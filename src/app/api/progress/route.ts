@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { GAMIFICATION, getLevelForPoints } from "@/lib/utils";
+import { createNotification } from "@/lib/notifications";
 
 export async function POST(request: Request) {
   try {
@@ -149,6 +150,16 @@ export async function POST(request: Request) {
         where: { id: user.id },
         data: { points: newPoints, level: newLevel },
       });
+
+      if (leveledUp) {
+        const levelInfo = getLevelForPoints(newPoints);
+        await createNotification({
+          userId: user.id,
+          type: "LEVEL_UP",
+          message: `Parabéns! Você alcançou o nível ${levelInfo.name}`,
+          link: "/profile",
+        });
+      }
     }
 
     return NextResponse.json({

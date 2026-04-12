@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
+import { createNotification } from "@/lib/notifications";
 
 export async function GET(
   _request: Request,
@@ -108,6 +109,34 @@ export async function POST(
         user: { select: { id: true, name: true, avatarUrl: true, role: true } },
       },
     });
+
+    const course = await prisma.course.findUnique({
+      where: { id: lesson.module.courseId },
+      select: { slug: true },
+    });
+    const previousCommenters = await prisma.lessonComment.findMany({
+      where: {
+        lessonId: lesson.id,
+        userId: { not: user.id },
+        id: { not: comment.id },
+      },
+      distinct: ["userId"],
+      select: { userId: true },
+    });
+    const link = course
+      ? `/course/${course.slug}/lesson/${lesson.id}`
+      : null;
+    await Promise.all(
+      previousCommenters.map((c) =>
+        createNotification({
+          userId: c.userId,
+          type: "REPLY",
+          message: `${user.name} comentou na aula ${lesson.title}`,
+          link,
+          actorId: user.id,
+        })
+      )
+    );
 
     return NextResponse.json({ comment }, { status: 201 });
   } catch (error) {

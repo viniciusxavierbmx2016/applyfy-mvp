@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { GAMIFICATION, getLevelForPoints } from "@/lib/utils";
+import { createNotification } from "@/lib/notifications";
 
 export async function POST(
   _request: Request,
@@ -58,6 +59,13 @@ export async function POST(
       liked = true;
       if (post.userId !== user.id) {
         pointsDelta = GAMIFICATION.POINTS.RECEIVE_LIKE;
+        await createNotification({
+          userId: post.userId,
+          type: "LIKE",
+          message: `${user.name} curtiu seu post`,
+          link: `/course/${post.course.slug}/community`,
+          actorId: user.id,
+        });
       }
     }
 

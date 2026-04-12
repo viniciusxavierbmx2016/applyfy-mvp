@@ -26,6 +26,7 @@ model User {
   lessonComments LessonComment[]
   likes          Like[]
   sessions       Session[]
+  notifications  Notification[]
 }
 
 enum Role {
@@ -167,6 +168,29 @@ model LessonComment {
 
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   lesson    Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+}
+
+model Notification {
+  id        String           @id @default(uuid())
+  userId    String
+  type      NotificationType
+  message   String
+  link      String?
+  read      Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, read])
+  @@index([userId, createdAt])
+}
+
+enum NotificationType {
+  LIKE
+  COMMENT
+  REPLY
+  ENROLLMENT
+  LEVEL_UP
 }
 
 model Session {

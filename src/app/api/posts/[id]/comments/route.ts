@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
+import { createNotification } from "@/lib/notifications";
 
 export async function GET(
   _request: Request,
@@ -67,7 +68,10 @@ export async function POST(
       );
     }
 
-    const post = await prisma.post.findUnique({ where: { id: params.id } });
+    const post = await prisma.post.findUnique({
+      where: { id: params.id },
+      include: { course: { select: { slug: true } } },
+    });
     if (!post) {
       return NextResponse.json(
         { error: "Post não encontrado" },
@@ -95,6 +99,14 @@ export async function POST(
       include: {
         user: { select: { id: true, name: true, avatarUrl: true, role: true } },
       },
+    });
+
+    await createNotification({
+      userId: post.userId,
+      type: "COMMENT",
+      message: `${user.name} comentou no seu post`,
+      link: `/course/${post.course.slug}/community`,
+      actorId: user.id,
     });
 
     return NextResponse.json({ comment }, { status: 201 });

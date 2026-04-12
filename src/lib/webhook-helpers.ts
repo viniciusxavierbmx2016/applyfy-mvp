@@ -1,5 +1,6 @@
 import { prisma } from "./prisma";
 import { createAdminClient } from "./supabase-admin";
+import { createNotification } from "./notifications";
 
 /**
  * Upsert a user in the database and in Supabase Auth.
@@ -53,11 +54,33 @@ export async function ensureUserByEmail(email: string, name?: string) {
 }
 
 export async function activateEnrollment(userId: string, courseId: string) {
-  return prisma.enrollment.upsert({
+  const existing = await prisma.enrollment.findUnique({
+    where: { userId_courseId: { userId, courseId } },
+  });
+  const wasActive = existing?.status === "ACTIVE";
+
+  const enrollment = await prisma.enrollment.upsert({
     where: { userId_courseId: { userId, courseId } },
     create: { userId, courseId, status: "ACTIVE" },
     update: { status: "ACTIVE" },
   });
+
+  if (!wasActive) {
+    const course = await prisma.course.findUnique({
+      where: { id: courseId },
+      select: { title: true, slug: true },
+    });
+    if (course) {
+      await createNotification({
+        userId,
+        type: "ENROLLMENT",
+        message: `Você foi matriculado no curso ${course.title}`,
+        link: `/course/${course.slug}`,
+      });
+    }
+  }
+
+  return enrollment;
 }
 
 export async function getSetting(key: string): Promise<string | null> {

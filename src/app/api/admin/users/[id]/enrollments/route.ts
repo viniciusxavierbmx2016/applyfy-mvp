@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
+import { createNotification } from "@/lib/notifications";
 
 export async function POST(
   request: Request,
@@ -16,6 +17,11 @@ export async function POST(
       );
     }
 
+    const existing = await prisma.enrollment.findUnique({
+      where: { userId_courseId: { userId: params.id, courseId } },
+    });
+    const wasActive = existing?.status === "ACTIVE";
+
     const enrollment = await prisma.enrollment.upsert({
       where: {
         userId_courseId: { userId: params.id, courseId },
@@ -26,6 +32,15 @@ export async function POST(
         course: { select: { id: true, title: true, slug: true } },
       },
     });
+
+    if (!wasActive) {
+      await createNotification({
+        userId: params.id,
+        type: "ENROLLMENT",
+        message: `Você foi matriculado no curso ${enrollment.course.title}`,
+        link: `/course/${enrollment.course.slug}`,
+      });
+    }
 
     return NextResponse.json({ enrollment });
   } catch (error) {

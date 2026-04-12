@@ -5,6 +5,7 @@ import { useUserStore } from "@/stores/user-store";
 import { Avatar } from "@/components/ui/avatar";
 import { getLevelForPoints } from "@/lib/utils";
 import { useState, useRef, useEffect } from "react";
+import { NotificationsBell } from "./notifications-bell";
 
 interface HeaderProps {
   onMenuToggle: () => void;
@@ -85,6 +86,9 @@ export function Header({ onMenuToggle }: HeaderProps) {
               </span>
             </div>
           )}
+
+          {/* Notifications */}
+          {user && <NotificationsBell />}
 
           {/* User dropdown */}
           <div className="relative" ref={dropdownRef}>
