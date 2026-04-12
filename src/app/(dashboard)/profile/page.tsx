@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useUserStore } from "@/stores/user-store";
-import { Avatar } from "@/components/ui/avatar";
+import { AvatarUploader } from "@/components/avatar-uploader";
 import { ProgressBar } from "@/components/progress-bar";
 import { getLevelForPoints, getNextLevel } from "@/lib/utils";
 
@@ -51,14 +51,12 @@ export default function ProfilePage() {
       <h1 className="text-2xl font-bold text-white mb-6">Meu Perfil</h1>
 
       {/* Profile card */}
-      <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 mb-6">
-        <div className="flex items-center gap-4">
-          <Avatar src={user.avatarUrl} name={user.name} size="lg" />
-          <div>
-            <h2 className="text-xl font-semibold text-white">{user.name}</h2>
-            <p className="text-gray-400 text-sm">{user.email}</p>
-          </div>
+      <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 mb-6 space-y-5">
+        <div>
+          <h2 className="text-xl font-semibold text-white">{user.name}</h2>
+          <p className="text-gray-400 text-sm">{user.email}</p>
         </div>
+        <AvatarUploader />
       </div>
 
       {/* Gamification card */}

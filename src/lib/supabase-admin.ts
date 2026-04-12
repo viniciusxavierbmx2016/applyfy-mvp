@@ -15,3 +15,4 @@ export function createAdminClient() {
 }
 
 export const STORAGE_BUCKET = "thumbnails";
+export const AVATAR_BUCKET = "avatars";
