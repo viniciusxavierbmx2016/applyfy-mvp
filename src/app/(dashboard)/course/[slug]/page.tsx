@@ -31,6 +31,7 @@ interface CourseDetail {
   description: string;
   thumbnail: string | null;
   checkoutUrl: string | null;
+  hasCertificate?: boolean;
   modules: ModuleItem[];
 }
 
@@ -301,6 +302,56 @@ export default function CourseDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* Certificado — visível ao concluir 100% */}
+      {progress >= 100 && course.hasCertificate !== false && (
+        <div className="mb-8 bg-gradient-to-r from-blue-600/20 to-blue-500/10 border border-blue-500/30 rounded-xl p-5 sm:p-6">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center flex-shrink-0">
+              <svg
+                className="w-6 h-6 text-blue-400"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
+                />
+              </svg>
+            </div>
+            <div className="flex-1">
+              <h3 className="text-lg font-semibold text-white">
+                Parabéns! Você concluiu este curso
+              </h3>
+              <p className="text-sm text-gray-300">
+                Baixe seu certificado oficial em PDF.
+              </p>
+            </div>
+            <a
+              href={`/api/certificates/${course.id}`}
+              className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition"
+            >
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"
+                />
+              </svg>
+              Baixar Certificado
+            </a>
+          </div>
+        </div>
+      )}
 
       {/* Conteúdo em accordion */}
       <div>

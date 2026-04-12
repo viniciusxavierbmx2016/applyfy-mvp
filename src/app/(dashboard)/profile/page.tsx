@@ -99,6 +99,58 @@ export default function ProfilePage() {
         )}
       </div>
 
+      {/* Completed courses with certificate */}
+      {(() => {
+        const completed = courses.filter((c) => c.progress >= 100);
+        if (completed.length === 0) return null;
+        return (
+          <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 mb-6">
+            <h3 className="text-lg font-semibold text-white mb-1">
+              Certificados
+            </h3>
+            <p className="text-xs text-gray-500 mb-4">
+              Cursos concluídos — baixe seu certificado oficial.
+            </p>
+            <ul className="space-y-3">
+              {completed.map((c) => (
+                <li
+                  key={c.id}
+                  className="flex flex-col sm:flex-row sm:items-center gap-3 p-3 rounded-lg bg-gray-800/40 border border-gray-800"
+                >
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-white truncate">
+                      {c.title}
+                    </p>
+                    <p className="text-xs text-green-400">
+                      Concluído — {c.totalLessons} aulas
+                    </p>
+                  </div>
+                  <a
+                    href={`/api/certificates/${c.id}`}
+                    className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded-lg transition"
+                  >
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"
+                      />
+                    </svg>
+                    Baixar certificado
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        );
+      })()}
+
       {/* Courses progress */}
       <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
         <h3 className="text-lg font-semibold text-white mb-4">Meus Cursos</h3>

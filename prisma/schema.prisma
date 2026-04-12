@@ -27,6 +27,7 @@ model User {
   likes          Like[]
   sessions       Session[]
   notifications  Notification[]
+  certificates   Certificate[]
 }
 
 enum Role {
@@ -44,6 +45,7 @@ model Course {
   externalProductId  String?   @unique
   isPublished        Boolean   @default(false)
   showInStore        Boolean   @default(true)
+  hasCertificate     Boolean   @default(true)
   order              Int       @default(0)
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt
@@ -51,6 +53,7 @@ model Course {
   modules       Module[]
   enrollments   Enrollment[]
   posts         Post[]
+  certificates  Certificate[]
 }
 
 model Settings {
@@ -191,6 +194,19 @@ enum NotificationType {
   REPLY
   ENROLLMENT
   LEVEL_UP
+}
+
+model Certificate {
+  id         String   @id @default(uuid())
+  code       String   @unique
+  userId     String
+  courseId   String
+  issuedAt   DateTime @default(now())
+
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course     Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, courseId])
 }
 
 model Session {
