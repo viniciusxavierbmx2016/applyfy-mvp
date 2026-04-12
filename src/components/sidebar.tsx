@@ -60,6 +60,15 @@ const adminLinks = [
     ),
   },
   {
+    href: "/admin/analytics",
+    label: "Analytics",
+    icon: (
+      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3v18h18M7 15l3-3 3 3 5-5" />
+      </svg>
+    ),
+  },
+  {
     href: "/admin/community",
     label: "Comunidade",
     icon: (
