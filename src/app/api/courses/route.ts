@@ -1,0 +1,165 @@
+import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+import { getCurrentUser, requireAdmin } from "@/lib/auth";
+
+export async function GET(request: Request) {
+  try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
+    }
+
+    const { searchParams } = new URL(request.url);
+    const filter = searchParams.get("filter"); // enrolled, store, all
+
+    const isAdmin = user.role === "ADMIN";
+
+    // Admin sees all courses
+    if (isAdmin && filter === "all") {
+      const courses = await prisma.course.findMany({
+        orderBy: { order: "asc" },
+        include: {
+          _count: {
+            select: { modules: true, enrollments: true },
+          },
+        },
+      });
+      return NextResponse.json({ courses });
+    }
+
+    // Student view
+    const enrollments = await prisma.enrollment.findMany({
+      where: { userId: user.id, status: "ACTIVE" },
+      select: { courseId: true },
+    });
+    const enrolledIds = enrollments.map((e) => e.courseId);
+
+    if (filter === "enrolled") {
+      const courses = await prisma.course.findMany({
+        where: { id: { in: enrolledIds }, isPublished: true },
+        orderBy: { order: "asc" },
+        include: {
+          modules: {
+            include: {
+              lessons: {
+                include: {
+                  progress: {
+                    where: { userId: user.id },
+                  },
+                },
+              },
+            },
+          },
+        },
+      });
+      return NextResponse.json({ courses });
+    }
+
+    if (filter === "store") {
+      const courses = await prisma.course.findMany({
+        where: {
+          id: { notIn: enrolledIds },
+          isPublished: true,
+          showInStore: true,
+        },
+        orderBy: { order: "asc" },
+      });
+      return NextResponse.json({ courses });
+    }
+
+    // Default: return both
+    const enrolled = await prisma.course.findMany({
+      where: { id: { in: enrolledIds }, isPublished: true },
+      orderBy: { order: "asc" },
+      include: {
+        modules: {
+          include: {
+            lessons: {
+              include: {
+                progress: {
+                  where: { userId: user.id },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    const store = await prisma.course.findMany({
+      where: {
+        id: { notIn: enrolledIds },
+        isPublished: true,
+        showInStore: true,
+      },
+      orderBy: { order: "asc" },
+    });
+
+    return NextResponse.json({ enrolled, store });
+  } catch (error) {
+    console.error("GET /api/courses error:", error);
+    return NextResponse.json(
+      { error: "Erro ao buscar cursos" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function POST(request: Request) {
+  try {
+    await requireAdmin();
+
+    const body = await request.json();
+    const {
+      title,
+      slug,
+      description,
+      thumbnail,
+      checkoutUrl,
+      isPublished,
+      showInStore,
+    } = body;
+
+    if (!title || !slug || !description) {
+      return NextResponse.json(
+        { error: "Título, slug e descrição são obrigatórios" },
+        { status: 400 }
+      );
+    }
+
+    const existing = await prisma.course.findUnique({ where: { slug } });
+    if (existing) {
+      return NextResponse.json(
+        { error: "Já existe um curso com esse slug" },
+        { status: 409 }
+      );
+    }
+
+    const lastCourse = await prisma.course.findFirst({
+      orderBy: { order: "desc" },
+    });
+
+    const course = await prisma.course.create({
+      data: {
+        title,
+        slug,
+        description,
+        thumbnail: thumbnail || null,
+        checkoutUrl: checkoutUrl || null,
+        isPublished: Boolean(isPublished),
+        showInStore: showInStore !== false,
+        order: (lastCourse?.order ?? -1) + 1,
+      },
+    });
+
+    return NextResponse.json({ course }, { status: 201 });
+  } catch (error) {
+    console.error("POST /api/courses error:", error);
+    const message =
+      error instanceof Error && error.message === "Forbidden"
+        ? "Acesso negado"
+        : "Erro ao criar curso";
+    const status = message === "Acesso negado" ? 403 : 500;
+    return NextResponse.json({ error: message }, { status });
+  }
+}

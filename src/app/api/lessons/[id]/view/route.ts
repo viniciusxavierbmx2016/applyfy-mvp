@@ -1,0 +1,115 @@
+import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+import { getCurrentUser } from "@/lib/auth";
+import { parseVideoUrl } from "@/lib/video";
+
+export async function GET(
+  _request: Request,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
+    }
+
+    const lesson = await prisma.lesson.findUnique({
+      where: { id: params.id },
+      include: {
+        module: {
+          include: {
+            course: {
+              include: {
+                modules: {
+                  orderBy: { order: "asc" },
+                  include: {
+                    lessons: {
+                      orderBy: { order: "asc" },
+                      include: {
+                        progress: { where: { userId: user.id } },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        progress: { where: { userId: user.id } },
+      },
+    });
+
+    if (!lesson) {
+      return NextResponse.json({ error: "Aula não encontrada" }, { status: 404 });
+    }
+
+    const course = lesson.module.course;
+
+    // Check enrollment (admins bypass)
+    if (user.role !== "ADMIN") {
+      const enrollment = await prisma.enrollment.findUnique({
+        where: { userId_courseId: { userId: user.id, courseId: course.id } },
+      });
+      if (!enrollment || enrollment.status !== "ACTIVE") {
+        return NextResponse.json(
+          { error: "Você não está matriculado neste curso" },
+          { status: 403 }
+        );
+      }
+    }
+
+    // Build flat ordered list of lessons across the course for prev/next
+    const flat: Array<{
+      id: string;
+      title: string;
+      moduleId: string;
+    }> = [];
+    for (const mod of course.modules) {
+      for (const l of mod.lessons) {
+        flat.push({ id: l.id, title: l.title, moduleId: mod.id });
+      }
+    }
+    const currentIndex = flat.findIndex((l) => l.id === lesson.id);
+    const prev = currentIndex > 0 ? flat[currentIndex - 1] : null;
+    const next =
+      currentIndex >= 0 && currentIndex < flat.length - 1
+        ? flat[currentIndex + 1]
+        : null;
+
+    const video = parseVideoUrl(lesson.videoUrl);
+
+    // Masked payload — never expose raw videoUrl
+    return NextResponse.json({
+      lesson: {
+        id: lesson.id,
+        title: lesson.title,
+        description: lesson.description,
+        moduleId: lesson.moduleId,
+        video,
+        completed: lesson.progress.some((p) => p.completed),
+      },
+      course: {
+        id: course.id,
+        slug: course.slug,
+        title: course.title,
+        modules: course.modules.map((m) => ({
+          id: m.id,
+          title: m.title,
+          lessons: m.lessons.map((l) => ({
+            id: l.id,
+            title: l.title,
+            completed: l.progress.some((p) => p.completed),
+          })),
+        })),
+      },
+      prev: prev ? { id: prev.id, title: prev.title } : null,
+      next: next ? { id: next.id, title: next.title } : null,
+    });
+  } catch (error) {
+    console.error("GET lesson view error:", error);
+    return NextResponse.json(
+      { error: "Erro ao carregar aula" },
+      { status: 500 }
+    );
+  }
+}
