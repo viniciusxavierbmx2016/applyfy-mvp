@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { GoogleAuthButton } from "@/components/google-auth-button";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -53,16 +54,27 @@ export default function LoginPage() {
           <p className="text-gray-400 mt-2">Acesse sua conta</p>
         </div>
 
-        <form
-          onSubmit={handleSubmit}
-          className="bg-gray-900 rounded-2xl p-8 shadow-xl border border-gray-800"
-        >
+        <div className="bg-gray-900 rounded-2xl p-8 shadow-xl border border-gray-800">
           {error && (
             <div className="mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
               {error}
             </div>
           )}
 
+          <GoogleAuthButton label="Entrar com Google" />
+
+          <div className="relative my-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-800" />
+            </div>
+            <div className="relative flex justify-center">
+              <span className="px-3 bg-gray-900 text-xs text-gray-500 uppercase tracking-wider">
+                ou
+              </span>
+            </div>
+          </div>
+
+          <form onSubmit={handleSubmit}>
           <div className="space-y-4">
             <div>
               <label
@@ -109,6 +121,7 @@ export default function LoginPage() {
             {loading ? "Entrando..." : "Entrar"}
           </button>
 
+          </form>
           <p className="mt-6 text-center text-sm text-gray-400">
             Não tem conta?{" "}
             <Link
@@ -118,7 +131,7 @@ export default function LoginPage() {
               Criar conta
             </Link>
           </p>
-        </form>
+        </div>
       </div>
     </div>
   );

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { GoogleAuthButton } from "@/components/google-auth-button";
 
 export default function RegisterPage() {
   const [name, setName] = useState("");
@@ -59,16 +60,27 @@ export default function RegisterPage() {
           <p className="text-gray-400 mt-2">Crie sua conta</p>
         </div>
 
-        <form
-          onSubmit={handleSubmit}
-          className="bg-gray-900 rounded-2xl p-8 shadow-xl border border-gray-800"
-        >
+        <div className="bg-gray-900 rounded-2xl p-8 shadow-xl border border-gray-800">
           {error && (
             <div className="mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
               {error}
             </div>
           )}
 
+          <GoogleAuthButton label="Criar conta com Google" />
+
+          <div className="relative my-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-800" />
+            </div>
+            <div className="relative flex justify-center">
+              <span className="px-3 bg-gray-900 text-xs text-gray-500 uppercase tracking-wider">
+                ou
+              </span>
+            </div>
+          </div>
+
+          <form onSubmit={handleSubmit}>
           <div className="space-y-4">
             <div>
               <label
@@ -151,6 +163,7 @@ export default function RegisterPage() {
             {loading ? "Criando conta..." : "Criar conta"}
           </button>
 
+          </form>
           <p className="mt-6 text-center text-sm text-gray-400">
             Já tem conta?{" "}
             <Link
@@ -160,7 +173,7 @@ export default function RegisterPage() {
               Fazer login
             </Link>
           </p>
-        </form>
+        </div>
       </div>
     </div>
   );

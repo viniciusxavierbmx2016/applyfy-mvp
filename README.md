@@ -105,6 +105,39 @@ src/
 - **Headers:** `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy` aplicados globalmente via `next.config.mjs`.
 - **Auth:** Supabase SSR + verificação server-side (`requireAuth` / `requireAdmin`) em todas as rotas protegidas.
 
+## Login social — Google OAuth
+
+A plataforma suporta login com Google via Supabase Auth. Fluxo: botão "Entrar com Google" chama `POST /api/auth/google` → Supabase redireciona ao Google → Google redireciona para `GET /api/auth/callback` → troca o `code` por sessão e cria/atualiza o `User` no Prisma.
+
+### 1. Google Cloud Console
+
+1. Acesse [console.cloud.google.com](https://console.cloud.google.com) e crie um projeto (ex: `applyfy-prod`).
+2. **APIs & Services → OAuth consent screen**:
+   - User type: **External**.
+   - App name: `Applyfy`.
+   - User support email e Developer contact: seu email.
+   - Scopes: adicione `.../auth/userinfo.email`, `.../auth/userinfo.profile` e `openid`.
+   - Test users (enquanto o app estiver em *Testing*): adicione os emails que farão login. Para produção, publique o app.
+3. **APIs & Services → Credentials → Create credentials → OAuth client ID**:
+   - Application type: **Web application**.
+   - Name: `Applyfy Web`.
+   - **Authorized redirect URIs**: copie a URL exata mostrada no painel do Supabase (próximo passo) — geralmente `https://<seu-projeto>.supabase.co/auth/v1/callback`.
+   - Salve e copie o **Client ID** e o **Client secret**.
+
+### 2. Supabase
+
+1. No painel do Supabase, vá em **Authentication → Providers → Google**.
+2. Habilite o provider.
+3. Cole o **Client ID** e o **Client secret** do passo anterior.
+4. A **Callback URL (for OAuth)** mostrada nessa tela deve coincidir com a *Authorized redirect URI* cadastrada no Google Cloud — se não coincidir, atualize no Google Cloud.
+5. Em **Authentication → URL Configuration**:
+   - **Site URL**: `https://seu-dominio.com` (produção) — em dev use `http://localhost:3000`.
+   - **Redirect URLs**: adicione `http://localhost:3000/api/auth/callback` e `https://seu-dominio.com/api/auth/callback`.
+
+### 3. Testando
+
+Em dev, reinicie o `npm run dev` e clique em **Entrar com Google** na tela de login. Na primeira vez, o Google pedirá consentimento; depois o usuário é redirecionado para `/` já autenticado. O registro Prisma é criado automaticamente com `name` e `avatarUrl` vindos do Google.
+
 ## Webhooks de pagamento
 
 O Applyfy libera acesso automaticamente após uma compra aprovada via **Hotmart** ou **Stripe**. O roteamento do produto → curso usa o campo **ID externo do produto** cadastrado em `Admin → Cursos`.
