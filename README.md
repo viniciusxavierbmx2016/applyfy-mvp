@@ -105,6 +105,42 @@ src/
 - **Headers:** `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy` aplicados globalmente via `next.config.mjs`.
 - **Auth:** Supabase SSR + verificação server-side (`requireAuth` / `requireAdmin`) em todas as rotas protegidas.
 
+## Webhooks de pagamento
+
+O Applyfy libera acesso automaticamente após uma compra aprovada via **Hotmart** ou **Stripe**. O roteamento do produto → curso usa o campo **ID externo do produto** cadastrado em `Admin → Cursos`.
+
+### 1. Vincular produtos aos cursos
+
+Em **Admin → Cursos**, edite cada curso e preencha **ID externo do produto** com:
+- **Hotmart:** o `product.id` (ou `ucode`) do produto.
+- **Stripe:** o `prod_XXXX` ou qualquer identificador que você coloque em `metadata.externalProductId` do checkout session. Alternativamente, envie `metadata.courseId` com o UUID do curso no Applyfy.
+
+### 2. Configurar Hotmart
+
+1. Acesse a Hotmart → **Ferramentas → Webhook (Postback) → Cadastrar**.
+2. URL: `https://SEU-APP.vercel.app/api/webhooks/hotmart`
+3. Selecione eventos: `PURCHASE_APPROVED`, `PURCHASE_COMPLETE`, `PURCHASE_REFUNDED`, `PURCHASE_CHARGEBACK`, `PURCHASE_CANCELED`.
+4. Copie o **hottok** gerado.
+5. No Applyfy, vá em **Admin → Configurações → Hotmart** e cole o hottok.
+
+### 3. Configurar Stripe
+
+1. Acesse [dashboard.stripe.com](https://dashboard.stripe.com) → **Developers → Webhooks → Add endpoint**.
+2. Endpoint URL: `https://SEU-APP.vercel.app/api/webhooks/stripe`
+3. Event: `checkout.session.completed`.
+4. Copie o **Signing secret** (`whsec_...`).
+5. No Applyfy, vá em **Admin → Configurações → Stripe** e cole o secret.
+6. Ao criar checkout sessions, envie `metadata`:
+   ```js
+   stripe.checkout.sessions.create({
+     // ...
+     metadata: { courseId: "<uuid-do-curso-no-applyfy>" },
+     // ou: metadata: { externalProductId: "prod_XXXX" }
+   });
+   ```
+
+Os segredos são armazenados criptografados no banco e nunca são exibidos em texto puro após salvar. Cancelamentos/estornos revogam o acesso automaticamente (enrollment → `CANCELLED`).
+
 ## Scripts
 
 ```bash

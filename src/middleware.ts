@@ -52,8 +52,11 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   if (pathname.startsWith("/api/")) {
-    const limited = applyRateLimit(request);
-    if (limited) return limited;
+    // Webhooks são chamados por serviços externos — skip rate limit
+    if (!pathname.startsWith("/api/webhooks/")) {
+      const limited = applyRateLimit(request);
+      if (limited) return limited;
+    }
     return NextResponse.next();
   }
 

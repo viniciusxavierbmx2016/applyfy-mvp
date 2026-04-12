@@ -12,6 +12,7 @@ interface CourseData {
   description: string;
   thumbnail: string | null;
   checkoutUrl: string | null;
+  externalProductId: string | null;
   isPublished: boolean;
   showInStore: boolean;
   modules: ModuleData[];
@@ -110,6 +111,7 @@ export default function EditCoursePage({
             description: course.description,
             thumbnail: course.thumbnail,
             checkoutUrl: course.checkoutUrl || "",
+            externalProductId: course.externalProductId || "",
             isPublished: course.isPublished,
             showInStore: course.showInStore,
           }}

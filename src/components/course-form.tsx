@@ -12,6 +12,7 @@ interface CourseFormData {
   description: string;
   thumbnail: string | null;
   checkoutUrl: string;
+  externalProductId: string;
   isPublished: boolean;
   showInStore: boolean;
 }
@@ -31,6 +32,9 @@ export function CourseForm({ initial, mode }: CourseFormProps) {
     initial?.thumbnail || null
   );
   const [checkoutUrl, setCheckoutUrl] = useState(initial?.checkoutUrl || "");
+  const [externalProductId, setExternalProductId] = useState(
+    initial?.externalProductId || ""
+  );
   const [isPublished, setIsPublished] = useState(initial?.isPublished ?? false);
   const [showInStore, setShowInStore] = useState(initial?.showInStore ?? true);
   const [error, setError] = useState("");
@@ -55,6 +59,7 @@ export function CourseForm({ initial, mode }: CourseFormProps) {
       description,
       thumbnail,
       checkoutUrl: checkoutUrl || null,
+      externalProductId: externalProductId.trim() || null,
       isPublished,
       showInStore,
     };
@@ -167,6 +172,22 @@ export function CourseForm({ initial, mode }: CourseFormProps) {
           />
           <p className="text-xs text-gray-500 mt-1">
             Link externo onde o aluno será redirecionado ao clicar em &ldquo;Comprar agora&rdquo;
+          </p>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-300 mb-1">
+            ID externo do produto (Hotmart / Stripe)
+          </label>
+          <input
+            type="text"
+            value={externalProductId}
+            onChange={(e) => setExternalProductId(e.target.value)}
+            className="w-full px-4 py-2.5 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="ex: 1234567 (Hotmart) ou prod_XXXX (Stripe)"
+          />
+          <p className="text-xs text-gray-500 mt-1">
+            Usado pelos webhooks para liberar acesso automaticamente após uma compra aprovada.
           </p>
         </div>
 

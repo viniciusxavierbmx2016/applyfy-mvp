@@ -34,21 +34,28 @@ enum Role {
 }
 
 model Course {
-  id            String    @id @default(uuid())
-  title         String
-  slug          String    @unique
-  description   String
-  thumbnail     String?
-  checkoutUrl   String?
-  isPublished   Boolean   @default(false)
-  showInStore   Boolean   @default(true)
-  order         Int       @default(0)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id                 String    @id @default(uuid())
+  title              String
+  slug               String    @unique
+  description        String
+  thumbnail          String?
+  checkoutUrl        String?
+  externalProductId  String?   @unique
+  isPublished        Boolean   @default(false)
+  showInStore        Boolean   @default(true)
+  order              Int       @default(0)
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
 
   modules       Module[]
   enrollments   Enrollment[]
   posts         Post[]
+}
+
+model Settings {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
 }
 
 model Module {

@@ -116,6 +116,7 @@ export async function POST(request: Request) {
       description,
       thumbnail,
       checkoutUrl,
+      externalProductId,
       isPublished,
       showInStore,
     } = body;
@@ -146,6 +147,7 @@ export async function POST(request: Request) {
         description,
         thumbnail: thumbnail || null,
         checkoutUrl: checkoutUrl || null,
+        externalProductId: externalProductId?.trim() || null,
         isPublished: Boolean(isPublished),
         showInStore: showInStore !== false,
         order: (lastCourse?.order ?? -1) + 1,

@@ -50,6 +50,7 @@ export async function PUT(
       description,
       thumbnail,
       checkoutUrl,
+      externalProductId,
       isPublished,
       showInStore,
     } = body;
@@ -74,6 +75,9 @@ export async function PUT(
         ...(description !== undefined && { description }),
         ...(thumbnail !== undefined && { thumbnail }),
         ...(checkoutUrl !== undefined && { checkoutUrl }),
+        ...(externalProductId !== undefined && {
+          externalProductId: externalProductId?.trim() || null,
+        }),
         ...(isPublished !== undefined && { isPublished: Boolean(isPublished) }),
         ...(showInStore !== undefined && { showInStore: Boolean(showInStore) }),
       },
