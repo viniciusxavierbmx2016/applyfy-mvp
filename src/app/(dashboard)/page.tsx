@@ -29,6 +29,7 @@ interface StoreCourse {
   slug: string;
   description: string;
   thumbnail: string | null;
+  checkoutUrl: string | null;
   ratingAverage?: number;
   ratingCount?: number;
 }
@@ -201,6 +202,7 @@ export default function HomePage() {
                 title={course.title}
                 description={course.description}
                 thumbnail={course.thumbnail}
+                checkoutUrl={course.checkoutUrl}
                 ratingAverage={course.ratingAverage}
                 ratingCount={course.ratingCount}
                 locked

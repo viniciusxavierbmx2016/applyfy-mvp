@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { PostCard, type PostItem } from "@/components/post-card";
 import { TiptapEditor } from "@/components/tiptap-editor";
@@ -20,6 +20,7 @@ const POST_TYPES: Array<{ value: PostItem["type"]; label: string }> = [
 
 export default function CommunityPage() {
   const params = useParams<{ slug: string }>();
+  const router = useRouter();
   const { user, setUser } = useUserStore();
   const [posts, setPosts] = useState<PostItem[]>([]);
   const [course, setCourse] = useState<{ title: string; slug: string } | null>(
@@ -37,6 +38,10 @@ export default function CommunityPage() {
     setLoading(true);
     fetch(`/api/posts?courseSlug=${params.slug}`)
       .then(async (res) => {
+        if (res.status === 403 || res.status === 404) {
+          if (!cancelled) router.replace(`/course/${params.slug}`);
+          return null;
+        }
         if (!res.ok) {
           const body = await res.json().catch(() => ({}));
           throw new Error(body.error || "Erro");
@@ -44,7 +49,7 @@ export default function CommunityPage() {
         return res.json();
       })
       .then((data) => {
-        if (!cancelled) {
+        if (data && !cancelled) {
           setPosts(data.posts);
           setCourse(data.course);
         }
@@ -58,7 +63,7 @@ export default function CommunityPage() {
     return () => {
       cancelled = true;
     };
-  }, [params.slug]);
+  }, [params.slug, router]);
 
   function showToast(msg: string) {
     setToast(msg);

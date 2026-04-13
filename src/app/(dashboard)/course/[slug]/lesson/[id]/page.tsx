@@ -60,14 +60,18 @@ export default function LessonPage({
 
     fetch(`/api/lessons/${params.id}/view`)
       .then(async (res) => {
+        if (res.status === 403 || res.status === 404) {
+          if (!cancelled) router.replace(`/course/${params.slug}`);
+          return null;
+        }
         if (!res.ok) {
           const body = await res.json().catch(() => ({}));
           throw new Error(body.error || "Erro ao carregar aula");
         }
         return res.json();
       })
-      .then((d: ViewData) => {
-        if (!cancelled) setData(d);
+      .then((d: ViewData | null) => {
+        if (d && !cancelled) setData(d);
       })
       .catch((e: Error) => {
         if (!cancelled) setError(e.message);
@@ -79,7 +83,7 @@ export default function LessonPage({
     return () => {
       cancelled = true;
     };
-  }, [params.id]);
+  }, [params.id, params.slug, router]);
 
   const showToast = (msg: string) => {
     setToast(msg);
