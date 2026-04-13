@@ -45,6 +45,14 @@ export async function GET(request: Request) {
       return NextResponse.json({ courses });
     }
 
+    // Student-style listing (enrolled + store). PRODUCER/COLLABORATOR/ADMIN should
+    // use filter=all — they don't browse a student storefront. Without a workspace
+    // scope, the store query would leak every course on the platform, so we bail
+    // out with empty lists for staff roles here.
+    if (isAdmin || isProducer || isCollaborator) {
+      return NextResponse.json({ enrolled: [], store: [] });
+    }
+
     // Student view: scope to user's workspace (if set)
     const workspaceFilter = user.workspaceId
       ? { workspaceId: user.workspaceId }
