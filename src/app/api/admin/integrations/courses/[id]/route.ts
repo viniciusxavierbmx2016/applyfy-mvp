@@ -1,13 +1,27 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/auth";
+import { requireStaff } from "@/lib/auth";
 
 export async function PATCH(
   request: Request,
   { params }: { params: { id: string } }
 ) {
   try {
-    await requireAdmin();
+    const staff = await requireStaff();
+
+    const course = await prisma.course.findUnique({
+      where: { id: params.id },
+      select: { id: true, ownerId: true, title: true },
+    });
+    if (!course) {
+      return NextResponse.json(
+        { error: "Curso não encontrado" },
+        { status: 404 }
+      );
+    }
+    if (staff.role === "PRODUCER" && course.ownerId !== staff.id) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
 
     const body = await request.json().catch(() => ({}));
     const raw = body?.externalProductId;
@@ -32,7 +46,7 @@ export async function PATCH(
       }
     }
 
-    const course = await prisma.course.update({
+    const updated = await prisma.course.update({
       where: { id: params.id },
       data: { externalProductId },
       select: {
@@ -44,7 +58,7 @@ export async function PATCH(
       },
     });
 
-    return NextResponse.json({ course });
+    return NextResponse.json({ course: updated });
   } catch (error) {
     const msg = error instanceof Error ? error.message : "";
     const status =

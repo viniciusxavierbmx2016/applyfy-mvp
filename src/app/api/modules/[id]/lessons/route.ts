@@ -1,13 +1,16 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/auth";
+import { canEditModule, requireStaff } from "@/lib/auth";
 
 export async function POST(
   request: Request,
   { params }: { params: { id: string } }
 ) {
   try {
-    await requireAdmin();
+    const staff = await requireStaff();
+    if (!(await canEditModule(staff, params.id))) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
 
     const { title, description, videoUrl, duration } = await request.json();
     if (!title || !videoUrl) {
@@ -36,9 +39,9 @@ export async function POST(
     return NextResponse.json({ lesson }, { status: 201 });
   } catch (error) {
     console.error("POST lesson error:", error);
-    return NextResponse.json(
-      { error: "Erro ao criar aula" },
-      { status: 500 }
-    );
+    const msg = error instanceof Error ? error.message : "";
+    const status =
+      msg === "Unauthorized" ? 401 : msg === "Forbidden" ? 403 : 500;
+    return NextResponse.json({ error: msg || "Erro" }, { status });
   }
 }

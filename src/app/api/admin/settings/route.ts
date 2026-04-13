@@ -1,26 +1,29 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/auth";
+import { requireStaff } from "@/lib/auth";
 
-const ALLOWED_KEYS = new Set([
-  "applyfy_token",
-  "stripe_webhook_secret",
-]);
+const ADMIN_KEYS = new Set(["stripe_webhook_secret"]);
+const STAFF_KEYS = new Set(["applyfy_token"]);
+const ALL_KEYS = new Set(["stripe_webhook_secret", "applyfy_token"]);
 
 export async function GET() {
   try {
-    await requireAdmin();
+    const staff = await requireStaff();
+    const canAdmin = staff.role === "ADMIN";
+
+    const visibleKeys = canAdmin
+      ? Array.from(ALL_KEYS)
+      : Array.from(STAFF_KEYS);
 
     const rows = await prisma.settings.findMany({
-      where: { key: { in: Array.from(ALLOWED_KEYS) } },
+      where: { key: { in: visibleKeys } },
     });
 
     const map: Record<string, string> = {};
     for (const r of rows) map[r.key] = r.value;
 
-    // Mask long secrets so they aren't re-sent in full; show last 4
     const masked: Record<string, { set: boolean; preview: string }> = {};
-    for (const k of Array.from(ALLOWED_KEYS)) {
+    for (const k of visibleKeys) {
       const v = map[k] || "";
       masked[k] = {
         set: v.length > 0,
@@ -39,7 +42,8 @@ export async function GET() {
 
 export async function PUT(request: Request) {
   try {
-    await requireAdmin();
+    const staff = await requireStaff();
+    const canAdmin = staff.role === "ADMIN";
 
     const body = await request.json();
     const updates = body?.settings as Record<string, string | null> | undefined;
@@ -49,7 +53,8 @@ export async function PUT(request: Request) {
     }
 
     for (const key of Object.keys(updates)) {
-      if (!ALLOWED_KEYS.has(key)) continue;
+      if (!ALL_KEYS.has(key)) continue;
+      if (ADMIN_KEYS.has(key) && !canAdmin) continue;
       const value = updates[key];
       if (value === null || value === "") {
         await prisma.settings.deleteMany({ where: { key } });

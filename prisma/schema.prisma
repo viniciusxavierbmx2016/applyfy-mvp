@@ -29,10 +29,12 @@ model User {
   notifications  Notification[]
   certificates   Certificate[]
   reviews        Review[]
+  ownedCourses   Course[]         @relation("CourseOwner")
 }
 
 enum Role {
   STUDENT
+  PRODUCER
   ADMIN
 }
 
@@ -48,14 +50,18 @@ model Course {
   showInStore        Boolean   @default(true)
   hasCertificate     Boolean   @default(true)
   order              Int       @default(0)
+  ownerId            String?
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt
 
+  owner         User?         @relation("CourseOwner", fields: [ownerId], references: [id], onDelete: SetNull)
   modules       Module[]
   enrollments   Enrollment[]
   posts         Post[]
   certificates  Certificate[]
   reviews       Review[]
+
+  @@index([ownerId])
 }
 
 model Settings {

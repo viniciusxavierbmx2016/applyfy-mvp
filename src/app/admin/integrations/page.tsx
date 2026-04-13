@@ -12,14 +12,18 @@ interface GatewayStatus {
   logoUrl: string | null;
 }
 
+type ViewerRole = "ADMIN" | "PRODUCER" | "STUDENT";
+
 interface StatusResponse {
   gateways: { applyfy: GatewayStatus };
   pendingRequests: number;
+  viewerRole?: ViewerRole;
 }
 
 export default function AdminIntegrationsIndexPage() {
   const [applyfy, setApplyfy] = useState<GatewayStatus | null>(null);
   const [pendingRequests, setPendingRequests] = useState(0);
+  const [viewerRole, setViewerRole] = useState<ViewerRole | null>(null);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
 
@@ -30,10 +34,13 @@ export default function AdminIntegrationsIndexPage() {
         if (d) {
           setApplyfy(d.gateways.applyfy);
           setPendingRequests(d.pendingRequests || 0);
+          setViewerRole(d.viewerRole || null);
         }
       })
       .finally(() => setLoading(false));
   }, []);
+
+  const isAdmin = viewerRole === "ADMIN";
 
   function handleLogoUpdated(url: string) {
     setApplyfy((prev) =>
@@ -52,6 +59,7 @@ export default function AdminIntegrationsIndexPage() {
             Conecte gateways de pagamento para liberar cursos automaticamente.
           </p>
         </div>
+        {isAdmin && (
         <Link
           href="/admin/integrations/requests"
           className="inline-flex items-center gap-2 self-start px-3.5 py-2 rounded-lg bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700 text-sm font-medium text-gray-700 dark:text-gray-200 transition"
@@ -66,6 +74,7 @@ export default function AdminIntegrationsIndexPage() {
             </span>
           )}
         </Link>
+        )}
       </div>
 
       {loading ? (
@@ -79,6 +88,7 @@ export default function AdminIntegrationsIndexPage() {
             connected={!!applyfy?.connected}
             logoUrl={applyfy?.logoUrl || DEFAULT_APPLYFY_LOGO}
             onLogoUpdated={handleLogoUpdated}
+            canEditLogo={isAdmin}
           />
           <RequestIntegrationCard onOpen={() => setModalOpen(true)} />
         </div>
@@ -178,19 +188,25 @@ function ApplyfyCard({
   connected,
   logoUrl,
   onLogoUpdated,
+  canEditLogo,
 }: {
   connected: boolean;
   logoUrl: string;
   onLogoUpdated: (url: string) => void;
+  canEditLogo: boolean;
 }) {
   return (
     <div className="group relative flex flex-col gap-3 p-5 rounded-xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700 hover:shadow-lg transition-all duration-200">
       <div className="flex items-start justify-between gap-3">
-        <LogoUploader
-          gateway="applyfy"
-          logoUrl={logoUrl}
-          onUploaded={onLogoUpdated}
-        />
+        {canEditLogo ? (
+          <LogoUploader
+            gateway="applyfy"
+            logoUrl={logoUrl}
+            onUploaded={onLogoUpdated}
+          />
+        ) : (
+          <GatewayLogo src={logoUrl} label="Applyfy" size={48} />
+        )}
         <span
           className={`text-[11px] font-medium px-2.5 py-1 rounded-full border ${
             connected

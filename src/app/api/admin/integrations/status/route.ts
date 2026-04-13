@@ -1,17 +1,20 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/auth";
+import { requireStaff } from "@/lib/auth";
 
 export async function GET() {
   try {
-    await requireAdmin();
+    const staff = await requireStaff();
+    const isAdmin = staff.role === "ADMIN";
 
     const [rows, pendingRequests] = await Promise.all([
       prisma.settings.findMany({
         where: { key: { in: ["applyfy_token", "applyfy_logo_url"] } },
         select: { key: true, value: true },
       }),
-      prisma.integrationRequest.count({ where: { status: "PENDING" } }),
+      isAdmin
+        ? prisma.integrationRequest.count({ where: { status: "PENDING" } })
+        : Promise.resolve(0),
     ]);
 
     const map = new Map(rows.map((r) => [r.key, r.value]));
@@ -24,6 +27,7 @@ export async function GET() {
         },
       },
       pendingRequests,
+      viewerRole: staff.role,
     });
   } catch (error) {
     const msg = error instanceof Error ? error.message : "";

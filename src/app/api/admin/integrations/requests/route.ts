@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/auth";
+import { requireAdmin, requireStaff } from "@/lib/auth";
 
 export async function GET() {
   try {
@@ -20,7 +20,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    await requireAdmin();
+    await requireStaff();
 
     const body = await request.json().catch(() => ({}));
     const gateway = typeof body?.gateway === "string" ? body.gateway.trim() : "";

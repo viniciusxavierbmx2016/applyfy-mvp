@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getCurrentUser, requireAdmin } from "@/lib/auth";
+import { getCurrentUser, requireStaff } from "@/lib/auth";
 
 export async function GET(request: Request) {
   try {
@@ -13,10 +13,12 @@ export async function GET(request: Request) {
     const filter = searchParams.get("filter"); // enrolled, store, all
 
     const isAdmin = user.role === "ADMIN";
+    const isProducer = user.role === "PRODUCER";
 
-    // Admin sees all courses
-    if (isAdmin && filter === "all") {
+    // Staff sees admin-scope courses (admin: all; producer: own)
+    if ((isAdmin || isProducer) && filter === "all") {
       const courses = await prisma.course.findMany({
+        where: isProducer ? { ownerId: user.id } : undefined,
         orderBy: { order: "asc" },
         include: {
           _count: {
@@ -135,7 +137,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    await requireAdmin();
+    const staff = await requireStaff();
 
     const body = await request.json();
     const {
@@ -179,6 +181,7 @@ export async function POST(request: Request) {
         isPublished: Boolean(isPublished),
         showInStore: showInStore !== false,
         order: (lastCourse?.order ?? -1) + 1,
+        ownerId: staff.id,
       },
     });
 

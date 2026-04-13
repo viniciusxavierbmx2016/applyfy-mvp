@@ -1,13 +1,16 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/auth";
+import { canEditModule, requireStaff } from "@/lib/auth";
 
 export async function PUT(
   request: Request,
   { params }: { params: { id: string } }
 ) {
   try {
-    await requireAdmin();
+    const staff = await requireStaff();
+    if (!(await canEditModule(staff, params.id))) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
     const { title } = await request.json();
 
     const updated = await prisma.module.update({
@@ -18,10 +21,10 @@ export async function PUT(
     return NextResponse.json({ module: updated });
   } catch (error) {
     console.error("PUT module error:", error);
-    return NextResponse.json(
-      { error: "Erro ao atualizar módulo" },
-      { status: 500 }
-    );
+    const msg = error instanceof Error ? error.message : "";
+    const status =
+      msg === "Unauthorized" ? 401 : msg === "Forbidden" ? 403 : 500;
+    return NextResponse.json({ error: msg || "Erro" }, { status });
   }
 }
 
@@ -30,14 +33,17 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    await requireAdmin();
+    const staff = await requireStaff();
+    if (!(await canEditModule(staff, params.id))) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
     await prisma.module.delete({ where: { id: params.id } });
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("DELETE module error:", error);
-    return NextResponse.json(
-      { error: "Erro ao excluir módulo" },
-      { status: 500 }
-    );
+    const msg = error instanceof Error ? error.message : "";
+    const status =
+      msg === "Unauthorized" ? 401 : msg === "Forbidden" ? 403 : 500;
+    return NextResponse.json({ error: msg || "Erro" }, { status });
   }
 }

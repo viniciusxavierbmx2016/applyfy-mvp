@@ -41,3 +41,60 @@ export async function requireAdmin(): Promise<User> {
   }
   return user;
 }
+
+export async function requireStaff(): Promise<User> {
+  const user = await requireAuth();
+  if (user.role !== "ADMIN" && user.role !== "PRODUCER") {
+    throw new Error("Forbidden");
+  }
+  return user;
+}
+
+export function isAdmin(user: Pick<User, "role">): boolean {
+  return user.role === "ADMIN";
+}
+
+export function isStaff(user: Pick<User, "role">): boolean {
+  return user.role === "ADMIN" || user.role === "PRODUCER";
+}
+
+// Returns true if the staff user can edit the given course.
+// ADMIN: always. PRODUCER: only if they are the course owner.
+export async function canEditCourse(
+  staff: Pick<User, "id" | "role">,
+  courseId: string
+): Promise<boolean> {
+  if (staff.role === "ADMIN") return true;
+  if (staff.role !== "PRODUCER") return false;
+  const c = await prisma.course.findUnique({
+    where: { id: courseId },
+    select: { ownerId: true },
+  });
+  return !!c && c.ownerId === staff.id;
+}
+
+export async function canEditModule(
+  staff: Pick<User, "id" | "role">,
+  moduleId: string
+): Promise<boolean> {
+  if (staff.role === "ADMIN") return true;
+  if (staff.role !== "PRODUCER") return false;
+  const m = await prisma.module.findUnique({
+    where: { id: moduleId },
+    select: { course: { select: { ownerId: true } } },
+  });
+  return !!m && m.course.ownerId === staff.id;
+}
+
+export async function canEditLesson(
+  staff: Pick<User, "id" | "role">,
+  lessonId: string
+): Promise<boolean> {
+  if (staff.role === "ADMIN") return true;
+  if (staff.role !== "PRODUCER") return false;
+  const l = await prisma.lesson.findUnique({
+    where: { id: lessonId },
+    select: { module: { select: { course: { select: { ownerId: true } } } } },
+  });
+  return !!l && l.module.course.ownerId === staff.id;
+}

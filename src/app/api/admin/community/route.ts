@@ -1,16 +1,37 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/auth";
+import { requireStaff } from "@/lib/auth";
 
 export async function GET(request: Request) {
   try {
-    await requireAdmin();
+    const staff = await requireStaff();
 
     const { searchParams } = new URL(request.url);
     const courseId = searchParams.get("courseId");
 
+    const isProducer = staff.role === "PRODUCER";
+    const scopedCourseIds = isProducer
+      ? (
+          await prisma.course.findMany({
+            where: { ownerId: staff.id },
+            select: { id: true },
+          })
+        ).map((c) => c.id)
+      : null;
+
+    const where: Record<string, unknown> = {};
+    if (isProducer) {
+      where.courseId = { in: scopedCourseIds || [] };
+    }
+    if (courseId) {
+      if (isProducer && !scopedCourseIds!.includes(courseId)) {
+        return NextResponse.json({ posts: [], courses: [] });
+      }
+      where.courseId = courseId;
+    }
+
     const posts = await prisma.post.findMany({
-      where: courseId ? { courseId } : {},
+      where,
       orderBy: [{ pinned: "desc" }, { createdAt: "desc" }],
       include: {
         user: { select: { id: true, name: true, avatarUrl: true, role: true } },
@@ -20,6 +41,7 @@ export async function GET(request: Request) {
     });
 
     const courses = await prisma.course.findMany({
+      where: isProducer ? { ownerId: staff.id } : undefined,
       orderBy: { order: "asc" },
       select: { id: true, title: true, slug: true },
     });

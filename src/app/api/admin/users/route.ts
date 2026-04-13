@@ -1,23 +1,49 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/auth";
+import { requireStaff } from "@/lib/auth";
 
 export async function GET(request: Request) {
   try {
-    await requireAdmin();
+    const staff = await requireStaff();
 
     const { searchParams } = new URL(request.url);
     const q = searchParams.get("q")?.trim() ?? "";
 
+    const searchClause = q
+      ? {
+          OR: [
+            { name: { contains: q, mode: "insensitive" as const } },
+            { email: { contains: q, mode: "insensitive" as const } },
+          ],
+        }
+      : {};
+
+    const isProducer = staff.role === "PRODUCER";
+
+    // Producer-scoped course IDs (used for filtering)
+    const scopedCourseIds = isProducer
+      ? (
+          await prisma.course.findMany({
+            where: { ownerId: staff.id },
+            select: { id: true },
+          })
+        ).map((c) => c.id)
+      : null;
+
+    const where = isProducer
+      ? {
+          ...searchClause,
+          enrollments: {
+            some: {
+              courseId: { in: scopedCourseIds || [] },
+              status: "ACTIVE" as const,
+            },
+          },
+        }
+      : searchClause;
+
     const users = await prisma.user.findMany({
-      where: q
-        ? {
-            OR: [
-              { name: { contains: q, mode: "insensitive" } },
-              { email: { contains: q, mode: "insensitive" } },
-            ],
-          }
-        : undefined,
+      where,
       orderBy: { createdAt: "desc" },
       select: {
         id: true,
@@ -29,7 +55,9 @@ export async function GET(request: Request) {
         level: true,
         createdAt: true,
         enrollments: {
-          where: { status: "ACTIVE" },
+          where: isProducer
+            ? { status: "ACTIVE", courseId: { in: scopedCourseIds || [] } }
+            : { status: "ACTIVE" },
           select: {
             id: true,
             courseId: true,
@@ -41,11 +69,16 @@ export async function GET(request: Request) {
     });
 
     const courses = await prisma.course.findMany({
+      where: isProducer ? { ownerId: staff.id } : undefined,
       orderBy: { order: "asc" },
       select: { id: true, title: true, slug: true },
     });
 
-    return NextResponse.json({ users, courses });
+    return NextResponse.json({
+      users,
+      courses,
+      viewerRole: staff.role,
+    });
   } catch (error) {
     console.error("GET /api/admin/users error:", error);
     const msg = error instanceof Error ? error.message : "";

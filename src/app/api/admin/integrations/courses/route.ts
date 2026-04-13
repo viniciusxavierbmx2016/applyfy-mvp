@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/auth";
+import { requireStaff } from "@/lib/auth";
 
 export async function GET() {
   try {
-    await requireAdmin();
+    const staff = await requireStaff();
 
     const courses = await prisma.course.findMany({
+      where: staff.role === "PRODUCER" ? { ownerId: staff.id } : undefined,
       orderBy: { order: "asc" },
       select: {
         id: true,

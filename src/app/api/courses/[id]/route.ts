@@ -1,6 +1,19 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/auth";
+import { requireStaff } from "@/lib/auth";
+
+async function assertCanEditCourse(courseId: string) {
+  const staff = await requireStaff();
+  const course = await prisma.course.findUnique({
+    where: { id: courseId },
+    select: { id: true, ownerId: true },
+  });
+  if (!course) return { error: "Curso não encontrado", status: 404 as const };
+  if (staff.role === "PRODUCER" && course.ownerId !== staff.id) {
+    return { error: "Forbidden", status: 403 as const };
+  }
+  return { ok: true as const };
+}
 
 export async function GET(
   _request: Request,
@@ -41,7 +54,10 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
-    await requireAdmin();
+    const check = await assertCanEditCourse(params.id);
+    if ("error" in check) {
+      return NextResponse.json({ error: check.error }, { status: check.status });
+    }
 
     const body = await request.json();
     const {
@@ -86,10 +102,10 @@ export async function PUT(
     return NextResponse.json({ course });
   } catch (error) {
     console.error("PUT /api/courses/[id] error:", error);
-    return NextResponse.json(
-      { error: "Erro ao atualizar curso" },
-      { status: 500 }
-    );
+    const msg = error instanceof Error ? error.message : "";
+    const status =
+      msg === "Unauthorized" ? 401 : msg === "Forbidden" ? 403 : 500;
+    return NextResponse.json({ error: msg || "Erro" }, { status });
   }
 }
 
@@ -98,16 +114,19 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    await requireAdmin();
+    const check = await assertCanEditCourse(params.id);
+    if ("error" in check) {
+      return NextResponse.json({ error: check.error }, { status: check.status });
+    }
 
     await prisma.course.delete({ where: { id: params.id } });
 
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("DELETE /api/courses/[id] error:", error);
-    return NextResponse.json(
-      { error: "Erro ao excluir curso" },
-      { status: 500 }
-    );
+    const msg = error instanceof Error ? error.message : "";
+    const status =
+      msg === "Unauthorized" ? 401 : msg === "Forbidden" ? 403 : 500;
+    return NextResponse.json({ error: msg || "Erro" }, { status });
   }
 }

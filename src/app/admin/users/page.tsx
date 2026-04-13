@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Avatar } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
 
 interface AdminUserEnrollment {
   id: string;
@@ -10,12 +11,14 @@ interface AdminUserEnrollment {
   course: { id: string; title: string; slug: string };
 }
 
+type Role = "STUDENT" | "PRODUCER" | "ADMIN";
+
 interface AdminUser {
   id: string;
   name: string;
   email: string;
   avatarUrl: string | null;
-  role: "STUDENT" | "ADMIN";
+  role: Role;
   points: number;
   level: number;
   createdAt: string;
@@ -31,6 +34,7 @@ interface CourseOption {
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [courses, setCourses] = useState<CourseOption[]>([]);
+  const [viewerRole, setViewerRole] = useState<Role | null>(null);
   const [query, setQuery] = useState("");
   const [debounced, setDebounced] = useState("");
   const [loading, setLoading] = useState(true);
@@ -57,6 +61,7 @@ export default function AdminUsersPage() {
         if (!cancelled) {
           setUsers(d.users || []);
           setCourses(d.courses || []);
+          setViewerRole(d.viewerRole || null);
         }
       })
       .finally(() => {
@@ -81,7 +86,7 @@ export default function AdminUsersPage() {
     return map;
   }, [users, courses]);
 
-  async function changeRole(userId: string, role: "STUDENT" | "ADMIN") {
+  async function changeRole(userId: string, role: Role) {
     const res = await fetch(`/api/admin/users/${userId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -155,7 +160,9 @@ export default function AdminUsersPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Usuários</h1>
+      <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+        {viewerRole === "PRODUCER" ? "Meus Alunos" : "Usuários"}
+      </h1>
 
       <div className="relative mb-6">
         <svg
@@ -217,16 +224,36 @@ export default function AdminUsersPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2 flex-wrap">
-                    <select
-                      value={u.role}
-                      onChange={(e) =>
-                        changeRole(u.id, e.target.value as "STUDENT" | "ADMIN")
-                      }
-                      className="bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg px-2.5 py-1.5 text-xs text-gray-900 dark:text-white focus:outline-none focus:border-blue-500"
-                    >
-                      <option value="STUDENT">Aluno</option>
-                      <option value="ADMIN">Admin</option>
-                    </select>
+                    {viewerRole === "ADMIN" ? (
+                      <select
+                        value={u.role}
+                        onChange={(e) =>
+                          changeRole(u.id, e.target.value as Role)
+                        }
+                        className="bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg px-2.5 py-1.5 text-xs text-gray-900 dark:text-white focus:outline-none focus:border-blue-500"
+                      >
+                        <option value="STUDENT">Aluno</option>
+                        <option value="PRODUCER">Produtor</option>
+                        <option value="ADMIN">Admin</option>
+                      </select>
+                    ) : (
+                      <span
+                        className={cn(
+                          "text-[11px] font-medium px-2 py-0.5 rounded-full border",
+                          u.role === "ADMIN"
+                            ? "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/30"
+                            : u.role === "PRODUCER"
+                            ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/30"
+                            : "bg-gray-500/10 text-gray-600 dark:text-gray-400 border-gray-400/30"
+                        )}
+                      >
+                        {u.role === "ADMIN"
+                          ? "Admin"
+                          : u.role === "PRODUCER"
+                          ? "Produtor"
+                          : "Aluno"}
+                      </span>
+                    )}
                     <button
                       type="button"
                       onClick={() => setExpanded(isOpen ? null : u.id)}
