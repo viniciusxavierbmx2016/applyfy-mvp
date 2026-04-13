@@ -47,8 +47,9 @@ export function WorkspaceShell({
 
   const displayName = ws?.name || "Workspace";
   const vitrineHref = `/w/${slug}`;
+  const profileHref = `/w/${slug}/profile`;
   const isVitrine = pathname === vitrineHref || pathname === `${vitrineHref}/`;
-  const isProfile = pathname?.startsWith("/profile");
+  const isProfile = pathname?.startsWith(profileHref);
 
   const navLink = (href: string, label: string, icon: React.ReactNode, active: boolean) => (
     <Link
@@ -103,9 +104,24 @@ export function WorkspaceShell({
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.4-1.4A2 2 0 0118 14.2V11a6 6 0 10-12 0v3.2c0 .53-.21 1.04-.59 1.41L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
               </svg>
             </button>
-            <div className="hidden sm:block text-sm text-gray-700 dark:text-gray-300 truncate max-w-[140px]">
-              {user?.name?.split(" ")[0] || ""}
-            </div>
+            <Link
+              href={profileHref}
+              className="hidden sm:flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white max-w-[180px]"
+            >
+              {user?.avatarUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={user.avatarUrl}
+                  alt={user.name || ""}
+                  className="w-7 h-7 rounded-full object-cover flex-shrink-0"
+                />
+              ) : (
+                <span className="w-7 h-7 rounded-full bg-gray-200 dark:bg-gray-800 flex items-center justify-center text-xs font-semibold text-gray-700 dark:text-gray-200 flex-shrink-0">
+                  {(user?.name || "?").charAt(0).toUpperCase()}
+                </span>
+              )}
+              <span className="truncate">{user?.name?.split(" ")[0] || ""}</span>
+            </Link>
             <button
               onClick={handleLogout}
               className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white px-2 sm:px-3 py-1.5 rounded-lg"
@@ -132,7 +148,7 @@ export function WorkspaceShell({
               !!isVitrine
             )}
             {navLink(
-              "/profile",
+              profileHref,
               "Meu Perfil",
               <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
