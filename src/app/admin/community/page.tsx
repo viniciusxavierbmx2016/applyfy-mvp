@@ -93,13 +93,13 @@ export default function AdminCommunityPage() {
   return (
     <div>
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
-        <h1 className="text-2xl font-bold text-white">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
           Moderação da Comunidade
         </h1>
         <select
           value={courseFilter}
           onChange={(e) => setCourseFilter(e.target.value)}
-          className="bg-gray-900 border border-gray-800 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500"
+          className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:border-blue-500"
         >
           <option value="">Todos os cursos</option>
           {courses.map((c) => (
@@ -115,7 +115,7 @@ export default function AdminCommunityPage() {
           <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
         </div>
       ) : posts.length === 0 ? (
-        <div className="bg-gray-900 border border-gray-800 rounded-xl p-8 text-center">
+        <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-8 text-center">
           <p className="text-gray-500 text-sm">Nenhum post encontrado.</p>
         </div>
       ) : (
@@ -125,7 +125,7 @@ export default function AdminCommunityPage() {
             return (
               <div
                 key={post.id}
-                className="bg-gray-900 border border-gray-800 rounded-xl p-4"
+                className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4"
               >
                 <div className="flex items-start gap-3 mb-2">
                   <Avatar
@@ -135,7 +135,7 @@ export default function AdminCommunityPage() {
                   />
                   <div className="flex-1 min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="text-white font-medium text-sm">
+                      <span className="text-gray-900 dark:text-white font-medium text-sm">
                         {post.user.name}
                       </span>
                       {post.user.role === "ADMIN" && (
@@ -157,7 +157,7 @@ export default function AdminCommunityPage() {
                     <p className="text-xs text-gray-500">
                       <Link
                         href={`/course/${post.course.slug}/community`}
-                        className="hover:text-white"
+                        className="hover:text-gray-900 dark:hover:text-white"
                       >
                         {post.course.title}
                       </Link>
@@ -170,7 +170,7 @@ export default function AdminCommunityPage() {
                       type="button"
                       onClick={() => togglePin(post.id)}
                       title={post.pinned ? "Desafixar" : "Fixar"}
-                      className="p-1.5 text-gray-400 hover:text-amber-400 hover:bg-gray-800 rounded"
+                      className="p-1.5 text-gray-600 dark:text-gray-400 hover:text-amber-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"
                     >
                       📌
                     </button>
@@ -178,7 +178,7 @@ export default function AdminCommunityPage() {
                       type="button"
                       onClick={() => deletePost(post.id)}
                       title="Excluir"
-                      className="p-1.5 text-gray-400 hover:text-red-400 hover:bg-gray-800 rounded"
+                      className="p-1.5 text-gray-600 dark:text-gray-400 hover:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"
                     >
                       <svg
                         className="w-4 h-4"
@@ -197,7 +197,7 @@ export default function AdminCommunityPage() {
                   </div>
                 </div>
                 <div
-                  className="post-content text-sm text-gray-200 break-words"
+                  className="post-content text-sm text-gray-800 dark:text-gray-200 break-words"
                   dangerouslySetInnerHTML={{ __html: sanitizeHtml(post.content) }}
                 />
                 <div className="flex items-center gap-4 mt-3 text-xs text-gray-500">

@@ -89,7 +89,7 @@ export function NotificationsBell() {
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-label="Notificações"
-        className="relative p-2 text-gray-400 hover:text-white transition"
+        className="relative p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition"
       >
         <svg
           className="w-5 h-5"
@@ -112,9 +112,9 @@ export function NotificationsBell() {
       </button>
 
       {open && (
-        <div className="fixed sm:absolute inset-x-2 sm:inset-x-auto sm:right-0 top-16 sm:top-auto sm:mt-2 sm:w-96 max-h-[80vh] bg-gray-900 border border-gray-800 rounded-xl shadow-2xl overflow-hidden z-50 flex flex-col">
-          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-800">
-            <h3 className="text-sm font-semibold text-white">Notificações</h3>
+        <div className="fixed sm:absolute inset-x-2 sm:inset-x-auto sm:right-0 top-16 sm:top-auto sm:mt-2 sm:w-96 max-h-[80vh] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl shadow-2xl overflow-hidden z-50 flex flex-col">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-800">
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Notificações</h3>
             {unread > 0 && (
               <button
                 type="button"
@@ -146,13 +146,13 @@ export function NotificationsBell() {
                         n.read ? "" : "bg-blue-500/5"
                       }`}
                     >
-                      <span className="mt-0.5 w-8 h-8 shrink-0 rounded-full bg-gray-800 flex items-center justify-center text-sm">
+                      <span className="mt-0.5 w-8 h-8 shrink-0 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-sm">
                         {ICON[n.type]}
                       </span>
                       <div className="flex-1 min-w-0">
                         <p
                           className={`text-sm ${
-                            n.read ? "text-gray-400" : "text-white font-medium"
+                            n.read ? "text-gray-600 dark:text-gray-400" : "text-gray-900 dark:text-white font-medium"
                           }`}
                         >
                           {n.message}

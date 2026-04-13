@@ -95,7 +95,7 @@ export function AvatarUploader() {
         )}
         <span className="absolute inset-0 rounded-full bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition">
           <svg
-            className="w-5 h-5 text-white"
+            className="w-5 h-5 text-gray-900 dark:text-white"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -133,7 +133,7 @@ export function AvatarUploader() {
               type="button"
               onClick={cancel}
               disabled={saving}
-              className="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-gray-200 text-sm font-medium rounded-lg transition"
+              className="px-4 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 text-sm font-medium rounded-lg transition"
             >
               Cancelar
             </button>

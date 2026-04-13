@@ -217,7 +217,7 @@ export function VideoPlayer({ video, onEnded }: Props) {
 
   if (!video.videoId) {
     return (
-      <div className="aspect-video w-full bg-gray-900 rounded-xl flex items-center justify-center border border-gray-800">
+      <div className="aspect-video w-full bg-white dark:bg-gray-900 rounded-xl flex items-center justify-center border border-gray-200 dark:border-gray-800">
         <p className="text-gray-500 text-sm">Vídeo indisponível</p>
       </div>
     );
@@ -249,14 +249,14 @@ export function VideoPlayer({ video, onEnded }: Props) {
             {speed}x
           </button>
           {menuOpen && (
-            <div className="absolute right-0 mt-1 bg-gray-900 border border-gray-800 rounded-md shadow-lg overflow-hidden">
+            <div className="absolute right-0 mt-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-md shadow-lg overflow-hidden">
               {SPEEDS.map((s) => (
                 <button
                   key={s}
                   type="button"
                   onClick={() => changeSpeed(s)}
-                  className={`block w-full text-left px-3 py-1.5 text-xs hover:bg-gray-800 ${
-                    s === speed ? "text-blue-400" : "text-white"
+                  className={`block w-full text-left px-3 py-1.5 text-xs hover:bg-gray-100 dark:hover:bg-gray-800 ${
+                    s === speed ? "text-blue-400" : "text-gray-900 dark:text-white"
                   }`}
                 >
                   {s}x

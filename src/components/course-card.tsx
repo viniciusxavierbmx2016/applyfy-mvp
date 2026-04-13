@@ -36,13 +36,13 @@ export function CourseCard({
     ratingCount > 0;
   const useCheckout = locked && !!checkoutUrl;
   const wrapperClassName = cn(
-    "group block bg-gray-900 border border-gray-800 rounded-xl overflow-hidden hover:border-gray-700 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200",
+    "group block bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden hover:border-gray-400 dark:hover:border-gray-700 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200",
     className
   );
   const inner = (
     <>
       {/* Thumbnail 16:9 */}
-      <div className="relative aspect-video bg-gray-800 overflow-hidden">
+      <div className="relative aspect-video bg-gray-100 dark:bg-gray-800 overflow-hidden">
         {thumbnail ? (
           <Image
             src={thumbnail}
@@ -92,8 +92,8 @@ export function CourseCard({
 
       {/* Content */}
       <div className="p-4">
-        <h3 className="font-semibold text-white line-clamp-1 mb-1">{title}</h3>
-        <p className="text-sm text-gray-400 line-clamp-2 mb-2 min-h-[2.5rem]">
+        <h3 className="font-semibold text-gray-900 dark:text-white line-clamp-1 mb-1">{title}</h3>
+        <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 mb-2 min-h-[2.5rem]">
           {description}
         </p>
         {showRating && (

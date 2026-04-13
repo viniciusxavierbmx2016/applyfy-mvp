@@ -102,22 +102,22 @@ export default function HomePage() {
 
   return (
     <div>
-      <h1 className="text-2xl lg:text-3xl font-bold text-white mb-2">
+      <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white mb-2">
         Olá, {user?.name?.split(" ")[0] || "aluno"} 👋
       </h1>
-      <p className="text-gray-400 mb-8">Bem-vindo à sua área de membros</p>
+      <p className="text-gray-600 dark:text-gray-400 mb-8">Bem-vindo à sua área de membros</p>
 
       {/* Continue assistindo */}
       {continueWatching && (
         <section className="mb-10">
-          <h2 className="text-lg font-semibold text-white mb-4">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
             Continue assistindo
           </h2>
           <Link
             href={`/course/${continueWatching.courseSlug}/lesson/${continueWatching.lessonId}`}
-            className="group flex flex-col sm:flex-row gap-4 bg-gray-900 border border-gray-800 hover:border-gray-700 rounded-xl overflow-hidden transition"
+            className="group flex flex-col sm:flex-row gap-4 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 hover:border-gray-400 dark:hover:border-gray-700 rounded-xl overflow-hidden transition"
           >
-            <div className="relative aspect-video sm:w-64 sm:flex-shrink-0 bg-gray-800 overflow-hidden">
+            <div className="relative aspect-video sm:w-64 sm:flex-shrink-0 bg-gray-100 dark:bg-gray-800 overflow-hidden">
               {continueWatching.thumbnail ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
@@ -144,17 +144,17 @@ export default function HomePage() {
               <p className="text-sm text-blue-400 font-medium mb-1">
                 {continueWatching.courseTitle}
               </p>
-              <h3 className="text-lg font-semibold text-white mb-3">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
                 {continueWatching.lessonTitle}
               </h3>
               <div className="flex items-center gap-3">
-                <div className="flex-1 h-1.5 bg-gray-800 rounded-full overflow-hidden">
+                <div className="flex-1 h-1.5 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
                   <div
                     className="h-full bg-blue-500 rounded-full"
                     style={{ width: `${continueWatching.progress}%` }}
                   />
                 </div>
-                <span className="text-xs text-gray-400">
+                <span className="text-xs text-gray-600 dark:text-gray-400">
                   {Math.round(continueWatching.progress)}%
                 </span>
               </div>
@@ -165,9 +165,9 @@ export default function HomePage() {
 
       {/* Meus cursos */}
       <section className="mb-10">
-        <h2 className="text-lg font-semibold text-white mb-4">Meus cursos</h2>
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Meus cursos</h2>
         {enrolled.length === 0 ? (
-          <div className="bg-gray-900 border border-gray-800 rounded-xl p-8 text-center">
+          <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-8 text-center">
             <p className="text-gray-500">
               Você ainda não está matriculado em nenhum curso
             </p>
@@ -193,7 +193,7 @@ export default function HomePage() {
       {/* Outros cursos */}
       {store.length > 0 && (
         <section>
-          <h2 className="text-lg font-semibold text-white mb-4">Outros cursos</h2>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Outros cursos</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {store.map((course) => (
               <CourseCard

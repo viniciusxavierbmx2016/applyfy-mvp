@@ -58,8 +58,8 @@ export default function AdminCoursesPage() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-white">Cursos</h1>
-          <p className="text-sm text-gray-400 mt-1">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Cursos</h1>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
             Gerencie seus cursos, módulos e aulas
           </p>
         </div>
@@ -79,7 +79,7 @@ export default function AdminCoursesPage() {
           <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
         </div>
       ) : courses.length === 0 ? (
-        <div className="bg-gray-900 border border-gray-800 rounded-xl p-12 text-center">
+        <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-12 text-center">
           <p className="text-gray-500 mb-4">Nenhum curso cadastrado ainda</p>
           <Link
             href="/admin/courses/new"
@@ -93,9 +93,9 @@ export default function AdminCoursesPage() {
           {courses.map((course) => (
             <div
               key={course.id}
-              className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden hover:border-gray-700 transition"
+              className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden hover:border-gray-400 dark:hover:border-gray-700 transition"
             >
-              <div className="relative aspect-video bg-gray-800">
+              <div className="relative aspect-video bg-gray-100 dark:bg-gray-800">
                 {course.thumbnail ? (
                   <Image
                     src={course.thumbnail}
@@ -123,11 +123,11 @@ export default function AdminCoursesPage() {
               </div>
 
               <div className="p-4">
-                <h3 className="font-semibold text-white line-clamp-1">
+                <h3 className="font-semibold text-gray-900 dark:text-white line-clamp-1">
                   {course.title}
                 </h3>
                 <p className="text-xs text-gray-500 mt-1">/{course.slug}</p>
-                <p className="text-sm text-gray-400 line-clamp-2 mt-2">
+                <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 mt-2">
                   {course.description}
                 </p>
 
@@ -140,7 +140,7 @@ export default function AdminCoursesPage() {
                 <div className="flex gap-2 mt-4">
                   <button
                     onClick={() => router.push(`/admin/courses/${course.id}/edit`)}
-                    className="flex-1 px-3 py-2 bg-gray-800 hover:bg-gray-700 text-gray-200 text-sm font-medium rounded-lg transition"
+                    className="flex-1 px-3 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 text-sm font-medium rounded-lg transition"
                   >
                     Editar
                   </button>

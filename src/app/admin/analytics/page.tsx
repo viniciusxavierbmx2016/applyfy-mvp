@@ -62,7 +62,7 @@ export default function AdminAnalyticsPage() {
   if (!data) {
     return (
       <div className="text-center py-16">
-        <p className="text-gray-400">Erro ao carregar analytics</p>
+        <p className="text-gray-600 dark:text-gray-400">Erro ao carregar analytics</p>
       </div>
     );
   }
@@ -70,8 +70,8 @@ export default function AdminAnalyticsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-white">Analytics</h1>
-        <p className="text-sm text-gray-400">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Analytics</h1>
+        <p className="text-sm text-gray-600 dark:text-gray-400">
           Visão geral do desempenho da plataforma.
         </p>
       </div>
@@ -252,7 +252,7 @@ function KpiCard({
   accent: string;
 }) {
   return (
-    <div className="bg-gray-900 border border-gray-800 rounded-xl p-4 sm:p-5">
+    <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4 sm:p-5">
       <p className="text-xs font-medium uppercase tracking-wider text-gray-500">
         {label}
       </p>
@@ -269,8 +269,8 @@ function ChartCard({
   children: React.ReactNode;
 }) {
   return (
-    <section className="bg-gray-900 border border-gray-800 rounded-xl p-4 sm:p-6">
-      <h2 className="text-sm font-semibold text-white mb-4">{title}</h2>
+    <section className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4 sm:p-6">
+      <h2 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">{title}</h2>
       {children}
     </section>
   );

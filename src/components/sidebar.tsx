@@ -97,18 +97,18 @@ export function Sidebar({ open, onClose }: SidebarProps) {
       {/* Sidebar */}
       <aside
         className={cn(
-          "fixed top-0 left-0 z-50 h-full w-64 bg-gray-900 border-r border-gray-800 transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:z-auto",
+          "fixed top-0 left-0 z-50 h-full w-64 bg-gray-100 dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:z-auto",
           open ? "translate-x-0" : "-translate-x-full"
         )}
       >
         {/* Logo */}
-        <div className="flex items-center justify-between h-16 px-6 border-b border-gray-800">
-          <Link href="/" className="text-xl font-bold text-white">
+        <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200 dark:border-gray-800">
+          <Link href="/" className="text-xl font-bold text-gray-900 dark:text-white">
             Applyfy
           </Link>
           <button
             onClick={onClose}
-            className="lg:hidden text-gray-400 hover:text-white"
+            className="lg:hidden text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
           >
             <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -130,7 +130,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
                 "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
                 pathname === link.href
                   ? "bg-blue-600/10 text-blue-400"
-                  : "text-gray-400 hover:text-white hover:bg-gray-800"
+                  : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-gray-800"
               )}
             >
               {link.icon}
@@ -154,7 +154,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
                     "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
                     pathname === link.href || (link.href !== "/admin" && pathname.startsWith(link.href))
                       ? "bg-blue-600/10 text-blue-400"
-                      : "text-gray-400 hover:text-white hover:bg-gray-800"
+                      : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-gray-800"
                   )}
                 >
                   {link.icon}

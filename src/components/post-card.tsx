@@ -131,12 +131,12 @@ export function PostCard({
   const typeMeta = typeLabels[post.type];
 
   return (
-    <div className="bg-gray-900 border border-gray-800 rounded-xl p-4 sm:p-5">
+    <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4 sm:p-5">
       <div className="flex items-start gap-3 mb-3">
         <Avatar src={post.user.avatarUrl} name={post.user.name} size="md" />
         <div className="flex-1 min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-white font-medium text-sm">
+            <span className="text-gray-900 dark:text-white font-medium text-sm">
               {post.user.name}
             </span>
             {post.user.role === "ADMIN" && (
@@ -165,7 +165,7 @@ export function PostCard({
               type="button"
               onClick={() => onTogglePin(post.id)}
               title={post.pinned ? "Desafixar" : "Fixar"}
-              className="p-1.5 text-gray-400 hover:text-amber-400 hover:bg-gray-800 rounded"
+              className="p-1.5 text-gray-600 dark:text-gray-400 hover:text-amber-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"
             >
               📌
             </button>
@@ -178,7 +178,7 @@ export function PostCard({
               if (confirm("Excluir este post?")) onDelete(post.id);
             }}
             title="Excluir"
-            className="p-1.5 text-gray-400 hover:text-red-400 hover:bg-gray-800 rounded flex-shrink-0"
+            className="p-1.5 text-gray-600 dark:text-gray-400 hover:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded flex-shrink-0"
           >
             <svg
               className="w-4 h-4"
@@ -198,11 +198,11 @@ export function PostCard({
       </div>
 
       <div
-        className="post-content text-gray-200 text-sm break-words mb-3"
+        className="post-content text-gray-800 dark:text-gray-200 text-sm break-words mb-3"
         dangerouslySetInnerHTML={{ __html: sanitizeHtml(post.content) }}
       />
 
-      <div className="flex items-center gap-4 border-t border-gray-800 pt-3">
+      <div className="flex items-center gap-4 border-t border-gray-200 dark:border-gray-800 pt-3">
         <button
           type="button"
           onClick={toggleLike}
@@ -210,7 +210,7 @@ export function PostCard({
           className={`flex items-center gap-1.5 text-sm transition ${
             post.liked
               ? "text-red-400"
-              : "text-gray-400 hover:text-red-400"
+              : "text-gray-600 dark:text-gray-400 hover:text-red-400"
           } disabled:opacity-50`}
         >
           <svg
@@ -231,7 +231,7 @@ export function PostCard({
         <button
           type="button"
           onClick={toggleComments}
-          className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-white transition"
+          className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition"
         >
           <svg
             className="w-4 h-4"
@@ -267,7 +267,7 @@ export function PostCard({
                       />
                       <div className="flex-1 bg-gray-800/60 rounded-lg px-3 py-2">
                         <div className="flex items-center gap-2">
-                          <span className="text-xs font-medium text-white">
+                          <span className="text-xs font-medium text-gray-900 dark:text-white">
                             {c.user.name}
                           </span>
                           {c.user.role === "ADMIN" && (
@@ -279,7 +279,7 @@ export function PostCard({
                             {formatRelativeTime(new Date(c.createdAt))}
                           </span>
                         </div>
-                        <p className="text-sm text-gray-200 whitespace-pre-wrap break-words mt-0.5">
+                        <p className="text-sm text-gray-800 dark:text-gray-200 whitespace-pre-wrap break-words mt-0.5">
                           {c.content}
                         </p>
                       </div>
@@ -296,7 +296,7 @@ export function PostCard({
                   value={newComment}
                   onChange={(e) => setNewComment(e.target.value)}
                   placeholder="Escreva um comentário..."
-                  className="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder:text-gray-500 focus:outline-none focus:border-blue-500"
+                  className="flex-1 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:border-blue-500"
                 />
                 <button
                   type="submit"

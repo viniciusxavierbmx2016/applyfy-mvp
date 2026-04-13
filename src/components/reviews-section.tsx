@@ -108,10 +108,10 @@ export function ReviewsSection({
     <section className="mt-10">
       <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2 mb-4">
         <div>
-          <h2 className="text-lg font-semibold text-white">Avaliações</h2>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Avaliações</h2>
           <div className="flex items-center gap-2 mt-1">
             <StarRating value={average} size="md" />
-            <span className="text-sm text-gray-300 font-medium">
+            <span className="text-sm text-gray-700 dark:text-gray-300 font-medium">
               {average > 0 ? average.toFixed(1) : "—"}
             </span>
             <span className="text-sm text-gray-500">
@@ -124,9 +124,9 @@ export function ReviewsSection({
       {canReview && (
         <form
           onSubmit={submit}
-          className="bg-gray-900 border border-gray-800 rounded-xl p-4 sm:p-5 mb-5"
+          className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4 sm:p-5 mb-5"
         >
-          <p className="text-sm text-gray-300 mb-2 font-medium">
+          <p className="text-sm text-gray-700 dark:text-gray-300 mb-2 font-medium">
             {myReview ? "Atualize sua avaliação" : "Avalie este curso"}
           </p>
           <StarRating value={rating} size="lg" onChange={setRating} />
@@ -136,7 +136,7 @@ export function ReviewsSection({
             placeholder="Conte sua experiência (opcional)"
             rows={3}
             maxLength={2000}
-            className="w-full mt-3 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder:text-gray-500 focus:outline-none focus:border-blue-500 resize-none"
+            className="w-full mt-3 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:border-blue-500 resize-none"
           />
           {formError && (
             <p className="mt-2 text-xs text-red-400">{formError}</p>
@@ -163,7 +163,7 @@ export function ReviewsSection({
       {loading ? (
         <p className="text-sm text-gray-500">Carregando avaliações...</p>
       ) : reviews.length === 0 ? (
-        <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 text-center">
+        <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-6 text-center">
           <p className="text-sm text-gray-500">
             Ainda não há avaliações. {canReview && "Seja o primeiro!"}
           </p>
@@ -173,13 +173,13 @@ export function ReviewsSection({
           {reviews.map((r) => (
             <div
               key={r.id}
-              className="bg-gray-900 border border-gray-800 rounded-xl p-4"
+              className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4"
             >
               <div className="flex items-start gap-3">
                 <Avatar src={r.user.avatarUrl} name={r.user.name} size="md" />
                 <div className="flex-1 min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-white font-medium text-sm">
+                    <span className="text-gray-900 dark:text-white font-medium text-sm">
                       {r.user.name}
                     </span>
                     <StarRating value={r.rating} size="sm" />
@@ -188,7 +188,7 @@ export function ReviewsSection({
                     </span>
                   </div>
                   {r.comment && (
-                    <p className="text-sm text-gray-300 mt-1.5 whitespace-pre-wrap break-words">
+                    <p className="text-sm text-gray-700 dark:text-gray-300 mt-1.5 whitespace-pre-wrap break-words">
                       {r.comment}
                     </p>
                   )}

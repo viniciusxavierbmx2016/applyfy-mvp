@@ -31,7 +31,7 @@ export function AutoplayCountdown({
   return (
     <div className="absolute inset-0 bg-black/80 flex items-center justify-center backdrop-blur-sm z-10">
       <div className="text-center px-6 max-w-md">
-        <p className="text-gray-400 text-sm mb-2">Próxima aula em</p>
+        <p className="text-gray-600 dark:text-gray-400 text-sm mb-2">Próxima aula em</p>
         <div className="relative w-24 h-24 mx-auto mb-4">
           <svg className="w-24 h-24 -rotate-90" viewBox="0 0 100 100">
             <circle
@@ -55,18 +55,18 @@ export function AutoplayCountdown({
               style={{ transition: "stroke-dashoffset 1s linear" }}
             />
           </svg>
-          <div className="absolute inset-0 flex items-center justify-center text-3xl font-bold text-white">
+          <div className="absolute inset-0 flex items-center justify-center text-3xl font-bold text-gray-900 dark:text-white">
             {remaining}
           </div>
         </div>
-        <p className="text-white font-semibold mb-4 line-clamp-2">
+        <p className="text-gray-900 dark:text-white font-semibold mb-4 line-clamp-2">
           {nextLessonTitle}
         </p>
         <div className="flex gap-2 justify-center">
           <button
             type="button"
             onClick={onCancel}
-            className="px-4 py-2 text-sm bg-gray-800 hover:bg-gray-700 text-white rounded-lg"
+            className="px-4 py-2 text-sm bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-900 dark:text-white rounded-lg"
           >
             Cancelar
           </button>

@@ -95,7 +95,7 @@ export default function CourseDetailPage() {
   if (!course) {
     return (
       <div className="text-center py-16">
-        <p className="text-gray-400">Curso não encontrado</p>
+        <p className="text-gray-600 dark:text-gray-400">Curso não encontrado</p>
       </div>
     );
   }
@@ -106,7 +106,7 @@ export default function CourseDetailPage() {
       <div className="max-w-5xl mx-auto">
         <Link
           href="/"
-          className="inline-flex items-center gap-1 text-sm text-gray-400 hover:text-white mb-6"
+          className="inline-flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white mb-6"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -115,7 +115,7 @@ export default function CourseDetailPage() {
         </Link>
 
         {/* Hero */}
-        <div className="relative aspect-video max-h-[400px] bg-gray-900 rounded-2xl overflow-hidden mb-8 border border-gray-800">
+        <div className="relative aspect-video max-h-[400px] bg-white dark:bg-gray-900 rounded-2xl overflow-hidden mb-8 border border-gray-200 dark:border-gray-800">
           {course.thumbnail ? (
             <Image
               src={course.thumbnail}
@@ -140,16 +140,16 @@ export default function CourseDetailPage() {
               </svg>
               Acesso bloqueado
             </div>
-            <h1 className="text-3xl lg:text-4xl font-bold text-white">
+            <h1 className="text-3xl lg:text-4xl font-bold text-gray-900 dark:text-white">
               {course.title}
             </h1>
             {course.ratingCount > 0 && (
               <div className="flex items-center gap-2 mt-2">
                 <StarRating value={course.ratingAverage} size="sm" />
-                <span className="text-sm text-white font-medium">
+                <span className="text-sm text-gray-900 dark:text-white font-medium">
                   {course.ratingAverage.toFixed(1)}
                 </span>
-                <span className="text-xs text-gray-300">
+                <span className="text-xs text-gray-700 dark:text-gray-300">
                   ({course.ratingCount} avaliaç{course.ratingCount === 1 ? "ão" : "ões"})
                 </span>
               </div>
@@ -159,19 +159,19 @@ export default function CourseDetailPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2">
-            <h2 className="text-xl font-semibold text-white mb-3">
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">
               Sobre o curso
             </h2>
-            <p className="text-gray-300 whitespace-pre-line leading-relaxed">
+            <p className="text-gray-700 dark:text-gray-300 whitespace-pre-line leading-relaxed">
               {course.description}
             </p>
 
             {course.modules.length > 0 && (
               <div className="mt-8">
-                <h2 className="text-xl font-semibold text-white mb-3">
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">
                   Conteúdo do curso
                 </h2>
-                <p className="text-sm text-gray-400 mb-4">
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
                   {course.modules.length} módulo{course.modules.length !== 1 && "s"} •{" "}
                   {course.modules.reduce((sum, m) => sum + m.lessons.length, 0)}{" "}
                   aulas
@@ -180,13 +180,13 @@ export default function CourseDetailPage() {
                   {course.modules.map((m, i) => (
                     <div
                       key={m.id}
-                      className="bg-gray-900 border border-gray-800 rounded-lg p-4 flex items-center gap-3 opacity-70"
+                      className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-4 flex items-center gap-3 opacity-70"
                     >
                       <span className="text-xs text-gray-500 w-6">
                         {String(i + 1).padStart(2, "0")}
                       </span>
                       <div className="flex-1">
-                        <p className="text-white font-medium text-sm">
+                        <p className="text-gray-900 dark:text-white font-medium text-sm">
                           {m.title}
                         </p>
                         <p className="text-xs text-gray-500">
@@ -214,11 +214,11 @@ export default function CourseDetailPage() {
 
           {/* CTA de compra */}
           <div className="lg:sticky lg:top-20 h-fit">
-            <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
-              <h3 className="text-lg font-semibold text-white mb-2">
+            <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-6">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
                 Libere o acesso
               </h3>
-              <p className="text-sm text-gray-400 mb-4">
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
                 Adquira o curso para assistir às aulas e participar da comunidade.
               </p>
 
@@ -232,12 +232,12 @@ export default function CourseDetailPage() {
                   Comprar agora
                 </a>
               ) : (
-                <div className="text-center py-3 px-4 bg-gray-800 text-gray-400 text-sm rounded-lg">
+                <div className="text-center py-3 px-4 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 text-sm rounded-lg">
                   Em breve
                 </div>
               )}
 
-              <ul className="mt-5 space-y-2.5 text-sm text-gray-300">
+              <ul className="mt-5 space-y-2.5 text-sm text-gray-700 dark:text-gray-300">
                 <li className="flex items-start gap-2">
                   <svg className="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -275,7 +275,7 @@ export default function CourseDetailPage() {
     <div className="max-w-5xl mx-auto">
       <Link
         href="/"
-        className="inline-flex items-center gap-1 text-sm text-gray-400 hover:text-white mb-6"
+        className="inline-flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white mb-6"
       >
         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -287,7 +287,7 @@ export default function CourseDetailPage() {
       <div className="flex flex-col md:flex-row gap-6 mb-8">
         {course.thumbnail && (
           <div className="md:w-80 flex-shrink-0">
-            <div className="relative aspect-video bg-gray-800 rounded-xl overflow-hidden border border-gray-800">
+            <div className="relative aspect-video bg-gray-100 dark:bg-gray-800 rounded-xl overflow-hidden border border-gray-200 dark:border-gray-800">
               <Image
                 src={course.thumbnail}
                 alt={course.title}
@@ -299,10 +299,10 @@ export default function CourseDetailPage() {
           </div>
         )}
         <div className="flex-1">
-          <h1 className="text-2xl lg:text-3xl font-bold text-white mb-2">
+          <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white mb-2">
             {course.title}
           </h1>
-          <p className="text-gray-400 mb-4 line-clamp-3">{course.description}</p>
+          <p className="text-gray-600 dark:text-gray-400 mb-4 line-clamp-3">{course.description}</p>
 
           <div className="mb-4">
             <ProgressBar value={progress} showLabel />
@@ -322,7 +322,7 @@ export default function CourseDetailPage() {
             )}
             <Link
               href={`/course/${course.slug}/community`}
-              className="inline-flex items-center gap-2 px-4 py-2.5 bg-gray-800 hover:bg-gray-700 text-white text-sm font-medium rounded-lg transition"
+              className="inline-flex items-center gap-2 px-4 py-2.5 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-900 dark:text-white text-sm font-medium rounded-lg transition"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" />
@@ -353,10 +353,10 @@ export default function CourseDetailPage() {
               </svg>
             </div>
             <div className="flex-1">
-              <h3 className="text-lg font-semibold text-white">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                 Parabéns! Você concluiu este curso
               </h3>
-              <p className="text-sm text-gray-300">
+              <p className="text-sm text-gray-700 dark:text-gray-300">
                 Baixe seu certificado oficial em PDF.
               </p>
             </div>
@@ -385,11 +385,11 @@ export default function CourseDetailPage() {
 
       {/* Conteúdo em accordion */}
       <div>
-        <h2 className="text-lg font-semibold text-white mb-4">
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
           Conteúdo do curso
         </h2>
         {course.modules.length === 0 ? (
-          <div className="bg-gray-900 border border-gray-800 rounded-xl p-8 text-center">
+          <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-8 text-center">
             <p className="text-gray-500">Nenhum módulo disponível ainda.</p>
           </div>
         ) : (
@@ -403,7 +403,7 @@ export default function CourseDetailPage() {
               return (
                 <div
                   key={module.id}
-                  className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden"
+                  className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden"
                 >
                   <button
                     onClick={() => toggleModule(module.id)}
@@ -413,7 +413,7 @@ export default function CourseDetailPage() {
                       {String(moduleIdx + 1).padStart(2, "0")}
                     </span>
                     <div className="flex-1">
-                      <p className="text-white font-medium">{module.title}</p>
+                      <p className="text-gray-900 dark:text-white font-medium">{module.title}</p>
                       <p className="text-xs text-gray-500">
                         {completedCount}/{module.lessons.length} aulas concluídas
                       </p>
@@ -431,7 +431,7 @@ export default function CourseDetailPage() {
                   </button>
 
                   {isOpen && (
-                    <div className="border-t border-gray-800">
+                    <div className="border-t border-gray-200 dark:border-gray-800">
                       {module.lessons.length === 0 ? (
                         <p className="text-sm text-gray-500 p-4">
                           Nenhuma aula neste módulo.
@@ -452,7 +452,7 @@ export default function CourseDetailPage() {
                                     className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 ${
                                       isCompleted
                                         ? "bg-green-500/20 text-green-400"
-                                        : "bg-gray-800 text-gray-500"
+                                        : "bg-gray-100 dark:bg-gray-800 text-gray-500"
                                     }`}
                                   >
                                     {isCompleted ? (
@@ -469,8 +469,8 @@ export default function CourseDetailPage() {
                                     <p
                                       className={`text-sm font-medium truncate ${
                                         isCompleted
-                                          ? "text-gray-400"
-                                          : "text-white"
+                                          ? "text-gray-600 dark:text-gray-400"
+                                          : "text-gray-900 dark:text-white"
                                       }`}
                                     >
                                       {lesson.title}

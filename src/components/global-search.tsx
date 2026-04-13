@@ -128,11 +128,11 @@ export function GlobalSearch() {
         }}
         onFocus={() => setOpen(true)}
         placeholder="Buscar cursos, aulas, posts..."
-        className="w-full pl-10 pr-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+        className="w-full pl-10 pr-4 py-2 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
       />
 
       {showDropdown && (
-        <div className="absolute left-0 right-0 mt-2 max-h-[70vh] overflow-y-auto bg-gray-900 border border-gray-800 rounded-xl shadow-2xl z-50">
+        <div className="absolute left-0 right-0 mt-2 max-h-[70vh] overflow-y-auto bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl shadow-2xl z-50">
           {loading && total === 0 ? (
             <div className="p-6 text-center text-sm text-gray-500">
               Buscando...
@@ -227,11 +227,11 @@ function ResultItem({
         onClick={onClick}
         className="w-full flex items-start gap-3 px-4 py-2.5 text-left hover:bg-gray-800/60 transition"
       >
-        <span className="mt-0.5 w-7 h-7 shrink-0 rounded-lg bg-gray-800 text-gray-300 flex items-center justify-center">
+        <span className="mt-0.5 w-7 h-7 shrink-0 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 flex items-center justify-center">
           {icon}
         </span>
         <div className="flex-1 min-w-0">
-          <p className="text-sm text-white line-clamp-1">{title}</p>
+          <p className="text-sm text-gray-900 dark:text-white line-clamp-1">{title}</p>
           <p className="text-xs text-gray-500 line-clamp-1">{subtitle}</p>
         </div>
       </button>

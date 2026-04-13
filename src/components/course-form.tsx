@@ -102,11 +102,11 @@ export function CourseForm({ initial, mode }: CourseFormProps) {
         </div>
       )}
 
-      <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 space-y-4">
-        <h2 className="text-lg font-semibold text-white">Informações básicas</h2>
+      <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-6 space-y-4">
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Informações básicas</h2>
 
         <div>
-          <label className="block text-sm font-medium text-gray-300 mb-1">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             Título *
           </label>
           <input
@@ -114,13 +114,13 @@ export function CourseForm({ initial, mode }: CourseFormProps) {
             value={title}
             onChange={handleTitleChange}
             required
-            className="w-full px-4 py-2.5 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
             placeholder="Ex: Curso de Marketing Digital"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-300 mb-1">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             Slug (URL) *
           </label>
           <div className="flex items-center gap-2">
@@ -133,14 +133,14 @@ export function CourseForm({ initial, mode }: CourseFormProps) {
                 setSlugEdited(true);
               }}
               required
-              className="flex-1 px-4 py-2.5 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="flex-1 px-4 py-2.5 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="marketing-digital"
             />
           </div>
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-300 mb-1">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             Descrição *
           </label>
           <textarea
@@ -148,7 +148,7 @@ export function CourseForm({ initial, mode }: CourseFormProps) {
             onChange={(e) => setDescription(e.target.value)}
             required
             rows={4}
-            className="w-full px-4 py-2.5 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y"
+            className="w-full px-4 py-2.5 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y"
             placeholder="Descreva o que os alunos vão aprender..."
           />
         </div>
@@ -156,18 +156,18 @@ export function CourseForm({ initial, mode }: CourseFormProps) {
         <ThumbnailUpload value={thumbnail} onChange={setThumbnail} />
       </div>
 
-      <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 space-y-4">
-        <h2 className="text-lg font-semibold text-white">Vendas & publicação</h2>
+      <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-6 space-y-4">
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Vendas & publicação</h2>
 
         <div>
-          <label className="block text-sm font-medium text-gray-300 mb-1">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             Link de checkout (externo)
           </label>
           <input
             type="url"
             value={checkoutUrl}
             onChange={(e) => setCheckoutUrl(e.target.value)}
-            className="w-full px-4 py-2.5 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-4 py-2.5 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
             placeholder="https://pay.hotmart.com/..."
           />
           <p className="text-xs text-gray-500 mt-1">
@@ -176,14 +176,14 @@ export function CourseForm({ initial, mode }: CourseFormProps) {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-300 mb-1">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             ID externo do produto (Hotmart / Stripe)
           </label>
           <input
             type="text"
             value={externalProductId}
             onChange={(e) => setExternalProductId(e.target.value)}
-            className="w-full px-4 py-2.5 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-4 py-2.5 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
             placeholder="ex: 1234567 (Hotmart) ou prod_XXXX (Stripe)"
           />
           <p className="text-xs text-gray-500 mt-1">
@@ -199,7 +199,7 @@ export function CourseForm({ initial, mode }: CourseFormProps) {
             className="mt-0.5 h-4 w-4 accent-blue-500"
           />
           <div>
-            <p className="text-sm font-medium text-white">Publicado</p>
+            <p className="text-sm font-medium text-gray-900 dark:text-white">Publicado</p>
             <p className="text-xs text-gray-500">
               Quando desativado, o curso fica como rascunho e invisível para alunos
             </p>
@@ -214,7 +214,7 @@ export function CourseForm({ initial, mode }: CourseFormProps) {
             className="mt-0.5 h-4 w-4 accent-blue-500"
           />
           <div>
-            <p className="text-sm font-medium text-white">Mostrar na loja</p>
+            <p className="text-sm font-medium text-gray-900 dark:text-white">Mostrar na loja</p>
             <p className="text-xs text-gray-500">
               Aparece na seção &ldquo;Outros cursos&rdquo; para alunos sem acesso
             </p>
@@ -226,7 +226,7 @@ export function CourseForm({ initial, mode }: CourseFormProps) {
         <button
           type="button"
           onClick={() => router.push("/admin/courses")}
-          className="px-4 py-2.5 bg-gray-800 hover:bg-gray-700 text-gray-200 text-sm font-medium rounded-lg transition"
+          className="px-4 py-2.5 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 text-sm font-medium rounded-lg transition"
         >
           Cancelar
         </button>

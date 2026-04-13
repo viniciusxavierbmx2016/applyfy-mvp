@@ -155,7 +155,7 @@ export default function AdminUsersPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-white mb-4">Usuários</h1>
+      <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Usuários</h1>
 
       <div className="relative mb-6">
         <svg
@@ -176,7 +176,7 @@ export default function AdminUsersPage() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Buscar por nome ou email..."
-          className="w-full bg-gray-900 border border-gray-800 rounded-lg pl-9 pr-3 py-2.5 text-sm text-white placeholder:text-gray-500 focus:outline-none focus:border-blue-500"
+          className="w-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg pl-9 pr-3 py-2.5 text-sm text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:border-blue-500"
         />
       </div>
 
@@ -187,7 +187,7 @@ export default function AdminUsersPage() {
           ))}
         </div>
       ) : users.length === 0 ? (
-        <div className="bg-gray-900 border border-gray-800 rounded-xl p-8 text-center">
+        <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-8 text-center">
           <p className="text-gray-500 text-sm">Nenhum usuário encontrado.</p>
         </div>
       ) : (
@@ -197,13 +197,13 @@ export default function AdminUsersPage() {
             return (
               <div
                 key={u.id}
-                className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden"
+                className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden"
               >
                 <div className="flex flex-col sm:flex-row sm:items-center gap-3 p-4">
                   <div className="flex items-center gap-3 flex-1 min-w-0">
                     <Avatar src={u.avatarUrl} name={u.name} size="md" />
                     <div className="min-w-0">
-                      <p className="text-white font-medium text-sm truncate">
+                      <p className="text-gray-900 dark:text-white font-medium text-sm truncate">
                         {u.name}
                       </p>
                       <p className="text-xs text-gray-500 truncate">
@@ -222,7 +222,7 @@ export default function AdminUsersPage() {
                       onChange={(e) =>
                         changeRole(u.id, e.target.value as "STUDENT" | "ADMIN")
                       }
-                      className="bg-gray-800 border border-gray-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-blue-500"
+                      className="bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg px-2.5 py-1.5 text-xs text-gray-900 dark:text-white focus:outline-none focus:border-blue-500"
                     >
                       <option value="STUDENT">Aluno</option>
                       <option value="ADMIN">Admin</option>
@@ -230,7 +230,7 @@ export default function AdminUsersPage() {
                     <button
                       type="button"
                       onClick={() => setExpanded(isOpen ? null : u.id)}
-                      className="px-3 py-1.5 text-xs font-medium text-white bg-gray-800 hover:bg-gray-700 rounded-lg"
+                      className="px-3 py-1.5 text-xs font-medium text-gray-900 dark:text-white bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg"
                     >
                       {isOpen ? "Fechar" : "Gerenciar acesso"}
                     </button>
@@ -238,8 +238,8 @@ export default function AdminUsersPage() {
                 </div>
 
                 {isOpen && (
-                  <div className="border-t border-gray-800 p-4 bg-gray-950/40">
-                    <p className="text-xs font-medium text-gray-400 mb-2">
+                  <div className="border-t border-gray-200 dark:border-gray-800 p-4 bg-gray-950/40">
+                    <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">
                       Cursos com acesso
                     </p>
                     {u.enrollments.length === 0 ? (
@@ -251,9 +251,9 @@ export default function AdminUsersPage() {
                         {u.enrollments.map((e) => (
                           <li
                             key={e.id}
-                            className="flex items-center justify-between gap-2 bg-gray-900 border border-gray-800 rounded-lg px-3 py-2"
+                            className="flex items-center justify-between gap-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg px-3 py-2"
                           >
-                            <span className="text-sm text-white truncate">
+                            <span className="text-sm text-gray-900 dark:text-white truncate">
                               {e.course.title}
                             </span>
                             <button
@@ -268,7 +268,7 @@ export default function AdminUsersPage() {
                       </ul>
                     )}
 
-                    <p className="text-xs font-medium text-gray-400 mb-2">
+                    <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">
                       Liberar acesso manual
                     </p>
                     <div className="flex flex-col sm:flex-row gap-2">
@@ -280,7 +280,7 @@ export default function AdminUsersPage() {
                             [u.id]: e.target.value,
                           }))
                         }
-                        className="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500"
+                        className="flex-1 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:border-blue-500"
                       >
                         <option value="">Escolha um curso...</option>
                         {(availableCoursesByUser[u.id] || []).map((c) => (

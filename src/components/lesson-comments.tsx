@@ -69,7 +69,7 @@ export function LessonComments({ lessonId }: { lessonId: string }) {
           placeholder="Deixe uma dúvida ou comentário sobre a aula..."
           rows={3}
           maxLength={1000}
-          className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder:text-gray-500 focus:outline-none focus:border-blue-500 resize-none"
+          className="w-full bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:border-blue-500 resize-none"
         />
         <div className="mt-2 flex justify-end">
           <button
@@ -95,7 +95,7 @@ export function LessonComments({ lessonId }: { lessonId: string }) {
               <Avatar src={c.user.avatarUrl} name={c.user.name} size="sm" />
               <div className="flex-1 bg-gray-800/60 rounded-lg px-3 py-2">
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-sm font-medium text-white">
+                  <span className="text-sm font-medium text-gray-900 dark:text-white">
                     {c.user.name}
                   </span>
                   {c.user.role === "ADMIN" && (
@@ -107,7 +107,7 @@ export function LessonComments({ lessonId }: { lessonId: string }) {
                     {formatRelativeTime(new Date(c.createdAt))}
                   </span>
                 </div>
-                <p className="text-sm text-gray-200 whitespace-pre-wrap break-words mt-1">
+                <p className="text-sm text-gray-800 dark:text-gray-200 whitespace-pre-wrap break-words mt-1">
                   {c.content}
                 </p>
               </div>

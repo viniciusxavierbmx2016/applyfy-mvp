@@ -103,7 +103,7 @@ export function ModulesManager({ courseId, initialModules }: ModulesManagerProps
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-white">Módulos & Aulas</h2>
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Módulos & Aulas</h2>
         {!creating && (
           <button
             onClick={() => setCreating(true)}
@@ -118,7 +118,7 @@ export function ModulesManager({ courseId, initialModules }: ModulesManagerProps
       </div>
 
       {creating && (
-        <div className="bg-gray-900 border border-blue-500/30 rounded-xl p-4 flex gap-2">
+        <div className="bg-white dark:bg-gray-900 border border-blue-500/30 rounded-xl p-4 flex gap-2">
           <input
             type="text"
             value={newTitle}
@@ -132,7 +132,7 @@ export function ModulesManager({ courseId, initialModules }: ModulesManagerProps
               }
             }}
             placeholder="Nome do módulo"
-            className="flex-1 px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="flex-1 px-3 py-2 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
           <button
             onClick={handleCreate}
@@ -145,7 +145,7 @@ export function ModulesManager({ courseId, initialModules }: ModulesManagerProps
               setCreating(false);
               setNewTitle("");
             }}
-            className="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-gray-300 text-sm rounded-lg transition"
+            className="px-4 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm rounded-lg transition"
           >
             Cancelar
           </button>
@@ -153,7 +153,7 @@ export function ModulesManager({ courseId, initialModules }: ModulesManagerProps
       )}
 
       {modules.length === 0 && !creating ? (
-        <div className="bg-gray-900 border border-gray-800 rounded-xl p-8 text-center">
+        <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-8 text-center">
           <p className="text-gray-500 text-sm">
             Nenhum módulo criado ainda. Clique em &ldquo;Novo módulo&rdquo; para começar.
           </p>
@@ -229,13 +229,13 @@ function SortableModule({
     <div
       ref={setNodeRef}
       style={style}
-      className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden"
+      className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden"
     >
-      <div className="flex items-center gap-2 p-4 bg-gray-900">
+      <div className="flex items-center gap-2 p-4 bg-white dark:bg-gray-900">
         <button
           {...attributes}
           {...listeners}
-          className="text-gray-500 hover:text-gray-300 cursor-grab active:cursor-grabbing touch-none"
+          className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 cursor-grab active:cursor-grabbing touch-none"
           aria-label="Arrastar módulo"
         >
           <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -250,7 +250,7 @@ function SortableModule({
 
         <button
           onClick={() => setExpanded(!expanded)}
-          className="text-gray-400 hover:text-white p-1"
+          className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white p-1"
         >
           <svg
             className={`w-4 h-4 transition-transform ${expanded ? "rotate-90" : ""}`}
@@ -275,12 +275,12 @@ function SortableModule({
                 setEditing(false);
               }
             }}
-            className="flex-1 px-2 py-1 bg-gray-800 border border-gray-700 rounded text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="flex-1 px-2 py-1 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
           />
         ) : (
           <h3
             onClick={() => setEditing(true)}
-            className="flex-1 text-white font-medium cursor-text hover:bg-gray-800 px-2 py-1 rounded"
+            className="flex-1 text-gray-900 dark:text-white font-medium cursor-text hover:bg-gray-100 dark:hover:bg-gray-800 px-2 py-1 rounded"
           >
             {module.title}
           </h3>
@@ -302,7 +302,7 @@ function SortableModule({
       </div>
 
       {expanded && (
-        <div className="border-t border-gray-800 bg-gray-950/40 p-4">
+        <div className="border-t border-gray-200 dark:border-gray-800 bg-gray-950/40 p-4">
           <LessonsManager
             moduleId={module.id}
             initialLessons={module.lessons}

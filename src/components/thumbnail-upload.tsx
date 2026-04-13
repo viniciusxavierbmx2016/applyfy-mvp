@@ -44,12 +44,12 @@ export function ThumbnailUpload({ value, onChange }: ThumbnailUploadProps) {
 
   return (
     <div>
-      <label className="block text-sm font-medium text-gray-300 mb-2">
+      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
         Thumbnail
       </label>
 
       {value ? (
-        <div className="relative aspect-video bg-gray-800 rounded-lg overflow-hidden border border-gray-700">
+        <div className="relative aspect-video bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden border border-gray-300 dark:border-gray-700">
           <Image src={value} alt="Thumbnail" fill className="object-cover" />
           <button
             type="button"
@@ -62,7 +62,7 @@ export function ThumbnailUpload({ value, onChange }: ThumbnailUploadProps) {
           </button>
         </div>
       ) : (
-        <label className="relative block aspect-video bg-gray-800 hover:bg-gray-750 border-2 border-dashed border-gray-700 hover:border-gray-600 rounded-lg cursor-pointer transition">
+        <label className="relative block aspect-video bg-gray-100 dark:bg-gray-800 hover:bg-gray-750 border-2 border-dashed border-gray-300 dark:border-gray-700 hover:border-gray-500 dark:hover:border-gray-600 rounded-lg cursor-pointer transition">
           <input
             type="file"
             accept="image/*"

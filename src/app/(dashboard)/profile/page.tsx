@@ -48,31 +48,31 @@ export default function ProfilePage() {
 
   return (
     <div className="max-w-2xl mx-auto">
-      <h1 className="text-2xl font-bold text-white mb-6">Meu Perfil</h1>
+      <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Meu Perfil</h1>
 
       {/* Profile card */}
-      <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 mb-6 space-y-5">
+      <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-6 mb-6 space-y-5">
         <div>
-          <h2 className="text-xl font-semibold text-white">{user.name}</h2>
-          <p className="text-gray-400 text-sm">{user.email}</p>
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">{user.name}</h2>
+          <p className="text-gray-600 dark:text-gray-400 text-sm">{user.email}</p>
         </div>
         <AvatarUploader />
       </div>
 
       {/* Gamification card */}
-      <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 mb-6">
-        <h3 className="text-lg font-semibold text-white mb-4">Gamificação</h3>
+      <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-6 mb-6">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Gamificação</h3>
         <div className="flex items-center gap-4 mb-4">
           <div className="flex items-center gap-2">
             <span className="text-2xl text-yellow-400">★</span>
             <div>
-              <p className="text-sm text-gray-400">Pontos</p>
-              <p className="text-xl font-bold text-white">{user.points}</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Pontos</p>
+              <p className="text-xl font-bold text-gray-900 dark:text-white">{user.points}</p>
             </div>
           </div>
-          <div className="h-8 w-px bg-gray-700" />
+          <div className="h-8 w-px bg-gray-200 dark:bg-gray-700" />
           <div>
-            <p className="text-sm text-gray-400">Nível {currentLevel.level}</p>
+            <p className="text-sm text-gray-600 dark:text-gray-400">Nível {currentLevel.level}</p>
             <p className="text-xl font-bold text-blue-400">
               {currentLevel.name}
             </p>
@@ -80,11 +80,11 @@ export default function ProfilePage() {
         </div>
         {nextLevel && (
           <div>
-            <div className="flex justify-between text-xs text-gray-400 mb-1">
+            <div className="flex justify-between text-xs text-gray-600 dark:text-gray-400 mb-1">
               <span>{currentLevel.name}</span>
               <span>{nextLevel.name}</span>
             </div>
-            <div className="w-full bg-gray-800 rounded-full h-2">
+            <div className="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-2">
               <div
                 className="bg-blue-500 h-2 rounded-full transition-all"
                 style={{ width: `${progressPercent}%` }}
@@ -102,8 +102,8 @@ export default function ProfilePage() {
         const completed = courses.filter((c) => c.progress >= 100);
         if (completed.length === 0) return null;
         return (
-          <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 mb-6">
-            <h3 className="text-lg font-semibold text-white mb-1">
+          <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-6 mb-6">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">
               Certificados
             </h3>
             <p className="text-xs text-gray-500 mb-4">
@@ -113,10 +113,10 @@ export default function ProfilePage() {
               {completed.map((c) => (
                 <li
                   key={c.id}
-                  className="flex flex-col sm:flex-row sm:items-center gap-3 p-3 rounded-lg bg-gray-800/40 border border-gray-800"
+                  className="flex flex-col sm:flex-row sm:items-center gap-3 p-3 rounded-lg bg-gray-800/40 border border-gray-200 dark:border-gray-800"
                 >
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-white truncate">
+                    <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
                       {c.title}
                     </p>
                     <p className="text-xs text-green-400">
@@ -150,8 +150,8 @@ export default function ProfilePage() {
       })()}
 
       {/* Courses progress */}
-      <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
-        <h3 className="text-lg font-semibold text-white mb-4">Meus Cursos</h3>
+      <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-6">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Meus Cursos</h3>
         {loadingCourses ? (
           <p className="text-gray-500 text-sm">Carregando...</p>
         ) : courses.length === 0 ? (
@@ -166,7 +166,7 @@ export default function ProfilePage() {
                   href={`/course/${c.slug}`}
                   className="flex gap-3 p-3 -mx-3 rounded-lg hover:bg-gray-800/50 transition"
                 >
-                  <div className="relative w-20 h-14 sm:w-24 sm:h-16 rounded-md overflow-hidden bg-gray-800 flex-shrink-0">
+                  <div className="relative w-20 h-14 sm:w-24 sm:h-16 rounded-md overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0">
                     {c.thumbnail ? (
                       <Image
                         src={c.thumbnail}
@@ -182,7 +182,7 @@ export default function ProfilePage() {
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-white truncate">
+                    <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
                       {c.title}
                     </p>
                     <p className="text-xs text-gray-500 mb-1.5">

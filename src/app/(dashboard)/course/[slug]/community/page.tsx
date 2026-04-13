@@ -147,7 +147,7 @@ export default function CommunityPage() {
 
   if (error) {
     return (
-      <div className="bg-gray-900 border border-gray-800 rounded-xl p-8 text-center">
+      <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-8 text-center">
         <p className="text-red-400 mb-4">{error}</p>
         <Link
           href={`/course/${params.slug}`}
@@ -165,7 +165,7 @@ export default function CommunityPage() {
     <div className="max-w-3xl mx-auto">
       <Link
         href={`/course/${params.slug}`}
-        className="inline-flex items-center gap-1 text-sm text-gray-400 hover:text-white mb-4"
+        className="inline-flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white mb-4"
       >
         <svg
           className="w-4 h-4"
@@ -184,18 +184,18 @@ export default function CommunityPage() {
       </Link>
 
       <div className="mb-6">
-        <h1 className="text-xl sm:text-2xl font-bold text-white">
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
           Comunidade
         </h1>
         {course && (
-          <p className="text-sm text-gray-400">{course.title}</p>
+          <p className="text-sm text-gray-600 dark:text-gray-400">{course.title}</p>
         )}
       </div>
 
       {/* Create post */}
       <form
         onSubmit={submitPost}
-        className="bg-gray-900 border border-gray-800 rounded-xl p-4 mb-6"
+        className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4 mb-6"
       >
         <TiptapEditor
           value={content}
@@ -212,7 +212,7 @@ export default function CommunityPage() {
                 className={`text-xs px-3 py-1.5 rounded-full border transition ${
                   type === t.value
                     ? "bg-blue-600 border-blue-500 text-white"
-                    : "bg-gray-800 border-gray-700 text-gray-300 hover:border-gray-600"
+                    : "bg-gray-100 dark:bg-gray-800 border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:border-gray-500 dark:hover:border-gray-600"
                 }`}
               >
                 {t.label}
@@ -231,7 +231,7 @@ export default function CommunityPage() {
 
       {/* Feed */}
       {posts.length === 0 ? (
-        <div className="bg-gray-900 border border-gray-800 rounded-xl p-8 text-center">
+        <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-8 text-center">
           <p className="text-gray-500 text-sm">
             Nenhum post ainda. Seja o primeiro a publicar!
           </p>

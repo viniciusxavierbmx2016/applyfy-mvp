@@ -179,7 +179,7 @@ export default function LessonPage({
 
   if (error || !data) {
     return (
-      <div className="bg-gray-900 border border-gray-800 rounded-xl p-8 text-center">
+      <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-8 text-center">
         <p className="text-red-400 mb-4">{error || "Aula não encontrada"}</p>
         <Link
           href={`/course/${params.slug}`}
@@ -211,7 +211,7 @@ export default function LessonPage({
           <button
             type="button"
             onClick={() => setMobileSidebarOpen(true)}
-            className="w-full px-4 py-2.5 bg-gray-900 border border-gray-800 text-white rounded-lg text-sm font-medium flex items-center justify-between"
+            className="w-full px-4 py-2.5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-gray-900 dark:text-white rounded-lg text-sm font-medium flex items-center justify-between"
           >
             <span>Lista de aulas</span>
             <svg
@@ -234,7 +234,7 @@ export default function LessonPage({
           <p className="text-sm text-blue-400 font-medium mb-1">
             {data.course.title}
           </p>
-          <h1 className="text-xl lg:text-2xl font-bold text-white mb-2">
+          <h1 className="text-xl lg:text-2xl font-bold text-gray-900 dark:text-white mb-2">
             {data.lesson.title}
           </h1>
 
@@ -255,7 +255,7 @@ export default function LessonPage({
             {data.prev && (
               <Link
                 href={`/course/${data.course.slug}/lesson/${data.prev.id}`}
-                className="px-4 py-2 rounded-lg bg-gray-800 hover:bg-gray-700 text-white text-sm font-medium"
+                className="px-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-900 dark:text-white text-sm font-medium"
               >
                 ← Anterior
               </Link>
@@ -263,7 +263,7 @@ export default function LessonPage({
             {data.next && (
               <Link
                 href={`/course/${data.course.slug}/lesson/${data.next.id}`}
-                className="px-4 py-2 rounded-lg bg-gray-800 hover:bg-gray-700 text-white text-sm font-medium"
+                className="px-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-900 dark:text-white text-sm font-medium"
               >
                 Próxima →
               </Link>
@@ -271,14 +271,14 @@ export default function LessonPage({
           </div>
 
           {/* Tabs */}
-          <div className="mt-6 border-b border-gray-800 flex gap-1">
+          <div className="mt-6 border-b border-gray-200 dark:border-gray-800 flex gap-1">
             <button
               type="button"
               onClick={() => setActiveTab("description")}
               className={`px-4 py-2.5 text-sm font-medium border-b-2 transition ${
                 activeTab === "description"
-                  ? "border-blue-500 text-white"
-                  : "border-transparent text-gray-400 hover:text-white"
+                  ? "border-blue-500 text-gray-900 dark:text-white"
+                  : "border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
               }`}
             >
               Descrição
@@ -288,8 +288,8 @@ export default function LessonPage({
               onClick={() => setActiveTab("comments")}
               className={`px-4 py-2.5 text-sm font-medium border-b-2 transition ${
                 activeTab === "comments"
-                  ? "border-blue-500 text-white"
-                  : "border-transparent text-gray-400 hover:text-white"
+                  ? "border-blue-500 text-gray-900 dark:text-white"
+                  : "border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
               }`}
             >
               Comentários
@@ -299,7 +299,7 @@ export default function LessonPage({
           <div className="mt-5">
             {activeTab === "description" ? (
               data.lesson.description ? (
-                <p className="text-gray-400 text-sm whitespace-pre-wrap">
+                <p className="text-gray-600 dark:text-gray-400 text-sm whitespace-pre-wrap">
                   {data.lesson.description}
                 </p>
               ) : (
@@ -332,14 +332,14 @@ export default function LessonPage({
         >
           <div className="absolute inset-0 bg-black/70" />
           <div
-            className="absolute right-0 top-0 bottom-0 w-full max-w-sm bg-gray-950 p-3 overflow-y-auto"
+            className="absolute right-0 top-0 bottom-0 w-full max-w-sm bg-white dark:bg-gray-950 p-3 overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex justify-end mb-2">
               <button
                 type="button"
                 onClick={() => setMobileSidebarOpen(false)}
-                className="p-2 text-gray-400 hover:text-white"
+                className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
                 aria-label="Fechar"
               >
                 <svg

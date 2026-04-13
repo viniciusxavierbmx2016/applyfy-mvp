@@ -43,14 +43,14 @@ function LessonLink({
       className={`flex items-start gap-3 px-3 py-2 rounded-lg text-sm transition ${
         isCurrent
           ? "bg-blue-600/20 text-white border border-blue-600/40"
-          : "text-gray-300 hover:bg-gray-800 border border-transparent"
+          : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 border border-transparent"
       }`}
     >
       <div className="pt-0.5 flex-shrink-0">
         {lesson.completed ? (
           <div className="w-4 h-4 rounded-full bg-green-500 flex items-center justify-center">
             <svg
-              className="w-3 h-3 text-white"
+              className="w-3 h-3 text-gray-900 dark:text-white"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -64,7 +64,7 @@ function LessonLink({
             </svg>
           </div>
         ) : (
-          <div className="w-4 h-4 rounded-full border-2 border-gray-600" />
+          <div className="w-4 h-4 rounded-full border-2 border-gray-400 dark:border-gray-600" />
         )}
       </div>
       <span className="line-clamp-2 flex-1">{lesson.title}</span>
@@ -97,15 +97,15 @@ export function LessonsSidebar({
   };
 
   return (
-    <aside className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden flex flex-col">
-      <div className="px-4 py-3 border-b border-gray-800">
+    <aside className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden flex flex-col">
+      <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-800">
         <Link
           href={`/course/${courseSlug}`}
-          className="text-xs text-gray-400 hover:text-white"
+          className="text-xs text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
         >
           ← Voltar ao curso
         </Link>
-        <h2 className="text-sm font-semibold text-white mt-1 line-clamp-2">
+        <h2 className="text-sm font-semibold text-gray-900 dark:text-white mt-1 line-clamp-2">
           {courseTitle}
         </h2>
       </div>
@@ -119,10 +119,10 @@ export function LessonsSidebar({
               <button
                 type="button"
                 onClick={() => toggle(mod.id)}
-                className="w-full flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-800 text-left"
+                className="w-full flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-left"
               >
                 <svg
-                  className={`w-4 h-4 text-gray-400 transition-transform ${
+                  className={`w-4 h-4 text-gray-600 dark:text-gray-400 transition-transform ${
                     isOpen ? "rotate-90" : ""
                   }`}
                   fill="none"
@@ -137,11 +137,11 @@ export function LessonsSidebar({
                   />
                 </svg>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-white line-clamp-1">
+                  <p className="text-sm font-medium text-gray-900 dark:text-white line-clamp-1">
                     {mod.title}
                   </p>
                   <div className="flex items-center gap-2 mt-1">
-                    <div className="flex-1 h-1 bg-gray-800 rounded-full overflow-hidden">
+                    <div className="flex-1 h-1 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
                       <div
                         className="h-full bg-blue-500"
                         style={{ width: `${prog}%` }}

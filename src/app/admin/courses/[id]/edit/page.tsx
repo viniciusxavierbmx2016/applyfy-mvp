@@ -50,7 +50,7 @@ export default function EditCoursePage({
   if (!course) {
     return (
       <div className="text-center py-16">
-        <p className="text-gray-400">Curso não encontrado</p>
+        <p className="text-gray-600 dark:text-gray-400">Curso não encontrado</p>
         <Link
           href="/admin/courses"
           className="inline-block mt-4 text-blue-400 hover:text-blue-300"
@@ -66,25 +66,25 @@ export default function EditCoursePage({
       <div className="mb-6">
         <Link
           href="/admin/courses"
-          className="inline-flex items-center gap-1 text-sm text-gray-400 hover:text-white mb-2"
+          className="inline-flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white mb-2"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
           Voltar
         </Link>
-        <h1 className="text-2xl font-bold text-white">{course.title}</h1>
-        <p className="text-sm text-gray-400 mt-1">/{course.slug}</p>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{course.title}</h1>
+        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">/{course.slug}</p>
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 mb-6 border-b border-gray-800">
+      <div className="flex gap-1 mb-6 border-b border-gray-200 dark:border-gray-800">
         <button
           onClick={() => setTab("info")}
           className={`px-4 py-2.5 text-sm font-medium border-b-2 transition ${
             tab === "info"
-              ? "border-blue-500 text-white"
-              : "border-transparent text-gray-400 hover:text-white"
+              ? "border-blue-500 text-gray-900 dark:text-white"
+              : "border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
           }`}
         >
           Informações
@@ -93,8 +93,8 @@ export default function EditCoursePage({
           onClick={() => setTab("content")}
           className={`px-4 py-2.5 text-sm font-medium border-b-2 transition ${
             tab === "content"
-              ? "border-blue-500 text-white"
-              : "border-transparent text-gray-400 hover:text-white"
+              ? "border-blue-500 text-gray-900 dark:text-white"
+              : "border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
           }`}
         >
           Conteúdo ({course.modules.length} módulos)

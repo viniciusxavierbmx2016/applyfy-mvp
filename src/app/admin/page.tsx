@@ -47,7 +47,7 @@ export default function AdminDashboardPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-white mb-6">Dashboard Admin</h1>
+      <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Dashboard Admin</h1>
 
       {loading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -61,10 +61,10 @@ export default function AdminDashboardPage() {
             <Link
               key={c.label}
               href={c.href}
-              className="bg-gray-900 border border-gray-800 hover:border-gray-700 rounded-xl p-6 transition block"
+              className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 hover:border-gray-400 dark:hover:border-gray-700 rounded-xl p-6 transition block"
             >
-              <p className="text-sm text-gray-400">{c.label}</p>
-              <p className="text-3xl font-bold text-white mt-1">{c.value}</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">{c.label}</p>
+              <p className="text-3xl font-bold text-gray-900 dark:text-white mt-1">{c.value}</p>
             </Link>
           ))}
         </div>

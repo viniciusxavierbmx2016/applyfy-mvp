@@ -139,7 +139,7 @@ export function LessonsManager({
       ) : (
         <button
           onClick={() => setCreating(true)}
-          className="w-full flex items-center justify-center gap-2 py-2 border border-dashed border-gray-700 hover:border-gray-600 text-gray-500 hover:text-gray-300 text-sm rounded-lg transition"
+          className="w-full flex items-center justify-center gap-2 py-2 border border-dashed border-gray-300 dark:border-gray-700 hover:border-gray-500 dark:hover:border-gray-600 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 text-sm rounded-lg transition"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -183,7 +183,7 @@ function SortableLesson({
 
   if (isEditing) {
     return (
-      <div ref={setNodeRef} style={style} className="bg-gray-900 border border-blue-500/30 rounded-lg p-3">
+      <div ref={setNodeRef} style={style} className="bg-white dark:bg-gray-900 border border-blue-500/30 rounded-lg p-3">
         <LessonForm
           initial={lesson}
           onSubmit={(data) => onUpdate(lesson.id, data)}
@@ -197,12 +197,12 @@ function SortableLesson({
     <div
       ref={setNodeRef}
       style={style}
-      className="flex items-center gap-2 p-3 bg-gray-900 border border-gray-800 rounded-lg hover:border-gray-700 transition"
+      className="flex items-center gap-2 p-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg hover:border-gray-400 dark:hover:border-gray-700 transition"
     >
       <button
         {...attributes}
         {...listeners}
-        className="text-gray-600 hover:text-gray-300 cursor-grab active:cursor-grabbing touch-none"
+        className="text-gray-600 hover:text-gray-700 dark:hover:text-gray-300 cursor-grab active:cursor-grabbing touch-none"
         aria-label="Arrastar aula"
       >
         <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
@@ -216,7 +216,7 @@ function SortableLesson({
       </button>
 
       <div className="flex-1 min-w-0">
-        <p className="text-sm text-white font-medium truncate">{lesson.title}</p>
+        <p className="text-sm text-gray-900 dark:text-white font-medium truncate">{lesson.title}</p>
         <p className="text-xs text-gray-500 truncate">{lesson.videoUrl}</p>
       </div>
 
@@ -279,7 +279,7 @@ function LessonForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-3 bg-gray-900 border border-blue-500/30 rounded-lg p-3">
+    <form onSubmit={handleSubmit} className="space-y-3 bg-white dark:bg-gray-900 border border-blue-500/30 rounded-lg p-3">
       <input
         autoFocus
         type="text"
@@ -287,7 +287,7 @@ function LessonForm({
         onChange={(e) => setTitle(e.target.value)}
         placeholder="Título da aula"
         required
-        className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        className="w-full px-3 py-2 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
       />
       <input
         type="url"
@@ -295,14 +295,14 @@ function LessonForm({
         onChange={(e) => setVideoUrl(e.target.value)}
         placeholder="URL do vídeo (YouTube, Vimeo...)"
         required
-        className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        className="w-full px-3 py-2 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
       />
       <textarea
         value={description}
         onChange={(e) => setDescription(e.target.value)}
         placeholder="Descrição (opcional)"
         rows={2}
-        className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y"
+        className="w-full px-3 py-2 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y"
       />
       <input
         type="number"
@@ -310,7 +310,7 @@ function LessonForm({
         onChange={(e) => setDuration(e.target.value)}
         placeholder="Duração em minutos (opcional)"
         min={0}
-        className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        className="w-full px-3 py-2 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
       />
       <div className="flex gap-2">
         <button
@@ -322,7 +322,7 @@ function LessonForm({
         <button
           type="button"
           onClick={onCancel}
-          className="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-gray-300 text-sm rounded-lg transition"
+          className="px-4 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm rounded-lg transition"
         >
           Cancelar
         </button>

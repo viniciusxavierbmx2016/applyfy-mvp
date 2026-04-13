@@ -36,7 +36,7 @@ export function TiptapEditor({ value, onChange, placeholder }: Props) {
     editorProps: {
       attributes: {
         class:
-          "tiptap prose prose-invert prose-sm max-w-none min-h-[96px] px-3 py-2 focus:outline-none text-sm text-white",
+          "tiptap prose prose-invert prose-sm max-w-none min-h-[96px] px-3 py-2 focus:outline-none text-sm text-gray-900 dark:text-white",
       },
     },
     onUpdate({ editor }) {
@@ -54,12 +54,12 @@ export function TiptapEditor({ value, onChange, placeholder }: Props) {
 
   if (!editor) {
     return (
-      <div className="bg-gray-800 border border-gray-700 rounded-lg h-[140px] animate-pulse" />
+      <div className="bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg h-[140px] animate-pulse" />
     );
   }
 
   return (
-    <div className="bg-gray-800 border border-gray-700 rounded-lg focus-within:border-blue-500 transition">
+    <div className="bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg focus-within:border-blue-500 transition">
       <Toolbar editor={editor} />
       <EditorContent editor={editor} />
     </div>
@@ -71,7 +71,7 @@ function Toolbar({ editor }: { editor: Editor }) {
     `p-1.5 rounded text-sm transition ${
       active
         ? "bg-blue-600 text-white"
-        : "text-gray-300 hover:bg-gray-700 hover:text-white"
+        : "text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white"
     }`;
 
   function promptLink() {
@@ -97,7 +97,7 @@ function Toolbar({ editor }: { editor: Editor }) {
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-1 border-b border-gray-700 px-2 py-1.5">
+    <div className="flex flex-wrap items-center gap-1 border-b border-gray-300 dark:border-gray-700 px-2 py-1.5">
       <button
         type="button"
         onClick={() => editor.chain().focus().toggleBold().run()}
@@ -120,7 +120,7 @@ function Toolbar({ editor }: { editor: Editor }) {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 5h8M6 19h8M14 5l-4 14" />
         </svg>
       </button>
-      <div className="w-px h-5 bg-gray-700 mx-1" />
+      <div className="w-px h-5 bg-gray-200 dark:bg-gray-700 mx-1" />
       <button
         type="button"
         onClick={() => editor.chain().focus().toggleBulletList().run()}
