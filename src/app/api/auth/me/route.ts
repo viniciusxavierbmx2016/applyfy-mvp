@@ -12,7 +12,23 @@ export async function GET() {
     if (!user) {
       return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
     }
-    return NextResponse.json({ user });
+    let collaborator: {
+      permissions: string[];
+      courseIds: string[];
+      workspaceId: string;
+    } | null = null;
+    if (user.role === "COLLABORATOR") {
+      const c = await prisma.collaborator.findFirst({
+        where: { userId: user.id, status: "ACCEPTED" },
+        select: {
+          permissions: true,
+          courseIds: true,
+          workspaceId: true,
+        },
+      });
+      if (c) collaborator = c;
+    }
+    return NextResponse.json({ user, collaborator });
   } catch (error) {
     console.error("Me error:", error);
     return NextResponse.json(

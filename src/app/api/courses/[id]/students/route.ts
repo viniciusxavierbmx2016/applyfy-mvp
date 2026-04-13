@@ -1,6 +1,37 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { canEditCourse, requireStaff } from "@/lib/auth";
+import { canEditCourse, requireStaff, requirePermission } from "@/lib/auth";
+import type { Role } from "@prisma/client";
+
+async function canManageStudentsOfCourse(
+  staff: { id: string; role: Role },
+  courseId: string
+) {
+  if (staff.role === "ADMIN") return true;
+  if (staff.role === "PRODUCER") {
+    return canEditCourse(staff, courseId);
+  }
+  if (staff.role === "COLLABORATOR") {
+    try {
+      await requirePermission(staff, "MANAGE_STUDENTS");
+    } catch {
+      return false;
+    }
+    const c = await prisma.collaborator.findFirst({
+      where: { userId: staff.id, status: "ACCEPTED" },
+      select: { workspaceId: true, courseIds: true },
+    });
+    if (!c) return false;
+    const course = await prisma.course.findUnique({
+      where: { id: courseId },
+      select: { workspaceId: true },
+    });
+    if (!course || course.workspaceId !== c.workspaceId) return false;
+    if (c.courseIds.length === 0) return true;
+    return c.courseIds.includes(courseId);
+  }
+  return false;
+}
 import {
   ensureUserByEmail,
   sendWorkspaceAccessEmail,
@@ -15,7 +46,7 @@ export async function GET(
 ) {
   try {
     const staff = await requireStaff();
-    if (!(await canEditCourse(staff, params.id))) {
+    if (!(await canManageStudentsOfCourse(staff, params.id))) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
@@ -153,7 +184,7 @@ export async function POST(
 ) {
   try {
     const staff = await requireStaff();
-    if (!(await canEditCourse(staff, params.id))) {
+    if (!(await canManageStudentsOfCourse(staff, params.id))) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 

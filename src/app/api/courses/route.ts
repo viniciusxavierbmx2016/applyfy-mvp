@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getCurrentUser, requireStaff } from "@/lib/auth";
+import {
+  getCurrentUser,
+  requireStaff,
+  getStaffCourseIds,
+} from "@/lib/auth";
 import { canAccessWorkspace, resolveStaffWorkspace } from "@/lib/workspace";
 
 export async function GET(request: Request) {
@@ -15,14 +19,22 @@ export async function GET(request: Request) {
 
     const isAdmin = user.role === "ADMIN";
     const isProducer = user.role === "PRODUCER";
+    const isCollaborator = user.role === "COLLABORATOR";
 
-    if ((isAdmin || isProducer) && filter === "all") {
+    if ((isAdmin || isProducer || isCollaborator) && filter === "all") {
       const { workspace, scoped } = await resolveStaffWorkspace(user);
-      if (isProducer && !workspace) {
+      if ((isProducer || isCollaborator) && !workspace) {
         return NextResponse.json({ courses: [] });
       }
+      const collabScope = await getStaffCourseIds(user);
+      const where =
+        collabScope !== null
+          ? { id: { in: collabScope } }
+          : scoped && workspace
+            ? { workspaceId: workspace.id }
+            : undefined;
       const courses = await prisma.course.findMany({
-        where: scoped && workspace ? { workspaceId: workspace.id } : undefined,
+        where,
         orderBy: { order: "asc" },
         include: {
           _count: {
@@ -159,6 +171,10 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const staff = await requireStaff();
+    if (staff.role === "COLLABORATOR") {
+      // Collaborators cannot create new courses — only manage existing ones.
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
 
     const body = await request.json();
     const {

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { canEditCourse, requireStaff } from "@/lib/auth";
+import { collaboratorCanActOnCourse } from "@/lib/collaborator";
 
 export async function POST(
   _request: Request,
@@ -20,7 +21,13 @@ export async function POST(
       );
     }
 
-    if (!(await canEditCourse(staff, post.courseId))) {
+    const allowed =
+      staff.role === "COLLABORATOR"
+        ? await collaboratorCanActOnCourse(staff.id, post.courseId, [
+            "MANAGE_COMMUNITY",
+          ])
+        : await canEditCourse(staff, post.courseId);
+    if (!allowed) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 

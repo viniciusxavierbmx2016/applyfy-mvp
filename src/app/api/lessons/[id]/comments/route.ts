@@ -3,6 +3,30 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { createNotification } from "@/lib/notifications";
 
+async function collaboratorAllowed(
+  userId: string,
+  courseId: string,
+  permissionNeeded: "REPLY_COMMENTS" | "MANAGE_COMMUNITY" = "REPLY_COMMENTS"
+) {
+  const c = await prisma.collaborator.findFirst({
+    where: { userId, status: "ACCEPTED" },
+    select: { workspaceId: true, permissions: true, courseIds: true },
+  });
+  if (!c) return false;
+  if (
+    !c.permissions.includes(permissionNeeded) &&
+    !c.permissions.includes("MANAGE_COMMUNITY")
+  )
+    return false;
+  const course = await prisma.course.findUnique({
+    where: { id: courseId },
+    select: { workspaceId: true },
+  });
+  if (!course || course.workspaceId !== c.workspaceId) return false;
+  if (c.courseIds.length === 0) return true;
+  return c.courseIds.includes(courseId);
+}
+
 export async function GET(
   _request: Request,
   { params }: { params: { id: string } }
@@ -25,16 +49,25 @@ export async function GET(
     }
 
     if (user.role !== "ADMIN") {
-      const enrollment = await prisma.enrollment.findUnique({
-        where: {
-          userId_courseId: {
-            userId: user.id,
-            courseId: lesson.module.courseId,
+      let allowed = false;
+      if (user.role === "COLLABORATOR") {
+        allowed = await collaboratorAllowed(
+          user.id,
+          lesson.module.courseId
+        );
+      }
+      if (!allowed) {
+        const enrollment = await prisma.enrollment.findUnique({
+          where: {
+            userId_courseId: {
+              userId: user.id,
+              courseId: lesson.module.courseId,
+            },
           },
-        },
-      });
-      if (!enrollment || enrollment.status !== "ACTIVE") {
-        return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
+        });
+        if (!enrollment || enrollment.status !== "ACTIVE") {
+          return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
+        }
       }
     }
 
@@ -86,16 +119,25 @@ export async function POST(
     }
 
     if (user.role !== "ADMIN") {
-      const enrollment = await prisma.enrollment.findUnique({
-        where: {
-          userId_courseId: {
-            userId: user.id,
-            courseId: lesson.module.courseId,
+      let allowed = false;
+      if (user.role === "COLLABORATOR") {
+        allowed = await collaboratorAllowed(
+          user.id,
+          lesson.module.courseId
+        );
+      }
+      if (!allowed) {
+        const enrollment = await prisma.enrollment.findUnique({
+          where: {
+            userId_courseId: {
+              userId: user.id,
+              courseId: lesson.module.courseId,
+            },
           },
-        },
-      });
-      if (!enrollment || enrollment.status !== "ACTIVE") {
-        return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
+        });
+        if (!enrollment || enrollment.status !== "ACTIVE") {
+          return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
+        }
       }
     }
 

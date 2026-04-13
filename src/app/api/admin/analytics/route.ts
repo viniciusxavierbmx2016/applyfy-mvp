@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireStaff } from "@/lib/auth";
+import { requireStaff, requirePermission, getStaffCourseIds } from "@/lib/auth";
 import { resolveStaffWorkspace } from "@/lib/workspace";
 
 function startOfDay(d: Date) {
@@ -31,10 +31,13 @@ function buildDaySeries(days: number) {
 export async function GET() {
   try {
     const staff = await requireStaff();
+    if (staff.role === "COLLABORATOR") {
+      await requirePermission(staff, "VIEW_ANALYTICS");
+    }
     const { workspace, scoped } = await resolveStaffWorkspace(staff);
     const workspaceId = scoped && workspace ? workspace.id : null;
 
-    if (staff.role === "PRODUCER" && !workspaceId) {
+    if (staff.role !== "ADMIN" && !workspaceId) {
       return NextResponse.json({
         kpis: { activeStudents: 0, newStudents7d: 0, avgCompletion: 0, totalPosts: 0 },
         newStudentsPerDay: [],
@@ -44,7 +47,8 @@ export async function GET() {
       });
     }
 
-    const scopedCourseIds = workspaceId
+    const collabScope = await getStaffCourseIds(staff);
+    const workspaceCourseIds = workspaceId
       ? (
           await prisma.course.findMany({
             where: { workspaceId },
@@ -52,10 +56,30 @@ export async function GET() {
           })
         ).map((c) => c.id)
       : null;
+    const scopedCourseIds =
+      collabScope !== null
+        ? workspaceCourseIds
+          ? collabScope.filter((id) => workspaceCourseIds.includes(id))
+          : collabScope
+        : workspaceCourseIds;
     const courseIdFilter = scopedCourseIds
       ? { courseId: { in: scopedCourseIds } }
       : {};
-    const workspaceUserFilter = workspaceId ? { workspaceId } : {};
+    // For collaborators we don't see workspace members at large — only students
+    // enrolled in their scoped courses.
+    const workspaceUserFilter =
+      staff.role === "COLLABORATOR"
+        ? {
+            enrollments: {
+              some: {
+                status: "ACTIVE" as const,
+                courseId: { in: scopedCourseIds || [] },
+              },
+            },
+          }
+        : workspaceId
+          ? { workspaceId }
+          : {};
 
     const now = new Date();
     const todayStart = startOfDay(now);
@@ -171,7 +195,11 @@ export async function GET() {
 
     // ----- TOP 5 POPULAR COURSES -----
     const topCourses = await prisma.course.findMany({
-      where: workspaceId ? { workspaceId } : undefined,
+      where: scopedCourseIds
+        ? { id: { in: scopedCourseIds } }
+        : workspaceId
+          ? { workspaceId }
+          : undefined,
       select: {
         id: true,
         title: true,

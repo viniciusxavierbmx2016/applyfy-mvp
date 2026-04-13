@@ -11,7 +11,12 @@ interface SidebarProps {
   onClose: () => void;
 }
 
-type NavLink = { href: string; label: string; icon: React.ReactNode };
+type NavLink = {
+  href: string;
+  label: string;
+  icon: React.ReactNode;
+  requires?: string;
+};
 
 const iconHome = (
   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -70,7 +75,36 @@ const producerLinks: NavLink[] = [
   { href: "/admin/courses", label: "Meus Cursos", icon: iconCourses },
   { href: "/admin/users", label: "Meus Alunos", icon: iconUsers },
   { href: "/admin/community", label: "Comunidade", icon: iconCommunity },
+  { href: "/admin/collaborators", label: "Colaboradores", icon: iconUsers },
   { href: "/admin/integrations", label: "Integrações", icon: iconIntegrations },
+];
+
+const collaboratorLinks: NavLink[] = [
+  { href: "/admin", label: "Dashboard", icon: iconDashboard },
+  {
+    href: "/admin/courses",
+    label: "Cursos",
+    icon: iconCourses,
+    requires: "MANAGE_LESSONS",
+  },
+  {
+    href: "/admin/users",
+    label: "Alunos",
+    icon: iconUsers,
+    requires: "MANAGE_STUDENTS",
+  },
+  {
+    href: "/admin/community",
+    label: "Comunidade",
+    icon: iconCommunity,
+    requires: "MANAGE_COMMUNITY",
+  },
+  {
+    href: "/admin/analytics",
+    label: "Analytics",
+    icon: iconAnalytics,
+    requires: "VIEW_ANALYTICS",
+  },
 ];
 
 const adminLinks: NavLink[] = [
@@ -85,12 +119,30 @@ const adminLinks: NavLink[] = [
 
 export function Sidebar({ open, onClose }: SidebarProps) {
   const pathname = usePathname();
-  const { user } = useUserStore();
+  const { user, collaborator } = useUserStore();
   const isAdmin = user?.role === "ADMIN";
   const isProducer = user?.role === "PRODUCER";
+  const isCollaborator = user?.role === "COLLABORATOR";
 
-  const staffLinks = isAdmin ? adminLinks : isProducer ? producerLinks : null;
-  const staffLabel = isAdmin ? "Admin" : isProducer ? "Produtor" : null;
+  const collabPerms = collaborator?.permissions ?? [];
+  const filteredCollabLinks = collaboratorLinks.filter(
+    (l) => !l.requires || collabPerms.includes(l.requires)
+  );
+
+  const staffLinks = isAdmin
+    ? adminLinks
+    : isProducer
+      ? producerLinks
+      : isCollaborator
+        ? filteredCollabLinks
+        : null;
+  const staffLabel = isAdmin
+    ? "Admin"
+    : isProducer
+      ? "Produtor"
+      : isCollaborator
+        ? "Colaborador"
+        : null;
 
   return (
     <>
@@ -125,7 +177,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
           <p className="px-3 mb-2 text-xs font-semibold uppercase tracking-wider text-gray-500">
             Menu
           </p>
-          {studentLinks.map((link) => (
+          {!isCollaborator && studentLinks.map((link) => (
             <Link
               key={link.href}
               href={link.href}

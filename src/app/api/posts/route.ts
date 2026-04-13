@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
+import { collaboratorCanActOnCourse } from "@/lib/collaborator";
 import { GAMIFICATION, getLevelForPoints } from "@/lib/utils";
 import { sanitizeHtml, stripHtml } from "@/lib/sanitize-html";
 import { PostType } from "@prisma/client";
@@ -46,7 +47,14 @@ export async function GET(request: Request) {
     const isStaffOwner =
       user.role === "ADMIN" ||
       (user.role === "PRODUCER" && course.workspace.ownerId === user.id);
-    if (!isStaffOwner) {
+    let collabAllowed = false;
+    if (!isStaffOwner && user.role === "COLLABORATOR") {
+      collabAllowed = await collaboratorCanActOnCourse(user.id, course.id, [
+        "MANAGE_COMMUNITY",
+        "REPLY_COMMENTS",
+      ]);
+    }
+    if (!isStaffOwner && !collabAllowed) {
       const enrollment = await prisma.enrollment.findUnique({
         where: {
           userId_courseId: { userId: user.id, courseId: course.id },
@@ -150,7 +158,14 @@ export async function POST(request: Request) {
     const isStaffOwner =
       user.role === "ADMIN" ||
       (user.role === "PRODUCER" && course.workspace.ownerId === user.id);
-    if (!isStaffOwner) {
+    let collabAllowed = false;
+    if (!isStaffOwner && user.role === "COLLABORATOR") {
+      collabAllowed = await collaboratorCanActOnCourse(user.id, course.id, [
+        "MANAGE_COMMUNITY",
+        "REPLY_COMMENTS",
+      ]);
+    }
+    if (!isStaffOwner && !collabAllowed) {
       const enrollment = await prisma.enrollment.findUnique({
         where: {
           userId_courseId: { userId: user.id, courseId: course.id },

@@ -1,14 +1,31 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/auth";
+import { requireStaff, requirePermission, canEditCourse } from "@/lib/auth";
+import type { Role } from "@prisma/client";
 import { createNotification } from "@/lib/notifications";
+
+async function assertCanManageCourse(
+  staff: { id: string; role: Role },
+  courseId: string
+) {
+  if (staff.role === "COLLABORATOR") {
+    await requirePermission(staff, "MANAGE_STUDENTS");
+  }
+  const ok = await canEditCourse(staff, courseId);
+  if (!ok && staff.role !== "ADMIN" && staff.role !== "PRODUCER") {
+    throw new Error("Forbidden");
+  }
+  // PRODUCER: canEditCourse covers ownership — but we still allow if owned.
+  // ADMIN: always allowed.
+  if (!ok && staff.role === "PRODUCER") throw new Error("Forbidden");
+}
 
 export async function POST(
   request: Request,
   { params }: { params: { id: string } }
 ) {
   try {
-    await requireAdmin();
+    const staff = await requireStaff();
     const { courseId } = await request.json();
     if (!courseId) {
       return NextResponse.json(
@@ -16,6 +33,7 @@ export async function POST(
         { status: 400 }
       );
     }
+    await assertCanManageCourse(staff, courseId);
 
     const existing = await prisma.enrollment.findUnique({
       where: { userId_courseId: { userId: params.id, courseId } },
@@ -57,7 +75,7 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    await requireAdmin();
+    const staff = await requireStaff();
     const { searchParams } = new URL(request.url);
     const courseId = searchParams.get("courseId");
     if (!courseId) {
@@ -66,6 +84,7 @@ export async function DELETE(
         { status: 400 }
       );
     }
+    await assertCanManageCourse(staff, courseId);
 
     await prisma.enrollment.deleteMany({
       where: { userId: params.id, courseId },

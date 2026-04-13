@@ -33,6 +33,7 @@ model User {
   ownedCourses     Course[]         @relation("CourseOwner")
   ownedWorkspaces  Workspace[]      @relation("WorkspaceOwner")
   workspace        Workspace?       @relation("WorkspaceMembers", fields: [workspaceId], references: [id], onDelete: SetNull)
+  collaborators    Collaborator[]
 
   @@index([workspaceId])
 }
@@ -52,6 +53,7 @@ model Workspace {
   members     User[]       @relation("WorkspaceMembers")
   courses     Course[]
   webhookLogs WebhookLog[]
+  collaborators Collaborator[]
 
   @@index([ownerId])
 }
@@ -60,6 +62,33 @@ enum Role {
   STUDENT
   PRODUCER
   ADMIN
+  COLLABORATOR
+}
+
+model Collaborator {
+  id          String              @id @default(uuid())
+  email       String
+  name        String?
+  workspaceId String
+  userId      String?
+  permissions String[]
+  courseIds   String[]
+  status      CollaboratorStatus  @default(PENDING)
+  invitedAt   DateTime            @default(now())
+  acceptedAt  DateTime?
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  user      User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@unique([workspaceId, email])
+  @@index([userId])
+  @@index([status])
+}
+
+enum CollaboratorStatus {
+  PENDING
+  ACCEPTED
+  REVOKED
 }
 
 model Course {

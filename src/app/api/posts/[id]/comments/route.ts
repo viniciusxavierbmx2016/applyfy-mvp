@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
+import { collaboratorCanActOnCourse } from "@/lib/collaborator";
 import { createNotification } from "@/lib/notifications";
 
 export async function GET(
@@ -22,13 +23,22 @@ export async function GET(
     }
 
     if (user.role !== "ADMIN") {
-      const enrollment = await prisma.enrollment.findUnique({
-        where: {
-          userId_courseId: { userId: user.id, courseId: post.courseId },
-        },
-      });
-      if (!enrollment || enrollment.status !== "ACTIVE") {
-        return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
+      let allowed = false;
+      if (user.role === "COLLABORATOR") {
+        allowed = await collaboratorCanActOnCourse(user.id, post.courseId, [
+          "REPLY_COMMENTS",
+          "MANAGE_COMMUNITY",
+        ]);
+      }
+      if (!allowed) {
+        const enrollment = await prisma.enrollment.findUnique({
+          where: {
+            userId_courseId: { userId: user.id, courseId: post.courseId },
+          },
+        });
+        if (!enrollment || enrollment.status !== "ACTIVE") {
+          return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
+        }
       }
     }
 
@@ -80,13 +90,22 @@ export async function POST(
     }
 
     if (user.role !== "ADMIN") {
-      const enrollment = await prisma.enrollment.findUnique({
-        where: {
-          userId_courseId: { userId: user.id, courseId: post.courseId },
-        },
-      });
-      if (!enrollment || enrollment.status !== "ACTIVE") {
-        return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
+      let allowed = false;
+      if (user.role === "COLLABORATOR") {
+        allowed = await collaboratorCanActOnCourse(user.id, post.courseId, [
+          "REPLY_COMMENTS",
+          "MANAGE_COMMUNITY",
+        ]);
+      }
+      if (!allowed) {
+        const enrollment = await prisma.enrollment.findUnique({
+          where: {
+            userId_courseId: { userId: user.id, courseId: post.courseId },
+          },
+        });
+        if (!enrollment || enrollment.status !== "ACTIVE") {
+          return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
+        }
       }
     }
 

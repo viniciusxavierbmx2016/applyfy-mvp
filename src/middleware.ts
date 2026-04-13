@@ -115,6 +115,7 @@ export async function middleware(request: NextRequest) {
   const isPublic =
     publicRoutes.includes(pathname) ||
     pathname.startsWith("/verify/") ||
+    pathname.startsWith("/invite/") ||
     isWorkspacePublic;
 
   if (!user && !isPublic) {

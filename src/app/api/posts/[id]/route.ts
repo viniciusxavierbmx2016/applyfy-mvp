@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
+import { collaboratorCanActOnCourse } from "@/lib/collaborator";
 
 export async function DELETE(
   _request: Request,
@@ -20,7 +21,20 @@ export async function DELETE(
       );
     }
 
-    if (user.role !== "ADMIN" && post.userId !== user.id) {
+    let canDelete = user.role === "ADMIN" || post.userId === user.id;
+    if (!canDelete && user.role === "PRODUCER") {
+      const course = await prisma.course.findUnique({
+        where: { id: post.courseId },
+        select: { ownerId: true },
+      });
+      canDelete = course?.ownerId === user.id;
+    }
+    if (!canDelete && user.role === "COLLABORATOR") {
+      canDelete = await collaboratorCanActOnCourse(user.id, post.courseId, [
+        "MANAGE_COMMUNITY",
+      ]);
+    }
+    if (!canDelete) {
       return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
     }
 

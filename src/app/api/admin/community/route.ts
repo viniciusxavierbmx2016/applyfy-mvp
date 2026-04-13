@@ -1,11 +1,19 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireStaff } from "@/lib/auth";
+import { requireStaff, requirePermission, getStaffCourseIds } from "@/lib/auth";
 import { resolveStaffWorkspace } from "@/lib/workspace";
 
 export async function GET(request: Request) {
   try {
     const staff = await requireStaff();
+    if (staff.role === "COLLABORATOR") {
+      // Collaborator needs at least MANAGE_COMMUNITY or REPLY_COMMENTS.
+      try {
+        await requirePermission(staff, "MANAGE_COMMUNITY");
+      } catch {
+        await requirePermission(staff, "REPLY_COMMENTS");
+      }
+    }
 
     const { searchParams } = new URL(request.url);
     const courseId = searchParams.get("courseId");
@@ -13,11 +21,12 @@ export async function GET(request: Request) {
     const { workspace, scoped } = await resolveStaffWorkspace(staff);
     const workspaceId = scoped && workspace ? workspace.id : null;
 
-    if (staff.role === "PRODUCER" && !workspaceId) {
+    if (staff.role !== "ADMIN" && !workspaceId) {
       return NextResponse.json({ posts: [], courses: [] });
     }
 
-    const scopedCourseIds = workspaceId
+    const collabScope = await getStaffCourseIds(staff);
+    const workspaceCourseIds = workspaceId
       ? (
           await prisma.course.findMany({
             where: { workspaceId },
@@ -25,6 +34,12 @@ export async function GET(request: Request) {
           })
         ).map((c) => c.id)
       : null;
+    const scopedCourseIds =
+      collabScope !== null
+        ? workspaceCourseIds
+          ? collabScope.filter((id) => workspaceCourseIds.includes(id))
+          : collabScope
+        : workspaceCourseIds;
 
     const where: Record<string, unknown> = {};
     if (scopedCourseIds) {
@@ -48,7 +63,11 @@ export async function GET(request: Request) {
     });
 
     const courses = await prisma.course.findMany({
-      where: workspaceId ? { workspaceId } : undefined,
+      where: scopedCourseIds
+        ? { id: { in: scopedCourseIds } }
+        : workspaceId
+          ? { workspaceId }
+          : undefined,
       orderBy: { order: "asc" },
       select: { id: true, title: true, slug: true },
     });

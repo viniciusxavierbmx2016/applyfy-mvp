@@ -83,6 +83,13 @@ export async function canAccessWorkspace(
   workspaceId: string
 ): Promise<boolean> {
   if (staff.role === "ADMIN") return true;
+  if (staff.role === "COLLABORATOR") {
+    const c = await prisma.collaborator.findFirst({
+      where: { userId: staff.id, status: "ACCEPTED" },
+      select: { workspaceId: true },
+    });
+    return !!c && c.workspaceId === workspaceId;
+  }
   if (staff.role !== "PRODUCER") return false;
   const ws = await prisma.workspace.findUnique({
     where: { id: workspaceId },
@@ -107,6 +114,17 @@ export async function resolveStaffWorkspace(
       if (ws) return { workspace: ws, scoped: true };
     }
     return { workspace: null, scoped: false };
+  }
+  if (staff.role === "COLLABORATOR") {
+    const c = await prisma.collaborator.findFirst({
+      where: { userId: staff.id, status: "ACCEPTED" },
+      select: { workspaceId: true },
+    });
+    if (!c) return { workspace: null, scoped: true };
+    const ws = await prisma.workspace.findUnique({
+      where: { id: c.workspaceId },
+    });
+    return { workspace: ws, scoped: true };
   }
   const ws = await getCurrentWorkspace(staff.id);
   return { workspace: ws, scoped: true };

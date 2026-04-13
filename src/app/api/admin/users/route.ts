@@ -1,11 +1,14 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireStaff } from "@/lib/auth";
+import { requireStaff, requirePermission, getStaffCourseIds } from "@/lib/auth";
 import { resolveStaffWorkspace } from "@/lib/workspace";
 
 export async function GET(request: Request) {
   try {
     const staff = await requireStaff();
+    if (staff.role === "COLLABORATOR") {
+      await requirePermission(staff, "MANAGE_STUDENTS");
+    }
 
     const { searchParams } = new URL(request.url);
     const q = searchParams.get("q")?.trim() ?? "";
@@ -22,8 +25,8 @@ export async function GET(request: Request) {
     const { workspace, scoped } = await resolveStaffWorkspace(staff);
     const workspaceId = scoped && workspace ? workspace.id : null;
 
-    // Producer with no workspace: nothing to show.
-    if (staff.role === "PRODUCER" && !workspaceId) {
+    // Non-admin with no workspace: nothing to show.
+    if (staff.role !== "ADMIN" && !workspaceId) {
       return NextResponse.json({
         users: [],
         courses: [],
@@ -31,7 +34,8 @@ export async function GET(request: Request) {
       });
     }
 
-    const scopedCourseIds = workspaceId
+    const collabScope = await getStaffCourseIds(staff);
+    const workspaceCourseIds = workspaceId
       ? (
           await prisma.course.findMany({
             where: { workspaceId },
@@ -39,22 +43,38 @@ export async function GET(request: Request) {
           })
         ).map((c) => c.id)
       : null;
+    const scopedCourseIds =
+      collabScope !== null
+        ? workspaceCourseIds
+          ? collabScope.filter((id) => workspaceCourseIds.includes(id))
+          : collabScope
+        : workspaceCourseIds;
 
     const where = workspaceId
-      ? {
-          ...searchClause,
-          OR: [
-            { workspaceId },
-            {
-              enrollments: {
-                some: {
-                  courseId: { in: scopedCourseIds || [] },
-                  status: "ACTIVE" as const,
-                },
+      ? staff.role === "COLLABORATOR"
+        ? {
+            ...searchClause,
+            enrollments: {
+              some: {
+                courseId: { in: scopedCourseIds || [] },
+                status: "ACTIVE" as const,
               },
             },
-          ],
-        }
+          }
+        : {
+            ...searchClause,
+            OR: [
+              { workspaceId },
+              {
+                enrollments: {
+                  some: {
+                    courseId: { in: scopedCourseIds || [] },
+                    status: "ACTIVE" as const,
+                  },
+                },
+              },
+            ],
+          }
       : searchClause;
 
     const users = await prisma.user.findMany({
@@ -85,7 +105,11 @@ export async function GET(request: Request) {
     });
 
     const courses = await prisma.course.findMany({
-      where: workspaceId ? { workspaceId } : undefined,
+      where: scopedCourseIds
+        ? { id: { in: scopedCourseIds } }
+        : workspaceId
+          ? { workspaceId }
+          : undefined,
       orderBy: { order: "asc" },
       select: { id: true, title: true, slug: true },
     });

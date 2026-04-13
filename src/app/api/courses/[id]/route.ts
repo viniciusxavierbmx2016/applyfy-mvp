@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireStaff } from "@/lib/auth";
+import { requireStaff, canEditCourse } from "@/lib/auth";
 
 async function assertCanEditCourse(courseId: string) {
   const staff = await requireStaff();
@@ -9,8 +9,13 @@ async function assertCanEditCourse(courseId: string) {
     select: { id: true, ownerId: true },
   });
   if (!course) return { error: "Curso não encontrado", status: 404 as const };
+  if (staff.role === "ADMIN") return { ok: true as const };
   if (staff.role === "PRODUCER" && course.ownerId !== staff.id) {
     return { error: "Forbidden", status: 403 as const };
+  }
+  if (staff.role === "COLLABORATOR") {
+    const ok = await canEditCourse(staff, courseId);
+    if (!ok) return { error: "Forbidden", status: 403 as const };
   }
   return { ok: true as const };
 }
@@ -130,6 +135,10 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
+    const staff = await requireStaff();
+    if (staff.role === "COLLABORATOR") {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
     const check = await assertCanEditCourse(params.id);
     if ("error" in check) {
       return NextResponse.json({ error: check.error }, { status: check.status });
