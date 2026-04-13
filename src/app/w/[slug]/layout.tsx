@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { WorkspaceShell } from "@/components/workspace-shell";
 
 export default async function WorkspaceLayout({
   children,
@@ -13,5 +14,5 @@ export default async function WorkspaceLayout({
     select: { isActive: true },
   });
   if (!ws || !ws.isActive) notFound();
-  return <>{children}</>;
+  return <WorkspaceShell slug={params.slug}>{children}</WorkspaceShell>;
 }

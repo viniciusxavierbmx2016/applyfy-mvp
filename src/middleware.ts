@@ -141,6 +141,16 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  // Authed student landing back on /w/[slug]/login should bounce to vitrine.
+  if (user) {
+    const wsLoginMatch = pathname.match(/^\/w\/([^/]+)\/login\/?$/);
+    if (wsLoginMatch) {
+      const url = request.nextUrl.clone();
+      url.pathname = `/w/${wsLoginMatch[1]}`;
+      return NextResponse.redirect(url);
+    }
+  }
+
   return supabaseResponse;
 }
 
