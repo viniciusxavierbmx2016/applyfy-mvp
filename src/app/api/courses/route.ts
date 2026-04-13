@@ -40,8 +40,16 @@ export async function GET(request: Request) {
 
     const enrollments = await prisma.enrollment.findMany({
       where: { userId: user.id, status: "ACTIVE" },
-      select: { courseId: true },
+      select: { courseId: true, expiresAt: true },
     });
+    const now = Date.now();
+    const expiredSet = new Set(
+      enrollments
+        .filter((e) => e.expiresAt && e.expiresAt.getTime() < now)
+        .map((e) => e.courseId)
+    );
+    // enrolledIds includes expired — the frontend gets an `isExpired` flag
+    // and access is re-checked server-side on course/lesson load.
     const enrolledIds = enrollments.map((e) => e.courseId);
 
     if (filter === "enrolled") {
@@ -126,9 +134,13 @@ export async function GET(request: Request) {
       ratingAverage: ratingMap.get(c.id)?.average ?? 0,
       ratingCount: ratingMap.get(c.id)?.count ?? 0,
     });
+    const withExpired = <T extends { id: string }>(c: T) => ({
+      ...withRating(c),
+      isExpired: expiredSet.has(c.id),
+    });
 
     return NextResponse.json({
-      enrolled: enrolled.map(withRating),
+      enrolled: enrolled.map(withExpired),
       store: store.map(withRating),
     });
   } catch (error) {

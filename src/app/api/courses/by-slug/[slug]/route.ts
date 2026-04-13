@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getCurrentUser } from "@/lib/auth";
+import { getCurrentUser, isEnrollmentActive } from "@/lib/auth";
 
 export async function GET(
   _request: Request,
@@ -45,7 +45,12 @@ export async function GET(
     });
 
     const hasAccess =
-      user.role === "ADMIN" || enrollment?.status === "ACTIVE";
+      user.role === "ADMIN" || isEnrollmentActive(enrollment);
+    const isExpired =
+      !!enrollment &&
+      enrollment.status === "ACTIVE" &&
+      !!enrollment.expiresAt &&
+      enrollment.expiresAt.getTime() < Date.now();
 
     const [agg, myReview] = await Promise.all([
       prisma.review.aggregate({
@@ -65,6 +70,7 @@ export async function GET(
         ratingCount: agg._count.rating,
       },
       hasAccess,
+      isExpired,
       enrollment,
       myReview,
     });

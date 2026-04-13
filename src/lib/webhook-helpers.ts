@@ -7,13 +7,30 @@ import { createNotification } from "./notifications";
  * If the Supabase auth user doesn't exist, creates one with a random password
  * and email_confirm:true. The buyer should use "forgot password" to set their own.
  */
-export async function ensureUserByEmail(email: string, name?: string) {
+export async function ensureUserByEmail(
+  email: string,
+  name?: string,
+  workspaceId?: string
+) {
   const normalizedEmail = email.trim().toLowerCase();
 
   const existing = await prisma.user.findUnique({
     where: { email: normalizedEmail },
   });
-  if (existing) return existing;
+  if (existing) {
+    // Auto-bind an unbound STUDENT to the workspace that's onboarding them.
+    if (
+      workspaceId &&
+      existing.role === "STUDENT" &&
+      !existing.workspaceId
+    ) {
+      return prisma.user.update({
+        where: { id: existing.id },
+        data: { workspaceId },
+      });
+    }
+    return existing;
+  }
 
   const admin = createAdminClient();
 
@@ -47,10 +64,41 @@ export async function ensureUserByEmail(email: string, name?: string) {
       id: authId,
       email: normalizedEmail,
       name: name || normalizedEmail.split("@")[0],
+      workspaceId: workspaceId ?? null,
     },
   });
 
   return user;
+}
+
+/**
+ * Sends a recovery link email to a user so they can set their password and
+ * access the workspace. Used when a producer manually enrolls a student.
+ * Returns the action_link for logging/debugging.
+ */
+export async function sendWorkspaceAccessEmail(
+  email: string,
+  workspaceSlug: string,
+  baseUrl: string
+): Promise<string | null> {
+  try {
+    const admin = createAdminClient();
+    const { data, error } = await admin.auth.admin.generateLink({
+      type: "recovery",
+      email: email.trim().toLowerCase(),
+      options: {
+        redirectTo: `${baseUrl}/reset-password?next=/w/${workspaceSlug}`,
+      },
+    });
+    if (error) {
+      console.error("generateLink error:", error);
+      return null;
+    }
+    return data.properties?.action_link || null;
+  } catch (err) {
+    console.error("sendWorkspaceAccessEmail error:", err);
+    return null;
+  }
 }
 
 export async function activateEnrollment(userId: string, courseId: string) {

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getCurrentUser } from "@/lib/auth";
+import { getCurrentUser, isEnrollmentActive } from "@/lib/auth";
 import { GAMIFICATION, getLevelForPoints } from "@/lib/utils";
 import { createNotification } from "@/lib/notifications";
 
@@ -50,9 +50,9 @@ export async function POST(request: Request) {
           userId_courseId: { userId: user.id, courseId: course.id },
         },
       });
-      if (!enrollment || enrollment.status !== "ACTIVE") {
+      if (!isEnrollmentActive(enrollment)) {
         return NextResponse.json(
-          { error: "Não matriculado neste curso" },
+          { error: "Acesso expirado ou não matriculado" },
           { status: 403 }
         );
       }

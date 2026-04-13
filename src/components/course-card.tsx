@@ -11,6 +11,7 @@ interface CourseCardProps {
   description: string;
   thumbnail?: string | null;
   locked?: boolean;
+  expired?: boolean;
   progress?: number;
   ratingAverage?: number;
   ratingCount?: number;
@@ -24,6 +25,7 @@ export function CourseCard({
   description,
   thumbnail,
   locked = false,
+  expired = false,
   progress,
   ratingAverage,
   ratingCount,
@@ -69,14 +71,16 @@ export function CourseCard({
 
         {/* Status badge */}
         <div className="absolute top-2 right-2">
-          {locked ? (
+          {expired ? (
+            <div className="flex items-center gap-1 px-2 py-1 bg-red-500/90 backdrop-blur-sm rounded-full text-xs text-white font-medium">
+              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Acesso expirado
+            </div>
+          ) : locked ? (
             <div className="flex items-center gap-1 px-2 py-1 bg-black/70 backdrop-blur-sm rounded-full text-xs text-white font-medium">
-              <svg
-                className="w-3 h-3"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
+              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
               </svg>
               Bloqueado

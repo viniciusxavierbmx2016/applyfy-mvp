@@ -1,6 +1,17 @@
 import { createServerSupabaseClient } from "./supabase-server";
 import { prisma } from "./prisma";
-import type { User } from "@prisma/client";
+import type { Enrollment, User } from "@prisma/client";
+
+/** True if the enrollment is ACTIVE and (expiresAt is null or in the future). */
+export function isEnrollmentActive(
+  enrollment: Pick<Enrollment, "status" | "expiresAt"> | null | undefined
+): boolean {
+  if (!enrollment) return false;
+  if (enrollment.status !== "ACTIVE") return false;
+  if (enrollment.expiresAt && enrollment.expiresAt.getTime() < Date.now())
+    return false;
+  return true;
+}
 
 export async function getSession() {
   const supabase = await createServerSupabaseClient();

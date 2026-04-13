@@ -23,6 +23,7 @@ interface EnrolledCourse {
   thumbnail: string | null;
   ratingAverage?: number;
   ratingCount?: number;
+  isExpired?: boolean;
   modules: Array<{
     lessons: Array<{
       id: string;
@@ -165,6 +166,7 @@ export default function WorkspaceVitrinePage() {
                   progress={calculateCourseProgress(course)}
                   ratingAverage={course.ratingAverage}
                   ratingCount={course.ratingCount}
+                  expired={course.isExpired}
                 />
               ))}
             </div>
