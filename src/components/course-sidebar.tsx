@@ -42,6 +42,8 @@ export function CourseSidebar({
 }: Props) {
   const pathname = usePathname();
   const [items, setItems] = useState<MenuItem[]>([]);
+  const [continueLessonId, setContinueLessonId] = useState<string | null>(null);
+  const [hasLessons, setHasLessons] = useState(true);
 
   useEffect(() => {
     fetch(`/api/courses/${course.id}/menu`)
@@ -49,6 +51,48 @@ export function CourseSidebar({
       .then((d) => setItems(d.items || []))
       .catch(() => setItems([]));
   }, [course.id]);
+
+  useEffect(() => {
+    fetch(`/api/courses/by-slug/${course.slug}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        const modules = d?.course?.modules as
+          | Array<{
+              lessons: Array<{
+                id: string;
+                progress?: Array<{ completed: boolean }>;
+              }>;
+              firstIncompleteLesson?: string | null;
+            }>
+          | undefined;
+        if (!modules) {
+          setHasLessons(false);
+          return;
+        }
+        const allLessons = modules.flatMap((m) => m.lessons);
+        if (allLessons.length === 0) {
+          setHasLessons(false);
+          setContinueLessonId(null);
+          return;
+        }
+        setHasLessons(true);
+        const firstIncompleteModule = modules.find(
+          (m) =>
+            m.firstIncompleteLesson &&
+            m.lessons.some(
+              (l) =>
+                l.id === m.firstIncompleteLesson &&
+                !l.progress?.some((p) => p.completed)
+            )
+        );
+        if (firstIncompleteModule?.firstIncompleteLesson) {
+          setContinueLessonId(firstIncompleteModule.firstIncompleteLesson);
+          return;
+        }
+        setContinueLessonId(allLessons[allLessons.length - 1].id);
+      })
+      .catch(() => {});
+  }, [course.slug]);
 
   const widthClass = collapsed ? "lg:w-16" : "lg:w-60";
 
@@ -179,11 +223,17 @@ export function CourseSidebar({
         >
           {items
             .filter((i) => i.enabled)
+            .filter((i) => !(i.url.includes("#continue") && !hasLessons))
             .map((item) => {
               const isExternal = /^https?:\/\//i.test(item.url);
+              const isContinue = item.url.includes("#continue");
               const href = isExternal
                 ? item.url
-                : item.url.startsWith("/")
+                : isContinue
+                  ? continueLessonId
+                    ? `/course/${course.slug}/lesson/${continueLessonId}`
+                    : `/course/${course.slug}`
+                  : item.url.startsWith("/")
                   ? item.url.replace(/:slug/g, course.slug)
                   : `/course/${course.slug}/${item.url}`;
               const isActive =
