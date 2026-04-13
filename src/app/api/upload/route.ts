@@ -11,11 +11,11 @@ export async function POST(request: Request) {
       { status: 401 }
     );
   }
-  if (user.role !== "ADMIN") {
+  if (user.role !== "ADMIN" && user.role !== "PRODUCER") {
     return NextResponse.json(
       {
         error:
-          "Apenas administradores podem fazer upload. Seu usuário está como STUDENT no banco.",
+          "Apenas staff (admin/producer) podem fazer upload.",
       },
       { status: 403 }
     );
@@ -34,6 +34,11 @@ export async function POST(request: Request) {
     // 3. Parse and validate the file
     const formData = await request.formData();
     const file = formData.get("file") as File | null;
+    const rawPath = (formData.get("path") as string | null) || "";
+    const safePath = rawPath
+      .replace(/^\/+/, "")
+      .replace(/\.\./g, "")
+      .replace(/[^\w\-/.]/g, "");
 
     if (!file) {
       return NextResponse.json(
@@ -86,7 +91,9 @@ export async function POST(request: Request) {
 
     // 5. Upload
     const ext = file.name.split(".").pop() || "jpg";
-    const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+    const fileName = safePath
+      ? `${safePath.replace(/\.[^/.]+$/, "")}-${Date.now()}.${ext}`
+      : `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
     const arrayBuffer = await file.arrayBuffer();
 
     const { error: uploadError } = await supabase.storage

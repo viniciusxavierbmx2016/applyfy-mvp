@@ -68,6 +68,7 @@ model Course {
   slug               String    @unique
   description        String
   thumbnail          String?
+  bannerUrl          String?
   checkoutUrl        String?
   externalProductId  String?   @unique
   isPublished        Boolean   @default(false)
@@ -82,6 +83,7 @@ model Course {
   owner         User?         @relation("CourseOwner", fields: [ownerId], references: [id], onDelete: SetNull)
   workspace     Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   modules       Module[]
+  sections      Section[]
   enrollments   Enrollment[]
   posts         Post[]
   certificates  Certificate[]
@@ -102,10 +104,28 @@ model Module {
   title          String
   order          Int      @default(0)
   daysToRelease  Int      @default(0)
+  thumbnailUrl   String?
+  sectionId      String?
   courseId       String
   course         Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  section        Section? @relation(fields: [sectionId], references: [id], onDelete: SetNull)
 
   lessons   Lesson[]
+
+  @@index([sectionId])
+}
+
+model Section {
+  id        String   @id @default(uuid())
+  title     String
+  order     Int      @default(0)
+  courseId  String
+  createdAt DateTime @default(now())
+
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  modules   Module[]
+
+  @@index([courseId])
 }
 
 model Lesson {

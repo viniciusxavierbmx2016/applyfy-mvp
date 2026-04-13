@@ -146,6 +146,7 @@ function LogoUploader({
         onClick={() => inputRef.current?.click()}
         disabled={uploading}
         aria-label="Editar logo"
+        title="Tamanho ideal: 100x100px"
         className="absolute inset-0 z-20 flex items-center justify-center rounded-xl bg-black/60 text-white opacity-0 group-hover/logo:opacity-100 focus:opacity-100 transition-opacity disabled:cursor-wait"
       >
         {uploading ? (

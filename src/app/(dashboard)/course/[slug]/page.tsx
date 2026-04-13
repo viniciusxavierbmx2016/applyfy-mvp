@@ -25,7 +25,15 @@ interface ModuleItem {
   title: string;
   order: number;
   daysToRelease: number;
+  thumbnailUrl: string | null;
+  sectionId: string | null;
   lessons: LessonItem[];
+}
+
+interface SectionItem {
+  id: string;
+  title: string;
+  order: number;
 }
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
@@ -53,11 +61,39 @@ interface CourseDetail {
   slug: string;
   description: string;
   thumbnail: string | null;
+  bannerUrl: string | null;
   checkoutUrl: string | null;
   hasCertificate?: boolean;
   ratingAverage: number;
   ratingCount: number;
   modules: ModuleItem[];
+  sections: SectionItem[];
+}
+
+type OrderedItem =
+  | { type: "section"; section: SectionItem }
+  | { type: "module"; module: ModuleItem; indexInCourse: number };
+
+function buildOrderedItems(
+  modules: ModuleItem[],
+  sections: SectionItem[]
+): OrderedItem[] {
+  const sorted = [...modules].sort((a, b) => a.order - b.order);
+  const indexOf = new Map(sorted.map((m, i) => [m.id, i]));
+  const unsectioned = sorted.filter((m) => !m.sectionId);
+  const sectionsSorted = [...sections].sort((a, b) => a.order - b.order);
+  const items: OrderedItem[] = [];
+  for (const m of unsectioned) {
+    items.push({ type: "module", module: m, indexInCourse: indexOf.get(m.id)! });
+  }
+  for (const s of sectionsSorted) {
+    items.push({ type: "section", section: s });
+    const mods = sorted.filter((m) => m.sectionId === s.id);
+    for (const m of mods) {
+      items.push({ type: "module", module: m, indexInCourse: indexOf.get(m.id)! });
+    }
+  }
+  return items;
 }
 
 interface MyReview {
@@ -139,6 +175,22 @@ export default function CourseDetailPage() {
           Voltar para vitrine
         </Link>
 
+        {course.bannerUrl && (
+          <div
+            className="relative w-full mb-6 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-800"
+            style={{ aspectRatio: "1920/400" }}
+          >
+            <Image
+              src={course.bannerUrl}
+              alt={course.title}
+              fill
+              sizes="100vw"
+              className="object-cover"
+              priority
+            />
+          </div>
+        )}
+
         {/* Hero */}
         <div className="relative aspect-video max-h-[400px] bg-white dark:bg-gray-900 rounded-2xl overflow-hidden mb-8 border border-gray-200 dark:border-gray-800">
           {course.thumbnail ? (
@@ -202,28 +254,49 @@ export default function CourseDetailPage() {
                   aulas
                 </p>
                 <div className="space-y-2">
-                  {course.modules.map((m, i) => (
-                    <div
-                      key={m.id}
-                      className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-4 flex items-center gap-3 opacity-70"
-                    >
-                      <span className="text-xs text-gray-500 w-6">
-                        {String(i + 1).padStart(2, "0")}
-                      </span>
-                      <div className="flex-1">
-                        <p className="text-gray-900 dark:text-white font-medium text-sm">
-                          {m.title}
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          {m.lessons.length} aula
-                          {m.lessons.length !== 1 && "s"}
-                        </p>
+                  {buildOrderedItems(course.modules, course.sections || []).map((item) => {
+                    if (item.type === "section") {
+                      return (
+                        <div key={`section-${item.section.id}`} className="pt-4 pb-1">
+                          <div className="flex items-center gap-3">
+                            <h3 className="text-base font-semibold text-gray-900 dark:text-white whitespace-nowrap">
+                              {item.section.title}
+                            </h3>
+                            <div className="flex-1 h-px bg-gray-200 dark:bg-gray-800" />
+                          </div>
+                        </div>
+                      );
+                    }
+                    const m = item.module;
+                    const i = item.indexInCourse;
+                    return (
+                      <div
+                        key={m.id}
+                        className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-4 flex items-center gap-3 opacity-70"
+                      >
+                        <span className="text-xs text-gray-500 w-6">
+                          {String(i + 1).padStart(2, "0")}
+                        </span>
+                        {m.thumbnailUrl && (
+                          <div className="relative w-14 h-10 rounded overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0">
+                            <Image src={m.thumbnailUrl} alt={m.title} fill sizes="56px" className="object-cover" />
+                          </div>
+                        )}
+                        <div className="flex-1">
+                          <p className="text-gray-900 dark:text-white font-medium text-sm">
+                            {m.title}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {m.lessons.length} aula
+                            {m.lessons.length !== 1 && "s"}
+                          </p>
+                        </div>
+                        <svg className="w-4 h-4 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                        </svg>
                       </div>
-                      <svg className="w-4 h-4 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                      </svg>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -317,6 +390,22 @@ export default function CourseDetailPage() {
         </svg>
         Voltar para vitrine
       </Link>
+
+      {course.bannerUrl && (
+        <div
+          className="relative w-full mb-8 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-800"
+          style={{ aspectRatio: "1920/400" }}
+        >
+          <Image
+            src={course.bannerUrl}
+            alt={course.title}
+            fill
+            sizes="100vw"
+            className="object-cover"
+            priority
+          />
+        </div>
+      )}
 
       {/* Header */}
       <div className="flex flex-col md:flex-row gap-6 mb-8">
@@ -429,28 +518,53 @@ export default function CourseDetailPage() {
           </div>
         ) : (
           <div className="space-y-2">
-            {course.modules.map((module, moduleIdx) => {
-              const isOpen = openModules.has(module.id);
-              const completedCount = module.lessons.filter((l) =>
+            {buildOrderedItems(course.modules, course.sections || []).map((item) => {
+              if (item.type === "section") {
+                return (
+                  <div key={`section-${item.section.id}`} className="pt-4 pb-1">
+                    <div className="flex items-center gap-3">
+                      <h3 className="text-base font-semibold text-gray-900 dark:text-white whitespace-nowrap">
+                        {item.section.title}
+                      </h3>
+                      <div className="flex-1 h-px bg-gray-200 dark:bg-gray-800" />
+                    </div>
+                  </div>
+                );
+              }
+              const mod = item.module;
+              const moduleIdx = item.indexInCourse;
+              const isOpen = openModules.has(mod.id);
+              const completedCount = mod.lessons.filter((l) =>
                 l.progress?.some((p) => p.completed)
               ).length;
               const modRel = releaseInfo(
                 enrollmentCreatedAt,
-                module.daysToRelease ?? 0
+                mod.daysToRelease ?? 0
               );
 
               return (
                 <div
-                  key={module.id}
+                  key={mod.id}
                   className={`bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden ${modRel.released ? "" : "opacity-70"}`}
                 >
                   <button
-                    onClick={() => toggleModule(module.id)}
+                    onClick={() => toggleModule(mod.id)}
                     className="w-full flex items-center gap-3 p-4 text-left hover:bg-gray-800/50 transition"
                   >
                     <span className="text-xs text-gray-500 w-6">
                       {String(moduleIdx + 1).padStart(2, "0")}
                     </span>
+                    {mod.thumbnailUrl && (
+                      <div className="relative w-14 h-10 rounded overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0">
+                        <Image
+                          src={mod.thumbnailUrl}
+                          alt={mod.title}
+                          fill
+                          sizes="56px"
+                          className="object-cover"
+                        />
+                      </div>
+                    )}
                     <div className="flex-1">
                       <p className="text-gray-900 dark:text-white font-medium flex items-center gap-2">
                         {!modRel.released && (
@@ -458,11 +572,11 @@ export default function CourseDetailPage() {
                             <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                           </svg>
                         )}
-                        {module.title}
+                        {mod.title}
                       </p>
                       <p className="text-xs text-gray-500">
                         {modRel.released
-                          ? `${completedCount}/${module.lessons.length} aulas concluídas`
+                          ? `${completedCount}/${mod.lessons.length} aulas concluídas`
                           : `Libera em ${modRel.daysRemaining} dia${modRel.daysRemaining === 1 ? "" : "s"} (${formatDateBR(modRel.releaseDate)})`}
                       </p>
                     </div>
@@ -480,20 +594,20 @@ export default function CourseDetailPage() {
 
                   {isOpen && (
                     <div className="border-t border-gray-200 dark:border-gray-800">
-                      {module.lessons.length === 0 ? (
+                      {mod.lessons.length === 0 ? (
                         <p className="text-sm text-gray-500 p-4">
                           Nenhuma aula neste módulo.
                         </p>
                       ) : (
                         <ul className="divide-y divide-gray-800">
-                          {module.lessons.map((lesson, lessonIdx) => {
+                          {mod.lessons.map((lesson, lessonIdx) => {
                             const isCompleted = lesson.progress?.some(
                               (p) => p.completed
                             );
                             const lessonRel = releaseInfo(
                               enrollmentCreatedAt,
                               Math.max(
-                                module.daysToRelease ?? 0,
+                                mod.daysToRelease ?? 0,
                                 lesson.daysToRelease ?? 0
                               )
                             );

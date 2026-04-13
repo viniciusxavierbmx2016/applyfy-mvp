@@ -23,6 +23,7 @@ export async function GET(
     const course = await prisma.course.findUnique({
       where: { id: params.id },
       include: {
+        sections: { orderBy: { order: "asc" } },
         modules: {
           orderBy: { order: "asc" },
           include: {
@@ -65,6 +66,7 @@ export async function PUT(
       slug,
       description,
       thumbnail,
+      bannerUrl,
       checkoutUrl,
       externalProductId,
       isPublished,
@@ -90,6 +92,7 @@ export async function PUT(
         ...(slug !== undefined && { slug }),
         ...(description !== undefined && { description }),
         ...(thumbnail !== undefined && { thumbnail }),
+        ...(bannerUrl !== undefined && { bannerUrl }),
         ...(checkoutUrl !== undefined && { checkoutUrl }),
         ...(externalProductId !== undefined && {
           externalProductId: externalProductId?.trim() || null,

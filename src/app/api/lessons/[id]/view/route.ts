@@ -128,6 +128,7 @@ export async function GET(
           return {
             id: m.id,
             title: m.title,
+            thumbnailUrl: m.thumbnailUrl,
             locked: user.role === "ADMIN" ? false : !modRelease.released,
             releaseDate: modRelease.released ? null : modRelease.releaseDate.toISOString(),
             daysRemaining: modRelease.daysRemaining,

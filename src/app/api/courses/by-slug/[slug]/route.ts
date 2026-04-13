@@ -15,6 +15,7 @@ export async function GET(
     const course = await prisma.course.findUnique({
       where: { slug: params.slug },
       include: {
+        sections: { orderBy: { order: "asc" } },
         modules: {
           orderBy: { order: "asc" },
           include: {

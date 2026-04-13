@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 
 export interface SidebarLesson {
   id: string;
@@ -15,6 +16,7 @@ export interface SidebarLesson {
 export interface SidebarModule {
   id: string;
   title: string;
+  thumbnailUrl?: string | null;
   lessons: SidebarLesson[];
   locked?: boolean;
   releaseDate?: string | null;
@@ -182,6 +184,11 @@ export function LessonsSidebar({
                     d="M9 5l7 7-7 7"
                   />
                 </svg>
+                {mod.thumbnailUrl && (
+                  <div className="relative w-10 h-7 rounded overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0">
+                    <Image src={mod.thumbnailUrl} alt={mod.title} fill sizes="40px" className="object-cover" />
+                  </div>
+                )}
                 <div className="flex-1 min-w-0">
                   <p className={`text-sm font-medium line-clamp-1 flex items-center gap-1.5 ${mod.locked ? "text-gray-400 dark:text-gray-500" : "text-gray-900 dark:text-white"}`}>
                     {mod.locked && (

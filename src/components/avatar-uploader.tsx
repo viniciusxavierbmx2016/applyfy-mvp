@@ -148,7 +148,7 @@ export function AvatarUploader() {
               Alterar foto
             </button>
             <p className="text-xs text-gray-500 mt-0.5">
-              JPG, PNG ou WebP · máx. 2MB
+              Tamanho ideal: 200x200px. JPG, PNG ou WebP · máx. 2MB
             </p>
           </div>
         )}

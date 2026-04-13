@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ThumbnailUpload } from "./thumbnail-upload";
+import { BannerUpload } from "./banner-upload";
 import { slugify } from "@/lib/utils";
 
 interface CourseFormData {
@@ -11,6 +12,7 @@ interface CourseFormData {
   slug: string;
   description: string;
   thumbnail: string | null;
+  bannerUrl: string | null;
   checkoutUrl: string;
   externalProductId: string;
   isPublished: boolean;
@@ -30,6 +32,9 @@ export function CourseForm({ initial, mode }: CourseFormProps) {
   const [description, setDescription] = useState(initial?.description || "");
   const [thumbnail, setThumbnail] = useState<string | null>(
     initial?.thumbnail || null
+  );
+  const [bannerUrl, setBannerUrl] = useState<string | null>(
+    initial?.bannerUrl || null
   );
   const [checkoutUrl, setCheckoutUrl] = useState(initial?.checkoutUrl || "");
   const [externalProductId, setExternalProductId] = useState(
@@ -58,6 +63,7 @@ export function CourseForm({ initial, mode }: CourseFormProps) {
       slug,
       description,
       thumbnail,
+      bannerUrl,
       checkoutUrl: checkoutUrl || null,
       externalProductId: externalProductId.trim() || null,
       isPublished,
@@ -153,7 +159,17 @@ export function CourseForm({ initial, mode }: CourseFormProps) {
           />
         </div>
 
-        <ThumbnailUpload value={thumbnail} onChange={setThumbnail} />
+        <ThumbnailUpload
+          value={thumbnail}
+          onChange={setThumbnail}
+          uploadPath={initial?.id ? `thumbnails/${initial.id}` : undefined}
+        />
+
+        <BannerUpload
+          value={bannerUrl}
+          onChange={setBannerUrl}
+          uploadPath={initial?.id ? `banners/${initial.id}` : undefined}
+        />
       </div>
 
       <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-6 space-y-4">

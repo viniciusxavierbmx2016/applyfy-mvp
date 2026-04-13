@@ -170,7 +170,7 @@ export default function EditWorkspacePage() {
               >
                 {uploading ? "Enviando..." : "Enviar nova logo"}
               </button>
-              <p className="text-[11px] text-gray-500 mt-1">PNG/JPG até 2MB.</p>
+              <p className="text-[11px] text-gray-500 mt-1">Tamanho ideal: 200x200px. PNG/JPG até 2MB.</p>
               <input
                 ref={fileRef}
                 type="file"

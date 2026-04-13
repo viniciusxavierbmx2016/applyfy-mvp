@@ -3,7 +3,11 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { CourseForm } from "@/components/course-form";
-import { ModulesManager, type ModuleData } from "@/components/modules-manager";
+import {
+  ModulesManager,
+  type ModuleData,
+  type SectionData,
+} from "@/components/modules-manager";
 
 interface CourseData {
   id: string;
@@ -11,11 +15,13 @@ interface CourseData {
   slug: string;
   description: string;
   thumbnail: string | null;
+  bannerUrl: string | null;
   checkoutUrl: string | null;
   externalProductId: string | null;
   isPublished: boolean;
   showInStore: boolean;
   modules: ModuleData[];
+  sections: SectionData[];
 }
 
 export default function EditCoursePage({
@@ -116,6 +122,7 @@ export default function EditCoursePage({
             slug: course.slug,
             description: course.description,
             thumbnail: course.thumbnail,
+            bannerUrl: course.bannerUrl,
             checkoutUrl: course.checkoutUrl || "",
             externalProductId: course.externalProductId || "",
             isPublished: course.isPublished,
@@ -126,6 +133,7 @@ export default function EditCoursePage({
         <ModulesManager
           courseId={course.id}
           initialModules={course.modules}
+          initialSections={course.sections || []}
         />
       )}
     </div>

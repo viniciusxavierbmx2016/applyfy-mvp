@@ -11,7 +11,8 @@ export async function PUT(
     if (!(await canEditModule(staff, params.id))) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
-    const { title, daysToRelease } = await request.json();
+    const { title, daysToRelease, thumbnailUrl, sectionId } =
+      await request.json();
 
     const updated = await prisma.module.update({
       where: { id: params.id },
@@ -20,6 +21,8 @@ export async function PUT(
         ...(typeof daysToRelease === "number" && daysToRelease >= 0 && {
           daysToRelease: Math.floor(daysToRelease),
         }),
+        ...(thumbnailUrl !== undefined && { thumbnailUrl }),
+        ...(sectionId !== undefined && { sectionId: sectionId || null }),
       },
     });
 
