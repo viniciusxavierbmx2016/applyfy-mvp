@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { CourseForm } from "@/components/course-form";
+import { CourseEditTabs } from "@/components/course-edit-tabs";
 import {
   ModulesManager,
   type ModuleData,
@@ -31,9 +33,25 @@ export default function EditCoursePage({
 }: {
   params: { id: string };
 }) {
+  const router = useRouter();
   const [course, setCourse] = useState<CourseData | null>(null);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<"info" | "content">("info");
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const t = new URL(window.location.href).searchParams.get("tab");
+    if (t === "content") setTab("content");
+  }, []);
+
+  function selectTab(next: "info" | "content") {
+    setTab(next);
+    const url =
+      next === "content"
+        ? `/admin/courses/${params.id}/edit?tab=content`
+        : `/admin/courses/${params.id}/edit`;
+    router.replace(url, { scroll: false });
+  }
 
   useEffect(() => {
     async function load() {
@@ -85,41 +103,13 @@ export default function EditCoursePage({
         <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">/{course.slug}</p>
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-1 mb-6 border-b border-gray-200 dark:border-gray-800">
-        <button
-          onClick={() => setTab("info")}
-          className={`px-4 py-2.5 text-sm font-medium border-b-2 transition ${
-            tab === "info"
-              ? "border-blue-500 text-gray-900 dark:text-white"
-              : "border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
-          }`}
-        >
-          Informações
-        </button>
-        <button
-          onClick={() => setTab("content")}
-          className={`px-4 py-2.5 text-sm font-medium border-b-2 transition ${
-            tab === "content"
-              ? "border-blue-500 text-gray-900 dark:text-white"
-              : "border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
-          }`}
-        >
-          Conteúdo ({course.modules.length} módulos)
-        </button>
-        <Link
-          href={`/admin/courses/${course.id}/menu`}
-          className="px-4 py-2.5 text-sm font-medium border-b-2 border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition"
-        >
-          Menu lateral
-        </Link>
-        <Link
-          href={`/admin/courses/${course.id}/students`}
-          className="px-4 py-2.5 text-sm font-medium border-b-2 border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition"
-        >
-          Alunos
-        </Link>
-      </div>
+      <CourseEditTabs
+        courseId={course.id}
+        active={tab}
+        modulesCount={course.modules.length}
+        onSelectInfo={() => selectTab("info")}
+        onSelectContent={() => selectTab("content")}
+      />
 
       {tab === "info" ? (
         <CourseForm

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import { CourseEditTabs } from "@/components/course-edit-tabs";
 
 interface Student {
   enrollmentId: string;
@@ -176,24 +177,11 @@ export default function CourseStudentsPage({
         </div>
       </div>
 
-      {/* Tabs (match course edit) */}
-      <div className="flex gap-1 mb-6 border-b border-gray-200 dark:border-gray-800">
-        <Link
-          href={`/admin/courses/${params.id}/edit`}
-          className="px-4 py-2.5 text-sm font-medium border-b-2 border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
-        >
-          Informações
-        </Link>
-        <Link
-          href={`/admin/courses/${params.id}/edit`}
-          className="px-4 py-2.5 text-sm font-medium border-b-2 border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
-        >
-          Conteúdo
-        </Link>
-        <span className="px-4 py-2.5 text-sm font-medium border-b-2 border-blue-500 text-gray-900 dark:text-white">
-          Alunos {data ? `(${data.total})` : ""}
-        </span>
-      </div>
+      <CourseEditTabs
+        courseId={params.id}
+        active="students"
+        studentsCount={data?.total}
+      />
 
       <div className="mb-4">
         <input
