@@ -11,11 +11,16 @@ export async function getSession() {
 }
 
 export async function getCurrentUser(): Promise<User | null> {
-  const session = await getSession();
-  if (!session?.user?.email) return null;
+  const supabase = await createServerSupabaseClient();
+  // Use getUser() (not getSession) — it validates the JWT with the Auth server,
+  // so it's reliable across middleware cookie refreshes on Vercel.
+  const {
+    data: { user: authUser },
+  } = await supabase.auth.getUser();
+  if (!authUser?.email) return null;
 
   const user = await prisma.user.findUnique({
-    where: { email: session.user.email },
+    where: { email: authUser.email.toLowerCase() },
   });
 
   return user;
