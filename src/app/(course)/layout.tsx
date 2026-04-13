@@ -10,6 +10,7 @@ interface CourseSummary {
   title: string;
   workspaceName?: string | null;
   workspaceLogo?: string | null;
+  workspaceSlug?: string | null;
 }
 
 const COLLAPSED_KEY = "course-sidebar-collapsed";
@@ -39,12 +40,14 @@ export default function CourseGroupLayout({
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
         if (!d?.course) return;
+        const vw = d.viewerWorkspace;
         setCourse({
           id: d.course.id,
           slug: d.course.slug,
           title: d.course.title,
-          workspaceName: d.course.workspace?.name ?? null,
-          workspaceLogo: d.course.workspace?.logoUrl ?? null,
+          workspaceName: vw?.name ?? d.course.workspace?.name ?? null,
+          workspaceLogo: vw?.logoUrl ?? d.course.workspace?.logoUrl ?? null,
+          workspaceSlug: vw?.slug ?? d.course.workspace?.slug ?? null,
         });
         setHasAccess(!!d.hasAccess);
       })

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
+import { useUserStore } from "@/stores/user-store";
 
 interface Lesson {
   id: string;
@@ -43,6 +44,8 @@ function releaseDate(base: Date | null, days: number) {
 export default function ModuleDetailPage() {
   const params = useParams<{ slug: string; moduleId: string }>();
   const router = useRouter();
+  const workspace = useUserStore((s) => s.workspace);
+  const backHref = workspace?.slug ? `/w/${workspace.slug}` : "/";
   const [course, setCourse] = useState<CourseDetail | null>(null);
   const [enrollmentCreatedAt, setEnrollmentCreatedAt] = useState<Date | null>(null);
   const [hasAccess, setHasAccess] = useState(false);
@@ -60,14 +63,14 @@ export default function ModuleDetailPage() {
             data.enrollment?.createdAt ? new Date(data.enrollment.createdAt) : null
           );
         } else {
-          router.replace("/");
+          router.replace(backHref);
         }
       } finally {
         setLoading(false);
       }
     }
     load();
-  }, [params.slug, router]);
+  }, [params.slug, router, backHref]);
 
   const mod = useMemo(
     () => course?.modules.find((m) => m.id === params.moduleId) ?? null,

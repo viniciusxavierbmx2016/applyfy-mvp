@@ -28,7 +28,13 @@ export async function GET() {
       });
       if (c) collaborator = c;
     }
-    return NextResponse.json({ user, collaborator });
+    const workspace = user.workspaceId
+      ? await prisma.workspace.findUnique({
+          where: { id: user.workspaceId },
+          select: { slug: true, name: true, logoUrl: true },
+        })
+      : null;
+    return NextResponse.json({ user, collaborator, workspace });
   } catch (error) {
     console.error("Me error:", error);
     return NextResponse.json(

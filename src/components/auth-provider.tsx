@@ -12,7 +12,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const res = await fetch("/api/auth/me");
         if (res.ok) {
           const data = await res.json();
-          setUser(data.user, data.collaborator ?? null);
+          setUser(data.user, data.collaborator ?? null, data.workspace ?? null);
         } else {
           setUser(null);
         }

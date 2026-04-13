@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
+import { useUserStore } from "@/stores/user-store";
 import { ReviewsSection } from "@/components/reviews-section";
 import {
   ModuleCarousel,
@@ -126,6 +127,8 @@ function groupBySection(modules: ModuleItem[], sections: SectionItem[]) {
 export default function CourseHomePage() {
   const params = useParams<{ slug: string }>();
   const router = useRouter();
+  const workspace = useUserStore((s) => s.workspace);
+  const backHref = workspace?.slug ? `/w/${workspace.slug}` : "/";
   const [course, setCourse] = useState<CourseDetail | null>(null);
   const [hasAccess, setHasAccess] = useState(false);
   const [enrollmentCreatedAt, setEnrollmentCreatedAt] = useState<Date | null>(null);
@@ -145,14 +148,14 @@ export default function CourseHomePage() {
           );
           setMyReview(data.myReview ?? null);
         } else if (res.status === 404) {
-          router.push("/");
+          router.push(backHref);
         }
       } finally {
         setLoading(false);
       }
     }
     load();
-  }, [params.slug, router]);
+  }, [params.slug, router, backHref]);
 
   const totals = useMemo(() => {
     if (!course) return { totalLessons: 0, doneLessons: 0, pct: 0 };

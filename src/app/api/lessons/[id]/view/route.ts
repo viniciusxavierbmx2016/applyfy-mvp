@@ -105,6 +105,13 @@ export async function GET(
 
     const video = parseVideoUrl(lesson.videoUrl);
 
+    const viewerWorkspace = user.workspaceId
+      ? await prisma.workspace.findUnique({
+          where: { id: user.workspaceId },
+          select: { slug: true, name: true, logoUrl: true },
+        })
+      : null;
+
     // Masked payload — never expose raw videoUrl
     return NextResponse.json({
       lesson: {
@@ -152,6 +159,7 @@ export async function GET(
       },
       prev: prev ? { id: prev.id, title: prev.title } : null,
       next: next ? { id: next.id, title: next.title } : null,
+      viewerWorkspace,
     });
   } catch (error) {
     console.error("GET lesson view error:", error);

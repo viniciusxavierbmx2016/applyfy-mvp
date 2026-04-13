@@ -15,7 +15,7 @@ export async function GET(
     const course = await prisma.course.findUnique({
       where: { slug: params.slug },
       include: {
-        workspace: { select: { name: true, logoUrl: true } },
+        workspace: { select: { slug: true, name: true, logoUrl: true } },
         sections: { orderBy: { order: "asc" } },
         modules: {
           orderBy: { order: "asc" },
@@ -54,6 +54,13 @@ export async function GET(
       !!enrollment.expiresAt &&
       enrollment.expiresAt.getTime() < Date.now();
 
+    const viewerWorkspace = user.workspaceId
+      ? await prisma.workspace.findUnique({
+          where: { id: user.workspaceId },
+          select: { slug: true, name: true, logoUrl: true },
+        })
+      : null;
+
     const [agg, myReview] = await Promise.all([
       prisma.review.aggregate({
         where: { courseId: course.id },
@@ -86,6 +93,7 @@ export async function GET(
       isExpired,
       enrollment,
       myReview,
+      viewerWorkspace,
     });
   } catch (error) {
     console.error("GET /api/courses/by-slug/[slug] error:", error);

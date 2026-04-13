@@ -22,6 +22,7 @@ interface CourseSummary {
   title: string;
   workspaceName?: string | null;
   workspaceLogo?: string | null;
+  workspaceSlug?: string | null;
 }
 
 interface Props {
@@ -141,7 +142,7 @@ export function CourseSidebar({
         {/* Voltar à vitrine */}
         <div className={cn("pt-3 pb-2", collapsed ? "lg:px-2 px-3" : "px-3")}>
           <Link
-            href="/"
+            href={course.workspaceSlug ? `/w/${course.workspaceSlug}` : "/"}
             onClick={onMobileClose}
             title="Voltar à vitrine"
             className={cn(

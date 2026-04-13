@@ -7,11 +7,22 @@ export interface CollaboratorInfo {
   workspaceId: string;
 }
 
+export interface UserWorkspaceInfo {
+  slug: string;
+  name: string;
+  logoUrl: string | null;
+}
+
 interface UserState {
   user: User | null;
   collaborator: CollaboratorInfo | null;
+  workspace: UserWorkspaceInfo | null;
   isLoading: boolean;
-  setUser: (user: User | null, collaborator?: CollaboratorInfo | null) => void;
+  setUser: (
+    user: User | null,
+    collaborator?: CollaboratorInfo | null,
+    workspace?: UserWorkspaceInfo | null
+  ) => void;
   setLoading: (loading: boolean) => void;
   logout: () => void;
 }
@@ -19,14 +30,17 @@ interface UserState {
 export const useUserStore = create<UserState>((set) => ({
   user: null,
   collaborator: null,
+  workspace: null,
   isLoading: true,
-  setUser: (user, collaborator) =>
+  setUser: (user, collaborator, workspace) =>
     set((state) => ({
       user,
       collaborator:
         typeof collaborator === "undefined" ? state.collaborator : collaborator,
+      workspace:
+        typeof workspace === "undefined" ? state.workspace : workspace,
       isLoading: false,
     })),
   setLoading: (isLoading) => set({ isLoading }),
-  logout: () => set({ user: null, collaborator: null, isLoading: false }),
+  logout: () => set({ user: null, collaborator: null, workspace: null, isLoading: false }),
 }));
