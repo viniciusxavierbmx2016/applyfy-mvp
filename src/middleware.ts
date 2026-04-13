@@ -51,12 +51,14 @@ function applyRateLimit(request: NextRequest): NextResponse | null {
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  if (pathname.startsWith("/api/")) {
-    // Webhooks são chamados por serviços externos — skip rate limit
-    if (!pathname.startsWith("/api/webhooks/")) {
-      const limited = applyRateLimit(request);
-      if (limited) return limited;
-    }
+  // Rate limit — apenas para /api/* (exceto webhooks externos)
+  if (pathname.startsWith("/api/") && !pathname.startsWith("/api/webhooks/")) {
+    const limited = applyRateLimit(request);
+    if (limited) return limited;
+  }
+
+  // Webhooks são servidor-a-servidor, sem cookies Supabase. Skip session refresh.
+  if (pathname.startsWith("/api/webhooks/")) {
     return NextResponse.next();
   }
 
@@ -83,9 +85,17 @@ export async function middleware(request: NextRequest) {
     }
   );
 
+  // getUser() refresca o access_token se necessário e, via setAll, grava os
+  // cookies rotacionados em supabaseResponse — essencial no Vercel onde o
+  // refresh_token é one-time-use.
   const {
     data: { user },
   } = await supabase.auth.getUser();
+
+  // Para rotas /api/* só renovamos cookies — a autorização fica no handler.
+  if (pathname.startsWith("/api/")) {
+    return supabaseResponse;
+  }
 
   const isPublic =
     publicRoutes.includes(pathname) || pathname.startsWith("/verify/");
