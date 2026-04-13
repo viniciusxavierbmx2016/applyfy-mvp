@@ -106,6 +106,12 @@ export default function EditCoursePage({
           Conteúdo ({course.modules.length} módulos)
         </button>
         <Link
+          href={`/admin/courses/${course.id}/menu`}
+          className="px-4 py-2.5 text-sm font-medium border-b-2 border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition"
+        >
+          Menu lateral
+        </Link>
+        <Link
           href={`/admin/courses/${course.id}/students`}
           className="px-4 py-2.5 text-sm font-medium border-b-2 border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition"
         >

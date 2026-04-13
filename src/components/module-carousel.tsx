@@ -1,0 +1,180 @@
+"use client";
+
+import { useRef, useState, useEffect } from "react";
+import Link from "next/link";
+import Image from "next/image";
+
+export interface CarouselModule {
+  id: string;
+  title: string;
+  thumbnailUrl: string | null;
+  lessonsTotal: number;
+  lessonsDone: number;
+  progressPct: number;
+  locked: boolean;
+  releaseAt?: Date;
+  href: string;
+  clickable: boolean;
+}
+
+interface Props {
+  title?: string;
+  modules: CarouselModule[];
+}
+
+export function ModuleCarousel({ title, modules }: Props) {
+  const scrollerRef = useRef<HTMLDivElement>(null);
+  const [canLeft, setCanLeft] = useState(false);
+  const [canRight, setCanRight] = useState(false);
+
+  useEffect(() => {
+    const el = scrollerRef.current;
+    if (!el) return;
+    const update = () => {
+      setCanLeft(el.scrollLeft > 4);
+      setCanRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 4);
+    };
+    update();
+    el.addEventListener("scroll", update, { passive: true });
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => {
+      el.removeEventListener("scroll", update);
+      ro.disconnect();
+    };
+  }, [modules.length]);
+
+  function scrollBy(dir: 1 | -1) {
+    const el = scrollerRef.current;
+    if (!el) return;
+    const amount = el.clientWidth * 0.85 * dir;
+    el.scrollBy({ left: amount, behavior: "smooth" });
+  }
+
+  return (
+    <section className="mb-10">
+      {title && (
+        <div className="flex items-center gap-3 mb-4 px-1">
+          <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white whitespace-nowrap">
+            {title}
+          </h2>
+          <div className="flex-1 h-px bg-gray-200 dark:bg-gray-800" />
+          <div className="hidden sm:flex gap-2">
+            <button
+              onClick={() => scrollBy(-1)}
+              disabled={!canLeft}
+              aria-label="Anterior"
+              className="p-2 rounded-full bg-gray-100 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800 disabled:opacity-30 disabled:cursor-not-allowed transition"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+            <button
+              onClick={() => scrollBy(1)}
+              disabled={!canRight}
+              aria-label="Próximo"
+              className="p-2 rounded-full bg-gray-100 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800 disabled:opacity-30 disabled:cursor-not-allowed transition"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      )}
+
+      <div
+        ref={scrollerRef}
+        className="flex gap-3 sm:gap-4 overflow-x-auto snap-x snap-mandatory scroll-smooth pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+      >
+        {modules.map((m) => (
+          <ModuleCard key={m.id} mod={m} />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function ModuleCard({ mod }: { mod: CarouselModule }) {
+  const content = (
+    <div className="relative w-full aspect-[9/16] rounded-xl overflow-hidden bg-gray-900 border border-gray-200 dark:border-gray-800 group-hover:border-blue-500/60 transition">
+      {mod.thumbnailUrl ? (
+        <Image
+          src={mod.thumbnailUrl}
+          alt={mod.title}
+          fill
+          sizes="(max-width: 640px) 65vw, (max-width: 1024px) 33vw, 20vw"
+          className="object-cover group-hover:scale-105 transition-transform duration-300"
+        />
+      ) : (
+        <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-gray-800 via-gray-900 to-black">
+          <svg className="w-12 h-12 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+          </svg>
+        </div>
+      )}
+
+      {mod.progressPct >= 100 && !mod.locked && (
+        <div className="absolute top-3 right-3 w-7 h-7 rounded-full bg-green-500 text-white flex items-center justify-center shadow-lg ring-2 ring-white/40">
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+          </svg>
+        </div>
+      )}
+
+      <div className="absolute top-3 left-1/2 -translate-x-1/2 px-2.5 py-0.5 rounded-full bg-black/60 backdrop-blur-sm text-[10px] font-bold uppercase tracking-wider text-white">
+        Módulo
+      </div>
+
+      {mod.locked && (
+        <div className="absolute inset-0 bg-black/65 flex flex-col items-center justify-center gap-2 text-white">
+          <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+          </svg>
+          {mod.releaseAt && (
+            <span className="text-xs font-medium">
+              Libera em{" "}
+              {mod.releaseAt.toLocaleDateString("pt-BR", {
+                day: "2-digit",
+                month: "2-digit",
+              })}
+            </span>
+          )}
+        </div>
+      )}
+
+      <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black via-black/75 to-transparent pt-12">
+        <p className="text-sm sm:text-base font-bold text-white line-clamp-2 drop-shadow">
+          {mod.title}
+        </p>
+        <p className="text-[11px] text-white/80 mt-0.5">
+          {mod.lessonsTotal > 0
+            ? `${mod.lessonsDone}/${mod.lessonsTotal} aulas`
+            : "Sem aulas"}
+        </p>
+        {mod.progressPct > 0 && mod.progressPct < 100 && !mod.locked && (
+          <div className="mt-2 h-1 bg-white/20 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-blue-500"
+              style={{ width: `${mod.progressPct}%` }}
+            />
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  const className = `group shrink-0 snap-start basis-[65%] sm:basis-[32%] lg:basis-[23%] xl:basis-[19%] ${
+    mod.clickable ? "" : "cursor-not-allowed"
+  }`;
+
+  if (!mod.clickable) {
+    return <div className={className}>{content}</div>;
+  }
+  return (
+    <Link href={mod.href} className={className}>
+      {content}
+    </Link>
+  );
+}

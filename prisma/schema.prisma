@@ -88,9 +88,26 @@ model Course {
   posts         Post[]
   certificates  Certificate[]
   reviews       Review[]
+  menuItems     MenuItem[]
 
   @@index([ownerId])
   @@index([workspaceId])
+}
+
+model MenuItem {
+  id        String   @id @default(uuid())
+  courseId  String
+  label     String
+  icon      String   @default("link")
+  url       String
+  order     Int      @default(0)
+  isDefault Boolean  @default(false)
+  enabled   Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@index([courseId])
 }
 
 model Settings {

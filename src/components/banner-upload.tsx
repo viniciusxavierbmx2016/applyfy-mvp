@@ -45,7 +45,7 @@ export function BannerUpload({ value, onChange, uploadPath }: BannerUploadProps)
         Banner do curso
       </label>
       {value ? (
-        <div className="relative w-full bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden border border-gray-300 dark:border-gray-700" style={{ aspectRatio: "1920/400" }}>
+        <div className="relative w-full bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden border border-gray-300 dark:border-gray-700" style={{ aspectRatio: "1125/350" }}>
           <Image src={value} alt="Banner" fill className="object-cover" sizes="100vw" />
           <button
             type="button"
@@ -61,7 +61,7 @@ export function BannerUpload({ value, onChange, uploadPath }: BannerUploadProps)
       ) : (
         <label
           className="relative block w-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-750 border-2 border-dashed border-gray-300 dark:border-gray-700 hover:border-gray-500 dark:hover:border-gray-600 rounded-lg cursor-pointer transition"
-          style={{ aspectRatio: "1920/400" }}
+          style={{ aspectRatio: "1125/350" }}
         >
           <input
             type="file"
@@ -88,7 +88,7 @@ export function BannerUpload({ value, onChange, uploadPath }: BannerUploadProps)
         </label>
       )}
       <p className="text-xs text-gray-500 mt-2">
-        Tamanho ideal: 1920x400px (formato horizontal). PNG, JPG ou WebP, máx. 5MB.
+        Tamanho ideal: 1125x350px. PNG, JPG ou WebP, máx. 5MB.
       </p>
       {error && <p className="mt-2 text-sm text-red-400">{error}</p>}
     </div>
