@@ -12,7 +12,6 @@ export default function AdminSettingsPage() {
   const [status, setStatus] = useState<Record<string, SettingStatus>>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [applyfyToken, setApplyfyToken] = useState("");
   const [stripeSecret, setStripeSecret] = useState("");
   const [toast, setToast] = useState<string | null>(null);
   const [origin, setOrigin] = useState("");
@@ -44,7 +43,6 @@ export default function AdminSettingsPage() {
           const d = await reload.json();
           setStatus(d.settings || {});
         }
-        if (key === "applyfy_token") setApplyfyToken("");
         if (key === "stripe_webhook_secret") setStripeSecret("");
         showToast(value ? "Salvo" : "Removido");
       } else {
@@ -55,7 +53,6 @@ export default function AdminSettingsPage() {
     }
   }
 
-  const applyfyUrl = `${origin}/api/webhooks/applyfy`;
   const stripeUrl = `${origin}/api/webhooks/stripe`;
 
   return (
@@ -73,61 +70,6 @@ export default function AdminSettingsPage() {
         </div>
       ) : (
         <div className="space-y-6">
-          {/* Applyfy */}
-          <section className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-6">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">Applyfy</h2>
-            <p className="text-xs text-gray-500 mb-4">
-              Webhook URL:{" "}
-              <code className="bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded text-gray-700 dark:text-gray-300">
-                {applyfyUrl}
-              </code>
-            </p>
-
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Token Applyfy
-            </label>
-            {status.applyfy_token?.set && (
-              <p className="text-xs text-green-400 mb-2">
-                ✓ Configurado (termina em {status.applyfy_token.preview})
-              </p>
-            )}
-            <div className="flex flex-col sm:flex-row gap-2">
-              <input
-                type="password"
-                value={applyfyToken}
-                onChange={(e) => setApplyfyToken(e.target.value)}
-                placeholder={
-                  status.applyfy_token?.set
-                    ? "Digite um novo valor para substituir"
-                    : "Cole o token Applyfy"
-                }
-                className="flex-1 px-4 py-2.5 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              <button
-                type="button"
-                onClick={() => save("applyfy_token", applyfyToken.trim())}
-                disabled={!applyfyToken.trim() || saving}
-                className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-sm font-medium rounded-lg"
-              >
-                Salvar
-              </button>
-              {status.applyfy_token?.set && (
-                <button
-                  type="button"
-                  onClick={() => save("applyfy_token", "")}
-                  disabled={saving}
-                  className="px-4 py-2.5 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-lg"
-                >
-                  Remover
-                </button>
-              )}
-            </div>
-            <p className="text-xs text-gray-500 mt-2">
-              No Applyfy, vá em <strong>Ferramentas → Webhook</strong>, cadastre a URL
-              acima e copie o <em>token</em> gerado.
-            </p>
-          </section>
-
           {/* Stripe */}
           <section className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-6">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">Stripe</h2>
