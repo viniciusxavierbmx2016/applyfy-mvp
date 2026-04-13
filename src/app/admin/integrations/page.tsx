@@ -1,12 +1,16 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { Skeleton } from "@/components/ui/skeleton";
+import { GatewayLogo } from "@/components/gateway-logo";
+
+const DEFAULT_APPLYFY_LOGO =
+  "https://play-lh.googleusercontent.com/GBYSf20osBl2a2Kpm_kN1EM9MhhBNJBM5syYac-d2IkpEL4nde5gjxVKuhMjFJM7Eg=w240-h480-rw";
 
 interface GatewayStatus {
   connected: boolean;
+  logoUrl: string | null;
 }
 
 interface StatusResponse {
@@ -15,7 +19,7 @@ interface StatusResponse {
 }
 
 export default function AdminIntegrationsIndexPage() {
-  const [status, setStatus] = useState<StatusResponse["gateways"] | null>(null);
+  const [applyfy, setApplyfy] = useState<GatewayStatus | null>(null);
   const [pendingRequests, setPendingRequests] = useState(0);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
@@ -25,12 +29,18 @@ export default function AdminIntegrationsIndexPage() {
       .then((r) => (r.ok ? r.json() : null))
       .then((d: StatusResponse | null) => {
         if (d) {
-          setStatus(d.gateways);
+          setApplyfy(d.gateways.applyfy);
           setPendingRequests(d.pendingRequests || 0);
         }
       })
       .finally(() => setLoading(false));
   }, []);
+
+  function handleLogoUpdated(url: string) {
+    setApplyfy((prev) =>
+      prev ? { ...prev, logoUrl: url } : { connected: false, logoUrl: url }
+    );
+  }
 
   return (
     <div className="max-w-5xl mx-auto">
@@ -66,7 +76,11 @@ export default function AdminIntegrationsIndexPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          <ApplyfyCard connected={!!status?.applyfy.connected} />
+          <ApplyfyCard
+            connected={!!applyfy?.connected}
+            logoUrl={applyfy?.logoUrl || DEFAULT_APPLYFY_LOGO}
+            onLogoUpdated={handleLogoUpdated}
+          />
           <RequestIntegrationCard onOpen={() => setModalOpen(true)} />
         </div>
       )}
@@ -76,21 +90,104 @@ export default function AdminIntegrationsIndexPage() {
   );
 }
 
-function ApplyfyCard({ connected }: { connected: boolean }) {
+function LogoEditButton({
+  gateway,
+  onUploaded,
+}: {
+  gateway: string;
+  onUploaded: (url: string) => void;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function onPick(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = "";
+    setError(null);
+    setUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      fd.append("gateway", gateway);
+      const res = await fetch("/api/admin/integrations/logo", {
+        method: "POST",
+        body: fd,
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(body?.error || "Erro no upload");
+        setTimeout(() => setError(null), 3000);
+        return;
+      }
+      onUploaded(body.url);
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          inputRef.current?.click();
+        }}
+        disabled={uploading}
+        aria-label="Editar logo"
+        className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 flex items-center justify-center shadow-md ring-2 ring-white dark:ring-gray-900 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity disabled:opacity-60"
+      >
+        {uploading ? (
+          <svg className="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" className="opacity-25" />
+            <path fill="currentColor" className="opacity-75" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+          </svg>
+        ) : (
+          <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+          </svg>
+        )}
+      </button>
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={onPick}
+      />
+      {error && (
+        <span
+          className="absolute left-0 -bottom-6 text-[10px] text-red-500 whitespace-nowrap"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {error}
+        </span>
+      )}
+    </>
+  );
+}
+
+function ApplyfyCard({
+  connected,
+  logoUrl,
+  onLogoUpdated,
+}: {
+  connected: boolean;
+  logoUrl: string;
+  onLogoUpdated: (url: string) => void;
+}) {
   return (
     <Link
       href="/admin/integrations/applyfy"
       className="group relative flex flex-col gap-3 p-5 rounded-xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200"
     >
       <div className="flex items-start justify-between gap-3">
-        <div className="w-12 h-12 rounded-xl overflow-hidden bg-white flex items-center justify-center flex-shrink-0 shadow-md ring-1 ring-gray-200 dark:ring-gray-800">
-          <Image
-            src="/images/applyfy-logo.png"
-            alt="Applyfy"
-            width={48}
-            height={48}
-            className="w-full h-full object-contain"
-          />
+        <div className="relative">
+          <GatewayLogo src={logoUrl} label="Applyfy" size={48} />
+          <LogoEditButton gateway="applyfy" onUploaded={onLogoUpdated} />
         </div>
         <span
           className={`text-[11px] font-medium px-2.5 py-1 rounded-full border ${

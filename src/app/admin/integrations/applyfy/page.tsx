@@ -2,8 +2,11 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { Skeleton } from "@/components/ui/skeleton";
+import { GatewayLogo } from "@/components/gateway-logo";
+
+const DEFAULT_APPLYFY_LOGO =
+  "https://play-lh.googleusercontent.com/GBYSf20osBl2a2Kpm_kN1EM9MhhBNJBM5syYac-d2IkpEL4nde5gjxVKuhMjFJM7Eg=w240-h480-rw";
 
 interface CourseRow {
   id: string;
@@ -57,6 +60,7 @@ export default function AdminIntegrationsPage() {
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [logoUrl, setLogoUrl] = useState<string>(DEFAULT_APPLYFY_LOGO);
 
   const webhookUrl = origin
     ? `${origin}/api/webhooks/applyfy`
@@ -92,10 +96,15 @@ export default function AdminIntegrationsPage() {
       fetch("/api/admin/integrations/courses").then((r) =>
         r.ok ? r.json() : { courses: [] }
       ),
+      fetch("/api/admin/integrations/status").then((r) =>
+        r.ok ? r.json() : null
+      ),
     ])
-      .then(([settings, coursesData]) => {
+      .then(([settings, coursesData, statusData]) => {
         setTokenStatus(settings.settings?.applyfy_token ?? null);
         setCourses(coursesData.courses || []);
+        const saved = statusData?.gateways?.applyfy?.logoUrl;
+        if (saved) setLogoUrl(saved);
       })
       .finally(() => setLoading(false));
 
@@ -190,15 +199,7 @@ export default function AdminIntegrationsPage() {
       </Link>
 
       <div className="mb-6 flex items-center gap-3">
-        <div className="w-12 h-12 rounded-lg overflow-hidden bg-white flex items-center justify-center flex-shrink-0 ring-1 ring-gray-200 dark:ring-gray-800">
-          <Image
-            src="/images/applyfy-logo.png"
-            alt="Applyfy"
-            width={48}
-            height={48}
-            className="w-full h-full object-contain"
-          />
-        </div>
+        <GatewayLogo src={logoUrl} label="Applyfy" size={48} />
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white leading-tight">
             Applyfy

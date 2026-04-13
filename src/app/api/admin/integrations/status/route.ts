@@ -8,7 +8,7 @@ export async function GET() {
 
     const [rows, pendingRequests] = await Promise.all([
       prisma.settings.findMany({
-        where: { key: { in: ["applyfy_token"] } },
+        where: { key: { in: ["applyfy_token", "applyfy_logo_url"] } },
         select: { key: true, value: true },
       }),
       prisma.integrationRequest.count({ where: { status: "PENDING" } }),
@@ -20,6 +20,7 @@ export async function GET() {
       gateways: {
         applyfy: {
           connected: !!(map.get("applyfy_token") || "").length,
+          logoUrl: map.get("applyfy_logo_url") || null,
         },
       },
       pendingRequests,
