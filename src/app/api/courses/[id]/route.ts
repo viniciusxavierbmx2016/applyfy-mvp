@@ -68,6 +68,8 @@ export async function PUT(
       thumbnail,
       bannerUrl,
       checkoutUrl,
+      price,
+      priceCurrency,
       externalProductId,
       isPublished,
       showInStore,
@@ -94,6 +96,17 @@ export async function PUT(
         ...(thumbnail !== undefined && { thumbnail }),
         ...(bannerUrl !== undefined && { bannerUrl }),
         ...(checkoutUrl !== undefined && { checkoutUrl }),
+        ...(price !== undefined && {
+          price:
+            price === null || price === ""
+              ? null
+              : typeof price === "number"
+                ? price
+                : Number(price) || null,
+        }),
+        ...(priceCurrency !== undefined && {
+          priceCurrency: priceCurrency || "BRL",
+        }),
         ...(externalProductId !== undefined && {
           externalProductId: externalProductId?.trim() || null,
         }),

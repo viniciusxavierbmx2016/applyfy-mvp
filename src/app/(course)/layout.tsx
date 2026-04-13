@@ -22,6 +22,7 @@ export default function CourseGroupLayout({
   const params = useParams<{ slug?: string }>();
   const slug = params?.slug;
   const [course, setCourse] = useState<CourseSummary | null>(null);
+  const [hasAccess, setHasAccess] = useState<boolean | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
 
@@ -45,6 +46,7 @@ export default function CourseGroupLayout({
           workspaceName: d.course.workspace?.name ?? null,
           workspaceLogo: d.course.workspace?.logoUrl ?? null,
         });
+        setHasAccess(!!d.hasAccess);
       })
       .catch(() => {});
   }, [slug]);
@@ -59,11 +61,18 @@ export default function CourseGroupLayout({
     });
   }
 
-  if (!course) {
+  if (!course || hasAccess === null) {
     return (
       <div className="min-h-screen bg-white dark:bg-gray-950 flex items-center justify-center">
         <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
       </div>
+    );
+  }
+
+  // Preview mode: no sidebar — the preview page owns the full viewport
+  if (!hasAccess) {
+    return (
+      <div className="min-h-screen bg-white dark:bg-gray-950">{children}</div>
     );
   }
 

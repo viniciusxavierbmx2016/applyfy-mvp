@@ -9,6 +9,7 @@ import {
   ModuleCarousel,
   type CarouselModule,
 } from "@/components/module-carousel";
+import { CoursePreview } from "@/components/course-preview";
 
 interface LessonItem {
   id: string;
@@ -45,6 +46,8 @@ interface CourseDetail {
   thumbnail: string | null;
   bannerUrl: string | null;
   checkoutUrl: string | null;
+  price: number | null;
+  priceCurrency: string | null;
   hasCertificate?: boolean;
   ratingAverage: number;
   ratingCount: number;
@@ -190,6 +193,41 @@ export default function CourseHomePage() {
       <div className="text-center py-16 px-4">
         <p className="text-gray-600 dark:text-gray-400">Curso não encontrado</p>
       </div>
+    );
+  }
+
+  // Pré-visualização para quem não tem acesso (página de vendas)
+  if (!hasAccess) {
+    return (
+      <CoursePreview
+        course={{
+          id: course.id,
+          title: course.title,
+          slug: course.slug,
+          description: course.description,
+          thumbnail: course.thumbnail,
+          bannerUrl: course.bannerUrl,
+          checkoutUrl: course.checkoutUrl,
+          price: course.price,
+          priceCurrency: course.priceCurrency,
+          ratingAverage: course.ratingAverage,
+          ratingCount: course.ratingCount,
+          modules: course.modules.map((m) => ({
+            id: m.id,
+            title: m.title,
+            order: m.order,
+            thumbnailUrl: m.thumbnailUrl,
+            sectionId: m.sectionId,
+            lessons: m.lessons.map((l) => ({
+              id: l.id,
+              title: l.title,
+              order: l.order,
+            })),
+          })),
+          sections: course.sections || [],
+        }}
+        myReview={myReview}
+      />
     );
   }
 

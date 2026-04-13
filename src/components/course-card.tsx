@@ -36,7 +36,7 @@ export function CourseCard({
     typeof ratingAverage === "number" &&
     typeof ratingCount === "number" &&
     ratingCount > 0;
-  const useCheckout = locked && !!checkoutUrl;
+  void checkoutUrl;
   const wrapperClassName = cn(
     "group block bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden hover:border-gray-400 dark:hover:border-gray-700 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200",
     className
@@ -118,7 +118,7 @@ export function CourseCard({
 
         {locked && (
           <p className="text-xs text-blue-400 font-medium flex items-center gap-1">
-            {useCheckout ? "Comprar agora" : "Ver detalhes"}
+            Ver detalhes
             <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>
@@ -128,18 +128,6 @@ export function CourseCard({
     </>
   );
 
-  if (useCheckout) {
-    return (
-      <a
-        href={checkoutUrl!}
-        target="_blank"
-        rel="noopener noreferrer"
-        className={wrapperClassName}
-      >
-        {inner}
-      </a>
-    );
-  }
   return (
     <Link href={`/course/${slug}`} className={wrapperClassName}>
       {inner}

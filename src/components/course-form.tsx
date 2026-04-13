@@ -14,6 +14,8 @@ interface CourseFormData {
   thumbnail: string | null;
   bannerUrl: string | null;
   checkoutUrl: string;
+  price: string;
+  priceCurrency: string;
   externalProductId: string;
   isPublished: boolean;
   showInStore: boolean;
@@ -37,6 +39,10 @@ export function CourseForm({ initial, mode }: CourseFormProps) {
     initial?.bannerUrl || null
   );
   const [checkoutUrl, setCheckoutUrl] = useState(initial?.checkoutUrl || "");
+  const [price, setPrice] = useState(initial?.price ?? "");
+  const [priceCurrency, setPriceCurrency] = useState(
+    initial?.priceCurrency || "BRL"
+  );
   const [externalProductId, setExternalProductId] = useState(
     initial?.externalProductId || ""
   );
@@ -65,6 +71,8 @@ export function CourseForm({ initial, mode }: CourseFormProps) {
       thumbnail,
       bannerUrl,
       checkoutUrl: checkoutUrl || null,
+      price: price === "" ? null : Number(price),
+      priceCurrency: priceCurrency || "BRL",
       externalProductId: externalProductId.trim() || null,
       isPublished,
       showInStore,
@@ -189,6 +197,40 @@ export function CourseForm({ initial, mode }: CourseFormProps) {
           <p className="text-xs text-gray-500 mt-1">
             Link externo onde o aluno será redirecionado ao clicar em &ldquo;Comprar agora&rdquo;
           </p>
+        </div>
+
+        <div className="grid grid-cols-[1fr_120px] gap-3">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Preço exibido
+            </label>
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              value={price}
+              onChange={(e) => setPrice(e.target.value)}
+              className="w-full px-4 py-2.5 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Ex: 497.00"
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              Apenas visual. Deixe em branco para exibir &ldquo;Consulte&rdquo;.
+            </p>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Moeda
+            </label>
+            <select
+              value={priceCurrency}
+              onChange={(e) => setPriceCurrency(e.target.value)}
+              className="w-full px-3 py-2.5 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="BRL">BRL</option>
+              <option value="USD">USD</option>
+              <option value="EUR">EUR</option>
+            </select>
+          </div>
         </div>
 
         <div>

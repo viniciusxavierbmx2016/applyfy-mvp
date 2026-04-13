@@ -70,6 +70,8 @@ model Course {
   thumbnail          String?
   bannerUrl          String?
   checkoutUrl        String?
+  price              Float?
+  priceCurrency      String    @default("BRL")
   externalProductId  String?   @unique
   isPublished        Boolean   @default(false)
   showInStore        Boolean   @default(true)
