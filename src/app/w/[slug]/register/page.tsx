@@ -52,7 +52,9 @@ export default function WorkspaceRegisterPage() {
         setLoading(false);
         return;
       }
-      router.push(`/w/${slug}/login`);
+      router.push(
+        `/verify-email?email=${encodeURIComponent(email)}&next=/w/${slug}/login`
+      );
     } catch {
       setError("Erro ao conectar com o servidor");
       setLoading(false);

@@ -4,9 +4,15 @@ import { useState } from "react";
 
 interface Props {
   label: string;
+  /** Optional path to land on after successful OAuth callback. */
+  next?: string;
+  /** Optional workspace slug to bind a STUDENT to on first login. */
+  slug?: string;
+  /** Optional role to assign to newly-created users (PRODUCER for producer flows). */
+  role?: "PRODUCER" | "STUDENT";
 }
 
-export function GoogleAuthButton({ label }: Props) {
+export function GoogleAuthButton({ label, next, slug, role }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -14,7 +20,11 @@ export function GoogleAuthButton({ label }: Props) {
     setError("");
     setLoading(true);
     try {
-      const res = await fetch("/api/auth/google", { method: "POST" });
+      const res = await fetch("/api/auth/google", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ next, slug, role }),
+      });
       const data = await res.json();
       if (!res.ok || !data.url) {
         setError(data.error || "Erro ao iniciar login com Google");
@@ -34,7 +44,7 @@ export function GoogleAuthButton({ label }: Props) {
         type="button"
         onClick={handleClick}
         disabled={loading}
-        className="w-full flex items-center justify-center gap-3 py-3 px-4 bg-white hover:bg-gray-100 disabled:opacity-60 text-gray-900 font-medium rounded-lg transition"
+        className="w-full flex items-center justify-center gap-3 py-3 px-4 bg-white hover:bg-gray-100 disabled:opacity-60 text-gray-900 font-medium rounded-lg transition border border-gray-200"
       >
         <svg className="w-5 h-5" viewBox="0 0 24 24" aria-hidden="true">
           <path

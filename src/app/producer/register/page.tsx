@@ -1,85 +1,60 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { useParams } from "next/navigation";
 import { GoogleAuthButton } from "@/components/google-auth-button";
 
-interface WorkspaceInfo {
-  id: string;
-  slug: string;
-  name: string;
-  logoUrl: string | null;
-  loginBgColor: string | null;
-}
-
-export default function WorkspaceLoginPage() {
-  const params = useParams<{ slug: string }>();
-  const slug = params.slug;
-  const [ws, setWs] = useState<WorkspaceInfo | null>(null);
+export default function ProducerRegisterPage() {
+  const router = useRouter();
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    fetch(`/api/w/${slug}`)
-      .then((r) => (r.ok ? r.json() : null))
-      .then((d) => d && setWs(d.workspace));
-  }, [slug]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
+    if (password.length < 6) {
+      setError("A senha precisa ter pelo menos 6 caracteres");
+      return;
+    }
+    if (password !== confirm) {
+      setError("As senhas não conferem");
+      return;
+    }
     setLoading(true);
     try {
-      const res = await fetch(`/api/w/${slug}/login`, {
+      const res = await fetch("/api/auth/register-producer", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ name, email, password }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setError(data.error || `Erro ao entrar (${res.status})`);
+        setError(data.error || "Erro ao criar conta");
         setLoading(false);
         return;
       }
-      window.location.href = `/w/${slug}`;
+      router.push(
+        `/verify-email?email=${encodeURIComponent(email)}&next=/admin/workspaces`
+      );
     } catch {
       setError("Erro ao conectar com o servidor");
       setLoading(false);
     }
   }
 
-  const bg = ws?.loginBgColor || undefined;
-  const displayName = ws?.name || "Workspace";
-
   return (
-    <div
-      className="min-h-screen flex items-center justify-center px-4 bg-white dark:bg-gray-950"
-      style={bg ? { backgroundColor: bg } : {}}
-    >
+    <div className="min-h-screen flex items-center justify-center bg-white dark:bg-gray-950 px-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="mx-auto w-16 h-16 rounded-2xl bg-white/10 backdrop-blur flex items-center justify-center overflow-hidden mb-3 shadow-lg">
-            {ws?.logoUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={ws.logoUrl}
-                alt={displayName}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <span className="text-2xl font-bold text-gray-800 dark:text-white">
-                {displayName.charAt(0).toUpperCase()}
-              </span>
-            )}
-          </div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-            {displayName}
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-2">Acesse sua conta</p>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Applyfy</h1>
+          <p className="text-sm font-medium text-blue-600 dark:text-blue-400 mt-2">
+            Seja um Produtor
+          </p>
         </div>
 
         <div className="bg-white dark:bg-gray-900 rounded-2xl p-8 shadow-xl border border-gray-200 dark:border-gray-800">
@@ -90,9 +65,9 @@ export default function WorkspaceLoginPage() {
           )}
 
           <GoogleAuthButton
-            label="Entrar com Google"
-            slug={slug}
-            next={`/w/${slug}`}
+            label="Cadastrar com Google"
+            next="/admin/workspaces"
+            role="PRODUCER"
           />
 
           <div className="relative my-6">
@@ -107,6 +82,20 @@ export default function WorkspaceLoginPage() {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Nome
+              </label>
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+                maxLength={80}
+                className="w-full px-4 py-3 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Seu nome"
+              />
+            </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Email
@@ -130,9 +119,24 @@ export default function WorkspaceLoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                autoComplete="current-password"
+                minLength={6}
+                autoComplete="new-password"
                 className="w-full px-4 py-3 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="••••••••"
+                placeholder="Mín. 6 caracteres"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Confirmar senha
+              </label>
+              <input
+                type="password"
+                value={confirm}
+                onChange={(e) => setConfirm(e.target.value)}
+                required
+                autoComplete="new-password"
+                className="w-full px-4 py-3 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Digite novamente"
               />
             </div>
             <button
@@ -140,24 +144,19 @@ export default function WorkspaceLoginPage() {
               disabled={loading}
               className="w-full py-3 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-medium rounded-lg transition"
             >
-              {loading ? "Entrando..." : "Entrar"}
+              {loading ? "Criando conta..." : "Criar conta de produtor"}
             </button>
           </form>
 
-          <div className="mt-6 flex items-center justify-between text-sm">
+          <p className="mt-6 text-center text-sm text-gray-600 dark:text-gray-400">
+            Já tem conta?{" "}
             <Link
-              href="/forgot-password"
-              className="text-blue-600 dark:text-blue-400 hover:underline"
+              href="/producer/login"
+              className="text-blue-600 dark:text-blue-400 hover:underline font-medium"
             >
-              Esqueci minha senha
+              Entrar
             </Link>
-            <Link
-              href={`/w/${slug}/register`}
-              className="text-blue-600 dark:text-blue-400 hover:underline"
-            >
-              Criar conta
-            </Link>
-          </div>
+          </p>
         </div>
       </div>
     </div>

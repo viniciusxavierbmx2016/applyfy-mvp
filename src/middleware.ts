@@ -1,7 +1,15 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-const publicRoutes = ["/login", "/register"];
+const publicRoutes = [
+  "/login",
+  "/register",
+  "/producer/login",
+  "/producer/register",
+  "/forgot-password",
+  "/reset-password",
+  "/verify-email",
+];
 
 const WINDOW_MS = 60 * 1000;
 const MAX_REQUESTS = 100;
@@ -115,7 +123,15 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  if (user && publicRoutes.includes(pathname)) {
+  // Redirect already-authenticated users away from login/register pages,
+  // but allow them to still reach password-reset / verify-email flows.
+  const redirectIfAuthed = [
+    "/login",
+    "/register",
+    "/producer/login",
+    "/producer/register",
+  ];
+  if (user && redirectIfAuthed.includes(pathname)) {
     const url = request.nextUrl.clone();
     url.pathname = "/";
     return NextResponse.redirect(url);
