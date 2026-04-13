@@ -192,7 +192,7 @@ export default function LessonPage({
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6">
+    <div className="px-4 sm:px-6 lg:px-8 py-5 lg:py-6 max-w-[1600px] mx-auto grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6">
       {/* Main content */}
       <div className="min-w-0">
         <div className="relative">
@@ -211,101 +211,107 @@ export default function LessonPage({
           <button
             type="button"
             onClick={() => setMobileSidebarOpen(true)}
-            className="w-full px-4 py-2.5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-gray-900 dark:text-white rounded-lg text-sm font-medium flex items-center justify-between"
+            className="w-full px-4 py-2.5 bg-white dark:bg-gray-900/60 border border-gray-200 dark:border-white/5 text-gray-900 dark:text-white rounded-xl text-sm font-medium flex items-center justify-between transition-all duration-200 hover:bg-gray-50 dark:hover:bg-white/5"
           >
             <span>Lista de aulas</span>
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M4 6h16M4 12h16M4 18h16"
-              />
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
             </svg>
           </button>
         </div>
 
         <div className="mt-6">
-          <p className="text-sm text-blue-400 font-medium mb-1">
+          <Link
+            href={`/course/${data.course.slug}`}
+            className="inline-block text-xs text-blue-500 hover:text-blue-400 font-medium tracking-wide transition-colors duration-200"
+          >
             {data.course.title}
-          </p>
-          <h1 className="text-xl lg:text-2xl font-bold text-gray-900 dark:text-white mb-2">
+          </Link>
+          <h1 className="text-xl lg:text-2xl font-semibold tracking-tight text-gray-900 dark:text-white mt-1">
             {data.lesson.title}
           </h1>
 
-          <div className="mt-6 flex flex-wrap items-center gap-3">
+          <div className="mt-5 flex flex-wrap items-center gap-2.5">
             <button
               type="button"
               onClick={() => markCompleted(!data.lesson.completed)}
               disabled={marking}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 disabled:opacity-50 ${
                 data.lesson.completed
-                  ? "bg-green-600/20 text-green-400 border border-green-600/40 hover:bg-green-600/30"
-                  : "bg-blue-600 text-white hover:bg-blue-700"
-              } disabled:opacity-50`}
+                  ? "bg-gradient-to-b from-emerald-500/15 to-emerald-500/10 text-emerald-600 dark:text-emerald-400 ring-1 ring-inset ring-emerald-500/20 hover:ring-emerald-500/40"
+                  : "bg-gradient-to-b from-emerald-500 to-emerald-600 text-white shadow-sm hover:from-emerald-500 hover:to-emerald-500 hover:shadow"
+              }`}
             >
-              {data.lesson.completed ? "✓ Concluída" : "Marcar como concluída"}
+              <span className="inline-flex items-center gap-1.5">
+                {data.lesson.completed && (
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                )}
+                {data.lesson.completed ? "Concluída" : "Marcar como concluída"}
+              </span>
             </button>
 
             {data.prev && (
               <Link
                 href={`/course/${data.course.slug}/lesson/${data.prev.id}`}
-                className="px-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-900 dark:text-white text-sm font-medium"
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border border-gray-200 dark:border-white/10 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-white/5 text-sm font-medium transition-all duration-200"
               >
-                ← Anterior
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" /></svg>
+                Anterior
               </Link>
             )}
             {data.next && (
               <Link
                 href={`/course/${data.course.slug}/lesson/${data.next.id}`}
-                className="px-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-900 dark:text-white text-sm font-medium"
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border border-gray-200 dark:border-white/10 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-white/5 text-sm font-medium transition-all duration-200"
               >
-                Próxima →
+                Próxima
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" /></svg>
               </Link>
             )}
           </div>
 
           {/* Tabs */}
-          <div className="mt-6 border-b border-gray-200 dark:border-gray-800 flex gap-1">
+          <div className="mt-6 border-b border-gray-200 dark:border-white/5 flex gap-6">
             <button
               type="button"
               onClick={() => setActiveTab("description")}
-              className={`px-4 py-2.5 text-sm font-medium border-b-2 transition ${
+              className={`relative px-0.5 py-2.5 text-sm font-medium transition-colors duration-200 ${
                 activeTab === "description"
-                  ? "border-blue-500 text-gray-900 dark:text-white"
-                  : "border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+                  ? "text-gray-900 dark:text-white"
+                  : "text-gray-500 hover:text-gray-900 dark:hover:text-white"
               }`}
             >
               Descrição
+              {activeTab === "description" && (
+                <span className="absolute inset-x-0 -bottom-px h-[2px] bg-blue-500 rounded-full" />
+              )}
             </button>
             <button
               type="button"
               onClick={() => setActiveTab("comments")}
-              className={`px-4 py-2.5 text-sm font-medium border-b-2 transition ${
+              className={`relative px-0.5 py-2.5 text-sm font-medium transition-colors duration-200 ${
                 activeTab === "comments"
-                  ? "border-blue-500 text-gray-900 dark:text-white"
-                  : "border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+                  ? "text-gray-900 dark:text-white"
+                  : "text-gray-500 hover:text-gray-900 dark:hover:text-white"
               }`}
             >
               Comentários
+              {activeTab === "comments" && (
+                <span className="absolute inset-x-0 -bottom-px h-[2px] bg-blue-500 rounded-full" />
+              )}
             </button>
           </div>
 
           <div className="mt-5">
             {activeTab === "description" ? (
               data.lesson.description ? (
-                <p className="text-gray-600 dark:text-gray-400 text-sm whitespace-pre-wrap">
+                <p className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed whitespace-pre-wrap">
                   {data.lesson.description}
                 </p>
               ) : (
-                <p className="text-gray-500 text-sm">
-                  Sem descrição para esta aula.
-                </p>
+                <p className="text-gray-500 text-sm">Sem descrição para esta aula.</p>
               )
             ) : (
               <LessonComments lessonId={data.lesson.id} />

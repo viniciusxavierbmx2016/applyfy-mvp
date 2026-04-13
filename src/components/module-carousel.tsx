@@ -54,19 +54,19 @@ export function ModuleCarousel({ title, modules }: Props) {
   return (
     <section className="mb-10">
       {title && (
-        <div className="flex items-center gap-3 mb-4 px-1">
-          <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white whitespace-nowrap">
+        <div className="flex items-center gap-4 mb-4 px-1">
+          <h2 className="text-xs font-semibold tracking-[0.14em] uppercase text-gray-400 dark:text-gray-500 whitespace-nowrap">
             {title}
           </h2>
-          <div className="flex-1 h-px bg-gray-200 dark:bg-gray-800" />
+          <div className="flex-1 h-px bg-gradient-to-r from-gray-200 via-gray-200 to-transparent dark:from-white/10 dark:via-white/10" />
           <div className="hidden sm:flex gap-2">
             <button
               onClick={() => scrollBy(-1)}
               disabled={!canLeft}
               aria-label="Anterior"
-              className="p-2 rounded-full bg-gray-100 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800 disabled:opacity-30 disabled:cursor-not-allowed transition"
+              className="p-2 rounded-full bg-gray-100 dark:bg-white/10 backdrop-blur text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-white/20 disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-200"
             >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
@@ -74,9 +74,9 @@ export function ModuleCarousel({ title, modules }: Props) {
               onClick={() => scrollBy(1)}
               disabled={!canRight}
               aria-label="Próximo"
-              className="p-2 rounded-full bg-gray-100 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800 disabled:opacity-30 disabled:cursor-not-allowed transition"
+              className="p-2 rounded-full bg-gray-100 dark:bg-white/10 backdrop-blur text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-white/20 disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-200"
             >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
               </svg>
             </button>
@@ -98,7 +98,7 @@ export function ModuleCarousel({ title, modules }: Props) {
 
 function ModuleCard({ mod }: { mod: CarouselModule }) {
   const content = (
-    <div className="relative w-full aspect-[9/16] rounded-xl overflow-hidden bg-gray-900 border border-gray-200 dark:border-gray-800 group-hover:border-blue-500/60 transition">
+    <div className="relative w-full aspect-[9/16] rounded-xl overflow-hidden bg-gray-900 shadow-md shadow-black/10 dark:shadow-black/40 ring-1 ring-black/5 dark:ring-white/5 group-hover:shadow-xl group-hover:shadow-black/20 dark:group-hover:shadow-black/60 transition-all duration-300">
       {mod.thumbnailUrl ? (
         <Image
           src={mod.thumbnailUrl}
@@ -116,14 +116,14 @@ function ModuleCard({ mod }: { mod: CarouselModule }) {
       )}
 
       {mod.progressPct >= 100 && !mod.locked && (
-        <div className="absolute top-3 right-3 w-7 h-7 rounded-full bg-green-500 text-white flex items-center justify-center shadow-lg ring-2 ring-white/40">
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+        <div className="absolute top-3 right-3 w-7 h-7 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-lg ring-2 ring-white/30">
+          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
           </svg>
         </div>
       )}
 
-      <div className="absolute top-3 left-1/2 -translate-x-1/2 px-2.5 py-0.5 rounded-full bg-black/60 backdrop-blur-sm text-[10px] font-bold uppercase tracking-wider text-white">
+      <div className="absolute top-3 left-1/2 -translate-x-1/2 px-2.5 py-[3px] rounded-full bg-black/40 backdrop-blur-md text-[10px] font-semibold uppercase tracking-[0.14em] text-white">
         Módulo
       </div>
 
@@ -144,11 +144,11 @@ function ModuleCard({ mod }: { mod: CarouselModule }) {
         </div>
       )}
 
-      <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black via-black/75 to-transparent pt-12">
-        <p className="text-sm sm:text-base font-bold text-white line-clamp-2 drop-shadow">
+      <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/90 via-black/60 to-transparent pt-16">
+        <p className="text-sm sm:text-base font-semibold tracking-tight text-white line-clamp-2 drop-shadow">
           {mod.title}
         </p>
-        <p className="text-[11px] text-white/80 mt-0.5">
+        <p className="text-xs text-gray-300 mt-1">
           {mod.lessonsTotal > 0
             ? `${mod.lessonsDone}/${mod.lessonsTotal} aulas`
             : "Sem aulas"}
@@ -165,8 +165,8 @@ function ModuleCard({ mod }: { mod: CarouselModule }) {
     </div>
   );
 
-  const className = `group shrink-0 snap-start basis-[65%] sm:basis-[32%] lg:basis-[23%] xl:basis-[19%] ${
-    mod.clickable ? "" : "cursor-not-allowed"
+  const className = `group shrink-0 snap-start basis-[65%] sm:basis-[32%] lg:basis-[23%] xl:basis-[19%] transition-transform duration-300 ${
+    mod.clickable ? "hover:scale-[1.03]" : "cursor-not-allowed"
   }`;
 
   if (!mod.clickable) {
