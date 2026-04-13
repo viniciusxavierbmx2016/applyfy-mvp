@@ -50,7 +50,10 @@ export async function GET(
       where: { courseId: params.id },
       orderBy: { order: "asc" },
     });
-    return NextResponse.json({ items });
+    return NextResponse.json(
+      { items },
+      { headers: { "Cache-Control": "private, max-age=300" } }
+    );
   } catch (error) {
     console.error("GET menu error:", error);
     return NextResponse.json({ error: "Erro" }, { status: 500 });

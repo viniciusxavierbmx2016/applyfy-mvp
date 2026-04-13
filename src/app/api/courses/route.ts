@@ -190,10 +190,18 @@ export async function GET(request: Request) {
       expiresAt: expiresAtMap.get(c.id) ?? null,
     });
 
-    return NextResponse.json({
-      enrolled: enrolled.map(withExpired),
-      store: store.map(withRating),
-    });
+    return NextResponse.json(
+      {
+        enrolled: enrolled.map(withExpired),
+        store: store.map(withRating),
+      },
+      {
+        headers: {
+          "Cache-Control":
+            "private, max-age=60, stale-while-revalidate=120",
+        },
+      }
+    );
   } catch (error) {
     const details =
       error instanceof Error

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useUserStore } from "@/stores/user-store";
@@ -82,8 +83,13 @@ export function WorkspaceShell({
             </button>
             <div className="w-9 h-9 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center overflow-hidden flex-shrink-0">
               {ws?.logoUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={ws.logoUrl} alt={displayName} className="w-full h-full object-cover" />
+                <Image
+                  src={ws.logoUrl}
+                  alt={displayName}
+                  width={36}
+                  height={36}
+                  className="w-full h-full object-cover"
+                />
               ) : (
                 <span className="text-sm font-bold text-gray-800 dark:text-white">
                   {displayName.charAt(0).toUpperCase()}

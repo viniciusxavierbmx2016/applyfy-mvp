@@ -112,21 +112,29 @@ export async function GET(
       return { ...m, firstIncompleteLesson };
     });
 
-    return NextResponse.json({
-      course: {
-        ...course,
-        modules: modulesWithResume,
-        ratingAverage: agg._avg.rating ?? 0,
-        ratingCount: agg._count.rating,
+    return NextResponse.json(
+      {
+        course: {
+          ...course,
+          modules: modulesWithResume,
+          ratingAverage: agg._avg.rating ?? 0,
+          ratingCount: agg._count.rating,
+        },
+        hasAccess,
+        isExpired,
+        enrollment,
+        myReview,
+        viewerWorkspace,
+        overrides: { modules: releasedModules, lessons: releasedLessons },
+        lastAccessedLesson,
       },
-      hasAccess,
-      isExpired,
-      enrollment,
-      myReview,
-      viewerWorkspace,
-      overrides: { modules: releasedModules, lessons: releasedLessons },
-      lastAccessedLesson,
-    });
+      {
+        headers: {
+          "Cache-Control":
+            "private, max-age=30, stale-while-revalidate=60",
+        },
+      }
+    );
   } catch (error) {
     console.error("GET /api/courses/by-slug/[slug] error:", error);
     return NextResponse.json(

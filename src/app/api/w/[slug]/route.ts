@@ -23,7 +23,14 @@ export async function GET(
         { status: 404 }
       );
     }
-    return NextResponse.json({ workspace });
+    return NextResponse.json(
+      { workspace },
+      {
+        headers: {
+          "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600",
+        },
+      }
+    );
   } catch (error) {
     console.error("GET /api/w/[slug] error:", error);
     return NextResponse.json({ error: "Erro" }, { status: 500 });

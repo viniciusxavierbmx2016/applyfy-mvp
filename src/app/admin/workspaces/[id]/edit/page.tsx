@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 
@@ -200,8 +201,13 @@ export default function EditWorkspacePage() {
               style={loginBgColor ? { backgroundColor: loginBgColor } : {}}
             >
               {logoUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={logoUrl} alt={name} className="w-full h-full object-cover" />
+                <Image
+                  src={logoUrl}
+                  alt={name}
+                  width={64}
+                  height={64}
+                  className="w-full h-full object-cover"
+                />
               ) : (
                 <span className="text-xl font-bold text-gray-700 dark:text-gray-300">
                   {name.charAt(0).toUpperCase() || "W"}
