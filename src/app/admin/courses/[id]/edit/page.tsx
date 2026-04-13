@@ -3,13 +3,20 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
 import { CourseForm } from "@/components/course-form";
 import { CourseEditTabs } from "@/components/course-edit-tabs";
-import {
-  ModulesManager,
-  type ModuleData,
-  type SectionData,
-} from "@/components/modules-manager";
+import type { ModuleData, SectionData } from "@/components/modules-manager";
+
+const ModulesManager = dynamic(
+  () => import("@/components/modules-manager").then((m) => m.ModulesManager),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-64 rounded-xl border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/40 animate-pulse" />
+    ),
+  }
+);
 
 interface CourseData {
   id: string;

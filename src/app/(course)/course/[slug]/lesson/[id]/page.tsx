@@ -3,7 +3,17 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { VideoPlayer } from "@/components/video-player";
+import dynamic from "next/dynamic";
+
+const VideoPlayer = dynamic(
+  () => import("@/components/video-player").then((m) => m.VideoPlayer),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="w-full aspect-video bg-black animate-pulse rounded-lg" />
+    ),
+  }
+);
 import { AutoplayCountdown } from "@/components/autoplay-countdown";
 import { LessonComments } from "@/components/lesson-comments";
 import {

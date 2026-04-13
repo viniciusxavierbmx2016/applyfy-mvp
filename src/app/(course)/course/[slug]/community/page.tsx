@@ -3,9 +3,19 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { PostCard, type PostItem } from "@/components/post-card";
-import { TiptapEditor } from "@/components/tiptap-editor";
 import { useUserStore } from "@/stores/user-store";
+
+const TiptapEditor = dynamic(
+  () => import("@/components/tiptap-editor").then((m) => m.TiptapEditor),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="min-h-[140px] rounded-lg border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/40 animate-pulse" />
+    ),
+  }
+);
 
 function htmlIsEmpty(html: string) {
   return !html.replace(/<[^>]*>/g, "").trim();
