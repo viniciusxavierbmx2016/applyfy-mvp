@@ -71,7 +71,12 @@ export async function GET(request: Request) {
     const posts = await prisma.post.findMany({
       where: { courseId: course.id },
       orderBy: [{ pinned: "desc" }, { createdAt: "desc" }],
-      include: {
+      select: {
+        id: true,
+        content: true,
+        type: true,
+        pinned: true,
+        createdAt: true,
         user: { select: { id: true, name: true, avatarUrl: true, role: true } },
         likes: { where: { userId: user.id }, select: { id: true } },
         _count: { select: { likes: true, comments: true } },

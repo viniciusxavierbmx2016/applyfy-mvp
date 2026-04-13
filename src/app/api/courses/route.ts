@@ -137,11 +137,15 @@ export async function GET(request: Request) {
       orderBy: { order: "asc" },
       include: {
         modules: {
-          include: {
+          select: {
+            id: true,
             lessons: {
-              include: {
+              select: {
+                id: true,
+                title: true,
                 progress: {
                   where: { userId: user.id },
+                  select: { completed: true },
                 },
               },
             },

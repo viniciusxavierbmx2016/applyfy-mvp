@@ -21,6 +21,14 @@ export async function GET(request: Request) {
         orderBy: { createdAt: "desc" },
         skip,
         take: PAGE_SIZE,
+        select: {
+          id: true,
+          type: true,
+          message: true,
+          link: true,
+          read: true,
+          createdAt: true,
+        },
       }),
       prisma.notification.count({ where: { userId: user.id } }),
       prisma.notification.count({

@@ -148,6 +148,7 @@ model Course {
 
   @@index([ownerId])
   @@index([workspaceId])
+  @@index([isPublished])
 }
 
 model MenuItem {
@@ -186,6 +187,7 @@ model Module {
   lessons   Lesson[]
 
   @@index([sectionId])
+  @@index([courseId, order])
 }
 
 model Section {
@@ -214,6 +216,8 @@ model Lesson {
 
   progress    LessonProgress[]
   comments    LessonComment[]
+
+  @@index([moduleId, order])
 }
 
 model Enrollment {
@@ -230,6 +234,8 @@ model Enrollment {
 
   @@unique([userId, courseId])
   @@index([expiresAt])
+  @@index([status])
+  @@index([courseId, status])
 }
 
 model EnrollmentOverride {
@@ -282,6 +288,9 @@ model Post {
   course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
   comments  Comment[]
   likes     Like[]
+
+  @@index([courseId, createdAt])
+  @@index([userId])
 }
 
 enum PostType {
@@ -300,6 +309,8 @@ model Comment {
 
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@index([postId, createdAt])
 }
 
 model Like {
@@ -337,6 +348,7 @@ model Notification {
 
   @@index([userId, read])
   @@index([userId, createdAt])
+  @@index([userId, read, createdAt])
 }
 
 enum NotificationType {
