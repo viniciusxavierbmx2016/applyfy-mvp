@@ -3,7 +3,6 @@
 import { useEditor, EditorContent, type Editor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
-import Link from "@tiptap/extension-link";
 import { useEffect } from "react";
 
 interface Props {
@@ -19,18 +18,18 @@ export function TiptapEditor({ value, onChange, placeholder }: Props) {
         heading: false,
         codeBlock: false,
         horizontalRule: false,
+        link: {
+          openOnClick: false,
+          autolink: true,
+          HTMLAttributes: {
+            class: "text-blue-400 underline hover:text-blue-300",
+            rel: "noopener noreferrer nofollow",
+            target: "_blank",
+          },
+        },
       }),
       Placeholder.configure({
         placeholder: placeholder || "Compartilhe algo com a turma...",
-      }),
-      Link.configure({
-        openOnClick: false,
-        autolink: true,
-        HTMLAttributes: {
-          class: "text-blue-400 underline hover:text-blue-300",
-          rel: "noopener noreferrer nofollow",
-          target: "_blank",
-        },
       }),
     ],
     content: value,
