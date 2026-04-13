@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface GatewayStatus {
@@ -10,10 +11,12 @@ interface GatewayStatus {
 
 interface StatusResponse {
   gateways: { applyfy: GatewayStatus };
+  pendingRequests: number;
 }
 
 export default function AdminIntegrationsIndexPage() {
   const [status, setStatus] = useState<StatusResponse["gateways"] | null>(null);
+  const [pendingRequests, setPendingRequests] = useState(0);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
 
@@ -21,20 +24,39 @@ export default function AdminIntegrationsIndexPage() {
     fetch("/api/admin/integrations/status")
       .then((r) => (r.ok ? r.json() : null))
       .then((d: StatusResponse | null) => {
-        if (d) setStatus(d.gateways);
+        if (d) {
+          setStatus(d.gateways);
+          setPendingRequests(d.pendingRequests || 0);
+        }
       })
       .finally(() => setLoading(false));
   }, []);
 
   return (
     <div className="max-w-5xl mx-auto">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
-          Integrações
-        </h1>
-        <p className="text-sm text-gray-600 dark:text-gray-400">
-          Conecte gateways de pagamento para liberar cursos automaticamente.
-        </p>
+      <div className="mb-6 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
+            Integrações
+          </h1>
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            Conecte gateways de pagamento para liberar cursos automaticamente.
+          </p>
+        </div>
+        <Link
+          href="/admin/integrations/requests"
+          className="inline-flex items-center gap-2 self-start px-3.5 py-2 rounded-lg bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700 text-sm font-medium text-gray-700 dark:text-gray-200 transition"
+        >
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+          </svg>
+          Ver solicitações
+          {pendingRequests > 0 && (
+            <span className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-[11px] font-semibold rounded-full bg-amber-500 text-white">
+              {pendingRequests}
+            </span>
+          )}
+        </Link>
       </div>
 
       {loading ? (
@@ -61,10 +83,14 @@ function ApplyfyCard({ connected }: { connected: boolean }) {
       className="group relative flex flex-col gap-3 p-5 rounded-xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200"
     >
       <div className="flex items-start justify-between gap-3">
-        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center flex-shrink-0 shadow-md shadow-indigo-500/20">
-          <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M13 10V3L4 14h7v7l9-11h-7z" />
-          </svg>
+        <div className="w-12 h-12 rounded-xl overflow-hidden bg-white flex items-center justify-center flex-shrink-0 shadow-md ring-1 ring-gray-200 dark:ring-gray-800">
+          <Image
+            src="/images/applyfy-logo.png"
+            alt="Applyfy"
+            width={48}
+            height={48}
+            className="w-full h-full object-contain"
+          />
         </div>
         <span
           className={`text-[11px] font-medium px-2.5 py-1 rounded-full border ${

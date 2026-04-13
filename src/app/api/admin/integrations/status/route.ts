@@ -6,10 +6,13 @@ export async function GET() {
   try {
     await requireAdmin();
 
-    const rows = await prisma.settings.findMany({
-      where: { key: { in: ["applyfy_token"] } },
-      select: { key: true, value: true },
-    });
+    const [rows, pendingRequests] = await Promise.all([
+      prisma.settings.findMany({
+        where: { key: { in: ["applyfy_token"] } },
+        select: { key: true, value: true },
+      }),
+      prisma.integrationRequest.count({ where: { status: "PENDING" } }),
+    ]);
 
     const map = new Map(rows.map((r) => [r.key, r.value]));
 
@@ -19,6 +22,7 @@ export async function GET() {
           connected: !!(map.get("applyfy_token") || "").length,
         },
       },
+      pendingRequests,
     });
   } catch (error) {
     const msg = error instanceof Error ? error.message : "";
