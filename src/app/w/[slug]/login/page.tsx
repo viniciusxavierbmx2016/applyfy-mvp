@@ -23,6 +23,12 @@ export default function WorkspaceLoginPage() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    if (typeof window === "undefined") return;
+    const err = new URL(window.location.href).searchParams.get("error");
+    if (err) setError(err);
+  }, []);
+
+  useEffect(() => {
     fetch(`/api/w/${slug}`)
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => d && setWs(d.workspace));

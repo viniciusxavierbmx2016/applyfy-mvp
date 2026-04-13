@@ -68,7 +68,15 @@ export default function WorkspaceVitrinePage() {
     }
     async function load() {
       try {
-        const res = await fetch("/api/courses");
+        const res = await fetch(`/api/courses?workspace=${encodeURIComponent(slug)}`);
+        if (res.status === 403) {
+          // Student belongs to another workspace — bounce to login with msg.
+          await fetch("/api/auth/logout", { method: "POST" }).catch(() => {});
+          router.replace(
+            `/w/${slug}/login?error=${encodeURIComponent("Você não tem acesso a esta área de membros")}`
+          );
+          return;
+        }
         if (res.ok) {
           const data = await res.json();
           setEnrolled(data.enrolled || []);

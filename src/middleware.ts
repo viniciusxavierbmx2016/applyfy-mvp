@@ -120,7 +120,10 @@ export async function middleware(request: NextRequest) {
 
   if (!user && !isPublic) {
     const url = request.nextUrl.clone();
-    url.pathname = "/login";
+    // Workspace area: send unauth'd visitors to that workspace's own login,
+    // not the global /login. Keeps the branded flow intact.
+    const wsMatch = pathname.match(/^\/w\/([^/]+)/);
+    url.pathname = wsMatch ? `/w/${wsMatch[1]}/login` : "/login";
     return NextResponse.redirect(url);
   }
 

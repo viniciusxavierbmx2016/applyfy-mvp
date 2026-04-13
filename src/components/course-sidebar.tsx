@@ -183,7 +183,7 @@ export function CourseSidebar({
               const href = isExternal
                 ? item.url
                 : item.url.startsWith("/")
-                  ? item.url.replace(/\/:slug/g, course.slug)
+                  ? item.url.replace(/:slug/g, course.slug)
                   : `/course/${course.slug}/${item.url}`;
               const isActive =
                 !isExternal &&

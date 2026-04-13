@@ -48,6 +48,23 @@ export default function EditWorkspacePage() {
     setTimeout(() => setToast(null), 2500);
   }
 
+  function workspaceUrl() {
+    const slug = ws?.slug || "";
+    if (typeof window !== "undefined") {
+      return `${window.location.origin}/w/${slug}`;
+    }
+    return `https://applyfy-mvp.vercel.app/w/${slug}`;
+  }
+
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(workspaceUrl());
+      showToast("Link copiado!");
+    } catch {
+      showToast("Não foi possível copiar");
+    }
+  }
+
   async function onPickLogo(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -137,6 +154,31 @@ export default function EditWorkspacePage() {
           Editar workspace
         </h1>
         <p className="text-sm text-gray-500 font-mono mt-1">/w/{ws.slug}</p>
+      </div>
+
+      <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-5 sm:p-6 mb-4">
+        <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
+          Link do workspace
+        </p>
+        <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+          Compartilhe este link com seus alunos
+        </p>
+        <div className="flex items-stretch gap-2">
+          <input
+            type="text"
+            readOnly
+            value={workspaceUrl()}
+            onFocus={(e) => e.currentTarget.select()}
+            className="flex-1 min-w-0 px-3 py-2 text-xs font-mono bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          />
+          <button
+            type="button"
+            onClick={copyLink}
+            className="px-3 py-2 text-xs font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex-shrink-0"
+          >
+            Copiar link
+          </button>
+        </div>
       </div>
 
       <form

@@ -32,6 +32,22 @@ export default function AdminWorkspacesPage() {
     setTimeout(() => setToast(null), 2500);
   }
 
+  function workspaceUrl(slug: string) {
+    if (typeof window !== "undefined") {
+      return `${window.location.origin}/w/${slug}`;
+    }
+    return `https://applyfy-mvp.vercel.app/w/${slug}`;
+  }
+
+  async function copyLink(slug: string) {
+    try {
+      await navigator.clipboard.writeText(workspaceUrl(slug));
+      showToast("Link copiado!");
+    } catch {
+      showToast("Não foi possível copiar");
+    }
+  }
+
   async function toggleActive(ws: WorkspaceRow) {
     if (
       ws.isActive &&
@@ -155,6 +171,28 @@ export default function AdminWorkspacesPage() {
                   <p className="text-xs text-gray-500 mt-0.5 truncate">
                     /w/{ws.slug}
                   </p>
+                </div>
+              </div>
+
+              <div className="px-4 pb-3">
+                <p className="text-[11px] font-medium text-gray-500 dark:text-gray-400 mb-1.5">
+                  Compartilhe este link com seus alunos
+                </p>
+                <div className="flex items-stretch gap-1.5">
+                  <input
+                    type="text"
+                    readOnly
+                    value={workspaceUrl(ws.slug)}
+                    onFocus={(e) => e.currentTarget.select()}
+                    className="flex-1 min-w-0 px-2.5 py-1.5 text-[11px] font-mono bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => copyLink(ws.slug)}
+                    className="px-2.5 py-1.5 text-[11px] font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-md flex-shrink-0"
+                  >
+                    Copiar
+                  </button>
                 </div>
               </div>
 

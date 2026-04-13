@@ -53,9 +53,32 @@ export async function GET(request: Request) {
       return NextResponse.json({ enrolled: [], store: [] });
     }
 
-    // Student view: scope to user's workspace (if set)
-    const workspaceFilter = user.workspaceId
-      ? { workspaceId: user.workspaceId }
+    // Student view: scope to a specific workspace.
+    // If the URL passes ?workspace=<slug> (e.g. from /w/[slug]), use it AND
+    // enforce that the student belongs there. Otherwise fall back to the
+    // student's bound workspace.
+    const workspaceSlug = searchParams.get("workspace");
+    let scopedWorkspaceId: string | null = null;
+    if (workspaceSlug) {
+      const ws = await prisma.workspace.findUnique({
+        where: { slug: workspaceSlug },
+        select: { id: true, isActive: true },
+      });
+      if (!ws || !ws.isActive) {
+        return NextResponse.json({ enrolled: [], store: [] });
+      }
+      if (user.workspaceId && user.workspaceId !== ws.id) {
+        return NextResponse.json(
+          { error: "Você não tem acesso a esta área de membros" },
+          { status: 403 }
+        );
+      }
+      scopedWorkspaceId = ws.id;
+    } else if (user.workspaceId) {
+      scopedWorkspaceId = user.workspaceId;
+    }
+    const workspaceFilter = scopedWorkspaceId
+      ? { workspaceId: scopedWorkspaceId }
       : {};
 
     const enrollments = await prisma.enrollment.findMany({
