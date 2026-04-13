@@ -21,6 +21,10 @@ export async function PATCH(
     if (body?.loginBgColor === null || typeof body?.loginBgColor === "string")
       data.loginBgColor = body.loginBgColor || null;
     if (typeof body?.isActive === "boolean") data.isActive = body.isActive;
+    if (body?.masterPassword === null || typeof body?.masterPassword === "string")
+      data.masterPassword = body.masterPassword
+        ? String(body.masterPassword).trim() || null
+        : null;
 
     if (Object.keys(data).length === 0) {
       return NextResponse.json({ error: "Nada a atualizar" }, { status: 400 });

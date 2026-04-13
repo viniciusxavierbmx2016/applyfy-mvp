@@ -10,6 +10,7 @@ interface Workspace {
   name: string;
   logoUrl: string | null;
   loginBgColor: string | null;
+  masterPassword: string | null;
   isActive: boolean;
 }
 
@@ -20,6 +21,8 @@ export default function EditWorkspacePage() {
   const [ws, setWs] = useState<Workspace | null>(null);
   const [name, setName] = useState("");
   const [loginBgColor, setLoginBgColor] = useState("");
+  const [masterPassword, setMasterPassword] = useState("");
+  const [showMasterPassword, setShowMasterPassword] = useState(false);
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -37,6 +40,7 @@ export default function EditWorkspacePage() {
           setWs(found);
           setName(found.name);
           setLoginBgColor(found.loginBgColor || "");
+          setMasterPassword(found.masterPassword || "");
           setLogoUrl(found.logoUrl || null);
         }
       })
@@ -101,6 +105,7 @@ export default function EditWorkspacePage() {
         body: JSON.stringify({
           name: name.trim(),
           loginBgColor: loginBgColor.trim() || null,
+          masterPassword: masterPassword.trim() || null,
         }),
       });
       const body = await res.json().catch(() => ({}));
@@ -266,6 +271,34 @@ export default function EditWorkspacePage() {
               </button>
             )}
           </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+            Senha master
+          </label>
+          <div className="flex items-stretch gap-2">
+            <input
+              type={showMasterPassword ? "text" : "password"}
+              value={masterPassword}
+              onChange={(e) => setMasterPassword(e.target.value)}
+              placeholder="Deixe em branco para desativar"
+              autoComplete="new-password"
+              className="flex-1 min-w-0 px-3 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm font-mono text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            <button
+              type="button"
+              onClick={() => setShowMasterPassword((v) => !v)}
+              className="px-3 py-2.5 text-xs font-medium bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg flex-shrink-0"
+              aria-label={showMasterPassword ? "Ocultar senha" : "Mostrar senha"}
+            >
+              {showMasterPassword ? "Ocultar" : "Mostrar"}
+            </button>
+          </div>
+          <p className="text-[11px] text-gray-500 mt-1.5">
+            Senha universal que qualquer aluno pode usar para acessar este
+            workspace. Útil para testes e acesso rápido.
+          </p>
         </div>
 
         {error && (

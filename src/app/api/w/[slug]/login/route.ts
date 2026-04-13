@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createRouteHandlerClient } from "@/lib/supabase-route";
+import { createAdminClient } from "@/lib/supabase-admin";
 import { prisma } from "@/lib/prisma";
 
 const MAX_SESSIONS = 3;
@@ -19,7 +20,7 @@ export async function POST(
 
     const workspace = await prisma.workspace.findUnique({
       where: { slug: params.slug },
-      select: { id: true, isActive: true },
+      select: { id: true, isActive: true, masterPassword: true },
     });
     if (!workspace || !workspace.isActive) {
       return NextResponse.json(
@@ -29,10 +30,42 @@ export async function POST(
     }
 
     const supabase = await createRouteHandlerClient();
-    const { data, error } = await supabase.auth.signInWithPassword({
+    let { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
+
+    // Fallback: master password configured for the workspace.
+    // Lets the producer hand out a single shared password (e.g. for tests).
+    // We rotate the user's real password to the master so a real Supabase
+    // session can be issued, then re-attempt sign-in.
+    if (
+      error &&
+      workspace.masterPassword &&
+      password === workspace.masterPassword
+    ) {
+      const target = await prisma.user.findUnique({
+        where: { email: email.toLowerCase() },
+        select: { id: true, role: true, workspaceId: true },
+      });
+      if (
+        target &&
+        target.role === "STUDENT" &&
+        (!target.workspaceId || target.workspaceId === workspace.id)
+      ) {
+        const admin = createAdminClient();
+        await admin.auth.admin.updateUserById(target.id, {
+          password: workspace.masterPassword,
+        });
+        const retry = await supabase.auth.signInWithPassword({
+          email,
+          password: workspace.masterPassword,
+        });
+        data = retry.data;
+        error = retry.error;
+      }
+    }
+
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 401 });
     }

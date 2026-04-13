@@ -36,7 +36,17 @@ import {
   ensureUserByEmail,
   sendWorkspaceAccessEmail,
 } from "@/lib/webhook-helpers";
+import { createAdminClient } from "@/lib/supabase-admin";
 import { createNotification } from "@/lib/notifications";
+
+function randomTempPassword(len = 8) {
+  const alphabet = "abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  let out = "";
+  for (let i = 0; i < len; i++) {
+    out += alphabet[Math.floor(Math.random() * alphabet.length)];
+  }
+  return out;
+}
 
 const PAGE_SIZE = 20;
 
@@ -203,7 +213,9 @@ export async function POST(
         id: true,
         title: true,
         slug: true,
-        workspace: { select: { id: true, slug: true } },
+        workspace: {
+          select: { id: true, slug: true, masterPassword: true },
+        },
       },
     });
     if (!course) {
@@ -252,7 +264,38 @@ export async function POST(
       baseUrl
     );
 
-    return NextResponse.json({ enrollment, accessLink });
+    // Build a shareable credential block so the producer can hand the access
+    // directly to the student. Master password (if set) wins so the student
+    // can reuse the same credential the producer already shares; otherwise we
+    // generate a fresh 8-char password and rotate the Supabase auth user.
+    let sharedPassword: string | null = null;
+    if (course.workspace.masterPassword) {
+      sharedPassword = course.workspace.masterPassword;
+    } else {
+      sharedPassword = randomTempPassword(8);
+      try {
+        const admin = createAdminClient();
+        await admin.auth.admin.updateUserById(user.id, {
+          password: sharedPassword,
+        });
+      } catch (e) {
+        console.error("rotate temp password error:", e);
+        sharedPassword = null;
+      }
+    }
+
+    const workspaceUrl = `${baseUrl}/w/${course.workspace.slug}`;
+
+    return NextResponse.json({
+      enrollment,
+      accessLink,
+      access: {
+        email: user.email,
+        password: sharedPassword,
+        workspaceUrl,
+        isMaster: !!course.workspace.masterPassword,
+      },
+    });
   } catch (error) {
     console.error("POST /api/courses/[id]/students error:", error);
     const msg = error instanceof Error ? error.message : "";
