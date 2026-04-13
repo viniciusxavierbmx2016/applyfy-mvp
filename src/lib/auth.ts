@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { createServerSupabaseClient } from "./supabase-server";
 import { prisma } from "./prisma";
 import type { Enrollment, User } from "@prisma/client";
@@ -114,10 +115,11 @@ export async function getSession() {
   return session;
 }
 
-export async function getCurrentUser(): Promise<User | null> {
+// React `cache()` deduplicates within a single request — multiple calls
+// (getCurrentUser + requireAuth + requireStaff in the same handler) now hit
+// Supabase Auth + Prisma exactly once per request.
+export const getCurrentUser = cache(async (): Promise<User | null> => {
   const supabase = await createServerSupabaseClient();
-  // Use getUser() (not getSession) — it validates the JWT with the Auth server,
-  // so it's reliable across middleware cookie refreshes on Vercel.
   const {
     data: { user: authUser },
   } = await supabase.auth.getUser();
@@ -128,7 +130,7 @@ export async function getCurrentUser(): Promise<User | null> {
   });
 
   return user;
-}
+});
 
 export async function requireAuth(): Promise<User> {
   const user = await getCurrentUser();

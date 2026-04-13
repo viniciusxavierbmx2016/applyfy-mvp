@@ -1,7 +1,6 @@
-import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-const publicRoutes = [
+const publicRoutes = new Set([
   "/login",
   "/register",
   "/producer/login",
@@ -9,140 +8,62 @@ const publicRoutes = [
   "/forgot-password",
   "/reset-password",
   "/verify-email",
-];
+]);
 
-const WINDOW_MS = 60 * 1000;
-const MAX_REQUESTS = 100;
+const redirectIfAuthed = new Set([
+  "/login",
+  "/register",
+  "/producer/login",
+  "/producer/register",
+]);
 
-interface Bucket {
-  count: number;
-  resetAt: number;
-}
-const buckets = new Map<string, Bucket>();
-
-function getIp(request: NextRequest): string {
-  const fwd = request.headers.get("x-forwarded-for");
-  if (fwd) return fwd.split(",")[0].trim();
-  return request.headers.get("x-real-ip") || "unknown";
-}
-
-function applyRateLimit(request: NextRequest): NextResponse | null {
-  const ip = getIp(request);
-  const now = Date.now();
-  let bucket = buckets.get(ip);
-  if (!bucket || bucket.resetAt < now) {
-    bucket = { count: 0, resetAt: now + WINDOW_MS };
-    buckets.set(ip, bucket);
+function hasSessionCookie(request: NextRequest): boolean {
+  for (const cookie of request.cookies.getAll()) {
+    if (
+      cookie.name.startsWith("sb-") &&
+      cookie.name.endsWith("-auth-token") &&
+      cookie.value
+    ) {
+      return true;
+    }
   }
-  bucket.count++;
-  if (bucket.count > MAX_REQUESTS) {
-    return NextResponse.json(
-      { error: "Muitas requisições. Tente novamente em instantes." },
-      {
-        status: 429,
-        headers: {
-          "Retry-After": Math.ceil((bucket.resetAt - now) / 1000).toString(),
-          "X-RateLimit-Limit": MAX_REQUESTS.toString(),
-          "X-RateLimit-Remaining": "0",
-        },
-      }
-    );
-  }
-  if (buckets.size > 5000) {
-    buckets.forEach((b, k) => {
-      if (b.resetAt < now) buckets.delete(k);
-    });
-  }
-  return null;
+  return false;
 }
 
-export async function middleware(request: NextRequest) {
+export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Rate limit — apenas para /api/* (exceto webhooks externos)
-  if (pathname.startsWith("/api/") && !pathname.startsWith("/api/webhooks/")) {
-    const limited = applyRateLimit(request);
-    if (limited) return limited;
-  }
-
-  // Webhooks são servidor-a-servidor, sem cookies Supabase. Skip session refresh.
-  if (pathname.startsWith("/api/webhooks/")) {
+  // API routes: auth is enforced per-handler. Middleware does nothing.
+  if (pathname.startsWith("/api/")) {
     return NextResponse.next();
   }
 
-  let supabaseResponse = NextResponse.next({ request });
+  const authed = hasSessionCookie(request);
 
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll();
-        },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) =>
-            request.cookies.set(name, value)
-          );
-          supabaseResponse = NextResponse.next({ request });
-          cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options)
-          );
-        },
-      },
-    }
-  );
-
-  // getUser() refresca o access_token se necessário e, via setAll, grava os
-  // cookies rotacionados em supabaseResponse — essencial no Vercel onde o
-  // refresh_token é one-time-use.
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  // Para rotas /api/* só renovamos cookies — a autorização fica no handler.
-  if (pathname.startsWith("/api/")) {
-    return supabaseResponse;
-  }
-
-  // /w/[slug]/login, /register, /forgot-password, /reset-password are public.
-  // /w/[slug] itself (vitrine) requires auth — handled client-side redirect.
   const isWorkspacePublic =
     /^\/w\/[^/]+\/(login|register|forgot-password|reset-password)\/?$/.test(
       pathname
     );
-
   const isPublic =
-    publicRoutes.includes(pathname) ||
+    publicRoutes.has(pathname) ||
     pathname.startsWith("/verify/") ||
     pathname.startsWith("/invite/") ||
     isWorkspacePublic;
 
-  if (!user && !isPublic) {
+  if (!authed && !isPublic) {
     const url = request.nextUrl.clone();
-    // Workspace area: send unauth'd visitors to that workspace's own login,
-    // not the global /login. Keeps the branded flow intact.
     const wsMatch = pathname.match(/^\/w\/([^/]+)/);
     url.pathname = wsMatch ? `/w/${wsMatch[1]}/login` : "/login";
     return NextResponse.redirect(url);
   }
 
-  // Redirect already-authenticated users away from login/register pages,
-  // but allow them to still reach password-reset / verify-email flows.
-  const redirectIfAuthed = [
-    "/login",
-    "/register",
-    "/producer/login",
-    "/producer/register",
-  ];
-  if (user && redirectIfAuthed.includes(pathname)) {
+  if (authed && redirectIfAuthed.has(pathname)) {
     const url = request.nextUrl.clone();
     url.pathname = "/";
     return NextResponse.redirect(url);
   }
 
-  // Authed student landing back on /w/[slug]/login should bounce to vitrine.
-  if (user) {
+  if (authed) {
     const wsLoginMatch = pathname.match(/^\/w\/([^/]+)\/login\/?$/);
     if (wsLoginMatch) {
       const url = request.nextUrl.clone();
@@ -151,7 +72,7 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  return supabaseResponse;
+  return NextResponse.next();
 }
 
 export const config = {
