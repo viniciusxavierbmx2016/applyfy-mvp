@@ -5,6 +5,8 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { ProgressBar } from "@/components/progress-bar";
+import { ReviewsSection } from "@/components/reviews-section";
+import { StarRating } from "@/components/star-rating";
 import { calculateCourseProgress } from "@/lib/utils";
 
 interface LessonItem {
@@ -32,7 +34,14 @@ interface CourseDetail {
   thumbnail: string | null;
   checkoutUrl: string | null;
   hasCertificate?: boolean;
+  ratingAverage: number;
+  ratingCount: number;
   modules: ModuleItem[];
+}
+
+interface MyReview {
+  rating: number;
+  comment: string | null;
 }
 
 export default function CourseDetailPage() {
@@ -40,6 +49,7 @@ export default function CourseDetailPage() {
   const router = useRouter();
   const [course, setCourse] = useState<CourseDetail | null>(null);
   const [hasAccess, setHasAccess] = useState(false);
+  const [myReview, setMyReview] = useState<MyReview | null>(null);
   const [loading, setLoading] = useState(true);
   const [openModules, setOpenModules] = useState<Set<string>>(new Set());
 
@@ -51,6 +61,7 @@ export default function CourseDetailPage() {
           const data = await res.json();
           setCourse(data.course);
           setHasAccess(data.hasAccess);
+          setMyReview(data.myReview ?? null);
           if (data.course?.modules?.[0]) {
             setOpenModules(new Set([data.course.modules[0].id]));
           }
@@ -132,6 +143,17 @@ export default function CourseDetailPage() {
             <h1 className="text-3xl lg:text-4xl font-bold text-white">
               {course.title}
             </h1>
+            {course.ratingCount > 0 && (
+              <div className="flex items-center gap-2 mt-2">
+                <StarRating value={course.ratingAverage} size="sm" />
+                <span className="text-sm text-white font-medium">
+                  {course.ratingAverage.toFixed(1)}
+                </span>
+                <span className="text-xs text-gray-300">
+                  ({course.ratingCount} avaliaç{course.ratingCount === 1 ? "ão" : "ões"})
+                </span>
+              </div>
+            )}
           </div>
         </div>
 
@@ -180,6 +202,14 @@ export default function CourseDetailPage() {
                 </div>
               </div>
             )}
+
+            <ReviewsSection
+              courseId={course.id}
+              initialAverage={course.ratingAverage}
+              initialCount={course.ratingCount}
+              myReview={null}
+              canReview={false}
+            />
           </div>
 
           {/* CTA de compra */}
@@ -465,6 +495,14 @@ export default function CourseDetailPage() {
           </div>
         )}
       </div>
+
+      <ReviewsSection
+        courseId={course.id}
+        initialAverage={course.ratingAverage}
+        initialCount={course.ratingCount}
+        myReview={myReview}
+        canReview
+      />
     </div>
   );
 }

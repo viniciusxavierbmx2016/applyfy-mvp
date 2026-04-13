@@ -47,7 +47,27 @@ export async function GET(
     const hasAccess =
       user.role === "ADMIN" || enrollment?.status === "ACTIVE";
 
-    return NextResponse.json({ course, hasAccess, enrollment });
+    const [agg, myReview] = await Promise.all([
+      prisma.review.aggregate({
+        where: { courseId: course.id },
+        _avg: { rating: true },
+        _count: { rating: true },
+      }),
+      prisma.review.findUnique({
+        where: { userId_courseId: { userId: user.id, courseId: course.id } },
+      }),
+    ]);
+
+    return NextResponse.json({
+      course: {
+        ...course,
+        ratingAverage: agg._avg.rating ?? 0,
+        ratingCount: agg._count.rating,
+      },
+      hasAccess,
+      enrollment,
+      myReview,
+    });
   } catch (error) {
     console.error("GET /api/courses/by-slug/[slug] error:", error);
     return NextResponse.json(

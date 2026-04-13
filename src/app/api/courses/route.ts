@@ -95,7 +95,31 @@ export async function GET(request: Request) {
       orderBy: { order: "asc" },
     });
 
-    return NextResponse.json({ enrolled, store });
+    const allCourseIds = [...enrolled.map((c) => c.id), ...store.map((c) => c.id)];
+    const ratings = allCourseIds.length
+      ? await prisma.review.groupBy({
+          by: ["courseId"],
+          where: { courseId: { in: allCourseIds } },
+          _avg: { rating: true },
+          _count: { rating: true },
+        })
+      : [];
+    const ratingMap = new Map(
+      ratings.map((r) => [
+        r.courseId,
+        { average: r._avg.rating ?? 0, count: r._count.rating },
+      ])
+    );
+    const withRating = <T extends { id: string }>(c: T) => ({
+      ...c,
+      ratingAverage: ratingMap.get(c.id)?.average ?? 0,
+      ratingCount: ratingMap.get(c.id)?.count ?? 0,
+    });
+
+    return NextResponse.json({
+      enrolled: enrolled.map(withRating),
+      store: store.map(withRating),
+    });
   } catch (error) {
     console.error("GET /api/courses error:", error);
     return NextResponse.json(

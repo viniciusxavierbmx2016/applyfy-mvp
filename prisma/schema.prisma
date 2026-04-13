@@ -28,6 +28,7 @@ model User {
   sessions       Session[]
   notifications  Notification[]
   certificates   Certificate[]
+  reviews        Review[]
 }
 
 enum Role {
@@ -54,6 +55,7 @@ model Course {
   enrollments   Enrollment[]
   posts         Post[]
   certificates  Certificate[]
+  reviews       Review[]
 }
 
 model Settings {
@@ -207,6 +209,22 @@ model Certificate {
   course     Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
 
   @@unique([userId, courseId])
+}
+
+model Review {
+  id        String   @id @default(uuid())
+  userId    String
+  courseId  String
+  rating    Int
+  comment   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, courseId])
+  @@index([courseId, createdAt])
 }
 
 model Session {

@@ -12,6 +12,8 @@ interface EnrolledCourse {
   slug: string;
   description: string;
   thumbnail: string | null;
+  ratingAverage?: number;
+  ratingCount?: number;
   modules: Array<{
     lessons: Array<{
       id: string;
@@ -27,6 +29,8 @@ interface StoreCourse {
   slug: string;
   description: string;
   thumbnail: string | null;
+  ratingAverage?: number;
+  ratingCount?: number;
 }
 
 interface ContinueWatching {
@@ -177,6 +181,8 @@ export default function HomePage() {
                 description={course.description}
                 thumbnail={course.thumbnail}
                 progress={calculateCourseProgress(course)}
+                ratingAverage={course.ratingAverage}
+                ratingCount={course.ratingCount}
               />
             ))}
           </div>
@@ -195,6 +201,8 @@ export default function HomePage() {
                 title={course.title}
                 description={course.description}
                 thumbnail={course.thumbnail}
+                ratingAverage={course.ratingAverage}
+                ratingCount={course.ratingCount}
                 locked
               />
             ))}
