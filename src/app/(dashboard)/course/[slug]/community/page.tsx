@@ -4,7 +4,12 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { PostCard, type PostItem } from "@/components/post-card";
+import { TiptapEditor } from "@/components/tiptap-editor";
 import { useUserStore } from "@/stores/user-store";
+
+function htmlIsEmpty(html: string) {
+  return !html.replace(/<[^>]*>/g, "").trim();
+}
 
 const POST_TYPES: Array<{ value: PostItem["type"]; label: string }> = [
   { value: "FREE", label: "Livre" },
@@ -62,7 +67,7 @@ export default function CommunityPage() {
 
   async function submitPost(e: React.FormEvent) {
     e.preventDefault();
-    if (!content.trim() || submitting) return;
+    if (htmlIsEmpty(content) || submitting) return;
     setSubmitting(true);
     try {
       const res = await fetch("/api/posts", {
@@ -187,13 +192,10 @@ export default function CommunityPage() {
         onSubmit={submitPost}
         className="bg-gray-900 border border-gray-800 rounded-xl p-4 mb-6"
       >
-        <textarea
+        <TiptapEditor
           value={content}
-          onChange={(e) => setContent(e.target.value)}
-          placeholder="Compartilhe algo com a comunidade..."
-          rows={3}
-          maxLength={2000}
-          className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder:text-gray-500 focus:outline-none focus:border-blue-500 resize-none"
+          onChange={setContent}
+          placeholder="Compartilhe algo com a turma..."
         />
         <div className="flex flex-wrap items-center justify-between gap-3 mt-3">
           <div className="flex flex-wrap gap-1.5">
@@ -214,7 +216,7 @@ export default function CommunityPage() {
           </div>
           <button
             type="submit"
-            disabled={!content.trim() || submitting}
+            disabled={htmlIsEmpty(content) || submitting}
             className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg disabled:opacity-50"
           >
             {submitting ? "Publicando..." : "Publicar"}

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Avatar } from "@/components/ui/avatar";
 import { formatRelativeTime } from "@/lib/utils";
+import { sanitizeHtml } from "@/lib/sanitize-html";
 
 export interface PostAuthor {
   id: string;
@@ -196,9 +197,10 @@ export function PostCard({
         )}
       </div>
 
-      <p className="text-gray-200 text-sm whitespace-pre-wrap break-words mb-3">
-        {post.content}
-      </p>
+      <div
+        className="post-content text-gray-200 text-sm break-words mb-3"
+        dangerouslySetInnerHTML={{ __html: sanitizeHtml(post.content) }}
+      />
 
       <div className="flex items-center gap-4 border-t border-gray-800 pt-3">
         <button

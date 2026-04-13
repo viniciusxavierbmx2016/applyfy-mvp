@@ -103,7 +103,7 @@ export async function GET(request: Request) {
       })),
       posts: posts.map((p) => ({
         id: p.id,
-        snippet: p.content.slice(0, 120),
+        snippet: p.content.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim().slice(0, 120),
         authorName: p.user.name,
         courseSlug: p.course.slug,
         courseTitle: p.course.title,

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { GAMIFICATION, getLevelForPoints } from "@/lib/utils";
+import { sanitizeHtml, stripHtml } from "@/lib/sanitize-html";
 import { PostType } from "@prisma/client";
 
 const VALID_TYPES: PostType[] = ["QUESTION", "RESULT", "FEEDBACK", "FREE"];
@@ -93,9 +94,22 @@ export async function POST(request: Request) {
     }
 
     const { content, type, courseId, courseSlug } = await request.json();
-    if (!content || typeof content !== "string" || !content.trim()) {
+    if (!content || typeof content !== "string") {
       return NextResponse.json(
         { error: "Conteúdo obrigatório" },
+        { status: 400 }
+      );
+    }
+    const sanitized = sanitizeHtml(content);
+    if (!stripHtml(sanitized)) {
+      return NextResponse.json(
+        { error: "Conteúdo obrigatório" },
+        { status: 400 }
+      );
+    }
+    if (sanitized.length > 20000) {
+      return NextResponse.json(
+        { error: "Conteúdo muito longo" },
         { status: 400 }
       );
     }
@@ -130,7 +144,7 @@ export async function POST(request: Request) {
 
     const post = await prisma.post.create({
       data: {
-        content: content.trim(),
+        content: sanitized,
         type: postType,
         userId: user.id,
         courseId: course.id,

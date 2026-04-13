@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Avatar } from "@/components/ui/avatar";
 import { formatRelativeTime } from "@/lib/utils";
+import { sanitizeHtml } from "@/lib/sanitize-html";
 
 interface AdminPost {
   id: string;
@@ -195,9 +196,10 @@ export default function AdminCommunityPage() {
                     </button>
                   </div>
                 </div>
-                <p className="text-sm text-gray-200 whitespace-pre-wrap break-words">
-                  {post.content}
-                </p>
+                <div
+                  className="post-content text-sm text-gray-200 break-words"
+                  dangerouslySetInnerHTML={{ __html: sanitizeHtml(post.content) }}
+                />
                 <div className="flex items-center gap-4 mt-3 text-xs text-gray-500">
                   <span>❤️ {post._count.likes}</span>
                   <span>💬 {post._count.comments}</span>
