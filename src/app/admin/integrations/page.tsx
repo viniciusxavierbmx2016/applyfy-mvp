@@ -5,8 +5,7 @@ import Link from "next/link";
 import { Skeleton } from "@/components/ui/skeleton";
 import { GatewayLogo } from "@/components/gateway-logo";
 
-const DEFAULT_APPLYFY_LOGO =
-  "https://play-lh.googleusercontent.com/GBYSf20osBl2a2Kpm_kN1EM9MhhBNJBM5syYac-d2IkpEL4nde5gjxVKuhMjFJM7Eg=w240-h480-rw";
+const DEFAULT_APPLYFY_LOGO = "/images/applyfy-logo.png";
 
 interface GatewayStatus {
   connected: boolean;
@@ -90,11 +89,13 @@ export default function AdminIntegrationsIndexPage() {
   );
 }
 
-function LogoEditButton({
+function LogoUploader({
   gateway,
+  logoUrl,
   onUploaded,
 }: {
   gateway: string;
+  logoUrl: string;
   onUploaded: (url: string) => void;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -128,29 +129,35 @@ function LogoEditButton({
   }
 
   return (
-    <>
+    <div className="relative group/logo inline-block">
+      <GatewayLogo src={logoUrl} label="Applyfy" size={48} />
       <button
         type="button"
-        onClick={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          inputRef.current?.click();
-        }}
+        onClick={() => inputRef.current?.click()}
         disabled={uploading}
         aria-label="Editar logo"
-        className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 flex items-center justify-center shadow-md ring-2 ring-white dark:ring-gray-900 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity disabled:opacity-60"
+        className="absolute inset-0 z-20 flex items-center justify-center rounded-xl bg-black/60 text-white opacity-0 group-hover/logo:opacity-100 focus:opacity-100 transition-opacity disabled:cursor-wait"
       >
         {uploading ? (
-          <svg className="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24">
+          <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
             <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" className="opacity-25" />
             <path fill="currentColor" className="opacity-75" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
           </svg>
         ) : (
-          <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
           </svg>
         )}
       </button>
+      <span
+        aria-hidden
+        className="absolute -bottom-1 -right-1 z-10 w-5 h-5 rounded-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 flex items-center justify-center shadow ring-2 ring-white dark:ring-gray-900 pointer-events-none"
+      >
+        <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+        </svg>
+      </span>
       <input
         ref={inputRef}
         type="file"
@@ -159,14 +166,11 @@ function LogoEditButton({
         onChange={onPick}
       />
       {error && (
-        <span
-          className="absolute left-0 -bottom-6 text-[10px] text-red-500 whitespace-nowrap"
-          onClick={(e) => e.stopPropagation()}
-        >
+        <span className="absolute left-0 top-full mt-1 text-[10px] text-red-500 whitespace-nowrap">
           {error}
         </span>
       )}
-    </>
+    </div>
   );
 }
 
@@ -180,15 +184,13 @@ function ApplyfyCard({
   onLogoUpdated: (url: string) => void;
 }) {
   return (
-    <Link
-      href="/admin/integrations/applyfy"
-      className="group relative flex flex-col gap-3 p-5 rounded-xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200"
-    >
+    <div className="group relative flex flex-col gap-3 p-5 rounded-xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700 hover:shadow-lg transition-all duration-200">
       <div className="flex items-start justify-between gap-3">
-        <div className="relative">
-          <GatewayLogo src={logoUrl} label="Applyfy" size={48} />
-          <LogoEditButton gateway="applyfy" onUploaded={onLogoUpdated} />
-        </div>
+        <LogoUploader
+          gateway="applyfy"
+          logoUrl={logoUrl}
+          onUploaded={onLogoUpdated}
+        />
         <span
           className={`text-[11px] font-medium px-2.5 py-1 rounded-full border ${
             connected
@@ -199,26 +201,32 @@ function ApplyfyCard({
           {connected ? "● Conectado" : "● Não configurado"}
         </span>
       </div>
-      <div>
-        <h2 className="text-base font-semibold text-gray-900 dark:text-white">
+      <Link
+        href="/admin/integrations/applyfy"
+        className="group/title block focus:outline-none"
+      >
+        <h2 className="text-base font-semibold text-gray-900 dark:text-white group-hover/title:text-blue-600 dark:group-hover/title:text-blue-400 transition-colors">
           Applyfy
         </h2>
         <p className="text-sm text-gray-600 dark:text-gray-400 mt-0.5">
           Gateway de pagamentos para infoprodutores.
         </p>
-      </div>
-      <div className="mt-auto pt-1 flex items-center text-xs text-blue-600 dark:text-blue-400 font-medium">
+      </Link>
+      <Link
+        href="/admin/integrations/applyfy"
+        className="group/cta mt-auto pt-1 inline-flex items-center text-xs text-blue-600 dark:text-blue-400 font-medium hover:text-blue-700 dark:hover:text-blue-300 w-fit"
+      >
         {connected ? "Gerenciar" : "Configurar"}
         <svg
-          className="w-3.5 h-3.5 ml-1 transition-transform group-hover:translate-x-0.5"
+          className="w-3.5 h-3.5 ml-1 transition-transform group-hover/cta:translate-x-0.5"
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
         >
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
         </svg>
-      </div>
-    </Link>
+      </Link>
+    </div>
   );
 }
 
