@@ -227,6 +227,27 @@ model Review {
   @@index([courseId, createdAt])
 }
 
+model WebhookLog {
+  id                String            @id @default(uuid())
+  event             String
+  email             String?
+  productExternalId String?
+  courseId          String?
+  status            WebhookLogStatus
+  errorMessage      String?
+  rawPayload        Json
+  createdAt         DateTime          @default(now())
+
+  @@index([event, createdAt])
+  @@index([createdAt])
+}
+
+enum WebhookLogStatus {
+  SUCCESS
+  ERROR
+  IGNORED
+}
+
 model Session {
   id        String   @id @default(uuid())
   userId    String
