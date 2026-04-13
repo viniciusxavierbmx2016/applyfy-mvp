@@ -85,6 +85,23 @@ export async function GET(
       }),
     ]);
 
+    const lessonIdsInCourse = course.modules.flatMap((m) =>
+      m.lessons.map((l) => l.id)
+    );
+    const lastAccess = lessonIdsInCourse.length
+      ? await prisma.lessonProgress.findFirst({
+          where: {
+            userId: user.id,
+            lessonId: { in: lessonIdsInCourse },
+            lastAccessedAt: { not: null },
+          },
+          orderBy: { lastAccessedAt: "desc" },
+          select: { lessonId: true },
+        })
+      : null;
+    const firstLessonId = course.modules[0]?.lessons[0]?.id ?? null;
+    const lastAccessedLesson = lastAccess?.lessonId ?? firstLessonId;
+
     const modulesWithResume = course.modules.map((m) => {
       const sorted = [...m.lessons].sort((a, b) => a.order - b.order);
       const firstIncomplete = sorted.find(
@@ -108,6 +125,7 @@ export async function GET(
       myReview,
       viewerWorkspace,
       overrides: { modules: releasedModules, lessons: releasedLessons },
+      lastAccessedLesson,
     });
   } catch (error) {
     console.error("GET /api/courses/by-slug/[slug] error:", error);

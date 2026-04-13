@@ -139,6 +139,9 @@ export default function CourseHomePage() {
     modules: Set<string>;
     lessons: Set<string>;
   }>({ modules: new Set(), lessons: new Set() });
+  const [lastAccessedLesson, setLastAccessedLesson] = useState<string | null>(
+    null
+  );
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -157,6 +160,7 @@ export default function CourseHomePage() {
             modules: new Set<string>(data.overrides?.modules ?? []),
             lessons: new Set<string>(data.overrides?.lessons ?? []),
           });
+          setLastAccessedLesson(data.lastAccessedLesson ?? null);
         } else if (res.status === 404) {
           router.push(backHref);
         }
@@ -198,8 +202,13 @@ export default function CourseHomePage() {
         }))
       )
       .filter((x) => x.released);
-    return all.find((x) => !x.lesson.progress?.some((p) => p.completed)) ?? null;
-  }, [course, enrollmentCreatedAt, overrides]);
+    if (all.length === 0) return null;
+    if (lastAccessedLesson) {
+      const fromAccess = all.find((x) => x.lesson.id === lastAccessedLesson);
+      if (fromAccess) return fromAccess;
+    }
+    return all.find((x) => !x.lesson.progress?.some((p) => p.completed)) ?? all[0];
+  }, [course, enrollmentCreatedAt, overrides, lastAccessedLesson]);
 
   if (loading) {
     return (

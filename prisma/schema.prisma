@@ -258,13 +258,15 @@ model LessonProgress {
   id          String    @id @default(uuid())
   userId      String
   lessonId    String
-  completed   Boolean   @default(false)
-  completedAt DateTime?
+  completed      Boolean   @default(false)
+  completedAt    DateTime?
+  lastAccessedAt DateTime?
 
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   lesson      Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
 
   @@unique([userId, lessonId])
+  @@index([userId, lastAccessedAt])
 }
 
 model Post {

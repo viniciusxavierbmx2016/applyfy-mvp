@@ -112,6 +112,17 @@ export async function GET(
         ? flat[currentIndex + 1]
         : null;
 
+    await prisma.lessonProgress.upsert({
+      where: { userId_lessonId: { userId: user.id, lessonId: lesson.id } },
+      update: { lastAccessedAt: new Date() },
+      create: {
+        userId: user.id,
+        lessonId: lesson.id,
+        completed: false,
+        lastAccessedAt: new Date(),
+      },
+    });
+
     const video = parseVideoUrl(lesson.videoUrl);
 
     const viewerWorkspace = user.workspaceId

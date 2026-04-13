@@ -57,39 +57,18 @@ export function CourseSidebar({
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
         const modules = d?.course?.modules as
-          | Array<{
-              lessons: Array<{
-                id: string;
-                progress?: Array<{ completed: boolean }>;
-              }>;
-              firstIncompleteLesson?: string | null;
-            }>
+          | Array<{ lessons: Array<{ id: string }> }>
           | undefined;
-        if (!modules) {
-          setHasLessons(false);
-          return;
-        }
-        const allLessons = modules.flatMap((m) => m.lessons);
+        const allLessons = modules?.flatMap((m) => m.lessons) ?? [];
         if (allLessons.length === 0) {
           setHasLessons(false);
           setContinueLessonId(null);
           return;
         }
         setHasLessons(true);
-        const firstIncompleteModule = modules.find(
-          (m) =>
-            m.firstIncompleteLesson &&
-            m.lessons.some(
-              (l) =>
-                l.id === m.firstIncompleteLesson &&
-                !l.progress?.some((p) => p.completed)
-            )
+        setContinueLessonId(
+          (d?.lastAccessedLesson as string | null) ?? allLessons[0].id
         );
-        if (firstIncompleteModule?.firstIncompleteLesson) {
-          setContinueLessonId(firstIncompleteModule.firstIncompleteLesson);
-          return;
-        }
-        setContinueLessonId(allLessons[allLessons.length - 1].id);
       })
       .catch(() => {});
   }, [course.slug]);
