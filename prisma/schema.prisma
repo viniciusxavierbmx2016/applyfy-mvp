@@ -226,9 +226,26 @@ model Enrollment {
 
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  overrides EnrollmentOverride[]
 
   @@unique([userId, courseId])
   @@index([expiresAt])
+}
+
+model EnrollmentOverride {
+  id           String   @id @default(uuid())
+  enrollmentId String
+  moduleId     String?
+  lessonId     String?
+  released     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  enrollment Enrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+
+  @@unique([enrollmentId, moduleId])
+  @@unique([enrollmentId, lessonId])
+  @@index([moduleId])
+  @@index([lessonId])
 }
 
 enum EnrollmentStatus {

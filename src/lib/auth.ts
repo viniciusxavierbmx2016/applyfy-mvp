@@ -37,6 +37,64 @@ export function computeLessonRelease(
   );
 }
 
+export interface ReleaseOverrides {
+  modules: Set<string>;
+  lessons: Set<string>;
+}
+
+export const EMPTY_OVERRIDES: ReleaseOverrides = {
+  modules: new Set(),
+  lessons: new Set(),
+};
+
+const RELEASED_NOW: ReleaseStatus = {
+  released: true,
+  releaseDate: new Date(0),
+  daysRemaining: 0,
+};
+
+export function computeModuleReleaseWithOverride(
+  enrollmentCreatedAt: Date | null | undefined,
+  moduleId: string,
+  moduleDays: number,
+  overrides: ReleaseOverrides
+): ReleaseStatus {
+  if (overrides.modules.has(moduleId)) return RELEASED_NOW;
+  return computeReleaseStatus(enrollmentCreatedAt, moduleDays);
+}
+
+export function computeLessonReleaseWithOverride(
+  enrollmentCreatedAt: Date | null | undefined,
+  moduleId: string,
+  lessonId: string,
+  moduleDays: number,
+  lessonDays: number,
+  overrides: ReleaseOverrides
+): ReleaseStatus {
+  if (overrides.lessons.has(lessonId)) return RELEASED_NOW;
+  if (overrides.modules.has(moduleId)) return RELEASED_NOW;
+  return computeLessonRelease(enrollmentCreatedAt, moduleDays, lessonDays);
+}
+
+/** Load an enrollment's overrides as a {modules, lessons} Set pair.
+ *  Returns EMPTY_OVERRIDES when enrollmentId is null (admin/preview). */
+export async function loadEnrollmentOverrides(
+  enrollmentId: string | null | undefined
+): Promise<ReleaseOverrides> {
+  if (!enrollmentId) return EMPTY_OVERRIDES;
+  const rows = await prisma.enrollmentOverride.findMany({
+    where: { enrollmentId, released: true },
+    select: { moduleId: true, lessonId: true },
+  });
+  const modules = new Set<string>();
+  const lessons = new Set<string>();
+  for (const r of rows) {
+    if (r.moduleId) modules.add(r.moduleId);
+    if (r.lessonId) lessons.add(r.lessonId);
+  }
+  return { modules, lessons };
+}
+
 /** True if the enrollment is ACTIVE and (expiresAt is null or in the future). */
 export function isEnrollmentActive(
   enrollment: Pick<Enrollment, "status" | "expiresAt"> | null | undefined

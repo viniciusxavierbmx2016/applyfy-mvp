@@ -80,11 +80,13 @@ function toCarouselModule(
   m: ModuleItem,
   course: CourseDetail,
   enrollmentCreatedAt: Date | null,
-  hasAccess: boolean
+  hasAccess: boolean,
+  overrides: { modules: Set<string>; lessons: Set<string> }
 ): CarouselModule {
   const stats = moduleStats(m);
   const rel = releaseInfo(enrollmentCreatedAt, m.daysToRelease ?? 0);
-  const locked = hasAccess && !rel.released;
+  const overridden = overrides.modules.has(m.id);
+  const locked = hasAccess && !overridden && !rel.released;
   const empty = stats.total === 0;
   const resumeLessonId =
     m.firstIncompleteLesson ?? m.lessons.slice().sort((a, b) => a.order - b.order)[0]?.id ?? null;
@@ -133,6 +135,10 @@ export default function CourseHomePage() {
   const [hasAccess, setHasAccess] = useState(false);
   const [enrollmentCreatedAt, setEnrollmentCreatedAt] = useState<Date | null>(null);
   const [myReview, setMyReview] = useState<MyReview | null>(null);
+  const [overrides, setOverrides] = useState<{
+    modules: Set<string>;
+    lessons: Set<string>;
+  }>({ modules: new Set(), lessons: new Set() });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -147,6 +153,10 @@ export default function CourseHomePage() {
             data.enrollment?.createdAt ? new Date(data.enrollment.createdAt) : null
           );
           setMyReview(data.myReview ?? null);
+          setOverrides({
+            modules: new Set<string>(data.overrides?.modules ?? []),
+            lessons: new Set<string>(data.overrides?.lessons ?? []),
+          });
         } else if (res.status === 404) {
           router.push(backHref);
         }
@@ -178,15 +188,18 @@ export default function CourseHomePage() {
         m.lessons.map((l) => ({
           lesson: l,
           module: m,
-          released: releaseInfo(
-            enrollmentCreatedAt,
-            Math.max(m.daysToRelease ?? 0, l.daysToRelease ?? 0)
-          ).released,
+          released:
+            overrides.lessons.has(l.id) ||
+            overrides.modules.has(m.id) ||
+            releaseInfo(
+              enrollmentCreatedAt,
+              Math.max(m.daysToRelease ?? 0, l.daysToRelease ?? 0)
+            ).released,
         }))
       )
       .filter((x) => x.released);
     return all.find((x) => !x.lesson.progress?.some((p) => p.completed)) ?? null;
-  }, [course, enrollmentCreatedAt]);
+  }, [course, enrollmentCreatedAt, overrides]);
 
   if (loading) {
     return (
@@ -388,7 +401,7 @@ export default function CourseHomePage() {
             (groups.length > 1 ? "Módulos" : undefined)
           }
           modules={group.modules.map((m) =>
-            toCarouselModule(m, course, enrollmentCreatedAt, hasAccess)
+            toCarouselModule(m, course, enrollmentCreatedAt, hasAccess, overrides)
           )}
         />
       ))}

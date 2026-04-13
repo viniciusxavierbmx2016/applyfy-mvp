@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import {
-  computeLessonRelease,
+  computeLessonReleaseWithOverride,
   getCurrentUser,
   isEnrollmentActive,
+  loadEnrollmentOverrides,
 } from "@/lib/auth";
 import { GAMIFICATION, getLevelForPoints } from "@/lib/utils";
 import { createNotification } from "@/lib/notifications";
@@ -61,10 +62,14 @@ export async function POST(request: Request) {
         );
       }
       if (completed) {
-        const release = computeLessonRelease(
+        const overrides = await loadEnrollmentOverrides(enrollment!.id);
+        const release = computeLessonReleaseWithOverride(
           enrollment!.createdAt,
+          lesson.moduleId,
+          lesson.id,
           lesson.module.daysToRelease,
-          lesson.daysToRelease
+          lesson.daysToRelease,
+          overrides
         );
         if (!release.released) {
           return NextResponse.json(

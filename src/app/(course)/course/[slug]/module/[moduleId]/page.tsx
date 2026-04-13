@@ -49,6 +49,10 @@ export default function ModuleDetailPage() {
   const [course, setCourse] = useState<CourseDetail | null>(null);
   const [enrollmentCreatedAt, setEnrollmentCreatedAt] = useState<Date | null>(null);
   const [hasAccess, setHasAccess] = useState(false);
+  const [overrides, setOverrides] = useState<{
+    modules: Set<string>;
+    lessons: Set<string>;
+  }>({ modules: new Set(), lessons: new Set() });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -62,6 +66,10 @@ export default function ModuleDetailPage() {
           setEnrollmentCreatedAt(
             data.enrollment?.createdAt ? new Date(data.enrollment.createdAt) : null
           );
+          setOverrides({
+            modules: new Set<string>(data.overrides?.modules ?? []),
+            lessons: new Set<string>(data.overrides?.lessons ?? []),
+          });
         } else {
           router.replace(backHref);
         }
@@ -99,7 +107,9 @@ export default function ModuleDetailPage() {
     );
   }
 
-  const modReleased = isReleased(enrollmentCreatedAt, mod.daysToRelease ?? 0);
+  const modOverridden = overrides.modules.has(mod.id);
+  const modReleased =
+    modOverridden || isReleased(enrollmentCreatedAt, mod.daysToRelease ?? 0);
   const modReleaseAt = releaseDate(enrollmentCreatedAt, mod.daysToRelease ?? 0);
 
   return (
@@ -152,10 +162,13 @@ export default function ModuleDetailPage() {
 
       <ul className="space-y-2">
         {mod.lessons.map((lesson, idx) => {
-          const released = isReleased(
-            enrollmentCreatedAt,
-            Math.max(mod.daysToRelease ?? 0, lesson.daysToRelease ?? 0)
-          );
+          const released =
+            overrides.lessons.has(lesson.id) ||
+            modOverridden ||
+            isReleased(
+              enrollmentCreatedAt,
+              Math.max(mod.daysToRelease ?? 0, lesson.daysToRelease ?? 0)
+            );
           const lessonRelAt = releaseDate(
             enrollmentCreatedAt,
             Math.max(mod.daysToRelease ?? 0, lesson.daysToRelease ?? 0)

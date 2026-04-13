@@ -1,9 +1,13 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import {
-  computeLessonRelease,
+  computeLessonReleaseWithOverride,
+  computeModuleReleaseWithOverride,
+  EMPTY_OVERRIDES,
   getCurrentUser,
   isEnrollmentActive,
+  loadEnrollmentOverrides,
+  type ReleaseOverrides,
 } from "@/lib/auth";
 import { parseVideoUrl } from "@/lib/video";
 
@@ -51,6 +55,7 @@ export async function GET(
 
     // Check enrollment (admins bypass)
     let enrollmentCreatedAt: Date | null = null;
+    let overrides: ReleaseOverrides = EMPTY_OVERRIDES;
     if (user.role !== "ADMIN") {
       const enrollment = await prisma.enrollment.findUnique({
         where: { userId_courseId: { userId: user.id, courseId: course.id } },
@@ -67,11 +72,15 @@ export async function GET(
         );
       }
       enrollmentCreatedAt = enrollment!.createdAt;
+      overrides = await loadEnrollmentOverrides(enrollment!.id);
 
-      const release = computeLessonRelease(
+      const release = computeLessonReleaseWithOverride(
         enrollmentCreatedAt,
+        lesson.moduleId,
+        lesson.id,
         lesson.module.daysToRelease,
-        lesson.daysToRelease
+        lesson.daysToRelease,
+        overrides
       );
       if (!release.released) {
         return NextResponse.json(
@@ -127,10 +136,11 @@ export async function GET(
         slug: course.slug,
         title: course.title,
         modules: course.modules.map((m) => {
-          const modRelease = computeLessonRelease(
+          const modRelease = computeModuleReleaseWithOverride(
             enrollmentCreatedAt,
+            m.id,
             m.daysToRelease,
-            0
+            overrides
           );
           return {
             id: m.id,
@@ -140,10 +150,13 @@ export async function GET(
             releaseDate: modRelease.released ? null : modRelease.releaseDate.toISOString(),
             daysRemaining: modRelease.daysRemaining,
             lessons: m.lessons.map((l) => {
-              const lr = computeLessonRelease(
+              const lr = computeLessonReleaseWithOverride(
                 enrollmentCreatedAt,
+                m.id,
+                l.id,
                 m.daysToRelease,
-                l.daysToRelease
+                l.daysToRelease,
+                overrides
               );
               return {
                 id: l.id,

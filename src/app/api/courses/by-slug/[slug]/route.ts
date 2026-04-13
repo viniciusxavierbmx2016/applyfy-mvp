@@ -61,6 +61,19 @@ export async function GET(
         })
       : null;
 
+    const overrideRows = enrollment
+      ? await prisma.enrollmentOverride.findMany({
+          where: { enrollmentId: enrollment.id, released: true },
+          select: { moduleId: true, lessonId: true },
+        })
+      : [];
+    const releasedModules = overrideRows
+      .filter((o) => o.moduleId)
+      .map((o) => o.moduleId as string);
+    const releasedLessons = overrideRows
+      .filter((o) => o.lessonId)
+      .map((o) => o.lessonId as string);
+
     const [agg, myReview] = await Promise.all([
       prisma.review.aggregate({
         where: { courseId: course.id },
@@ -94,6 +107,7 @@ export async function GET(
       enrollment,
       myReview,
       viewerWorkspace,
+      overrides: { modules: releasedModules, lessons: releasedLessons },
     });
   } catch (error) {
     console.error("GET /api/courses/by-slug/[slug] error:", error);

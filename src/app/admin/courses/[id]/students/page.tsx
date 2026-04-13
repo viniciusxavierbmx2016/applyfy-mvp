@@ -497,6 +497,20 @@ export default function CourseStudentsPage({
   );
 }
 
+interface ModuleNode {
+  id: string;
+  title: string;
+  daysToRelease: number;
+  lessons: Array<{ id: string; title: string; daysToRelease: number }>;
+}
+
+interface OverrideRow {
+  id: string;
+  moduleId: string | null;
+  lessonId: string | null;
+  released: boolean;
+}
+
 function EditAccessModal({
   courseId,
   student,
@@ -508,14 +522,148 @@ function EditAccessModal({
   onClose: () => void;
   onSaved: (patch: Partial<Student>) => void;
 }) {
+  const [tab, setTab] = useState<"access" | "release">("access");
   const [durationIdx, setDurationIdx] = useState(0);
   const [customDays, setCustomDays] = useState(30);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [modules, setModules] = useState<ModuleNode[] | null>(null);
+  const [moduleOverrides, setModuleOverrides] = useState<Set<string>>(
+    new Set()
+  );
+  const [lessonOverrides, setLessonOverrides] = useState<Set<string>>(
+    new Set()
+  );
+  const [releaseBusy, setReleaseBusy] = useState(false);
+
+  useEffect(() => {
+    fetch(`/api/courses/${courseId}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (!d?.course) return;
+        setModules(
+          (d.course.modules as ModuleNode[]).map((m) => ({
+            id: m.id,
+            title: m.title,
+            daysToRelease: m.daysToRelease ?? 0,
+            lessons: (m.lessons || []).map((l) => ({
+              id: l.id,
+              title: l.title,
+              daysToRelease: l.daysToRelease ?? 0,
+            })),
+          }))
+        );
+      });
+    fetch(
+      `/api/courses/${courseId}/students/${student.enrollmentId}/overrides`
+    )
+      .then((r) => (r.ok ? r.json() : { overrides: [] }))
+      .then((d) => {
+        const mods = new Set<string>();
+        const less = new Set<string>();
+        for (const o of (d.overrides as OverrideRow[]) || []) {
+          if (!o.released) continue;
+          if (o.moduleId) mods.add(o.moduleId);
+          if (o.lessonId) less.add(o.lessonId);
+        }
+        setModuleOverrides(mods);
+        setLessonOverrides(less);
+      });
+  }, [courseId, student.enrollmentId]);
 
   const opt = DURATION_OPTIONS[durationIdx];
   const isCustom = opt.days === -1;
   const isLifetime = opt.days === null && !isCustom;
+
+  async function toggleOverride(
+    target: { moduleId?: string; lessonId?: string },
+    next: boolean
+  ) {
+    setReleaseBusy(true);
+    setError("");
+    try {
+      const res = await fetch(
+        `/api/courses/${courseId}/students/${student.enrollmentId}/overrides`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ...target, released: next }),
+        }
+      );
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setError(data.error || "Erro ao salvar liberação");
+        return;
+      }
+      if (target.moduleId) {
+        setModuleOverrides((prev) => {
+          const s = new Set(prev);
+          if (next) s.add(target.moduleId!);
+          else s.delete(target.moduleId!);
+          return s;
+        });
+      } else if (target.lessonId) {
+        setLessonOverrides((prev) => {
+          const s = new Set(prev);
+          if (next) s.add(target.lessonId!);
+          else s.delete(target.lessonId!);
+          return s;
+        });
+      }
+    } finally {
+      setReleaseBusy(false);
+    }
+  }
+
+  async function handleReleaseAll() {
+    setReleaseBusy(true);
+    setError("");
+    try {
+      const res = await fetch(
+        `/api/courses/${courseId}/students/${student.enrollmentId}/overrides/release-all`,
+        { method: "POST" }
+      );
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(data.error || "Erro ao liberar tudo");
+        return;
+      }
+      const mods = new Set<string>();
+      for (const o of (data.overrides as OverrideRow[]) || []) {
+        if (o.moduleId && o.released) mods.add(o.moduleId);
+      }
+      setModuleOverrides(mods);
+      setLessonOverrides(new Set());
+    } finally {
+      setReleaseBusy(false);
+    }
+  }
+
+  async function handleResetOverrides() {
+    if (!confirm("Restaurar a liberação padrão para este aluno?")) return;
+    setReleaseBusy(true);
+    setError("");
+    try {
+      const res = await fetch(
+        `/api/courses/${courseId}/students/${student.enrollmentId}/overrides`,
+        { method: "DELETE" }
+      );
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setError(data.error || "Erro ao restaurar");
+        return;
+      }
+      setModuleOverrides(new Set());
+      setLessonOverrides(new Set());
+    } finally {
+      setReleaseBusy(false);
+    }
+  }
+
+  function defaultLabel(days: number) {
+    if (!days || days <= 0) return "Imediato";
+    return `Libera em ${days}d`;
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -554,7 +702,11 @@ function EditAccessModal({
 
   return (
     <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-gray-900 rounded-2xl w-full max-w-md p-6 border border-gray-200 dark:border-gray-800">
+      <div
+        className={`bg-white dark:bg-gray-900 rounded-2xl w-full ${
+          tab === "release" ? "max-w-2xl" : "max-w-md"
+        } p-6 border border-gray-200 dark:border-gray-800 max-h-[90vh] overflow-y-auto`}
+      >
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
             Editar acesso
@@ -585,12 +737,38 @@ function EditAccessModal({
           </p>
         </div>
 
+        <div className="mb-4 flex gap-1 p-1 bg-gray-100 dark:bg-gray-800 rounded-lg">
+          <button
+            type="button"
+            onClick={() => setTab("access")}
+            className={`flex-1 px-3 py-2 text-xs font-medium rounded-md transition ${
+              tab === "access"
+                ? "bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-sm"
+                : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+            }`}
+          >
+            Tempo de acesso
+          </button>
+          <button
+            type="button"
+            onClick={() => setTab("release")}
+            className={`flex-1 px-3 py-2 text-xs font-medium rounded-md transition ${
+              tab === "release"
+                ? "bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-sm"
+                : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+            }`}
+          >
+            Liberação de conteúdo
+          </button>
+        </div>
+
         {error && (
           <div className="mb-3 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-500 text-sm">
             {error}
           </div>
         )}
 
+        {tab === "access" && (
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -657,6 +835,154 @@ function EditAccessModal({
             </button>
           </div>
         </form>
+        )}
+
+        {tab === "release" && (
+          <div className="space-y-4">
+            <div className="flex flex-col sm:flex-row gap-2">
+              <button
+                type="button"
+                onClick={handleReleaseAll}
+                disabled={releaseBusy}
+                className="flex-1 px-3 py-2 text-xs font-medium bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-lg"
+              >
+                Liberar tudo
+              </button>
+              <button
+                type="button"
+                onClick={handleResetOverrides}
+                disabled={releaseBusy}
+                className="flex-1 px-3 py-2 text-xs font-medium bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-50 text-gray-700 dark:text-gray-200 rounded-lg"
+              >
+                Restaurar padrão
+              </button>
+            </div>
+
+            {!modules ? (
+              <div className="text-center py-8 text-sm text-gray-500">
+                Carregando módulos...
+              </div>
+            ) : modules.length === 0 ? (
+              <div className="text-center py-8 text-sm text-gray-500">
+                Este curso ainda não tem módulos.
+              </div>
+            ) : (
+              <ul className="space-y-3">
+                {modules.map((m) => {
+                  const modOn = moduleOverrides.has(m.id);
+                  return (
+                    <li
+                      key={m.id}
+                      className="rounded-lg border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/40"
+                    >
+                      <div className="flex items-center gap-3 p-3">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">
+                            {m.title}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {defaultLabel(m.daysToRelease)}
+                          </p>
+                        </div>
+                        <label className="inline-flex items-center gap-2 cursor-pointer select-none">
+                          <span
+                            className={`text-xs ${
+                              modOn
+                                ? "text-blue-600 dark:text-blue-400 font-medium"
+                                : "text-gray-500"
+                            }`}
+                          >
+                            {modOn ? "Liberado" : "Liberar agora"}
+                          </span>
+                          <input
+                            type="checkbox"
+                            className="sr-only peer"
+                            checked={modOn}
+                            disabled={releaseBusy}
+                            onChange={(e) =>
+                              toggleOverride(
+                                { moduleId: m.id },
+                                e.target.checked
+                              )
+                            }
+                          />
+                          <span className="relative inline-block w-9 h-5 bg-gray-300 dark:bg-gray-700 rounded-full peer-checked:bg-blue-600 transition">
+                            <span className="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition peer-checked:translate-x-4" />
+                          </span>
+                        </label>
+                      </div>
+                      {m.lessons.length > 0 && (
+                        <ul className="divide-y divide-gray-200 dark:divide-gray-800 border-t border-gray-200 dark:border-gray-800">
+                          {m.lessons.map((l) => {
+                            const lOn =
+                              modOn || lessonOverrides.has(l.id);
+                            return (
+                              <li
+                                key={l.id}
+                                className="flex items-center gap-3 px-3 py-2"
+                              >
+                                <div className="flex-1 min-w-0 pl-3">
+                                  <p className="text-xs font-medium text-gray-800 dark:text-gray-200 truncate">
+                                    {l.title}
+                                  </p>
+                                  <p className="text-[11px] text-gray-500">
+                                    {defaultLabel(l.daysToRelease)}
+                                  </p>
+                                </div>
+                                <label
+                                  className={`inline-flex items-center gap-2 ${
+                                    modOn
+                                      ? "opacity-50 cursor-not-allowed"
+                                      : "cursor-pointer"
+                                  } select-none`}
+                                >
+                                  <span
+                                    className={`text-xs ${
+                                      lOn
+                                        ? "text-blue-600 dark:text-blue-400"
+                                        : "text-gray-500"
+                                    }`}
+                                  >
+                                    {lOn ? "Liberada" : "Liberar"}
+                                  </span>
+                                  <input
+                                    type="checkbox"
+                                    className="sr-only peer"
+                                    checked={lOn}
+                                    disabled={releaseBusy || modOn}
+                                    onChange={(e) =>
+                                      toggleOverride(
+                                        { lessonId: l.id },
+                                        e.target.checked
+                                      )
+                                    }
+                                  />
+                                  <span className="relative inline-block w-9 h-5 bg-gray-300 dark:bg-gray-700 rounded-full peer-checked:bg-blue-600 transition">
+                                    <span className="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition peer-checked:translate-x-4" />
+                                  </span>
+                                </label>
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+
+            <div className="flex justify-end pt-2">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg"
+              >
+                Fechar
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
