@@ -91,6 +91,9 @@ export async function GET(request: Request) {
         .filter((e) => e.expiresAt && e.expiresAt.getTime() < now)
         .map((e) => e.courseId)
     );
+    const expiresAtMap = new Map(
+      enrollments.map((e) => [e.courseId, e.expiresAt])
+    );
     // enrolledIds includes expired — the frontend gets an `isExpired` flag
     // and access is re-checked server-side on course/lesson load.
     const enrolledIds = enrollments.map((e) => e.courseId);
@@ -180,6 +183,7 @@ export async function GET(request: Request) {
     const withExpired = <T extends { id: string }>(c: T) => ({
       ...withRating(c),
       isExpired: expiredSet.has(c.id),
+      expiresAt: expiresAtMap.get(c.id) ?? null,
     });
 
     return NextResponse.json({

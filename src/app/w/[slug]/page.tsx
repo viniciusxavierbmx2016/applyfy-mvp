@@ -20,9 +20,11 @@ interface EnrolledCourse {
   slug: string;
   description: string;
   thumbnail: string | null;
+  checkoutUrl: string | null;
   ratingAverage?: number;
   ratingCount?: number;
   isExpired?: boolean;
+  expiresAt?: string | null;
   modules: Array<{
     lessons: Array<{
       id: string;
@@ -88,6 +90,8 @@ export default function WorkspaceVitrinePage() {
   }, [user, userLoading, slug, router]);
 
   const displayName = ws?.name || "Workspace";
+  const active = enrolled.filter((c) => !c.isExpired);
+  const expired = enrolled.filter((c) => c.isExpired);
 
   return (
     <div className="px-4 sm:px-6 lg:px-8 py-6 lg:py-8 max-w-6xl mx-auto">
@@ -108,15 +112,15 @@ export default function WorkspaceVitrinePage() {
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
               Meus cursos
             </h3>
-            {enrolled.length === 0 ? (
+            {active.length === 0 ? (
               <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-8 text-center">
                 <p className="text-gray-500">
-                  Você ainda não está matriculado em nenhum curso
+                  Você ainda não está matriculado em nenhum curso ativo
                 </p>
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {enrolled.map((course) => (
+                {active.map((course) => (
                   <CourseCard
                     key={course.id}
                     slug={course.slug}
@@ -126,12 +130,38 @@ export default function WorkspaceVitrinePage() {
                     progress={calculateCourseProgress(course)}
                     ratingAverage={course.ratingAverage}
                     ratingCount={course.ratingCount}
-                    expired={course.isExpired}
+                    expiresAt={course.expiresAt}
                   />
                 ))}
               </div>
             )}
           </section>
+
+          {expired.length > 0 && (
+            <section className="mb-10">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">
+                Acesso expirado
+              </h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                Renove para continuar assistindo a estes cursos.
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {expired.map((course) => (
+                  <CourseCard
+                    key={course.id}
+                    slug={course.slug}
+                    title={course.title}
+                    description={course.description}
+                    thumbnail={course.thumbnail}
+                    ratingAverage={course.ratingAverage}
+                    ratingCount={course.ratingCount}
+                    checkoutUrl={course.checkoutUrl}
+                    expired
+                  />
+                ))}
+              </div>
+            </section>
+          )}
 
           {store.length > 0 && (
             <section>

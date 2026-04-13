@@ -16,7 +16,14 @@ interface CourseCardProps {
   ratingAverage?: number;
   ratingCount?: number;
   checkoutUrl?: string | null;
+  expiresAt?: string | Date | null;
   className?: string;
+}
+
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
+
+function daysUntil(date: Date) {
+  return Math.ceil((date.getTime() - Date.now()) / MS_PER_DAY);
 }
 
 export function CourseCard({
@@ -30,15 +37,23 @@ export function CourseCard({
   ratingAverage,
   ratingCount,
   checkoutUrl,
+  expiresAt,
   className,
 }: CourseCardProps) {
   const showRating =
     typeof ratingAverage === "number" &&
     typeof ratingCount === "number" &&
     ratingCount > 0;
-  void checkoutUrl;
+  const expiresAtDate =
+    expiresAt instanceof Date
+      ? expiresAt
+      : expiresAt
+        ? new Date(expiresAt)
+        : null;
+  const daysLeft = expiresAtDate ? daysUntil(expiresAtDate) : null;
   const wrapperClassName = cn(
     "group block bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden hover:border-gray-400 dark:hover:border-gray-700 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200",
+    expired && "opacity-75 grayscale-[0.4]",
     className
   );
   const inner = (
@@ -74,9 +89,9 @@ export function CourseCard({
           {expired ? (
             <div className="flex items-center gap-1 px-2 py-1 bg-red-500/90 backdrop-blur-sm rounded-full text-xs text-white font-medium">
               <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
               </svg>
-              Acesso expirado
+              Expirado
             </div>
           ) : locked ? (
             <div className="flex items-center gap-1 px-2 py-1 bg-black/70 backdrop-blur-sm rounded-full text-xs text-white font-medium">
@@ -84,6 +99,27 @@ export function CourseCard({
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
               </svg>
               Bloqueado
+            </div>
+          ) : daysLeft !== null ? (
+            daysLeft <= 30 ? (
+              <div className="flex items-center gap-1 px-2 py-1 bg-amber-500/90 backdrop-blur-sm rounded-full text-xs text-white font-medium">
+                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Expira em {daysLeft}d
+              </div>
+            ) : (
+              <div className="flex items-center gap-1 px-2 py-1 bg-green-500/90 backdrop-blur-sm rounded-full text-xs text-white font-medium">
+                <span className="w-1.5 h-1.5 rounded-full bg-white" />
+                {daysLeft}d restantes
+              </div>
+            )
+          ) : typeof progress === "number" ? (
+            <div className="flex items-center gap-1 px-2 py-1 bg-emerald-500/90 backdrop-blur-sm rounded-full text-xs text-white font-medium">
+              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+              Vitalício
             </div>
           ) : (
             <div className="flex items-center gap-1 px-2 py-1 bg-green-500/90 backdrop-blur-sm rounded-full text-xs text-white font-medium">
@@ -112,11 +148,30 @@ export function CourseCard({
           </div>
         )}
 
-        {!locked && typeof progress === "number" && (
+        {!locked && !expired && typeof progress === "number" && (
           <ProgressBar value={progress} showLabel />
         )}
 
-        {locked && (
+        {expired && (
+          <>
+            <p className="text-xs text-red-500 dark:text-red-400 font-medium mb-2">
+              Seu acesso expirou. Renove para continuar assistindo.
+            </p>
+            {checkoutUrl && (
+              <a
+                href={checkoutUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                className="inline-flex items-center justify-center w-full px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg transition"
+              >
+                Renovar acesso
+              </a>
+            )}
+          </>
+        )}
+
+        {locked && !expired && (
           <p className="text-xs text-blue-400 font-medium flex items-center gap-1">
             Ver detalhes
             <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
