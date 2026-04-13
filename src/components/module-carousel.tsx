@@ -12,6 +12,7 @@ export interface CarouselModule {
   lessonsDone: number;
   progressPct: number;
   locked: boolean;
+  empty?: boolean;
   releaseAt?: Date;
   href: string;
   clickable: boolean;
@@ -141,6 +142,14 @@ function ModuleCard({ mod }: { mod: CarouselModule }) {
               })}
             </span>
           )}
+        </div>
+      )}
+
+      {!mod.locked && mod.empty && (
+        <div className="absolute inset-0 bg-black/55 flex items-center justify-center text-white">
+          <span className="px-3 py-1 rounded-full bg-white/10 backdrop-blur text-[11px] font-semibold uppercase tracking-[0.14em]">
+            Em breve
+          </span>
         </div>
       )}
 

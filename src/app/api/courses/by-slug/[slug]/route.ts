@@ -65,9 +65,20 @@ export async function GET(
       }),
     ]);
 
+    const modulesWithResume = course.modules.map((m) => {
+      const sorted = [...m.lessons].sort((a, b) => a.order - b.order);
+      const firstIncomplete = sorted.find(
+        (l) => !l.progress?.some((p) => p.completed)
+      );
+      const firstIncompleteLesson =
+        firstIncomplete?.id ?? sorted[0]?.id ?? null;
+      return { ...m, firstIncompleteLesson };
+    });
+
     return NextResponse.json({
       course: {
         ...course,
+        modules: modulesWithResume,
         ratingAverage: agg._avg.rating ?? 0,
         ratingCount: agg._count.rating,
       },

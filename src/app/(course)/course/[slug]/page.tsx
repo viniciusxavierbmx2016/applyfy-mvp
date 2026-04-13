@@ -30,6 +30,7 @@ interface ModuleItem {
   thumbnailUrl: string | null;
   sectionId: string | null;
   lessons: LessonItem[];
+  firstIncompleteLesson: string | null;
 }
 
 interface SectionItem {
@@ -83,8 +84,10 @@ function toCarouselModule(
   const stats = moduleStats(m);
   const rel = releaseInfo(enrollmentCreatedAt, m.daysToRelease ?? 0);
   const locked = hasAccess && !rel.released;
-  const firstLesson = m.lessons[0];
-  const clickable = hasAccess && !locked && !!firstLesson;
+  const empty = stats.total === 0;
+  const resumeLessonId =
+    m.firstIncompleteLesson ?? m.lessons.slice().sort((a, b) => a.order - b.order)[0]?.id ?? null;
+  const clickable = hasAccess && !locked && !empty && !!resumeLessonId;
   return {
     id: m.id,
     title: m.title,
@@ -93,10 +96,12 @@ function toCarouselModule(
     lessonsDone: stats.done,
     progressPct: stats.pct,
     locked,
+    empty,
     releaseAt: rel.releaseAt,
-    href: clickable
-      ? `/course/${course.slug}/module/${m.id}`
-      : `/course/${course.slug}`,
+    href:
+      clickable && resumeLessonId
+        ? `/course/${course.slug}/lesson/${resumeLessonId}`
+        : `/course/${course.slug}`,
     clickable,
   };
 }
