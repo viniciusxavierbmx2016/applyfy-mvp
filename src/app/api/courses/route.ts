@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser, requireStaff } from "@/lib/auth";
+import { canAccessWorkspace, resolveStaffWorkspace } from "@/lib/workspace";
 
 export async function GET(request: Request) {
   try {
@@ -15,10 +16,13 @@ export async function GET(request: Request) {
     const isAdmin = user.role === "ADMIN";
     const isProducer = user.role === "PRODUCER";
 
-    // Staff sees admin-scope courses (admin: all; producer: own)
     if ((isAdmin || isProducer) && filter === "all") {
+      const { workspace, scoped } = await resolveStaffWorkspace(user);
+      if (isProducer && !workspace) {
+        return NextResponse.json({ courses: [] });
+      }
       const courses = await prisma.course.findMany({
-        where: isProducer ? { ownerId: user.id } : undefined,
+        where: scoped && workspace ? { workspaceId: workspace.id } : undefined,
         orderBy: { order: "asc" },
         include: {
           _count: {
@@ -29,7 +33,11 @@ export async function GET(request: Request) {
       return NextResponse.json({ courses });
     }
 
-    // Student view
+    // Student view: scope to user's workspace (if set)
+    const workspaceFilter = user.workspaceId
+      ? { workspaceId: user.workspaceId }
+      : {};
+
     const enrollments = await prisma.enrollment.findMany({
       where: { userId: user.id, status: "ACTIVE" },
       select: { courseId: true },
@@ -38,7 +46,7 @@ export async function GET(request: Request) {
 
     if (filter === "enrolled") {
       const courses = await prisma.course.findMany({
-        where: { id: { in: enrolledIds }, isPublished: true },
+        where: { id: { in: enrolledIds }, isPublished: true, ...workspaceFilter },
         orderBy: { order: "asc" },
         include: {
           modules: {
@@ -63,15 +71,15 @@ export async function GET(request: Request) {
           id: { notIn: enrolledIds },
           isPublished: true,
           showInStore: true,
+          ...workspaceFilter,
         },
         orderBy: { order: "asc" },
       });
       return NextResponse.json({ courses });
     }
 
-    // Default: return both
     const enrolled = await prisma.course.findMany({
-      where: { id: { in: enrolledIds }, isPublished: true },
+      where: { id: { in: enrolledIds }, isPublished: true, ...workspaceFilter },
       orderBy: { order: "asc" },
       include: {
         modules: {
@@ -93,6 +101,7 @@ export async function GET(request: Request) {
         id: { notIn: enrolledIds },
         isPublished: true,
         showInStore: true,
+        ...workspaceFilter,
       },
       orderBy: { order: "asc" },
     });
@@ -149,11 +158,31 @@ export async function POST(request: Request) {
       externalProductId,
       isPublished,
       showInStore,
+      workspaceId: explicitWorkspaceId,
     } = body;
 
     if (!title || !slug || !description) {
       return NextResponse.json(
         { error: "Título, slug e descrição são obrigatórios" },
+        { status: 400 }
+      );
+    }
+
+    // Resolve workspace: explicit > staff active workspace
+    let targetWorkspaceId: string | null = null;
+    if (explicitWorkspaceId) {
+      if (!(await canAccessWorkspace(staff, explicitWorkspaceId))) {
+        return NextResponse.json({ error: "Workspace inválido" }, { status: 403 });
+      }
+      targetWorkspaceId = explicitWorkspaceId;
+    } else {
+      const { workspace } = await resolveStaffWorkspace(staff);
+      targetWorkspaceId = workspace?.id ?? null;
+    }
+
+    if (!targetWorkspaceId) {
+      return NextResponse.json(
+        { error: "Nenhum workspace ativo. Crie um workspace antes de criar cursos." },
         { status: 400 }
       );
     }
@@ -167,6 +196,7 @@ export async function POST(request: Request) {
     }
 
     const lastCourse = await prisma.course.findFirst({
+      where: { workspaceId: targetWorkspaceId },
       orderBy: { order: "desc" },
     });
 
@@ -182,6 +212,7 @@ export async function POST(request: Request) {
         showInStore: showInStore !== false,
         order: (lastCourse?.order ?? -1) + 1,
         ownerId: staff.id,
+        workspaceId: targetWorkspaceId,
       },
     });
 

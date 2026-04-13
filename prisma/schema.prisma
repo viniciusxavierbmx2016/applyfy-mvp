@@ -16,20 +16,44 @@ model User {
   role          Role      @default(STUDENT)
   points        Int       @default(0)
   level         Int       @default(1)
+  workspaceId   String?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  enrollments    Enrollment[]
-  progress       LessonProgress[]
-  posts          Post[]
-  comments       Comment[]
-  lessonComments LessonComment[]
-  likes          Like[]
-  sessions       Session[]
-  notifications  Notification[]
-  certificates   Certificate[]
-  reviews        Review[]
-  ownedCourses   Course[]         @relation("CourseOwner")
+  enrollments      Enrollment[]
+  progress         LessonProgress[]
+  posts            Post[]
+  comments         Comment[]
+  lessonComments   LessonComment[]
+  likes            Like[]
+  sessions         Session[]
+  notifications    Notification[]
+  certificates     Certificate[]
+  reviews          Review[]
+  ownedCourses     Course[]         @relation("CourseOwner")
+  ownedWorkspaces  Workspace[]      @relation("WorkspaceOwner")
+  workspace        Workspace?       @relation("WorkspaceMembers", fields: [workspaceId], references: [id], onDelete: SetNull)
+
+  @@index([workspaceId])
+}
+
+model Workspace {
+  id             String   @id @default(uuid())
+  slug           String   @unique
+  name           String
+  logoUrl        String?
+  loginBgColor   String?
+  ownerId        String
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  owner       User         @relation("WorkspaceOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  members     User[]       @relation("WorkspaceMembers")
+  courses     Course[]
+  webhookLogs WebhookLog[]
+
+  @@index([ownerId])
 }
 
 enum Role {
@@ -51,10 +75,12 @@ model Course {
   hasCertificate     Boolean   @default(true)
   order              Int       @default(0)
   ownerId            String?
+  workspaceId        String
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt
 
   owner         User?         @relation("CourseOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+  workspace     Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   modules       Module[]
   enrollments   Enrollment[]
   posts         Post[]
@@ -62,6 +88,7 @@ model Course {
   reviews       Review[]
 
   @@index([ownerId])
+  @@index([workspaceId])
 }
 
 model Settings {
@@ -239,13 +266,17 @@ model WebhookLog {
   email             String?
   productExternalId String?
   courseId          String?
+  workspaceId       String?
   status            WebhookLogStatus
   errorMessage      String?
   rawPayload        Json
   createdAt         DateTime          @default(now())
 
+  workspace         Workspace?        @relation(fields: [workspaceId], references: [id], onDelete: SetNull)
+
   @@index([event, createdAt])
   @@index([createdAt])
+  @@index([workspaceId])
 }
 
 enum WebhookLogStatus {

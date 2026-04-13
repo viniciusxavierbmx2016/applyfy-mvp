@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireStaff } from "@/lib/auth";
+import { resolveStaffWorkspace } from "@/lib/workspace";
 
 export async function GET(request: Request) {
   try {
@@ -18,27 +19,41 @@ export async function GET(request: Request) {
         }
       : {};
 
-    const isProducer = staff.role === "PRODUCER";
+    const { workspace, scoped } = await resolveStaffWorkspace(staff);
+    const workspaceId = scoped && workspace ? workspace.id : null;
 
-    // Producer-scoped course IDs (used for filtering)
-    const scopedCourseIds = isProducer
+    // Producer with no workspace: nothing to show.
+    if (staff.role === "PRODUCER" && !workspaceId) {
+      return NextResponse.json({
+        users: [],
+        courses: [],
+        viewerRole: staff.role,
+      });
+    }
+
+    const scopedCourseIds = workspaceId
       ? (
           await prisma.course.findMany({
-            where: { ownerId: staff.id },
+            where: { workspaceId },
             select: { id: true },
           })
         ).map((c) => c.id)
       : null;
 
-    const where = isProducer
+    const where = workspaceId
       ? {
           ...searchClause,
-          enrollments: {
-            some: {
-              courseId: { in: scopedCourseIds || [] },
-              status: "ACTIVE" as const,
+          OR: [
+            { workspaceId },
+            {
+              enrollments: {
+                some: {
+                  courseId: { in: scopedCourseIds || [] },
+                  status: "ACTIVE" as const,
+                },
+              },
             },
-          },
+          ],
         }
       : searchClause;
 
@@ -54,8 +69,9 @@ export async function GET(request: Request) {
         points: true,
         level: true,
         createdAt: true,
+        workspaceId: true,
         enrollments: {
-          where: isProducer
+          where: workspaceId
             ? { status: "ACTIVE", courseId: { in: scopedCourseIds || [] } }
             : { status: "ACTIVE" },
           select: {
@@ -69,7 +85,7 @@ export async function GET(request: Request) {
     });
 
     const courses = await prisma.course.findMany({
-      where: isProducer ? { ownerId: staff.id } : undefined,
+      where: workspaceId ? { workspaceId } : undefined,
       orderBy: { order: "asc" },
       select: { id: true, title: true, slug: true },
     });
@@ -78,6 +94,7 @@ export async function GET(request: Request) {
       users,
       courses,
       viewerRole: staff.role,
+      workspaceId,
     });
   } catch (error) {
     console.error("GET /api/admin/users error:", error);

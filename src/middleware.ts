@@ -97,8 +97,17 @@ export async function middleware(request: NextRequest) {
     return supabaseResponse;
   }
 
+  // /w/[slug]/login, /register, /forgot-password, /reset-password are public.
+  // /w/[slug] itself (vitrine) requires auth — handled client-side redirect.
+  const isWorkspacePublic =
+    /^\/w\/[^/]+\/(login|register|forgot-password|reset-password)\/?$/.test(
+      pathname
+    );
+
   const isPublic =
-    publicRoutes.includes(pathname) || pathname.startsWith("/verify/");
+    publicRoutes.includes(pathname) ||
+    pathname.startsWith("/verify/") ||
+    isWorkspacePublic;
 
   if (!user && !isPublic) {
     const url = request.nextUrl.clone();

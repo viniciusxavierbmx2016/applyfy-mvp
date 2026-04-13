@@ -68,9 +68,10 @@ export async function canEditCourse(
   if (staff.role !== "PRODUCER") return false;
   const c = await prisma.course.findUnique({
     where: { id: courseId },
-    select: { ownerId: true },
+    select: { ownerId: true, workspace: { select: { ownerId: true } } },
   });
-  return !!c && c.ownerId === staff.id;
+  if (!c) return false;
+  return c.ownerId === staff.id || c.workspace.ownerId === staff.id;
 }
 
 export async function canEditModule(
@@ -81,9 +82,16 @@ export async function canEditModule(
   if (staff.role !== "PRODUCER") return false;
   const m = await prisma.module.findUnique({
     where: { id: moduleId },
-    select: { course: { select: { ownerId: true } } },
+    select: {
+      course: {
+        select: { ownerId: true, workspace: { select: { ownerId: true } } },
+      },
+    },
   });
-  return !!m && m.course.ownerId === staff.id;
+  if (!m) return false;
+  return (
+    m.course.ownerId === staff.id || m.course.workspace.ownerId === staff.id
+  );
 }
 
 export async function canEditLesson(
@@ -94,7 +102,19 @@ export async function canEditLesson(
   if (staff.role !== "PRODUCER") return false;
   const l = await prisma.lesson.findUnique({
     where: { id: lessonId },
-    select: { module: { select: { course: { select: { ownerId: true } } } } },
+    select: {
+      module: {
+        select: {
+          course: {
+            select: { ownerId: true, workspace: { select: { ownerId: true } } },
+          },
+        },
+      },
+    },
   });
-  return !!l && l.module.course.ownerId === staff.id;
+  if (!l) return false;
+  return (
+    l.module.course.ownerId === staff.id ||
+    l.module.course.workspace.ownerId === staff.id
+  );
 }

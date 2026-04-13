@@ -7,15 +7,9 @@ import {
   getSetting,
 } from "@/lib/webhook-helpers";
 
-// Applyfy webhook events.
-// Docs: https://app.applyfy.com.br/api/v1
-// Payload shape (reference):
-// {
-//   event, token, offerCode,
-//   client: { id, name, email, phone },
-//   transaction: { id, status, paymentMethod, amount },
-//   orderItems: [ { id, price, product: { id, name, externalId } } ]
-// }
+// Workspace-scoped Applyfy webhook.
+// The workspace is identified by the `[slug]` segment (the workspace slug).
+// Token per workspace is stored in Settings under key `applyfy_token:<workspaceId>`.
 
 type ApplyfyProduct = { id?: string; name?: string; externalId?: string };
 type ApplyfyOrderItem = { id?: string; price?: number; product?: ApplyfyProduct };
@@ -68,29 +62,44 @@ async function logWebhook(entry: {
   }
 }
 
-export async function POST(request: Request) {
+export async function POST(
+  request: Request,
+  { params }: { params: { slug: string } }
+) {
   let body: ApplyfyPayload = {};
+  let workspaceId: string | null = null;
   try {
     body = (await request.json().catch(() => ({}))) as ApplyfyPayload;
     const event = body?.event || "UNKNOWN";
 
-    console.log("[applyfy webhook] received", {
-      event,
-      transactionId: body?.transaction?.id,
-      email: body?.client?.email,
-      items: body?.orderItems?.length ?? 0,
+    const workspace = await prisma.workspace.findUnique({
+      where: { slug: params.slug },
+      select: { id: true, isActive: true },
     });
+    if (!workspace || !workspace.isActive) {
+      await logWebhook({
+        event,
+        status: "ERROR",
+        errorMessage: `Workspace not found: ${params.slug}`,
+        rawPayload: body,
+      });
+      return NextResponse.json(
+        { ok: false, error: "Workspace not found" },
+        { status: 200 }
+      );
+    }
+    workspaceId = workspace.id;
 
-    // Token validation — reject fast, but still return 200 per Applyfy spec
     const storedToken =
-      (await getSetting("applyfy_token")) || process.env.APPLYFY_TOKEN || "";
+      (await getSetting(`applyfy_token:${workspace.id}`)) ||
+      (await getSetting("applyfy_token")) ||
+      "";
     const providedToken = body?.token || "";
-
     if (!storedToken || providedToken !== storedToken) {
-      console.warn("[applyfy webhook] invalid token", { event });
       await logWebhook({
         event,
         email: body?.client?.email,
+        workspaceId,
         status: "ERROR",
         errorMessage: "Invalid token",
         rawPayload: body,
@@ -102,10 +111,10 @@ export async function POST(request: Request) {
     }
 
     if (IGNORED_EVENTS.has(event)) {
-      console.log("[applyfy webhook] ignored event", { event });
       await logWebhook({
         event,
         email: body?.client?.email,
+        workspaceId,
         status: "IGNORED",
         rawPayload: body,
       });
@@ -114,10 +123,10 @@ export async function POST(request: Request) {
 
     const email = body?.client?.email?.trim().toLowerCase();
     const name = body?.client?.name;
-
     if (!email) {
       await logWebhook({
         event,
+        workspaceId,
         status: "ERROR",
         errorMessage: "Missing client.email",
         rawPayload: body,
@@ -133,6 +142,7 @@ export async function POST(request: Request) {
       await logWebhook({
         event,
         email,
+        workspaceId,
         status: "ERROR",
         errorMessage: "Missing orderItems",
         rawPayload: body,
@@ -145,6 +155,14 @@ export async function POST(request: Request) {
 
     if (GRANT_EVENTS.has(event)) {
       const user = await ensureUserByEmail(email, name);
+      // Bind STUDENT user to this workspace if not bound yet.
+      if (user.role === "STUDENT" && !user.workspaceId) {
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { workspaceId },
+        });
+      }
+
       const results: Array<{
         externalId: string;
         courseId?: string;
@@ -158,6 +176,7 @@ export async function POST(request: Request) {
           await logWebhook({
             event,
             email,
+            workspaceId,
             status: "ERROR",
             errorMessage: "Missing product.externalId",
             rawPayload: item,
@@ -166,17 +185,18 @@ export async function POST(request: Request) {
           continue;
         }
 
+        // Only match courses within this workspace.
         const course = await prisma.course.findFirst({
-          where: { externalProductId: externalId },
+          where: { externalProductId: externalId, workspaceId },
         });
         if (!course) {
-          console.warn("[applyfy webhook] no course for externalId", { externalId });
           await logWebhook({
             event,
             email,
             productExternalId: externalId,
+            workspaceId,
             status: "ERROR",
-            errorMessage: `No course linked to externalId ${externalId}`,
+            errorMessage: `No course linked to externalId ${externalId} in workspace`,
             rawPayload: item,
           });
           results.push({ externalId, granted: false, reason: "no course" });
@@ -189,6 +209,7 @@ export async function POST(request: Request) {
           email,
           productExternalId: externalId,
           courseId: course.id,
+          workspaceId,
           status: "SUCCESS",
           rawPayload: item,
         });
@@ -204,6 +225,7 @@ export async function POST(request: Request) {
         await logWebhook({
           event,
           email,
+          workspaceId,
           status: "IGNORED",
           errorMessage: "User not found",
           rawPayload: body,
@@ -217,15 +239,16 @@ export async function POST(request: Request) {
         if (!externalId) continue;
 
         const course = await prisma.course.findFirst({
-          where: { externalProductId: externalId },
+          where: { externalProductId: externalId, workspaceId },
         });
         if (!course) {
           await logWebhook({
             event,
             email,
             productExternalId: externalId,
+            workspaceId,
             status: "ERROR",
-            errorMessage: `No course linked to externalId ${externalId}`,
+            errorMessage: `No course linked to externalId ${externalId} in workspace`,
             rawPayload: item,
           });
           continue;
@@ -242,6 +265,7 @@ export async function POST(request: Request) {
           email,
           productExternalId: externalId,
           courseId: course.id,
+          workspaceId,
           status: "SUCCESS",
           rawPayload: item,
         });
@@ -253,21 +277,22 @@ export async function POST(request: Request) {
     await logWebhook({
       event,
       email,
+      workspaceId,
       status: "IGNORED",
       errorMessage: "Unhandled event",
       rawPayload: body,
     });
     return NextResponse.json({ ok: true, ignored: event }, { status: 200 });
   } catch (error) {
-    console.error("[applyfy webhook] processing error:", error);
+    console.error("[applyfy workspace webhook] processing error:", error);
     await logWebhook({
       event: body?.event || "UNKNOWN",
       email: body?.client?.email,
+      workspaceId,
       status: "ERROR",
       errorMessage: error instanceof Error ? error.message : "Unknown error",
       rawPayload: body,
     });
-    // Applyfy requires 200 OK to avoid retries on non-recoverable errors.
     return NextResponse.json(
       { ok: false, error: "Webhook processing failed" },
       { status: 200 }

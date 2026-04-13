@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/auth";
+import { requireStaff } from "@/lib/auth";
+import { resolveStaffWorkspace } from "@/lib/workspace";
 
 function startOfDay(d: Date) {
   const x = new Date(d);
@@ -29,7 +30,32 @@ function buildDaySeries(days: number) {
 
 export async function GET() {
   try {
-    await requireAdmin();
+    const staff = await requireStaff();
+    const { workspace, scoped } = await resolveStaffWorkspace(staff);
+    const workspaceId = scoped && workspace ? workspace.id : null;
+
+    if (staff.role === "PRODUCER" && !workspaceId) {
+      return NextResponse.json({
+        kpis: { activeStudents: 0, newStudents7d: 0, avgCompletion: 0, totalPosts: 0 },
+        newStudentsPerDay: [],
+        lessonsCompletedPerDay: [],
+        topCourses: [],
+        postsByType: [],
+      });
+    }
+
+    const scopedCourseIds = workspaceId
+      ? (
+          await prisma.course.findMany({
+            where: { workspaceId },
+            select: { id: true },
+          })
+        ).map((c) => c.id)
+      : null;
+    const courseIdFilter = scopedCourseIds
+      ? { courseId: { in: scopedCourseIds } }
+      : {};
+    const workspaceUserFilter = workspaceId ? { workspaceId } : {};
 
     const now = new Date();
     const todayStart = startOfDay(now);
@@ -43,18 +69,28 @@ export async function GET() {
       prisma.user.count({
         where: {
           role: "STUDENT",
-          enrollments: { some: { status: "ACTIVE" } },
+          ...workspaceUserFilter,
+          enrollments: {
+            some: {
+              status: "ACTIVE",
+              ...(scopedCourseIds ? { courseId: { in: scopedCourseIds } } : {}),
+            },
+          },
         },
       }),
       prisma.user.count({
-        where: { role: "STUDENT", createdAt: { gte: sevenDaysAgo } },
+        where: {
+          role: "STUDENT",
+          createdAt: { gte: sevenDaysAgo },
+          ...workspaceUserFilter,
+        },
       }),
-      prisma.post.count(),
+      prisma.post.count({ where: courseIdFilter }),
     ]);
 
     // Avg completion rate: for each active enrollment, completed lessons / total course lessons
     const enrollments = await prisma.enrollment.findMany({
-      where: { status: "ACTIVE" },
+      where: { status: "ACTIVE", ...courseIdFilter },
       select: {
         userId: true,
         courseId: true,
@@ -91,7 +127,11 @@ export async function GET() {
 
     // ----- NEW STUDENTS PER DAY (30d) -----
     const newStudentsRows = await prisma.user.findMany({
-      where: { role: "STUDENT", createdAt: { gte: thirtyDaysAgo } },
+      where: {
+        role: "STUDENT",
+        createdAt: { gte: thirtyDaysAgo },
+        ...workspaceUserFilter,
+      },
       select: { createdAt: true },
     });
     const series30 = buildDaySeries(30);
@@ -106,7 +146,17 @@ export async function GET() {
 
     // ----- LESSONS COMPLETED PER DAY (30d) -----
     const completedRows = await prisma.lessonProgress.findMany({
-      where: { completed: true, completedAt: { gte: thirtyDaysAgo } },
+      where: {
+        completed: true,
+        completedAt: { gte: thirtyDaysAgo },
+        ...(scopedCourseIds
+          ? {
+              lesson: {
+                module: { courseId: { in: scopedCourseIds } },
+              },
+            }
+          : {}),
+      },
       select: { completedAt: true },
     });
     const lessonsByDay = new Map<string, number>(
@@ -121,6 +171,7 @@ export async function GET() {
 
     // ----- TOP 5 POPULAR COURSES -----
     const topCourses = await prisma.course.findMany({
+      where: workspaceId ? { workspaceId } : undefined,
       select: {
         id: true,
         title: true,
@@ -133,6 +184,7 @@ export async function GET() {
     // ----- POSTS BY TYPE -----
     const postsByTypeRaw = await prisma.post.groupBy({
       by: ["type"],
+      where: courseIdFilter,
       _count: { _all: true },
     });
     const typeLabels: Record<string, string> = {

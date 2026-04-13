@@ -26,8 +26,14 @@ export async function GET(request: Request) {
     }
 
     const course = courseId
-      ? await prisma.course.findUnique({ where: { id: courseId } })
-      : await prisma.course.findUnique({ where: { slug: courseSlug! } });
+      ? await prisma.course.findUnique({
+          where: { id: courseId },
+          include: { workspace: { select: { ownerId: true } } },
+        })
+      : await prisma.course.findUnique({
+          where: { slug: courseSlug! },
+          include: { workspace: { select: { ownerId: true } } },
+        });
 
     if (!course) {
       return NextResponse.json(
@@ -36,8 +42,11 @@ export async function GET(request: Request) {
       );
     }
 
-    // Access: admin bypass, else must be enrolled
-    if (user.role !== "ADMIN") {
+    // Access: ADMIN bypass, PRODUCER owning workspace bypass, else must be enrolled
+    const isStaffOwner =
+      user.role === "ADMIN" ||
+      (user.role === "PRODUCER" && course.workspace.ownerId === user.id);
+    if (!isStaffOwner) {
       const enrollment = await prisma.enrollment.findUnique({
         where: {
           userId_courseId: { userId: user.id, courseId: course.id },
@@ -120,9 +129,15 @@ export async function POST(request: Request) {
     const postType = VALID_TYPES.includes(type) ? (type as PostType) : "FREE";
 
     const course = courseId
-      ? await prisma.course.findUnique({ where: { id: courseId } })
+      ? await prisma.course.findUnique({
+          where: { id: courseId },
+          include: { workspace: { select: { ownerId: true } } },
+        })
       : courseSlug
-        ? await prisma.course.findUnique({ where: { slug: courseSlug } })
+        ? await prisma.course.findUnique({
+            where: { slug: courseSlug },
+            include: { workspace: { select: { ownerId: true } } },
+          })
         : null;
 
     if (!course) {
@@ -132,7 +147,10 @@ export async function POST(request: Request) {
       );
     }
 
-    if (user.role !== "ADMIN") {
+    const isStaffOwner =
+      user.role === "ADMIN" ||
+      (user.role === "PRODUCER" && course.workspace.ownerId === user.id);
+    if (!isStaffOwner) {
       const enrollment = await prisma.enrollment.findUnique({
         where: {
           userId_courseId: { userId: user.id, courseId: course.id },

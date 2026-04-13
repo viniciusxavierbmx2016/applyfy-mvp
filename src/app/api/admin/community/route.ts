@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireStaff } from "@/lib/auth";
+import { resolveStaffWorkspace } from "@/lib/workspace";
 
 export async function GET(request: Request) {
   try {
@@ -9,22 +10,28 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const courseId = searchParams.get("courseId");
 
-    const isProducer = staff.role === "PRODUCER";
-    const scopedCourseIds = isProducer
+    const { workspace, scoped } = await resolveStaffWorkspace(staff);
+    const workspaceId = scoped && workspace ? workspace.id : null;
+
+    if (staff.role === "PRODUCER" && !workspaceId) {
+      return NextResponse.json({ posts: [], courses: [] });
+    }
+
+    const scopedCourseIds = workspaceId
       ? (
           await prisma.course.findMany({
-            where: { ownerId: staff.id },
+            where: { workspaceId },
             select: { id: true },
           })
         ).map((c) => c.id)
       : null;
 
     const where: Record<string, unknown> = {};
-    if (isProducer) {
-      where.courseId = { in: scopedCourseIds || [] };
+    if (scopedCourseIds) {
+      where.courseId = { in: scopedCourseIds };
     }
     if (courseId) {
-      if (isProducer && !scopedCourseIds!.includes(courseId)) {
+      if (scopedCourseIds && !scopedCourseIds.includes(courseId)) {
         return NextResponse.json({ posts: [], courses: [] });
       }
       where.courseId = courseId;
@@ -41,7 +48,7 @@ export async function GET(request: Request) {
     });
 
     const courses = await prisma.course.findMany({
-      where: isProducer ? { ownerId: staff.id } : undefined,
+      where: workspaceId ? { workspaceId } : undefined,
       orderBy: { order: "asc" },
       select: { id: true, title: true, slug: true },
     });
