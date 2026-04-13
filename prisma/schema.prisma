@@ -248,6 +248,16 @@ enum WebhookLogStatus {
   IGNORED
 }
 
+model IntegrationRequest {
+  id        String   @id @default(uuid())
+  gateway   String
+  email     String
+  notes     String?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
+
 model Session {
   id        String   @id @default(uuid())
   userId    String
