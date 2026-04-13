@@ -78,7 +78,11 @@ export async function GET(request: Request) {
       course: { id: course.id, slug: course.slug, title: course.title },
     });
   } catch (error) {
-    console.error("GET /api/posts error:", error);
+    const details =
+      error instanceof Error
+        ? { name: error.name, message: error.message, stack: error.stack }
+        : error;
+    console.error("GET /api/posts error:", details);
     return NextResponse.json(
       { error: "Erro ao buscar posts" },
       { status: 500 }

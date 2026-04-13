@@ -1,7 +1,7 @@
-import DOMPurify from "isomorphic-dompurify";
+import sanitize from "sanitize-html";
 
-const CONFIG = {
-  ALLOWED_TAGS: [
+const OPTIONS: sanitize.IOptions = {
+  allowedTags: [
     "p",
     "br",
     "strong",
@@ -14,7 +14,6 @@ const CONFIG = {
     "ol",
     "li",
     "a",
-    "img",
     "blockquote",
     "code",
     "pre",
@@ -23,14 +22,23 @@ const CONFIG = {
     "h3",
     "span",
   ],
-  ALLOWED_ATTR: ["href", "target", "rel", "src", "alt", "title"],
-  ALLOWED_URI_REGEXP: /^(https?:|mailto:|\/|#)/i,
+  allowedAttributes: {
+    a: ["href", "target", "rel", "title"],
+    span: ["class"],
+  },
+  allowedSchemes: ["http", "https", "mailto"],
+  transformTags: {
+    a: sanitize.simpleTransform("a", {
+      rel: "noopener noreferrer nofollow",
+      target: "_blank",
+    }),
+  },
 };
 
 export function sanitizeHtml(dirty: string): string {
-  return DOMPurify.sanitize(dirty, CONFIG);
+  return sanitize(dirty, OPTIONS);
 }
 
 export function stripHtml(html: string): string {
-  return html.replace(/<[^>]*>/g, "").trim();
+  return sanitize(html, { allowedTags: [], allowedAttributes: {} }).trim();
 }
