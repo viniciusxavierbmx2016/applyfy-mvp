@@ -24,6 +24,7 @@ export interface ModuleData {
   id: string;
   title: string;
   order: number;
+  daysToRelease: number;
   lessons: LessonData[];
 }
 
@@ -67,21 +68,27 @@ export function ModulesManager({ courseId, initialModules }: ModulesManagerProps
     });
     if (res.ok) {
       const data = await res.json();
-      setModules([...modules, { ...data.module, lessons: [] }]);
+      setModules([
+        ...modules,
+        { ...data.module, daysToRelease: data.module.daysToRelease ?? 0, lessons: [] },
+      ]);
       setNewTitle("");
       setCreating(false);
     }
   }
 
-  async function handleUpdate(id: string, title: string) {
+  async function handleUpdate(
+    id: string,
+    data: { title?: string; daysToRelease?: number }
+  ) {
     const res = await fetch(`/api/modules/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title }),
+      body: JSON.stringify(data),
     });
     if (res.ok) {
       setModules((prev) =>
-        prev.map((m) => (m.id === id ? { ...m, title } : m))
+        prev.map((m) => (m.id === id ? { ...m, ...data } : m))
       );
     }
   }
@@ -195,7 +202,10 @@ function SortableModule({
   onLessonsChange,
 }: {
   module: ModuleData;
-  onUpdate: (id: string, title: string) => void;
+  onUpdate: (
+    id: string,
+    data: { title?: string; daysToRelease?: number }
+  ) => void;
   onDelete: (id: string) => void;
   onLessonsChange: (lessons: LessonData[]) => void;
 }) {
@@ -220,9 +230,16 @@ function SortableModule({
 
   function saveEdit() {
     if (editTitle.trim() && editTitle !== module.title) {
-      onUpdate(module.id, editTitle);
+      onUpdate(module.id, { title: editTitle });
     }
     setEditing(false);
+  }
+
+  const [daysInput, setDaysInput] = useState(String(module.daysToRelease ?? 0));
+  function saveDays() {
+    const n = Math.max(0, Math.floor(Number(daysInput) || 0));
+    if (n !== module.daysToRelease) onUpdate(module.id, { daysToRelease: n });
+    setDaysInput(String(n));
   }
 
   return (
@@ -302,7 +319,23 @@ function SortableModule({
       </div>
 
       {expanded && (
-        <div className="border-t border-gray-200 dark:border-gray-800 bg-gray-950/40 p-4">
+        <div className="border-t border-gray-200 dark:border-gray-800 bg-gray-950/40 p-4 space-y-4">
+          <div>
+            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Liberar após (dias)
+            </label>
+            <input
+              type="number"
+              min={0}
+              value={daysInput}
+              onChange={(e) => setDaysInput(e.target.value)}
+              onBlur={saveDays}
+              className="w-32 px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              0 = liberado imediatamente. Ex: 7 = libera 7 dias após a matrícula do aluno.
+            </p>
+          </div>
           <LessonsManager
             moduleId={module.id}
             initialLessons={module.lessons}

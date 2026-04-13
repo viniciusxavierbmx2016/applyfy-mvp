@@ -26,6 +26,7 @@ export interface LessonData {
   videoUrl: string;
   duration: number | null;
   order: number;
+  daysToRelease: number;
 }
 
 interface LessonsManagerProps {
@@ -257,6 +258,7 @@ function LessonForm({
     description: string | null;
     videoUrl: string;
     duration: number | null;
+    daysToRelease: number;
   }) => void;
   onCancel: () => void;
 }) {
@@ -265,6 +267,9 @@ function LessonForm({
   const [videoUrl, setVideoUrl] = useState(initial?.videoUrl || "");
   const [duration, setDuration] = useState<string>(
     initial?.duration ? String(initial.duration) : ""
+  );
+  const [daysToRelease, setDaysToRelease] = useState<string>(
+    String(initial?.daysToRelease ?? 0)
   );
 
   function handleSubmit(e: React.FormEvent) {
@@ -275,6 +280,7 @@ function LessonForm({
       description: description.trim() || null,
       videoUrl: videoUrl.trim(),
       duration: duration ? Number(duration) : null,
+      daysToRelease: Math.max(0, Math.floor(Number(daysToRelease) || 0)),
     });
   }
 
@@ -312,6 +318,21 @@ function LessonForm({
         min={0}
         className="w-full px-3 py-2 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
       />
+      <div>
+        <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Liberar após (dias)
+        </label>
+        <input
+          type="number"
+          value={daysToRelease}
+          onChange={(e) => setDaysToRelease(e.target.value)}
+          min={0}
+          className="w-full px-3 py-2 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+          0 = liberado imediatamente. Ex: 7 = libera 7 dias após a matrícula do aluno.
+        </p>
+      </div>
       <div className="flex gap-2">
         <button
           type="submit"

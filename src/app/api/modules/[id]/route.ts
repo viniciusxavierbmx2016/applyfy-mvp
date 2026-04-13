@@ -11,11 +11,16 @@ export async function PUT(
     if (!(await canEditModule(staff, params.id))) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
-    const { title } = await request.json();
+    const { title, daysToRelease } = await request.json();
 
     const updated = await prisma.module.update({
       where: { id: params.id },
-      data: { ...(title !== undefined && { title }) },
+      data: {
+        ...(title !== undefined && { title }),
+        ...(typeof daysToRelease === "number" && daysToRelease >= 0 && {
+          daysToRelease: Math.floor(daysToRelease),
+        }),
+      },
     });
 
     return NextResponse.json({ module: updated });

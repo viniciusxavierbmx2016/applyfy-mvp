@@ -12,7 +12,7 @@ export async function POST(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const { title } = await request.json();
+    const { title, daysToRelease } = await request.json();
     if (!title) {
       return NextResponse.json(
         { error: "Título é obrigatório" },
@@ -30,6 +30,10 @@ export async function POST(
         title,
         courseId: params.id,
         order: (lastModule?.order ?? -1) + 1,
+        daysToRelease:
+          typeof daysToRelease === "number" && daysToRelease >= 0
+            ? Math.floor(daysToRelease)
+            : 0,
       },
       include: { lessons: true },
     });

@@ -12,7 +12,8 @@ export async function POST(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const { title, description, videoUrl, duration } = await request.json();
+    const { title, description, videoUrl, duration, daysToRelease } =
+      await request.json();
     if (!title || !videoUrl) {
       return NextResponse.json(
         { error: "Título e videoUrl são obrigatórios" },
@@ -33,6 +34,10 @@ export async function POST(
         duration: duration ? Number(duration) : null,
         moduleId: params.id,
         order: (lastLesson?.order ?? -1) + 1,
+        daysToRelease:
+          typeof daysToRelease === "number" && daysToRelease >= 0
+            ? Math.floor(daysToRelease)
+            : 0,
       },
     });
 

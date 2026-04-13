@@ -16,6 +16,7 @@ interface LessonItem {
   videoUrl: string;
   duration: number | null;
   order: number;
+  daysToRelease: number;
   progress: Array<{ completed: boolean }>;
 }
 
@@ -23,7 +24,27 @@ interface ModuleItem {
   id: string;
   title: string;
   order: number;
+  daysToRelease: number;
   lessons: LessonItem[];
+}
+
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
+function releaseInfo(base: Date | null, days: number) {
+  const baseMs = base ? new Date(base).getTime() : Date.now();
+  const releaseTime = baseMs + Math.max(0, days) * MS_PER_DAY;
+  const now = Date.now();
+  const released = releaseTime <= now;
+  const daysRemaining = released
+    ? 0
+    : Math.ceil((releaseTime - now) / MS_PER_DAY);
+  return { released, releaseDate: new Date(releaseTime), daysRemaining };
+}
+function formatDateBR(d: Date): string {
+  return d.toLocaleDateString("pt-BR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
 }
 
 interface CourseDetail {
@@ -49,6 +70,7 @@ export default function CourseDetailPage() {
   const router = useRouter();
   const [course, setCourse] = useState<CourseDetail | null>(null);
   const [hasAccess, setHasAccess] = useState(false);
+  const [enrollmentCreatedAt, setEnrollmentCreatedAt] = useState<Date | null>(null);
   const [myReview, setMyReview] = useState<MyReview | null>(null);
   const [loading, setLoading] = useState(true);
   const [openModules, setOpenModules] = useState<Set<string>>(new Set());
@@ -61,6 +83,9 @@ export default function CourseDetailPage() {
           const data = await res.json();
           setCourse(data.course);
           setHasAccess(data.hasAccess);
+          setEnrollmentCreatedAt(
+            data.enrollment?.createdAt ? new Date(data.enrollment.createdAt) : null
+          );
           setMyReview(data.myReview ?? null);
           if (data.course?.modules?.[0]) {
             setOpenModules(new Set([data.course.modules[0].id]));
@@ -266,10 +291,20 @@ export default function CourseDetailPage() {
 
   // === ENROLLED VIEW ===
   const progress = calculateCourseProgress(course);
-  const allLessons = course.modules.flatMap((m) => m.lessons);
-  const firstIncomplete = allLessons.find(
-    (l) => !l.progress?.some((p) => p.completed)
+  const allLessonsFlat = course.modules.flatMap((m) =>
+    m.lessons.map((l) => ({
+      lesson: l,
+      moduleDays: m.daysToRelease ?? 0,
+    }))
   );
+  const firstIncomplete = allLessonsFlat.find(
+    ({ lesson, moduleDays }) =>
+      !lesson.progress?.some((p) => p.completed) &&
+      releaseInfo(
+        enrollmentCreatedAt,
+        Math.max(moduleDays, lesson.daysToRelease ?? 0)
+      ).released
+  )?.lesson;
 
   return (
     <div className="max-w-5xl mx-auto">
@@ -399,11 +434,15 @@ export default function CourseDetailPage() {
               const completedCount = module.lessons.filter((l) =>
                 l.progress?.some((p) => p.completed)
               ).length;
+              const modRel = releaseInfo(
+                enrollmentCreatedAt,
+                module.daysToRelease ?? 0
+              );
 
               return (
                 <div
                   key={module.id}
-                  className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden"
+                  className={`bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden ${modRel.released ? "" : "opacity-70"}`}
                 >
                   <button
                     onClick={() => toggleModule(module.id)}
@@ -413,9 +452,18 @@ export default function CourseDetailPage() {
                       {String(moduleIdx + 1).padStart(2, "0")}
                     </span>
                     <div className="flex-1">
-                      <p className="text-gray-900 dark:text-white font-medium">{module.title}</p>
+                      <p className="text-gray-900 dark:text-white font-medium flex items-center gap-2">
+                        {!modRel.released && (
+                          <svg className="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                          </svg>
+                        )}
+                        {module.title}
+                      </p>
                       <p className="text-xs text-gray-500">
-                        {completedCount}/{module.lessons.length} aulas concluídas
+                        {modRel.released
+                          ? `${completedCount}/${module.lessons.length} aulas concluídas`
+                          : `Libera em ${modRel.daysRemaining} dia${modRel.daysRemaining === 1 ? "" : "s"} (${formatDateBR(modRel.releaseDate)})`}
                       </p>
                     </div>
                     <svg
@@ -442,6 +490,37 @@ export default function CourseDetailPage() {
                             const isCompleted = lesson.progress?.some(
                               (p) => p.completed
                             );
+                            const lessonRel = releaseInfo(
+                              enrollmentCreatedAt,
+                              Math.max(
+                                module.daysToRelease ?? 0,
+                                lesson.daysToRelease ?? 0
+                              )
+                            );
+                            if (!lessonRel.released) {
+                              return (
+                                <li key={lesson.id}>
+                                  <div
+                                    className="flex items-center gap-3 p-4 opacity-60 cursor-not-allowed"
+                                    title={`Disponível em ${formatDateBR(lessonRel.releaseDate)}`}
+                                  >
+                                    <div className="w-6 h-6 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 flex items-center justify-center flex-shrink-0">
+                                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                      </svg>
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                      <p className="text-sm font-medium text-gray-500 truncate">
+                                        {lesson.title}
+                                      </p>
+                                      <p className="text-xs text-gray-500 mt-0.5">
+                                        Disponível em {formatDateBR(lessonRel.releaseDate)}
+                                      </p>
+                                    </div>
+                                  </div>
+                                </li>
+                              );
+                            }
                             return (
                               <li key={lesson.id}>
                                 <Link

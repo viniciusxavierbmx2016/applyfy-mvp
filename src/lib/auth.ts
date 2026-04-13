@@ -2,6 +2,41 @@ import { createServerSupabaseClient } from "./supabase-server";
 import { prisma } from "./prisma";
 import type { Enrollment, User } from "@prisma/client";
 
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
+
+export interface ReleaseStatus {
+  released: boolean;
+  releaseDate: Date;
+  daysRemaining: number;
+}
+
+/** Compute release status for a module or lesson based on enrollment.createdAt
+ * and the maximum of its own daysToRelease and the parent module's. */
+export function computeReleaseStatus(
+  enrollmentCreatedAt: Date | null | undefined,
+  daysToRelease: number
+): ReleaseStatus {
+  const base = enrollmentCreatedAt ? enrollmentCreatedAt.getTime() : Date.now();
+  const releaseTime = base + Math.max(0, daysToRelease) * MS_PER_DAY;
+  const now = Date.now();
+  const released = releaseTime <= now;
+  const daysRemaining = released
+    ? 0
+    : Math.ceil((releaseTime - now) / MS_PER_DAY);
+  return { released, releaseDate: new Date(releaseTime), daysRemaining };
+}
+
+export function computeLessonRelease(
+  enrollmentCreatedAt: Date | null | undefined,
+  moduleDays: number,
+  lessonDays: number
+): ReleaseStatus {
+  return computeReleaseStatus(
+    enrollmentCreatedAt,
+    Math.max(moduleDays || 0, lessonDays || 0)
+  );
+}
+
 /** True if the enrollment is ACTIVE and (expiresAt is null or in the future). */
 export function isEnrollmentActive(
   enrollment: Pick<Enrollment, "status" | "expiresAt"> | null | undefined

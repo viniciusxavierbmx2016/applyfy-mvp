@@ -7,12 +7,28 @@ export interface SidebarLesson {
   id: string;
   title: string;
   completed: boolean;
+  locked?: boolean;
+  releaseDate?: string | null;
+  daysRemaining?: number;
 }
 
 export interface SidebarModule {
   id: string;
   title: string;
   lessons: SidebarLesson[];
+  locked?: boolean;
+  releaseDate?: string | null;
+  daysRemaining?: number;
+}
+
+function formatReleaseDate(iso?: string | null): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  return d.toLocaleDateString("pt-BR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
 }
 
 interface Props {
@@ -37,6 +53,36 @@ function LessonLink({
   lesson: SidebarLesson;
   isCurrent: boolean;
 }) {
+  if (lesson.locked) {
+    return (
+      <div
+        className="flex items-start gap-3 px-3 py-2 rounded-lg text-sm border border-transparent text-gray-400 dark:text-gray-500 opacity-70 cursor-not-allowed"
+        title={`Disponível em ${formatReleaseDate(lesson.releaseDate)}`}
+      >
+        <div className="pt-0.5 flex-shrink-0">
+          <svg
+            className="w-4 h-4 text-gray-400 dark:text-gray-500"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+            />
+          </svg>
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="line-clamp-2">{lesson.title}</p>
+          <p className="text-[10px] mt-0.5">
+            Disponível em {formatReleaseDate(lesson.releaseDate)}
+          </p>
+        </div>
+      </div>
+    );
+  }
   return (
     <Link
       href={`/course/${courseSlug}/lesson/${lesson.id}`}
@@ -137,20 +183,31 @@ export function LessonsSidebar({
                   />
                 </svg>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 dark:text-white line-clamp-1">
+                  <p className={`text-sm font-medium line-clamp-1 flex items-center gap-1.5 ${mod.locked ? "text-gray-400 dark:text-gray-500" : "text-gray-900 dark:text-white"}`}>
+                    {mod.locked && (
+                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                      </svg>
+                    )}
                     {mod.title}
                   </p>
-                  <div className="flex items-center gap-2 mt-1">
-                    <div className="flex-1 h-1 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-blue-500"
-                        style={{ width: `${prog}%` }}
-                      />
+                  {mod.locked ? (
+                    <p className="text-[10px] text-gray-500 mt-1">
+                      Libera em {mod.daysRemaining} dia{mod.daysRemaining === 1 ? "" : "s"}
+                    </p>
+                  ) : (
+                    <div className="flex items-center gap-2 mt-1">
+                      <div className="flex-1 h-1 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-blue-500"
+                          style={{ width: `${prog}%` }}
+                        />
+                      </div>
+                      <span className="text-[10px] text-gray-500">
+                        {prog}%
+                      </span>
                     </div>
-                    <span className="text-[10px] text-gray-500">
-                      {prog}%
-                    </span>
-                  </div>
+                  )}
                 </div>
               </button>
               {isOpen && (

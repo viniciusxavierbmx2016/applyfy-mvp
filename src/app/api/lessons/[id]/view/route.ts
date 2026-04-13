@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getCurrentUser, isEnrollmentActive } from "@/lib/auth";
+import {
+  computeLessonRelease,
+  getCurrentUser,
+  isEnrollmentActive,
+} from "@/lib/auth";
 import { parseVideoUrl } from "@/lib/video";
 
 export async function GET(
@@ -46,6 +50,7 @@ export async function GET(
     const course = lesson.module.course;
 
     // Check enrollment (admins bypass)
+    let enrollmentCreatedAt: Date | null = null;
     if (user.role !== "ADMIN") {
       const enrollment = await prisma.enrollment.findUnique({
         where: { userId_courseId: { userId: user.id, courseId: course.id } },
@@ -57,6 +62,23 @@ export async function GET(
               enrollment?.expiresAt && enrollment.expiresAt.getTime() < Date.now()
                 ? "Seu acesso a este curso expirou"
                 : "Você não está matriculado neste curso",
+          },
+          { status: 403 }
+        );
+      }
+      enrollmentCreatedAt = enrollment!.createdAt;
+
+      const release = computeLessonRelease(
+        enrollmentCreatedAt,
+        lesson.module.daysToRelease,
+        lesson.daysToRelease
+      );
+      if (!release.released) {
+        return NextResponse.json(
+          {
+            error: `Este conteúdo será liberado em ${release.daysRemaining} dia${release.daysRemaining === 1 ? "" : "s"}`,
+            releaseDate: release.releaseDate.toISOString(),
+            daysRemaining: release.daysRemaining,
           },
           { status: 403 }
         );
@@ -97,15 +119,35 @@ export async function GET(
         id: course.id,
         slug: course.slug,
         title: course.title,
-        modules: course.modules.map((m) => ({
-          id: m.id,
-          title: m.title,
-          lessons: m.lessons.map((l) => ({
-            id: l.id,
-            title: l.title,
-            completed: l.progress.some((p) => p.completed),
-          })),
-        })),
+        modules: course.modules.map((m) => {
+          const modRelease = computeLessonRelease(
+            enrollmentCreatedAt,
+            m.daysToRelease,
+            0
+          );
+          return {
+            id: m.id,
+            title: m.title,
+            locked: user.role === "ADMIN" ? false : !modRelease.released,
+            releaseDate: modRelease.released ? null : modRelease.releaseDate.toISOString(),
+            daysRemaining: modRelease.daysRemaining,
+            lessons: m.lessons.map((l) => {
+              const lr = computeLessonRelease(
+                enrollmentCreatedAt,
+                m.daysToRelease,
+                l.daysToRelease
+              );
+              return {
+                id: l.id,
+                title: l.title,
+                completed: l.progress.some((p) => p.completed),
+                locked: user.role === "ADMIN" ? false : !lr.released,
+                releaseDate: lr.released ? null : lr.releaseDate.toISOString(),
+                daysRemaining: lr.daysRemaining,
+              };
+            }),
+          };
+        }),
       },
       prev: prev ? { id: prev.id, title: prev.title } : null,
       next: next ? { id: next.id, title: next.title } : null,

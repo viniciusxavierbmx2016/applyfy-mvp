@@ -11,7 +11,8 @@ export async function PUT(
     if (!(await canEditLesson(staff, params.id))) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
-    const { title, description, videoUrl, duration } = await request.json();
+    const { title, description, videoUrl, duration, daysToRelease } =
+      await request.json();
 
     const lesson = await prisma.lesson.update({
       where: { id: params.id },
@@ -21,6 +22,9 @@ export async function PUT(
         ...(videoUrl !== undefined && { videoUrl }),
         ...(duration !== undefined && {
           duration: duration ? Number(duration) : null,
+        }),
+        ...(typeof daysToRelease === "number" && daysToRelease >= 0 && {
+          daysToRelease: Math.floor(daysToRelease),
         }),
       },
     });

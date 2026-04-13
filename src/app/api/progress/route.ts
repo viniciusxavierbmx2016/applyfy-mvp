@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getCurrentUser, isEnrollmentActive } from "@/lib/auth";
+import {
+  computeLessonRelease,
+  getCurrentUser,
+  isEnrollmentActive,
+} from "@/lib/auth";
 import { GAMIFICATION, getLevelForPoints } from "@/lib/utils";
 import { createNotification } from "@/lib/notifications";
 
@@ -55,6 +59,21 @@ export async function POST(request: Request) {
           { error: "Acesso expirado ou não matriculado" },
           { status: 403 }
         );
+      }
+      if (completed) {
+        const release = computeLessonRelease(
+          enrollment!.createdAt,
+          lesson.module.daysToRelease,
+          lesson.daysToRelease
+        );
+        if (!release.released) {
+          return NextResponse.json(
+            {
+              error: `Este conteúdo será liberado em ${release.daysRemaining} dia${release.daysRemaining === 1 ? "" : "s"}`,
+            },
+            { status: 403 }
+          );
+        }
       }
     }
 
