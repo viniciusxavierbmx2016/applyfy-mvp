@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
 
 const ALLOWED_KEYS = new Set([
-  "hotmart_hottok",
+  "applyfy_token",
   "stripe_webhook_secret",
 ]);
 

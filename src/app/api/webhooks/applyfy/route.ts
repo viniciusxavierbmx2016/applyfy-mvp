@@ -6,13 +6,13 @@ import {
   getSetting,
 } from "@/lib/webhook-helpers";
 
-// Hotmart sends events for: PURCHASE_APPROVED, PURCHASE_COMPLETE, PURCHASE_REFUNDED,
+// Applyfy sends events for: PURCHASE_APPROVED, PURCHASE_COMPLETE, PURCHASE_REFUNDED,
 // PURCHASE_CHARGEBACK, PURCHASE_CANCELED, SUBSCRIPTION_CANCELLATION, etc.
 // We grant access on APPROVED/COMPLETE and revoke on refund/cancel/chargeback.
 const GRANT_EVENTS = new Set([
   "PURCHASE_APPROVED",
   "PURCHASE_COMPLETE",
-  "PURCHASE_BILLET_PRINTED", // optional — treat as grant-pending if desired
+  "PURCHASE_BILLET_PRINTED",
 ]);
 const REVOKE_EVENTS = new Set([
   "PURCHASE_REFUNDED",
@@ -24,23 +24,26 @@ const REVOKE_EVENTS = new Set([
 export async function POST(request: Request) {
   try {
     const storedToken =
-      (await getSetting("hotmart_hottok")) || process.env.HOTMART_HOTTOK || "";
+      (await getSetting("applyfy_token")) || process.env.APPLYFY_TOKEN || "";
 
     const headerToken =
-      request.headers.get("x-hotmart-hottok") ||
-      request.headers.get("hottok") ||
+      request.headers.get("x-applyfy-token") ||
+      request.headers.get("applyfy_token") ||
       "";
 
     const url = new URL(request.url);
-    const queryToken = url.searchParams.get("hottok") || "";
+    const queryToken = url.searchParams.get("applyfy_token") || "";
 
     const body = await request.json().catch(() => ({}));
-    const bodyToken = body?.hottok || "";
+    const bodyToken = body?.applyfy_token || "";
 
     const providedToken = headerToken || queryToken || bodyToken;
 
     if (!storedToken || providedToken !== storedToken) {
-      return NextResponse.json({ error: "Invalid hottok" }, { status: 401 });
+      return NextResponse.json(
+        { error: "Invalid applyfy_token" },
+        { status: 401 }
+      );
     }
 
     const event: string = body?.event || body?.data?.event || "";
@@ -102,7 +105,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ ok: true, ignored: event || "no-event" });
   } catch (error) {
-    console.error("POST /api/webhooks/hotmart error:", error);
+    console.error("POST /api/webhooks/applyfy error:", error);
     return NextResponse.json(
       { error: "Webhook processing failed" },
       { status: 500 }

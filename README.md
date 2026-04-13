@@ -140,21 +140,21 @@ Em dev, reinicie o `npm run dev` e clique em **Entrar com Google** na tela de lo
 
 ## Webhooks de pagamento
 
-O Applyfy libera acesso automaticamente após uma compra aprovada via **Hotmart** ou **Stripe**. O roteamento do produto → curso usa o campo **ID externo do produto** cadastrado em `Admin → Cursos`.
+O Applyfy libera acesso automaticamente após uma compra aprovada via **Applyfy** ou **Stripe**. O roteamento do produto → curso usa o campo **ID externo do produto** cadastrado em `Admin → Cursos`.
 
 ### 1. Vincular produtos aos cursos
 
 Em **Admin → Cursos**, edite cada curso e preencha **ID externo do produto** com:
-- **Hotmart:** o `product.id` (ou `ucode`) do produto.
+- **Applyfy:** o `product.id` (ou `ucode`) do produto.
 - **Stripe:** o `prod_XXXX` ou qualquer identificador que você coloque em `metadata.externalProductId` do checkout session. Alternativamente, envie `metadata.courseId` com o UUID do curso no Applyfy.
 
-### 2. Configurar Hotmart
+### 2. Configurar Applyfy
 
-1. Acesse a Hotmart → **Ferramentas → Webhook (Postback) → Cadastrar**.
-2. URL: `https://SEU-APP.vercel.app/api/webhooks/hotmart`
+1. Acesse o Applyfy → **Ferramentas → Webhook (Postback) → Cadastrar**.
+2. URL: `https://SEU-APP.vercel.app/api/webhooks/applyfy`
 3. Selecione eventos: `PURCHASE_APPROVED`, `PURCHASE_COMPLETE`, `PURCHASE_REFUNDED`, `PURCHASE_CHARGEBACK`, `PURCHASE_CANCELED`.
-4. Copie o **hottok** gerado.
-5. No Applyfy, vá em **Admin → Configurações → Hotmart** e cole o hottok.
+4. Copie o **token** gerado.
+5. No Applyfy, vá em **Admin → Configurações → Applyfy** e cole o token.
 
 ### 3. Configurar Stripe
 
