@@ -121,7 +121,11 @@ export async function GET(request: Request) {
       store: store.map(withRating),
     });
   } catch (error) {
-    console.error("GET /api/courses error:", error);
+    const details =
+      error instanceof Error
+        ? { name: error.name, message: error.message, stack: error.stack }
+        : error;
+    console.error("GET /api/courses error:", details);
     return NextResponse.json(
       { error: "Erro ao buscar cursos" },
       { status: 500 }
