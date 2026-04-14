@@ -10,22 +10,6 @@ import {
   type DateRangeValue,
 } from "@/components/date-range-selector";
 
-const AdminAnalyticsContent = dynamic(
-  () =>
-    import("@/components/admin-analytics-content").then(
-      (m) => m.AdminAnalyticsContent
-    ),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="p-6">
-        <div className="h-6 w-48 bg-gray-200 dark:bg-gray-800 rounded animate-pulse mb-4" />
-        <div className="h-64 bg-gray-100 dark:bg-gray-900 rounded-xl animate-pulse" />
-      </div>
-    ),
-  }
-);
-
 const ReportsContentTab = dynamic(
   () =>
     import("@/components/reports-content-tab").then((m) => m.ReportsContentTab),
@@ -50,10 +34,9 @@ const ReportsStudentsTab = dynamic(
   }
 );
 
-type TabId = "overview" | "content" | "students";
+type TabId = "content" | "students";
 
 const TABS: Array<{ id: TabId; label: string }> = [
-  { id: "overview", label: "Visão Geral" },
   { id: "content", label: "Conteúdo" },
   { id: "students", label: "Alunos" },
 ];
@@ -81,8 +64,18 @@ export default function AdminAnalyticsPage() {
 function AdminAnalyticsPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const tabParam = (searchParams.get("tab") || "overview") as TabId;
-  const tab: TabId = TABS.some((t) => t.id === tabParam) ? tabParam : "overview";
+  const rawTab = searchParams.get("tab") || "content";
+  const tab: TabId = TABS.some((t) => t.id === rawTab)
+    ? (rawTab as TabId)
+    : "content";
+
+  useEffect(() => {
+    if (rawTab === "overview" || !TABS.some((t) => t.id === rawTab)) {
+      const sp = new URLSearchParams(searchParams.toString());
+      sp.set("tab", "content");
+      router.replace(`/admin/analytics?${sp.toString()}`);
+    }
+  }, [rawTab, router, searchParams]);
 
   const [courseId, setCourseId] = useState<string>("all");
   const [range, setRange] = useState<DateRangeValue>(() =>
@@ -122,7 +115,7 @@ function AdminAnalyticsPageInner() {
             Relatórios
           </h1>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Performance dos seus cursos, engajamento e progresso dos alunos.
+            Análise detalhada de conteúdo e alunos
           </p>
         </div>
         <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
@@ -173,14 +166,6 @@ function AdminAnalyticsPageInner() {
       </div>
 
       {/* Tab content */}
-      {tab === "overview" && (
-        <AdminAnalyticsContent
-          courseId={courseId}
-          startDate={range.startDate}
-          endDate={range.endDate}
-          rangeLabel={range.label}
-        />
-      )}
       {tab === "content" && (
         <ReportsContentTab
           courseId={courseId}
