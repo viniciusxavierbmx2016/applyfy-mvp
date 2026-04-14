@@ -19,6 +19,7 @@ export async function GET(
           logoUrl: true,
           loginBgColor: true,
           isActive: true,
+          ownerId: true,
         },
       }),
     ]);
@@ -64,6 +65,14 @@ export async function GET(
       enrollments.map((e) => [e.courseId, e.expiresAt])
     );
 
+    const isWorkspaceOwner =
+      user.role === "PRODUCER" && workspace.ownerId === user.id;
+    const isStaffViewer = user.role === "ADMIN" || isWorkspaceOwner;
+    const canManageCourse = (ownerId: string | null | undefined) =>
+      user.role === "ADMIN" ||
+      isWorkspaceOwner ||
+      (user.role === "PRODUCER" && ownerId === user.id);
+
     const [enrolledCourses, storeCourses] = await Promise.all([
       prisma.course.findMany({
         where: {
@@ -79,6 +88,7 @@ export async function GET(
           description: true,
           thumbnail: true,
           checkoutUrl: true,
+          ownerId: true,
           modules: {
             select: {
               id: true,
@@ -98,9 +108,10 @@ export async function GET(
       prisma.course.findMany({
         where: {
           id: { notIn: enrolledIds },
-          isPublished: true,
-          showInStore: true,
           workspaceId: workspace.id,
+          ...(isStaffViewer
+            ? {}
+            : { isPublished: true, showInStore: true }),
         },
         orderBy: { order: "asc" },
         select: {
@@ -112,6 +123,7 @@ export async function GET(
           checkoutUrl: true,
           price: true,
           priceCurrency: true,
+          ownerId: true,
         },
       }),
     ]);
@@ -134,12 +146,21 @@ export async function GET(
         { average: r._avg.rating ?? 0, count: r._count.rating },
       ])
     );
-    const withRating = <T extends { id: string }>(c: T) => ({
-      ...c,
-      ratingAverage: ratingMap.get(c.id)?.average ?? 0,
-      ratingCount: ratingMap.get(c.id)?.count ?? 0,
-    });
-    const withExpired = <T extends { id: string }>(c: T) => ({
+    const withRating = <T extends { id: string; ownerId?: string | null }>(
+      c: T
+    ) => {
+      const { ownerId: _ownerId, ...rest } = c;
+      void _ownerId;
+      return {
+        ...rest,
+        ratingAverage: ratingMap.get(c.id)?.average ?? 0,
+        ratingCount: ratingMap.get(c.id)?.count ?? 0,
+        canManage: canManageCourse(c.ownerId),
+      };
+    };
+    const withExpired = <T extends { id: string; ownerId?: string | null }>(
+      c: T
+    ) => ({
       ...withRating(c),
       isExpired: expiredSet.has(c.id),
       expiresAt: expiresAtMap.get(c.id) ?? null,

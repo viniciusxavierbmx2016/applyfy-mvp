@@ -25,6 +25,7 @@ interface EnrolledCourse {
   ratingCount?: number;
   isExpired?: boolean;
   expiresAt?: string | null;
+  canManage?: boolean;
   modules: Array<{
     lessons: Array<{
       id: string;
@@ -43,6 +44,7 @@ interface StoreCourse {
   checkoutUrl: string | null;
   ratingAverage?: number;
   ratingCount?: number;
+  canManage?: boolean;
 }
 
 export default function WorkspaceVitrinePage() {
@@ -126,6 +128,11 @@ export default function WorkspaceVitrinePage() {
                     ratingAverage={course.ratingAverage}
                     ratingCount={course.ratingCount}
                     expiresAt={course.expiresAt}
+                    manageHref={
+                      course.canManage
+                        ? `/admin/courses/${course.id}/edit`
+                        : undefined
+                    }
                   />
                 ))}
               </div>
@@ -174,7 +181,12 @@ export default function WorkspaceVitrinePage() {
                     checkoutUrl={course.checkoutUrl}
                     ratingAverage={course.ratingAverage}
                     ratingCount={course.ratingCount}
-                    locked
+                    locked={!course.canManage}
+                    manageHref={
+                      course.canManage
+                        ? `/admin/courses/${course.id}/edit`
+                        : undefined
+                    }
                   />
                 ))}
               </div>

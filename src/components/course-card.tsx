@@ -18,6 +18,7 @@ interface CourseCardProps {
   checkoutUrl?: string | null;
   expiresAt?: string | Date | null;
   className?: string;
+  manageHref?: string;
 }
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
@@ -39,6 +40,7 @@ export function CourseCard({
   checkoutUrl,
   expiresAt,
   className,
+  manageHref,
 }: CourseCardProps) {
   const showRating =
     typeof ratingAverage === "number" &&
@@ -171,7 +173,7 @@ export function CourseCard({
           </>
         )}
 
-        {locked && !expired && (
+        {locked && !expired && !manageHref && (
           <p className="text-xs text-blue-400 font-medium flex items-center gap-1">
             Ver detalhes
             <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -179,9 +181,32 @@ export function CourseCard({
             </svg>
           </p>
         )}
+
+        {manageHref && (
+          <div className="mt-3 grid grid-cols-2 gap-2">
+            <Link
+              href={manageHref}
+              onClick={(e) => e.stopPropagation()}
+              className="inline-flex items-center justify-center px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg transition"
+            >
+              Editar
+            </Link>
+            <Link
+              href={`/course/${slug}`}
+              onClick={(e) => e.stopPropagation()}
+              className="inline-flex items-center justify-center px-3 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-900 dark:text-white text-xs font-semibold rounded-lg transition"
+            >
+              Ver como aluno
+            </Link>
+          </div>
+        )}
       </div>
     </>
   );
+
+  if (manageHref) {
+    return <div className={wrapperClassName}>{inner}</div>;
+  }
 
   return (
     <Link href={`/course/${slug}`} className={wrapperClassName}>

@@ -51,7 +51,9 @@ export async function GET(
     const course = await prisma.course.findUnique({
       where: { slug: params.slug },
       include: {
-        workspace: { select: { slug: true, name: true, logoUrl: true } },
+        workspace: {
+          select: { slug: true, name: true, logoUrl: true, ownerId: true },
+        },
         sections: { orderBy: { order: "asc" } },
         modules: {
           orderBy: { order: "asc" },
@@ -116,8 +118,13 @@ export async function GET(
         : Promise.resolve(null),
     ]);
 
+    const isCourseOwner =
+      user.role === "PRODUCER" &&
+      (course.ownerId === user.id || course.workspace.ownerId === user.id);
     const hasAccess =
-      user.role === "ADMIN" || isEnrollmentActive(enrollment);
+      user.role === "ADMIN" ||
+      isCourseOwner ||
+      isEnrollmentActive(enrollment);
     const isExpired =
       !!enrollment &&
       enrollment.status === "ACTIVE" &&

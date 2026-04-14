@@ -14,7 +14,12 @@ export async function GET(
       return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
     }
 
-    const post = await prisma.post.findUnique({ where: { id: params.id } });
+    const post = await prisma.post.findUnique({
+      where: { id: params.id },
+      include: {
+        course: { select: { ownerId: true, workspace: { select: { ownerId: true } } } },
+      },
+    });
     if (!post) {
       return NextResponse.json(
         { error: "Post não encontrado" },
@@ -23,8 +28,11 @@ export async function GET(
     }
 
     if (user.role !== "ADMIN") {
-      let allowed = false;
-      if (user.role === "COLLABORATOR") {
+      let allowed =
+        user.role === "PRODUCER" &&
+        (post.course.ownerId === user.id ||
+          post.course.workspace.ownerId === user.id);
+      if (!allowed && user.role === "COLLABORATOR") {
         allowed = await collaboratorCanActOnCourse(user.id, post.courseId, [
           "REPLY_COMMENTS",
           "MANAGE_COMMUNITY",
@@ -80,7 +88,15 @@ export async function POST(
 
     const post = await prisma.post.findUnique({
       where: { id: params.id },
-      include: { course: { select: { slug: true } } },
+      include: {
+        course: {
+          select: {
+            slug: true,
+            ownerId: true,
+            workspace: { select: { ownerId: true } },
+          },
+        },
+      },
     });
     if (!post) {
       return NextResponse.json(
@@ -90,8 +106,11 @@ export async function POST(
     }
 
     if (user.role !== "ADMIN") {
-      let allowed = false;
-      if (user.role === "COLLABORATOR") {
+      let allowed =
+        user.role === "PRODUCER" &&
+        (post.course.ownerId === user.id ||
+          post.course.workspace.ownerId === user.id);
+      if (!allowed && user.role === "COLLABORATOR") {
         allowed = await collaboratorCanActOnCourse(user.id, post.courseId, [
           "REPLY_COMMENTS",
           "MANAGE_COMMUNITY",
