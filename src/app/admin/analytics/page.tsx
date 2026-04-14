@@ -32,6 +32,19 @@ const ReportsContentTab = dynamic(
   }
 );
 
+const ReportsStudentsTab = dynamic(
+  () =>
+    import("@/components/reports-students-tab").then(
+      (m) => m.ReportsStudentsTab
+    ),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-64 bg-gray-100 dark:bg-gray-900 rounded-xl animate-pulse" />
+    ),
+  }
+);
+
 type TabId = "overview" | "content" | "students";
 
 const TABS: Array<{ id: TabId; label: string }> = [
@@ -46,15 +59,6 @@ function DownloadIcon({ className = "" }: { className?: string }) {
       <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
       <polyline points="7 10 12 15 17 10" />
       <line x1="12" y1="15" x2="12" y2="3" />
-    </svg>
-  );
-}
-
-function ClockIcon({ className = "" }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <circle cx="12" cy="12" r="10" />
-      <polyline points="12 6 12 12 16 14" />
     </svg>
   );
 }
@@ -182,19 +186,10 @@ function AdminAnalyticsPageInner() {
       {tab === "content" && (
         <ReportsContentTab courseId={courseId} windowDays={windowDays} />
       )}
-      {tab === "students" && <ComingSoon title="Relatórios de Alunos" />}
+      {tab === "students" && (
+        <ReportsStudentsTab courseId={courseId} windowDays={windowDays} />
+      )}
     </div>
   );
 }
 
-function ComingSoon({ title }: { title: string }) {
-  return (
-    <div className="flex flex-col items-center justify-center text-center rounded-2xl border border-dashed border-gray-300 dark:border-gray-800 bg-white/40 dark:bg-gray-900/40 py-20 px-6">
-      <span className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 mb-4">
-        <ClockIcon className="w-7 h-7" />
-      </span>
-      <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{title}</h3>
-      <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Em breve</p>
-    </div>
-  );
-}

@@ -59,30 +59,6 @@ export async function GET(request: Request) {
           : "overview";
     const sectionParam = (searchParams.get("section") || "").toLowerCase();
 
-    if (tab === "students") {
-      if (format === "csv") {
-        return new NextResponse("", {
-          headers: {
-            "Content-Type": "text/csv; charset=utf-8",
-            "Content-Disposition": `attachment; filename=students-${sectionParam || "all"}-${new Date().toISOString().slice(0, 10)}.csv`,
-          },
-        });
-      }
-      return NextResponse.json({
-        tab,
-        window: windowDays,
-        section: sectionParam || null,
-        topEngaged: [],
-        inactiveGrouped: [
-          { bucket: "30-60", count: 0 },
-          { bucket: "60-90", count: 0 },
-          { bucket: "90+", count: 0 },
-        ],
-        neverAccessed: [],
-        expiredStudents: [],
-      });
-    }
-
     const { workspace, scoped } = await resolveStaffWorkspace(staff);
     const workspaceId = scoped && workspace ? workspace.id : null;
 
@@ -406,6 +382,366 @@ export async function GET(request: Request) {
         lessonsLeastCompleted,
         modulesLeastCompleted,
         modulesAbandonment,
+      });
+    }
+
+    if (tab === "students") {
+      const nowS = new Date();
+      const todayS = startOfDay(nowS);
+      const thirtyAgoS = new Date(todayS);
+      thirtyAgoS.setDate(thirtyAgoS.getDate() - 30);
+      const sixtyAgoS = new Date(todayS);
+      sixtyAgoS.setDate(sixtyAgoS.getDate() - 60);
+      const ninetyAgoS = new Date(todayS);
+      ninetyAgoS.setDate(ninetyAgoS.getDate() - 90);
+
+      if (courseIds.length === 0) {
+        if (format === "csv") {
+          return new NextResponse("", {
+            headers: {
+              "Content-Type": "text/csv; charset=utf-8",
+              "Content-Disposition": `attachment; filename=students-${sectionParam || "all"}-${isoDay(nowS)}.csv`,
+            },
+          });
+        }
+        return NextResponse.json({
+          tab,
+          window: windowDays,
+          selectedCourseId,
+          courses: scopedCourses,
+          topEngaged: [],
+          inactiveGrouped: { "30-60": [], "60-90": [], "90+": [] },
+          neverAccessed: [],
+          expiredStudents: [],
+          expiredCount: 0,
+        });
+      }
+
+      const coursesS = await prisma.course.findMany({
+        where: { id: { in: courseIds } },
+        select: {
+          id: true,
+          title: true,
+          modules: {
+            select: { id: true, lessons: { select: { id: true } } },
+          },
+        },
+      });
+      const courseTitleS = new Map(coursesS.map((c) => [c.id, c.title]));
+      const courseLessonsS = new Map<string, string[]>();
+      const allLessonIdsS: string[] = [];
+      for (const c of coursesS) {
+        const ids: string[] = [];
+        for (const m of c.modules) for (const l of m.lessons) ids.push(l.id);
+        courseLessonsS.set(c.id, ids);
+        allLessonIdsS.push(...ids);
+      }
+
+      const enrollmentsS = await prisma.enrollment.findMany({
+        where: { courseId: { in: courseIds } },
+        select: {
+          id: true,
+          userId: true,
+          courseId: true,
+          status: true,
+          createdAt: true,
+          expiresAt: true,
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              avatarUrl: true,
+              points: true,
+            },
+          },
+        },
+      });
+
+      const activeEnrollments = enrollmentsS.filter(
+        (e) => e.status === "ACTIVE"
+      );
+      const activeUserIds = Array.from(
+        new Set(activeEnrollments.map((e) => e.userId))
+      );
+
+      const progressS =
+        allLessonIdsS.length && activeUserIds.length
+          ? await prisma.lessonProgress.findMany({
+              where: {
+                userId: { in: activeUserIds },
+                lessonId: { in: allLessonIdsS },
+              },
+              select: {
+                userId: true,
+                lessonId: true,
+                completed: true,
+                completedAt: true,
+                lastAccessedAt: true,
+              },
+            })
+          : [];
+
+      const lessonToCourseS = new Map<string, string>();
+      for (const c of coursesS)
+        for (const m of c.modules)
+          for (const l of m.lessons) lessonToCourseS.set(l.id, c.id);
+
+      const completedByUserCourse = new Map<string, Map<string, number>>();
+      const userLastActive = new Map<string, Date>();
+      for (const p of progressS) {
+        const cid = lessonToCourseS.get(p.lessonId);
+        if (!cid) continue;
+        if (p.completed) {
+          if (!completedByUserCourse.has(p.userId))
+            completedByUserCourse.set(p.userId, new Map());
+          const m = completedByUserCourse.get(p.userId)!;
+          m.set(cid, (m.get(cid) || 0) + 1);
+        }
+        const t =
+          p.lastAccessedAt ?? p.completedAt ?? null;
+        if (t) {
+          const prev = userLastActive.get(p.userId);
+          if (!prev || t > prev) userLastActive.set(p.userId, t);
+        }
+      }
+
+      type UserRow = {
+        userId: string;
+        name: string;
+        email: string;
+        avatarUrl: string | null;
+        points: number;
+        lessonsCompleted: number;
+        totalLessons: number;
+        progressPercent: number;
+        lastAccessedAt: string | null;
+        enrollmentId: string | null;
+        courseId: string | null;
+        courseTitle: string;
+      };
+
+      const perUser = new Map<string, UserRow>();
+      for (const e of activeEnrollments) {
+        const completed =
+          completedByUserCourse.get(e.userId)?.get(e.courseId) || 0;
+        const total = courseLessonsS.get(e.courseId)?.length || 0;
+        const existing = perUser.get(e.userId);
+        if (!existing) {
+          perUser.set(e.userId, {
+            userId: e.userId,
+            name: e.user.name,
+            email: e.user.email,
+            avatarUrl: e.user.avatarUrl,
+            points: e.user.points,
+            lessonsCompleted: completed,
+            totalLessons: total,
+            progressPercent: total > 0 ? Math.round((completed / total) * 100) : 0,
+            lastAccessedAt:
+              userLastActive.get(e.userId)?.toISOString() ?? null,
+            enrollmentId: e.id,
+            courseId: e.courseId,
+            courseTitle: courseTitleS.get(e.courseId) || "",
+          });
+        } else {
+          existing.lessonsCompleted += completed;
+          existing.totalLessons += total;
+          existing.progressPercent =
+            existing.totalLessons > 0
+              ? Math.round(
+                  (existing.lessonsCompleted / existing.totalLessons) * 100
+                )
+              : 0;
+        }
+      }
+
+      const userList = Array.from(perUser.values());
+
+      const topEngaged = [...userList]
+        .sort((a, b) => {
+          if (b.points !== a.points) return b.points - a.points;
+          return b.lessonsCompleted - a.lessonsCompleted;
+        })
+        .slice(0, 10);
+
+      const grouped3060: UserRow[] = [];
+      const grouped6090: UserRow[] = [];
+      const grouped90: UserRow[] = [];
+      for (const u of userList) {
+        if (!u.lastAccessedAt) continue;
+        const la = new Date(u.lastAccessedAt);
+        if (la >= thirtyAgoS) continue;
+        if (la >= sixtyAgoS) grouped3060.push(u);
+        else if (la >= ninetyAgoS) grouped6090.push(u);
+        else grouped90.push(u);
+      }
+      const byLastAsc = (a: UserRow, b: UserRow) =>
+        (new Date(a.lastAccessedAt || 0).getTime() || 0) -
+        (new Date(b.lastAccessedAt || 0).getTime() || 0);
+      grouped3060.sort(byLastAsc);
+      grouped6090.sort(byLastAsc);
+      grouped90.sort(byLastAsc);
+
+      const usersWithActivity = new Set(
+        progressS.map((p) => p.userId)
+      );
+      const neverAccessedSeen = new Set<string>();
+      const neverAccessedRows: UserRow[] = [];
+      for (const e of activeEnrollments) {
+        if (usersWithActivity.has(e.userId)) continue;
+        if (neverAccessedSeen.has(e.userId)) continue;
+        neverAccessedSeen.add(e.userId);
+        const total = courseLessonsS.get(e.courseId)?.length || 0;
+        neverAccessedRows.push({
+          userId: e.userId,
+          name: e.user.name,
+          email: e.user.email,
+          avatarUrl: e.user.avatarUrl,
+          points: e.user.points,
+          lessonsCompleted: 0,
+          totalLessons: total,
+          progressPercent: 0,
+          lastAccessedAt: e.createdAt.toISOString(),
+          enrollmentId: e.id,
+          courseId: e.courseId,
+          courseTitle: courseTitleS.get(e.courseId) || "",
+        });
+      }
+      neverAccessedRows.sort(
+        (a, b) =>
+          new Date(b.lastAccessedAt || 0).getTime() -
+          new Date(a.lastAccessedAt || 0).getTime()
+      );
+
+      const expiredRows = enrollmentsS
+        .filter(
+          (e) =>
+            e.expiresAt !== null &&
+            e.expiresAt !== undefined &&
+            e.expiresAt < nowS
+        )
+        .map((e) => {
+          const completed =
+            completedByUserCourse.get(e.userId)?.get(e.courseId) || 0;
+          const total = courseLessonsS.get(e.courseId)?.length || 0;
+          return {
+            userId: e.userId,
+            enrollmentId: e.id,
+            courseId: e.courseId,
+            courseTitle: courseTitleS.get(e.courseId) || "",
+            name: e.user.name,
+            email: e.user.email,
+            avatarUrl: e.user.avatarUrl,
+            expiresAt: e.expiresAt!.toISOString(),
+            lessonsCompleted: completed,
+            totalLessons: total,
+            progressPercent:
+              total > 0 ? Math.round((completed / total) * 100) : 0,
+          };
+        })
+        .sort(
+          (a, b) =>
+            new Date(b.expiresAt).getTime() - new Date(a.expiresAt).getTime()
+        );
+
+      if (format === "csv") {
+        const pickHeaders = (section: string) => {
+          if (section === "expired")
+            return "nome,email,curso,expira_em,progresso_percent";
+          if (section === "never")
+            return "nome,email,curso,matriculado_em";
+          return "nome,email,curso,ultimo_acesso,progresso_percent,faixa_inativo";
+        };
+        const pickRows = (section: string): string[] => {
+          if (section === "expired") {
+            return expiredRows.map((r) =>
+              [
+                csvEscape(r.name),
+                csvEscape(r.email),
+                csvEscape(r.courseTitle),
+                r.expiresAt,
+                String(r.progressPercent),
+              ].join(",")
+            );
+          }
+          if (section === "never") {
+            return neverAccessedRows.map((r) =>
+              [
+                csvEscape(r.name),
+                csvEscape(r.email),
+                csvEscape(r.courseTitle),
+                r.lastAccessedAt || "",
+              ].join(",")
+            );
+          }
+          if (section === "engaged") {
+            const header =
+              "nome,email,pontos,aulas_concluidas,total_aulas,progresso_percent,ultimo_acesso";
+            const body = topEngaged.map((r) =>
+              [
+                csvEscape(r.name),
+                csvEscape(r.email),
+                String(r.points),
+                String(r.lessonsCompleted),
+                String(r.totalLessons),
+                String(r.progressPercent),
+                r.lastAccessedAt || "",
+              ].join(",")
+            );
+            return [header, ...body];
+          }
+          const buckets: Array<[string, UserRow[]]> = [
+            ["30-60", grouped3060],
+            ["60-90", grouped6090],
+            ["90+", grouped90],
+          ];
+          const out: string[] = [];
+          for (const [label, list] of buckets) {
+            for (const r of list) {
+              out.push(
+                [
+                  csvEscape(r.name),
+                  csvEscape(r.email),
+                  csvEscape(r.courseTitle),
+                  r.lastAccessedAt || "",
+                  String(r.progressPercent),
+                  label,
+                ].join(",")
+              );
+            }
+          }
+          return out;
+        };
+
+        const section = sectionParam || "engaged";
+        let csv = "";
+        if (section === "engaged") {
+          csv = pickRows(section).join("\n");
+        } else {
+          csv = [pickHeaders(section), ...pickRows(section)].join("\n");
+        }
+        return new NextResponse(csv, {
+          headers: {
+            "Content-Type": "text/csv; charset=utf-8",
+            "Content-Disposition": `attachment; filename=students-${section}-${isoDay(nowS)}.csv`,
+          },
+        });
+      }
+
+      return NextResponse.json({
+        tab,
+        window: windowDays,
+        selectedCourseId,
+        courses: scopedCourses,
+        topEngaged,
+        inactiveGrouped: {
+          "30-60": grouped3060,
+          "60-90": grouped6090,
+          "90+": grouped90,
+        },
+        neverAccessed: neverAccessedRows,
+        expiredStudents: expiredRows,
+        expiredCount: expiredRows.length,
       });
     }
 
