@@ -129,8 +129,15 @@ function groupBySection(modules: ModuleItem[], sections: SectionItem[]) {
 export default function CourseHomePage() {
   const params = useParams<{ slug: string }>();
   const router = useRouter();
+  const user = useUserStore((s) => s.user);
   const workspace = useUserStore((s) => s.workspace);
-  const backHref = workspace?.slug ? `/w/${workspace.slug}` : "/";
+  const isStaffViewer =
+    user?.role === "ADMIN" || user?.role === "PRODUCER";
+  const backHref = isStaffViewer
+    ? "/"
+    : workspace?.slug
+      ? `/w/${workspace.slug}`
+      : "/";
   const [course, setCourse] = useState<CourseDetail | null>(null);
   const [hasAccess, setHasAccess] = useState(false);
   const [enrollmentCreatedAt, setEnrollmentCreatedAt] = useState<Date | null>(null);
@@ -265,6 +272,23 @@ export default function CourseHomePage() {
 
   return (
     <div className="px-4 sm:px-6 lg:px-10 py-4 lg:py-6 max-w-[1400px] mx-auto w-full">
+      {isStaffViewer && (
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3 px-4 py-2.5 rounded-lg border border-amber-200 dark:border-amber-900/40 bg-amber-50 dark:bg-amber-950/30 text-sm">
+          <span className="text-amber-800 dark:text-amber-200 flex items-center gap-2">
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+            </svg>
+            Você está visualizando como produtor
+          </span>
+          <Link
+            href={`/admin/courses/${course.id}/edit`}
+            className="text-amber-900 dark:text-amber-100 font-medium hover:underline"
+          >
+            Voltar ao editor →
+          </Link>
+        </div>
+      )}
       {/* Banner */}
       {course.bannerUrl && (
         <div

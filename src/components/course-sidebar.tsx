@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { MenuIcon } from "./menu-icons";
+import { useUserStore } from "@/stores/user-store";
 
 interface MenuItem {
   id: string;
@@ -41,6 +42,14 @@ export function CourseSidebar({
   onToggleCollapsed,
 }: Props) {
   const pathname = usePathname();
+  const userRole = useUserStore((s) => s.user?.role);
+  const isStaffViewer = userRole === "ADMIN" || userRole === "PRODUCER";
+  const backHref = isStaffViewer
+    ? "/"
+    : course.workspaceSlug
+      ? `/w/${course.workspaceSlug}`
+      : "/";
+  const backLabel = isStaffViewer ? "Voltar ao painel" : "{backLabel}";
   const [items, setItems] = useState<MenuItem[]>([]);
   const [continueLessonId, setContinueLessonId] = useState<string | null>(null);
   const [hasLessons, setHasLessons] = useState(true);
@@ -156,12 +165,12 @@ export function CourseSidebar({
           </svg>
         </button>
 
-        {/* Voltar à vitrine */}
+        {/* Botão voltar */}
         <div className={cn("pt-3 pb-2", collapsed ? "lg:px-2 px-3" : "px-3")}>
           <Link
-            href={course.workspaceSlug ? `/w/${course.workspaceSlug}` : "/"}
+            href={backHref}
             onClick={onMobileClose}
-            title="Voltar à vitrine"
+            title={backLabel}
             className={cn(
               "group relative flex items-center gap-2.5 rounded-[10px] text-[13px] font-medium text-gray-500 dark:text-gray-500 hover:text-gray-800 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 transition-all duration-200",
               collapsed ? "lg:justify-center lg:p-2.5 px-3 py-2" : "px-3 py-2"
@@ -170,10 +179,10 @@ export function CourseSidebar({
             <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
-            <span className={cn(collapsed && "lg:hidden")}>Voltar à vitrine</span>
+            <span className={cn(collapsed && "lg:hidden")}>{backLabel}</span>
             {collapsed && (
               <span className="hidden lg:group-hover:block absolute left-full ml-2 px-2 py-1 text-xs rounded-md bg-gray-900 dark:bg-gray-800 text-white whitespace-nowrap z-50 pointer-events-none shadow-lg">
-                Voltar à vitrine
+                {backLabel}
               </span>
             )}
           </Link>

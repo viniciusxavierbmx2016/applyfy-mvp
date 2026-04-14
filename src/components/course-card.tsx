@@ -182,30 +182,32 @@ export function CourseCard({
           </p>
         )}
 
-        {manageHref && (
-          <div className="mt-3 grid grid-cols-2 gap-2">
-            <Link
-              href={manageHref}
-              onClick={(e) => e.stopPropagation()}
-              className="inline-flex items-center justify-center px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg transition"
-            >
-              Editar
-            </Link>
-            <Link
-              href={`/course/${slug}`}
-              onClick={(e) => e.stopPropagation()}
-              className="inline-flex items-center justify-center px-3 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-900 dark:text-white text-xs font-semibold rounded-lg transition"
-            >
-              Ver como aluno
-            </Link>
-          </div>
-        )}
       </div>
     </>
   );
 
   if (manageHref) {
-    return <div className={wrapperClassName}>{inner}</div>;
+    return (
+      <div className={wrapperClassName}>
+        <Link href={`/course/${slug}`} className="block">
+          {inner}
+        </Link>
+        <div className="px-4 pb-4 -mt-1 grid grid-cols-2 gap-2">
+          <Link
+            href={`/course/${slug}`}
+            className="inline-flex items-center justify-center px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg transition"
+          >
+            Acessar
+          </Link>
+          <Link
+            href={manageHref}
+            className="inline-flex items-center justify-center px-3 py-2 border border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200 text-xs font-semibold rounded-lg transition"
+          >
+            Editar
+          </Link>
+        </div>
+      </div>
+    );
   }
 
   return (
