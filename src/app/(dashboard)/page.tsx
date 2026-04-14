@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useUserStore } from "@/stores/user-store";
 import { CourseCard } from "@/components/course-card";
 import { calculateCourseProgress } from "@/lib/utils";
@@ -54,9 +55,25 @@ interface ProducerCourse {
 }
 
 export default function HomePage() {
-  const { user, isLoading: userLoading } = useUserStore();
+  const { user, workspace, isLoading: userLoading } = useUserStore();
+  const router = useRouter();
 
-  if (userLoading) {
+  useEffect(() => {
+    if (userLoading || !user) return;
+    if (user.role === "ADMIN") {
+      router.replace("/admin");
+      return;
+    }
+    if (user.role === "STUDENT") {
+      if (workspace?.slug) {
+        router.replace(`/w/${workspace.slug}`);
+      } else {
+        router.replace("/login?error=sem-workspace");
+      }
+    }
+  }, [user, workspace, userLoading, router]);
+
+  if (userLoading || !user) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
@@ -64,11 +81,19 @@ export default function HomePage() {
     );
   }
 
-  if (user?.role === "PRODUCER") {
+  if (user.role === "ADMIN" || user.role === "STUDENT") {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (user.role === "PRODUCER") {
     return <ProducerHome firstName={user.name?.split(" ")[0] || "produtor"} />;
   }
 
-  return <StudentHome firstName={user?.name?.split(" ")[0] || "aluno"} />;
+  return <StudentHome firstName={user.name?.split(" ")[0] || "aluno"} />;
 }
 
 function StudentHome({ firstName }: { firstName: string }) {

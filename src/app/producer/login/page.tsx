@@ -8,11 +8,15 @@ export default function ProducerLoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [errorRole, setErrorRole] = useState<
+    "ADMIN" | "STUDENT" | "COLLABORATOR" | null
+  >(null);
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
+    setErrorRole(null);
     setLoading(true);
     try {
       const res = await fetch("/api/auth/producer-login", {
@@ -23,11 +27,17 @@ export default function ProducerLoginPage() {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setError(data.error || `Erro ao entrar (${res.status})`);
+        const msg: string = data.error || `Erro ao entrar (${res.status})`;
+        setError(msg);
+        if (msg.includes("/login")) setErrorRole("ADMIN");
+        else if (msg.toLowerCase().includes("link do seu curso"))
+          setErrorRole("STUDENT");
+        else if (msg.toLowerCase().includes("workspace onde você colabora"))
+          setErrorRole("COLLABORATOR");
         setLoading(false);
         return;
       }
-      window.location.href = "/admin";
+      window.location.href = data.redirect || "/";
     } catch {
       setError("Erro ao conectar com o servidor");
       setLoading(false);
@@ -47,7 +57,15 @@ export default function ProducerLoginPage() {
         <div className="bg-white dark:bg-gray-900 rounded-2xl p-8 shadow-xl border border-gray-200 dark:border-gray-800">
           {error && (
             <div className="mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-500 text-sm">
-              {error}
+              <p>{error}</p>
+              {errorRole === "ADMIN" && (
+                <Link
+                  href="/login"
+                  className="inline-block mt-2 text-blue-400 hover:text-blue-300 font-medium"
+                >
+                  Ir para login do admin →
+                </Link>
+              )}
             </div>
           )}
 

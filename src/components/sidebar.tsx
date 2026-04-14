@@ -115,11 +115,7 @@ const collaboratorLinks: NavLink[] = [
 const adminLinks: NavLink[] = [
   { href: "/admin", label: "Dashboard", icon: iconDashboard },
   { href: "/admin/producers", label: "Produtores", icon: iconBriefcase },
-  { href: "/admin/workspaces", label: "Workspaces", icon: iconWorkspaces },
-  { href: "/admin/courses", label: "Cursos", icon: iconCourses },
-  { href: "/admin/users", label: "Usuários", icon: iconUsers },
   { href: "/admin/analytics", label: "Analytics", icon: iconAnalytics },
-  { href: "/admin/community", label: "Comunidade", icon: iconCommunity },
   { href: "/admin/integrations", label: "Integrações", icon: iconIntegrations },
 ];
 
@@ -183,7 +179,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
           <p className="px-3 mb-2 text-xs font-semibold uppercase tracking-wider text-gray-500">
             Menu
           </p>
-          {!isCollaborator && studentLinks.map((link) => (
+          {!isCollaborator && !isAdmin && studentLinks.map((link) => (
             <Link
               key={link.href}
               href={link.href}
