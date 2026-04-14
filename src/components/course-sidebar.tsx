@@ -49,7 +49,7 @@ export function CourseSidebar({
     : course.workspaceSlug
       ? `/w/${course.workspaceSlug}`
       : "/";
-  const backLabel = isStaffViewer ? "Voltar ao painel" : "{backLabel}";
+  const backLabel = isStaffViewer ? "Voltar ao painel" : "Voltar à vitrine";
   const [items, setItems] = useState<MenuItem[]>([]);
   const [continueLessonId, setContinueLessonId] = useState<string | null>(null);
   const [hasLessons, setHasLessons] = useState(true);
