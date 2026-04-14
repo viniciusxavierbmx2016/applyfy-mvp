@@ -15,16 +15,56 @@ export async function PATCH(
 
     const body = await request.json();
     const data: Record<string, unknown> = {};
+    const hexRe = /^#[0-9a-fA-F]{6}$/;
+    const allowedLayouts = new Set(["central", "lateral-left", "lateral-right"]);
+
     if (typeof body?.name === "string") data.name = body.name.trim();
     if (body?.logoUrl === null || typeof body?.logoUrl === "string")
       data.logoUrl = body.logoUrl || null;
-    if (body?.loginBgColor === null || typeof body?.loginBgColor === "string")
-      data.loginBgColor = body.loginBgColor || null;
     if (typeof body?.isActive === "boolean") data.isActive = body.isActive;
     if (body?.masterPassword === null || typeof body?.masterPassword === "string")
       data.masterPassword = body.masterPassword
         ? String(body.masterPassword).trim() || null
         : null;
+
+    if (typeof body?.loginLayout === "string") {
+      if (!allowedLayouts.has(body.loginLayout)) {
+        return NextResponse.json(
+          { error: "loginLayout inválido" },
+          { status: 400 }
+        );
+      }
+      data.loginLayout = body.loginLayout;
+    }
+
+    for (const key of ["loginBgColor", "loginPrimaryColor"] as const) {
+      if (body?.[key] === null) {
+        data[key] = null;
+      } else if (typeof body?.[key] === "string") {
+        const v = (body[key] as string).trim();
+        if (v && !hexRe.test(v)) {
+          return NextResponse.json(
+            { error: `${key} deve ser hex (#RRGGBB)` },
+            { status: 400 }
+          );
+        }
+        data[key] = v || null;
+      }
+    }
+
+    for (const key of [
+      "loginBgImageUrl",
+      "loginLogoUrl",
+      "loginTitle",
+      "loginSubtitle",
+    ] as const) {
+      if (body?.[key] === null) {
+        data[key] = null;
+      } else if (typeof body?.[key] === "string") {
+        const v = (body[key] as string).trim();
+        data[key] = v || null;
+      }
+    }
 
     if (Object.keys(data).length === 0) {
       return NextResponse.json({ error: "Nada a atualizar" }, { status: 400 });

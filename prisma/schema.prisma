@@ -44,7 +44,13 @@ model Workspace {
   slug           String   @unique
   name           String
   logoUrl        String?
-  loginBgColor   String?
+  loginLayout       String  @default("central")
+  loginBgImageUrl   String?
+  loginBgColor      String? @default("#0f172a")
+  loginPrimaryColor String? @default("#3b82f6")
+  loginLogoUrl      String?
+  loginTitle        String?
+  loginSubtitle     String?
   masterPassword String?
   ownerId        String
   isActive       Boolean  @default(true)

@@ -13,7 +13,13 @@ export async function GET(
         slug: true,
         name: true,
         logoUrl: true,
+        loginLayout: true,
+        loginBgImageUrl: true,
         loginBgColor: true,
+        loginPrimaryColor: true,
+        loginLogoUrl: true,
+        loginTitle: true,
+        loginSubtitle: true,
         isActive: true,
       },
     });

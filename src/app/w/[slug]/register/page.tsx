@@ -3,18 +3,20 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-
-interface WorkspaceInfo {
-  name: string;
-  logoUrl: string | null;
-  loginBgColor: string | null;
-}
+import {
+  WorkspaceAuthShell,
+  WorkspaceAuthInfo,
+  getLoginTheme,
+  authInputCls,
+  authLabelCls,
+  authErrorCls,
+} from "@/components/workspace-auth-shell";
 
 export default function WorkspaceRegisterPage() {
   const params = useParams<{ slug: string }>();
   const router = useRouter();
   const slug = params.slug;
-  const [ws, setWs] = useState<WorkspaceInfo | null>(null);
+  const [ws, setWs] = useState<WorkspaceAuthInfo | null>(null);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -61,122 +63,97 @@ export default function WorkspaceRegisterPage() {
     }
   }
 
-  const bg = ws?.loginBgColor || undefined;
-  const displayName = ws?.name || "Workspace";
+  const theme = getLoginTheme(ws);
+  const registerTitle = ws?.loginTitle
+    ? `${ws.loginTitle} · Cadastro`
+    : "Criar conta";
 
   return (
-    <div
-      className="min-h-screen flex items-center justify-center px-4 bg-white dark:bg-gray-950"
-      style={bg ? { backgroundColor: bg } : {}}
+    <WorkspaceAuthShell
+      ws={ws}
+      title={registerTitle}
+      subtitle="Preencha os dados para criar sua conta"
+      footer={
+        <p className="mt-6 text-center text-sm text-white/70">
+          Já tem conta?{" "}
+          <Link
+            href={`/w/${slug}/login`}
+            className="hover:underline font-medium transition-colors"
+            style={{ color: theme.primaryColor }}
+          >
+            Entrar
+          </Link>
+        </p>
+      }
     >
-      <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <div className="mx-auto w-16 h-16 rounded-2xl bg-white/10 backdrop-blur flex items-center justify-center overflow-hidden mb-3 shadow-lg">
-            {ws?.logoUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={ws.logoUrl}
-                alt={displayName}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <span className="text-2xl font-bold text-gray-800 dark:text-white">
-                {displayName.charAt(0).toUpperCase()}
-              </span>
-            )}
-          </div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-            {displayName}
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-2">Crie sua conta</p>
+      {error && <div className={authErrorCls}>{error}</div>}
+
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label className={authLabelCls}>Nome</label>
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            required
+            maxLength={80}
+            className={authInputCls}
+            placeholder="Seu nome"
+          />
+        </div>
+        <div>
+          <label className={authLabelCls}>Email</label>
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            autoComplete="email"
+            className={authInputCls}
+            placeholder="seu@email.com"
+          />
+        </div>
+        <div>
+          <label className={authLabelCls}>Senha</label>
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            minLength={6}
+            autoComplete="new-password"
+            className={authInputCls}
+            placeholder="Mín. 6 caracteres"
+          />
+        </div>
+        <div>
+          <label className={authLabelCls}>Confirmar senha</label>
+          <input
+            type="password"
+            value={confirm}
+            onChange={(e) => setConfirm(e.target.value)}
+            required
+            autoComplete="new-password"
+            className={authInputCls}
+            placeholder="Digite novamente"
+          />
         </div>
 
-        <div className="bg-white dark:bg-gray-900 rounded-2xl p-8 shadow-xl border border-gray-200 dark:border-gray-800">
-          {error && (
-            <div className="mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-500 text-sm">
-              {error}
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Nome
-              </label>
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-                maxLength={80}
-                className="w-full px-4 py-3 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Seu nome"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Email
-              </label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                autoComplete="email"
-                className="w-full px-4 py-3 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="seu@email.com"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Senha
-              </label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                minLength={6}
-                autoComplete="new-password"
-                className="w-full px-4 py-3 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Mín. 6 caracteres"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Confirmar senha
-              </label>
-              <input
-                type="password"
-                value={confirm}
-                onChange={(e) => setConfirm(e.target.value)}
-                required
-                autoComplete="new-password"
-                className="w-full px-4 py-3 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Digite novamente"
-              />
-            </div>
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-3 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-medium rounded-lg transition"
-            >
-              {loading ? "Criando conta..." : "Criar conta"}
-            </button>
-          </form>
-
-          <p className="mt-6 text-center text-sm text-gray-600 dark:text-gray-400">
-            Já tem conta?{" "}
-            <Link
-              href={`/w/${slug}/login`}
-              className="text-blue-600 dark:text-blue-400 hover:underline font-medium"
-            >
-              Entrar
-            </Link>
-          </p>
-        </div>
-      </div>
-    </div>
+        <button
+          type="submit"
+          disabled={loading}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = theme.primaryHover;
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = theme.primaryColor;
+          }}
+          style={{ backgroundColor: theme.primaryColor }}
+          className="w-full py-3 disabled:opacity-60 text-white font-medium rounded-lg transition shadow-lg"
+        >
+          {loading ? "Criando conta..." : "Criar conta"}
+        </button>
+      </form>
+    </WorkspaceAuthShell>
   );
 }
