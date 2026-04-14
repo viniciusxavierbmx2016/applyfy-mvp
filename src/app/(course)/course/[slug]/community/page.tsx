@@ -36,6 +36,7 @@ export default function CommunityPage() {
   const [course, setCourse] = useState<{ title: string; slug: string } | null>(
     null
   );
+  const [isStaffViewer, setIsStaffViewer] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [content, setContent] = useState("");
@@ -62,6 +63,7 @@ export default function CommunityPage() {
         if (data && !cancelled) {
           setPosts(data.posts);
           setCourse(data.course);
+          setIsStaffViewer(!!data.isStaffViewer);
         }
       })
       .catch((e: Error) => {
@@ -170,6 +172,8 @@ export default function CommunityPage() {
   }
 
   const isAdmin = user?.role === "ADMIN";
+  const isProducer =
+    isStaffViewer && (user?.role === "PRODUCER" || user?.role === "COLLABORATOR");
 
   return (
     <div className="max-w-3xl mx-auto">
@@ -253,6 +257,7 @@ export default function CommunityPage() {
               key={post.id}
               post={post}
               isAdmin={!!isAdmin}
+              isProducer={isProducer}
               currentUserId={user?.id ?? ""}
               onUpdate={updatePost}
               onDelete={deletePost}

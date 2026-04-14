@@ -46,7 +46,9 @@ export async function GET(request: Request) {
     // Access: ADMIN bypass, PRODUCER owning workspace bypass, else must be enrolled
     const isStaffOwner =
       user.role === "ADMIN" ||
-      (user.role === "PRODUCER" && course.workspace.ownerId === user.id);
+      (user.role === "PRODUCER" &&
+        (course.ownerId === user.id ||
+          course.workspace.ownerId === user.id));
     let collabAllowed = false;
     if (!isStaffOwner && user.role === "COLLABORATOR") {
       collabAllowed = await collaboratorCanActOnCourse(user.id, course.id, [
@@ -98,6 +100,7 @@ export async function GET(request: Request) {
     return NextResponse.json({
       posts: withLiked,
       course: { id: course.id, slug: course.slug, title: course.title },
+      isStaffViewer: isStaffOwner,
     });
   } catch (error) {
     const details =
@@ -162,7 +165,9 @@ export async function POST(request: Request) {
 
     const isStaffOwner =
       user.role === "ADMIN" ||
-      (user.role === "PRODUCER" && course.workspace.ownerId === user.id);
+      (user.role === "PRODUCER" &&
+        (course.ownerId === user.id ||
+          course.workspace.ownerId === user.id));
     let collabAllowed = false;
     if (!isStaffOwner && user.role === "COLLABORATOR") {
       collabAllowed = await collaboratorCanActOnCourse(user.id, course.id, [

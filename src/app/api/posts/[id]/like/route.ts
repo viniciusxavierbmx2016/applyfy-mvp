@@ -16,7 +16,9 @@ export async function POST(
 
     const post = await prisma.post.findUnique({
       where: { id: params.id },
-      include: { course: true },
+      include: {
+        course: { include: { workspace: { select: { ownerId: true } } } },
+      },
     });
     if (!post) {
       return NextResponse.json(
@@ -25,7 +27,13 @@ export async function POST(
       );
     }
 
-    if (user.role !== "ADMIN") {
+    const isCourseOwner =
+      user.role === "PRODUCER" &&
+      (post.course.ownerId === user.id ||
+        post.course.workspace.ownerId === user.id);
+    const isStaffViewer = user.role === "ADMIN" || isCourseOwner;
+
+    if (!isStaffViewer) {
       const enrollment = await prisma.enrollment.findUnique({
         where: {
           userId_courseId: { userId: user.id, courseId: post.courseId },

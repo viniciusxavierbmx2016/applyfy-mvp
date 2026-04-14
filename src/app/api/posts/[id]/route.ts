@@ -25,9 +25,11 @@ export async function DELETE(
     if (!canDelete && user.role === "PRODUCER") {
       const course = await prisma.course.findUnique({
         where: { id: post.courseId },
-        select: { ownerId: true },
+        select: { ownerId: true, workspace: { select: { ownerId: true } } },
       });
-      canDelete = course?.ownerId === user.id;
+      canDelete =
+        course?.ownerId === user.id ||
+        course?.workspace.ownerId === user.id;
     }
     if (!canDelete && user.role === "COLLABORATOR") {
       canDelete = await collaboratorCanActOnCourse(user.id, post.courseId, [

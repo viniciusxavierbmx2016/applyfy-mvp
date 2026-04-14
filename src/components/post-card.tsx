@@ -9,7 +9,7 @@ export interface PostAuthor {
   id: string;
   name: string;
   avatarUrl: string | null;
-  role: "STUDENT" | "ADMIN";
+  role: "STUDENT" | "ADMIN" | "PRODUCER" | "COLLABORATOR";
 }
 
 export interface PostItem {
@@ -41,20 +41,25 @@ const typeLabels: Record<PostItem["type"], { label: string; color: string }> = {
 interface Props {
   post: PostItem;
   isAdmin: boolean;
+  isProducer?: boolean;
   currentUserId: string;
   onUpdate: (post: PostItem) => void;
   onDelete: (id: string) => void;
   onTogglePin: (id: string) => void;
+  onDeleteComment?: (postId: string, commentId: string) => void;
 }
 
 export function PostCard({
   post,
   isAdmin,
+  isProducer = false,
   currentUserId,
   onUpdate,
   onDelete,
   onTogglePin,
+  onDeleteComment,
 }: Props) {
+  const isModerator = isAdmin || isProducer;
   const [showComments, setShowComments] = useState(false);
   const [comments, setComments] = useState<CommentItem[] | null>(null);
   const [loadingComments, setLoadingComments] = useState(false);
@@ -127,7 +132,7 @@ export function PostCard({
     }
   }
 
-  const canDelete = isAdmin || post.user.id === currentUserId;
+  const canDelete = isModerator || post.user.id === currentUserId;
   const typeMeta = typeLabels[post.type];
 
   return (
@@ -142,6 +147,11 @@ export function PostCard({
             {post.user.role === "ADMIN" && (
               <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-600/30 text-blue-300">
                 ADMIN
+              </span>
+            )}
+            {post.user.role === "PRODUCER" && (
+              <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-600/30 text-amber-300">
+                PRODUTOR
               </span>
             )}
             {post.pinned && (
@@ -159,7 +169,7 @@ export function PostCard({
             {formatRelativeTime(new Date(post.createdAt))}
           </p>
         </div>
-        {isAdmin && (
+        {isModerator && (
           <div className="flex gap-1 flex-shrink-0">
             <button
               type="button"
@@ -258,7 +268,10 @@ export function PostCard({
             <>
               {comments && comments.length > 0 ? (
                 <div className="space-y-3">
-                  {comments.map((c) => (
+                  {comments.map((c) => {
+                    const canDeleteComment =
+                      isModerator || c.user.id === currentUserId;
+                    return (
                     <div key={c.id} className="flex gap-2">
                       <Avatar
                         src={c.user.avatarUrl}
@@ -275,16 +288,51 @@ export function PostCard({
                               ADMIN
                             </span>
                           )}
+                          {c.user.role === "PRODUCER" && (
+                            <span className="text-[9px] px-1 rounded bg-amber-600/30 text-amber-300">
+                              PRODUTOR
+                            </span>
+                          )}
                           <span className="text-[10px] text-gray-500">
                             {formatRelativeTime(new Date(c.createdAt))}
                           </span>
+                          {canDeleteComment && (
+                            <button
+                              type="button"
+                              onClick={async () => {
+                                if (!confirm("Excluir este comentário?")) return;
+                                const res = await fetch(
+                                  `/api/posts/${post.id}/comments/${c.id}`,
+                                  { method: "DELETE" }
+                                );
+                                if (res.ok) {
+                                  setComments((prev) =>
+                                    (prev ?? []).filter((x) => x.id !== c.id)
+                                  );
+                                  onUpdate({
+                                    ...post,
+                                    commentCount: Math.max(
+                                      0,
+                                      post.commentCount - 1
+                                    ),
+                                  });
+                                  onDeleteComment?.(post.id, c.id);
+                                }
+                              }}
+                              className="ml-auto text-[10px] text-gray-500 hover:text-red-400"
+                              title="Excluir comentário"
+                            >
+                              Excluir
+                            </button>
+                          )}
                         </div>
                         <p className="text-sm text-gray-800 dark:text-gray-200 whitespace-pre-wrap break-words mt-0.5">
                           {c.content}
                         </p>
                       </div>
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               ) : (
                 <p className="text-xs text-gray-500">Nenhum comentário ainda.</p>
