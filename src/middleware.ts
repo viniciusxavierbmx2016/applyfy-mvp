@@ -18,10 +18,12 @@ const redirectIfAuthed = new Set([
 ]);
 
 function hasSessionCookie(request: NextRequest): boolean {
+  // Supabase SSR chunks large JWTs into `sb-<ref>-auth-token.0`, `.1`, ...
+  // so we accept both the whole and chunked cookie names.
   for (const cookie of request.cookies.getAll()) {
     if (
       cookie.name.startsWith("sb-") &&
-      cookie.name.endsWith("-auth-token") &&
+      cookie.name.includes("-auth-token") &&
       cookie.value
     ) {
       return true;
