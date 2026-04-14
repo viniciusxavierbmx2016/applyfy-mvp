@@ -130,6 +130,14 @@ interface NeverAccessed {
   email: string;
   enrolledAt: string;
 }
+interface Diagnosis {
+  hasData: boolean;
+  positivePoint: string;
+  engagementProblem: string;
+  improvementOpportunity: string;
+  monetizationOpportunity: string;
+}
+
 interface AnalyticsData {
   courses: CourseOption[];
   selectedCourseId: string;
@@ -145,6 +153,7 @@ interface AnalyticsData {
   topStudents: TopStudent[];
   inactiveStudentsList: InactiveStudent[];
   neverAccessedStudents: NeverAccessed[];
+  diagnosis?: Diagnosis;
 }
 
 const PIE_COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#ec4899"];
@@ -550,11 +559,110 @@ export function AdminAnalyticsContent({
         )}
       </SectionCard>
 
+      {/* Diagnosis */}
+      {data.diagnosis && (
+        <section className="space-y-4 pt-4">
+          <div className="flex items-center gap-3">
+            <span className="text-2xl" aria-hidden>🚀</span>
+            <div>
+              <h2 className="text-xl font-bold tracking-tight text-gray-900 dark:text-white">
+                Diagnóstico Geral
+              </h2>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+                Análise automática baseada nos seus dados
+              </p>
+            </div>
+          </div>
+
+          {data.diagnosis.hasData ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <DiagnosisCard
+                icon="✅"
+                title="Ponto positivo"
+                text={data.diagnosis.positivePoint}
+                tone="emerald"
+              />
+              <DiagnosisCard
+                icon="⚠️"
+                title="Problema de engajamento"
+                text={data.diagnosis.engagementProblem}
+                tone="amber"
+              />
+              <DiagnosisCard
+                icon="💡"
+                title="Oportunidade de melhoria"
+                text={data.diagnosis.improvementOpportunity}
+                tone="blue"
+              />
+              <DiagnosisCard
+                icon="🚀"
+                title="Oportunidade de monetização"
+                text={data.diagnosis.monetizationOpportunity}
+                tone="purple"
+              />
+            </div>
+          ) : (
+            <div className="rounded-2xl border border-dashed border-gray-300 dark:border-gray-800 bg-white/40 dark:bg-gray-900/40 px-6 py-12 text-center">
+              <span className="text-3xl block mb-2" aria-hidden>📊</span>
+              <p className="text-sm text-gray-600 dark:text-gray-400 max-w-md mx-auto">
+                Adicione mais alunos e conteúdo para gerar diagnósticos automáticos sobre seus cursos.
+              </p>
+            </div>
+          )}
+        </section>
+      )}
+
       {toast && (
         <div className="fixed bottom-6 right-6 z-50 bg-gray-900 dark:bg-white text-white dark:text-gray-900 px-4 py-3 rounded-lg shadow-2xl text-sm font-medium animate-in fade-in slide-in-from-bottom-2">
           {toast}
         </div>
       )}
+    </div>
+  );
+}
+
+const DIAG_TONE: Record<string, { border: string; bg: string; title: string }> = {
+  emerald: {
+    border: "border-l-emerald-500",
+    bg: "bg-emerald-50 dark:bg-emerald-500/5",
+    title: "text-emerald-700 dark:text-emerald-400",
+  },
+  amber: {
+    border: "border-l-amber-500",
+    bg: "bg-amber-50 dark:bg-amber-500/5",
+    title: "text-amber-700 dark:text-amber-400",
+  },
+  blue: {
+    border: "border-l-blue-500",
+    bg: "bg-blue-50 dark:bg-blue-500/5",
+    title: "text-blue-700 dark:text-blue-400",
+  },
+  purple: {
+    border: "border-l-purple-500",
+    bg: "bg-purple-50 dark:bg-purple-500/5",
+    title: "text-purple-700 dark:text-purple-400",
+  },
+};
+
+function DiagnosisCard({
+  icon,
+  title,
+  text,
+  tone,
+}: {
+  icon: string;
+  title: string;
+  text: string;
+  tone: "emerald" | "amber" | "blue" | "purple";
+}) {
+  const t = DIAG_TONE[tone];
+  return (
+    <div className={`flex items-start gap-4 rounded-xl border-l-[3px] ${t.border} ${t.bg} px-5 py-5`}>
+      <span className="text-2xl leading-none shrink-0" aria-hidden>{icon}</span>
+      <div className="min-w-0">
+        <p className={`text-sm font-semibold ${t.title}`}>{title}</p>
+        <p className="mt-1 text-sm leading-relaxed text-gray-600 dark:text-gray-300">{text}</p>
+      </div>
     </div>
   );
 }

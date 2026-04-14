@@ -802,6 +802,17 @@ export async function GET(request: Request) {
         topStudents: [],
         inactiveStudentsList: [],
         neverAccessedStudents: [],
+        diagnosis: {
+          hasData: false,
+          positivePoint:
+            "Seus cursos estão no ar — publique conteúdo e convide alunos para começar a gerar insights",
+          engagementProblem:
+            "Sem dados suficientes para analisar engajamento ainda",
+          improvementOpportunity:
+            "Adicione mais alunos e conteúdo para gerar diagnósticos automáticos sobre seus cursos",
+          monetizationOpportunity:
+            "Foque em aumentar sua base de alunos para gerar mais oportunidades",
+        },
       };
       if (format === "csv") {
         return new NextResponse(
@@ -1188,6 +1199,64 @@ export async function GET(request: Request) {
       courseId: earliestEnrollment.get(u.userId)?.courseId || null,
     }));
 
+    const expiredCount = await prisma.enrollment.count({
+      where: { courseId: { in: courseIds }, expiresAt: { lt: now } },
+    });
+    const totalPosts = postsByType.reduce((s, p) => s + p.count, 0);
+    const totalU = uniqueStudents || 0;
+    const inactivePct = totalU > 0 ? (inactiveStudents / totalU) * 100 : 0;
+    const neverPct = totalU > 0 ? (neverAccessed / totalU) * 100 : 0;
+    const activePct = totalU > 0 ? (activeStudents / totalU) * 100 : 0;
+    const hasData = totalU > 0;
+
+    let positivePoint =
+      "Seus cursos estão no ar e recebendo alunos — continue produzindo conteúdo de qualidade";
+    if (avgCompletion > 50) {
+      positivePoint = `Excelente taxa de conclusão de ${Math.round(avgCompletion)}% — seus alunos estão engajados com o conteúdo`;
+    } else if (avgRating > 4 && ratingCount > 0) {
+      positivePoint = `Avaliações excelentes com média de ${avgRating.toFixed(1)} estrelas — seus alunos estão satisfeitos`;
+    } else if (activePct > 70) {
+      positivePoint = `Alta taxa de alunos ativos (${Math.round(activePct)}%) — seu conteúdo mantém o interesse`;
+    }
+
+    let engagementProblem =
+      "Nenhum problema crítico de engajamento detectado — continue monitorando";
+    if (inactivePct > 30) {
+      engagementProblem = `${Math.round(inactivePct)}% dos seus alunos estão inativos há mais de 30 dias — considere enviar comunicações de reengajamento`;
+    } else if (avgCompletion < 20 && completionCount > 0) {
+      engagementProblem = `Taxa de conclusão de apenas ${Math.round(avgCompletion)}% — revise a estrutura dos seus cursos e considere aulas mais curtas`;
+    } else if (neverPct > 20) {
+      engagementProblem = `${Math.round(neverPct)}% dos alunos nunca acessaram o curso — verifique se o email de acesso está chegando corretamente`;
+    }
+
+    let improvementOpportunity =
+      "Continue analisando os dados de conteúdo para identificar pontos de melhoria específicos";
+    if (moduleAbandonment.length > 0 && moduleAbandonment[0].count > 0) {
+      improvementOpportunity = `O módulo '${moduleAbandonment[0].title}' concentra ${moduleAbandonment[0].count} aluno(s) parados — considere revisar o conteúdo ou dividir em partes menores`;
+    } else if (totalU > 10 && totalPosts < totalU / 10) {
+      improvementOpportunity =
+        "A comunidade tem poucos posts — incentive os alunos a compartilhar resultados e dúvidas";
+    }
+
+    let monetizationOpportunity =
+      "Foque em aumentar sua base de alunos para gerar mais oportunidades";
+    if (expiredCount > 0) {
+      monetizationOpportunity = `${expiredCount} aluno(s) com acesso expirado — crie uma oferta especial de renovação para reativá-los`;
+    } else if (inactiveStudents > 0) {
+      monetizationOpportunity = `${inactiveStudents} aluno(s) inativos podem ser reengajados com um email oferecendo conteúdo novo ou bônus exclusivo`;
+    } else if (avgCompletion > 50) {
+      monetizationOpportunity =
+        "Alunos que concluíram o curso são candidatos perfeitos para upsell de um curso avançado";
+    }
+
+    const diagnosis = {
+      hasData,
+      positivePoint,
+      engagementProblem,
+      improvementOpportunity,
+      monetizationOpportunity,
+    };
+
     return NextResponse.json({
       courses: scopedCourses,
       selectedCourseId,
@@ -1228,6 +1297,7 @@ export async function GET(request: Request) {
       topStudents,
       inactiveStudentsList: inactiveWithEnrollment,
       neverAccessedStudents,
+      diagnosis,
     });
   } catch (error) {
     console.error("GET /api/admin/analytics error:", error);
