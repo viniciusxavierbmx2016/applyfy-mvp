@@ -37,7 +37,12 @@ export async function PATCH(
       data.loginLayout = body.loginLayout;
     }
 
-    for (const key of ["loginBgColor", "loginPrimaryColor"] as const) {
+    for (const key of [
+      "loginBgColor",
+      "loginPrimaryColor",
+      "loginBoxColor",
+      "loginSideColor",
+    ] as const) {
       if (body?.[key] === null) {
         data[key] = null;
       } else if (typeof body?.[key] === "string") {
@@ -50,6 +55,19 @@ export async function PATCH(
         }
         data[key] = v || null;
       }
+    }
+
+    if (body?.loginBoxOpacity === null) {
+      data.loginBoxOpacity = null;
+    } else if (typeof body?.loginBoxOpacity === "number") {
+      const v = body.loginBoxOpacity;
+      if (!Number.isFinite(v) || v < 0 || v > 1) {
+        return NextResponse.json(
+          { error: "loginBoxOpacity deve estar entre 0 e 1" },
+          { status: 400 }
+        );
+      }
+      data.loginBoxOpacity = v;
     }
 
     for (const key of [

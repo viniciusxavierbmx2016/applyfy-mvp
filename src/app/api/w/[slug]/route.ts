@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export async function GET(
   _request: Request,
   { params }: { params: { slug: string } }
@@ -20,6 +23,9 @@ export async function GET(
         loginLogoUrl: true,
         loginTitle: true,
         loginSubtitle: true,
+        loginBoxColor: true,
+        loginBoxOpacity: true,
+        loginSideColor: true,
         isActive: true,
       },
     });
@@ -33,7 +39,7 @@ export async function GET(
       { workspace },
       {
         headers: {
-          "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600",
+          "Cache-Control": "private, no-store, max-age=0, must-revalidate",
         },
       }
     );

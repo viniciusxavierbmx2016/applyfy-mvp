@@ -20,13 +20,28 @@ interface Workspace {
   loginLogoUrl: string | null;
   loginTitle: string | null;
   loginSubtitle: string | null;
+  loginBoxColor: string | null;
+  loginBoxOpacity: number | null;
+  loginSideColor: string | null;
   masterPassword: string | null;
   isActive: boolean;
 }
 
 const DEFAULT_BG = "#0f172a";
 const DEFAULT_PRIMARY = "#3b82f6";
+const DEFAULT_BOX = "#1e293b";
+const DEFAULT_BOX_OPACITY = 0.8;
+const DEFAULT_SIDE = "#0f172a";
 const HEX_RE = /^#[0-9a-fA-F]{6}$/;
+
+function hexToRgba(hex: string, alpha: number): string {
+  if (!HEX_RE.test(hex)) return `rgba(30, 41, 59, ${alpha})`;
+  const n = parseInt(hex.slice(1), 16);
+  const r = (n >> 16) & 0xff;
+  const g = (n >> 8) & 0xff;
+  const b = n & 0xff;
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
 
 type TabKey = "info" | "login";
 
@@ -53,6 +68,10 @@ export default function EditWorkspacePage() {
   const [loginLogoUrl, setLoginLogoUrl] = useState<string | null>(null);
   const [loginTitle, setLoginTitle] = useState("");
   const [loginSubtitle, setLoginSubtitle] = useState("");
+  const [loginBoxColor, setLoginBoxColor] = useState(DEFAULT_BOX);
+  const [loginBoxOpacity, setLoginBoxOpacity] =
+    useState<number>(DEFAULT_BOX_OPACITY);
+  const [loginSideColor, setLoginSideColor] = useState(DEFAULT_SIDE);
   const [uploadingBg, setUploadingBg] = useState(false);
   const [uploadingLoginLogo, setUploadingLoginLogo] = useState(false);
 
@@ -82,6 +101,13 @@ export default function EditWorkspacePage() {
           setLoginLogoUrl(found.loginLogoUrl || null);
           setLoginTitle(found.loginTitle || "");
           setLoginSubtitle(found.loginSubtitle || "");
+          setLoginBoxColor(found.loginBoxColor || DEFAULT_BOX);
+          setLoginBoxOpacity(
+            typeof found.loginBoxOpacity === "number"
+              ? found.loginBoxOpacity
+              : DEFAULT_BOX_OPACITY
+          );
+          setLoginSideColor(found.loginSideColor || DEFAULT_SIDE);
         }
       })
       .finally(() => setLoading(false));
@@ -183,6 +209,16 @@ export default function EditWorkspacePage() {
           setSaving(false);
           return;
         }
+        if (loginBoxColor && !HEX_RE.test(loginBoxColor)) {
+          setError("Cor do box deve ser hex (#RRGGBB)");
+          setSaving(false);
+          return;
+        }
+        if (loginSideColor && !HEX_RE.test(loginSideColor)) {
+          setError("Cor lateral deve ser hex (#RRGGBB)");
+          setSaving(false);
+          return;
+        }
         payload.loginLayout = loginLayout;
         payload.loginBgColor = loginBgColor || null;
         payload.loginPrimaryColor = loginPrimaryColor || null;
@@ -190,6 +226,9 @@ export default function EditWorkspacePage() {
         payload.loginLogoUrl = loginLogoUrl || null;
         payload.loginTitle = loginTitle.trim() || null;
         payload.loginSubtitle = loginSubtitle.trim() || null;
+        payload.loginBoxColor = loginBoxColor || null;
+        payload.loginBoxOpacity = loginBoxOpacity;
+        payload.loginSideColor = loginSideColor || null;
       }
       const res = await fetch(`/api/workspaces/${id}`, {
         method: "PATCH",
@@ -506,6 +545,97 @@ export default function EditWorkspacePage() {
                     Usada quando não há imagem de fundo
                   </p>
                 </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                    Cor do box do login
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="color"
+                      value={
+                        HEX_RE.test(loginBoxColor) ? loginBoxColor : DEFAULT_BOX
+                      }
+                      onChange={(e) => setLoginBoxColor(e.target.value)}
+                      className="w-12 h-10 rounded-lg border border-gray-300 dark:border-gray-700 bg-transparent cursor-pointer"
+                    />
+                    <input
+                      type="text"
+                      value={loginBoxColor}
+                      onChange={(e) => setLoginBoxColor(e.target.value)}
+                      placeholder={DEFAULT_BOX}
+                      className="flex-1 px-3 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm font-mono text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div className="mt-3">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
+                        Opacidade
+                      </span>
+                      <span className="text-xs font-mono text-gray-600 dark:text-gray-400">
+                        {Math.round(loginBoxOpacity * 100)}%
+                      </span>
+                    </div>
+                    <input
+                      type="range"
+                      min={0}
+                      max={100}
+                      step={1}
+                      value={Math.round(loginBoxOpacity * 100)}
+                      onChange={(e) =>
+                        setLoginBoxOpacity(Number(e.target.value) / 100)
+                      }
+                      className="w-full accent-blue-600"
+                    />
+                  </div>
+                  <div
+                    className="mt-3 h-10 rounded-lg border border-gray-200 dark:border-gray-700"
+                    style={{
+                      backgroundColor: hexToRgba(
+                        HEX_RE.test(loginBoxColor) ? loginBoxColor : DEFAULT_BOX,
+                        loginBoxOpacity
+                      ),
+                      backgroundImage:
+                        "linear-gradient(45deg, rgba(127,127,127,0.15) 25%, transparent 25%, transparent 75%, rgba(127,127,127,0.15) 75%), linear-gradient(45deg, rgba(127,127,127,0.15) 25%, transparent 25%, transparent 75%, rgba(127,127,127,0.15) 75%)",
+                      backgroundSize: "14px 14px",
+                      backgroundPosition: "0 0, 7px 7px",
+                    }}
+                  />
+                  <p className="text-[11px] text-gray-500 mt-1.5">
+                    Cor e transparência do card em volta do formulário
+                  </p>
+                </div>
+
+                {(loginLayout === "lateral-left" ||
+                  loginLayout === "lateral-right") && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                      Cor de fundo lateral
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="color"
+                        value={
+                          HEX_RE.test(loginSideColor)
+                            ? loginSideColor
+                            : DEFAULT_SIDE
+                        }
+                        onChange={(e) => setLoginSideColor(e.target.value)}
+                        className="w-12 h-10 rounded-lg border border-gray-300 dark:border-gray-700 bg-transparent cursor-pointer"
+                      />
+                      <input
+                        type="text"
+                        value={loginSideColor}
+                        onChange={(e) => setLoginSideColor(e.target.value)}
+                        placeholder={DEFAULT_SIDE}
+                        className="flex-1 px-3 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm font-mono text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                    <p className="text-[11px] text-gray-500 mt-1.5">
+                      Cor do fundo ao lado da imagem nos layouts laterais
+                    </p>
+                  </div>
+                )}
               </section>
 
               {/* Imagens */}
@@ -699,6 +829,13 @@ export default function EditWorkspacePage() {
                       ? loginPrimaryColor
                       : DEFAULT_PRIMARY
                   }
+                  boxColor={
+                    HEX_RE.test(loginBoxColor) ? loginBoxColor : DEFAULT_BOX
+                  }
+                  boxOpacity={loginBoxOpacity}
+                  sideColor={
+                    HEX_RE.test(loginSideColor) ? loginSideColor : DEFAULT_SIDE
+                  }
                   bgImageUrl={loginBgImageUrl}
                   logoUrl={previewLogo}
                   logoFallback={name.charAt(0).toUpperCase() || "W"}
@@ -773,6 +910,9 @@ function LoginPreview({
   layout,
   bgColor,
   primaryColor,
+  boxColor,
+  boxOpacity,
+  sideColor,
   bgImageUrl,
   logoUrl,
   logoFallback,
@@ -782,6 +922,9 @@ function LoginPreview({
   layout: LoginLayout;
   bgColor: string;
   primaryColor: string;
+  boxColor: string;
+  boxOpacity: number;
+  sideColor: string;
   bgImageUrl: string | null;
   logoUrl: string | null;
   logoFallback: string;
@@ -796,28 +939,33 @@ function LoginPreview({
       }
     : { backgroundColor: bgColor };
 
+  const boxBg = hexToRgba(boxColor, boxOpacity);
+
   const form = (
-    <div className="bg-white/95 backdrop-blur rounded-lg p-3 w-[140px] shadow-lg">
+    <div
+      className="backdrop-blur rounded-lg p-3 w-[140px] shadow-lg border border-white/10"
+      style={{ backgroundColor: boxBg }}
+    >
       <div className="flex justify-center mb-1.5">
-        <div className="w-8 h-8 rounded-md bg-gray-100 flex items-center justify-center overflow-hidden">
+        <div className="w-8 h-8 rounded-md bg-white/10 flex items-center justify-center overflow-hidden">
           {logoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={logoUrl} alt="" className="w-full h-full object-cover" />
           ) : (
-            <span className="text-[10px] font-bold text-gray-600">
+            <span className="text-[10px] font-bold text-white">
               {logoFallback}
             </span>
           )}
         </div>
       </div>
-      <p className="text-[9px] font-semibold text-gray-900 text-center leading-tight truncate">
+      <p className="text-[9px] font-semibold text-white text-center leading-tight truncate">
         {title}
       </p>
-      <p className="text-[7px] text-gray-500 text-center leading-tight mb-2 truncate">
+      <p className="text-[7px] text-white/70 text-center leading-tight mb-2 truncate">
         {subtitle}
       </p>
-      <div className="h-2 rounded bg-gray-200 mb-1" />
-      <div className="h-2 rounded bg-gray-200 mb-2" />
+      <div className="h-2 rounded bg-white/20 mb-1" />
+      <div className="h-2 rounded bg-white/20 mb-2" />
       <div
         className="h-2.5 rounded"
         style={{ backgroundColor: primaryColor }}
@@ -828,30 +976,39 @@ function LoginPreview({
   if (layout === "central") {
     return (
       <div
-        className="w-full aspect-[16/10] rounded-lg overflow-hidden flex items-center justify-center"
+        className="w-full aspect-[16/10] rounded-lg overflow-hidden flex items-center justify-center relative"
         style={bgStyle}
       >
-        {form}
+        {bgImageUrl && (
+          <div className="absolute inset-0 bg-black/40" aria-hidden />
+        )}
+        <div className="relative">{form}</div>
       </div>
     );
   }
 
   const leftIsForm = layout === "lateral-left";
+  const formPane = (
+    <div
+      className="w-1/2 flex items-center justify-center p-2"
+      style={{ backgroundColor: sideColor }}
+    >
+      {form}
+    </div>
+  );
+  const imagePane = <div className="w-1/2" style={bgStyle} />;
+
   return (
     <div className="w-full aspect-[16/10] rounded-lg overflow-hidden flex">
       {leftIsForm ? (
         <>
-          <div className="w-1/2 bg-white flex items-center justify-center p-2">
-            {form}
-          </div>
-          <div className="w-1/2" style={bgStyle} />
+          {formPane}
+          {imagePane}
         </>
       ) : (
         <>
-          <div className="w-1/2" style={bgStyle} />
-          <div className="w-1/2 bg-white flex items-center justify-center p-2">
-            {form}
-          </div>
+          {imagePane}
+          {formPane}
         </>
       )}
     </div>

@@ -15,11 +15,26 @@ export interface WorkspaceAuthInfo {
   loginLogoUrl?: string | null;
   loginTitle?: string | null;
   loginSubtitle?: string | null;
+  loginBoxColor?: string | null;
+  loginBoxOpacity?: number | null;
+  loginSideColor?: string | null;
 }
 
 const DEFAULT_BG = "#0f172a";
 const DEFAULT_PRIMARY = "#3b82f6";
+const DEFAULT_BOX = "#1e293b";
+const DEFAULT_BOX_OPACITY = 0.8;
+const DEFAULT_SIDE = "#0f172a";
 const HEX_RE = /^#[0-9a-fA-F]{6}$/;
+
+function hexToRgba(hex: string, alpha: number): string {
+  if (!HEX_RE.test(hex)) return `rgba(30, 41, 59, ${alpha})`;
+  const n = parseInt(hex.slice(1), 16);
+  const r = (n >> 16) & 0xff;
+  const g = (n >> 8) & 0xff;
+  const b = n & 0xff;
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
 
 function darken(hex: string, amount = 0.1): string {
   if (!HEX_RE.test(hex)) return hex;
@@ -43,11 +58,30 @@ export function getLoginTheme(ws: WorkspaceAuthInfo | null) {
       ? ws.loginPrimaryColor
       : DEFAULT_PRIMARY;
   const primaryHover = darken(primaryColor, 0.12);
+  const boxColor =
+    ws?.loginBoxColor && HEX_RE.test(ws.loginBoxColor)
+      ? ws.loginBoxColor
+      : DEFAULT_BOX;
+  const boxOpacity =
+    typeof ws?.loginBoxOpacity === "number" &&
+    ws.loginBoxOpacity >= 0 &&
+    ws.loginBoxOpacity <= 1
+      ? ws.loginBoxOpacity
+      : DEFAULT_BOX_OPACITY;
+  const sideColor =
+    ws?.loginSideColor && HEX_RE.test(ws.loginSideColor)
+      ? ws.loginSideColor
+      : DEFAULT_SIDE;
+  const boxBackground = hexToRgba(boxColor, boxOpacity);
   return {
     layout,
     bgColor,
     primaryColor,
     primaryHover,
+    boxColor,
+    boxOpacity,
+    boxBackground,
+    sideColor,
     bgImageUrl: ws?.loginBgImageUrl || null,
     logoUrl: ws?.loginLogoUrl || ws?.logoUrl || null,
     name: ws?.name || "Workspace",
@@ -80,8 +114,8 @@ export function WorkspaceAuthShell({
       }
     : { backgroundColor: theme.bgColor };
 
-  const solidBgStyle: React.CSSProperties = {
-    backgroundColor: theme.bgColor,
+  const sidePaneStyle: React.CSSProperties = {
+    backgroundColor: theme.sideColor,
   };
 
   const formCard = (
@@ -90,7 +124,7 @@ export function WorkspaceAuthShell({
       name={theme.name}
       title={displayTitle}
       subtitle={displaySubtitle}
-      hasBgImage={!!theme.bgImageUrl}
+      boxBackground={theme.boxBackground}
     >
       {children}
       {footer}
@@ -128,7 +162,7 @@ export function WorkspaceAuthShell({
   const formPane = (
     <div
       className="relative flex items-center justify-center w-full lg:w-1/2 min-h-screen px-4 py-10"
-      style={solidBgStyle}
+      style={sidePaneStyle}
     >
       {/* On mobile, show bg image behind form for visual consistency */}
       {theme.bgImageUrl && (
@@ -192,22 +226,21 @@ function FormCard({
   name,
   title,
   subtitle,
-  hasBgImage,
+  boxBackground,
   children,
 }: {
   logoUrl: string | null;
   name: string;
   title: string;
   subtitle: string;
-  hasBgImage: boolean;
+  boxBackground: string;
   children: ReactNode;
 }) {
-  const cardCls = hasBgImage
-    ? "bg-white/10 backdrop-blur-xl border border-white/15 text-white shadow-2xl"
-    : "bg-white/5 backdrop-blur-sm border border-white/10 text-white shadow-2xl";
-
   return (
-    <div className={`${cardCls} rounded-2xl p-7 sm:p-8`}>
+    <div
+      className="backdrop-blur-xl border border-white/10 text-white shadow-2xl rounded-2xl p-7 sm:p-8"
+      style={{ backgroundColor: boxBackground }}
+    >
       <div className="flex flex-col items-center text-center mb-6">
         <div className="w-16 h-16 rounded-2xl bg-white/10 backdrop-blur flex items-center justify-center overflow-hidden mb-3 border border-white/10">
           {logoUrl ? (

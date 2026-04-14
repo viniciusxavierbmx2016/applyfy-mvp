@@ -25,7 +25,7 @@ export default function WorkspaceRegisterPage() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    fetch(`/api/w/${slug}`)
+    fetch(`/api/w/${slug}`, { cache: "no-store" })
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => d && setWs(d.workspace));
   }, [slug]);

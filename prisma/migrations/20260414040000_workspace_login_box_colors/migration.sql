@@ -1,0 +1,4 @@
+ALTER TABLE "Workspace"
+  ADD COLUMN "loginBoxColor" TEXT DEFAULT '#1e293b',
+  ADD COLUMN "loginBoxOpacity" DOUBLE PRECISION DEFAULT 0.8,
+  ADD COLUMN "loginSideColor" TEXT DEFAULT '#0f172a';
