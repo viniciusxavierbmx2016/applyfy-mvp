@@ -34,6 +34,7 @@ export async function GET() {
       title: e.course.title,
       slug: e.course.slug,
       thumbnail: e.course.thumbnail,
+      certificateEnabled: e.course.certificateEnabled,
       progress: calculateCourseProgress(e.course),
       totalLessons: e.course.modules.reduce(
         (s, m) => s + m.lessons.length,

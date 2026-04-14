@@ -109,12 +109,21 @@ export async function POST(
 
     const lesson = await prisma.lesson.findUnique({
       where: { id: params.id },
-      include: { module: true },
+      include: {
+        module: { include: { course: { select: { lessonCommentsEnabled: true } } } },
+      },
     });
     if (!lesson) {
       return NextResponse.json(
         { error: "Aula não encontrada" },
         { status: 404 }
+      );
+    }
+
+    if (!lesson.module.course.lessonCommentsEnabled) {
+      return NextResponse.json(
+        { error: "Comentários desativados neste curso" },
+        { status: 403 }
       );
     }
 

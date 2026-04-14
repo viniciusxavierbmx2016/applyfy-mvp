@@ -49,7 +49,12 @@ export default function CommunityPage() {
     setLoading(true);
     fetch(`/api/posts?courseSlug=${params.slug}`)
       .then(async (res) => {
-        if (res.status === 403 || res.status === 404) {
+        if (res.status === 403) {
+          const body = await res.json().catch(() => ({}));
+          if (!cancelled) setError(body.error || "Acesso negado");
+          return null;
+        }
+        if (res.status === 404) {
           if (!cancelled) router.replace(`/course/${params.slug}`);
           return null;
         }

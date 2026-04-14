@@ -89,6 +89,7 @@ export async function GET(
           thumbnail: true,
           checkoutUrl: true,
           ownerId: true,
+          reviewsEnabled: true,
           modules: {
             select: {
               id: true,
@@ -124,6 +125,7 @@ export async function GET(
           price: true,
           priceCurrency: true,
           ownerId: true,
+          reviewsEnabled: true,
         },
       }),
     ]);
@@ -146,15 +148,18 @@ export async function GET(
         { average: r._avg.rating ?? 0, count: r._count.rating },
       ])
     );
-    const withRating = <T extends { id: string; ownerId?: string | null }>(
+    const withRating = <
+      T extends { id: string; ownerId?: string | null; reviewsEnabled?: boolean }
+    >(
       c: T
     ) => {
       const { ownerId: _ownerId, ...rest } = c;
       void _ownerId;
+      const showReviews = c.reviewsEnabled !== false;
       return {
         ...rest,
-        ratingAverage: ratingMap.get(c.id)?.average ?? 0,
-        ratingCount: ratingMap.get(c.id)?.count ?? 0,
+        ratingAverage: showReviews ? ratingMap.get(c.id)?.average ?? 0 : 0,
+        ratingCount: showReviews ? ratingMap.get(c.id)?.count ?? 0 : 0,
         canManage: canManageCourse(c.ownerId),
       };
     };

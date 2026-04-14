@@ -113,7 +113,9 @@ export async function POST(request: Request) {
     let courseCompleted = false;
 
     if (completed && !wasCompleted) {
-      pointsAwarded += GAMIFICATION.POINTS.COMPLETE_LESSON;
+      if (course.gamificationEnabled) {
+        pointsAwarded += GAMIFICATION.POINTS.COMPLETE_LESSON;
+      }
 
       // Check module completion
       const moduleLessons = await prisma.lesson.findMany({
@@ -136,7 +138,9 @@ export async function POST(request: Request) {
         moduleProgress.length === moduleLessonIds.length
       ) {
         moduleCompleted = true;
-        pointsAwarded += GAMIFICATION.POINTS.COMPLETE_MODULE;
+        if (course.gamificationEnabled) {
+          pointsAwarded += GAMIFICATION.POINTS.COMPLETE_MODULE;
+        }
       }
 
       // Check course completion
@@ -157,7 +161,9 @@ export async function POST(request: Request) {
         courseProgress.length === courseLessonIds.length
       ) {
         courseCompleted = true;
-        pointsAwarded += GAMIFICATION.POINTS.COMPLETE_COURSE;
+        if (course.gamificationEnabled) {
+          pointsAwarded += GAMIFICATION.POINTS.COMPLETE_COURSE;
+        }
       }
     }
 

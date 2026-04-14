@@ -51,6 +51,10 @@ interface CourseDetail {
   price: number | null;
   priceCurrency: string | null;
   certificateEnabled?: boolean;
+  communityEnabled?: boolean;
+  reviewsEnabled?: boolean;
+  showStudentCount?: boolean;
+  enrollmentCount?: number;
   ratingAverage: number;
   ratingCount: number;
   modules: ModuleItem[];
@@ -254,6 +258,10 @@ export default function CourseHomePage() {
           priceCurrency: course.priceCurrency,
           ratingAverage: course.ratingAverage,
           ratingCount: course.ratingCount,
+          certificateEnabled: course.certificateEnabled,
+          reviewsEnabled: course.reviewsEnabled,
+          showStudentCount: course.showStudentCount,
+          enrollmentCount: course.enrollmentCount,
           modules: course.modules.map((m) => ({
             id: m.id,
             title: m.title,
@@ -337,6 +345,12 @@ export default function CourseHomePage() {
               {course.modules.length} módulo{course.modules.length !== 1 && "s"}
               {" · "}
               {totals.totalLessons} aula{totals.totalLessons !== 1 && "s"}
+              {course.showStudentCount && typeof course.enrollmentCount === "number" && course.enrollmentCount > 0 && (
+                <>
+                  {" · "}
+                  {course.enrollmentCount} aluno{course.enrollmentCount !== 1 && "s"} matriculado{course.enrollmentCount !== 1 && "s"}
+                </>
+              )}
             </p>
           </div>
         </div>
@@ -466,13 +480,15 @@ export default function CourseHomePage() {
         </p>
       </section>
 
-      <ReviewsSection
-        courseId={course.id}
-        initialAverage={course.ratingAverage}
-        initialCount={course.ratingCount}
-        myReview={myReview}
-        canReview={hasAccess}
-      />
+      {course.reviewsEnabled !== false && (
+        <ReviewsSection
+          courseId={course.id}
+          initialAverage={course.ratingAverage}
+          initialCount={course.ratingCount}
+          myReview={myReview}
+          canReview={hasAccess}
+        />
+      )}
     </div>
   );
 }

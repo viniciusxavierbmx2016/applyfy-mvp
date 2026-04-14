@@ -152,6 +152,7 @@ export async function GET(
         id: course.id,
         slug: course.slug,
         title: course.title,
+        lessonCommentsEnabled: course.lessonCommentsEnabled,
         modules: course.modules.map((m) => {
           const modRelease = computeModuleReleaseWithOverride(
             enrollmentCreatedAt,

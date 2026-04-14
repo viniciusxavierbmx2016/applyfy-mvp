@@ -36,6 +36,7 @@ interface ViewData {
     id: string;
     slug: string;
     title: string;
+    lessonCommentsEnabled?: boolean;
     modules: SidebarModule[];
   };
   prev: { id: string; title: string } | null;
@@ -282,51 +283,61 @@ export default function LessonPage({
             )}
           </div>
 
-          {/* Tabs */}
-          <div className="mt-6 border-b border-gray-200 dark:border-white/5 flex gap-6">
-            <button
-              type="button"
-              onClick={() => setActiveTab("description")}
-              className={`relative px-0.5 py-2.5 text-sm font-medium transition-colors duration-200 ${
-                activeTab === "description"
-                  ? "text-gray-900 dark:text-white"
-                  : "text-gray-500 hover:text-gray-900 dark:hover:text-white"
-              }`}
-            >
-              Descrição
-              {activeTab === "description" && (
-                <span className="absolute inset-x-0 -bottom-px h-[2px] bg-blue-500 rounded-full" />
-              )}
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab("comments")}
-              className={`relative px-0.5 py-2.5 text-sm font-medium transition-colors duration-200 ${
-                activeTab === "comments"
-                  ? "text-gray-900 dark:text-white"
-                  : "text-gray-500 hover:text-gray-900 dark:hover:text-white"
-              }`}
-            >
-              Comentários
-              {activeTab === "comments" && (
-                <span className="absolute inset-x-0 -bottom-px h-[2px] bg-blue-500 rounded-full" />
-              )}
-            </button>
-          </div>
+          {(() => {
+            const commentsEnabled = data.course.lessonCommentsEnabled !== false;
+            const shownTab = commentsEnabled ? activeTab : "description";
+            return (
+              <>
+                {/* Tabs */}
+                <div className="mt-6 border-b border-gray-200 dark:border-white/5 flex gap-6">
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab("description")}
+                    className={`relative px-0.5 py-2.5 text-sm font-medium transition-colors duration-200 ${
+                      shownTab === "description"
+                        ? "text-gray-900 dark:text-white"
+                        : "text-gray-500 hover:text-gray-900 dark:hover:text-white"
+                    }`}
+                  >
+                    Descrição
+                    {shownTab === "description" && (
+                      <span className="absolute inset-x-0 -bottom-px h-[2px] bg-blue-500 rounded-full" />
+                    )}
+                  </button>
+                  {commentsEnabled && (
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab("comments")}
+                      className={`relative px-0.5 py-2.5 text-sm font-medium transition-colors duration-200 ${
+                        shownTab === "comments"
+                          ? "text-gray-900 dark:text-white"
+                          : "text-gray-500 hover:text-gray-900 dark:hover:text-white"
+                      }`}
+                    >
+                      Comentários
+                      {shownTab === "comments" && (
+                        <span className="absolute inset-x-0 -bottom-px h-[2px] bg-blue-500 rounded-full" />
+                      )}
+                    </button>
+                  )}
+                </div>
 
-          <div className="mt-5">
-            {activeTab === "description" ? (
-              data.lesson.description ? (
-                <p className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed whitespace-pre-wrap">
-                  {data.lesson.description}
-                </p>
-              ) : (
-                <p className="text-gray-500 text-sm">Sem descrição para esta aula.</p>
-              )
-            ) : (
-              <LessonComments lessonId={data.lesson.id} />
-            )}
-          </div>
+                <div className="mt-5">
+                  {shownTab === "description" ? (
+                    data.lesson.description ? (
+                      <p className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed whitespace-pre-wrap">
+                        {data.lesson.description}
+                      </p>
+                    ) : (
+                      <p className="text-gray-500 text-sm">Sem descrição para esta aula.</p>
+                    )
+                  ) : (
+                    <LessonComments lessonId={data.lesson.id} />
+                  )}
+                </div>
+              </>
+            );
+          })()}
         </div>
       </div>
 

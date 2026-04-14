@@ -38,6 +38,10 @@ export interface PreviewCourse {
   priceCurrency: string | null;
   ratingAverage: number;
   ratingCount: number;
+  certificateEnabled?: boolean;
+  reviewsEnabled?: boolean;
+  showStudentCount?: boolean;
+  enrollmentCount?: number;
   modules: PreviewModule[];
   sections: PreviewSection[];
 }
@@ -175,7 +179,7 @@ export function CoursePreview({
                 {course.title}
               </h1>
               <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-500">
-                {course.ratingCount > 0 && (
+                {course.reviewsEnabled !== false && course.ratingCount > 0 && (
                   <span className="inline-flex items-center gap-1.5">
                     <StarRating value={course.ratingAverage} size="sm" />
                     <span className="font-medium text-gray-700 dark:text-gray-300">
@@ -190,6 +194,11 @@ export function CoursePreview({
                 <span>
                   {totalLessons} aula{totalLessons !== 1 && "s"}
                 </span>
+                {course.showStudentCount && typeof course.enrollmentCount === "number" && course.enrollmentCount > 0 && (
+                  <span>
+                    {course.enrollmentCount} aluno{course.enrollmentCount !== 1 && "s"} matriculado{course.enrollmentCount !== 1 && "s"}
+                  </span>
+                )}
               </div>
             </div>
           </div>
@@ -292,13 +301,15 @@ export function CoursePreview({
           </section>
 
           {/* Reviews (read-only) */}
-          <ReviewsSection
-            courseId={course.id}
-            initialAverage={course.ratingAverage}
-            initialCount={course.ratingCount}
-            myReview={myReview}
-            canReview={false}
-          />
+          {course.reviewsEnabled !== false && (
+            <ReviewsSection
+              courseId={course.id}
+              initialAverage={course.ratingAverage}
+              initialCount={course.ratingCount}
+              myReview={myReview}
+              canReview={false}
+            />
+          )}
         </div>
 
         {/* Purchase sidebar (desktop) */}
@@ -346,12 +357,14 @@ export function CoursePreview({
                 {course.modules.length} módulo{course.modules.length !== 1 && "s"} ·{" "}
                 {totalLessons} aula{totalLessons !== 1 && "s"}
               </li>
-              <li className="flex items-center gap-2">
-                <svg className="w-4 h-4 text-emerald-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                </svg>
-                Certificado de conclusão
-              </li>
+              {course.certificateEnabled !== false && (
+                <li className="flex items-center gap-2">
+                  <svg className="w-4 h-4 text-emerald-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                  Certificado de conclusão
+                </li>
+              )}
             </ul>
           </div>
         </aside>

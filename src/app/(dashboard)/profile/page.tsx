@@ -14,6 +14,7 @@ interface ProfileCourse {
   title: string;
   slug: string;
   thumbnail: string | null;
+  certificateEnabled?: boolean;
   progress: number;
   totalLessons: number;
   completedLessons: number;
@@ -104,7 +105,9 @@ export default function ProfilePage() {
 
       {/* Completed courses with certificate */}
       {(() => {
-        const completed = courses.filter((c) => c.progress >= 100);
+        const completed = courses.filter(
+          (c) => c.progress >= 100 && c.certificateEnabled !== false
+        );
         if (completed.length === 0) return null;
         return (
           <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-6 mb-6">

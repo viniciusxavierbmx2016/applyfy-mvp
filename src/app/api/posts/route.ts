@@ -43,6 +43,13 @@ export async function GET(request: Request) {
       );
     }
 
+    if (!course.communityEnabled) {
+      return NextResponse.json(
+        { error: "Comunidade desativada neste curso" },
+        { status: 403 }
+      );
+    }
+
     // Access: ADMIN bypass, PRODUCER owning workspace bypass, else must be enrolled
     const isStaffOwner =
       user.role === "ADMIN" ||
@@ -163,6 +170,13 @@ export async function POST(request: Request) {
       );
     }
 
+    if (!course.communityEnabled) {
+      return NextResponse.json(
+        { error: "Comunidade desativada neste curso" },
+        { status: 403 }
+      );
+    }
+
     const isStaffOwner =
       user.role === "ADMIN" ||
       (user.role === "PRODUCER" &&
@@ -202,14 +216,23 @@ export async function POST(request: Request) {
       },
     });
 
-    // +5 points, update level
-    const newPoints = user.points + GAMIFICATION.POINTS.CREATE_POST;
-    const newLevel = getLevelForPoints(newPoints).level;
-    const leveledUp = newLevel > user.level;
-    const updated = await prisma.user.update({
-      where: { id: user.id },
-      data: { points: newPoints, level: newLevel },
-    });
+    // Gamification: only award points if enabled on the course
+    let pointsAwarded = 0;
+    let leveledUp = false;
+    let finalPoints = user.points;
+    let finalLevel = user.level;
+    if (course.gamificationEnabled) {
+      const newPoints = user.points + GAMIFICATION.POINTS.CREATE_POST;
+      const newLevel = getLevelForPoints(newPoints).level;
+      leveledUp = newLevel > user.level;
+      const updated = await prisma.user.update({
+        where: { id: user.id },
+        data: { points: newPoints, level: newLevel },
+      });
+      pointsAwarded = GAMIFICATION.POINTS.CREATE_POST;
+      finalPoints = updated.points;
+      finalLevel = updated.level;
+    }
 
     return NextResponse.json(
       {
@@ -224,9 +247,9 @@ export async function POST(request: Request) {
           likeCount: 0,
           commentCount: 0,
         },
-        pointsAwarded: GAMIFICATION.POINTS.CREATE_POST,
+        pointsAwarded,
         leveledUp,
-        user: { points: updated.points, level: updated.level },
+        user: { points: finalPoints, level: finalLevel },
       },
       { status: 201 }
     );

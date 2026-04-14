@@ -85,6 +85,7 @@ export async function GET(
       myReview,
       menuItems,
       viewerWorkspace,
+      enrollmentCount,
     ] = await Promise.all([
       prisma.enrollment.findUnique({
         where: { userId_courseId: { userId: user.id, courseId: course.id } },
@@ -116,7 +117,17 @@ export async function GET(
             select: { slug: true, name: true, logoUrl: true },
           })
         : Promise.resolve(null),
+      course.showStudentCount
+        ? prisma.enrollment.count({
+            where: { courseId: course.id, status: "ACTIVE" },
+          })
+        : Promise.resolve(0),
     ]);
+
+    const filteredMenu = menuItems.filter((m) => {
+      if (!course.communityEnabled && m.label === "Comunidade") return false;
+      return true;
+    });
 
     const isCourseOwner =
       user.role === "PRODUCER" &&
@@ -175,6 +186,7 @@ export async function GET(
           modules: modulesWithResume,
           ratingAverage: agg._avg.rating ?? 0,
           ratingCount: agg._count.rating,
+          enrollmentCount: course.showStudentCount ? enrollmentCount : 0,
         },
         hasAccess,
         isStaffViewer,
@@ -184,7 +196,7 @@ export async function GET(
         viewerWorkspace,
         overrides: { modules: releasedModules, lessons: releasedLessons },
         lastAccessedLesson,
-        menu: menuItems,
+        menu: filteredMenu,
       },
       {
         headers: {

@@ -65,12 +65,18 @@ export async function POST(
 
     const course = await prisma.course.findUnique({
       where: { id: params.id },
-      select: { id: true },
+      select: { id: true, reviewsEnabled: true },
     });
     if (!course) {
       return NextResponse.json(
         { error: "Curso não encontrado" },
         { status: 404 }
+      );
+    }
+    if (!course.reviewsEnabled) {
+      return NextResponse.json(
+        { error: "Avaliações desativadas neste curso" },
+        { status: 403 }
       );
     }
 
