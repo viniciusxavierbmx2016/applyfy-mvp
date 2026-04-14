@@ -59,27 +59,6 @@ export async function GET(request: Request) {
           : "overview";
     const sectionParam = (searchParams.get("section") || "").toLowerCase();
 
-    if (tab === "content") {
-      if (format === "csv") {
-        return new NextResponse("", {
-          headers: {
-            "Content-Type": "text/csv; charset=utf-8",
-            "Content-Disposition": `attachment; filename=content-${new Date().toISOString().slice(0, 10)}.csv`,
-          },
-        });
-      }
-      return NextResponse.json({
-        tab,
-        window: windowDays,
-        lessonsLeastViewed: [],
-        lessonsLeastCompleted: [],
-        lessonsMostCompleted: [],
-        lessonsMostViewed: [],
-        modulesLeastCompleted: [],
-        modulesAbandonment: [],
-      });
-    }
-
     if (tab === "students") {
       if (format === "csv") {
         return new NextResponse("", {
@@ -138,6 +117,297 @@ export async function GET(request: Request) {
       courseIdParam && courseIds.length === 1 && courseIds[0] === courseIdParam
         ? courseIdParam
         : "";
+
+    if (tab === "content") {
+      if (courseIds.length === 0) {
+        if (format === "csv") {
+          return new NextResponse("", {
+            headers: {
+              "Content-Type": "text/csv; charset=utf-8",
+              "Content-Disposition": `attachment; filename=content-${new Date().toISOString().slice(0, 10)}.csv`,
+            },
+          });
+        }
+        return NextResponse.json({
+          tab,
+          window: windowDays,
+          selectedCourseId,
+          courses: scopedCourses,
+          lessonsMostViewed: [],
+          lessonsLeastViewed: [],
+          lessonsMostCompleted: [],
+          lessonsLeastCompleted: [],
+          modulesLeastCompleted: [],
+          modulesAbandonment: [],
+        });
+      }
+
+      const coursesC = await prisma.course.findMany({
+        where: { id: { in: courseIds } },
+        select: {
+          id: true,
+          title: true,
+          modules: {
+            select: {
+              id: true,
+              title: true,
+              order: true,
+              lessons: {
+                select: { id: true, title: true, order: true },
+                orderBy: { order: "asc" },
+              },
+            },
+            orderBy: { order: "asc" },
+          },
+        },
+      });
+
+      const enrollmentsC = await prisma.enrollment.findMany({
+        where: { courseId: { in: courseIds }, status: "ACTIVE" },
+        select: { userId: true, courseId: true },
+      });
+      const enrolledByCourse = new Map<string, Set<string>>();
+      for (const e of enrollmentsC) {
+        if (!enrolledByCourse.has(e.courseId))
+          enrolledByCourse.set(e.courseId, new Set());
+        enrolledByCourse.get(e.courseId)!.add(e.userId);
+      }
+
+      type LessonInfo = {
+        id: string;
+        title: string;
+        moduleId: string;
+        moduleTitle: string;
+        courseId: string;
+      };
+      const lessonMeta = new Map<string, LessonInfo>();
+      const moduleMeta = new Map<
+        string,
+        { id: string; title: string; courseId: string; lessonIds: string[] }
+      >();
+      const courseLessons = new Map<string, string[]>();
+      for (const c of coursesC) {
+        const cLessonIds: string[] = [];
+        for (const m of c.modules) {
+          const mLessonIds = m.lessons.map((l) => l.id);
+          moduleMeta.set(m.id, {
+            id: m.id,
+            title: m.title,
+            courseId: c.id,
+            lessonIds: mLessonIds,
+          });
+          for (const l of m.lessons) {
+            lessonMeta.set(l.id, {
+              id: l.id,
+              title: l.title,
+              moduleId: m.id,
+              moduleTitle: m.title,
+              courseId: c.id,
+            });
+            cLessonIds.push(l.id);
+          }
+        }
+        courseLessons.set(c.id, cLessonIds);
+      }
+      const allLessonIds = Array.from(lessonMeta.keys());
+
+      const progressC = allLessonIds.length
+        ? await prisma.lessonProgress.findMany({
+            where: { lessonId: { in: allLessonIds } },
+            select: {
+              userId: true,
+              lessonId: true,
+              completed: true,
+              completedAt: true,
+            },
+          })
+        : [];
+
+      const viewersByLesson = new Map<string, Set<string>>();
+      const completersByLesson = new Map<string, Set<string>>();
+      const lastLessonByUserCourse = new Map<string, string>();
+      const lastTimeByUserCourse = new Map<string, number>();
+      for (const p of progressC) {
+        const meta = lessonMeta.get(p.lessonId);
+        if (!meta) continue;
+        const enrolledSet = enrolledByCourse.get(meta.courseId);
+        if (!enrolledSet || !enrolledSet.has(p.userId)) continue;
+        if (!viewersByLesson.has(p.lessonId))
+          viewersByLesson.set(p.lessonId, new Set());
+        viewersByLesson.get(p.lessonId)!.add(p.userId);
+        if (p.completed) {
+          if (!completersByLesson.has(p.lessonId))
+            completersByLesson.set(p.lessonId, new Set());
+          completersByLesson.get(p.lessonId)!.add(p.userId);
+          if (p.completedAt) {
+            const key = `${p.userId}|${meta.courseId}`;
+            const t = p.completedAt.getTime();
+            if (t > (lastTimeByUserCourse.get(key) || 0)) {
+              lastTimeByUserCourse.set(key, t);
+              lastLessonByUserCourse.set(key, p.lessonId);
+            }
+          }
+        }
+      }
+
+      const lessonStats = Array.from(lessonMeta.values())
+        .map((l) => {
+          const enrolled = enrolledByCourse.get(l.courseId)?.size || 0;
+          const viewedCount = viewersByLesson.get(l.id)?.size || 0;
+          const completedCount = completersByLesson.get(l.id)?.size || 0;
+          return {
+            lessonId: l.id,
+            lessonTitle: l.title,
+            moduleTitle: l.moduleTitle,
+            totalStudents: enrolled,
+            viewedCount,
+            viewedPercent:
+              enrolled > 0 ? Math.round((viewedCount / enrolled) * 100) : 0,
+            completedCount,
+            completedPercent:
+              enrolled > 0 ? Math.round((completedCount / enrolled) * 100) : 0,
+          };
+        })
+        .filter((l) => l.totalStudents > 0);
+
+      const lessonsMostViewed = [...lessonStats]
+        .sort(
+          (a, b) =>
+            b.viewedPercent - a.viewedPercent ||
+            b.viewedCount - a.viewedCount
+        )
+        .slice(0, 5);
+      const lessonsLeastViewed = [...lessonStats]
+        .sort(
+          (a, b) =>
+            a.viewedPercent - b.viewedPercent ||
+            a.viewedCount - b.viewedCount
+        )
+        .slice(0, 5);
+      const lessonsMostCompleted = [...lessonStats]
+        .sort(
+          (a, b) =>
+            b.completedPercent - a.completedPercent ||
+            b.completedCount - a.completedCount
+        )
+        .slice(0, 5);
+      const lessonsLeastCompleted = [...lessonStats]
+        .filter((l) => l.viewedCount > 0)
+        .sort(
+          (a, b) =>
+            a.completedPercent - b.completedPercent ||
+            a.completedCount - b.completedCount
+        )
+        .slice(0, 5);
+
+      const modulesStats = Array.from(moduleMeta.values())
+        .map((m) => {
+          const enrolled = Array.from(enrolledByCourse.get(m.courseId) || []);
+          let completers = 0;
+          if (enrolled.length > 0 && m.lessonIds.length > 0) {
+            for (const uid of enrolled) {
+              let allDone = true;
+              for (const lid of m.lessonIds) {
+                if (!completersByLesson.get(lid)?.has(uid)) {
+                  allDone = false;
+                  break;
+                }
+              }
+              if (allDone) completers++;
+            }
+          }
+          return {
+            moduleId: m.id,
+            moduleTitle: m.title,
+            totalStudents: enrolled.length,
+            completedCount: completers,
+            completedPercent:
+              enrolled.length > 0
+                ? Math.round((completers / enrolled.length) * 100)
+                : 0,
+          };
+        })
+        .filter((m) => m.totalStudents > 0 && moduleMeta.get(m.moduleId)!.lessonIds.length > 0);
+
+      const modulesLeastCompleted = [...modulesStats]
+        .sort((a, b) => a.completedPercent - b.completedPercent)
+        .slice(0, 5);
+
+      const abandonPerModule = new Map<string, number>();
+      for (const e of enrollmentsC) {
+        const cLessons = courseLessons.get(e.courseId) || [];
+        if (cLessons.length === 0) continue;
+        let userCompleted = 0;
+        for (const lid of cLessons) {
+          if (completersByLesson.get(lid)?.has(e.userId)) userCompleted++;
+        }
+        if (userCompleted >= cLessons.length) continue;
+        const key = `${e.userId}|${e.courseId}`;
+        const lastLessonId = lastLessonByUserCourse.get(key);
+        if (!lastLessonId) continue;
+        const moduleId = lessonMeta.get(lastLessonId)?.moduleId;
+        if (moduleId)
+          abandonPerModule.set(
+            moduleId,
+            (abandonPerModule.get(moduleId) || 0) + 1
+          );
+      }
+      const modulesAbandonment = Array.from(abandonPerModule.entries())
+        .map(([moduleId, count]) => ({
+          moduleId,
+          moduleTitle: moduleMeta.get(moduleId)?.title || "",
+          count,
+        }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 8);
+
+      if (format === "csv") {
+        const header =
+          "secao,aula,modulo,alunos_total,alunos_viram,percent_viram,alunos_concluiram,percent_concluiram";
+        const sections: Array<[string, typeof lessonsMostViewed]> = [
+          ["mais_assistidas", lessonsMostViewed],
+          ["menos_assistidas", lessonsLeastViewed],
+          ["mais_concluidas", lessonsMostCompleted],
+          ["menos_concluidas", lessonsLeastCompleted],
+        ];
+        const rows: string[] = [];
+        for (const [name, list] of sections) {
+          for (const l of list) {
+            rows.push(
+              [
+                name,
+                csvEscape(l.lessonTitle),
+                csvEscape(l.moduleTitle),
+                String(l.totalStudents),
+                String(l.viewedCount),
+                String(l.viewedPercent),
+                String(l.completedCount),
+                String(l.completedPercent),
+              ].join(",")
+            );
+          }
+        }
+        return new NextResponse([header, ...rows].join("\n"), {
+          headers: {
+            "Content-Type": "text/csv; charset=utf-8",
+            "Content-Disposition": `attachment; filename=content-${new Date().toISOString().slice(0, 10)}.csv`,
+          },
+        });
+      }
+
+      return NextResponse.json({
+        tab,
+        window: windowDays,
+        selectedCourseId,
+        courses: scopedCourses,
+        lessonsMostViewed,
+        lessonsLeastViewed,
+        lessonsMostCompleted,
+        lessonsLeastCompleted,
+        modulesLeastCompleted,
+        modulesAbandonment,
+      });
+    }
 
     const now = new Date();
     const todayStart = startOfDay(now);

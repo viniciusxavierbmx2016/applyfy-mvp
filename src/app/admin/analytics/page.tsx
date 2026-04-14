@@ -21,6 +21,17 @@ const AdminAnalyticsContent = dynamic(
   }
 );
 
+const ReportsContentTab = dynamic(
+  () =>
+    import("@/components/reports-content-tab").then((m) => m.ReportsContentTab),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-64 bg-gray-100 dark:bg-gray-900 rounded-xl animate-pulse" />
+    ),
+  }
+);
+
 type TabId = "overview" | "content" | "students";
 
 const TABS: Array<{ id: TabId; label: string }> = [
@@ -168,7 +179,9 @@ function AdminAnalyticsPageInner() {
       {tab === "overview" && (
         <AdminAnalyticsContent courseId={courseId} windowDays={windowDays} />
       )}
-      {tab === "content" && <ComingSoon title="Relatórios de Conteúdo" />}
+      {tab === "content" && (
+        <ReportsContentTab courseId={courseId} windowDays={windowDays} />
+      )}
       {tab === "students" && <ComingSoon title="Relatórios de Alunos" />}
     </div>
   );
