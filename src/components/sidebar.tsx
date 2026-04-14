@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { useUserStore } from "@/stores/user-store";
 import { WorkspaceSwitcher } from "./workspace-switcher";
@@ -18,53 +19,57 @@ type NavLink = {
   requires?: string;
 };
 
+const COLLAPSED_KEY = "admin_sidebar_collapsed";
+
+const iconCls = "w-[18px] h-[18px]";
+
 const iconHome = (
-  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+  <svg className={iconCls} fill="none" viewBox="0 0 24 24" stroke="currentColor">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
   </svg>
 );
 const iconProfile = (
-  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+  <svg className={iconCls} fill="none" viewBox="0 0 24 24" stroke="currentColor">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
   </svg>
 );
 const iconDashboard = (
-  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+  <svg className={iconCls} fill="none" viewBox="0 0 24 24" stroke="currentColor">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
   </svg>
 );
 const iconCourses = (
-  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+  <svg className={iconCls} fill="none" viewBox="0 0 24 24" stroke="currentColor">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
   </svg>
 );
 const iconUsers = (
-  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+  <svg className={iconCls} fill="none" viewBox="0 0 24 24" stroke="currentColor">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
   </svg>
 );
 const iconAnalytics = (
-  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+  <svg className={iconCls} fill="none" viewBox="0 0 24 24" stroke="currentColor">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3v18h18M7 15l3-3 3 3 5-5" />
   </svg>
 );
 const iconCommunity = (
-  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+  <svg className={iconCls} fill="none" viewBox="0 0 24 24" stroke="currentColor">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" />
   </svg>
 );
 const iconIntegrations = (
-  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+  <svg className={iconCls} fill="none" viewBox="0 0 24 24" stroke="currentColor">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
   </svg>
 );
 const iconWorkspaces = (
-  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+  <svg className={iconCls} fill="none" viewBox="0 0 24 24" stroke="currentColor">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
   </svg>
 );
 const iconBriefcase = (
-  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+  <svg className={iconCls} fill="none" viewBox="0 0 24 24" stroke="currentColor">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
   </svg>
 );
@@ -119,12 +124,32 @@ const adminLinks: NavLink[] = [
   { href: "/admin/integrations", label: "Integrações", icon: iconIntegrations },
 ];
 
+const tooltipCls =
+  "hidden lg:group-hover:block absolute left-full ml-2 px-2 py-1 text-xs rounded-md bg-gray-900 dark:bg-gray-800 text-white whitespace-nowrap z-50 pointer-events-none shadow-lg";
+
 export function Sidebar({ open, onClose }: SidebarProps) {
   const pathname = usePathname();
   const { user, collaborator } = useUserStore();
   const isAdmin = user?.role === "ADMIN";
   const isProducer = user?.role === "PRODUCER";
   const isCollaborator = user?.role === "COLLABORATOR";
+
+  const [collapsed, setCollapsed] = useState(false);
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(COLLAPSED_KEY);
+      if (saved === "1") setCollapsed(true);
+    } catch {}
+  }, []);
+  function toggleCollapsed() {
+    setCollapsed((v) => {
+      const next = !v;
+      try {
+        localStorage.setItem(COLLAPSED_KEY, next ? "1" : "0");
+      } catch {}
+      return next;
+    });
+  }
 
   const collabPerms = collaborator?.permissions ?? [];
   const filteredCollabLinks = collaboratorLinks.filter(
@@ -146,6 +171,29 @@ export function Sidebar({ open, onClose }: SidebarProps) {
         ? "Colaborador"
         : null;
 
+  const isActive = (href: string) =>
+    pathname === href || (href !== "/admin" && href !== "/" && pathname.startsWith(href));
+
+  function linkCls(active: boolean) {
+    return cn(
+      "group relative flex items-center gap-3 rounded-lg text-sm font-medium transition-all duration-200",
+      collapsed ? "lg:justify-center lg:p-2.5 py-2.5 px-3" : "py-2.5 px-3",
+      active
+        ? "bg-blue-500/10 text-blue-600 dark:text-blue-400"
+        : "text-gray-600 dark:text-gray-400 hover:bg-gray-50 hover:text-gray-900 dark:hover:bg-white/5 dark:hover:text-white"
+    );
+  }
+
+  function iconWrapCls(active: boolean) {
+    return cn(
+      "flex-shrink-0 transition-colors duration-200",
+      collapsed && "lg:mx-auto",
+      active
+        ? "text-blue-600 dark:text-blue-400"
+        : "text-gray-400 dark:text-gray-500 group-hover:text-gray-900 dark:group-hover:text-white"
+    );
+  }
+
   return (
     <>
       {open && (
@@ -157,70 +205,189 @@ export function Sidebar({ open, onClose }: SidebarProps) {
 
       <aside
         className={cn(
-          "fixed top-0 left-0 z-50 h-full w-64 bg-gray-100 dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:z-auto",
+          "fixed top-0 left-0 z-50 h-screen w-64 flex flex-col",
+          "bg-white dark:bg-gray-950",
+          "border-r border-gray-200 dark:border-white/5",
+          "transform transition-all duration-300 ease-in-out",
+          "lg:translate-x-0 lg:sticky lg:top-0 lg:z-auto",
+          collapsed ? "lg:w-16" : "lg:w-56",
           open ? "translate-x-0" : "-translate-x-full"
         )}
       >
-        <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200 dark:border-gray-800">
-          <Link href="/" className="text-xl font-bold text-gray-900 dark:text-white">
-            Applyfy
+        {/* Logo */}
+        <div
+          className={cn(
+            "relative flex items-center border-b border-gray-200 dark:border-white/5 transition-all duration-300",
+            collapsed
+              ? "lg:justify-center lg:py-4 lg:px-2 h-16 px-5"
+              : "h-16 px-5 justify-between"
+          )}
+        >
+          <Link
+            href="/"
+            onClick={onClose}
+            className={cn(
+              "flex items-center",
+              collapsed ? "lg:justify-center" : ""
+            )}
+            title="Applyfy"
+          >
+            {collapsed ? (
+              <span className="hidden lg:flex w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 text-white items-center justify-center text-sm font-bold shadow-sm">
+                A
+              </span>
+            ) : null}
+            <span
+              className={cn(
+                "text-xl font-bold text-gray-900 dark:text-white",
+                collapsed && "lg:hidden"
+              )}
+            >
+              Applyfy
+            </span>
           </Link>
+
+          {/* Fechar mobile */}
           <button
             onClick={onClose}
-            className="lg:hidden text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+            className={cn(
+              "lg:hidden text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors",
+              collapsed && "hidden"
+            )}
+            aria-label="Fechar menu"
           >
             <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
-        </div>
 
-        <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-          <p className="px-3 mb-2 text-xs font-semibold uppercase tracking-wider text-gray-500">
-            Menu
-          </p>
-          {!isCollaborator && !isAdmin && studentLinks.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              onClick={onClose}
+          {/* Colapsar — canto direito quando aberta */}
+          {!collapsed && (
+            <button
+              onClick={toggleCollapsed}
+              aria-label="Recolher menu"
               className={cn(
-                "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
-                pathname === link.href
-                  ? "bg-blue-600/10 text-blue-400"
-                  : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-gray-800"
+                "hidden lg:flex absolute top-1/2 -translate-y-1/2 right-3 items-center justify-center w-6 h-6 rounded-full",
+                "bg-gray-100 hover:bg-gray-200 dark:bg-white/5 dark:hover:bg-white/10",
+                "text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white",
+                "transition-colors duration-200"
               )}
             >
-              {link.icon}
-              {link.label}
-            </Link>
-          ))}
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+          )}
+        </div>
+
+        {/* Expandir — abaixo da logo quando colapsada */}
+        {collapsed && (
+          <div className="hidden lg:flex justify-center py-2 border-b border-gray-200 dark:border-white/5">
+            <button
+              onClick={toggleCollapsed}
+              aria-label="Expandir menu"
+              className={cn(
+                "group relative flex items-center justify-center w-7 h-7 rounded-full",
+                "bg-gray-100 hover:bg-gray-200 dark:bg-white/5 dark:hover:bg-white/10",
+                "text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white",
+                "transition-colors duration-200"
+              )}
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+              </svg>
+              <span className={tooltipCls}>Expandir menu</span>
+            </button>
+          </div>
+        )}
+
+        {/* Nav */}
+        <nav
+          className={cn(
+            "flex-1 flex flex-col gap-1 py-4 overflow-y-auto",
+            collapsed ? "lg:px-2 px-3" : "px-3"
+          )}
+        >
+          {!isCollaborator && !isAdmin && (
+            <>
+              <p
+                className={cn(
+                  "text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1 px-1",
+                  collapsed && "lg:hidden"
+                )}
+              >
+                Menu
+              </p>
+              {studentLinks.map((link) => {
+                const active = isActive(link.href);
+                return (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    onClick={onClose}
+                    title={link.label}
+                    className={linkCls(active)}
+                  >
+                    <span className={iconWrapCls(active)}>{link.icon}</span>
+                    <span className={cn("truncate", collapsed && "lg:hidden")}>
+                      {link.label}
+                    </span>
+                    {collapsed && <span className={tooltipCls}>{link.label}</span>}
+                  </Link>
+                );
+              })}
+            </>
+          )}
 
           {staffLinks && (
             <>
-              <div className="pt-4 pb-2">
-                <p className="px-3 mb-2 text-xs font-semibold uppercase tracking-wider text-gray-500">
+              <div
+                className={cn(
+                  "pt-4 pb-1",
+                  !isCollaborator && !isAdmin
+                    ? "mt-2 border-t border-gray-200 dark:border-white/5"
+                    : ""
+                )}
+              >
+                <p
+                  className={cn(
+                    "text-xs font-semibold uppercase tracking-wider text-gray-500 px-1",
+                    collapsed && "lg:hidden"
+                  )}
+                >
                   {staffLabel}
                 </p>
               </div>
-              {isProducer && <WorkspaceSwitcher />}
-              {staffLinks.map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  onClick={onClose}
+
+              {isProducer && (
+                <div
                   className={cn(
-                    "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
-                    pathname === link.href ||
-                      (link.href !== "/admin" && pathname.startsWith(link.href))
-                      ? "bg-blue-600/10 text-blue-400"
-                      : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-gray-800"
+                    "mb-1",
+                    collapsed ? "lg:flex lg:justify-center" : ""
                   )}
                 >
-                  {link.icon}
-                  {link.label}
-                </Link>
-              ))}
+                  <WorkspaceSwitcher collapsed={collapsed} />
+                </div>
+              )}
+
+              {staffLinks.map((link) => {
+                const active = isActive(link.href);
+                return (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    onClick={onClose}
+                    title={link.label}
+                    className={linkCls(active)}
+                  >
+                    <span className={iconWrapCls(active)}>{link.icon}</span>
+                    <span className={cn("truncate", collapsed && "lg:hidden")}>
+                      {link.label}
+                    </span>
+                    {collapsed && <span className={tooltipCls}>{link.label}</span>}
+                  </Link>
+                );
+              })}
             </>
           )}
         </nav>

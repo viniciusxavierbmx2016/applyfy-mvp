@@ -22,7 +22,7 @@ function readCookie(name: string): string | null {
   return m ? decodeURIComponent(m[1]) : null;
 }
 
-export function WorkspaceSwitcher() {
+export function WorkspaceSwitcher({ collapsed = false }: { collapsed?: boolean } = {}) {
   const [workspaces, setWorkspaces] = useState<WorkspaceRow[] | null>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
@@ -46,14 +46,32 @@ export function WorkspaceSwitcher() {
   }, []);
 
   if (!workspaces) {
-    return (
-      <div className="mx-3 mb-2 h-10 rounded-lg bg-gray-100 dark:bg-gray-800 animate-pulse" />
+    return collapsed ? (
+      <div className="w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-800 animate-pulse" />
+    ) : (
+      <div className="mb-2 h-10 rounded-lg bg-gray-100 dark:bg-gray-800 animate-pulse" />
     );
   }
 
   if (workspaces.length === 0) {
+    if (collapsed) {
+      return (
+        <Link
+          href="/admin/workspaces/new"
+          title="Criar workspace"
+          className="group relative flex items-center justify-center w-8 h-8 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-500/20 transition"
+        >
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          </svg>
+          <span className="hidden lg:group-hover:block absolute left-full ml-2 px-2 py-1 text-xs rounded-md bg-gray-900 dark:bg-gray-800 text-white whitespace-nowrap z-50 pointer-events-none shadow-lg">
+            Criar workspace
+          </span>
+        </Link>
+      );
+    }
     return (
-      <div className="mx-3 mb-2 rounded-lg bg-blue-500/10 border border-blue-500/30 p-3 text-xs">
+      <div className="mb-2 rounded-lg bg-blue-500/10 border border-blue-500/30 p-3 text-xs">
         <p className="text-blue-700 dark:text-blue-300 font-medium">
           Sem workspace
         </p>
@@ -80,12 +98,77 @@ export function WorkspaceSwitcher() {
     window.location.reload();
   }
 
+  if (collapsed) {
+    return (
+      <div className="relative">
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          title={active.name}
+          className="group relative w-8 h-8 rounded-lg bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 flex items-center justify-center overflow-hidden transition"
+          aria-label={`Workspace: ${active.name}`}
+        >
+          {active.logoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={active.logoUrl} alt={active.name} className="w-full h-full object-cover" />
+          ) : (
+            <span className="text-xs font-bold text-gray-700 dark:text-gray-300">
+              {active.name.charAt(0).toUpperCase()}
+            </span>
+          )}
+          <span className="hidden lg:group-hover:block absolute left-full ml-2 px-2 py-1 text-xs rounded-md bg-gray-900 dark:bg-gray-800 text-white whitespace-nowrap z-50 pointer-events-none shadow-lg">
+            {active.name}
+          </span>
+        </button>
+        {open && (
+          <div className="absolute left-full ml-2 top-0 z-40 w-56 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow-lg p-1">
+            {workspaces.map((ws) => (
+              <button
+                key={ws.id}
+                type="button"
+                onClick={() => choose(ws)}
+                className={cn(
+                  "w-full flex items-center gap-2 px-2 py-1.5 rounded text-left text-xs",
+                  ws.id === active.id
+                    ? "bg-blue-500/10 text-blue-700 dark:text-blue-300"
+                    : "hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200"
+                )}
+              >
+                <div className="w-5 h-5 rounded bg-gray-200 dark:bg-gray-700 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                  {ws.logoUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={ws.logoUrl} alt={ws.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="text-[9px] font-bold text-gray-700 dark:text-gray-300">
+                      {ws.name.charAt(0).toUpperCase()}
+                    </span>
+                  )}
+                </div>
+                <span className="flex-1 truncate">{ws.name}</span>
+              </button>
+            ))}
+            <Link
+              href="/admin/workspaces/new"
+              onClick={() => setOpen(false)}
+              className="mt-1 w-full flex items-center gap-2 px-2 py-1.5 rounded text-xs text-blue-600 dark:text-blue-400 hover:bg-blue-500/10"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              Novo workspace
+            </Link>
+          </div>
+        )}
+      </div>
+    );
+  }
+
   return (
-    <div className="mx-3 mb-2 relative">
+    <div className="mb-2 relative">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700"
+        className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 border border-gray-200 dark:border-white/5"
       >
         <div className="w-6 h-6 rounded bg-gray-200 dark:bg-gray-700 flex items-center justify-center flex-shrink-0 overflow-hidden">
           {active.logoUrl ? (
