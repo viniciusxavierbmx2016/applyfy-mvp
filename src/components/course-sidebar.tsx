@@ -83,6 +83,9 @@ export function CourseSidebar({
 
   const widthClass = collapsed ? "lg:w-16" : "lg:w-60";
 
+  const tooltipCls =
+    "hidden lg:group-hover:block absolute left-full ml-2 px-2 py-1 text-xs rounded-md bg-gray-900 dark:bg-gray-800 text-white whitespace-nowrap z-50 pointer-events-none shadow-lg";
+
   return (
     <>
       {mobileOpen && (
@@ -93,20 +96,20 @@ export function CourseSidebar({
       )}
       <aside
         className={cn(
-          "fixed top-0 left-0 z-50 h-full w-60 flex flex-col",
-          "bg-white/80 dark:bg-gray-950/80 backdrop-blur-xl",
-          "border-r border-gray-200/70 dark:border-white/5",
+          "fixed top-0 left-0 z-50 h-screen w-60 flex flex-col overflow-y-auto overflow-x-hidden",
+          "bg-gray-50 dark:bg-gray-950",
+          "border-r border-gray-200 dark:border-white/5",
           "transform transition-all duration-300 ease-in-out",
-          "lg:translate-x-0 lg:static lg:z-auto",
+          "lg:translate-x-0 lg:sticky lg:top-0 lg:z-auto",
           widthClass,
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
-        {/* Header */}
+        {/* Header — logo do workspace */}
         <div
           className={cn(
-            "h-16 flex items-center relative",
-            collapsed ? "lg:justify-center lg:px-2 px-5" : "px-5 justify-between"
+            "relative flex items-center border-b border-gray-200 dark:border-white/5",
+            collapsed ? "lg:justify-center lg:p-4 p-5" : "p-5 justify-between"
           )}
         >
           <Link
@@ -124,7 +127,7 @@ export function CourseSidebar({
                 alt={course.workspaceName || course.title}
                 width={32}
                 height={32}
-                className="rounded-lg object-cover flex-shrink-0 ring-1 ring-black/5 dark:ring-white/10"
+                className="w-8 h-8 rounded-lg object-cover flex-shrink-0 ring-1 ring-black/5 dark:ring-white/10"
               />
             ) : (
               <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 text-white flex items-center justify-center text-sm font-semibold flex-shrink-0 shadow-sm">
@@ -133,13 +136,15 @@ export function CourseSidebar({
             )}
             <span
               className={cn(
-                "text-[15px] font-semibold tracking-tight text-gray-900 dark:text-white truncate",
+                "text-sm font-semibold tracking-tight text-gray-900 dark:text-white truncate",
                 collapsed && "lg:hidden"
               )}
             >
               {course.workspaceName || course.title}
             </span>
           </Link>
+
+          {/* Botão fechar no mobile */}
           <button
             onClick={onMobileClose}
             className={cn(
@@ -154,14 +159,23 @@ export function CourseSidebar({
           </button>
         </div>
 
-        {/* Desktop collapse toggle — discreet, top-right edge */}
+        {/* Botão de colapsar — topo direito (desktop) */}
         <button
           onClick={onToggleCollapsed}
           aria-label={collapsed ? "Expandir menu" : "Recolher menu"}
-          className="hidden lg:flex absolute top-[52px] -right-3 z-50 items-center justify-center w-6 h-6 rounded-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-white/10 text-gray-500 hover:text-gray-900 dark:hover:text-white shadow-sm hover:shadow transition-all duration-200"
+          className={cn(
+            "hidden lg:flex absolute top-3 items-center justify-center w-6 h-6 rounded-full",
+            "bg-gray-100 hover:bg-gray-200 dark:bg-white/5 dark:hover:bg-white/10",
+            "text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white",
+            "transition-all duration-200 z-10",
+            collapsed ? "right-1/2 translate-x-1/2 top-16" : "right-3"
+          )}
         >
           <svg
-            className={cn("w-3 h-3 transition-transform duration-300", collapsed && "rotate-180")}
+            className={cn(
+              "w-3.5 h-3.5 transition-transform duration-300",
+              collapsed && "rotate-180"
+            )}
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -170,41 +184,37 @@ export function CourseSidebar({
           </svg>
         </button>
 
-        {/* Botão voltar */}
-        <div className={cn("pt-3 pb-2", collapsed ? "lg:px-2 px-3" : "px-3")}>
+        {/* Voltar à vitrine/painel */}
+        <div className="border-b border-gray-200 dark:border-white/5">
           <Link
             href={backHref}
             onClick={onMobileClose}
             title={backLabel}
             className={cn(
-              "group relative flex items-center gap-2.5 rounded-[10px] text-[13px] font-medium text-gray-500 dark:text-gray-500 hover:text-gray-800 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 transition-all duration-200",
-              collapsed ? "lg:justify-center lg:p-2.5 px-3 py-2" : "px-3 py-2"
+              "group relative flex items-center gap-2 text-xs font-medium uppercase tracking-wide",
+              "text-gray-500 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300",
+              "transition-colors duration-200",
+              collapsed ? "lg:justify-center lg:py-3 lg:px-0 py-3 px-4" : "py-3 px-4"
             )}
           >
-            <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg
+              className="flex-shrink-0"
+              style={{ width: 14, height: 14 }}
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
             <span className={cn(collapsed && "lg:hidden")}>{backLabel}</span>
-            {collapsed && (
-              <span className="hidden lg:group-hover:block absolute left-full ml-2 px-2 py-1 text-xs rounded-md bg-gray-900 dark:bg-gray-800 text-white whitespace-nowrap z-50 pointer-events-none shadow-lg">
-                {backLabel}
-              </span>
-            )}
+            {collapsed && <span className={tooltipCls}>{backLabel}</span>}
           </Link>
         </div>
 
-        {/* Divider */}
-        <div
-          className={cn(
-            "h-px bg-gradient-to-r from-transparent via-gray-200 dark:via-white/10 to-transparent",
-            collapsed ? "lg:mx-3 mx-4" : "mx-4"
-          )}
-        />
-
-        {/* Nav */}
+        {/* Itens do menu */}
         <nav
           className={cn(
-            "flex-1 py-3 space-y-0.5 overflow-y-auto overflow-x-hidden",
+            "flex-1 flex flex-col py-3 gap-1",
             collapsed ? "lg:px-2 px-3" : "px-3"
           )}
         >
@@ -221,21 +231,22 @@ export function CourseSidebar({
                     ? `/course/${course.slug}/lesson/${continueLessonId}`
                     : `/course/${course.slug}`
                   : item.url.startsWith("/")
-                  ? item.url.replace(/:slug/g, course.slug)
-                  : `/course/${course.slug}/${item.url}`;
+                    ? item.url.replace(/:slug/g, course.slug)
+                    : `/course/${course.slug}/${item.url}`;
               const isActive =
                 !isExternal &&
                 (pathname === href ||
                   (href !== `/course/${course.slug}` && pathname.startsWith(href)));
               const baseCls = cn(
-                "group relative flex items-center gap-3 rounded-[10px] text-[14px] font-medium transition-all duration-200",
-                collapsed ? "lg:justify-center lg:p-2.5 px-4 py-2.5" : "px-4 py-2.5",
+                "group relative flex items-center gap-3 rounded-lg text-sm font-medium transition-all duration-200",
+                collapsed ? "lg:justify-center lg:p-2.5 py-2.5 px-3" : "py-2.5 px-3",
                 isActive
-                  ? "bg-gray-900/5 dark:bg-white/10 text-gray-900 dark:text-white"
-                  : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5"
+                  ? "bg-gray-200 text-gray-900 dark:bg-white/10 dark:text-white"
+                  : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 hover:text-gray-900 dark:hover:bg-white/5 dark:hover:text-white"
               );
               const iconCls = cn(
-                "flex-shrink-0 transition-colors duration-200",
+                "flex-shrink-0 transition-colors duration-200 [&>svg]:w-[18px] [&>svg]:h-[18px]",
+                collapsed && "lg:mx-auto",
                 isActive
                   ? "text-gray-900 dark:text-white"
                   : "text-gray-400 dark:text-gray-500 group-hover:text-gray-900 dark:group-hover:text-white"
@@ -246,9 +257,7 @@ export function CourseSidebar({
                 </span>
               );
               const tooltipEl = collapsed ? (
-                <span className="hidden lg:group-hover:block absolute left-full ml-2 px-2 py-1 text-xs rounded-md bg-gray-900 dark:bg-gray-800 text-white whitespace-nowrap z-50 pointer-events-none shadow-lg">
-                  {item.label}
-                </span>
+                <span className={tooltipCls}>{item.label}</span>
               ) : null;
               if (isExternal) {
                 return (
@@ -285,16 +294,27 @@ export function CourseSidebar({
               );
             })}
 
+          {/* Suporte — empurrado para o final */}
           {(supportEmail || supportWhatsapp) && (
-            <SupportPopover
-              email={supportEmail}
-              whatsapp={supportWhatsapp}
-              collapsed={collapsed}
-              triggerClassName={cn(
-                "w-full text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5",
-                collapsed ? "lg:justify-center lg:p-2.5 px-4 py-2.5" : "px-4 py-2.5"
+            <div
+              className={cn(
+                "mt-auto pt-3 border-t border-gray-200 dark:border-white/5",
+                collapsed ? "lg:-mx-2 lg:px-2 -mx-3 px-3" : "-mx-3 px-3"
               )}
-            />
+            >
+              <SupportPopover
+                email={supportEmail}
+                whatsapp={supportWhatsapp}
+                collapsed={collapsed}
+                openUpward
+                triggerClassName={cn(
+                  "w-full text-sm font-medium rounded-lg transition-all duration-200",
+                  "text-gray-600 dark:text-gray-400",
+                  "hover:bg-gray-100 hover:text-gray-900 dark:hover:bg-white/5 dark:hover:text-white",
+                  collapsed ? "lg:justify-center lg:p-2.5 py-2.5 px-3" : "py-2.5 px-3"
+                )}
+              />
+            </div>
           )}
         </nav>
       </aside>

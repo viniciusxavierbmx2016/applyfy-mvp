@@ -11,6 +11,7 @@ interface Props {
   label?: string;
   align?: "left" | "right";
   collapsed?: boolean;
+  openUpward?: boolean;
 }
 
 export function SupportPopover({
@@ -20,6 +21,7 @@ export function SupportPopover({
   label = "Suporte",
   align = "left",
   collapsed = false,
+  openUpward = false,
 }: Props) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement | null>(null);
@@ -52,8 +54,11 @@ export function SupportPopover({
           triggerClassName
         )}
       >
-        <span className="flex-shrink-0 transition-colors duration-200 text-gray-400 dark:text-gray-500 group-hover:text-gray-900 dark:group-hover:text-white">
-          <HeadphonesIcon />
+        <span className={cn(
+          "flex-shrink-0 transition-colors duration-200 text-gray-400 dark:text-gray-500 group-hover:text-gray-900 dark:group-hover:text-white",
+          collapsed && "lg:mx-auto"
+        )}>
+          <HeadphonesIcon className="w-[18px] h-[18px]" />
         </span>
         <span className={cn("truncate", collapsed && "lg:hidden")}>{label}</span>
         {collapsed && (
@@ -67,7 +72,8 @@ export function SupportPopover({
         <div
           role="menu"
           className={cn(
-            "absolute z-50 mt-2 w-64 rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-gray-900 shadow-xl overflow-hidden",
+            "absolute z-50 w-64 rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-gray-900 shadow-xl overflow-hidden",
+            openUpward ? "bottom-full mb-2" : "top-full mt-2",
             align === "right" ? "right-0" : "left-0"
           )}
         >
