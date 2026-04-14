@@ -80,7 +80,7 @@ const producerLinks: NavLink[] = [
   { href: "/admin/courses", label: "Meus Cursos", icon: iconCourses },
   { href: "/admin/users", label: "Meus Alunos", icon: iconUsers },
   { href: "/admin/community", label: "Comunidade", icon: iconCommunity },
-  { href: "/admin/analytics", label: "Analytics", icon: iconAnalytics },
+  { href: "/admin/analytics", label: "Relatórios", icon: iconAnalytics },
   { href: "/admin/collaborators", label: "Colaboradores", icon: iconUsers },
   { href: "/admin/integrations", label: "Integrações", icon: iconIntegrations },
 ];
@@ -107,7 +107,7 @@ const collaboratorLinks: NavLink[] = [
   },
   {
     href: "/admin/analytics",
-    label: "Analytics",
+    label: "Relatórios",
     icon: iconAnalytics,
     requires: "VIEW_ANALYTICS",
   },

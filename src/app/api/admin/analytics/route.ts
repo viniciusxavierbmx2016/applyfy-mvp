@@ -50,6 +50,59 @@ export async function GET(request: Request) {
     const windowDays: 7 | 30 | 90 =
       rawWindow === 90 ? 90 : rawWindow === 30 ? 30 : 7;
     const format = (searchParams.get("format") || "json").toLowerCase();
+    const tabParam = (searchParams.get("tab") || "overview").toLowerCase();
+    const tab: "overview" | "content" | "students" =
+      tabParam === "content"
+        ? "content"
+        : tabParam === "students"
+          ? "students"
+          : "overview";
+    const sectionParam = (searchParams.get("section") || "").toLowerCase();
+
+    if (tab === "content") {
+      if (format === "csv") {
+        return new NextResponse("", {
+          headers: {
+            "Content-Type": "text/csv; charset=utf-8",
+            "Content-Disposition": `attachment; filename=content-${new Date().toISOString().slice(0, 10)}.csv`,
+          },
+        });
+      }
+      return NextResponse.json({
+        tab,
+        window: windowDays,
+        lessonsLeastViewed: [],
+        lessonsLeastCompleted: [],
+        lessonsMostCompleted: [],
+        lessonsMostViewed: [],
+        modulesLeastCompleted: [],
+        modulesAbandonment: [],
+      });
+    }
+
+    if (tab === "students") {
+      if (format === "csv") {
+        return new NextResponse("", {
+          headers: {
+            "Content-Type": "text/csv; charset=utf-8",
+            "Content-Disposition": `attachment; filename=students-${sectionParam || "all"}-${new Date().toISOString().slice(0, 10)}.csv`,
+          },
+        });
+      }
+      return NextResponse.json({
+        tab,
+        window: windowDays,
+        section: sectionParam || null,
+        topEngaged: [],
+        inactiveGrouped: [
+          { bucket: "30-60", count: 0 },
+          { bucket: "60-90", count: 0 },
+          { bucket: "90+", count: 0 },
+        ],
+        neverAccessed: [],
+        expiredStudents: [],
+      });
+    }
 
     const { workspace, scoped } = await resolveStaffWorkspace(staff);
     const workspaceId = scoped && workspace ? workspace.id : null;

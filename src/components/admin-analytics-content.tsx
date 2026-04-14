@@ -18,15 +18,6 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 
-function Download({ className = "" }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-      <polyline points="7 10 12 15 17 10" />
-      <line x1="12" y1="15" x2="12" y2="3" />
-    </svg>
-  );
-}
 function Star({ className = "" }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" fill="currentColor" className={className}>
@@ -159,11 +150,19 @@ interface AnalyticsData {
 const PIE_COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#ec4899"];
 const DIST_COLORS = ["#f43f5e", "#f59e0b", "#3b82f6", "#10b981"];
 
-export function AdminAnalyticsContent() {
+interface AdminAnalyticsContentProps {
+  courseId?: string;
+  windowDays?: 7 | 30 | 90;
+}
+
+export function AdminAnalyticsContent({
+  courseId: courseIdProp,
+  windowDays: windowDaysProp,
+}: AdminAnalyticsContentProps = {}) {
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [courseId, setCourseId] = useState<string>("all");
-  const [windowDays, setWindowDays] = useState<7 | 30 | 90>(30);
+  const courseId = courseIdProp ?? "all";
+  const windowDays = windowDaysProp ?? 30;
   const [topSort, setTopSort] = useState<{ key: keyof TopStudent; dir: "asc" | "desc" }>({ key: "points", dir: "desc" });
   const [resending, setResending] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
@@ -173,6 +172,7 @@ export function AdminAnalyticsContent() {
     const qs = new URLSearchParams();
     if (courseId !== "all") qs.set("courseId", courseId);
     qs.set("window", String(windowDays));
+    qs.set("tab", "overview");
     fetch(`/api/admin/analytics?${qs.toString()}`)
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => setData(d))
@@ -232,19 +232,9 @@ export function AdminAnalyticsContent() {
     }
   }
 
-  function handleExport() {
-    const qs = new URLSearchParams();
-    if (courseId !== "all") qs.set("courseId", courseId);
-    qs.set("window", String(windowDays));
-    qs.set("format", "csv");
-    window.location.href = `/api/admin/analytics?${qs.toString()}`;
-  }
-
   if (loading && !data) {
     return (
-      <div className="space-y-6 p-4 sm:p-6">
-        <Skeleton className="h-10 w-64" />
-        <Skeleton className="h-16 w-full" />
+      <div className="space-y-6">
         <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
           {[...Array(6)].map((_, i) => (
             <Skeleton key={i} className="h-32" />
@@ -266,58 +256,13 @@ export function AdminAnalyticsContent() {
     );
   }
 
-  const hasCourses = data.courses.length > 0;
   const totalPosts = data.postsByType.reduce((s, p) => s + p.count, 0);
 
   const newDelta = pctDelta(data.kpis.newStudents, data.kpiDeltas.newStudentsPrev);
   const lessonsDelta = pctDelta(data.kpiDeltas.lessonsCompleted, data.kpiDeltas.lessonsCompletedPrev);
 
   return (
-    <div className="space-y-6 p-4 sm:p-6 max-w-[1600px] mx-auto">
-      {/* Header */}
-      <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">
-            Analytics
-          </h1>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Performance dos seus cursos, engajamento e progresso dos alunos.
-          </p>
-        </div>
-        <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
-          <select
-            value={courseId}
-            onChange={(e) => setCourseId(e.target.value)}
-            className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[180px]"
-          >
-            <option value="all">Todos os cursos</option>
-            {data.courses.map((c) => (
-              <option key={c.id} value={c.id}>{c.title}</option>
-            ))}
-          </select>
-          <div className="inline-flex rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-0.5">
-            {[7, 30, 90].map((d) => (
-              <button
-                key={d}
-                type="button"
-                onClick={() => setWindowDays(d as 7 | 30 | 90)}
-                className={`px-3 py-1.5 text-xs font-semibold rounded-md transition ${
-                  windowDays === d
-                    ? "bg-blue-600 text-white shadow-sm"
-                    : "text-gray-500 hover:text-gray-900 dark:hover:text-white"
-                }`}
-              >
-                {d}d
-              </button>
-            ))}
-          </div>
-          <Button variant="secondary" size="sm" onClick={handleExport} disabled={!hasCourses}>
-            <Download className="w-4 h-4 mr-2" />
-            Exportar CSV
-          </Button>
-        </div>
-      </div>
-
+    <div className="space-y-6">
       {/* KPIs */}
       <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-4">
         <KpiCard
