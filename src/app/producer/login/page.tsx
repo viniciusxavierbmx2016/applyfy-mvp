@@ -29,7 +29,7 @@ export default function ProducerLoginPage() {
       if (!res.ok) {
         const msg: string = data.error || `Erro ao entrar (${res.status})`;
         setError(msg);
-        if (msg.includes("/login")) setErrorRole("ADMIN");
+        if (msg.includes("/admin/login")) setErrorRole("ADMIN");
         else if (msg.toLowerCase().includes("link do seu curso"))
           setErrorRole("STUDENT");
         else if (msg.toLowerCase().includes("workspace onde você colabora"))
@@ -60,7 +60,7 @@ export default function ProducerLoginPage() {
               <p>{error}</p>
               {errorRole === "ADMIN" && (
                 <Link
-                  href="/login"
+                  href="/admin/login"
                   className="inline-block mt-2 text-blue-400 hover:text-blue-300 font-medium"
                 >
                   Ir para login do admin →

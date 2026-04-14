@@ -32,7 +32,7 @@ export async function POST(request: Request) {
       await supabase.auth.signOut();
       const message =
         user?.role === "ADMIN"
-          ? "Use /login para acessar o painel admin"
+          ? "Use /admin/login para acessar o painel admin"
           : user?.role === "STUDENT"
             ? "Acesse pelo link do seu curso"
             : user?.role === "COLLABORATOR"

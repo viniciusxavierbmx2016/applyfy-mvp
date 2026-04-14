@@ -3,6 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 const publicRoutes = new Set([
   "/login",
   "/register",
+  "/admin/login",
   "/producer/login",
   "/producer/register",
   "/forgot-password",
@@ -13,6 +14,7 @@ const publicRoutes = new Set([
 const redirectIfAuthed = new Set([
   "/login",
   "/register",
+  "/admin/login",
   "/producer/login",
   "/producer/register",
 ]);
@@ -61,7 +63,7 @@ export function middleware(request: NextRequest) {
 
   if (authed && redirectIfAuthed.has(pathname)) {
     const url = request.nextUrl.clone();
-    url.pathname = "/";
+    url.pathname = pathname === "/admin/login" ? "/admin" : "/";
     return NextResponse.redirect(url);
   }
 
