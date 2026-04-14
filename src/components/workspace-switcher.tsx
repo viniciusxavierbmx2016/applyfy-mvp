@@ -22,7 +22,13 @@ function readCookie(name: string): string | null {
   return m ? decodeURIComponent(m[1]) : null;
 }
 
-export function WorkspaceSwitcher({ collapsed = false }: { collapsed?: boolean } = {}) {
+export function WorkspaceSwitcher({
+  collapsed = false,
+  onExpand,
+}: {
+  collapsed?: boolean;
+  onExpand?: () => void;
+} = {}) {
   const [workspaces, setWorkspaces] = useState<WorkspaceRow[] | null>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
@@ -116,7 +122,13 @@ export function WorkspaceSwitcher({ collapsed = false }: { collapsed?: boolean }
       <div className="relative" ref={containerRef}>
         <button
           type="button"
-          onClick={() => setOpen((v) => !v)}
+          onClick={() => {
+            if (onExpand) {
+              onExpand();
+              return;
+            }
+            setOpen((v) => !v);
+          }}
           title={active.name}
           className="group relative w-8 h-8 rounded-lg bg-transparent hover:bg-gray-50 dark:bg-white/5 dark:hover:bg-white/10 flex items-center justify-center overflow-hidden transition"
           aria-label={`Workspace: ${active.name}`}
@@ -133,7 +145,7 @@ export function WorkspaceSwitcher({ collapsed = false }: { collapsed?: boolean }
             {active.name}
           </span>
         </button>
-        {open && (
+        {open && !onExpand && (
           <div className="absolute left-full ml-2 top-0 z-50 w-56 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow-lg p-1">
             {workspaces.map((ws) => (
               <button
@@ -177,13 +189,13 @@ export function WorkspaceSwitcher({ collapsed = false }: { collapsed?: boolean }
   }
 
   return (
-    <div className="mb-2 relative" ref={containerRef}>
+    <div className="relative" ref={containerRef}>
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 border border-gray-200 dark:border-white/5"
+        className="w-full flex items-center gap-3 p-3 rounded-lg bg-gray-50 hover:bg-gray-100 dark:bg-white/5 dark:hover:bg-white/10 transition"
       >
-        <div className="w-6 h-6 rounded bg-gray-200 dark:bg-gray-700 flex items-center justify-center flex-shrink-0 overflow-hidden">
+        <div className="w-9 h-9 rounded-lg bg-gray-200 dark:bg-gray-700 flex items-center justify-center flex-shrink-0 overflow-hidden">
           {active.logoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -192,22 +204,22 @@ export function WorkspaceSwitcher({ collapsed = false }: { collapsed?: boolean }
               className="w-full h-full object-cover"
             />
           ) : (
-            <span className="text-[10px] font-bold text-gray-700 dark:text-gray-300">
+            <span className="text-sm font-bold text-gray-700 dark:text-gray-300">
               {active.name.charAt(0).toUpperCase()}
             </span>
           )}
         </div>
         <div className="flex-1 min-w-0 text-left">
-          <p className="text-xs font-medium text-gray-900 dark:text-white truncate">
+          <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
             {active.name}
           </p>
-          <p className="text-[10px] text-gray-500 truncate font-mono">
+          <p className="text-[11px] text-gray-500 truncate font-mono">
             /w/{active.slug}
           </p>
         </div>
         <svg
           className={cn(
-            "w-3.5 h-3.5 text-gray-500 transition-transform",
+            "w-3.5 h-3.5 text-gray-500 transition-transform flex-shrink-0",
             open && "rotate-180"
           )}
           fill="none"

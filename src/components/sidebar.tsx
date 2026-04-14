@@ -214,18 +214,26 @@ export function Sidebar({ open, onClose }: SidebarProps) {
           open ? "translate-x-0" : "-translate-x-full"
         )}
       >
-        {/* Logo */}
+        {/* Topo: logo/workspace switcher */}
         <div
           className={cn(
-            "relative flex items-center border-b border-gray-200 dark:border-white/5 transition-all duration-300",
+            "relative flex items-center transition-all duration-300",
             collapsed
-              ? "lg:justify-center lg:py-4 lg:px-2 h-16 px-5"
-              : "h-16 px-5 justify-between"
+              ? "lg:justify-center lg:pt-4 lg:px-2 h-16 px-4 justify-between"
+              : "pt-4 px-3 pb-2 justify-between gap-2"
           )}
         >
           {isProducer ? (
-            <div className={cn("min-w-0", collapsed ? "lg:flex lg:justify-center" : "flex-1")}>
-              <WorkspaceSwitcher collapsed={collapsed} />
+            <div
+              className={cn(
+                "min-w-0",
+                collapsed ? "lg:flex lg:justify-center lg:w-full" : "flex-1"
+              )}
+            >
+              <WorkspaceSwitcher
+                collapsed={collapsed}
+                onExpand={collapsed ? toggleCollapsed : undefined}
+              />
             </div>
           ) : (
             <Link
@@ -233,7 +241,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
               onClick={onClose}
               className={cn(
                 "flex items-center",
-                collapsed ? "lg:justify-center" : ""
+                collapsed ? "lg:justify-center lg:w-full" : "flex-1"
               )}
               title="Applyfy"
             >
@@ -257,7 +265,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
           <button
             onClick={onClose}
             className={cn(
-              "lg:hidden text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors",
+              "lg:hidden text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors flex-shrink-0",
               collapsed && "hidden"
             )}
             aria-label="Fechar menu"
@@ -266,52 +274,47 @@ export function Sidebar({ open, onClose }: SidebarProps) {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
-
-          {/* Colapsar — canto direito quando aberta */}
-          {!collapsed && (
-            <button
-              onClick={toggleCollapsed}
-              aria-label="Recolher menu"
-              className={cn(
-                "hidden lg:flex absolute top-1/2 -translate-y-1/2 right-3 items-center justify-center w-6 h-6 rounded-full",
-                "bg-gray-100 hover:bg-gray-200 dark:bg-white/5 dark:hover:bg-white/10",
-                "text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white",
-                "transition-colors duration-200"
-              )}
-            >
-              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
-          )}
         </div>
 
-        {/* Expandir — abaixo da logo quando colapsada */}
-        {collapsed && (
-          <div className="hidden lg:flex justify-center py-2 border-b border-gray-200 dark:border-white/5">
-            <button
-              onClick={toggleCollapsed}
-              aria-label="Expandir menu"
-              className={cn(
-                "group relative flex items-center justify-center w-7 h-7 rounded-full",
-                "bg-gray-100 hover:bg-gray-200 dark:bg-white/5 dark:hover:bg-white/10",
-                "text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white",
-                "transition-colors duration-200"
-              )}
-            >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        {/* Separador + botão de colapsar/expandir */}
+        <div
+          className={cn(
+            "hidden lg:block border-b border-gray-200 dark:border-white/5",
+            collapsed ? "mx-2" : "mx-3"
+          )}
+        />
+        <div
+          className={cn(
+            "hidden lg:flex mb-3",
+            collapsed ? "justify-center pt-2 px-2" : "justify-end pt-2 px-3"
+          )}
+        >
+          <button
+            onClick={toggleCollapsed}
+            aria-label={collapsed ? "Expandir menu" : "Recolher menu"}
+            className={cn(
+              "group relative flex items-center justify-center w-6 h-6 rounded-full",
+              "bg-gray-100 hover:bg-gray-200 dark:bg-white/5 dark:hover:bg-white/10",
+              "text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white",
+              "transition-colors duration-200"
+            )}
+          >
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              {collapsed ? (
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
-              </svg>
-              <span className={tooltipCls}>Expandir menu</span>
-            </button>
-          </div>
-        )}
+              ) : (
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
+              )}
+            </svg>
+            {collapsed && <span className={tooltipCls}>Expandir menu</span>}
+          </button>
+        </div>
 
         {/* Nav */}
         <nav
           className={cn(
-            "flex-1 flex flex-col gap-1 py-4 overflow-y-auto",
-            collapsed ? "lg:px-2 px-3" : "px-3"
+            "flex-1 flex flex-col gap-0.5 pb-4 overflow-y-auto px-3",
+            collapsed && "lg:px-2"
           )}
         >
           {!isCollaborator && !isAdmin && (
@@ -350,7 +353,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
               {isProducer ? (
                 <div
                   className={cn(
-                    "my-3 border-t border-gray-200 dark:border-white/5",
+                    "my-2 border-t border-gray-200 dark:border-white/5",
                     !isCollaborator && !isAdmin ? "" : "hidden"
                   )}
                 />
