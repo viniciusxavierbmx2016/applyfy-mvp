@@ -48,6 +48,7 @@ interface ProducerCourse {
   id: string;
   title: string;
   slug: string;
+  description: string;
   thumbnail: string | null;
   _count?: { enrollments: number; modules: number };
 }
@@ -364,36 +365,17 @@ function ProducerHome({ firstName }: { firstName: string }) {
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {courses.map((c) => (
-            <Link
+            <CourseCard
               key={c.id}
-              href={`/admin/courses/${c.id}`}
-              className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 hover:border-gray-400 dark:hover:border-gray-700 rounded-xl overflow-hidden transition group"
-            >
-              <div className="aspect-video bg-gray-100 dark:bg-gray-800 overflow-hidden">
-                {c.thumbnail ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={c.thumbnail}
-                    alt={c.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-gray-400">
-                    <svg className="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13" />
-                    </svg>
-                  </div>
-                )}
-              </div>
-              <div className="p-4">
-                <h3 className="text-sm font-semibold text-gray-900 dark:text-white truncate">
-                  {c.title}
-                </h3>
-                <p className="text-xs text-gray-500 mt-1">
-                  {c._count?.enrollments ?? 0} alunos · {c._count?.modules ?? 0} módulos
-                </p>
-              </div>
-            </Link>
+              slug={c.slug}
+              title={c.title}
+              description={
+                c.description ||
+                `${c._count?.enrollments ?? 0} alunos · ${c._count?.modules ?? 0} módulos`
+              }
+              thumbnail={c.thumbnail}
+              manageHref={`/admin/courses/${c.id}/edit`}
+            />
           ))}
         </div>
       </section>

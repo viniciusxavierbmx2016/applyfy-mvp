@@ -121,10 +121,8 @@ export async function GET(
     const isCourseOwner =
       user.role === "PRODUCER" &&
       (course.ownerId === user.id || course.workspace.ownerId === user.id);
-    const hasAccess =
-      user.role === "ADMIN" ||
-      isCourseOwner ||
-      isEnrollmentActive(enrollment);
+    const isStaffViewer = user.role === "ADMIN" || isCourseOwner;
+    const hasAccess = isStaffViewer || isEnrollmentActive(enrollment);
     const isExpired =
       !!enrollment &&
       enrollment.status === "ACTIVE" &&
@@ -179,6 +177,7 @@ export async function GET(
           ratingCount: agg._count.rating,
         },
         hasAccess,
+        isStaffViewer,
         isExpired,
         enrollment,
         myReview,

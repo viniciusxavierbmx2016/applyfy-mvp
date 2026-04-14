@@ -81,11 +81,12 @@ function toCarouselModule(
   course: CourseDetail,
   enrollmentCreatedAt: Date | null,
   hasAccess: boolean,
-  overrides: { modules: Set<string>; lessons: Set<string> }
+  overrides: { modules: Set<string>; lessons: Set<string> },
+  bypassRelease: boolean
 ): CarouselModule {
   const stats = moduleStats(m);
   const rel = releaseInfo(enrollmentCreatedAt, m.daysToRelease ?? 0);
-  const overridden = overrides.modules.has(m.id);
+  const overridden = overrides.modules.has(m.id) || bypassRelease;
   const locked = hasAccess && !overridden && !rel.released;
   const empty = stats.total === 0;
   const resumeLessonId =
@@ -140,6 +141,7 @@ export default function CourseHomePage() {
       : "/";
   const [course, setCourse] = useState<CourseDetail | null>(null);
   const [hasAccess, setHasAccess] = useState(false);
+  const [serverStaffViewer, setServerStaffViewer] = useState(false);
   const [enrollmentCreatedAt, setEnrollmentCreatedAt] = useState<Date | null>(null);
   const [myReview, setMyReview] = useState<MyReview | null>(null);
   const [overrides, setOverrides] = useState<{
@@ -159,6 +161,7 @@ export default function CourseHomePage() {
           const data = await res.json();
           setCourse(data.course);
           setHasAccess(data.hasAccess);
+          setServerStaffViewer(!!data.isStaffViewer);
           setEnrollmentCreatedAt(
             data.enrollment?.createdAt ? new Date(data.enrollment.createdAt) : null
           );
@@ -192,6 +195,7 @@ export default function CourseHomePage() {
     return { totalLessons, doneLessons, pct };
   }, [course]);
 
+  const bypassRelease = serverStaffViewer || isStaffViewer;
   const continueWatching = useMemo(() => {
     if (!course) return null;
     const all = course.modules
@@ -200,6 +204,7 @@ export default function CourseHomePage() {
           lesson: l,
           module: m,
           released:
+            bypassRelease ||
             overrides.lessons.has(l.id) ||
             overrides.modules.has(m.id) ||
             releaseInfo(
@@ -215,7 +220,7 @@ export default function CourseHomePage() {
       if (fromAccess) return fromAccess;
     }
     return all.find((x) => !x.lesson.progress?.some((p) => p.completed)) ?? all[0];
-  }, [course, enrollmentCreatedAt, overrides, lastAccessedLesson]);
+  }, [course, enrollmentCreatedAt, overrides, lastAccessedLesson, bypassRelease]);
 
   if (loading) {
     return (
@@ -434,7 +439,14 @@ export default function CourseHomePage() {
             (groups.length > 1 ? "Módulos" : undefined)
           }
           modules={group.modules.map((m) =>
-            toCarouselModule(m, course, enrollmentCreatedAt, hasAccess, overrides)
+            toCarouselModule(
+              m,
+              course,
+              enrollmentCreatedAt,
+              hasAccess,
+              overrides,
+              serverStaffViewer || isStaffViewer
+            )
           )}
         />
       ))}

@@ -28,6 +28,7 @@ export async function GET(
           include: {
             course: {
               include: {
+                workspace: { select: { ownerId: true } },
                 modules: {
                   orderBy: { order: "asc" },
                   include: {
@@ -53,10 +54,15 @@ export async function GET(
 
     const course = lesson.module.course;
 
-    // Check enrollment (admins bypass)
+    const isCourseOwner =
+      user.role === "PRODUCER" &&
+      (course.ownerId === user.id || course.workspace.ownerId === user.id);
+    const isStaffViewer = user.role === "ADMIN" || isCourseOwner;
+
+    // Check enrollment (admins + producer owners bypass)
     let enrollmentCreatedAt: Date | null = null;
     let overrides: ReleaseOverrides = EMPTY_OVERRIDES;
-    if (user.role !== "ADMIN") {
+    if (!isStaffViewer) {
       const enrollment = await prisma.enrollment.findUnique({
         where: { userId_courseId: { userId: user.id, courseId: course.id } },
       });
@@ -157,7 +163,7 @@ export async function GET(
             id: m.id,
             title: m.title,
             thumbnailUrl: m.thumbnailUrl,
-            locked: user.role === "ADMIN" ? false : !modRelease.released,
+            locked: isStaffViewer ? false : !modRelease.released,
             releaseDate: modRelease.released ? null : modRelease.releaseDate.toISOString(),
             daysRemaining: modRelease.daysRemaining,
             lessons: m.lessons.map((l) => {
@@ -173,7 +179,7 @@ export async function GET(
                 id: l.id,
                 title: l.title,
                 completed: l.progress.some((p) => p.completed),
-                locked: user.role === "ADMIN" ? false : !lr.released,
+                locked: isStaffViewer ? false : !lr.released,
                 releaseDate: lr.released ? null : lr.releaseDate.toISOString(),
                 daysRemaining: lr.daysRemaining,
               };
