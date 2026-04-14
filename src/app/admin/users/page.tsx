@@ -286,8 +286,20 @@ export default function AdminUsersPage() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Buscar por nome ou email..."
-          className="w-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg pl-9 pr-3 py-2.5 text-sm text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:border-blue-500"
+          className="w-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg pl-9 pr-9 py-2.5 text-sm text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:border-blue-500"
         />
+        {query && (
+          <button
+            type="button"
+            onClick={() => setQuery("")}
+            aria-label="Limpar busca"
+            className="absolute right-2 top-1/2 -translate-y-1/2 w-6 h-6 flex items-center justify-center rounded-full text-gray-400 hover:text-gray-700 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+          >
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        )}
       </div>
 
       {loading ? (
@@ -298,7 +310,11 @@ export default function AdminUsersPage() {
         </div>
       ) : users.length === 0 ? (
         <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-8 text-center">
-          <p className="text-gray-500 text-sm">Nenhum usuário encontrado.</p>
+          <p className="text-gray-500 text-sm">
+            {debounced
+              ? `Nenhum aluno encontrado para "${debounced}"`
+              : "Nenhum usuário encontrado."}
+          </p>
         </div>
       ) : (
         <div className="space-y-3">

@@ -121,16 +121,20 @@ export async function GET(request: Request) {
               },
             }
           : {
-              ...searchClause,
-              OR: [
-                { workspaceId },
+              AND: [
+                searchClause,
                 {
-                  enrollments: {
-                    some: {
-                      courseId: { in: scopedCourseIds || [] },
-                      status: "ACTIVE" as const,
+                  OR: [
+                    { workspaceId },
+                    {
+                      enrollments: {
+                        some: {
+                          courseId: { in: scopedCourseIds || [] },
+                          status: "ACTIVE" as const,
+                        },
+                      },
                     },
-                  },
+                  ],
                 },
               ],
             }
