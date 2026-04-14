@@ -46,8 +46,9 @@ export async function GET(request: Request) {
 
     const { searchParams } = new URL(request.url);
     const courseIdParam = (searchParams.get("courseId") || "").trim();
-    const windowDays =
-      Number(searchParams.get("window") || "7") === 30 ? 30 : 7;
+    const rawWindow = Number(searchParams.get("window") || "7");
+    const windowDays: 7 | 30 | 90 =
+      rawWindow === 90 ? 90 : rawWindow === 30 ? 30 : 7;
     const format = (searchParams.get("format") || "json").toLowerCase();
 
     const { workspace, scoped } = await resolveStaffWorkspace(staff);
@@ -93,7 +94,10 @@ export async function GET(request: Request) {
     sevenAgo.setDate(sevenAgo.getDate() - 7);
     const thirtyAgo = new Date(todayStart);
     thirtyAgo.setDate(thirtyAgo.getDate() - 30);
-    const series30 = buildDaySeries(30);
+    const prevWindowStart = new Date(windowStart);
+    prevWindowStart.setDate(prevWindowStart.getDate() - windowDays);
+    const seriesLen = windowDays;
+    const series30 = buildDaySeries(seriesLen);
     const thirtySeriesStart = series30[0].date;
 
     if (courseIds.length === 0) {
@@ -111,6 +115,11 @@ export async function GET(request: Request) {
           activeStudents: 0,
           inactiveStudents: 0,
           neverAccessed: 0,
+        },
+        kpiDeltas: {
+          newStudentsPrev: 0,
+          lessonsCompleted: 0,
+          lessonsCompletedPrev: 0,
         },
         newEnrollmentsPerDay: series30.map((s) => ({ day: s.label, count: 0 })),
         lessonsCompletedPerDay: series30.map((s) => ({
@@ -254,6 +263,18 @@ export async function GET(request: Request) {
     const uniqueStudents = enrollmentUserIds.length;
     const newStudents = enrollments.filter(
       (e) => e.createdAt >= windowStart
+    ).length;
+    const prevNewStudents = enrollments.filter(
+      (e) => e.createdAt >= prevWindowStart && e.createdAt < windowStart
+    ).length;
+    const lessonsCompletedWindow = progress.filter(
+      (p) => p.completedAt && p.completedAt >= windowStart
+    ).length;
+    const prevLessonsCompletedWindow = progress.filter(
+      (p) =>
+        p.completedAt &&
+        p.completedAt >= prevWindowStart &&
+        p.completedAt < windowStart
     ).length;
 
     let completionSum = 0;
@@ -522,6 +543,11 @@ export async function GET(request: Request) {
         activeStudents,
         inactiveStudents,
         neverAccessed,
+      },
+      kpiDeltas: {
+        newStudentsPrev: prevNewStudents,
+        lessonsCompleted: lessonsCompletedWindow,
+        lessonsCompletedPrev: prevLessonsCompletedWindow,
       },
       newEnrollmentsPerDay: series30.map((s) => ({
         day: s.label,
