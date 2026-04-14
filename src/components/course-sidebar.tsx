@@ -96,7 +96,7 @@ export function CourseSidebar({
       )}
       <aside
         className={cn(
-          "fixed top-0 left-0 z-50 h-screen w-60 flex flex-col overflow-y-auto overflow-x-hidden",
+          "fixed top-0 left-0 z-50 h-screen w-60 flex flex-col",
           "bg-gray-50 dark:bg-gray-950",
           "border-r border-gray-200 dark:border-white/5",
           "transform transition-all duration-300 ease-in-out",
@@ -214,7 +214,7 @@ export function CourseSidebar({
         {/* Itens do menu */}
         <nav
           className={cn(
-            "flex-1 flex flex-col py-3 gap-1",
+            "flex-1 flex flex-col py-3 gap-1 overflow-y-auto",
             collapsed ? "lg:px-2 px-3" : "px-3"
           )}
         >
@@ -293,30 +293,30 @@ export function CourseSidebar({
                 </Link>
               );
             })}
-
-          {/* Suporte — empurrado para o final */}
-          {(supportEmail || supportWhatsapp) && (
-            <div
-              className={cn(
-                "mt-auto pt-3 border-t border-gray-200 dark:border-white/5",
-                collapsed ? "lg:-mx-2 lg:px-2 -mx-3 px-3" : "-mx-3 px-3"
-              )}
-            >
-              <SupportPopover
-                email={supportEmail}
-                whatsapp={supportWhatsapp}
-                collapsed={collapsed}
-                openUpward
-                triggerClassName={cn(
-                  "w-full text-sm font-medium rounded-lg transition-all duration-200",
-                  "text-gray-600 dark:text-gray-400",
-                  "hover:bg-gray-100 hover:text-gray-900 dark:hover:bg-white/5 dark:hover:text-white",
-                  collapsed ? "lg:justify-center lg:p-2.5 py-2.5 px-3" : "py-2.5 px-3"
-                )}
-              />
-            </div>
-          )}
         </nav>
+
+        {/* Suporte — rodapé fixo, fora do scroll para o popover não ser cortado */}
+        {(supportEmail || supportWhatsapp) && (
+          <div
+            className={cn(
+              "border-t border-gray-200 dark:border-white/5 py-3",
+              collapsed ? "lg:px-2 px-3" : "px-3"
+            )}
+          >
+            <SupportPopover
+              email={supportEmail}
+              whatsapp={supportWhatsapp}
+              collapsed={collapsed}
+              openUpward
+              triggerClassName={cn(
+                "w-full text-sm font-medium rounded-lg transition-all duration-200",
+                "text-gray-600 dark:text-gray-400",
+                "hover:bg-gray-100 hover:text-gray-900 dark:hover:bg-white/5 dark:hover:text-white",
+                collapsed ? "lg:justify-center lg:p-2.5 py-2.5 px-3" : "py-2.5 px-3"
+              )}
+            />
+          </div>
+        )}
       </aside>
     </>
   );

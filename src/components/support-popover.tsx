@@ -72,9 +72,12 @@ export function SupportPopover({
         <div
           role="menu"
           className={cn(
-            "absolute z-50 w-64 rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-gray-900 shadow-xl overflow-hidden",
-            openUpward ? "bottom-full mb-2" : "top-full mt-2",
-            align === "right" ? "right-0" : "left-0"
+            "absolute z-50 min-w-[250px] max-w-[300px] rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-gray-900 shadow-xl overflow-hidden",
+            collapsed
+              ? "left-full ml-2 bottom-0"
+              : openUpward
+                ? cn("bottom-full mb-2", align === "right" ? "right-0" : "left-0")
+                : cn("top-full mt-2", align === "right" ? "right-0" : "left-0")
           )}
         >
           <div className="px-3 py-2 text-[11px] font-semibold tracking-[0.14em] uppercase text-gray-400 dark:text-gray-500 border-b border-gray-100 dark:border-white/5">
@@ -91,7 +94,7 @@ export function SupportPopover({
                   <span className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 inline-flex items-center justify-center flex-shrink-0">
                     <EmailIcon />
                   </span>
-                  <span className="min-w-0 truncate">{email}</span>
+                  <span className="min-w-0 truncate" title={email}>{email}</span>
                 </a>
               </li>
             )}
@@ -107,7 +110,7 @@ export function SupportPopover({
                   <span className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 inline-flex items-center justify-center flex-shrink-0">
                     <PhoneIcon />
                   </span>
-                  <span className="min-w-0 truncate">{waDisplay}</span>
+                  <span className="min-w-0 truncate" title={waDisplay}>{waDisplay}</span>
                 </a>
               </li>
             )}
