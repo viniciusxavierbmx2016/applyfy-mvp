@@ -50,7 +50,7 @@ interface CourseDetail {
   checkoutUrl: string | null;
   price: number | null;
   priceCurrency: string | null;
-  hasCertificate?: boolean;
+  certificateEnabled?: boolean;
   ratingAverage: number;
   ratingCount: number;
   modules: ModuleItem[];

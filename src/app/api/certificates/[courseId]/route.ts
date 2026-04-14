@@ -28,7 +28,7 @@ export async function GET(
         { status: 404 }
       );
     }
-    if (!course.hasCertificate) {
+    if (!course.certificateEnabled) {
       return NextResponse.json(
         { error: "Este curso não emite certificado" },
         { status: 400 }

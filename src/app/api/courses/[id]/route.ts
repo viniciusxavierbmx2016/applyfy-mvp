@@ -78,6 +78,12 @@ export async function PUT(
       externalProductId,
       isPublished,
       showInStore,
+      certificateEnabled,
+      communityEnabled,
+      lessonCommentsEnabled,
+      reviewsEnabled,
+      gamificationEnabled,
+      showStudentCount,
     } = body;
 
     if (slug) {
@@ -117,6 +123,24 @@ export async function PUT(
         }),
         ...(isPublished !== undefined && { isPublished: Boolean(isPublished) }),
         ...(showInStore !== undefined && { showInStore: Boolean(showInStore) }),
+        ...(certificateEnabled !== undefined && {
+          certificateEnabled: Boolean(certificateEnabled),
+        }),
+        ...(communityEnabled !== undefined && {
+          communityEnabled: Boolean(communityEnabled),
+        }),
+        ...(lessonCommentsEnabled !== undefined && {
+          lessonCommentsEnabled: Boolean(lessonCommentsEnabled),
+        }),
+        ...(reviewsEnabled !== undefined && {
+          reviewsEnabled: Boolean(reviewsEnabled),
+        }),
+        ...(gamificationEnabled !== undefined && {
+          gamificationEnabled: Boolean(gamificationEnabled),
+        }),
+        ...(showStudentCount !== undefined && {
+          showStudentCount: Boolean(showStudentCount),
+        }),
       },
     });
 

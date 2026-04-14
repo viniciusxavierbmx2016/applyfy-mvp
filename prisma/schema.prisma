@@ -129,7 +129,12 @@ model Course {
   externalProductId  String?   @unique
   isPublished        Boolean   @default(false)
   showInStore        Boolean   @default(true)
-  hasCertificate     Boolean   @default(true)
+  certificateEnabled Boolean   @default(true)
+  communityEnabled   Boolean   @default(true)
+  lessonCommentsEnabled Boolean @default(true)
+  reviewsEnabled     Boolean   @default(true)
+  gamificationEnabled Boolean  @default(true)
+  showStudentCount   Boolean   @default(false)
   order              Int       @default(0)
   ownerId            String?
   workspaceId        String
