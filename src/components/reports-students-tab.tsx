@@ -45,7 +45,8 @@ interface StudentsData {
 
 interface Props {
   courseId: string;
-  windowDays: 7 | 30 | 90;
+  startDate?: string;
+  endDate?: string;
 }
 
 function DownloadIcon({ className = "" }: { className?: string }) {
@@ -82,7 +83,7 @@ function MoonIcon({ className = "" }: { className?: string }) {
   );
 }
 
-export function ReportsStudentsTab({ courseId, windowDays }: Props) {
+export function ReportsStudentsTab({ courseId, startDate, endDate }: Props) {
   const [data, setData] = useState<StudentsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [resending, setResending] = useState<string | null>(null);
@@ -95,12 +96,13 @@ export function ReportsStudentsTab({ courseId, windowDays }: Props) {
     const qs = new URLSearchParams();
     qs.set("tab", "students");
     if (courseId !== "all") qs.set("courseId", courseId);
-    qs.set("window", String(windowDays));
+    if (startDate) qs.set("startDate", startDate);
+    if (endDate) qs.set("endDate", endDate);
     fetch(`/api/admin/analytics?${qs.toString()}`)
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => setData(d))
       .finally(() => setLoading(false));
-  }, [courseId, windowDays]);
+  }, [courseId, startDate, endDate]);
 
   const sortedEngaged = useMemo(() => {
     if (!data) return [];
@@ -160,7 +162,8 @@ export function ReportsStudentsTab({ courseId, windowDays }: Props) {
     qs.set("format", "csv");
     qs.set("section", section);
     if (courseId !== "all") qs.set("courseId", courseId);
-    qs.set("window", String(windowDays));
+    if (startDate) qs.set("startDate", startDate);
+    if (endDate) qs.set("endDate", endDate);
     window.location.href = `/api/admin/analytics?${qs.toString()}`;
   }
 

@@ -34,7 +34,8 @@ interface ContentData {
 
 interface Props {
   courseId: string;
-  windowDays: 7 | 30 | 90;
+  startDate?: string;
+  endDate?: string;
 }
 
 type Tone = "emerald" | "amber" | "red" | "blue";
@@ -73,7 +74,7 @@ const TONE_MAP: Record<
   },
 };
 
-export function ReportsContentTab({ courseId, windowDays }: Props) {
+export function ReportsContentTab({ courseId, startDate, endDate }: Props) {
   const [data, setData] = useState<ContentData | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -82,12 +83,13 @@ export function ReportsContentTab({ courseId, windowDays }: Props) {
     const qs = new URLSearchParams();
     qs.set("tab", "content");
     if (courseId !== "all") qs.set("courseId", courseId);
-    qs.set("window", String(windowDays));
+    if (startDate) qs.set("startDate", startDate);
+    if (endDate) qs.set("endDate", endDate);
     fetch(`/api/admin/analytics?${qs.toString()}`)
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => setData(d))
       .finally(() => setLoading(false));
-  }, [courseId, windowDays]);
+  }, [courseId, startDate, endDate]);
 
   if (loading && !data) {
     return (

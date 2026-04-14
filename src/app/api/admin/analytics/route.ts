@@ -17,15 +17,50 @@ function dayLabel(d: Date) {
   return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
 }
 
-function buildDaySeries(days: number) {
-  const today = startOfDay(new Date());
+function buildDaySeriesRange(start: Date, end: Date) {
+  const s = startOfDay(start);
+  const e = startOfDay(end);
+  const diffDays = Math.max(
+    1,
+    Math.round((e.getTime() - s.getTime()) / 86400000) + 1
+  );
+  const maxPoints = 120;
   const series: Array<{ key: string; label: string; date: Date }> = [];
-  for (let i = days - 1; i >= 0; i--) {
-    const d = new Date(today);
-    d.setDate(d.getDate() - i);
-    series.push({ key: isoDay(d), label: dayLabel(d), date: d });
+  if (diffDays <= maxPoints) {
+    const cur = new Date(s);
+    while (cur.getTime() <= e.getTime()) {
+      series.push({
+        key: isoDay(cur),
+        label: dayLabel(cur),
+        date: new Date(cur),
+      });
+      cur.setDate(cur.getDate() + 1);
+    }
+    return series;
+  }
+  // Bucket into maxPoints buckets
+  const bucketSize = Math.ceil(diffDays / maxPoints);
+  const cur = new Date(s);
+  while (cur.getTime() <= e.getTime()) {
+    series.push({
+      key: isoDay(cur),
+      label: dayLabel(cur),
+      date: new Date(cur),
+    });
+    cur.setDate(cur.getDate() + bucketSize);
   }
   return series;
+}
+
+function bucketKeyFor(
+  date: Date,
+  series: Array<{ date: Date; key: string }>
+) {
+  // Find the latest series bucket whose start <= date
+  for (let i = series.length - 1; i >= 0; i--) {
+    if (date.getTime() >= series[i].date.getTime()) return series[i].key;
+  }
+  return null;
 }
 
 function csvEscape(v: unknown) {
@@ -46,9 +81,11 @@ export async function GET(request: Request) {
 
     const { searchParams } = new URL(request.url);
     const courseIdParam = (searchParams.get("courseId") || "").trim();
-    const rawWindow = Number(searchParams.get("window") || "7");
-    const windowDays: 7 | 30 | 90 =
-      rawWindow === 90 ? 90 : rawWindow === 30 ? 30 : 7;
+    const startDateParam = (searchParams.get("startDate") || "").trim();
+    const endDateParam = (searchParams.get("endDate") || "").trim();
+    const rawWindow = Number(searchParams.get("window") || "30");
+    const legacyWindow: 7 | 30 | 90 =
+      rawWindow === 90 ? 90 : rawWindow === 7 ? 7 : 30;
     const format = (searchParams.get("format") || "json").toLowerCase();
     const tabParam = (searchParams.get("tab") || "overview").toLowerCase();
     const tab: "overview" | "content" | "students" =
@@ -106,7 +143,7 @@ export async function GET(request: Request) {
         }
         return NextResponse.json({
           tab,
-          window: windowDays,
+          window: legacyWindow,
           selectedCourseId,
           courses: scopedCourses,
           lessonsMostViewed: [],
@@ -373,7 +410,7 @@ export async function GET(request: Request) {
 
       return NextResponse.json({
         tab,
-        window: windowDays,
+        window: legacyWindow,
         selectedCourseId,
         courses: scopedCourses,
         lessonsMostViewed,
@@ -406,7 +443,7 @@ export async function GET(request: Request) {
         }
         return NextResponse.json({
           tab,
-          window: windowDays,
+          window: legacyWindow,
           selectedCourseId,
           courses: scopedCourses,
           topEngaged: [],
@@ -730,7 +767,7 @@ export async function GET(request: Request) {
 
       return NextResponse.json({
         tab,
-        window: windowDays,
+        window: legacyWindow,
         selectedCourseId,
         courses: scopedCourses,
         topEngaged,
@@ -747,17 +784,36 @@ export async function GET(request: Request) {
 
     const now = new Date();
     const todayStart = startOfDay(now);
-    const windowStart = new Date(todayStart);
-    windowStart.setDate(windowStart.getDate() - windowDays);
     const sevenAgo = new Date(todayStart);
     sevenAgo.setDate(sevenAgo.getDate() - 7);
     const thirtyAgo = new Date(todayStart);
     thirtyAgo.setDate(thirtyAgo.getDate() - 30);
+
+    let windowStart: Date;
+    let windowEnd: Date;
+    if (startDateParam && endDateParam) {
+      const sd = new Date(startDateParam);
+      const ed = new Date(endDateParam);
+      windowStart = startOfDay(Number.isNaN(sd.getTime()) ? todayStart : sd);
+      const endBase = Number.isNaN(ed.getTime()) ? now : ed;
+      windowEnd = new Date(endBase);
+      windowEnd.setHours(23, 59, 59, 999);
+    } else {
+      windowStart = new Date(todayStart);
+      windowStart.setDate(windowStart.getDate() - legacyWindow);
+      windowEnd = new Date(now);
+    }
+    const windowDays = Math.max(
+      1,
+      Math.round(
+        (startOfDay(windowEnd).getTime() - windowStart.getTime()) / 86400000
+      ) + 1
+    );
     const prevWindowStart = new Date(windowStart);
     prevWindowStart.setDate(prevWindowStart.getDate() - windowDays);
-    const seriesLen = windowDays;
-    const series30 = buildDaySeries(seriesLen);
-    const thirtySeriesStart = series30[0].date;
+    const prevWindowEnd = new Date(windowStart);
+    const series30 = buildDaySeriesRange(windowStart, windowEnd);
+    const thirtySeriesStart = series30[0]?.date || windowStart;
 
     if (courseIds.length === 0) {
       const emptyBody = {
@@ -932,19 +988,22 @@ export async function GET(request: Request) {
     const totalEnrolled = enrollments.length;
     const uniqueStudents = enrollmentUserIds.length;
     const newStudents = enrollments.filter(
-      (e) => e.createdAt >= windowStart
+      (e) => e.createdAt >= windowStart && e.createdAt <= windowEnd
     ).length;
     const prevNewStudents = enrollments.filter(
-      (e) => e.createdAt >= prevWindowStart && e.createdAt < windowStart
+      (e) => e.createdAt >= prevWindowStart && e.createdAt < prevWindowEnd
     ).length;
     const lessonsCompletedWindow = progress.filter(
-      (p) => p.completedAt && p.completedAt >= windowStart
+      (p) =>
+        p.completedAt &&
+        p.completedAt >= windowStart &&
+        p.completedAt <= windowEnd
     ).length;
     const prevLessonsCompletedWindow = progress.filter(
       (p) =>
         p.completedAt &&
         p.completedAt >= prevWindowStart &&
-        p.completedAt < windowStart
+        p.completedAt < prevWindowEnd
     ).length;
 
     let completionSum = 0;
@@ -1032,21 +1091,26 @@ export async function GET(request: Request) {
       else if (last < thirtyAgo) inactiveStudents++;
     }
 
-    // Enrollments per day
+    // Enrollments per day (bucket-aware)
     const enrollByDay = new Map(series30.map((s) => [s.key, 0]));
     for (const e of enrollments) {
-      if (e.createdAt < thirtySeriesStart) continue;
-      const k = isoDay(startOfDay(e.createdAt));
-      if (enrollByDay.has(k))
+      if (e.createdAt < thirtySeriesStart || e.createdAt > windowEnd) continue;
+      const k = bucketKeyFor(e.createdAt, series30);
+      if (k && enrollByDay.has(k))
         enrollByDay.set(k, (enrollByDay.get(k) || 0) + 1);
     }
 
-    // Lessons completed per day
+    // Lessons completed per day (bucket-aware)
     const lessonsByDay = new Map(series30.map((s) => [s.key, 0]));
     for (const p of progress) {
-      if (!p.completedAt || p.completedAt < thirtySeriesStart) continue;
-      const k = isoDay(startOfDay(p.completedAt));
-      if (lessonsByDay.has(k))
+      if (
+        !p.completedAt ||
+        p.completedAt < thirtySeriesStart ||
+        p.completedAt > windowEnd
+      )
+        continue;
+      const k = bucketKeyFor(p.completedAt, series30);
+      if (k && lessonsByDay.has(k))
         lessonsByDay.set(k, (lessonsByDay.get(k) || 0) + 1);
     }
 

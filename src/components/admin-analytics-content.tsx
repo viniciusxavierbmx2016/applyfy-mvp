@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   AreaChart,
   Area,
@@ -16,22 +16,11 @@ import {
   CartesianGrid,
 } from "recharts";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Button } from "@/components/ui/button";
 
 function Star({ className = "" }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" fill="currentColor" className={className}>
       <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-    </svg>
-  );
-}
-function ArrowUpDown({ className = "" }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <path d="m21 16-4 4-4-4" />
-      <path d="M17 20V4" />
-      <path d="m3 8 4-4 4 4" />
-      <path d="M7 4v16" />
     </svg>
   );
 }
@@ -108,28 +97,6 @@ interface KpiDeltas {
   lessonsCompleted: number;
   lessonsCompletedPrev: number;
 }
-interface TopStudent {
-  userId: string;
-  name: string;
-  email: string;
-  points: number;
-  completed: number;
-  total: number;
-  progress: number;
-  lastActive: string | null;
-}
-interface InactiveStudent extends TopStudent {
-  enrollmentId: string | null;
-  courseId: string | null;
-}
-interface NeverAccessed {
-  userId: string;
-  enrollmentId: string;
-  courseId: string;
-  name: string;
-  email: string;
-  enrolledAt: string;
-}
 interface Diagnosis {
   hasData: boolean;
   positivePoint: string;
@@ -141,7 +108,6 @@ interface Diagnosis {
 interface AnalyticsData {
   courses: CourseOption[];
   selectedCourseId: string;
-  window: number;
   kpis: Kpis;
   kpiDeltas: KpiDeltas;
   newEnrollmentsPerDay: Array<{ day: string; count: number }>;
@@ -150,9 +116,6 @@ interface AnalyticsData {
   moduleAbandonment: Array<{ moduleId: string; title: string; count: number }>;
   topLessons: Array<{ id: string; title: string; views: number }>;
   postsByType: Array<{ type: string; label: string; count: number }>;
-  topStudents: TopStudent[];
-  inactiveStudentsList: InactiveStudent[];
-  neverAccessedStudents: NeverAccessed[];
   diagnosis?: Diagnosis;
 }
 
@@ -161,85 +124,33 @@ const DIST_COLORS = ["#f43f5e", "#f59e0b", "#3b82f6", "#10b981"];
 
 interface AdminAnalyticsContentProps {
   courseId?: string;
-  windowDays?: 7 | 30 | 90;
+  startDate?: string;
+  endDate?: string;
+  rangeLabel?: string;
 }
 
 export function AdminAnalyticsContent({
   courseId: courseIdProp,
-  windowDays: windowDaysProp,
+  startDate,
+  endDate,
+  rangeLabel,
 }: AdminAnalyticsContentProps = {}) {
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
   const courseId = courseIdProp ?? "all";
-  const windowDays = windowDaysProp ?? 30;
-  const [topSort, setTopSort] = useState<{ key: keyof TopStudent; dir: "asc" | "desc" }>({ key: "points", dir: "desc" });
-  const [resending, setResending] = useState<string | null>(null);
-  const [toast, setToast] = useState<string | null>(null);
 
   useEffect(() => {
     setLoading(true);
     const qs = new URLSearchParams();
     if (courseId !== "all") qs.set("courseId", courseId);
-    qs.set("window", String(windowDays));
+    if (startDate) qs.set("startDate", startDate);
+    if (endDate) qs.set("endDate", endDate);
     qs.set("tab", "overview");
     fetch(`/api/admin/analytics?${qs.toString()}`)
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => setData(d))
       .finally(() => setLoading(false));
-  }, [courseId, windowDays]);
-
-  const sortedTop = useMemo(() => {
-    if (!data) return [];
-    const rows = [...data.topStudents];
-    const { key, dir } = topSort;
-    rows.sort((a, b) => {
-      const av = a[key];
-      const bv = b[key];
-      if (av === null && bv === null) return 0;
-      if (av === null) return 1;
-      if (bv === null) return -1;
-      if (typeof av === "number" && typeof bv === "number") {
-        return dir === "asc" ? av - bv : bv - av;
-      }
-      return dir === "asc"
-        ? String(av).localeCompare(String(bv))
-        : String(bv).localeCompare(String(av));
-    });
-    return rows;
-  }, [data, topSort]);
-
-  function toggleSort(key: keyof TopStudent) {
-    setTopSort((prev) =>
-      prev.key === key
-        ? { key, dir: prev.dir === "asc" ? "desc" : "asc" }
-        : { key, dir: "desc" }
-    );
-  }
-
-  async function handleResend(courseIdArg: string | null, enrollmentId: string | null) {
-    if (!courseIdArg || !enrollmentId) {
-      setToast("Não foi possível reenviar (matrícula ausente).");
-      setTimeout(() => setToast(null), 4000);
-      return;
-    }
-    setResending(enrollmentId);
-    try {
-      const res = await fetch(
-        `/api/courses/${courseIdArg}/students/${enrollmentId}/resend`,
-        { method: "POST" }
-      );
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body.error || "Falha");
-      }
-      setToast("Link de acesso reenviado com sucesso.");
-    } catch (err) {
-      setToast(err instanceof Error ? err.message : "Erro ao reenviar");
-    } finally {
-      setResending(null);
-      setTimeout(() => setToast(null), 4000);
-    }
-  }
+  }, [courseId, startDate, endDate]);
 
   if (loading && !data) {
     return (
@@ -270,6 +181,8 @@ export function AdminAnalyticsContent({
   const newDelta = pctDelta(data.kpis.newStudents, data.kpiDeltas.newStudentsPrev);
   const lessonsDelta = pctDelta(data.kpiDeltas.lessonsCompleted, data.kpiDeltas.lessonsCompletedPrev);
 
+  const periodSubtitle = rangeLabel || "No período";
+
   return (
     <div className="space-y-6">
       {/* KPIs */}
@@ -283,7 +196,7 @@ export function AdminAnalyticsContent({
         />
         <KpiCard
           icon={<SparkleIcon className="w-4 h-4" />}
-          label={`Novos (${windowDays}d)`}
+          label="Novos (período)"
           value={data.kpis.newStudents}
           accent="emerald"
           delta={newDelta}
@@ -327,7 +240,7 @@ export function AdminAnalyticsContent({
 
       {/* Two-column charts: area + bar */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-        <ChartCard title="Novas matrículas" subtitle={`Últimos ${windowDays} dias`}>
+        <ChartCard title="Novas matrículas" subtitle={periodSubtitle}>
           <ResponsiveContainer width="100%" height={260}>
             <AreaChart data={data.newEnrollmentsPerDay} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
               <defs>
@@ -345,7 +258,7 @@ export function AdminAnalyticsContent({
           </ResponsiveContainer>
         </ChartCard>
 
-        <ChartCard title="Aulas concluídas" subtitle={`Últimos ${windowDays} dias`}>
+        <ChartCard title="Aulas concluídas" subtitle={periodSubtitle}>
           <ResponsiveContainer width="100%" height={260}>
             <BarChart data={data.lessonsCompletedPerDay} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
               <CartesianGrid stroke="currentColor" className="text-gray-200 dark:text-gray-800" strokeDasharray="3 3" vertical={false} />
@@ -429,136 +342,6 @@ export function AdminAnalyticsContent({
         </div>
       )}
 
-      {/* Top engaged students */}
-      <SectionCard title="Top 10 alunos mais engajados" subtitle="Ordene por qualquer coluna">
-        {sortedTop.length === 0 ? <Empty /> : (
-          <div className="overflow-x-auto -mx-4 sm:mx-0">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="text-left border-b border-gray-200 dark:border-gray-800 text-[11px] uppercase tracking-wider text-gray-500">
-                  <Th label="Aluno" k="name" sort={topSort} onClick={toggleSort} />
-                  <Th label="Pontos" k="points" sort={topSort} onClick={toggleSort} />
-                  <Th label="Aulas" k="completed" sort={topSort} onClick={toggleSort} />
-                  <Th label="Progresso" k="progress" sort={topSort} onClick={toggleSort} />
-                  <Th label="Último acesso" k="lastActive" sort={topSort} onClick={toggleSort} />
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100 dark:divide-gray-800/60">
-                {sortedTop.map((s, i) => (
-                  <tr key={s.userId} className={`${i % 2 === 1 ? "bg-gray-50/50 dark:bg-gray-900/30" : ""} hover:bg-blue-50/50 dark:hover:bg-blue-500/5 transition-colors`}>
-                    <td className="py-3 px-4">
-                      <div className="flex items-center gap-3">
-                        <Avatar name={s.name} />
-                        <div className="min-w-0">
-                          <p className="font-medium text-gray-900 dark:text-white truncate">{s.name}</p>
-                          <p className="text-xs text-gray-500 truncate">{s.email}</p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="py-3 px-4">
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 font-semibold text-xs tabular-nums">
-                        <Star className="w-3 h-3" />
-                        {s.points}
-                      </span>
-                    </td>
-                    <td className="py-3 px-4 text-gray-700 dark:text-gray-300 tabular-nums">
-                      {s.completed}<span className="text-gray-400">/{s.total}</span>
-                    </td>
-                    <td className="py-3 px-4"><ProgressBar value={s.progress} /></td>
-                    <td className="py-3 px-4 text-gray-500 whitespace-nowrap">{formatDate(s.lastActive)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </SectionCard>
-
-      {/* Inactive */}
-      <SectionCard title="Alunos inativos" subtitle="Sem acesso há mais de 30 dias">
-        {data.inactiveStudentsList.length === 0 ? <Empty /> : (
-          <div className="overflow-x-auto -mx-4 sm:mx-0">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="text-left border-b border-gray-200 dark:border-gray-800 text-[11px] uppercase tracking-wider text-gray-500">
-                  <th className="py-2 px-4 font-medium">Aluno</th>
-                  <th className="py-2 px-4 font-medium">Inativo há</th>
-                  <th className="py-2 px-4 font-medium">Progresso</th>
-                  <th className="py-2 px-4 font-medium text-right"></th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100 dark:divide-gray-800/60">
-                {data.inactiveStudentsList.map((s, i) => {
-                  const days = daysSince(s.lastActive);
-                  return (
-                    <tr key={s.userId} className={`${i % 2 === 1 ? "bg-gray-50/50 dark:bg-gray-900/30" : ""} hover:bg-rose-50/40 dark:hover:bg-rose-500/5 transition-colors`}>
-                      <td className="py-3 px-4">
-                        <div className="flex items-center gap-3">
-                          <Avatar name={s.name} />
-                          <div className="min-w-0">
-                            <p className="font-medium text-gray-900 dark:text-white truncate">{s.name}</p>
-                            <p className="text-xs text-gray-500 truncate">{s.email}</p>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="py-3 px-4">
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 text-xs font-semibold">
-                          {days != null ? `${days} dias` : "—"}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4"><ProgressBar value={s.progress} /></td>
-                      <td className="py-3 px-4 text-right">
-                        <Button size="sm" variant="secondary" onClick={() => handleResend(s.courseId, s.enrollmentId)} disabled={resending === s.enrollmentId || !s.enrollmentId}>
-                          {resending === s.enrollmentId ? "Enviando…" : "Reenviar link"}
-                        </Button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </SectionCard>
-
-      {/* Never accessed */}
-      <SectionCard title="Nunca acessaram" subtitle="Matriculados que ainda não entraram no curso">
-        {data.neverAccessedStudents.length === 0 ? <Empty /> : (
-          <div className="overflow-x-auto -mx-4 sm:mx-0">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="text-left border-b border-gray-200 dark:border-gray-800 text-[11px] uppercase tracking-wider text-gray-500">
-                  <th className="py-2 px-4 font-medium">Aluno</th>
-                  <th className="py-2 px-4 font-medium">Matriculado em</th>
-                  <th className="py-2 px-4 font-medium text-right"></th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100 dark:divide-gray-800/60">
-                {data.neverAccessedStudents.map((s, i) => (
-                  <tr key={s.enrollmentId} className={`${i % 2 === 1 ? "bg-gray-50/50 dark:bg-gray-900/30" : ""} hover:bg-blue-50/40 dark:hover:bg-blue-500/5 transition-colors`}>
-                    <td className="py-3 px-4">
-                      <div className="flex items-center gap-3">
-                        <Avatar name={s.name} />
-                        <div className="min-w-0">
-                          <p className="font-medium text-gray-900 dark:text-white truncate">{s.name}</p>
-                          <p className="text-xs text-gray-500 truncate">{s.email}</p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="py-3 px-4 text-gray-500 whitespace-nowrap">{formatDate(s.enrolledAt)}</td>
-                    <td className="py-3 px-4 text-right">
-                      <Button size="sm" variant="secondary" onClick={() => handleResend(s.courseId, s.enrollmentId)} disabled={resending === s.enrollmentId}>
-                        {resending === s.enrollmentId ? "Enviando…" : "Reenviar link"}
-                      </Button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </SectionCard>
-
       {/* Diagnosis */}
       {data.diagnosis && (
         <section className="space-y-4 pt-4">
@@ -610,12 +393,6 @@ export function AdminAnalyticsContent({
             </div>
           )}
         </section>
-      )}
-
-      {toast && (
-        <div className="fixed bottom-6 right-6 z-50 bg-gray-900 dark:bg-white text-white dark:text-gray-900 px-4 py-3 rounded-lg shadow-2xl text-sm font-medium animate-in fade-in slide-in-from-bottom-2">
-          {toast}
-        </div>
       )}
     </div>
   );
@@ -749,53 +526,6 @@ function Empty() {
   );
 }
 
-function ProgressBar({ value }: { value: number }) {
-  const clamp = Math.max(0, Math.min(100, value));
-  const color = clamp >= 75 ? "bg-emerald-500" : clamp >= 50 ? "bg-blue-500" : clamp >= 25 ? "bg-amber-500" : "bg-rose-500";
-  return (
-    <div className="flex items-center gap-2 min-w-[140px]">
-      <div className="flex-1 h-1.5 rounded-full bg-gray-200 dark:bg-gray-800 overflow-hidden">
-        <div className={`h-full ${color} transition-all`} style={{ width: `${clamp}%` }} />
-      </div>
-      <span className="text-xs tabular-nums text-gray-600 dark:text-gray-400 w-9 text-right font-medium">{clamp}%</span>
-    </div>
-  );
-}
-
-function Th({ label, k, sort, onClick }: { label: string; k: keyof TopStudent; sort: { key: keyof TopStudent; dir: "asc" | "desc" }; onClick: (k: keyof TopStudent) => void; }) {
-  const active = sort.key === k;
-  return (
-    <th className="py-2 px-4 font-medium">
-      <button
-        type="button"
-        onClick={() => onClick(k)}
-        className={`inline-flex items-center gap-1 hover:text-gray-900 dark:hover:text-white transition ${active ? "text-gray-900 dark:text-white" : ""}`}
-      >
-        {label}
-        <ArrowUpDown className="w-3 h-3 opacity-60" />
-      </button>
-    </th>
-  );
-}
-
-function Avatar({ name }: { name: string }) {
-  const initials = name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((p) => p[0]?.toUpperCase() || "")
-    .join("") || "?";
-  const palette = ["bg-blue-500/15 text-blue-600 dark:text-blue-300", "bg-emerald-500/15 text-emerald-600 dark:text-emerald-300", "bg-amber-500/15 text-amber-600 dark:text-amber-300", "bg-purple-500/15 text-purple-600 dark:text-purple-300", "bg-rose-500/15 text-rose-600 dark:text-rose-300"];
-  let h = 0;
-  for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0;
-  const cls = palette[h % palette.length];
-  return (
-    <span className={`inline-flex items-center justify-center w-9 h-9 rounded-full text-xs font-semibold shrink-0 ${cls}`}>
-      {initials}
-    </span>
-  );
-}
-
 function RankedBars({ items, colorHi, colorLo, suffix = "" }: { items: Array<{ label: string; value: number }>; colorHi: string; colorLo: string; suffix?: string }) {
   const max = items.reduce((m, it) => Math.max(m, it.value), 0) || 1;
   return (
@@ -830,22 +560,6 @@ function CustomTooltip({ active, payload, label, color }: { active?: boolean; pa
       </p>
     </div>
   );
-}
-
-function formatDate(v: string | null) {
-  if (!v) return "—";
-  try {
-    return new Date(v).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" });
-  } catch {
-    return "—";
-  }
-}
-
-function daysSince(v: string | null): number | null {
-  if (!v) return null;
-  const t = new Date(v).getTime();
-  if (Number.isNaN(t)) return null;
-  return Math.max(0, Math.floor((Date.now() - t) / 86400000));
 }
 
 function pctDelta(curr: number, prev: number): number | null {

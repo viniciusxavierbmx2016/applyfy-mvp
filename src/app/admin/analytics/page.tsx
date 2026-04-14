@@ -4,6 +4,11 @@ import dynamic from "next/dynamic";
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import {
+  DateRangeSelector,
+  computeRange,
+  type DateRangeValue,
+} from "@/components/date-range-selector";
 
 const AdminAnalyticsContent = dynamic(
   () =>
@@ -80,7 +85,9 @@ function AdminAnalyticsPageInner() {
   const tab: TabId = TABS.some((t) => t.id === tabParam) ? tabParam : "overview";
 
   const [courseId, setCourseId] = useState<string>("all");
-  const [windowDays, setWindowDays] = useState<7 | 30 | 90>(30);
+  const [range, setRange] = useState<DateRangeValue>(() =>
+    computeRange("last_30_days")
+  );
   const [courses, setCourses] = useState<CourseOption[]>([]);
 
   useEffect(() => {
@@ -99,7 +106,8 @@ function AdminAnalyticsPageInner() {
   function handleExport() {
     const qs = new URLSearchParams();
     if (courseId !== "all") qs.set("courseId", courseId);
-    qs.set("window", String(windowDays));
+    qs.set("startDate", range.startDate);
+    qs.set("endDate", range.endDate);
     qs.set("tab", tab);
     qs.set("format", "csv");
     window.location.href = `/api/admin/analytics?${qs.toString()}`;
@@ -128,22 +136,7 @@ function AdminAnalyticsPageInner() {
               <option key={c.id} value={c.id}>{c.title}</option>
             ))}
           </select>
-          <div className="inline-flex rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-0.5">
-            {[7, 30, 90].map((d) => (
-              <button
-                key={d}
-                type="button"
-                onClick={() => setWindowDays(d as 7 | 30 | 90)}
-                className={`px-3 py-1.5 text-xs font-semibold rounded-md transition ${
-                  windowDays === d
-                    ? "bg-blue-600 text-white shadow-sm"
-                    : "text-gray-500 hover:text-gray-900 dark:hover:text-white"
-                }`}
-              >
-                {d}d
-              </button>
-            ))}
-          </div>
+          <DateRangeSelector value={range} onChange={setRange} />
           <Button variant="secondary" size="sm" onClick={handleExport}>
             <DownloadIcon className="w-4 h-4 mr-2" />
             Exportar relatório
@@ -181,15 +174,27 @@ function AdminAnalyticsPageInner() {
 
       {/* Tab content */}
       {tab === "overview" && (
-        <AdminAnalyticsContent courseId={courseId} windowDays={windowDays} />
+        <AdminAnalyticsContent
+          courseId={courseId}
+          startDate={range.startDate}
+          endDate={range.endDate}
+          rangeLabel={range.label}
+        />
       )}
       {tab === "content" && (
-        <ReportsContentTab courseId={courseId} windowDays={windowDays} />
+        <ReportsContentTab
+          courseId={courseId}
+          startDate={range.startDate}
+          endDate={range.endDate}
+        />
       )}
       {tab === "students" && (
-        <ReportsStudentsTab courseId={courseId} windowDays={windowDays} />
+        <ReportsStudentsTab
+          courseId={courseId}
+          startDate={range.startDate}
+          endDate={range.endDate}
+        />
       )}
     </div>
   );
 }
-
