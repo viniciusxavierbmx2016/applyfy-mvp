@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useUserStore } from "@/stores/user-store";
 import { AvatarUploader } from "@/components/avatar-uploader";
+import { ChangePasswordForm } from "@/components/change-password-form";
 import { ProgressBar } from "@/components/progress-bar";
 import { getLevelForPoints, getNextLevel } from "@/lib/utils";
 
@@ -57,6 +58,10 @@ export default function ProfilePage() {
           <p className="text-gray-600 dark:text-gray-400 text-sm">{user.email}</p>
         </div>
         <AvatarUploader />
+      </div>
+
+      <div className="mb-6">
+        <ChangePasswordForm />
       </div>
 
       {/* Gamification card */}

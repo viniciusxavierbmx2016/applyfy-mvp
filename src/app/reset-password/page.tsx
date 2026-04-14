@@ -13,19 +13,58 @@ export default function ResetPasswordPage() {
   const [done, setDone] = useState(false);
   const [loading, setLoading] = useState(false);
   const [ready, setReady] = useState(false);
+  const [expired, setExpired] = useState(false);
 
   useEffect(() => {
+    if (typeof window !== "undefined") {
+      const hash = window.location.hash || "";
+      if (
+        hash.includes("error_code=otp_expired") ||
+        hash.includes("error=access_denied") ||
+        hash.includes("error_code=invalid_token")
+      ) {
+        setExpired(true);
+        return;
+      }
+    }
     const supabase = createClient();
-    // Supabase sends the recovery link with a URL fragment that the browser
-    // client automatically exchanges into a session. We just wait for it.
-    supabase.auth.getSession().then(() => setReady(true));
+    supabase.auth.getSession().then(({ data }) => {
+      if (data.session) setReady(true);
+    });
     const { data: sub } = supabase.auth.onAuthStateChange((event) => {
       if (event === "PASSWORD_RECOVERY" || event === "SIGNED_IN") {
         setReady(true);
       }
     });
-    return () => sub.subscription.unsubscribe();
+    const timer = setTimeout(() => {
+      setReady((r) => {
+        if (!r) setExpired(true);
+        return r;
+      });
+    }, 3000);
+    return () => {
+      sub.subscription.unsubscribe();
+      clearTimeout(timer);
+    };
   }, []);
+
+  async function redirectAfterReset() {
+    try {
+      const res = await fetch("/api/auth/me");
+      if (res.ok) {
+        const data = await res.json();
+        if (data.user?.role === "PRODUCER" || data.user?.role === "ADMIN") {
+          router.push("/");
+          return;
+        }
+        if (data.workspace?.slug) {
+          router.push(`/w/${data.workspace.slug}`);
+          return;
+        }
+      }
+    } catch {}
+    router.push("/login");
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -48,7 +87,9 @@ export default function ResetPasswordPage() {
         return;
       }
       setDone(true);
-      setTimeout(() => router.push("/login"), 1500);
+      setTimeout(() => {
+        redirectAfterReset();
+      }, 1200);
     } catch {
       setError("Erro ao conectar com o servidor");
       setLoading(false);
@@ -68,7 +109,37 @@ export default function ResetPasswordPage() {
         </div>
 
         <div className="bg-white dark:bg-gray-900 rounded-2xl p-8 shadow-xl border border-gray-200 dark:border-gray-800">
-          {done ? (
+          {expired ? (
+            <div className="text-center">
+              <div className="mx-auto w-14 h-14 rounded-full bg-red-500/10 flex items-center justify-center mb-4">
+                <svg
+                  className="w-7 h-7 text-red-500"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+              </div>
+              <p className="text-gray-900 dark:text-white font-medium mb-1">
+                Link expirado
+              </p>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
+                Solicite um novo link de recuperação para definir sua nova senha.
+              </p>
+              <Link
+                href="/forgot-password"
+                className="inline-flex items-center justify-center w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition"
+              >
+                Solicitar novo link
+              </Link>
+            </div>
+          ) : done ? (
             <div className="text-center">
               <div className="mx-auto w-14 h-14 rounded-full bg-green-500/10 flex items-center justify-center mb-4">
                 <svg
@@ -89,7 +160,7 @@ export default function ResetPasswordPage() {
                 Senha alterada com sucesso
               </p>
               <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                Redirecionando para o login...
+                Redirecionando...
               </p>
             </div>
           ) : (
