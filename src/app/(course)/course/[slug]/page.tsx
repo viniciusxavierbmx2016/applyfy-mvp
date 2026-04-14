@@ -11,6 +11,8 @@ import {
   type CarouselModule,
 } from "@/components/module-carousel";
 import { CoursePreview } from "@/components/course-preview";
+import { HeadphonesIcon } from "@/components/support-popover";
+import { formatPhoneDisplay, formatWhatsappLink } from "@/lib/utils";
 
 interface LessonItem {
   id: string;
@@ -55,6 +57,8 @@ interface CourseDetail {
   reviewsEnabled?: boolean;
   showStudentCount?: boolean;
   enrollmentCount?: number;
+  supportEmail?: string | null;
+  supportWhatsapp?: string | null;
   ratingAverage: number;
   ratingCount: number;
   modules: ModuleItem[];
@@ -488,6 +492,51 @@ export default function CourseHomePage() {
           myReview={myReview}
           canReview={hasAccess}
         />
+      )}
+
+      {(course.supportEmail || course.supportWhatsapp) && (
+        <section className="mt-10 rounded-xl border border-gray-200/70 dark:border-white/5 bg-gray-50 dark:bg-white/5 p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <span className="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400 inline-flex items-center justify-center flex-shrink-0">
+              <HeadphonesIcon className="w-5 h-5" />
+            </span>
+            <div>
+              <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                Precisa de ajuda?
+              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Fale direto com a equipe de suporte deste curso.
+              </p>
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {course.supportEmail && (
+              <a
+                href={`mailto:${course.supportEmail}`}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-gray-900/60 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-white/5 transition"
+              >
+                <svg className="w-4 h-4 text-blue-500 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l9 6 9-6M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+                Email
+              </a>
+            )}
+            {formatWhatsappLink(course.supportWhatsapp) && (
+              <a
+                href={formatWhatsappLink(course.supportWhatsapp)!}
+                target="_blank"
+                rel="noopener noreferrer"
+                title={formatPhoneDisplay(course.supportWhatsapp)}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-gray-900/60 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-white/5 transition"
+              >
+                <svg className="w-4 h-4 text-emerald-500 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h2.28a1 1 0 01.95.68l1.5 4.49a1 1 0 01-.5 1.21l-1.9.95a11 11 0 005.52 5.52l.95-1.9a1 1 0 011.21-.5l4.49 1.5a1 1 0 01.68.95V19a2 2 0 01-2 2h-1C9.72 21 3 14.28 3 6V5z" />
+                </svg>
+                WhatsApp
+              </a>
+            )}
+          </div>
+        </section>
       )}
     </div>
   );

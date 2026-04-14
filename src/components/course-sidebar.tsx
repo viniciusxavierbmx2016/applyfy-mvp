@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { MenuIcon } from "./menu-icons";
 import { useUserStore } from "@/stores/user-store";
+import { SupportPopover } from "./support-popover";
 
 interface MenuItem {
   id: string;
@@ -53,12 +54,16 @@ export function CourseSidebar({
   const [items, setItems] = useState<MenuItem[]>([]);
   const [continueLessonId, setContinueLessonId] = useState<string | null>(null);
   const [hasLessons, setHasLessons] = useState(true);
+  const [supportEmail, setSupportEmail] = useState<string | null>(null);
+  const [supportWhatsapp, setSupportWhatsapp] = useState<string | null>(null);
 
   useEffect(() => {
     fetch(`/api/courses/by-slug/${course.slug}/init`)
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
         if (d?.menu) setItems(d.menu as MenuItem[]);
+        setSupportEmail(d?.course?.supportEmail ?? null);
+        setSupportWhatsapp(d?.course?.supportWhatsapp ?? null);
         const modules = d?.course?.modules as
           | Array<{ lessons: Array<{ id: string }> }>
           | undefined;
@@ -279,6 +284,18 @@ export function CourseSidebar({
                 </Link>
               );
             })}
+
+          {(supportEmail || supportWhatsapp) && (
+            <SupportPopover
+              email={supportEmail}
+              whatsapp={supportWhatsapp}
+              collapsed={collapsed}
+              triggerClassName={cn(
+                "w-full text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5",
+                collapsed ? "lg:justify-center lg:p-2.5 px-4 py-2.5" : "px-4 py-2.5"
+              )}
+            />
+          )}
         </nav>
       </aside>
     </>

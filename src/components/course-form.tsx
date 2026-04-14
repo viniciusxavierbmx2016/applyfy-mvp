@@ -19,6 +19,8 @@ interface CourseFormData {
   externalProductId: string;
   isPublished: boolean;
   showInStore: boolean;
+  supportEmail: string;
+  supportWhatsapp: string;
 }
 
 interface CourseFormProps {
@@ -48,6 +50,10 @@ export function CourseForm({ initial, mode }: CourseFormProps) {
   );
   const [isPublished, setIsPublished] = useState(initial?.isPublished ?? false);
   const [showInStore, setShowInStore] = useState(initial?.showInStore ?? true);
+  const [supportEmail, setSupportEmail] = useState(initial?.supportEmail || "");
+  const [supportWhatsapp, setSupportWhatsapp] = useState(
+    initial?.supportWhatsapp || ""
+  );
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -76,6 +82,8 @@ export function CourseForm({ initial, mode }: CourseFormProps) {
       externalProductId: externalProductId.trim() || null,
       isPublished,
       showInStore,
+      supportEmail: supportEmail.trim() || null,
+      supportWhatsapp: supportWhatsapp.trim() || null,
     };
 
     try {
@@ -278,6 +286,61 @@ export function CourseForm({ initial, mode }: CourseFormProps) {
             </p>
           </div>
         </label>
+      </div>
+
+      <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-6 space-y-4">
+        <div>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Suporte</h2>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+            Configure os canais de atendimento para os alunos deste curso
+          </p>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Email de suporte
+          </label>
+          <div className="relative">
+            <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400 dark:text-gray-500 pointer-events-none">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l9 6 9-6M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+            </span>
+            <input
+              type="email"
+              value={supportEmail}
+              onChange={(e) => setSupportEmail(e.target.value)}
+              placeholder="suporte@exemplo.com"
+              className="w-full pl-10 pr-4 py-2.5 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <p className="text-xs text-gray-500 mt-1">
+            Será exibido na área de membros para os alunos entrarem em contato
+          </p>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            WhatsApp de suporte
+          </label>
+          <div className="relative">
+            <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400 dark:text-gray-500 pointer-events-none">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h2.28a1 1 0 01.95.68l1.5 4.49a1 1 0 01-.5 1.21l-1.9.95a11 11 0 005.52 5.52l.95-1.9a1 1 0 011.21-.5l4.49 1.5a1 1 0 01.68.95V19a2 2 0 01-2 2h-1C9.72 21 3 14.28 3 6V5z" />
+              </svg>
+            </span>
+            <input
+              type="tel"
+              value={supportWhatsapp}
+              onChange={(e) => setSupportWhatsapp(e.target.value)}
+              placeholder="(11) 99999-8888"
+              className="w-full pl-10 pr-4 py-2.5 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <p className="text-xs text-gray-500 mt-1">
+            Número com DDD. O aluno poderá clicar e abrir conversa no WhatsApp
+          </p>
+        </div>
       </div>
 
       <div className="flex justify-end gap-3">

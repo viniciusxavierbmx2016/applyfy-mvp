@@ -84,7 +84,19 @@ export async function PUT(
       reviewsEnabled,
       gamificationEnabled,
       showStudentCount,
+      supportEmail,
+      supportWhatsapp,
     } = body;
+
+    if (supportEmail !== undefined && supportEmail !== null && supportEmail !== "") {
+      const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(supportEmail).trim());
+      if (!emailOk) {
+        return NextResponse.json(
+          { error: "Email de suporte inválido" },
+          { status: 400 }
+        );
+      }
+    }
 
     if (slug) {
       const existing = await prisma.course.findFirst({
@@ -140,6 +152,18 @@ export async function PUT(
         }),
         ...(showStudentCount !== undefined && {
           showStudentCount: Boolean(showStudentCount),
+        }),
+        ...(supportEmail !== undefined && {
+          supportEmail:
+            typeof supportEmail === "string" && supportEmail.trim()
+              ? supportEmail.trim()
+              : null,
+        }),
+        ...(supportWhatsapp !== undefined && {
+          supportWhatsapp:
+            typeof supportWhatsapp === "string" && supportWhatsapp.replace(/\D/g, "")
+              ? supportWhatsapp.replace(/\D/g, "")
+              : null,
         }),
       },
     });

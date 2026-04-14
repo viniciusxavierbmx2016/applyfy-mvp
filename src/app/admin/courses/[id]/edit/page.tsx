@@ -31,6 +31,8 @@ interface CourseData {
   externalProductId: string | null;
   isPublished: boolean;
   showInStore: boolean;
+  supportEmail: string | null;
+  supportWhatsapp: string | null;
   modules: ModuleData[];
   sections: SectionData[];
 }
@@ -169,6 +171,8 @@ export default function EditCoursePage({
             externalProductId: course.externalProductId || "",
             isPublished: course.isPublished,
             showInStore: course.showInStore,
+            supportEmail: course.supportEmail || "",
+            supportWhatsapp: course.supportWhatsapp || "",
           }}
         />
       ) : (

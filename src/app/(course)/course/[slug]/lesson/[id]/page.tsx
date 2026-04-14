@@ -22,6 +22,7 @@ import {
 } from "@/components/lessons-sidebar";
 import { useUserStore } from "@/stores/user-store";
 import type { ParsedVideo } from "@/lib/video";
+import { formatPhoneDisplay, formatWhatsappLink } from "@/lib/utils";
 
 interface ViewData {
   lesson: {
@@ -37,6 +38,8 @@ interface ViewData {
     slug: string;
     title: string;
     lessonCommentsEnabled?: boolean;
+    supportEmail?: string | null;
+    supportWhatsapp?: string | null;
     modules: SidebarModule[];
   };
   prev: { id: string; title: string } | null;
@@ -57,9 +60,9 @@ export default function LessonPage({
   const [showCountdown, setShowCountdown] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<"description" | "comments">(
-    "description"
-  );
+  const [activeTab, setActiveTab] = useState<
+    "description" | "comments" | "support"
+  >("description");
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Load lesson
@@ -285,7 +288,13 @@ export default function LessonPage({
 
           {(() => {
             const commentsEnabled = data.course.lessonCommentsEnabled !== false;
-            const shownTab = commentsEnabled ? activeTab : "description";
+            const hasSupport = !!(data.course.supportEmail || data.course.supportWhatsapp);
+            const waHref = formatWhatsappLink(data.course.supportWhatsapp);
+            const shownTab =
+              (activeTab === "comments" && !commentsEnabled) ||
+              (activeTab === "support" && !hasSupport)
+                ? "description"
+                : activeTab;
             return (
               <>
                 {/* Tabs */}
@@ -320,10 +329,30 @@ export default function LessonPage({
                       )}
                     </button>
                   )}
+                  {hasSupport && (
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab("support")}
+                      className={`relative inline-flex items-center gap-1.5 px-0.5 py-2.5 text-sm font-medium transition-colors duration-200 ${
+                        shownTab === "support"
+                          ? "text-gray-900 dark:text-white"
+                          : "text-gray-500 hover:text-gray-900 dark:hover:text-white"
+                      }`}
+                    >
+                      <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M3 18v-6a9 9 0 0 1 18 0v6" />
+                        <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z" />
+                      </svg>
+                      Suporte
+                      {shownTab === "support" && (
+                        <span className="absolute inset-x-0 -bottom-px h-[2px] bg-blue-500 rounded-full" />
+                      )}
+                    </button>
+                  )}
                 </div>
 
                 <div className="mt-5">
-                  {shownTab === "description" ? (
+                  {shownTab === "description" && (
                     data.lesson.description ? (
                       <p className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed whitespace-pre-wrap">
                         {data.lesson.description}
@@ -331,8 +360,41 @@ export default function LessonPage({
                     ) : (
                       <p className="text-gray-500 text-sm">Sem descrição para esta aula.</p>
                     )
-                  ) : (
+                  )}
+                  {shownTab === "comments" && (
                     <LessonComments lessonId={data.lesson.id} />
+                  )}
+                  {shownTab === "support" && (
+                    <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
+                      {data.course.supportEmail && (
+                        <a
+                          href={`mailto:${data.course.supportEmail}`}
+                          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-gray-900/60 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-white/5 transition"
+                        >
+                          <span className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 inline-flex items-center justify-center">
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l9 6 9-6M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                            </svg>
+                          </span>
+                          <span className="truncate">{data.course.supportEmail}</span>
+                        </a>
+                      )}
+                      {waHref && (
+                        <a
+                          href={waHref}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-gray-900/60 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-white/5 transition"
+                        >
+                          <span className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 inline-flex items-center justify-center">
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h2.28a1 1 0 01.95.68l1.5 4.49a1 1 0 01-.5 1.21l-1.9.95a11 11 0 005.52 5.52l.95-1.9a1 1 0 011.21-.5l4.49 1.5a1 1 0 01.68.95V19a2 2 0 01-2 2h-1C9.72 21 3 14.28 3 6V5z" />
+                            </svg>
+                          </span>
+                          <span>{formatPhoneDisplay(data.course.supportWhatsapp)}</span>
+                        </a>
+                      )}
+                    </div>
                   )}
                 </div>
               </>

@@ -81,3 +81,24 @@ export function getNextLevel(points: number) {
   const nextIndex = levels.findIndex((l) => l.level === currentLevel.level) + 1;
   return nextIndex < levels.length ? levels[nextIndex] : null;
 }
+
+export function formatWhatsappLink(number: string | null | undefined): string | null {
+  if (!number) return null;
+  const digits = String(number).replace(/\D/g, "");
+  if (!digits) return null;
+  const withCountry = digits.startsWith("55") ? digits : `55${digits}`;
+  return `https://wa.me/${withCountry}`;
+}
+
+export function formatPhoneDisplay(number: string | null | undefined): string {
+  if (!number) return "";
+  const digits = String(number).replace(/\D/g, "");
+  const local = digits.startsWith("55") ? digits.slice(2) : digits;
+  if (local.length === 11) {
+    return `(${local.slice(0, 2)}) ${local.slice(2, 7)}-${local.slice(7)}`;
+  }
+  if (local.length === 10) {
+    return `(${local.slice(0, 2)}) ${local.slice(2, 6)}-${local.slice(6)}`;
+  }
+  return local || digits;
+}
