@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
@@ -26,6 +26,19 @@ export function WorkspaceSwitcher({ collapsed = false }: { collapsed?: boolean }
   const [workspaces, setWorkspaces] = useState<WorkspaceRow[] | null>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    function handleClick(e: MouseEvent) {
+      if (!containerRef.current) return;
+      if (!containerRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [open]);
 
   useEffect(() => {
     fetch("/api/workspaces")
@@ -100,12 +113,12 @@ export function WorkspaceSwitcher({ collapsed = false }: { collapsed?: boolean }
 
   if (collapsed) {
     return (
-      <div className="relative">
+      <div className="relative" ref={containerRef}>
         <button
           type="button"
           onClick={() => setOpen((v) => !v)}
           title={active.name}
-          className="group relative w-8 h-8 rounded-lg bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 flex items-center justify-center overflow-hidden transition"
+          className="group relative w-8 h-8 rounded-lg bg-transparent hover:bg-gray-50 dark:bg-white/5 dark:hover:bg-white/10 flex items-center justify-center overflow-hidden transition"
           aria-label={`Workspace: ${active.name}`}
         >
           {active.logoUrl ? (
@@ -121,7 +134,7 @@ export function WorkspaceSwitcher({ collapsed = false }: { collapsed?: boolean }
           </span>
         </button>
         {open && (
-          <div className="absolute left-full ml-2 top-0 z-40 w-56 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow-lg p-1">
+          <div className="absolute left-full ml-2 top-0 z-50 w-56 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow-lg p-1">
             {workspaces.map((ws) => (
               <button
                 key={ws.id}
@@ -164,7 +177,7 @@ export function WorkspaceSwitcher({ collapsed = false }: { collapsed?: boolean }
   }
 
   return (
-    <div className="mb-2 relative">
+    <div className="mb-2 relative" ref={containerRef}>
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
@@ -206,7 +219,7 @@ export function WorkspaceSwitcher({ collapsed = false }: { collapsed?: boolean }
       </button>
 
       {open && (
-        <div className="absolute left-0 right-0 mt-1 z-40 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow-lg p-1">
+        <div className="absolute left-0 right-0 mt-1 z-50 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow-lg p-1">
           {workspaces.map((ws) => (
             <button
               key={ws.id}

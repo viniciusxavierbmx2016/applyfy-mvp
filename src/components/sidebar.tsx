@@ -223,29 +223,35 @@ export function Sidebar({ open, onClose }: SidebarProps) {
               : "h-16 px-5 justify-between"
           )}
         >
-          <Link
-            href="/"
-            onClick={onClose}
-            className={cn(
-              "flex items-center",
-              collapsed ? "lg:justify-center" : ""
-            )}
-            title="Applyfy"
-          >
-            {collapsed ? (
-              <span className="hidden lg:flex w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 text-white items-center justify-center text-sm font-bold shadow-sm">
-                A
-              </span>
-            ) : null}
-            <span
+          {isProducer ? (
+            <div className={cn("min-w-0", collapsed ? "lg:flex lg:justify-center" : "flex-1")}>
+              <WorkspaceSwitcher collapsed={collapsed} />
+            </div>
+          ) : (
+            <Link
+              href="/"
+              onClick={onClose}
               className={cn(
-                "text-xl font-bold text-gray-900 dark:text-white",
-                collapsed && "lg:hidden"
+                "flex items-center",
+                collapsed ? "lg:justify-center" : ""
               )}
+              title="Applyfy"
             >
-              Applyfy
-            </span>
-          </Link>
+              {collapsed ? (
+                <span className="hidden lg:flex w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 text-white items-center justify-center text-sm font-bold shadow-sm">
+                  A
+                </span>
+              ) : null}
+              <span
+                className={cn(
+                  "text-xl font-bold text-gray-900 dark:text-white",
+                  collapsed && "lg:hidden"
+                )}
+              >
+                Applyfy
+              </span>
+            </Link>
+          )}
 
           {/* Fechar mobile */}
           <button
@@ -341,32 +347,30 @@ export function Sidebar({ open, onClose }: SidebarProps) {
 
           {staffLinks && (
             <>
-              <div
-                className={cn(
-                  "pt-4 pb-1",
-                  !isCollaborator && !isAdmin
-                    ? "mt-2 border-t border-gray-200 dark:border-white/5"
-                    : ""
-                )}
-              >
-                <p
-                  className={cn(
-                    "text-xs font-semibold uppercase tracking-wider text-gray-500 px-1",
-                    collapsed && "lg:hidden"
-                  )}
-                >
-                  {staffLabel}
-                </p>
-              </div>
-
-              {isProducer && (
+              {isProducer ? (
                 <div
                   className={cn(
-                    "mb-1",
-                    collapsed ? "lg:flex lg:justify-center" : ""
+                    "my-3 border-t border-gray-200 dark:border-white/5",
+                    !isCollaborator && !isAdmin ? "" : "hidden"
+                  )}
+                />
+              ) : (
+                <div
+                  className={cn(
+                    "pt-4 pb-1",
+                    !isCollaborator && !isAdmin
+                      ? "mt-2 border-t border-gray-200 dark:border-white/5"
+                      : ""
                   )}
                 >
-                  <WorkspaceSwitcher collapsed={collapsed} />
+                  <p
+                    className={cn(
+                      "text-xs font-semibold uppercase tracking-wider text-gray-500 px-1",
+                      collapsed && "lg:hidden"
+                    )}
+                  >
+                    {staffLabel}
+                  </p>
                 </div>
               )}
 
