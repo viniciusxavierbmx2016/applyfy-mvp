@@ -15,7 +15,7 @@ export default function ProducerLoginPage() {
     setError("");
     setLoading(true);
     try {
-      const res = await fetch("/api/auth/login", {
+      const res = await fetch("/api/auth/producer-login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",

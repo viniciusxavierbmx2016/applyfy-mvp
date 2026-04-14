@@ -34,6 +34,21 @@ export async function POST(request: Request) {
       },
     });
 
+    // /login is the ADMIN-only entry point. Reject other roles and clear the
+    // session cookies that signInWithPassword just wrote.
+    if (!user || user.role !== "ADMIN") {
+      await supabase.auth.signOut();
+      const message =
+        user?.role === "PRODUCER"
+          ? "Use a tela de login do produtor em /producer/login"
+          : user?.role === "STUDENT"
+            ? "Acesse a área de membros pelo link fornecido pelo seu produtor"
+            : user?.role === "COLLABORATOR"
+              ? "Acesse pelo link do workspace onde você colabora"
+              : "Conta sem permissão para esta área";
+      return NextResponse.json({ error: message }, { status: 403 });
+    }
+
     if (user) {
       // Clean up expired sessions
       await prisma.session.deleteMany({
@@ -76,7 +91,9 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json({
+      success: true,
       message: "Login realizado com sucesso",
+      redirect: "/",
       user: data.user,
       session: data.session,
     });

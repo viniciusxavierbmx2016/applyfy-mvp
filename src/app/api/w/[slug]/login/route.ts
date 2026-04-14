@@ -75,6 +75,19 @@ export async function POST(
       return NextResponse.json({ error: "Usuário não encontrado" }, { status: 404 });
     }
 
+    if (user.role !== "STUDENT") {
+      await supabase.auth.signOut();
+      const message =
+        user.role === "ADMIN"
+          ? "Use /login para acessar o painel admin"
+          : user.role === "PRODUCER"
+            ? "Use /producer/login para acessar o painel do produtor"
+            : user.role === "COLLABORATOR"
+              ? "Acesse pelo link do workspace onde você colabora"
+              : "Conta sem permissão para esta área de membros";
+      return NextResponse.json({ error: message }, { status: 403 });
+    }
+
     // Bind STUDENTs to this workspace if not already bound.
     // Staff (PRODUCER/ADMIN) are global and must not be workspace-bound.
     if (user.role === "STUDENT") {

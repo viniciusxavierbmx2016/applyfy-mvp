@@ -33,6 +33,7 @@ export async function POST(request: Request) {
           id: data.user.id,
           email,
           name,
+          role: "ADMIN",
         },
       });
     }
