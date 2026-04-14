@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { GoogleAuthButton } from "@/components/google-auth-button";
 
 export default function ProducerLoginPage() {
   const [email, setEmail] = useState("");
@@ -68,19 +67,6 @@ export default function ProducerLoginPage() {
               )}
             </div>
           )}
-
-          <GoogleAuthButton label="Entrar com Google" next="/admin" />
-
-          <div className="relative my-6">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-200 dark:border-gray-800" />
-            </div>
-            <div className="relative flex justify-center">
-              <span className="px-3 bg-white dark:bg-gray-900 text-xs text-gray-500 uppercase tracking-wider">
-                ou
-              </span>
-            </div>
-          </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
