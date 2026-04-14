@@ -108,8 +108,10 @@ export function CourseSidebar({
         {/* Header — logo do workspace */}
         <div
           className={cn(
-            "relative flex items-center border-b border-gray-200 dark:border-white/5",
-            collapsed ? "lg:justify-center lg:p-4 p-5" : "p-5 justify-between"
+            "relative flex items-center border-b border-gray-200 dark:border-white/5 transition-all duration-300",
+            collapsed
+              ? "lg:justify-center lg:py-4 lg:px-2 p-5"
+              : "p-5 justify-between"
           )}
         >
           <Link
@@ -157,32 +159,46 @@ export function CourseSidebar({
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
+
+          {/* Botão de colapsar — canto direito quando aberta */}
+          {!collapsed && (
+            <button
+              onClick={onToggleCollapsed}
+              aria-label="Recolher menu"
+              className={cn(
+                "hidden lg:flex absolute top-1/2 -translate-y-1/2 right-3 items-center justify-center w-6 h-6 rounded-full",
+                "bg-gray-100 hover:bg-gray-200 dark:bg-white/5 dark:hover:bg-white/10",
+                "text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white",
+                "transition-colors duration-200"
+              )}
+            >
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+          )}
         </div>
 
-        {/* Botão de colapsar — topo direito (desktop) */}
-        <button
-          onClick={onToggleCollapsed}
-          aria-label={collapsed ? "Expandir menu" : "Recolher menu"}
-          className={cn(
-            "hidden lg:flex absolute top-3 items-center justify-center w-6 h-6 rounded-full",
-            "bg-gray-100 hover:bg-gray-200 dark:bg-white/5 dark:hover:bg-white/10",
-            "text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white",
-            "transition-all duration-200 z-10",
-            collapsed ? "right-1/2 translate-x-1/2 top-16" : "right-3"
-          )}
-        >
-          <svg
-            className={cn(
-              "w-3.5 h-3.5 transition-transform duration-300",
-              collapsed && "rotate-180"
-            )}
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
-          </svg>
-        </button>
+        {/* Botão de expandir — visível apenas quando colapsada, abaixo da logo */}
+        {collapsed && (
+          <div className="hidden lg:flex justify-center py-2 border-b border-gray-200 dark:border-white/5">
+            <button
+              onClick={onToggleCollapsed}
+              aria-label="Expandir menu"
+              className={cn(
+                "group relative flex items-center justify-center w-7 h-7 rounded-full",
+                "bg-gray-100 hover:bg-gray-200 dark:bg-white/5 dark:hover:bg-white/10",
+                "text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white",
+                "transition-colors duration-200"
+              )}
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+              </svg>
+              <span className={tooltipCls}>Expandir menu</span>
+            </button>
+          </div>
+        )}
 
         {/* Voltar à vitrine/painel */}
         <div className="border-b border-gray-200 dark:border-white/5">
@@ -190,16 +206,19 @@ export function CourseSidebar({
             href={backHref}
             onClick={onMobileClose}
             title={backLabel}
+            aria-label={backLabel}
             className={cn(
-              "group relative flex items-center gap-2 text-xs font-medium uppercase tracking-wide",
+              "group relative flex items-center text-xs font-medium uppercase tracking-wide",
               "text-gray-500 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300",
               "transition-colors duration-200",
-              collapsed ? "lg:justify-center lg:py-3 lg:px-0 py-3 px-4" : "py-3 px-4"
+              collapsed
+                ? "lg:justify-center lg:py-3 lg:px-0 gap-2 py-3 px-4"
+                : "gap-2 py-3 px-4"
             )}
           >
             <svg
               className="flex-shrink-0"
-              style={{ width: 14, height: 14 }}
+              style={{ width: 16, height: 16 }}
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
