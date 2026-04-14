@@ -86,6 +86,7 @@ export async function PUT(
       showStudentCount,
       supportEmail,
       supportWhatsapp,
+      showLessonSupport,
     } = body;
 
     if (supportEmail !== undefined && supportEmail !== null && supportEmail !== "") {
@@ -164,6 +165,9 @@ export async function PUT(
             typeof supportWhatsapp === "string" && supportWhatsapp.replace(/\D/g, "")
               ? supportWhatsapp.replace(/\D/g, "")
               : null,
+        }),
+        ...(showLessonSupport !== undefined && {
+          showLessonSupport: Boolean(showLessonSupport),
         }),
       },
     });

@@ -137,6 +137,7 @@ model Course {
   showStudentCount   Boolean   @default(false)
   supportEmail       String?
   supportWhatsapp    String?
+  showLessonSupport  Boolean   @default(true)
   order              Int       @default(0)
   ownerId            String?
   workspaceId        String

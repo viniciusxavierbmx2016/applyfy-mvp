@@ -155,6 +155,7 @@ export async function GET(
         lessonCommentsEnabled: course.lessonCommentsEnabled,
         supportEmail: course.supportEmail,
         supportWhatsapp: course.supportWhatsapp,
+        showLessonSupport: course.showLessonSupport,
         modules: course.modules.map((m) => {
           const modRelease = computeModuleReleaseWithOverride(
             enrollmentCreatedAt,

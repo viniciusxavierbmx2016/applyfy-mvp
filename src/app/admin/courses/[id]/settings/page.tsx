@@ -11,6 +11,7 @@ interface CourseFlags {
   certificateEnabled: boolean;
   gamificationEnabled: boolean;
   showStudentCount: boolean;
+  showLessonSupport: boolean;
 }
 
 type FlagKey = keyof CourseFlags;
@@ -72,6 +73,14 @@ const ITEMS: SettingItem[] = [
       "Desativado — a contagem de alunos não é exibida publicamente.",
     icon: <UsersIcon />,
   },
+  {
+    key: "showLessonSupport",
+    title: "Suporte nas aulas",
+    description:
+      "Exibe a aba de suporte com email e WhatsApp abaixo de cada aula.",
+    disabledHint: "Desativado — a aba de suporte não aparecerá nas aulas.",
+    icon: <HeadphonesIcon />,
+  },
 ];
 
 export default function CourseSettingsPage({
@@ -98,6 +107,7 @@ export default function CourseSettingsPage({
           certificateEnabled: Boolean(c.certificateEnabled),
           gamificationEnabled: Boolean(c.gamificationEnabled),
           showStudentCount: Boolean(c.showStudentCount),
+          showLessonSupport: c.showLessonSupport !== false,
         });
       })
       .finally(() => alive && setLoading(false));
@@ -340,6 +350,23 @@ function TrophyIcon() {
       <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22" />
       <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22" />
       <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z" />
+    </svg>
+  );
+}
+
+function HeadphonesIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="w-5 h-5"
+    >
+      <path d="M3 18v-6a9 9 0 0 1 18 0v6" />
+      <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z" />
     </svg>
   );
 }

@@ -40,6 +40,7 @@ interface ViewData {
     lessonCommentsEnabled?: boolean;
     supportEmail?: string | null;
     supportWhatsapp?: string | null;
+    showLessonSupport?: boolean;
     modules: SidebarModule[];
   };
   prev: { id: string; title: string } | null;
@@ -288,7 +289,10 @@ export default function LessonPage({
 
           {(() => {
             const commentsEnabled = data.course.lessonCommentsEnabled !== false;
-            const hasSupport = !!(data.course.supportEmail || data.course.supportWhatsapp);
+            const supportTabEnabled = data.course.showLessonSupport !== false;
+            const hasSupport =
+              supportTabEnabled &&
+              !!(data.course.supportEmail || data.course.supportWhatsapp);
             const waHref = formatWhatsappLink(data.course.supportWhatsapp);
             const shownTab =
               (activeTab === "comments" && !commentsEnabled) ||
