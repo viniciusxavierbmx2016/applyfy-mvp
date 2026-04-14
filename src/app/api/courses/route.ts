@@ -8,9 +8,12 @@ import {
 import { canAccessWorkspace, resolveStaffWorkspace } from "@/lib/workspace";
 
 export async function GET(request: Request) {
+  const t0 = Date.now();
   try {
     const user = await getCurrentUser();
+    const t1 = Date.now();
     if (!user) {
+      console.log(`[API /api/courses] auth:${t1 - t0}ms total:${t1 - t0}ms (unauth)`);
       return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
     }
 
@@ -190,6 +193,10 @@ export async function GET(request: Request) {
       expiresAt: expiresAtMap.get(c.id) ?? null,
     });
 
+    const t2 = Date.now();
+    console.log(
+      `[API /api/courses] auth:${t1 - t0}ms query:${t2 - t1}ms total:${t2 - t0}ms`
+    );
     return NextResponse.json(
       {
         enrolled: enrolled.map(withExpired),

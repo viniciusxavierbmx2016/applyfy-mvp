@@ -147,7 +147,7 @@ export default function CourseHomePage() {
   useEffect(() => {
     async function load() {
       try {
-        const res = await fetch(`/api/courses/by-slug/${params.slug}`);
+        const res = await fetch(`/api/courses/by-slug/${params.slug}/init`);
         if (res.ok) {
           const data = await res.json();
           setCourse(data.course);

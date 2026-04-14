@@ -7,9 +7,12 @@ const MAX_BYTES = 2 * 1024 * 1024;
 const ALLOWED = new Set(["image/jpeg", "image/jpg", "image/png", "image/webp"]);
 
 export async function GET() {
+  const t0 = Date.now();
   try {
     const user = await getCurrentUser();
+    const t1 = Date.now();
     if (!user) {
+      console.log(`[API /api/auth/me] auth:${t1 - t0}ms total:${t1 - t0}ms (unauth)`);
       return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
     }
     let collaborator: {
@@ -17,23 +20,25 @@ export async function GET() {
       courseIds: string[];
       workspaceId: string;
     } | null = null;
-    if (user.role === "COLLABORATOR") {
-      const c = await prisma.collaborator.findFirst({
-        where: { userId: user.id, status: "ACCEPTED" },
-        select: {
-          permissions: true,
-          courseIds: true,
-          workspaceId: true,
-        },
-      });
-      if (c) collaborator = c;
-    }
-    const workspace = user.workspaceId
-      ? await prisma.workspace.findUnique({
-          where: { id: user.workspaceId },
-          select: { slug: true, name: true, logoUrl: true },
-        })
-      : null;
+    const [collabRow, workspace] = await Promise.all([
+      user.role === "COLLABORATOR"
+        ? prisma.collaborator.findFirst({
+            where: { userId: user.id, status: "ACCEPTED" },
+            select: { permissions: true, courseIds: true, workspaceId: true },
+          })
+        : Promise.resolve(null),
+      user.workspaceId
+        ? prisma.workspace.findUnique({
+            where: { id: user.workspaceId },
+            select: { slug: true, name: true, logoUrl: true },
+          })
+        : Promise.resolve(null),
+    ]);
+    if (collabRow) collaborator = collabRow;
+    const t2 = Date.now();
+    console.log(
+      `[API /api/auth/me] auth:${t1 - t0}ms query:${t2 - t1}ms total:${t2 - t0}ms`
+    );
     return NextResponse.json({ user, collaborator, workspace });
   } catch (error) {
     console.error("Me error:", error);

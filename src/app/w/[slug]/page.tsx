@@ -56,12 +56,6 @@ export default function WorkspaceVitrinePage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`/api/w/${slug}`)
-      .then((r) => (r.ok ? r.json() : null))
-      .then((d) => d && setWs(d.workspace));
-  }, [slug]);
-
-  useEffect(() => {
     if (userLoading) return;
     if (!user) {
       router.replace(`/w/${slug}/login`);
@@ -69,7 +63,7 @@ export default function WorkspaceVitrinePage() {
     }
     async function load() {
       try {
-        const res = await fetch(`/api/courses?workspace=${encodeURIComponent(slug)}`);
+        const res = await fetch(`/api/w/${slug}/init`);
         if (res.status === 403) {
           await fetch("/api/auth/logout", { method: "POST" }).catch(() => {});
           router.replace(
@@ -79,6 +73,7 @@ export default function WorkspaceVitrinePage() {
         }
         if (res.ok) {
           const data = await res.json();
+          setWs(data.workspace);
           setEnrolled(data.enrolled || []);
           setStore(data.store || []);
         }

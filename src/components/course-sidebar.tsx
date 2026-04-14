@@ -46,16 +46,10 @@ export function CourseSidebar({
   const [hasLessons, setHasLessons] = useState(true);
 
   useEffect(() => {
-    fetch(`/api/courses/${course.id}/menu`)
-      .then((r) => (r.ok ? r.json() : { items: [] }))
-      .then((d) => setItems(d.items || []))
-      .catch(() => setItems([]));
-  }, [course.id]);
-
-  useEffect(() => {
-    fetch(`/api/courses/by-slug/${course.slug}`)
+    fetch(`/api/courses/by-slug/${course.slug}/init`)
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
+        if (d?.menu) setItems(d.menu as MenuItem[]);
         const modules = d?.course?.modules as
           | Array<{ lessons: Array<{ id: string }> }>
           | undefined;

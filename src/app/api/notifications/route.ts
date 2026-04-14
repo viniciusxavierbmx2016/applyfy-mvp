@@ -5,9 +5,12 @@ import { getCurrentUser } from "@/lib/auth";
 const PAGE_SIZE = 20;
 
 export async function GET(request: Request) {
+  const t0 = Date.now();
   try {
     const user = await getCurrentUser();
+    const t1 = Date.now();
     if (!user) {
+      console.log(`[API /api/notifications] auth:${t1 - t0}ms total:${t1 - t0}ms (unauth)`);
       return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
     }
 
@@ -36,6 +39,10 @@ export async function GET(request: Request) {
       }),
     ]);
 
+    const t2 = Date.now();
+    console.log(
+      `[API /api/notifications] auth:${t1 - t0}ms query:${t2 - t1}ms total:${t2 - t0}ms`
+    );
     return NextResponse.json({
       notifications: items,
       page,
