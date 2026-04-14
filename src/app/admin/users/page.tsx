@@ -37,6 +37,8 @@ export default function AdminUsersPage() {
   const [viewerRole, setViewerRole] = useState<Role | null>(null);
   const [query, setQuery] = useState("");
   const [debounced, setDebounced] = useState("");
+  const [courseFilter, setCourseFilter] = useState<string>("");
+  const [exporting, setExporting] = useState(false);
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [enrollCourseId, setEnrollCourseId] = useState<Record<string, string>>(
@@ -52,9 +54,11 @@ export default function AdminUsersPage() {
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    const url = debounced
-      ? `/api/admin/users?q=${encodeURIComponent(debounced)}`
-      : "/api/admin/users";
+    const params = new URLSearchParams();
+    if (debounced) params.set("q", debounced);
+    if (courseFilter) params.set("courseId", courseFilter);
+    const qs = params.toString();
+    const url = qs ? `/api/admin/users?${qs}` : "/api/admin/users";
     fetch(url)
       .then((r) => (r.ok ? r.json() : { users: [], courses: [] }))
       .then((d) => {
@@ -70,7 +74,7 @@ export default function AdminUsersPage() {
     return () => {
       cancelled = true;
     };
-  }, [debounced]);
+  }, [debounced, courseFilter]);
 
   function showToast(msg: string) {
     setToast(msg);
@@ -135,6 +139,39 @@ export default function AdminUsersPage() {
     }
   }
 
+  async function handleExportCsv() {
+    if (exporting) return;
+    setExporting(true);
+    try {
+      const params = new URLSearchParams();
+      if (debounced) params.set("q", debounced);
+      if (courseFilter) params.set("courseId", courseFilter);
+      const qs = params.toString();
+      const url = qs
+        ? `/api/admin/users/export?${qs}`
+        : "/api/admin/users/export";
+      const res = await fetch(url);
+      if (!res.ok) throw new Error("fail");
+      const disposition = res.headers.get("Content-Disposition") || "";
+      const match = /filename="([^"]+)"/.exec(disposition);
+      const filename = match?.[1] || "alunos.csv";
+      const blob = await res.blob();
+      const href = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = href;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(href);
+      showToast("CSV exportado");
+    } catch {
+      showToast("Erro ao exportar CSV");
+    } finally {
+      setExporting(false);
+    }
+  }
+
   async function removeEnrollment(userId: string, courseId: string) {
     if (!confirm("Remover acesso a este curso?")) return;
     const res = await fetch(
@@ -163,6 +200,72 @@ export default function AdminUsersPage() {
       <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
         {viewerRole === "PRODUCER" ? "Meus Alunos" : "Usuários"}
       </h1>
+
+      <div className="mb-3 flex flex-col sm:flex-row sm:items-end gap-2">
+        {courses.length > 0 && (
+          <div className="flex-1 sm:max-w-sm">
+            <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">
+              Curso
+            </label>
+            <select
+              value={courseFilter}
+              onChange={(e) => setCourseFilter(e.target.value)}
+              className="w-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg px-3 py-2.5 text-sm text-gray-900 dark:text-white focus:outline-none focus:border-blue-500"
+            >
+              <option value="">Todos os cursos</option>
+              {courses.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.title}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+        <button
+          type="button"
+          onClick={handleExportCsv}
+          disabled={exporting || loading}
+          className="inline-flex items-center justify-center gap-2 px-3.5 py-2.5 text-sm font-medium rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white transition disabled:opacity-60 disabled:cursor-not-allowed"
+        >
+          {exporting ? (
+            <svg
+              className="w-4 h-4 animate-spin"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <circle
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="3"
+                className="opacity-25"
+              />
+              <path
+                d="M4 12a8 8 0 018-8"
+                stroke="currentColor"
+                strokeWidth="3"
+                strokeLinecap="round"
+              />
+            </svg>
+          ) : (
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"
+              />
+            </svg>
+          )}
+          <span>{exporting ? "Exportando..." : "Exportar CSV"}</span>
+        </button>
+      </div>
 
       <div className="relative mb-6">
         <svg

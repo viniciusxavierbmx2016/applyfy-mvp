@@ -12,6 +12,7 @@ export async function GET(request: Request) {
 
     const { searchParams } = new URL(request.url);
     const q = searchParams.get("q")?.trim() ?? "";
+    const courseIdFilter = searchParams.get("courseId")?.trim() || null;
 
     const searchClause = q
       ? {
@@ -50,32 +51,51 @@ export async function GET(request: Request) {
           : collabScope
         : workspaceCourseIds;
 
-    const where = workspaceId
-      ? staff.role === "COLLABORATOR"
-        ? {
-            ...searchClause,
-            enrollments: {
-              some: {
-                courseId: { in: scopedCourseIds || [] },
-                status: "ACTIVE" as const,
-              },
+    // If a specific course filter is provided, it must be within the staff's scope.
+    const effectiveCourseIds =
+      courseIdFilter &&
+      (scopedCourseIds === null || scopedCourseIds.includes(courseIdFilter))
+        ? [courseIdFilter]
+        : scopedCourseIds;
+
+    const courseFilterActive = !!courseIdFilter;
+
+    const where = courseFilterActive
+      ? {
+          ...searchClause,
+          enrollments: {
+            some: {
+              courseId: { in: effectiveCourseIds || [] },
+              status: "ACTIVE" as const,
             },
-          }
-        : {
-            ...searchClause,
-            OR: [
-              { workspaceId },
-              {
-                enrollments: {
-                  some: {
-                    courseId: { in: scopedCourseIds || [] },
-                    status: "ACTIVE" as const,
-                  },
+          },
+        }
+      : workspaceId
+        ? staff.role === "COLLABORATOR"
+          ? {
+              ...searchClause,
+              enrollments: {
+                some: {
+                  courseId: { in: scopedCourseIds || [] },
+                  status: "ACTIVE" as const,
                 },
               },
-            ],
-          }
-      : searchClause;
+            }
+          : {
+              ...searchClause,
+              OR: [
+                { workspaceId },
+                {
+                  enrollments: {
+                    some: {
+                      courseId: { in: scopedCourseIds || [] },
+                      status: "ACTIVE" as const,
+                    },
+                  },
+                },
+              ],
+            }
+        : searchClause;
 
     const users = await prisma.user.findMany({
       where,
@@ -91,9 +111,11 @@ export async function GET(request: Request) {
         createdAt: true,
         workspaceId: true,
         enrollments: {
-          where: workspaceId
-            ? { status: "ACTIVE", courseId: { in: scopedCourseIds || [] } }
-            : { status: "ACTIVE" },
+          where: courseFilterActive
+            ? { status: "ACTIVE", courseId: { in: effectiveCourseIds || [] } }
+            : workspaceId
+              ? { status: "ACTIVE", courseId: { in: scopedCourseIds || [] } }
+              : { status: "ACTIVE" },
           select: {
             id: true,
             courseId: true,
