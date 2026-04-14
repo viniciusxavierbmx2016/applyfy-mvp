@@ -232,7 +232,7 @@ export function DateRangeSelector({ value, onChange }: DateRangeSelectorProps) {
       </button>
 
       {open && (
-        <div className="absolute right-0 mt-2 w-72 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-xl z-50 overflow-hidden">
+        <div className="absolute right-0 mt-2 w-auto min-w-[200px] max-w-[250px] rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-xl z-50 overflow-hidden">
           <ul className="py-1 max-h-[min(70vh,480px)] overflow-y-auto">
             {OPTIONS.map((o) => {
               const active = value.option === o.id;
@@ -241,7 +241,7 @@ export function DateRangeSelector({ value, onChange }: DateRangeSelectorProps) {
                   <button
                     type="button"
                     onClick={() => pick(o.id)}
-                    className={`w-full flex items-center gap-2 px-4 py-2.5 text-sm text-left hover:bg-gray-50 dark:hover:bg-gray-800 transition ${
+                    className={`w-full flex items-center gap-2 px-3 py-2 text-sm text-left hover:bg-gray-50 dark:hover:bg-gray-800 transition ${
                       active ? "text-blue-600 dark:text-blue-400 font-medium" : "text-gray-700 dark:text-gray-300"
                     }`}
                   >
