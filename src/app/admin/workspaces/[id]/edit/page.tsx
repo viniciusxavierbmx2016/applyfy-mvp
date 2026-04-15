@@ -303,7 +303,12 @@ export default function EditWorkspacePage() {
   const previewSubtitle = loginSubtitle || "Acesse sua conta para continuar";
 
   return (
-    <div className="max-w-3xl mx-auto">
+    <div
+      className={cn(
+        "mx-auto",
+        tab === "login" ? "max-w-6xl" : "max-w-3xl"
+      )}
+    >
       <div className="mb-6">
         <Link
           href="/admin/workspaces"
@@ -460,10 +465,296 @@ export default function EditWorkspacePage() {
         )}
 
         {tab === "login" && (
-          <div className="space-y-6">
-            <div
+          <div className="grid gap-4 lg:grid-cols-[55fr_45fr] items-start">
+            {/* LEFT COLUMN — compact form */}
+            <div className="order-2 lg:order-none min-w-0 flex flex-col gap-3">
+              {/* Layout */}
+              <section className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-3">
+                <p className="text-xs uppercase tracking-wide text-gray-500 mb-2">
+                  Layout
+                </p>
+                <div className="flex gap-2">
+                  {(
+                    [
+                      { key: "central", label: "Central" },
+                      { key: "lateral-left", label: "Esq." },
+                      { key: "lateral-right", label: "Dir." },
+                    ] as const
+                  ).map((opt) => (
+                    <button
+                      key={opt.key}
+                      type="button"
+                      onClick={() => setLoginLayout(opt.key)}
+                      className={cn(
+                        "rounded-md border-2 p-1.5 transition w-20 flex flex-col items-center gap-1",
+                        loginLayout === opt.key
+                          ? "border-blue-500 bg-blue-500/5"
+                          : "border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700"
+                      )}
+                    >
+                      <div className="w-full h-[38px] rounded-sm overflow-hidden">
+                        <LayoutMini kind={opt.key} />
+                      </div>
+                      <span className="text-[11px] font-medium text-gray-900 dark:text-white">
+                        {opt.label}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </section>
+
+              {/* Cores */}
+              <section className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-3">
+                <p className="text-sm font-semibold text-gray-900 dark:text-white mb-2">
+                  Cores
+                </p>
+                <div className="grid grid-cols-2 gap-x-3 gap-y-2">
+                  <CompactColor
+                    label="Botões"
+                    value={loginPrimaryColor}
+                    fallback={DEFAULT_PRIMARY}
+                    onChange={setLoginPrimaryColor}
+                  />
+                  <CompactColor
+                    label="Links"
+                    value={loginLinkColor}
+                    fallback={DEFAULT_LINK}
+                    onChange={setLoginLinkColor}
+                  />
+                  <CompactColor
+                    label="Fundo"
+                    value={loginBgColor}
+                    fallback={DEFAULT_BG}
+                    onChange={setLoginBgColor}
+                  />
+                  <CompactColor
+                    label="Box"
+                    value={loginBoxColor}
+                    fallback={DEFAULT_BOX}
+                    onChange={setLoginBoxColor}
+                  />
+                  {(loginLayout === "lateral-left" ||
+                    loginLayout === "lateral-right") && (
+                    <CompactColor
+                      label="Lateral"
+                      value={loginSideColor}
+                      fallback={DEFAULT_SIDE}
+                      onChange={setLoginSideColor}
+                    />
+                  )}
+                </div>
+                <div className="mt-3">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-xs text-gray-600 dark:text-gray-400">
+                      Opacidade do box
+                    </span>
+                    <span className="text-xs font-mono text-gray-600 dark:text-gray-400">
+                      {Math.round(loginBoxOpacity * 100)}%
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min={0}
+                    max={100}
+                    step={1}
+                    value={Math.round(loginBoxOpacity * 100)}
+                    onChange={(e) =>
+                      setLoginBoxOpacity(Number(e.target.value) / 100)
+                    }
+                    className="w-full h-1 accent-blue-600"
+                  />
+                  <div
+                    className="mt-1.5 h-6 rounded"
+                    style={{
+                      backgroundColor: hexToRgba(
+                        HEX_RE.test(loginBoxColor) ? loginBoxColor : DEFAULT_BOX,
+                        loginBoxOpacity
+                      ),
+                      backgroundImage:
+                        "linear-gradient(45deg, rgba(127,127,127,0.15) 25%, transparent 25%, transparent 75%, rgba(127,127,127,0.15) 75%), linear-gradient(45deg, rgba(127,127,127,0.15) 25%, transparent 25%, transparent 75%, rgba(127,127,127,0.15) 75%)",
+                      backgroundSize: "10px 10px",
+                      backgroundPosition: "0 0, 5px 5px",
+                    }}
+                  />
+                </div>
+              </section>
+
+              {/* Imagens */}
+              <section className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-3">
+                <p className="text-sm font-semibold text-gray-900 dark:text-white mb-2">
+                  Imagens
+                </p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <p className="text-xs text-gray-500 mb-1">Fundo</p>
+                    <div className="flex items-center gap-2">
+                      <div
+                        className="w-[60px] h-10 rounded-md bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 bg-cover bg-center flex-shrink-0"
+                        style={
+                          loginBgImageUrl
+                            ? { backgroundImage: `url(${loginBgImageUrl})` }
+                            : HEX_RE.test(loginBgColor)
+                              ? { backgroundColor: loginBgColor }
+                              : {}
+                        }
+                      />
+                      <div className="flex flex-col gap-1 min-w-0 flex-1">
+                        <button
+                          type="button"
+                          onClick={() => bgFileRef.current?.click()}
+                          disabled={uploadingBg}
+                          className="px-2 py-1 text-xs font-medium bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded disabled:opacity-50"
+                        >
+                          {uploadingBg ? "..." : "Enviar"}
+                        </button>
+                        {loginBgImageUrl && (
+                          <button
+                            type="button"
+                            onClick={() => setLoginBgImageUrl(null)}
+                            className="px-2 py-1 text-xs font-medium text-red-600 dark:text-red-400 hover:bg-red-500/10 rounded"
+                          >
+                            Remover
+                          </button>
+                        )}
+                      </div>
+                      <input
+                        ref={bgFileRef}
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => {
+                          const f = e.target.files?.[0];
+                          e.target.value = "";
+                          if (f) uploadLoginImage(f, "bgImage");
+                        }}
+                      />
+                    </div>
+                    <p className="text-[10px] text-gray-500 mt-1">1920×1080</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500 mb-1">Logo</p>
+                    <div className="flex items-center gap-2">
+                      <div className="w-10 h-10 rounded-md bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 flex items-center justify-center overflow-hidden flex-shrink-0">
+                        {loginLogoUrl ? (
+                          <Image
+                            src={loginLogoUrl}
+                            alt=""
+                            width={40}
+                            height={40}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : logoUrl ? (
+                          <Image
+                            src={logoUrl}
+                            alt=""
+                            width={40}
+                            height={40}
+                            className="w-full h-full object-cover opacity-70"
+                          />
+                        ) : (
+                          <span className="text-sm font-bold text-gray-400">
+                            {name.charAt(0).toUpperCase() || "W"}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex flex-col gap-1 min-w-0 flex-1">
+                        <button
+                          type="button"
+                          onClick={() => loginLogoFileRef.current?.click()}
+                          disabled={uploadingLoginLogo}
+                          className="px-2 py-1 text-xs font-medium bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded disabled:opacity-50"
+                        >
+                          {uploadingLoginLogo ? "..." : "Enviar"}
+                        </button>
+                        {loginLogoUrl && (
+                          <button
+                            type="button"
+                            onClick={() => setLoginLogoUrl(null)}
+                            className="px-2 py-1 text-xs font-medium text-red-600 dark:text-red-400 hover:bg-red-500/10 rounded"
+                          >
+                            Remover
+                          </button>
+                        )}
+                      </div>
+                      <input
+                        ref={loginLogoFileRef}
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => {
+                          const f = e.target.files?.[0];
+                          e.target.value = "";
+                          if (f) uploadLoginImage(f, "loginLogo");
+                        }}
+                      />
+                    </div>
+                    <p className="text-[10px] text-gray-500 mt-1">200×200</p>
+                  </div>
+                </div>
+              </section>
+
+              {/* Textos */}
+              <section className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-3">
+                <p className="text-sm font-semibold text-gray-900 dark:text-white mb-2">
+                  Textos
+                </p>
+                <div className="space-y-2">
+                  <div>
+                    <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">
+                      Título
+                    </label>
+                    <input
+                      type="text"
+                      value={loginTitle}
+                      onChange={(e) => setLoginTitle(e.target.value)}
+                      placeholder="Bem-vindo"
+                      maxLength={80}
+                      className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-md text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">
+                      Subtítulo
+                    </label>
+                    <input
+                      type="text"
+                      value={loginSubtitle}
+                      onChange={(e) => setLoginSubtitle(e.target.value)}
+                      placeholder="Acesse sua conta"
+                      maxLength={120}
+                      className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-md text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                </div>
+              </section>
+
+              {error && (
+                <p className="text-sm text-red-500" role="alert">
+                  {error}
+                </p>
+              )}
+
+              <div className="flex justify-end gap-2 pt-1">
+                <Link
+                  href="/admin/workspaces"
+                  className="px-3 py-2 text-xs font-medium bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-md"
+                >
+                  Cancelar
+                </Link>
+                <button
+                  type="submit"
+                  disabled={saving || !name.trim()}
+                  className="px-3 py-2 text-xs font-medium bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-md"
+                >
+                  {saving ? "Salvando..." : "Salvar alterações"}
+                </button>
+              </div>
+            </div>
+
+            {/* RIGHT COLUMN — sticky preview */}
+            <aside
               ref={previewRef}
-              className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-4 shadow-sm max-w-2xl mx-auto"
+              className="order-1 lg:order-none lg:sticky lg:top-20 self-start w-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-3 shadow-sm"
             >
               <p className="text-xs font-semibold text-gray-900 dark:text-white mb-2">
                 Pré-visualização
@@ -511,451 +802,33 @@ export default function EditWorkspacePage() {
               <p className="text-[11px] text-gray-500 mt-2 text-center">
                 Atualiza automaticamente conforme você edita
               </p>
-            </div>
-
-            <div className="space-y-6">
-              {/* Layout */}
-              <section className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-5 sm:p-6">
-                <h2 className="text-sm font-semibold text-gray-900 dark:text-white mb-1">
-                  Layout
-                </h2>
-                <p className="text-xs text-gray-500 mb-4">
-                  Escolha como o formulário de login aparece na tela
-                </p>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  {(
-                    [
-                      { key: "central", label: "Central" },
-                      { key: "lateral-left", label: "Lateral esquerda" },
-                      { key: "lateral-right", label: "Lateral direita" },
-                    ] as const
-                  ).map((opt) => (
-                    <button
-                      key={opt.key}
-                      type="button"
-                      onClick={() => setLoginLayout(opt.key)}
-                      className={cn(
-                        "group rounded-lg border-2 p-3 text-left transition",
-                        loginLayout === opt.key
-                          ? "border-blue-500 bg-blue-500/5"
-                          : "border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700"
-                      )}
-                    >
-                      <LayoutMini kind={opt.key} />
-                      <p className="mt-2 text-xs font-medium text-gray-900 dark:text-white">
-                        {opt.label}
-                      </p>
-                    </button>
-                  ))}
-                </div>
-              </section>
-
-              {/* Cores */}
-              <section className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-5 sm:p-6 space-y-5">
-                <div>
-                  <h2 className="text-sm font-semibold text-gray-900 dark:text-white mb-1">
-                    Cores
-                  </h2>
-                  <p className="text-xs text-gray-500">
-                    Personalize as cores da tela de login
-                  </p>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                    Cor dos botões
-                  </label>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="color"
-                      value={
-                        HEX_RE.test(loginPrimaryColor)
-                          ? loginPrimaryColor
-                          : DEFAULT_PRIMARY
-                      }
-                      onChange={(e) => setLoginPrimaryColor(e.target.value)}
-                      className="w-12 h-10 rounded-lg border border-gray-300 dark:border-gray-700 bg-transparent cursor-pointer"
-                    />
-                    <input
-                      type="text"
-                      value={loginPrimaryColor}
-                      onChange={(e) => setLoginPrimaryColor(e.target.value)}
-                      placeholder={DEFAULT_PRIMARY}
-                      className="flex-1 px-3 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm font-mono text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-                  <div className="mt-3">
-                    <button
-                      type="button"
-                      disabled
-                      style={{
-                        backgroundColor: HEX_RE.test(loginPrimaryColor)
-                          ? loginPrimaryColor
-                          : DEFAULT_PRIMARY,
-                      }}
-                      className="px-4 py-2 text-sm font-medium text-white rounded-lg shadow"
-                    >
-                      Entrar
-                    </button>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                    Cor dos links
-                  </label>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="color"
-                      value={
-                        HEX_RE.test(loginLinkColor)
-                          ? loginLinkColor
-                          : DEFAULT_LINK
-                      }
-                      onChange={(e) => setLoginLinkColor(e.target.value)}
-                      className="w-12 h-10 rounded-lg border border-gray-300 dark:border-gray-700 bg-transparent cursor-pointer"
-                    />
-                    <input
-                      type="text"
-                      value={loginLinkColor}
-                      onChange={(e) => setLoginLinkColor(e.target.value)}
-                      placeholder={DEFAULT_LINK}
-                      className="flex-1 px-3 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm font-mono text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-                  <div
-                    className="mt-2 text-sm font-medium underline"
-                    style={{
-                      color: HEX_RE.test(loginLinkColor)
-                        ? loginLinkColor
-                        : DEFAULT_LINK,
-                    }}
-                  >
-                    Esqueci minha senha
-                  </div>
-                  <p className="text-[11px] text-gray-500 mt-1.5">
-                    Cor dos textos como &ldquo;Esqueci minha senha&rdquo; e
-                    &ldquo;Criar conta&rdquo;
-                  </p>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                    Cor de fundo
-                  </label>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="color"
-                      value={
-                        HEX_RE.test(loginBgColor) ? loginBgColor : DEFAULT_BG
-                      }
-                      onChange={(e) => setLoginBgColor(e.target.value)}
-                      className="w-12 h-10 rounded-lg border border-gray-300 dark:border-gray-700 bg-transparent cursor-pointer"
-                    />
-                    <input
-                      type="text"
-                      value={loginBgColor}
-                      onChange={(e) => setLoginBgColor(e.target.value)}
-                      placeholder={DEFAULT_BG}
-                      className="flex-1 px-3 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm font-mono text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-                  <p className="text-[11px] text-gray-500 mt-1.5">
-                    Usada quando não há imagem de fundo
-                  </p>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                    Cor do box do login
-                  </label>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="color"
-                      value={
-                        HEX_RE.test(loginBoxColor) ? loginBoxColor : DEFAULT_BOX
-                      }
-                      onChange={(e) => setLoginBoxColor(e.target.value)}
-                      className="w-12 h-10 rounded-lg border border-gray-300 dark:border-gray-700 bg-transparent cursor-pointer"
-                    />
-                    <input
-                      type="text"
-                      value={loginBoxColor}
-                      onChange={(e) => setLoginBoxColor(e.target.value)}
-                      placeholder={DEFAULT_BOX}
-                      className="flex-1 px-3 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm font-mono text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-                  <div className="mt-3">
-                    <div className="flex items-center justify-between mb-1.5">
-                      <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
-                        Opacidade
-                      </span>
-                      <span className="text-xs font-mono text-gray-600 dark:text-gray-400">
-                        {Math.round(loginBoxOpacity * 100)}%
-                      </span>
-                    </div>
-                    <input
-                      type="range"
-                      min={0}
-                      max={100}
-                      step={1}
-                      value={Math.round(loginBoxOpacity * 100)}
-                      onChange={(e) =>
-                        setLoginBoxOpacity(Number(e.target.value) / 100)
-                      }
-                      className="w-full accent-blue-600"
-                    />
-                  </div>
-                  <div
-                    className="mt-3 h-10 rounded-lg border border-gray-200 dark:border-gray-700"
-                    style={{
-                      backgroundColor: hexToRgba(
-                        HEX_RE.test(loginBoxColor) ? loginBoxColor : DEFAULT_BOX,
-                        loginBoxOpacity
-                      ),
-                      backgroundImage:
-                        "linear-gradient(45deg, rgba(127,127,127,0.15) 25%, transparent 25%, transparent 75%, rgba(127,127,127,0.15) 75%), linear-gradient(45deg, rgba(127,127,127,0.15) 25%, transparent 25%, transparent 75%, rgba(127,127,127,0.15) 75%)",
-                      backgroundSize: "14px 14px",
-                      backgroundPosition: "0 0, 7px 7px",
-                    }}
-                  />
-                  <p className="text-[11px] text-gray-500 mt-1.5">
-                    Cor e transparência do card em volta do formulário
-                  </p>
-                </div>
-
-                {(loginLayout === "lateral-left" ||
-                  loginLayout === "lateral-right") && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                      Cor de fundo lateral
-                    </label>
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="color"
-                        value={
-                          HEX_RE.test(loginSideColor)
-                            ? loginSideColor
-                            : DEFAULT_SIDE
-                        }
-                        onChange={(e) => setLoginSideColor(e.target.value)}
-                        className="w-12 h-10 rounded-lg border border-gray-300 dark:border-gray-700 bg-transparent cursor-pointer"
-                      />
-                      <input
-                        type="text"
-                        value={loginSideColor}
-                        onChange={(e) => setLoginSideColor(e.target.value)}
-                        placeholder={DEFAULT_SIDE}
-                        className="flex-1 px-3 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm font-mono text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      />
-                    </div>
-                    <p className="text-[11px] text-gray-500 mt-1.5">
-                      Cor do fundo ao lado da imagem nos layouts laterais
-                    </p>
-                  </div>
-                )}
-              </section>
-
-              {/* Imagens */}
-              <section className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-5 sm:p-6 space-y-5">
-                <div>
-                  <h2 className="text-sm font-semibold text-gray-900 dark:text-white mb-1">
-                    Imagens
-                  </h2>
-                  <p className="text-xs text-gray-500">
-                    Imagem de fundo e logo exclusiva para o login
-                  </p>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Imagem de fundo
-                  </label>
-                  <div className="flex items-start gap-4">
-                    <div
-                      className="w-32 h-20 rounded-lg bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 overflow-hidden bg-cover bg-center flex-shrink-0"
-                      style={
-                        loginBgImageUrl
-                          ? { backgroundImage: `url(${loginBgImageUrl})` }
-                          : HEX_RE.test(loginBgColor)
-                            ? { backgroundColor: loginBgColor }
-                            : {}
-                      }
-                    />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex flex-wrap gap-2">
-                        <button
-                          type="button"
-                          onClick={() => bgFileRef.current?.click()}
-                          disabled={uploadingBg}
-                          className="px-3.5 py-2 text-xs font-medium bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg disabled:opacity-50"
-                        >
-                          {uploadingBg ? "Enviando..." : "Enviar imagem"}
-                        </button>
-                        {loginBgImageUrl && (
-                          <button
-                            type="button"
-                            onClick={() => setLoginBgImageUrl(null)}
-                            className="px-3.5 py-2 text-xs font-medium text-red-600 dark:text-red-400 hover:bg-red-500/10 rounded-lg"
-                          >
-                            Remover
-                          </button>
-                        )}
-                      </div>
-                      <p className="text-[11px] text-gray-500 mt-1.5">
-                        Tamanho ideal: 1920x1080px. Aparece atrás do formulário.
-                      </p>
-                      <input
-                        ref={bgFileRef}
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={(e) => {
-                          const f = e.target.files?.[0];
-                          e.target.value = "";
-                          if (f) uploadLoginImage(f, "bgImage");
-                        }}
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Logo do login
-                  </label>
-                  <div className="flex items-start gap-4">
-                    <div className="w-16 h-16 rounded-xl bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 flex items-center justify-center overflow-hidden flex-shrink-0">
-                      {loginLogoUrl ? (
-                        <Image
-                          src={loginLogoUrl}
-                          alt="Logo do login"
-                          width={64}
-                          height={64}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : logoUrl ? (
-                        <Image
-                          src={logoUrl}
-                          alt="Logo do workspace"
-                          width={64}
-                          height={64}
-                          className="w-full h-full object-cover opacity-70"
-                        />
-                      ) : (
-                        <span className="text-xl font-bold text-gray-400">
-                          {name.charAt(0).toUpperCase() || "W"}
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex flex-wrap gap-2">
-                        <button
-                          type="button"
-                          onClick={() => loginLogoFileRef.current?.click()}
-                          disabled={uploadingLoginLogo}
-                          className="px-3.5 py-2 text-xs font-medium bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg disabled:opacity-50"
-                        >
-                          {uploadingLoginLogo ? "Enviando..." : "Enviar logo"}
-                        </button>
-                        {loginLogoUrl && (
-                          <button
-                            type="button"
-                            onClick={() => setLoginLogoUrl(null)}
-                            className="px-3.5 py-2 text-xs font-medium text-red-600 dark:text-red-400 hover:bg-red-500/10 rounded-lg"
-                          >
-                            Remover
-                          </button>
-                        )}
-                      </div>
-                      <p className="text-[11px] text-gray-500 mt-1.5">
-                        Tamanho ideal: 200x200px. Se vazio, usa a logo do workspace.
-                      </p>
-                      <input
-                        ref={loginLogoFileRef}
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={(e) => {
-                          const f = e.target.files?.[0];
-                          e.target.value = "";
-                          if (f) uploadLoginImage(f, "loginLogo");
-                        }}
-                      />
-                    </div>
-                  </div>
-                </div>
-              </section>
-
-              {/* Textos */}
-              <section className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-5 sm:p-6 space-y-5">
-                <div>
-                  <h2 className="text-sm font-semibold text-gray-900 dark:text-white mb-1">
-                    Textos
-                  </h2>
-                  <p className="text-xs text-gray-500">
-                    Mensagens que aparecem na tela de login
-                  </p>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                    Título de boas-vindas
-                  </label>
-                  <input
-                    type="text"
-                    value={loginTitle}
-                    onChange={(e) => setLoginTitle(e.target.value)}
-                    placeholder="Bem-vindo à nossa plataforma"
-                    maxLength={80}
-                    className="w-full px-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                  <p className="text-[11px] text-gray-500 mt-1.5">
-                    Aparece acima do formulário de login
-                  </p>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                    Subtítulo
-                  </label>
-                  <input
-                    type="text"
-                    value={loginSubtitle}
-                    onChange={(e) => setLoginSubtitle(e.target.value)}
-                    placeholder="Acesse sua conta para continuar"
-                    maxLength={120}
-                    className="w-full px-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-              </section>
-            </div>
-
+            </aside>
           </div>
         )}
 
-        {error && (
+        {tab !== "login" && error && (
           <p className="text-sm text-red-500" role="alert">
             {error}
           </p>
         )}
 
-        <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
-          <Link
-            href="/admin/workspaces"
-            className="px-4 py-2.5 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-lg text-center"
-          >
-            Cancelar
-          </Link>
-          <button
-            type="submit"
-            disabled={saving || !name.trim()}
-            className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-sm font-medium rounded-lg"
-          >
-            {saving ? "Salvando..." : "Salvar alterações"}
-          </button>
-        </div>
+        {tab !== "login" && (
+          <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
+            <Link
+              href="/admin/workspaces"
+              className="px-4 py-2.5 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-lg text-center"
+            >
+              Cancelar
+            </Link>
+            <button
+              type="submit"
+              disabled={saving || !name.trim()}
+              className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-sm font-medium rounded-lg"
+            >
+              {saving ? "Salvando..." : "Salvar alterações"}
+            </button>
+          </div>
+        )}
       </form>
 
       {toast && (
@@ -991,24 +864,59 @@ export default function EditWorkspacePage() {
   );
 }
 
+function CompactColor({
+  label,
+  value,
+  fallback,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  fallback: string;
+  onChange: (v: string) => void;
+}) {
+  return (
+    <div>
+      <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">
+        {label}
+      </label>
+      <div className="flex items-center gap-1.5">
+        <input
+          type="color"
+          value={HEX_RE.test(value) ? value : fallback}
+          onChange={(e) => onChange(e.target.value)}
+          className="w-6 h-6 rounded border border-gray-300 dark:border-gray-700 bg-transparent cursor-pointer flex-shrink-0"
+        />
+        <input
+          type="text"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={fallback}
+          className="flex-1 min-w-0 px-2 py-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded text-xs font-mono text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+      </div>
+    </div>
+  );
+}
+
 function LayoutMini({ kind }: { kind: LoginLayout }) {
   if (kind === "central") {
     return (
-      <div className="h-14 rounded bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 flex items-center justify-center">
-        <div className="w-8 h-8 rounded bg-white dark:bg-gray-600 border border-gray-300 dark:border-gray-500" />
+      <div className="w-full h-full rounded-sm bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 flex items-center justify-center">
+        <div className="w-5 h-5 rounded-sm bg-white dark:bg-gray-600 border border-gray-300 dark:border-gray-500" />
       </div>
     );
   }
   if (kind === "lateral-left") {
     return (
-      <div className="h-14 rounded border border-gray-200 dark:border-gray-700 flex overflow-hidden">
+      <div className="w-full h-full rounded-sm border border-gray-200 dark:border-gray-700 flex overflow-hidden">
         <div className="w-1/2 bg-white dark:bg-gray-600 border-r border-gray-300 dark:border-gray-500" />
         <div className="w-1/2 bg-gray-200 dark:bg-gray-800" />
       </div>
     );
   }
   return (
-    <div className="h-14 rounded border border-gray-200 dark:border-gray-700 flex overflow-hidden">
+    <div className="w-full h-full rounded-sm border border-gray-200 dark:border-gray-700 flex overflow-hidden">
       <div className="w-1/2 bg-gray-200 dark:bg-gray-800" />
       <div className="w-1/2 bg-white dark:bg-gray-600 border-l border-gray-300 dark:border-gray-500" />
     </div>
