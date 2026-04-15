@@ -1,7 +1,6 @@
 "use client";
 
-import { createContext, useContext } from "react";
-import { ThemeProvider as NextThemesProvider } from "next-themes";
+import { createContext, useContext, useEffect } from "react";
 
 const Ctx = createContext<{ locked: boolean }>({ locked: false });
 
@@ -18,22 +17,46 @@ export function WorkspaceThemeLock({
 }) {
   const locked = forceTheme === "light" || forceTheme === "dark";
 
-  // When locked, nest a NextThemesProvider with `forcedTheme` so the forced
-  // value is applied without touching localStorage — preserves the student's
-  // own preference for non-locked workspaces. When unlocked, render children
-  // unchanged so the root ThemeProvider (defaultTheme="dark") keeps control.
-  const content = locked ? (
-    <NextThemesProvider
-      attribute="class"
-      enableSystem={false}
-      storageKey="applyfy-theme"
-      forcedTheme={forceTheme as "light" | "dark"}
-    >
-      {children}
-    </NextThemesProvider>
-  ) : (
-    children
-  );
+  useEffect(() => {
+    if (!locked) return;
+    const theme = forceTheme as "light" | "dark";
+    const html = document.documentElement;
 
-  return <Ctx.Provider value={{ locked }}>{content}</Ctx.Provider>;
+    // next-themes manages "class" (adds "light"/"dark"), "data-theme", and
+    // `style.color-scheme`. We mirror all three so the forced theme wins
+    // regardless of which hook the rest of the app reads from.
+    const apply = () => {
+      if (!html.classList.contains(theme)) {
+        html.classList.remove("light", "dark");
+        html.classList.add(theme);
+      }
+      if (html.getAttribute("data-theme") !== theme) {
+        html.setAttribute("data-theme", theme);
+      }
+      if (html.style.colorScheme !== theme) {
+        html.style.colorScheme = theme;
+      }
+    };
+
+    apply();
+
+    // Root ThemeProvider re-applies its own class on hydration, storage events,
+    // and any setTheme call. Watch the <html> element and re-force on any
+    // mutation to class / data-theme / style so the lock wins every round.
+    const observer = new MutationObserver(() => apply());
+    observer.observe(html, {
+      attributes: true,
+      attributeFilter: ["class", "data-theme", "style"],
+    });
+
+    return () => {
+      observer.disconnect();
+      // Don't restore the previous class manually — the root ThemeProvider
+      // will re-apply its own state (from localStorage) on the next render
+      // when the lock unmounts, so any DOM change triggers its effect.
+      html.classList.remove(theme);
+    };
+  }, [locked, forceTheme]);
+
+  return <Ctx.Provider value={{ locked }}>{children}</Ctx.Provider>;
 }
