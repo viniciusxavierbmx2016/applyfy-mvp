@@ -86,6 +86,24 @@ export default function EditWorkspacePage() {
   const logoFileRef = useRef<HTMLInputElement>(null);
   const bgFileRef = useRef<HTMLInputElement>(null);
   const loginLogoFileRef = useRef<HTMLInputElement>(null);
+  const previewRef = useRef<HTMLDivElement>(null);
+  const [previewVisible, setPreviewVisible] = useState(true);
+
+  useEffect(() => {
+    if (tab !== "login") return;
+    const el = previewRef.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      ([entry]) => setPreviewVisible(entry.isIntersecting),
+      { threshold: 0.1 }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [tab]);
+
+  function scrollToPreview() {
+    previewRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
 
   useEffect(() => {
     fetch("/api/workspaces")
@@ -285,12 +303,7 @@ export default function EditWorkspacePage() {
   const previewSubtitle = loginSubtitle || "Acesse sua conta para continuar";
 
   return (
-    <div
-      className={cn(
-        "mx-auto",
-        tab === "login" ? "max-w-6xl" : "max-w-3xl"
-      )}
-    >
+    <div className="max-w-3xl mx-auto">
       <div className="mb-6">
         <Link
           href="/admin/workspaces"
@@ -447,8 +460,60 @@ export default function EditWorkspacePage() {
         )}
 
         {tab === "login" && (
-          <div className="grid gap-6 lg:grid-cols-[3fr_2fr] items-start">
-            <div className="order-2 lg:order-none lg:col-start-1 lg:row-start-1 space-y-6 min-w-0">
+          <div className="space-y-6">
+            <div
+              ref={previewRef}
+              className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-4 shadow-sm max-w-2xl mx-auto"
+            >
+              <p className="text-xs font-semibold text-gray-900 dark:text-white mb-2">
+                Pré-visualização
+              </p>
+              <div className="rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800">
+                <div className="h-8 px-3 bg-gray-200 dark:bg-gray-800 flex items-center gap-2">
+                  <div className="flex gap-1.5">
+                    <div className="w-2 h-2 rounded-full bg-red-400" />
+                    <div className="w-2 h-2 rounded-full bg-yellow-400" />
+                    <div className="w-2 h-2 rounded-full bg-green-400" />
+                  </div>
+                  <div className="flex-1 mx-2 h-5 rounded-full bg-gray-300 dark:bg-gray-700 flex items-center justify-center px-3 overflow-hidden">
+                    <span className="text-xs text-gray-500 truncate">
+                      applyfy-mvp.vercel.app/w/{ws?.slug || ""}/login
+                    </span>
+                  </div>
+                </div>
+                <LoginPreview
+                  layout={loginLayout}
+                  bgColor={
+                    HEX_RE.test(loginBgColor) ? loginBgColor : DEFAULT_BG
+                  }
+                  primaryColor={
+                    HEX_RE.test(loginPrimaryColor)
+                      ? loginPrimaryColor
+                      : DEFAULT_PRIMARY
+                  }
+                  boxColor={
+                    HEX_RE.test(loginBoxColor) ? loginBoxColor : DEFAULT_BOX
+                  }
+                  boxOpacity={loginBoxOpacity}
+                  sideColor={
+                    HEX_RE.test(loginSideColor) ? loginSideColor : DEFAULT_SIDE
+                  }
+                  linkColor={
+                    HEX_RE.test(loginLinkColor) ? loginLinkColor : DEFAULT_LINK
+                  }
+                  bgImageUrl={loginBgImageUrl}
+                  logoUrl={previewLogo}
+                  logoFallback={name.charAt(0).toUpperCase() || "W"}
+                  title={previewTitle}
+                  subtitle={previewSubtitle}
+                />
+              </div>
+              <p className="text-[11px] text-gray-500 mt-2 text-center">
+                Atualiza automaticamente conforme você edita
+              </p>
+            </div>
+
+            <div className="space-y-6">
               {/* Layout */}
               <section className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-5 sm:p-6">
                 <h2 className="text-sm font-semibold text-gray-900 dark:text-white mb-1">
@@ -867,43 +932,6 @@ export default function EditWorkspacePage() {
               </section>
             </div>
 
-            {/* Preview sticky — right on desktop, top on mobile */}
-            <aside className="order-1 lg:order-none lg:col-start-2 lg:row-start-1 lg:sticky lg:top-20 self-start w-full">
-              <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-4 shadow-sm">
-                <p className="text-xs font-semibold text-gray-900 dark:text-white mb-2">
-                  Pré-visualização
-                </p>
-                <LoginPreview
-                  layout={loginLayout}
-                  bgColor={
-                    HEX_RE.test(loginBgColor) ? loginBgColor : DEFAULT_BG
-                  }
-                  primaryColor={
-                    HEX_RE.test(loginPrimaryColor)
-                      ? loginPrimaryColor
-                      : DEFAULT_PRIMARY
-                  }
-                  boxColor={
-                    HEX_RE.test(loginBoxColor) ? loginBoxColor : DEFAULT_BOX
-                  }
-                  boxOpacity={loginBoxOpacity}
-                  sideColor={
-                    HEX_RE.test(loginSideColor) ? loginSideColor : DEFAULT_SIDE
-                  }
-                  linkColor={
-                    HEX_RE.test(loginLinkColor) ? loginLinkColor : DEFAULT_LINK
-                  }
-                  bgImageUrl={loginBgImageUrl}
-                  logoUrl={previewLogo}
-                  logoFallback={name.charAt(0).toUpperCase() || "W"}
-                  title={previewTitle}
-                  subtitle={previewSubtitle}
-                />
-                <p className="text-[11px] text-gray-500 mt-2">
-                  Atualiza automaticamente conforme você edita
-                </p>
-              </div>
-            </aside>
           </div>
         )}
 
@@ -934,6 +962,30 @@ export default function EditWorkspacePage() {
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-5 py-3 bg-blue-600 text-white rounded-lg shadow-xl text-sm font-medium">
           {toast}
         </div>
+      )}
+
+      {tab === "login" && !previewVisible && (
+        <button
+          type="button"
+          onClick={scrollToPreview}
+          className="fixed bottom-6 right-6 z-40 inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium shadow-xl transition"
+        >
+          <svg
+            className="w-4 h-4"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"
+            />
+            <circle cx="12" cy="12" r="3" strokeWidth={2} />
+          </svg>
+          Ver preview
+        </button>
       )}
     </div>
   );
@@ -990,7 +1042,23 @@ function LoginPreview({
   title: string;
   subtitle: string;
 }) {
-  const bgStyle = bgImageUrl
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(0.7);
+
+  useEffect(() => {
+    const el = wrapperRef.current;
+    if (!el) return;
+    const update = () => {
+      const w = el.offsetWidth;
+      if (w > 0) setScale(w / 900);
+    };
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  const bgStyle: React.CSSProperties = bgImageUrl
     ? {
         backgroundImage: `url(${bgImageUrl})`,
         backgroundSize: "cover",
@@ -1002,88 +1070,126 @@ function LoginPreview({
 
   const form = (
     <div
-      className="backdrop-blur rounded-lg p-3 w-[140px] shadow-lg border border-white/10"
+      className="backdrop-blur-xl rounded-2xl p-7 w-[400px] shadow-2xl border border-white/10"
       style={{ backgroundColor: boxBg }}
     >
-      <div className="flex justify-center mb-1.5">
-        <div className="w-8 h-8 rounded-md bg-white/10 flex items-center justify-center overflow-hidden">
+      <div className="flex flex-col items-center text-center mb-6">
+        <div className="w-16 h-16 rounded-2xl bg-white/10 backdrop-blur flex items-center justify-center overflow-hidden mb-3 border border-white/10">
           {logoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={logoUrl} alt="" className="w-full h-full object-cover" />
+            <img
+              src={logoUrl}
+              alt=""
+              className="w-full h-full object-cover"
+            />
           ) : (
-            <span className="text-[10px] font-bold text-white">
+            <span className="text-2xl font-bold text-white">
               {logoFallback}
             </span>
           )}
         </div>
+        <h1 className="text-2xl font-bold text-white leading-tight break-words">
+          {title}
+        </h1>
+        {subtitle && (
+          <p className="text-sm text-white/70 mt-1.5 break-words">
+            {subtitle}
+          </p>
+        )}
       </div>
-      <p className="text-[9px] font-semibold text-white text-center leading-tight truncate">
-        {title}
-      </p>
-      <p className="text-[7px] text-white/70 text-center leading-tight mb-2 truncate">
-        {subtitle}
-      </p>
-      <div className="h-2 rounded bg-white/20 mb-1" />
-      <div className="h-2 rounded bg-white/20 mb-2" />
-      <div
-        className="h-2.5 rounded"
-        style={{ backgroundColor: primaryColor }}
-      />
-      <div className="flex justify-between mt-1.5">
-        <span
-          className="text-[6px] underline"
-          style={{ color: linkColor }}
+      <div className="space-y-4">
+        <div>
+          <div className="block text-sm font-medium text-white/80 mb-1">
+            Email
+          </div>
+          <div className="w-full h-[46px] bg-white/10 border border-white/15 rounded-lg" />
+        </div>
+        <div>
+          <div className="block text-sm font-medium text-white/80 mb-1">
+            Senha
+          </div>
+          <div className="w-full h-[46px] bg-white/10 border border-white/15 rounded-lg" />
+        </div>
+        <div
+          className="w-full h-[46px] rounded-lg flex items-center justify-center text-white font-medium shadow-lg"
+          style={{ backgroundColor: primaryColor }}
         >
-          Esqueci senha
-        </span>
-        <span
-          className="text-[6px] underline"
-          style={{ color: linkColor }}
-        >
-          Criar conta
-        </span>
+          Entrar
+        </div>
+        <div className="flex items-center justify-between text-sm pt-1">
+          <span className="underline" style={{ color: linkColor }}>
+            Esqueci minha senha
+          </span>
+          <span className="underline" style={{ color: linkColor }}>
+            Criar conta
+          </span>
+        </div>
       </div>
     </div>
   );
 
+  let scene: React.ReactNode;
   if (layout === "central") {
-    return (
+    scene = (
       <div
-        className="w-full aspect-[16/10] rounded-lg overflow-hidden flex items-center justify-center relative"
+        className="w-[900px] h-[560px] flex items-center justify-center relative"
         style={bgStyle}
       >
         {bgImageUrl && (
-          <div className="absolute inset-0 bg-black/40" aria-hidden />
+          <div className="absolute inset-0 bg-black/55" aria-hidden />
         )}
         <div className="relative">{form}</div>
       </div>
     );
+  } else {
+    const formPane = (
+      <div
+        className="w-[450px] h-full flex items-center justify-center relative"
+        style={{ backgroundColor: sideColor }}
+      >
+        {form}
+      </div>
+    );
+    const imagePane = (
+      <div className="w-[450px] h-full relative" style={bgStyle}>
+        {bgImageUrl && (
+          <div className="absolute inset-0 bg-black/30" aria-hidden />
+        )}
+      </div>
+    );
+    scene = (
+      <div className="w-[900px] h-[560px] flex">
+        {layout === "lateral-left" ? (
+          <>
+            {formPane}
+            {imagePane}
+          </>
+        ) : (
+          <>
+            {imagePane}
+            {formPane}
+          </>
+        )}
+      </div>
+    );
   }
 
-  const leftIsForm = layout === "lateral-left";
-  const formPane = (
-    <div
-      className="w-1/2 flex items-center justify-center p-2"
-      style={{ backgroundColor: sideColor }}
-    >
-      {form}
-    </div>
-  );
-  const imagePane = <div className="w-1/2" style={bgStyle} />;
-
   return (
-    <div className="w-full aspect-[16/10] rounded-lg overflow-hidden flex">
-      {leftIsForm ? (
-        <>
-          {formPane}
-          {imagePane}
-        </>
-      ) : (
-        <>
-          {imagePane}
-          {formPane}
-        </>
-      )}
+    <div
+      ref={wrapperRef}
+      className="w-full overflow-hidden bg-gray-100 dark:bg-gray-950"
+      style={{ height: 560 * scale }}
+    >
+      <div
+        style={{
+          width: 900,
+          height: 560,
+          transform: `scale(${scale})`,
+          transformOrigin: "top left",
+        }}
+      >
+        {scene}
+      </div>
     </div>
   );
 }
