@@ -18,6 +18,7 @@ const geistMono = localFont({
 export const metadata: Metadata = {
   title: "Applyfy - Área de Membros",
   description: "Plataforma de cursos online com comunidade integrada",
+  icons: { icon: "/applyfy-logo.png" },
 };
 
 export default function RootLayout({
