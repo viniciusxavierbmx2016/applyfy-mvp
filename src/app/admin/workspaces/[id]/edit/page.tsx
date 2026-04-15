@@ -465,11 +465,11 @@ export default function EditWorkspacePage() {
         )}
 
         {tab === "login" && (
-          <div className="grid gap-4 lg:grid-cols-[55fr_45fr] items-start">
+          <div className="grid gap-6 lg:grid-cols-[50fr_50fr] items-start">
             {/* LEFT COLUMN — compact form */}
             <div className="order-2 lg:order-none min-w-0 flex flex-col gap-3">
               {/* Layout */}
-              <section className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-3">
+              <section className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-4">
                 <p className="text-xs uppercase tracking-wide text-gray-500 mb-2">
                   Layout
                 </p>
@@ -504,11 +504,11 @@ export default function EditWorkspacePage() {
               </section>
 
               {/* Cores */}
-              <section className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-3">
+              <section className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-4">
                 <p className="text-sm font-semibold text-gray-900 dark:text-white mb-2">
                   Cores
                 </p>
-                <div className="grid grid-cols-2 gap-x-3 gap-y-2">
+                <div className="space-y-2">
                   <CompactColor
                     label="Botões"
                     value={loginPrimaryColor}
@@ -580,121 +580,117 @@ export default function EditWorkspacePage() {
               </section>
 
               {/* Imagens */}
-              <section className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-3">
+              <section className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-4">
                 <p className="text-sm font-semibold text-gray-900 dark:text-white mb-2">
                   Imagens
                 </p>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <p className="text-xs text-gray-500 mb-1">Fundo</p>
-                    <div className="flex items-center gap-2">
-                      <div
-                        className="w-[60px] h-10 rounded-md bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 bg-cover bg-center flex-shrink-0"
-                        style={
-                          loginBgImageUrl
-                            ? { backgroundImage: `url(${loginBgImageUrl})` }
-                            : HEX_RE.test(loginBgColor)
-                              ? { backgroundColor: loginBgColor }
-                              : {}
-                        }
-                      />
-                      <div className="flex flex-col gap-1 min-w-0 flex-1">
+                    <p className="text-xs text-gray-500 mb-1.5">Fundo</p>
+                    <div
+                      className="w-full h-20 rounded-md bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 bg-cover bg-center mb-2"
+                      style={
+                        loginBgImageUrl
+                          ? { backgroundImage: `url(${loginBgImageUrl})` }
+                          : HEX_RE.test(loginBgColor)
+                            ? { backgroundColor: loginBgColor }
+                            : {}
+                      }
+                    />
+                    <div className="flex flex-wrap gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => bgFileRef.current?.click()}
+                        disabled={uploadingBg}
+                        className="px-3 py-1.5 text-xs font-medium bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded disabled:opacity-50"
+                      >
+                        {uploadingBg ? "Enviando..." : "Enviar"}
+                      </button>
+                      {loginBgImageUrl && (
                         <button
                           type="button"
-                          onClick={() => bgFileRef.current?.click()}
-                          disabled={uploadingBg}
-                          className="px-2 py-1 text-xs font-medium bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded disabled:opacity-50"
+                          onClick={() => setLoginBgImageUrl(null)}
+                          className="px-3 py-1.5 text-xs font-medium text-red-600 dark:text-red-400 hover:bg-red-500/10 rounded"
                         >
-                          {uploadingBg ? "..." : "Enviar"}
+                          Remover
                         </button>
-                        {loginBgImageUrl && (
-                          <button
-                            type="button"
-                            onClick={() => setLoginBgImageUrl(null)}
-                            className="px-2 py-1 text-xs font-medium text-red-600 dark:text-red-400 hover:bg-red-500/10 rounded"
-                          >
-                            Remover
-                          </button>
-                        )}
-                      </div>
-                      <input
-                        ref={bgFileRef}
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={(e) => {
-                          const f = e.target.files?.[0];
-                          e.target.value = "";
-                          if (f) uploadLoginImage(f, "bgImage");
-                        }}
-                      />
+                      )}
                     </div>
-                    <p className="text-[10px] text-gray-500 mt-1">1920×1080</p>
+                    <input
+                      ref={bgFileRef}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        const f = e.target.files?.[0];
+                        e.target.value = "";
+                        if (f) uploadLoginImage(f, "bgImage");
+                      }}
+                    />
+                    <p className="text-[10px] text-gray-500 mt-1.5">1920×1080</p>
                   </div>
                   <div>
-                    <p className="text-xs text-gray-500 mb-1">Logo</p>
-                    <div className="flex items-center gap-2">
-                      <div className="w-10 h-10 rounded-md bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 flex items-center justify-center overflow-hidden flex-shrink-0">
-                        {loginLogoUrl ? (
-                          <Image
-                            src={loginLogoUrl}
-                            alt=""
-                            width={40}
-                            height={40}
-                            className="w-full h-full object-cover"
-                          />
-                        ) : logoUrl ? (
-                          <Image
-                            src={logoUrl}
-                            alt=""
-                            width={40}
-                            height={40}
-                            className="w-full h-full object-cover opacity-70"
-                          />
-                        ) : (
-                          <span className="text-sm font-bold text-gray-400">
-                            {name.charAt(0).toUpperCase() || "W"}
-                          </span>
-                        )}
-                      </div>
-                      <div className="flex flex-col gap-1 min-w-0 flex-1">
+                    <p className="text-xs text-gray-500 mb-1.5">Logo</p>
+                    <div className="w-20 h-20 rounded-md bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 flex items-center justify-center overflow-hidden mb-2">
+                      {loginLogoUrl ? (
+                        <Image
+                          src={loginLogoUrl}
+                          alt=""
+                          width={80}
+                          height={80}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : logoUrl ? (
+                        <Image
+                          src={logoUrl}
+                          alt=""
+                          width={80}
+                          height={80}
+                          className="w-full h-full object-cover opacity-70"
+                        />
+                      ) : (
+                        <span className="text-2xl font-bold text-gray-400">
+                          {name.charAt(0).toUpperCase() || "W"}
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex flex-wrap gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => loginLogoFileRef.current?.click()}
+                        disabled={uploadingLoginLogo}
+                        className="px-3 py-1.5 text-xs font-medium bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded disabled:opacity-50"
+                      >
+                        {uploadingLoginLogo ? "Enviando..." : "Enviar"}
+                      </button>
+                      {loginLogoUrl && (
                         <button
                           type="button"
-                          onClick={() => loginLogoFileRef.current?.click()}
-                          disabled={uploadingLoginLogo}
-                          className="px-2 py-1 text-xs font-medium bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded disabled:opacity-50"
+                          onClick={() => setLoginLogoUrl(null)}
+                          className="px-3 py-1.5 text-xs font-medium text-red-600 dark:text-red-400 hover:bg-red-500/10 rounded"
                         >
-                          {uploadingLoginLogo ? "..." : "Enviar"}
+                          Remover
                         </button>
-                        {loginLogoUrl && (
-                          <button
-                            type="button"
-                            onClick={() => setLoginLogoUrl(null)}
-                            className="px-2 py-1 text-xs font-medium text-red-600 dark:text-red-400 hover:bg-red-500/10 rounded"
-                          >
-                            Remover
-                          </button>
-                        )}
-                      </div>
-                      <input
-                        ref={loginLogoFileRef}
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={(e) => {
-                          const f = e.target.files?.[0];
-                          e.target.value = "";
-                          if (f) uploadLoginImage(f, "loginLogo");
-                        }}
-                      />
+                      )}
                     </div>
-                    <p className="text-[10px] text-gray-500 mt-1">200×200</p>
+                    <input
+                      ref={loginLogoFileRef}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        const f = e.target.files?.[0];
+                        e.target.value = "";
+                        if (f) uploadLoginImage(f, "loginLogo");
+                      }}
+                    />
+                    <p className="text-[10px] text-gray-500 mt-1.5">200×200</p>
                   </div>
                 </div>
               </section>
 
               {/* Textos */}
-              <section className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-3">
+              <section className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-4">
                 <p className="text-sm font-semibold text-gray-900 dark:text-white mb-2">
                   Textos
                 </p>
@@ -876,25 +872,23 @@ function CompactColor({
   onChange: (v: string) => void;
 }) {
   return (
-    <div>
-      <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">
+    <div className="flex items-center gap-2">
+      <label className="text-xs text-gray-600 dark:text-gray-400 w-16 flex-shrink-0">
         {label}
       </label>
-      <div className="flex items-center gap-1.5">
-        <input
-          type="color"
-          value={HEX_RE.test(value) ? value : fallback}
-          onChange={(e) => onChange(e.target.value)}
-          className="w-6 h-6 rounded border border-gray-300 dark:border-gray-700 bg-transparent cursor-pointer flex-shrink-0"
-        />
-        <input
-          type="text"
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder={fallback}
-          className="flex-1 min-w-0 px-2 py-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded text-xs font-mono text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-      </div>
+      <input
+        type="color"
+        value={HEX_RE.test(value) ? value : fallback}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-6 h-6 rounded border border-gray-300 dark:border-gray-700 bg-transparent cursor-pointer flex-shrink-0"
+      />
+      <input
+        type="text"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={fallback}
+        className="flex-1 min-w-[100px] px-2 py-1.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded text-xs font-mono text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+      />
     </div>
   );
 }
