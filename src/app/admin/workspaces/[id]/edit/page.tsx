@@ -25,6 +25,9 @@ interface Workspace {
   loginSideColor: string | null;
   loginLinkColor: string | null;
   masterPassword: string | null;
+  faviconUrl: string | null;
+  forceTheme: string | null;
+  customDomain: string | null;
   isActive: boolean;
 }
 
@@ -45,7 +48,7 @@ function hexToRgba(hex: string, alpha: number): string {
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
-type TabKey = "info" | "login";
+type TabKey = "info" | "login" | "settings";
 
 export default function EditWorkspacePage() {
   const params = useParams<{ id: string }>();
@@ -77,6 +80,13 @@ export default function EditWorkspacePage() {
   const [loginLinkColor, setLoginLinkColor] = useState(DEFAULT_LINK);
   const [uploadingBg, setUploadingBg] = useState(false);
   const [uploadingLoginLogo, setUploadingLoginLogo] = useState(false);
+
+  // Settings tab fields
+  const [faviconUrl, setFaviconUrl] = useState<string | null>(null);
+  const [uploadingFavicon, setUploadingFavicon] = useState(false);
+  const [forceTheme, setForceTheme] = useState<"" | "light" | "dark">("");
+  const [customDomain, setCustomDomain] = useState("");
+  const faviconFileRef = useRef<HTMLInputElement>(null);
 
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -123,6 +133,13 @@ export default function EditWorkspacePage() {
           );
           setLoginSideColor(found.loginSideColor || DEFAULT_SIDE);
           setLoginLinkColor(found.loginLinkColor || DEFAULT_LINK);
+          setFaviconUrl(found.faviconUrl || null);
+          setForceTheme(
+            found.forceTheme === "light" || found.forceTheme === "dark"
+              ? found.forceTheme
+              : ""
+          );
+          setCustomDomain(found.customDomain || "");
         }
       })
       .finally(() => setLoading(false));
@@ -177,9 +194,14 @@ export default function EditWorkspacePage() {
 
   async function uploadLoginImage(
     file: File,
-    kind: "bgImage" | "loginLogo"
+    kind: "bgImage" | "loginLogo" | "favicon"
   ) {
-    const setter = kind === "bgImage" ? setUploadingBg : setUploadingLoginLogo;
+    const setter =
+      kind === "bgImage"
+        ? setUploadingBg
+        : kind === "loginLogo"
+          ? setUploadingLoginLogo
+          : setUploadingFavicon;
     setter(true);
     setError(null);
     try {
@@ -196,8 +218,15 @@ export default function EditWorkspacePage() {
         return;
       }
       if (kind === "bgImage") setLoginBgImageUrl(body.url);
-      else setLoginLogoUrl(body.url);
-      showToast(kind === "bgImage" ? "Imagem de fundo atualizada" : "Logo do login atualizada");
+      else if (kind === "loginLogo") setLoginLogoUrl(body.url);
+      else setFaviconUrl(body.url);
+      showToast(
+        kind === "bgImage"
+          ? "Imagem de fundo atualizada"
+          : kind === "loginLogo"
+            ? "Logo do login atualizada"
+            : "Favicon atualizado"
+      );
     } finally {
       setter(false);
     }
@@ -211,6 +240,9 @@ export default function EditWorkspacePage() {
       const payload: Record<string, unknown> = {
         name: name.trim(),
         masterPassword: masterPassword.trim() || null,
+        faviconUrl: faviconUrl || null,
+        forceTheme: forceTheme || null,
+        customDomain: customDomain.trim() || null,
       };
       if (tab === "login" || true) {
         // Always send login fields — form submits apply across tabs
@@ -316,6 +348,7 @@ export default function EditWorkspacePage() {
           {([
             { key: "info", label: "Informações" },
             { key: "login", label: "Personalizar Login" },
+            { key: "settings", label: "Configurações" },
           ] as const).map((t) => (
             <button
               key={t.key}
@@ -733,6 +766,106 @@ export default function EditWorkspacePage() {
                   {saving ? "Salvando..." : "Salvar alterações"}
                 </button>
               </div>
+            </div>
+          </div>
+        )}
+
+        {tab === "settings" && (
+          <div className="space-y-5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-5 sm:p-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Favicon
+              </label>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                Ícone que aparece na aba do navegador para seus alunos.
+                Recomendado: 32x32px, formato .ico ou .png
+              </p>
+              <div className="mt-3 flex items-center gap-4">
+                <div className="w-12 h-12 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center overflow-hidden border border-gray-200 dark:border-gray-700">
+                  {faviconUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={faviconUrl}
+                      alt="favicon"
+                      className="w-8 h-8 object-contain"
+                    />
+                  ) : (
+                    <span className="text-xs text-gray-400">32×32</span>
+                  )}
+                </div>
+                <div className="flex-1 flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => faviconFileRef.current?.click()}
+                    disabled={uploadingFavicon}
+                    className="px-3.5 py-2 text-xs font-medium bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg disabled:opacity-50"
+                  >
+                    {uploadingFavicon ? "Enviando..." : faviconUrl ? "Trocar favicon" : "Enviar favicon"}
+                  </button>
+                  {faviconUrl && (
+                    <button
+                      type="button"
+                      onClick={() => setFaviconUrl(null)}
+                      className="px-3 py-2 text-xs font-medium text-red-600 hover:text-red-700 dark:text-red-400"
+                    >
+                      Remover
+                    </button>
+                  )}
+                  <input
+                    ref={faviconFileRef}
+                    type="file"
+                    accept="image/x-icon,image/png,image/svg+xml,image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      e.target.value = "";
+                      if (f) uploadLoginImage(f, "favicon");
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Tema para alunos
+              </label>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                Force um tema específico para todos os alunos deste workspace
+              </p>
+              <select
+                value={forceTheme}
+                onChange={(e) =>
+                  setForceTheme(e.target.value as "" | "light" | "dark")
+                }
+                className="mt-2 w-full px-3 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">Padrão do sistema (aluno escolhe)</option>
+                <option value="light">Sempre claro</option>
+                <option value="dark">Sempre escuro</option>
+              </select>
+            </div>
+
+            <div>
+              <div className="flex items-center gap-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Domínio personalizado
+                </label>
+                <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300">
+                  Em breve
+                </span>
+              </div>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                Configure um domínio próprio para seu workspace (em breve)
+              </p>
+              <input
+                type="text"
+                value={customDomain}
+                onChange={(e) => setCustomDomain(e.target.value)}
+                placeholder="cursos.meusite.com"
+                disabled
+                className="mt-2 w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-500 dark:text-gray-400 font-mono cursor-not-allowed"
+              />
             </div>
           </div>
         )}

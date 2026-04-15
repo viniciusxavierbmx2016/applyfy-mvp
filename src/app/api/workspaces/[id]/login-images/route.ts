@@ -4,7 +4,7 @@ import { requireStaff } from "@/lib/auth";
 import { canAccessWorkspace } from "@/lib/workspace";
 import { createAdminClient, STORAGE_BUCKET } from "@/lib/supabase-admin";
 
-type Kind = "bgImage" | "loginLogo";
+type Kind = "bgImage" | "loginLogo" | "favicon";
 
 export async function POST(
   request: Request,
@@ -26,9 +26,13 @@ export async function POST(
     const formData = await request.formData();
     const file = formData.get("file") as File | null;
     const kindRaw = String(formData.get("kind") || "");
-    if (kindRaw !== "bgImage" && kindRaw !== "loginLogo") {
+    if (
+      kindRaw !== "bgImage" &&
+      kindRaw !== "loginLogo" &&
+      kindRaw !== "favicon"
+    ) {
       return NextResponse.json(
-        { error: "kind inválido (bgImage | loginLogo)" },
+        { error: "kind inválido (bgImage | loginLogo | favicon)" },
         { status: 400 }
       );
     }
@@ -80,7 +84,12 @@ export async function POST(
     }
 
     const ext = (file.name.split(".").pop() || "png").toLowerCase().slice(0, 5);
-    const base = kind === "bgImage" ? "login-bg" : "login-logo";
+    const base =
+      kind === "bgImage"
+        ? "login-bg"
+        : kind === "loginLogo"
+          ? "login-logo"
+          : "favicon";
     const path = `workspaces/${params.id}/${base}-${Date.now()}.${ext}`;
     const arrayBuffer = await file.arrayBuffer();
 
@@ -100,7 +109,12 @@ export async function POST(
       .getPublicUrl(path);
     const url = publicUrl.publicUrl;
 
-    const field = kind === "bgImage" ? "loginBgImageUrl" : "loginLogoUrl";
+    const field =
+      kind === "bgImage"
+        ? "loginBgImageUrl"
+        : kind === "loginLogo"
+          ? "loginLogoUrl"
+          : "faviconUrl";
     const workspace = await prisma.workspace.update({
       where: { id: params.id },
       data: { [field]: url },

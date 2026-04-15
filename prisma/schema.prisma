@@ -55,6 +55,9 @@ model Workspace {
   loginBoxOpacity   Float?  @default(0.85)
   loginSideColor    String? @default("#0a0a1a")
   loginLinkColor    String? @default("#818cf8")
+  faviconUrl     String?
+  forceTheme     String?
+  customDomain   String?  @unique
   masterPassword String?
   ownerId        String
   isActive       Boolean  @default(true)

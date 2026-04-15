@@ -2,12 +2,16 @@
 
 import { useEffect, useState } from "react";
 import { useTheme } from "next-themes";
+import { useWorkspaceThemeLock } from "./workspace-theme-lock";
 
 export function ThemeToggle() {
   const { theme, setTheme } = useTheme();
+  const { locked } = useWorkspaceThemeLock();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => setMounted(true), []);
+
+  if (locked) return null;
 
   const isDark = theme === "dark";
 

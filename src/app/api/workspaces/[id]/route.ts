@@ -76,6 +76,8 @@ export async function PATCH(
       "loginLogoUrl",
       "loginTitle",
       "loginSubtitle",
+      "faviconUrl",
+      "customDomain",
     ] as const) {
       if (body?.[key] === null) {
         data[key] = null;
@@ -83,6 +85,18 @@ export async function PATCH(
         const v = (body[key] as string).trim();
         data[key] = v || null;
       }
+    }
+
+    if (body?.forceTheme === null || body?.forceTheme === "") {
+      data.forceTheme = null;
+    } else if (typeof body?.forceTheme === "string") {
+      if (body.forceTheme !== "light" && body.forceTheme !== "dark") {
+        return NextResponse.json(
+          { error: "forceTheme deve ser 'light', 'dark' ou null" },
+          { status: 400 }
+        );
+      }
+      data.forceTheme = body.forceTheme;
     }
 
     if (Object.keys(data).length === 0) {
