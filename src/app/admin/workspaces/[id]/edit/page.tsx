@@ -285,7 +285,12 @@ export default function EditWorkspacePage() {
   const previewSubtitle = loginSubtitle || "Acesse sua conta para continuar";
 
   return (
-    <div className="max-w-3xl mx-auto">
+    <div
+      className={cn(
+        "mx-auto",
+        tab === "login" ? "max-w-6xl" : "max-w-3xl"
+      )}
+    >
       <div className="mb-6">
         <Link
           href="/admin/workspaces"
@@ -442,7 +447,7 @@ export default function EditWorkspacePage() {
         )}
 
         {tab === "login" && (
-          <div className="grid gap-6 lg:grid-cols-[3fr_2fr]">
+          <div className="grid gap-6 lg:grid-cols-[3fr_2fr] items-start">
             <div className="order-2 lg:order-none lg:col-start-1 lg:row-start-1 space-y-6 min-w-0">
               {/* Layout */}
               <section className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-5 sm:p-6">
