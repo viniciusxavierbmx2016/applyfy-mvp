@@ -86,24 +86,16 @@ export default function EditWorkspacePage() {
   const logoFileRef = useRef<HTMLInputElement>(null);
   const bgFileRef = useRef<HTMLInputElement>(null);
   const loginLogoFileRef = useRef<HTMLInputElement>(null);
-  const previewRef = useRef<HTMLDivElement>(null);
-  const [previewVisible, setPreviewVisible] = useState(true);
+  const [previewOpen, setPreviewOpen] = useState(false);
 
   useEffect(() => {
-    if (tab !== "login") return;
-    const el = previewRef.current;
-    if (!el) return;
-    const obs = new IntersectionObserver(
-      ([entry]) => setPreviewVisible(entry.isIntersecting),
-      { threshold: 0.1 }
-    );
-    obs.observe(el);
-    return () => obs.disconnect();
-  }, [tab]);
-
-  function scrollToPreview() {
-    previewRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-  }
+    if (!previewOpen) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setPreviewOpen(false);
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [previewOpen]);
 
   useEffect(() => {
     fetch("/api/workspaces")
@@ -303,12 +295,7 @@ export default function EditWorkspacePage() {
   const previewSubtitle = loginSubtitle || "Acesse sua conta para continuar";
 
   return (
-    <div
-      className={cn(
-        "mx-auto",
-        tab === "login" ? "max-w-6xl" : "max-w-3xl"
-      )}
-    >
+    <div className="max-w-3xl mx-auto">
       <div className="mb-6">
         <Link
           href="/admin/workspaces"
@@ -465,106 +452,148 @@ export default function EditWorkspacePage() {
         )}
 
         {tab === "login" && (
-          <div className="grid gap-6 lg:grid-cols-[40fr_60fr] items-start">
-            {/* LEFT COLUMN — compact form */}
-            <div className="order-2 lg:order-none lg:min-w-[380px] flex flex-col gap-3">
-              {/* Layout */}
-              <section className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-4">
-                <p className="text-xs uppercase tracking-wide text-gray-500 mb-2">
-                  Layout
+          <div className="space-y-5">
+            {/* Header */}
+            <div className="flex items-start justify-between gap-4 flex-wrap">
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  Personalizar Login
+                </h2>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+                  Configure a aparência da tela de login dos seus alunos
                 </p>
-                <div className="flex gap-2">
-                  {(
-                    [
-                      { key: "central", label: "Central" },
-                      { key: "lateral-left", label: "Esq." },
-                      { key: "lateral-right", label: "Dir." },
-                    ] as const
-                  ).map((opt) => (
-                    <button
-                      key={opt.key}
-                      type="button"
-                      onClick={() => setLoginLayout(opt.key)}
-                      className={cn(
-                        "rounded-md border-2 p-1.5 transition w-20 flex flex-col items-center gap-1",
-                        loginLayout === opt.key
-                          ? "border-blue-500 bg-blue-500/5"
-                          : "border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700"
-                      )}
-                    >
-                      <div className="w-full h-[38px] rounded-sm overflow-hidden">
-                        <LayoutMini kind={opt.key} />
-                      </div>
-                      <span className="text-[11px] font-medium text-gray-900 dark:text-white">
-                        {opt.label}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              </section>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setPreviewOpen(true)}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 text-sm font-medium border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z" />
+                    <circle cx="12" cy="12" r="3" strokeWidth={2} />
+                  </svg>
+                  Pré-visualizar
+                </button>
+                <button
+                  type="submit"
+                  disabled={saving || !name.trim()}
+                  className="px-3.5 py-2 text-sm font-medium bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-lg whitespace-nowrap transition"
+                >
+                  {saving ? "Salvando..." : "Salvar alterações"}
+                </button>
+              </div>
+            </div>
 
-              {/* Cores */}
-              <section className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-4">
-                <p className="text-sm font-semibold text-gray-900 dark:text-white mb-2">
-                  Cores
-                </p>
-                <div className="space-y-2">
-                  <CompactColor
-                    label="Botões"
-                    value={loginPrimaryColor}
-                    fallback={DEFAULT_PRIMARY}
-                    onChange={setLoginPrimaryColor}
-                  />
-                  <CompactColor
-                    label="Links"
-                    value={loginLinkColor}
-                    fallback={DEFAULT_LINK}
-                    onChange={setLoginLinkColor}
-                  />
-                  <CompactColor
-                    label="Fundo"
-                    value={loginBgColor}
-                    fallback={DEFAULT_BG}
-                    onChange={setLoginBgColor}
-                  />
-                  <CompactColor
-                    label="Box"
-                    value={loginBoxColor}
-                    fallback={DEFAULT_BOX}
-                    onChange={setLoginBoxColor}
-                  />
-                  {(loginLayout === "lateral-left" ||
-                    loginLayout === "lateral-right") && (
-                    <CompactColor
-                      label="Lateral"
-                      value={loginSideColor}
-                      fallback={DEFAULT_SIDE}
-                      onChange={setLoginSideColor}
+            {/* Layout */}
+            <section className="bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-white/5 rounded-xl p-5">
+              <h3 className="text-base font-semibold text-gray-900 dark:text-white">
+                Layout
+              </h3>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                Escolha como o formulário aparece na tela
+              </p>
+              <div className="mt-4 grid grid-cols-3 gap-3">
+                {(
+                  [
+                    { key: "central", label: "Central" },
+                    { key: "lateral-left", label: "Lateral esquerda" },
+                    { key: "lateral-right", label: "Lateral direita" },
+                  ] as const
+                ).map((opt) => (
+                  <button
+                    key={opt.key}
+                    type="button"
+                    onClick={() => setLoginLayout(opt.key)}
+                    className={cn(
+                      "group rounded-lg border-2 p-3 transition flex flex-col items-center gap-2",
+                      loginLayout === opt.key
+                        ? "border-blue-500 bg-blue-500/5 shadow-sm"
+                        : "border-gray-200 dark:border-gray-800 hover:bg-gray-100/50 dark:hover:bg-white/5"
+                    )}
+                  >
+                    <div className="w-full h-[70px]">
+                      <LayoutIllustration kind={opt.key} />
+                    </div>
+                    <span className="text-xs font-medium text-gray-900 dark:text-white">
+                      {opt.label}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </section>
+
+            {/* Cores */}
+            <section className="bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-white/5 rounded-xl p-5">
+              <h3 className="text-base font-semibold text-gray-900 dark:text-white">
+                Cores
+              </h3>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                Personalize as cores da tela de login
+              </p>
+              <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <ColorField
+                  label="Cor dos botões"
+                  description="Cor do botão 'Entrar'"
+                  value={loginPrimaryColor}
+                  fallback={DEFAULT_PRIMARY}
+                  onChange={setLoginPrimaryColor}
+                />
+                <ColorField
+                  label="Cor dos links"
+                  description="Cor dos textos 'Esqueci senha' e 'Criar conta'"
+                  value={loginLinkColor}
+                  fallback={DEFAULT_LINK}
+                  onChange={setLoginLinkColor}
+                />
+                <ColorField
+                  label="Cor de fundo"
+                  description="Fundo da tela quando não há imagem"
+                  value={loginBgColor}
+                  fallback={DEFAULT_BG}
+                  onChange={setLoginBgColor}
+                />
+                <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-3">
+                  <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                    Cor do box
+                  </p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                    Card em volta do formulário
+                  </p>
+                  <div className="mt-2.5 flex items-center gap-2">
+                    <input
+                      type="color"
+                      value={HEX_RE.test(loginBoxColor) ? loginBoxColor : DEFAULT_BOX}
+                      onChange={(e) => setLoginBoxColor(e.target.value)}
+                      className="w-8 h-8 rounded-lg border border-gray-300 dark:border-gray-700 bg-transparent cursor-pointer flex-shrink-0"
                     />
-                  )}
-                </div>
-                <div className="mt-3">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-xs text-gray-600 dark:text-gray-400">
-                      Opacidade do box
-                    </span>
-                    <span className="text-xs font-mono text-gray-600 dark:text-gray-400">
-                      {Math.round(loginBoxOpacity * 100)}%
-                    </span>
+                    <input
+                      type="text"
+                      value={loginBoxColor}
+                      onChange={(e) => setLoginBoxColor(e.target.value)}
+                      placeholder={DEFAULT_BOX}
+                      className="flex-1 min-w-0 px-2.5 py-1.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-xs font-mono text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
                   </div>
-                  <input
-                    type="range"
-                    min={0}
-                    max={100}
-                    step={1}
-                    value={Math.round(loginBoxOpacity * 100)}
-                    onChange={(e) =>
-                      setLoginBoxOpacity(Number(e.target.value) / 100)
-                    }
-                    className="w-full h-1 accent-blue-600"
-                  />
+                  <div className="mt-3">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs text-gray-600 dark:text-gray-400">Opacidade</span>
+                      <span className="text-xs font-mono text-gray-600 dark:text-gray-400">
+                        {Math.round(loginBoxOpacity * 100)}%
+                      </span>
+                    </div>
+                    <input
+                      type="range"
+                      min={0}
+                      max={100}
+                      step={1}
+                      value={Math.round(loginBoxOpacity * 100)}
+                      onChange={(e) => setLoginBoxOpacity(Number(e.target.value) / 100)}
+                      className="w-full h-1 accent-blue-600"
+                    />
+                  </div>
                   <div
-                    className="mt-1.5 h-6 rounded"
+                    className="mt-2 w-full h-8 rounded"
                     style={{
                       backgroundColor: hexToRgba(
                         HEX_RE.test(loginBoxColor) ? loginBoxColor : DEFAULT_BOX,
@@ -572,233 +601,141 @@ export default function EditWorkspacePage() {
                       ),
                       backgroundImage:
                         "linear-gradient(45deg, rgba(127,127,127,0.15) 25%, transparent 25%, transparent 75%, rgba(127,127,127,0.15) 75%), linear-gradient(45deg, rgba(127,127,127,0.15) 25%, transparent 25%, transparent 75%, rgba(127,127,127,0.15) 75%)",
-                      backgroundSize: "10px 10px",
-                      backgroundPosition: "0 0, 5px 5px",
+                      backgroundSize: "12px 12px",
+                      backgroundPosition: "0 0, 6px 6px",
                     }}
                   />
                 </div>
-              </section>
+                {(loginLayout === "lateral-left" || loginLayout === "lateral-right") && (
+                  <ColorField
+                    label="Fundo lateral"
+                    description="Cor ao lado da imagem nos layouts laterais"
+                    value={loginSideColor}
+                    fallback={DEFAULT_SIDE}
+                    onChange={setLoginSideColor}
+                  />
+                )}
+              </div>
+            </section>
 
-              {/* Imagens */}
-              <section className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-4">
-                <p className="text-sm font-semibold text-gray-900 dark:text-white mb-2">
-                  Imagens
-                </p>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <p className="text-xs text-gray-500 mb-1.5">Fundo</p>
-                    <div
-                      className="w-full h-20 rounded-md bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 bg-cover bg-center mb-2"
-                      style={
-                        loginBgImageUrl
-                          ? { backgroundImage: `url(${loginBgImageUrl})` }
-                          : HEX_RE.test(loginBgColor)
-                            ? { backgroundColor: loginBgColor }
-                            : {}
-                      }
-                    />
-                    <div className="flex flex-wrap gap-1.5">
-                      <button
-                        type="button"
-                        onClick={() => bgFileRef.current?.click()}
-                        disabled={uploadingBg}
-                        className="px-3 py-1.5 text-xs font-medium bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded disabled:opacity-50"
-                      >
-                        {uploadingBg ? "Enviando..." : "Enviar"}
-                      </button>
-                      {loginBgImageUrl && (
-                        <button
-                          type="button"
-                          onClick={() => setLoginBgImageUrl(null)}
-                          className="px-3 py-1.5 text-xs font-medium text-red-600 dark:text-red-400 hover:bg-red-500/10 rounded"
-                        >
-                          Remover
-                        </button>
-                      )}
-                    </div>
-                    <input
-                      ref={bgFileRef}
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={(e) => {
-                        const f = e.target.files?.[0];
-                        e.target.value = "";
-                        if (f) uploadLoginImage(f, "bgImage");
-                      }}
-                    />
-                    <p className="text-[10px] text-gray-500 mt-1.5">1920×1080</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-500 mb-1.5">Logo</p>
-                    <div className="w-20 h-20 rounded-md bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 flex items-center justify-center overflow-hidden mb-2">
-                      {loginLogoUrl ? (
-                        <Image
-                          src={loginLogoUrl}
-                          alt=""
-                          width={80}
-                          height={80}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : logoUrl ? (
-                        <Image
-                          src={logoUrl}
-                          alt=""
-                          width={80}
-                          height={80}
-                          className="w-full h-full object-cover opacity-70"
-                        />
-                      ) : (
-                        <span className="text-2xl font-bold text-gray-400">
-                          {name.charAt(0).toUpperCase() || "W"}
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex flex-wrap gap-1.5">
-                      <button
-                        type="button"
-                        onClick={() => loginLogoFileRef.current?.click()}
-                        disabled={uploadingLoginLogo}
-                        className="px-3 py-1.5 text-xs font-medium bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded disabled:opacity-50"
-                      >
-                        {uploadingLoginLogo ? "Enviando..." : "Enviar"}
-                      </button>
-                      {loginLogoUrl && (
-                        <button
-                          type="button"
-                          onClick={() => setLoginLogoUrl(null)}
-                          className="px-3 py-1.5 text-xs font-medium text-red-600 dark:text-red-400 hover:bg-red-500/10 rounded"
-                        >
-                          Remover
-                        </button>
-                      )}
-                    </div>
-                    <input
-                      ref={loginLogoFileRef}
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={(e) => {
-                        const f = e.target.files?.[0];
-                        e.target.value = "";
-                        if (f) uploadLoginImage(f, "loginLogo");
-                      }}
-                    />
-                    <p className="text-[10px] text-gray-500 mt-1.5">200×200</p>
-                  </div>
+            {/* Imagens */}
+            <section className="bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-white/5 rounded-xl p-5">
+              <h3 className="text-base font-semibold text-gray-900 dark:text-white">
+                Imagens
+              </h3>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                Imagem de fundo e logo para a tela de login
+              </p>
+              <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <ImageDropzone
+                  label="Imagem de fundo"
+                  dimensions="1920×1080"
+                  imageUrl={loginBgImageUrl}
+                  uploading={uploadingBg}
+                  fallbackColor={HEX_RE.test(loginBgColor) ? loginBgColor : null}
+                  onPick={() => bgFileRef.current?.click()}
+                  onRemove={() => setLoginBgImageUrl(null)}
+                />
+                <ImageDropzone
+                  label="Logo do login"
+                  dimensions="200×200"
+                  imageUrl={loginLogoUrl || logoUrl || null}
+                  imageIsFallback={!loginLogoUrl && !!logoUrl}
+                  uploading={uploadingLoginLogo}
+                  onPick={() => loginLogoFileRef.current?.click()}
+                  onRemove={loginLogoUrl ? () => setLoginLogoUrl(null) : undefined}
+                  initial={name.charAt(0).toUpperCase() || "W"}
+                />
+              </div>
+              <input
+                ref={bgFileRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  e.target.value = "";
+                  if (f) uploadLoginImage(f, "bgImage");
+                }}
+              />
+              <input
+                ref={loginLogoFileRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  e.target.value = "";
+                  if (f) uploadLoginImage(f, "loginLogo");
+                }}
+              />
+            </section>
+
+            {/* Textos */}
+            <section className="bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-white/5 rounded-xl p-5">
+              <h3 className="text-base font-semibold text-gray-900 dark:text-white">
+                Textos
+              </h3>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                Mensagens que aparecem na tela de login
+              </p>
+              <div className="mt-4 space-y-3">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Título de boas-vindas
+                  </label>
+                  <input
+                    type="text"
+                    value={loginTitle}
+                    onChange={(e) => setLoginTitle(e.target.value)}
+                    placeholder={`Bem-vindo a ${name || "..."}`}
+                    maxLength={80}
+                    className="w-full px-3.5 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Aparece acima do formulário
+                  </p>
                 </div>
-              </section>
-
-              {/* Textos */}
-              <section className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-4">
-                <p className="text-sm font-semibold text-gray-900 dark:text-white mb-2">
-                  Textos
-                </p>
-                <div className="space-y-2">
-                  <div>
-                    <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">
-                      Título
-                    </label>
-                    <input
-                      type="text"
-                      value={loginTitle}
-                      onChange={(e) => setLoginTitle(e.target.value)}
-                      placeholder="Bem-vindo"
-                      maxLength={80}
-                      className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-md text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">
-                      Subtítulo
-                    </label>
-                    <input
-                      type="text"
-                      value={loginSubtitle}
-                      onChange={(e) => setLoginSubtitle(e.target.value)}
-                      placeholder="Acesse sua conta"
-                      maxLength={120}
-                      className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-md text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Subtítulo
+                  </label>
+                  <input
+                    type="text"
+                    value={loginSubtitle}
+                    onChange={(e) => setLoginSubtitle(e.target.value)}
+                    placeholder="Acesse sua conta para continuar"
+                    maxLength={120}
+                    className="w-full px-3.5 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
                 </div>
-              </section>
+              </div>
+            </section>
 
-              {error && (
-                <p className="text-sm text-red-500" role="alert">
-                  {error}
-                </p>
-              )}
+            {error && (
+              <p className="text-sm text-red-500" role="alert">
+                {error}
+              </p>
+            )}
 
-              <div className="flex flex-row justify-end items-center gap-2 pt-1 whitespace-nowrap">
+            {/* Footer */}
+            <div className="sticky bottom-0 -mx-4 sm:-mx-0 bg-white/95 dark:bg-gray-950/95 backdrop-blur border-t border-gray-200 dark:border-gray-800 px-4 sm:px-0 py-3 sm:py-4 sm:rounded-b-xl">
+              <div className="flex justify-end gap-2">
                 <Link
                   href="/admin/workspaces"
-                  className="px-3 py-2 text-xs font-medium bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-md whitespace-nowrap"
+                  className="px-3.5 py-2 text-sm font-medium bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg whitespace-nowrap"
                 >
                   Cancelar
                 </Link>
                 <button
                   type="submit"
                   disabled={saving || !name.trim()}
-                  className="px-3 py-2 text-xs font-medium bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-md whitespace-nowrap"
+                  className="px-3.5 py-2 text-sm font-medium bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-lg whitespace-nowrap"
                 >
                   {saving ? "Salvando..." : "Salvar alterações"}
                 </button>
               </div>
             </div>
-
-            {/* RIGHT COLUMN — sticky preview */}
-            <aside
-              ref={previewRef}
-              className="order-1 lg:order-none lg:sticky lg:top-20 self-start w-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-3 shadow-sm"
-            >
-              <p className="text-xs font-semibold text-gray-900 dark:text-white mb-2">
-                Pré-visualização
-              </p>
-              <div className="rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800">
-                <div className="h-8 px-3 bg-gray-200 dark:bg-gray-800 flex items-center gap-2">
-                  <div className="flex gap-1.5">
-                    <div className="w-2 h-2 rounded-full bg-red-400" />
-                    <div className="w-2 h-2 rounded-full bg-yellow-400" />
-                    <div className="w-2 h-2 rounded-full bg-green-400" />
-                  </div>
-                  <div className="flex-1 mx-2 h-5 rounded-full bg-gray-300 dark:bg-gray-700 flex items-center justify-center px-3 overflow-hidden">
-                    <span className="text-xs text-gray-500 truncate">
-                      applyfy-mvp.vercel.app/w/{ws?.slug || ""}/login
-                    </span>
-                  </div>
-                </div>
-                <LoginPreview
-                  layout={loginLayout}
-                  bgColor={
-                    HEX_RE.test(loginBgColor) ? loginBgColor : DEFAULT_BG
-                  }
-                  primaryColor={
-                    HEX_RE.test(loginPrimaryColor)
-                      ? loginPrimaryColor
-                      : DEFAULT_PRIMARY
-                  }
-                  boxColor={
-                    HEX_RE.test(loginBoxColor) ? loginBoxColor : DEFAULT_BOX
-                  }
-                  boxOpacity={loginBoxOpacity}
-                  sideColor={
-                    HEX_RE.test(loginSideColor) ? loginSideColor : DEFAULT_SIDE
-                  }
-                  linkColor={
-                    HEX_RE.test(loginLinkColor) ? loginLinkColor : DEFAULT_LINK
-                  }
-                  bgImageUrl={loginBgImageUrl}
-                  logoUrl={previewLogo}
-                  logoFallback={name.charAt(0).toUpperCase() || "W"}
-                  title={previewTitle}
-                  subtitle={previewSubtitle}
-                />
-              </div>
-              <p className="text-[11px] text-gray-500 mt-2 text-center">
-                Atualiza automaticamente conforme você edita
-              </p>
-            </aside>
           </div>
         )}
 
@@ -833,86 +770,260 @@ export default function EditWorkspacePage() {
         </div>
       )}
 
-      {tab === "login" && !previewVisible && (
+      {previewOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/70 backdrop-blur-sm"
+          onClick={() => setPreviewOpen(false)}
+        >
+          <div
+            className="relative w-full max-w-5xl bg-gray-900 rounded-2xl shadow-2xl overflow-hidden flex flex-col"
+            style={{ height: "80vh" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between px-4 py-3 border-b border-white/10 bg-gray-950">
+              <p className="text-sm font-semibold text-white">
+                Pré-visualização da tela de login
+              </p>
+              <button
+                type="button"
+                onClick={() => setPreviewOpen(false)}
+                className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-white hover:bg-white/10"
+                aria-label="Fechar"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="flex-1 overflow-hidden p-4 bg-gray-900">
+              <div className="h-full rounded-xl overflow-hidden border border-white/10 flex flex-col">
+                <div className="h-9 px-3 bg-gray-800 flex items-center gap-2 flex-shrink-0">
+                  <div className="flex gap-1.5">
+                    <div className="w-3 h-3 rounded-full bg-red-400" />
+                    <div className="w-3 h-3 rounded-full bg-yellow-400" />
+                    <div className="w-3 h-3 rounded-full bg-green-400" />
+                  </div>
+                  <div className="flex-1 mx-2 h-6 rounded-full bg-gray-700 flex items-center px-3 overflow-hidden">
+                    <span className="text-xs text-gray-400 truncate">
+                      applyfy-mvp.vercel.app/w/{ws?.slug || ""}/login
+                    </span>
+                  </div>
+                </div>
+                <div className="flex-1 overflow-hidden bg-gray-950">
+                  <LoginPreview
+                    layout={loginLayout}
+                    bgColor={HEX_RE.test(loginBgColor) ? loginBgColor : DEFAULT_BG}
+                    primaryColor={HEX_RE.test(loginPrimaryColor) ? loginPrimaryColor : DEFAULT_PRIMARY}
+                    boxColor={HEX_RE.test(loginBoxColor) ? loginBoxColor : DEFAULT_BOX}
+                    boxOpacity={loginBoxOpacity}
+                    sideColor={HEX_RE.test(loginSideColor) ? loginSideColor : DEFAULT_SIDE}
+                    linkColor={HEX_RE.test(loginLinkColor) ? loginLinkColor : DEFAULT_LINK}
+                    bgImageUrl={loginBgImageUrl}
+                    logoUrl={previewLogo}
+                    logoFallback={name.charAt(0).toUpperCase() || "W"}
+                    title={previewTitle}
+                    subtitle={previewSubtitle}
+                  />
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center justify-end gap-2 px-4 py-3 border-t border-white/10 bg-gray-950">
+              <button
+                type="button"
+                onClick={() => setPreviewOpen(false)}
+                className="px-3.5 py-2 text-sm font-medium bg-gray-800 hover:bg-gray-700 text-gray-200 rounded-lg"
+              >
+                Fechar
+              </button>
+              {ws?.slug && (
+                <a
+                  href={`/w/${ws.slug}/login`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-lg"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                  </svg>
+                  Abrir em nova aba
+                </a>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ColorField({
+  label,
+  description,
+  value,
+  fallback,
+  onChange,
+}: {
+  label: string;
+  description: string;
+  value: string;
+  fallback: string;
+  onChange: (v: string) => void;
+}) {
+  return (
+    <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-3">
+      <p className="text-sm font-semibold text-gray-900 dark:text-white">
+        {label}
+      </p>
+      <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+        {description}
+      </p>
+      <div className="mt-2.5 flex items-center gap-2">
+        <input
+          type="color"
+          value={HEX_RE.test(value) ? value : fallback}
+          onChange={(e) => onChange(e.target.value)}
+          className="w-8 h-8 rounded-lg border border-gray-300 dark:border-gray-700 bg-transparent cursor-pointer flex-shrink-0"
+        />
+        <input
+          type="text"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={fallback}
+          className="flex-1 min-w-0 px-2.5 py-1.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-xs font-mono text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+      </div>
+    </div>
+  );
+}
+
+function ImageDropzone({
+  label,
+  dimensions,
+  imageUrl,
+  imageIsFallback,
+  uploading,
+  fallbackColor,
+  onPick,
+  onRemove,
+  initial,
+}: {
+  label: string;
+  dimensions: string;
+  imageUrl: string | null;
+  imageIsFallback?: boolean;
+  uploading: boolean;
+  fallbackColor?: string | null;
+  onPick: () => void;
+  onRemove?: () => void;
+  initial?: string;
+}) {
+  const hasImage = !!imageUrl;
+  return (
+    <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-3">
+      <div className="flex items-center justify-between mb-2">
+        <p className="text-sm font-semibold text-gray-900 dark:text-white">
+          {label}
+        </p>
+        <span className="text-[10px] font-mono px-1.5 py-0.5 bg-gray-100 dark:bg-gray-800 text-gray-500 rounded">
+          {dimensions}
+        </span>
+      </div>
+      {hasImage ? (
+        <div className="relative group">
+          <div
+            className="w-full h-[120px] rounded-lg bg-cover bg-center border border-gray-200 dark:border-gray-700"
+            style={
+              imageUrl
+                ? { backgroundImage: `url(${imageUrl})` }
+                : fallbackColor
+                  ? { backgroundColor: fallbackColor }
+                  : {}
+            }
+          />
+          {imageIsFallback && (
+            <span className="absolute top-2 left-2 text-[10px] px-1.5 py-0.5 bg-black/60 text-white rounded">
+              Usando logo do workspace
+            </span>
+          )}
+          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/50 transition rounded-lg flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
+            <button
+              type="button"
+              onClick={onPick}
+              disabled={uploading}
+              className="px-3 py-1.5 text-xs font-medium bg-white/90 hover:bg-white text-gray-900 rounded disabled:opacity-50"
+            >
+              {uploading ? "Enviando..." : "Trocar"}
+            </button>
+            {onRemove && (
+              <button
+                type="button"
+                onClick={onRemove}
+                className="px-3 py-1.5 text-xs font-medium bg-red-500/90 hover:bg-red-500 text-white rounded"
+              >
+                Remover
+              </button>
+            )}
+          </div>
+        </div>
+      ) : (
         <button
           type="button"
-          onClick={scrollToPreview}
-          className="fixed bottom-6 right-6 z-40 inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium shadow-xl transition"
+          onClick={onPick}
+          disabled={uploading}
+          className="w-full h-[120px] rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-700 hover:border-blue-400 dark:hover:border-blue-500 hover:bg-blue-500/5 transition flex flex-col items-center justify-center gap-1.5 disabled:opacity-50"
         >
-          <svg
-            className="w-4 h-4"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"
-            />
-            <circle cx="12" cy="12" r="3" strokeWidth={2} />
-          </svg>
-          Ver preview
+          {initial && !imageUrl ? (
+            <span className="text-2xl font-bold text-gray-400">{initial}</span>
+          ) : (
+            <svg className="w-6 h-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+            </svg>
+          )}
+          <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
+            {uploading ? "Enviando..." : "Arraste ou clique para enviar"}
+          </span>
         </button>
       )}
     </div>
   );
 }
 
-function CompactColor({
-  label,
-  value,
-  fallback,
-  onChange,
-}: {
-  label: string;
-  value: string;
-  fallback: string;
-  onChange: (v: string) => void;
-}) {
-  return (
-    <div className="flex items-center gap-2">
-      <label className="text-xs text-gray-600 dark:text-gray-400 w-20 flex-shrink-0">
-        {label}
-      </label>
-      <input
-        type="color"
-        value={HEX_RE.test(value) ? value : fallback}
-        onChange={(e) => onChange(e.target.value)}
-        className="w-7 h-7 rounded border border-gray-300 dark:border-gray-700 bg-transparent cursor-pointer flex-shrink-0"
-      />
-      <input
-        type="text"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={fallback}
-        className="flex-1 min-w-[100px] px-2 py-1.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded text-xs font-mono text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-      />
-    </div>
-  );
-}
-
-function LayoutMini({ kind }: { kind: LoginLayout }) {
+function LayoutIllustration({ kind }: { kind: LoginLayout }) {
   if (kind === "central") {
     return (
-      <div className="w-full h-full rounded-sm bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 flex items-center justify-center">
-        <div className="w-5 h-5 rounded-sm bg-white dark:bg-gray-600 border border-gray-300 dark:border-gray-500" />
+      <div className="w-full h-full rounded-md bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900 border border-gray-200 dark:border-gray-700 flex items-center justify-center">
+        <div className="w-10 h-12 rounded bg-white dark:bg-gray-600 border border-gray-300 dark:border-gray-500 shadow-sm flex flex-col items-center justify-center gap-0.5 p-1">
+          <div className="w-full h-1 rounded bg-gray-300 dark:bg-gray-500" />
+          <div className="w-full h-1 rounded bg-gray-300 dark:bg-gray-500" />
+          <div className="w-full h-1.5 rounded bg-blue-400" />
+        </div>
       </div>
     );
   }
   if (kind === "lateral-left") {
     return (
-      <div className="w-full h-full rounded-sm border border-gray-200 dark:border-gray-700 flex overflow-hidden">
-        <div className="w-1/2 bg-white dark:bg-gray-600 border-r border-gray-300 dark:border-gray-500" />
-        <div className="w-1/2 bg-gray-200 dark:bg-gray-800" />
+      <div className="w-full h-full rounded-md border border-gray-200 dark:border-gray-700 flex overflow-hidden">
+        <div className="w-1/2 bg-gray-800 dark:bg-gray-950 flex items-center justify-center">
+          <div className="w-7 h-9 rounded-sm bg-white/80 flex flex-col items-center justify-center gap-0.5 p-0.5">
+            <div className="w-full h-0.5 rounded bg-gray-300" />
+            <div className="w-full h-0.5 rounded bg-gray-300" />
+            <div className="w-full h-1 rounded bg-blue-400" />
+          </div>
+        </div>
+        <div className="w-1/2 bg-gradient-to-br from-blue-400 to-purple-500" />
       </div>
     );
   }
   return (
-    <div className="w-full h-full rounded-sm border border-gray-200 dark:border-gray-700 flex overflow-hidden">
-      <div className="w-1/2 bg-gray-200 dark:bg-gray-800" />
-      <div className="w-1/2 bg-white dark:bg-gray-600 border-l border-gray-300 dark:border-gray-500" />
+    <div className="w-full h-full rounded-md border border-gray-200 dark:border-gray-700 flex overflow-hidden">
+      <div className="w-1/2 bg-gradient-to-br from-blue-400 to-purple-500" />
+      <div className="w-1/2 bg-gray-800 dark:bg-gray-950 flex items-center justify-center">
+        <div className="w-7 h-9 rounded-sm bg-white/80 flex flex-col items-center justify-center gap-0.5 p-0.5">
+          <div className="w-full h-0.5 rounded bg-gray-300" />
+          <div className="w-full h-0.5 rounded bg-gray-300" />
+          <div className="w-full h-1 rounded bg-blue-400" />
+        </div>
+      </div>
     </div>
   );
 }
