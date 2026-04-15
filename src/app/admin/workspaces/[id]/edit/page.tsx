@@ -777,10 +777,10 @@ export default function EditWorkspacePage() {
         >
           <div
             className="relative w-full max-w-5xl bg-gray-900 rounded-2xl shadow-2xl overflow-hidden flex flex-col"
-            style={{ height: "80vh" }}
+            style={{ maxHeight: "85vh", height: "85vh" }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between px-4 py-3 border-b border-white/10 bg-gray-950">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-white/10 bg-gray-950 flex-shrink-0">
               <p className="text-sm font-semibold text-white">
                 Pré-visualização da tela de login
               </p>
@@ -795,39 +795,40 @@ export default function EditWorkspacePage() {
                 </svg>
               </button>
             </div>
-            <div className="flex-1 overflow-hidden p-4 bg-gray-900">
-              <div className="h-full rounded-xl overflow-hidden border border-white/10 flex flex-col">
-                <div className="h-9 px-3 bg-gray-800 flex items-center gap-2 flex-shrink-0">
-                  <div className="flex gap-1.5">
-                    <div className="w-3 h-3 rounded-full bg-red-400" />
-                    <div className="w-3 h-3 rounded-full bg-yellow-400" />
-                    <div className="w-3 h-3 rounded-full bg-green-400" />
-                  </div>
-                  <div className="flex-1 mx-2 h-6 rounded-full bg-gray-700 flex items-center px-3 overflow-hidden">
-                    <span className="text-xs text-gray-400 truncate">
-                      applyfy-mvp.vercel.app/w/{ws?.slug || ""}/login
-                    </span>
-                  </div>
-                </div>
-                <div className="flex-1 overflow-hidden bg-gray-950">
-                  <LoginPreview
-                    layout={loginLayout}
-                    bgColor={HEX_RE.test(loginBgColor) ? loginBgColor : DEFAULT_BG}
-                    primaryColor={HEX_RE.test(loginPrimaryColor) ? loginPrimaryColor : DEFAULT_PRIMARY}
-                    boxColor={HEX_RE.test(loginBoxColor) ? loginBoxColor : DEFAULT_BOX}
-                    boxOpacity={loginBoxOpacity}
-                    sideColor={HEX_RE.test(loginSideColor) ? loginSideColor : DEFAULT_SIDE}
-                    linkColor={HEX_RE.test(loginLinkColor) ? loginLinkColor : DEFAULT_LINK}
-                    bgImageUrl={loginBgImageUrl}
-                    logoUrl={previewLogo}
-                    logoFallback={name.charAt(0).toUpperCase() || "W"}
-                    title={previewTitle}
-                    subtitle={previewSubtitle}
-                  />
-                </div>
+            <div className="flex-1 min-h-0 overflow-hidden p-4 bg-gray-900">
+              <div className="h-full w-full rounded-xl overflow-hidden border border-white/10">
+                <LoginPreview
+                  fit="contain"
+                  chrome={
+                    <div className="h-full px-3 bg-gray-800 flex items-center gap-2">
+                      <div className="flex gap-1.5">
+                        <div className="w-3 h-3 rounded-full bg-red-400" />
+                        <div className="w-3 h-3 rounded-full bg-yellow-400" />
+                        <div className="w-3 h-3 rounded-full bg-green-400" />
+                      </div>
+                      <div className="flex-1 mx-2 h-6 rounded-full bg-gray-700 flex items-center px-3 overflow-hidden">
+                        <span className="text-xs text-gray-400 truncate">
+                          applyfy-mvp.vercel.app/w/{ws?.slug || ""}/login
+                        </span>
+                      </div>
+                    </div>
+                  }
+                  layout={loginLayout}
+                  bgColor={HEX_RE.test(loginBgColor) ? loginBgColor : DEFAULT_BG}
+                  primaryColor={HEX_RE.test(loginPrimaryColor) ? loginPrimaryColor : DEFAULT_PRIMARY}
+                  boxColor={HEX_RE.test(loginBoxColor) ? loginBoxColor : DEFAULT_BOX}
+                  boxOpacity={loginBoxOpacity}
+                  sideColor={HEX_RE.test(loginSideColor) ? loginSideColor : DEFAULT_SIDE}
+                  linkColor={HEX_RE.test(loginLinkColor) ? loginLinkColor : DEFAULT_LINK}
+                  bgImageUrl={loginBgImageUrl}
+                  logoUrl={previewLogo}
+                  logoFallback={name.charAt(0).toUpperCase() || "W"}
+                  title={previewTitle}
+                  subtitle={previewSubtitle}
+                />
               </div>
             </div>
-            <div className="flex items-center justify-end gap-2 px-4 py-3 border-t border-white/10 bg-gray-950">
+            <div className="flex items-center justify-end gap-2 px-4 py-3 border-t border-white/10 bg-gray-950 flex-shrink-0">
               <button
                 type="button"
                 onClick={() => setPreviewOpen(false)}
@@ -1041,6 +1042,9 @@ function LoginPreview({
   logoFallback,
   title,
   subtitle,
+  fit = "width",
+  chrome,
+  chromeHeight = 40,
 }: {
   layout: LoginLayout;
   bgColor: string;
@@ -1054,22 +1058,35 @@ function LoginPreview({
   logoFallback: string;
   title: string;
   subtitle: string;
+  fit?: "width" | "contain";
+  chrome?: React.ReactNode;
+  chromeHeight?: number;
 }) {
   const wrapperRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(0.7);
+  const STAGE_W = 900;
+  const SCENE_H = 560;
+  const headerH = chrome ? chromeHeight : 0;
+  const STAGE_H = SCENE_H + headerH;
 
   useEffect(() => {
     const el = wrapperRef.current;
     if (!el) return;
     const update = () => {
       const w = el.offsetWidth;
-      if (w > 0) setScale(w / 900);
+      const h = el.offsetHeight;
+      if (w <= 0) return;
+      if (fit === "contain" && h > 0) {
+        setScale(Math.min(w / STAGE_W, h / STAGE_H));
+      } else {
+        setScale(w / STAGE_W);
+      }
     };
     update();
     const ro = new ResizeObserver(update);
     ro.observe(el);
     return () => ro.disconnect();
-  }, []);
+  }, [fit, STAGE_H]);
 
   const bgStyle: React.CSSProperties = bgImageUrl
     ? {
@@ -1187,21 +1204,46 @@ function LoginPreview({
     );
   }
 
+  const stage = (
+    <div style={{ width: STAGE_W, height: STAGE_H }}>
+      {chrome && (
+        <div style={{ width: STAGE_W, height: headerH }}>{chrome}</div>
+      )}
+      <div style={{ width: STAGE_W, height: SCENE_H }}>{scene}</div>
+    </div>
+  );
+
+  if (fit === "contain") {
+    return (
+      <div
+        ref={wrapperRef}
+        className="w-full h-full overflow-hidden bg-gray-100 dark:bg-gray-950 flex items-center justify-center"
+      >
+        <div
+          style={{
+            transform: `scale(${scale})`,
+            transformOrigin: "center center",
+          }}
+        >
+          {stage}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
       ref={wrapperRef}
       className="w-full overflow-hidden bg-gray-100 dark:bg-gray-950"
-      style={{ height: 560 * scale }}
+      style={{ height: STAGE_H * scale }}
     >
       <div
         style={{
-          width: 900,
-          height: 560,
           transform: `scale(${scale})`,
           transformOrigin: "top left",
         }}
       >
-        {scene}
+        {stage}
       </div>
     </div>
   );
