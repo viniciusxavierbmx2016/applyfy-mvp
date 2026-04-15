@@ -6,6 +6,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useUserStore } from "@/stores/user-store";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 interface WorkspaceInfo {
   id: string;
@@ -170,6 +171,7 @@ export function WorkspaceShell({
           </div>
 
           <div className="flex items-center gap-2">
+            <ThemeToggle />
             <button
               className="p-2 text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white rounded-lg"
               aria-label="Notificações"
