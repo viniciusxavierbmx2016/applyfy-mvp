@@ -465,9 +465,9 @@ export default function EditWorkspacePage() {
         )}
 
         {tab === "login" && (
-          <div className="grid gap-6 lg:grid-cols-[50fr_50fr] items-start">
+          <div className="grid gap-6 lg:grid-cols-[40fr_60fr] items-start">
             {/* LEFT COLUMN — compact form */}
-            <div className="order-2 lg:order-none min-w-0 flex flex-col gap-3">
+            <div className="order-2 lg:order-none lg:min-w-[380px] flex flex-col gap-3">
               {/* Layout */}
               <section className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-4">
                 <p className="text-xs uppercase tracking-wide text-gray-500 mb-2">
@@ -730,17 +730,17 @@ export default function EditWorkspacePage() {
                 </p>
               )}
 
-              <div className="flex justify-end gap-2 pt-1">
+              <div className="flex flex-row justify-end items-center gap-2 pt-1 whitespace-nowrap">
                 <Link
                   href="/admin/workspaces"
-                  className="px-3 py-2 text-xs font-medium bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-md"
+                  className="px-3 py-2 text-xs font-medium bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-md whitespace-nowrap"
                 >
                   Cancelar
                 </Link>
                 <button
                   type="submit"
                   disabled={saving || !name.trim()}
-                  className="px-3 py-2 text-xs font-medium bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-md"
+                  className="px-3 py-2 text-xs font-medium bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-md whitespace-nowrap"
                 >
                   {saving ? "Salvando..." : "Salvar alterações"}
                 </button>
@@ -873,14 +873,14 @@ function CompactColor({
 }) {
   return (
     <div className="flex items-center gap-2">
-      <label className="text-xs text-gray-600 dark:text-gray-400 w-16 flex-shrink-0">
+      <label className="text-xs text-gray-600 dark:text-gray-400 w-20 flex-shrink-0">
         {label}
       </label>
       <input
         type="color"
         value={HEX_RE.test(value) ? value : fallback}
         onChange={(e) => onChange(e.target.value)}
-        className="w-6 h-6 rounded border border-gray-300 dark:border-gray-700 bg-transparent cursor-pointer flex-shrink-0"
+        className="w-7 h-7 rounded border border-gray-300 dark:border-gray-700 bg-transparent cursor-pointer flex-shrink-0"
       />
       <input
         type="text"
