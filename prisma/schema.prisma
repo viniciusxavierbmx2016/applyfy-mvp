@@ -46,15 +46,15 @@ model Workspace {
   logoUrl        String?
   loginLayout       String  @default("central")
   loginBgImageUrl   String?
-  loginBgColor      String? @default("#0f172a")
-  loginPrimaryColor String? @default("#3b82f6")
+  loginBgColor      String? @default("#0a0a1a")
+  loginPrimaryColor String? @default("#6366f1")
   loginLogoUrl      String?
   loginTitle        String?
   loginSubtitle     String?
-  loginBoxColor     String? @default("#1e293b")
-  loginBoxOpacity   Float?  @default(0.8)
-  loginSideColor    String? @default("#0f172a")
-  loginLinkColor    String? @default("#3b82f6")
+  loginBoxColor     String? @default("#1a1a2e")
+  loginBoxOpacity   Float?  @default(0.85)
+  loginSideColor    String? @default("#0a0a1a")
+  loginLinkColor    String? @default("#818cf8")
   masterPassword String?
   ownerId        String
   isActive       Boolean  @default(true)

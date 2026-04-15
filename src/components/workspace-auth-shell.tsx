@@ -21,11 +21,11 @@ export interface WorkspaceAuthInfo {
   loginLinkColor?: string | null;
 }
 
-const DEFAULT_BG = "#0f172a";
-const DEFAULT_PRIMARY = "#3b82f6";
-const DEFAULT_BOX = "#1e293b";
-const DEFAULT_BOX_OPACITY = 0.8;
-const DEFAULT_SIDE = "#0f172a";
+const DEFAULT_BG = "#0a0a1a";
+const DEFAULT_PRIMARY = "#6366f1";
+const DEFAULT_BOX = "#1a1a2e";
+const DEFAULT_BOX_OPACITY = 0.85;
+const DEFAULT_SIDE = "#0a0a1a";
 const HEX_RE = /^#[0-9a-fA-F]{6}$/;
 
 function hexToRgba(hex: string, alpha: number): string {
@@ -47,6 +47,16 @@ function darken(hex: string, amount = 0.1): string {
   return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, "0")}`;
 }
 
+function lighten(hex: string, amount = 0.15): string {
+  if (!HEX_RE.test(hex)) return hex;
+  const n = parseInt(hex.slice(1), 16);
+  const clamp = (v: number) => Math.max(0, Math.min(255, Math.round(v)));
+  const r = clamp(((n >> 16) & 0xff) + (255 - ((n >> 16) & 0xff)) * amount);
+  const g = clamp(((n >> 8) & 0xff) + (255 - ((n >> 8) & 0xff)) * amount);
+  const b = clamp((n & 0xff) + (255 - (n & 0xff)) * amount);
+  return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, "0")}`;
+}
+
 export function getLoginTheme(ws: WorkspaceAuthInfo | null) {
   const layout: LoginLayout =
     (ws?.loginLayout as LoginLayout) || "central";
@@ -59,6 +69,8 @@ export function getLoginTheme(ws: WorkspaceAuthInfo | null) {
       ? ws.loginPrimaryColor
       : DEFAULT_PRIMARY;
   const primaryHover = darken(primaryColor, 0.12);
+  const primaryLight = lighten(primaryColor, 0.18);
+  const bgDeep = darken(bgColor, 0.35);
   const boxColor =
     ws?.loginBoxColor && HEX_RE.test(ws.loginBoxColor)
       ? ws.loginBoxColor
@@ -81,8 +93,10 @@ export function getLoginTheme(ws: WorkspaceAuthInfo | null) {
   return {
     layout,
     bgColor,
+    bgDeep,
     primaryColor,
     primaryHover,
+    primaryLight,
     boxColor,
     boxOpacity,
     boxBackground,
@@ -118,7 +132,10 @@ export function WorkspaceAuthShell({
         backgroundSize: "cover",
         backgroundPosition: "center",
       }
-    : { backgroundColor: theme.bgColor };
+    : {
+        backgroundColor: theme.bgDeep,
+        backgroundImage: `radial-gradient(ellipse 80% 60% at 20% 10%, ${theme.bgColor} 0%, transparent 55%), radial-gradient(ellipse 70% 60% at 85% 90%, ${theme.bgColor} 0%, transparent 55%), radial-gradient(ellipse 90% 90% at 50% 50%, ${theme.bgColor} 0%, ${theme.bgDeep} 90%)`,
+      };
 
   const sidePaneStyle: React.CSSProperties = {
     backgroundColor: theme.sideColor,
@@ -139,13 +156,19 @@ export function WorkspaceAuthShell({
 
   if (theme.layout === "central") {
     return (
-      <ThemedRoot primary={theme.primaryColor} hover={theme.primaryHover}>
+      <ThemedRoot
+        primary={theme.primaryColor}
+        hover={theme.primaryHover}
+        light={theme.primaryLight}
+      >
         <div
           className="relative min-h-screen flex items-center justify-center px-4 py-10"
           style={bgStyle}
         >
-          {theme.bgImageUrl && (
+          {theme.bgImageUrl ? (
             <div className="absolute inset-0 bg-black/55" aria-hidden />
+          ) : (
+            <DotGrid />
           )}
           <div className="relative w-full max-w-md">{formCard}</div>
         </div>
@@ -181,12 +204,17 @@ export function WorkspaceAuthShell({
       {theme.bgImageUrl && (
         <div className="lg:hidden absolute inset-0 bg-black/55" aria-hidden />
       )}
+      {!theme.bgImageUrl && <DotGrid />}
       <div className="relative w-full max-w-md">{formCard}</div>
     </div>
   );
 
   return (
-    <ThemedRoot primary={theme.primaryColor} hover={theme.primaryHover}>
+    <ThemedRoot
+      primary={theme.primaryColor}
+      hover={theme.primaryHover}
+      light={theme.primaryLight}
+    >
       <div className="min-h-screen flex flex-col lg:flex-row">
         {formOnLeft ? (
           <>
@@ -207,10 +235,12 @@ export function WorkspaceAuthShell({
 function ThemedRoot({
   primary,
   hover,
+  light,
   children,
 }: {
   primary: string;
   hover: string;
+  light: string;
   children: ReactNode;
 }) {
   return (
@@ -219,11 +249,49 @@ function ThemedRoot({
         {
           ["--wa-primary" as string]: primary,
           ["--wa-primary-hover" as string]: hover,
+          ["--wa-primary-light" as string]: light,
         } as React.CSSProperties
       }
     >
+      <style>{`
+        .wa-input {
+          background-color: rgba(255,255,255,0.06);
+          border: 1px solid rgba(255,255,255,0.1);
+        }
+        .wa-input::placeholder { color: rgba(255,255,255,0.35); }
+        .wa-input:focus {
+          border-color: ${primary};
+          box-shadow: 0 0 0 4px ${primary}33;
+          background-color: rgba(255,255,255,0.08);
+        }
+        .wa-submit {
+          background-image: linear-gradient(135deg, ${light}, ${primary});
+        }
+        .wa-submit:hover:not(:disabled) { filter: brightness(1.1); }
+        .wa-submit:active:not(:disabled) { transform: scale(0.98); }
+        .wa-link { color: ${primary}; }
+        .wa-link:hover { text-decoration: underline; filter: brightness(1.15); }
+      `}</style>
       {children}
     </div>
+  );
+}
+
+function DotGrid() {
+  return (
+    <div
+      className="absolute inset-0 pointer-events-none opacity-[0.15]"
+      style={{
+        backgroundImage:
+          "radial-gradient(rgba(255,255,255,0.6) 1px, transparent 1px)",
+        backgroundSize: "28px 28px",
+        maskImage:
+          "radial-gradient(ellipse 70% 60% at 50% 50%, black 40%, transparent 85%)",
+        WebkitMaskImage:
+          "radial-gradient(ellipse 70% 60% at 50% 50%, black 40%, transparent 85%)",
+      }}
+      aria-hidden
+    />
   );
 }
 
@@ -244,30 +312,52 @@ function FormCard({
 }) {
   return (
     <div
-      className="backdrop-blur-xl border border-white/10 text-white shadow-2xl rounded-2xl p-7 sm:p-8"
-      style={{ backgroundColor: boxBackground }}
+      className="text-white rounded-2xl p-8"
+      style={{
+        backgroundColor: boxBackground,
+        backdropFilter: "blur(20px)",
+        WebkitBackdropFilter: "blur(20px)",
+        border: "1px solid rgba(255,255,255,0.08)",
+        boxShadow:
+          "0 25px 50px rgba(0,0,0,0.25), 0 0 0 1px rgba(255,255,255,0.03) inset",
+      }}
     >
-      <div className="flex flex-col items-center text-center mb-6">
-        <div className="w-16 h-16 rounded-2xl bg-white/10 backdrop-blur flex items-center justify-center overflow-hidden mb-3 border border-white/10">
-          {logoUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
+      <div className="flex flex-col items-center text-center mb-6 gap-4">
+        {logoUrl ? (
+          <div
+            className="w-16 h-16 rounded-2xl overflow-hidden border border-white/10"
+            style={{ boxShadow: "0 8px 20px rgba(0,0,0,0.25)" }}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={logoUrl}
               alt={name}
               className="w-full h-full object-cover"
             />
-          ) : (
-            <span className="text-2xl font-bold text-white">
-              {name.charAt(0).toUpperCase()}
-            </span>
+          </div>
+        ) : (
+          <div
+            className="w-16 h-16 rounded-full flex items-center justify-center text-2xl font-bold text-white"
+            style={{
+              backgroundImage:
+                "linear-gradient(135deg, var(--wa-primary-light), var(--wa-primary))",
+              boxShadow:
+                "0 10px 25px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.08) inset",
+            }}
+          >
+            {name.charAt(0).toUpperCase()}
+          </div>
+        )}
+        <div className="flex flex-col gap-2">
+          <h1 className="text-2xl font-bold text-white leading-tight">
+            {title}
+          </h1>
+          {subtitle && (
+            <p className="text-sm" style={{ color: "rgba(255,255,255,0.6)" }}>
+              {subtitle}
+            </p>
           )}
         </div>
-        <h1 className="text-2xl sm:text-3xl font-bold text-white leading-tight">
-          {title}
-        </h1>
-        {subtitle && (
-          <p className="text-sm text-white/70 mt-1.5">{subtitle}</p>
-        )}
       </div>
       {children}
     </div>
@@ -275,14 +365,15 @@ function FormCard({
 }
 
 export const authInputCls =
-  "w-full px-4 py-3 bg-white/10 border border-white/15 rounded-lg text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:bg-white/15 transition";
+  "wa-input w-full h-12 px-4 rounded-xl text-white text-sm focus:outline-none transition";
 
-export const authInputStyle: React.CSSProperties = {
-  // ring uses primary via tailwind focus — override with style
-};
+export const authInputStyle: React.CSSProperties = {};
 
 export const authLabelCls =
-  "block text-sm font-medium text-white/80 mb-1";
+  "block text-sm font-medium text-white/75 mb-1.5";
 
 export const authErrorCls =
-  "mb-4 p-3 rounded-lg bg-red-500/15 border border-red-400/30 text-red-200 text-sm";
+  "mb-4 p-3 rounded-xl bg-red-500/10 border border-red-400/25 text-red-200 text-sm";
+
+export const authSubmitCls =
+  "wa-submit w-full h-12 rounded-xl text-white font-semibold shadow-lg transition disabled:opacity-60 disabled:cursor-not-allowed";

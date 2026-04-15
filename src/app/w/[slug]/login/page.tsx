@@ -10,6 +10,7 @@ import {
   authInputCls,
   authLabelCls,
   authErrorCls,
+  authSubmitCls,
 } from "@/components/workspace-auth-shell";
 
 export default function WorkspaceLoginPage() {
@@ -114,18 +115,7 @@ export default function WorkspaceLoginPage() {
             placeholder="••••••••"
           />
         </div>
-        <button
-          type="submit"
-          disabled={loading}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = theme.primaryHover;
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = theme.primaryColor;
-          }}
-          style={{ backgroundColor: theme.primaryColor }}
-          className="w-full py-3 disabled:opacity-60 text-white font-medium rounded-lg transition shadow-lg"
-        >
+        <button type="submit" disabled={loading} className={authSubmitCls}>
           {loading ? "Entrando..." : "Entrar"}
         </button>
       </form>
