@@ -79,7 +79,7 @@ export default function WorkspaceRegisterPage() {
           <Link
             href={`/w/${slug}/login`}
             className="hover:underline font-medium transition-colors"
-            style={{ color: theme.primaryColor }}
+            style={{ color: theme.linkColor }}
           >
             Entrar
           </Link>

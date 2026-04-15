@@ -18,6 +18,7 @@ export interface WorkspaceAuthInfo {
   loginBoxColor?: string | null;
   loginBoxOpacity?: number | null;
   loginSideColor?: string | null;
+  loginLinkColor?: string | null;
 }
 
 const DEFAULT_BG = "#0f172a";
@@ -72,6 +73,10 @@ export function getLoginTheme(ws: WorkspaceAuthInfo | null) {
     ws?.loginSideColor && HEX_RE.test(ws.loginSideColor)
       ? ws.loginSideColor
       : DEFAULT_SIDE;
+  const linkColor =
+    ws?.loginLinkColor && HEX_RE.test(ws.loginLinkColor)
+      ? ws.loginLinkColor
+      : primaryColor;
   const boxBackground = hexToRgba(boxColor, boxOpacity);
   return {
     layout,
@@ -82,6 +87,7 @@ export function getLoginTheme(ws: WorkspaceAuthInfo | null) {
     boxOpacity,
     boxBackground,
     sideColor,
+    linkColor,
     bgImageUrl: ws?.loginBgImageUrl || null,
     logoUrl: ws?.loginLogoUrl || ws?.logoUrl || null,
     name: ws?.name || "Workspace",

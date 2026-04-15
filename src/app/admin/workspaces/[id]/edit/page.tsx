@@ -23,6 +23,7 @@ interface Workspace {
   loginBoxColor: string | null;
   loginBoxOpacity: number | null;
   loginSideColor: string | null;
+  loginLinkColor: string | null;
   masterPassword: string | null;
   isActive: boolean;
 }
@@ -32,6 +33,7 @@ const DEFAULT_PRIMARY = "#3b82f6";
 const DEFAULT_BOX = "#1e293b";
 const DEFAULT_BOX_OPACITY = 0.8;
 const DEFAULT_SIDE = "#0f172a";
+const DEFAULT_LINK = "#3b82f6";
 const HEX_RE = /^#[0-9a-fA-F]{6}$/;
 
 function hexToRgba(hex: string, alpha: number): string {
@@ -72,6 +74,7 @@ export default function EditWorkspacePage() {
   const [loginBoxOpacity, setLoginBoxOpacity] =
     useState<number>(DEFAULT_BOX_OPACITY);
   const [loginSideColor, setLoginSideColor] = useState(DEFAULT_SIDE);
+  const [loginLinkColor, setLoginLinkColor] = useState(DEFAULT_LINK);
   const [uploadingBg, setUploadingBg] = useState(false);
   const [uploadingLoginLogo, setUploadingLoginLogo] = useState(false);
 
@@ -108,6 +111,7 @@ export default function EditWorkspacePage() {
               : DEFAULT_BOX_OPACITY
           );
           setLoginSideColor(found.loginSideColor || DEFAULT_SIDE);
+          setLoginLinkColor(found.loginLinkColor || DEFAULT_LINK);
         }
       })
       .finally(() => setLoading(false));
@@ -226,9 +230,15 @@ export default function EditWorkspacePage() {
         payload.loginLogoUrl = loginLogoUrl || null;
         payload.loginTitle = loginTitle.trim() || null;
         payload.loginSubtitle = loginSubtitle.trim() || null;
+        if (loginLinkColor && !HEX_RE.test(loginLinkColor)) {
+          setError("Cor dos links deve ser hex (#RRGGBB)");
+          setSaving(false);
+          return;
+        }
         payload.loginBoxColor = loginBoxColor || null;
         payload.loginBoxOpacity = loginBoxOpacity;
         payload.loginSideColor = loginSideColor || null;
+        payload.loginLinkColor = loginLinkColor || null;
       }
       const res = await fetch(`/api/workspaces/${id}`, {
         method: "PATCH",
@@ -432,8 +442,8 @@ export default function EditWorkspacePage() {
         )}
 
         {tab === "login" && (
-          <div className="grid gap-6 lg:grid-cols-[1fr_400px]">
-            <div className="space-y-6 min-w-0">
+          <div className="grid gap-6 lg:grid-cols-[3fr_2fr]">
+            <div className="order-2 lg:order-none lg:col-start-1 lg:row-start-1 space-y-6 min-w-0">
               {/* Layout */}
               <section className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-5 sm:p-6">
                 <h2 className="text-sm font-semibold text-gray-900 dark:text-white mb-1">
@@ -518,6 +528,45 @@ export default function EditWorkspacePage() {
                       Entrar
                     </button>
                   </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                    Cor dos links
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="color"
+                      value={
+                        HEX_RE.test(loginLinkColor)
+                          ? loginLinkColor
+                          : DEFAULT_LINK
+                      }
+                      onChange={(e) => setLoginLinkColor(e.target.value)}
+                      className="w-12 h-10 rounded-lg border border-gray-300 dark:border-gray-700 bg-transparent cursor-pointer"
+                    />
+                    <input
+                      type="text"
+                      value={loginLinkColor}
+                      onChange={(e) => setLoginLinkColor(e.target.value)}
+                      placeholder={DEFAULT_LINK}
+                      className="flex-1 px-3 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm font-mono text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div
+                    className="mt-2 text-sm font-medium underline"
+                    style={{
+                      color: HEX_RE.test(loginLinkColor)
+                        ? loginLinkColor
+                        : DEFAULT_LINK,
+                    }}
+                  >
+                    Esqueci minha senha
+                  </div>
+                  <p className="text-[11px] text-gray-500 mt-1.5">
+                    Cor dos textos como &ldquo;Esqueci minha senha&rdquo; e
+                    &ldquo;Criar conta&rdquo;
+                  </p>
                 </div>
 
                 <div>
@@ -813,9 +862,9 @@ export default function EditWorkspacePage() {
               </section>
             </div>
 
-            {/* Preview sticky */}
-            <aside className="lg:sticky lg:top-4 self-start">
-              <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4">
+            {/* Preview sticky — right on desktop, top on mobile */}
+            <aside className="order-1 lg:order-none lg:col-start-2 lg:row-start-1 lg:sticky lg:top-20 self-start w-full">
+              <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-4 shadow-sm">
                 <p className="text-xs font-semibold text-gray-900 dark:text-white mb-2">
                   Pré-visualização
                 </p>
@@ -835,6 +884,9 @@ export default function EditWorkspacePage() {
                   boxOpacity={loginBoxOpacity}
                   sideColor={
                     HEX_RE.test(loginSideColor) ? loginSideColor : DEFAULT_SIDE
+                  }
+                  linkColor={
+                    HEX_RE.test(loginLinkColor) ? loginLinkColor : DEFAULT_LINK
                   }
                   bgImageUrl={loginBgImageUrl}
                   logoUrl={previewLogo}
@@ -913,6 +965,7 @@ function LoginPreview({
   boxColor,
   boxOpacity,
   sideColor,
+  linkColor,
   bgImageUrl,
   logoUrl,
   logoFallback,
@@ -925,6 +978,7 @@ function LoginPreview({
   boxColor: string;
   boxOpacity: number;
   sideColor: string;
+  linkColor: string;
   bgImageUrl: string | null;
   logoUrl: string | null;
   logoFallback: string;
@@ -970,6 +1024,20 @@ function LoginPreview({
         className="h-2.5 rounded"
         style={{ backgroundColor: primaryColor }}
       />
+      <div className="flex justify-between mt-1.5">
+        <span
+          className="text-[6px] underline"
+          style={{ color: linkColor }}
+        >
+          Esqueci senha
+        </span>
+        <span
+          className="text-[6px] underline"
+          style={{ color: linkColor }}
+        >
+          Criar conta
+        </span>
+      </div>
     </div>
   );
 

@@ -54,6 +54,7 @@ model Workspace {
   loginBoxColor     String? @default("#1e293b")
   loginBoxOpacity   Float?  @default(0.8)
   loginSideColor    String? @default("#0f172a")
+  loginLinkColor    String? @default("#3b82f6")
   masterPassword String?
   ownerId        String
   isActive       Boolean  @default(true)

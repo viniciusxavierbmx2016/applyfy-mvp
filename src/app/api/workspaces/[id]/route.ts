@@ -42,6 +42,7 @@ export async function PATCH(
       "loginPrimaryColor",
       "loginBoxColor",
       "loginSideColor",
+      "loginLinkColor",
     ] as const) {
       if (body?.[key] === null) {
         data[key] = null;

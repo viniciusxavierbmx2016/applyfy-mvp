@@ -67,14 +67,14 @@ export default function WorkspaceLoginPage() {
           <Link
             href="/forgot-password"
             className="hover:underline transition-colors"
-            style={{ color: theme.primaryColor }}
+            style={{ color: theme.linkColor }}
           >
             Esqueci minha senha
           </Link>
           <Link
             href={`/w/${slug}/register`}
             className="hover:underline transition-colors"
-            style={{ color: theme.primaryColor }}
+            style={{ color: theme.linkColor }}
           >
             Criar conta
           </Link>
