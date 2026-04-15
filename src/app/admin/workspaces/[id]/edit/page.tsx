@@ -797,13 +797,22 @@ export default function EditWorkspacePage() {
               <div className="h-full w-full rounded-xl overflow-hidden border border-white/10 flex flex-col bg-gray-950">
                 <div className="h-9 px-3 bg-gray-800 flex items-center gap-2 flex-shrink-0">
                   <div className="flex gap-1.5">
-                    <div className="w-3 h-3 rounded-full bg-red-400" />
-                    <div className="w-3 h-3 rounded-full bg-yellow-400" />
-                    <div className="w-3 h-3 rounded-full bg-green-400" />
+                    <div
+                      className="w-3 h-3 rounded-full"
+                      style={{ backgroundColor: "#ff5f57" }}
+                    />
+                    <div
+                      className="w-3 h-3 rounded-full"
+                      style={{ backgroundColor: "#ffbd2e" }}
+                    />
+                    <div
+                      className="w-3 h-3 rounded-full"
+                      style={{ backgroundColor: "#28c840" }}
+                    />
                   </div>
                   <div className="flex-1 mx-2 h-6 rounded-full bg-gray-700 flex items-center px-3 overflow-hidden">
                     <span className="text-xs text-gray-400 truncate">
-                      applyfy-mvp.vercel.app/w/{ws?.slug || ""}/login
+                      applyfy.com/w/{ws?.slug || ""}/login
                     </span>
                   </div>
                 </div>
@@ -1044,14 +1053,17 @@ function PreviewIframe({
       {slug && scale > 0 && (
         <iframe
           key={reloadKey}
-          src={`/w/${slug}/login?preview=1&t=${reloadKey}`}
+          src={`/w/${slug}/login?preview=true&t=${reloadKey}`}
           title="Preview"
+          width={W}
+          height={H}
           style={{
             width: W,
             height: H,
             transform: `scale(${scale})`,
             transformOrigin: "center center",
-            border: 0,
+            border: "none",
+            pointerEvents: "none",
             flexShrink: 0,
           }}
         />
