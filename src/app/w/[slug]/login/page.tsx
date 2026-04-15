@@ -35,6 +35,12 @@ export default function WorkspaceLoginPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (
+      typeof window !== "undefined" &&
+      new URL(window.location.href).searchParams.get("preview")
+    ) {
+      return;
+    }
     setError("");
     setLoading(true);
     try {

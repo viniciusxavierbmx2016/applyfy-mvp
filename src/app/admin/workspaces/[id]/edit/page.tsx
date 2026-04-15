@@ -87,6 +87,7 @@ export default function EditWorkspacePage() {
   const bgFileRef = useRef<HTMLInputElement>(null);
   const loginLogoFileRef = useRef<HTMLInputElement>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewKey, setPreviewKey] = useState(() => Date.now());
 
   useEffect(() => {
     if (!previewOpen) return;
@@ -261,6 +262,7 @@ export default function EditWorkspacePage() {
         return;
       }
       showToast("Workspace atualizado");
+      setPreviewKey(Date.now());
       router.refresh();
     } finally {
       setSaving(false);
@@ -289,10 +291,6 @@ export default function EditWorkspacePage() {
       </div>
     );
   }
-
-  const previewLogo = loginLogoUrl || logoUrl;
-  const previewTitle = loginTitle || `Bem-vindo a ${name}`;
-  const previewSubtitle = loginSubtitle || "Acesse sua conta para continuar";
 
   return (
     <div className="max-w-3xl mx-auto">
@@ -796,36 +794,22 @@ export default function EditWorkspacePage() {
               </button>
             </div>
             <div className="flex-1 min-h-0 overflow-hidden p-4 bg-gray-900">
-              <div className="h-full w-full rounded-xl overflow-hidden border border-white/10">
-                <LoginPreview
-                  fit="contain"
-                  chrome={
-                    <div className="h-full px-3 bg-gray-800 flex items-center gap-2">
-                      <div className="flex gap-1.5">
-                        <div className="w-3 h-3 rounded-full bg-red-400" />
-                        <div className="w-3 h-3 rounded-full bg-yellow-400" />
-                        <div className="w-3 h-3 rounded-full bg-green-400" />
-                      </div>
-                      <div className="flex-1 mx-2 h-6 rounded-full bg-gray-700 flex items-center px-3 overflow-hidden">
-                        <span className="text-xs text-gray-400 truncate">
-                          applyfy-mvp.vercel.app/w/{ws?.slug || ""}/login
-                        </span>
-                      </div>
-                    </div>
-                  }
-                  layout={loginLayout}
-                  bgColor={HEX_RE.test(loginBgColor) ? loginBgColor : DEFAULT_BG}
-                  primaryColor={HEX_RE.test(loginPrimaryColor) ? loginPrimaryColor : DEFAULT_PRIMARY}
-                  boxColor={HEX_RE.test(loginBoxColor) ? loginBoxColor : DEFAULT_BOX}
-                  boxOpacity={loginBoxOpacity}
-                  sideColor={HEX_RE.test(loginSideColor) ? loginSideColor : DEFAULT_SIDE}
-                  linkColor={HEX_RE.test(loginLinkColor) ? loginLinkColor : DEFAULT_LINK}
-                  bgImageUrl={loginBgImageUrl}
-                  logoUrl={previewLogo}
-                  logoFallback={name.charAt(0).toUpperCase() || "W"}
-                  title={previewTitle}
-                  subtitle={previewSubtitle}
-                />
+              <div className="h-full w-full rounded-xl overflow-hidden border border-white/10 flex flex-col bg-gray-950">
+                <div className="h-9 px-3 bg-gray-800 flex items-center gap-2 flex-shrink-0">
+                  <div className="flex gap-1.5">
+                    <div className="w-3 h-3 rounded-full bg-red-400" />
+                    <div className="w-3 h-3 rounded-full bg-yellow-400" />
+                    <div className="w-3 h-3 rounded-full bg-green-400" />
+                  </div>
+                  <div className="flex-1 mx-2 h-6 rounded-full bg-gray-700 flex items-center px-3 overflow-hidden">
+                    <span className="text-xs text-gray-400 truncate">
+                      applyfy-mvp.vercel.app/w/{ws?.slug || ""}/login
+                    </span>
+                  </div>
+                </div>
+                <div className="flex-1 min-h-0">
+                  <PreviewIframe slug={ws?.slug || ""} reloadKey={previewKey} />
+                </div>
               </div>
             </div>
             <div className="flex items-center justify-end gap-2 px-4 py-3 border-t border-white/10 bg-gray-950 flex-shrink-0">
@@ -1029,222 +1013,49 @@ function LayoutIllustration({ kind }: { kind: LoginLayout }) {
   );
 }
 
-function LoginPreview({
-  layout,
-  bgColor,
-  primaryColor,
-  boxColor,
-  boxOpacity,
-  sideColor,
-  linkColor,
-  bgImageUrl,
-  logoUrl,
-  logoFallback,
-  title,
-  subtitle,
-  fit = "width",
-  chrome,
-  chromeHeight = 40,
+function PreviewIframe({
+  slug,
+  reloadKey,
 }: {
-  layout: LoginLayout;
-  bgColor: string;
-  primaryColor: string;
-  boxColor: string;
-  boxOpacity: number;
-  sideColor: string;
-  linkColor: string;
-  bgImageUrl: string | null;
-  logoUrl: string | null;
-  logoFallback: string;
-  title: string;
-  subtitle: string;
-  fit?: "width" | "contain";
-  chrome?: React.ReactNode;
-  chromeHeight?: number;
+  slug: string;
+  reloadKey: number;
 }) {
   const wrapperRef = useRef<HTMLDivElement>(null);
-  const [scale, setScale] = useState(0.7);
-  const STAGE_W = 900;
-  const SCENE_H = 560;
-  const headerH = chrome ? chromeHeight : 0;
-  const STAGE_H = SCENE_H + headerH;
-
+  const [size, setSize] = useState({ w: 0, h: 0 });
   useEffect(() => {
     const el = wrapperRef.current;
     if (!el) return;
-    const update = () => {
-      const w = el.offsetWidth;
-      const h = el.offsetHeight;
-      if (w <= 0) return;
-      if (fit === "contain" && h > 0) {
-        setScale(Math.min(w / STAGE_W, h / STAGE_H));
-      } else {
-        setScale(w / STAGE_W);
-      }
-    };
+    const update = () =>
+      setSize({ w: el.offsetWidth, h: el.offsetHeight });
     update();
     const ro = new ResizeObserver(update);
     ro.observe(el);
     return () => ro.disconnect();
-  }, [fit, STAGE_H]);
-
-  const bgStyle: React.CSSProperties = bgImageUrl
-    ? {
-        backgroundImage: `url(${bgImageUrl})`,
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-      }
-    : { backgroundColor: bgColor };
-
-  const boxBg = hexToRgba(boxColor, boxOpacity);
-
-  const form = (
-    <div
-      className="backdrop-blur-xl rounded-2xl p-7 w-[400px] shadow-2xl border border-white/10"
-      style={{ backgroundColor: boxBg }}
-    >
-      <div className="flex flex-col items-center text-center mb-6">
-        <div className="w-16 h-16 rounded-2xl bg-white/10 backdrop-blur flex items-center justify-center overflow-hidden mb-3 border border-white/10">
-          {logoUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={logoUrl}
-              alt=""
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            <span className="text-2xl font-bold text-white">
-              {logoFallback}
-            </span>
-          )}
-        </div>
-        <h1 className="text-2xl font-bold text-white leading-tight break-words">
-          {title}
-        </h1>
-        {subtitle && (
-          <p className="text-sm text-white/70 mt-1.5 break-words">
-            {subtitle}
-          </p>
-        )}
-      </div>
-      <div className="space-y-4">
-        <div>
-          <div className="block text-sm font-medium text-white/80 mb-1">
-            Email
-          </div>
-          <div className="w-full h-[46px] bg-white/10 border border-white/15 rounded-lg" />
-        </div>
-        <div>
-          <div className="block text-sm font-medium text-white/80 mb-1">
-            Senha
-          </div>
-          <div className="w-full h-[46px] bg-white/10 border border-white/15 rounded-lg" />
-        </div>
-        <div
-          className="w-full h-[46px] rounded-lg flex items-center justify-center text-white font-medium shadow-lg"
-          style={{ backgroundColor: primaryColor }}
-        >
-          Entrar
-        </div>
-        <div className="flex items-center justify-between text-sm pt-1">
-          <span className="underline" style={{ color: linkColor }}>
-            Esqueci minha senha
-          </span>
-          <span className="underline" style={{ color: linkColor }}>
-            Criar conta
-          </span>
-        </div>
-      </div>
-    </div>
-  );
-
-  let scene: React.ReactNode;
-  if (layout === "central") {
-    scene = (
-      <div
-        className="w-[900px] h-[560px] flex items-center justify-center relative"
-        style={bgStyle}
-      >
-        {bgImageUrl && (
-          <div className="absolute inset-0 bg-black/55" aria-hidden />
-        )}
-        <div className="relative">{form}</div>
-      </div>
-    );
-  } else {
-    const formPane = (
-      <div
-        className="w-[450px] h-full flex items-center justify-center relative"
-        style={{ backgroundColor: sideColor }}
-      >
-        {form}
-      </div>
-    );
-    const imagePane = (
-      <div className="w-[450px] h-full relative" style={bgStyle}>
-        {bgImageUrl && (
-          <div className="absolute inset-0 bg-black/30" aria-hidden />
-        )}
-      </div>
-    );
-    scene = (
-      <div className="w-[900px] h-[560px] flex">
-        {layout === "lateral-left" ? (
-          <>
-            {formPane}
-            {imagePane}
-          </>
-        ) : (
-          <>
-            {imagePane}
-            {formPane}
-          </>
-        )}
-      </div>
-    );
-  }
-
-  const stage = (
-    <div style={{ width: STAGE_W, height: STAGE_H }}>
-      {chrome && (
-        <div style={{ width: STAGE_W, height: headerH }}>{chrome}</div>
-      )}
-      <div style={{ width: STAGE_W, height: SCENE_H }}>{scene}</div>
-    </div>
-  );
-
-  if (fit === "contain") {
-    return (
-      <div
-        ref={wrapperRef}
-        className="w-full h-full overflow-hidden bg-gray-100 dark:bg-gray-950 flex items-center justify-center"
-      >
-        <div
-          style={{
-            transform: `scale(${scale})`,
-            transformOrigin: "center center",
-          }}
-        >
-          {stage}
-        </div>
-      </div>
-    );
-  }
-
+  }, []);
+  const W = 1280;
+  const H = 800;
+  const scale =
+    size.w > 0 && size.h > 0 ? Math.min(size.w / W, size.h / H) : 0;
   return (
     <div
       ref={wrapperRef}
-      className="w-full overflow-hidden bg-gray-100 dark:bg-gray-950"
-      style={{ height: STAGE_H * scale }}
+      className="w-full h-full overflow-hidden flex items-center justify-center"
     >
-      <div
-        style={{
-          transform: `scale(${scale})`,
-          transformOrigin: "top left",
-        }}
-      >
-        {stage}
-      </div>
+      {slug && scale > 0 && (
+        <iframe
+          key={reloadKey}
+          src={`/w/${slug}/login?preview=1&t=${reloadKey}`}
+          title="Preview"
+          style={{
+            width: W,
+            height: H,
+            transform: `scale(${scale})`,
+            transformOrigin: "center center",
+            border: 0,
+            flexShrink: 0,
+          }}
+        />
+      )}
     </div>
   );
 }

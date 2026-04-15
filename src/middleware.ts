@@ -69,7 +69,7 @@ export function middleware(request: NextRequest) {
 
   if (authed) {
     const wsLoginMatch = pathname.match(/^\/w\/([^/]+)\/login\/?$/);
-    if (wsLoginMatch) {
+    if (wsLoginMatch && !request.nextUrl.searchParams.get("preview")) {
       const url = request.nextUrl.clone();
       url.pathname = `/w/${wsLoginMatch[1]}`;
       return NextResponse.redirect(url);
