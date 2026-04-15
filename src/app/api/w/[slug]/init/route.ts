@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
+import { hasWorkspaceAccess } from "@/lib/workspace-access";
 
 export async function GET(
   _request: Request,
@@ -37,11 +38,14 @@ export async function GET(
       );
       return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
     }
-    if (user.workspaceId && user.workspaceId !== workspace.id) {
-      return NextResponse.json(
-        { error: "Você não tem acesso a esta área de membros" },
-        { status: 403 }
-      );
+    if (user.role === "STUDENT") {
+      const allowed = await hasWorkspaceAccess(user.id, workspace.id);
+      if (!allowed) {
+        return NextResponse.json(
+          { error: "Você não tem acesso a esta área de membros" },
+          { status: 403 }
+        );
+      }
     }
 
     const [enrollments, unreadCount] = await Promise.all([

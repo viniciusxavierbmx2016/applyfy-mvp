@@ -6,6 +6,7 @@ import {
   getStaffCourseIds,
 } from "@/lib/auth";
 import { canAccessWorkspace, resolveStaffWorkspace } from "@/lib/workspace";
+import { hasWorkspaceAccess } from "@/lib/workspace-access";
 
 export async function GET(request: Request) {
   const t0 = Date.now();
@@ -70,7 +71,8 @@ export async function GET(request: Request) {
       if (!ws || !ws.isActive) {
         return NextResponse.json({ enrolled: [], store: [] });
       }
-      if (user.workspaceId && user.workspaceId !== ws.id) {
+      const allowed = await hasWorkspaceAccess(user.id, ws.id);
+      if (!allowed) {
         return NextResponse.json(
           { error: "Você não tem acesso a esta área de membros" },
           { status: 403 }

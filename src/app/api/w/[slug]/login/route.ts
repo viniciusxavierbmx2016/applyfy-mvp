@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createRouteHandlerClient } from "@/lib/supabase-route";
 import { createAdminClient } from "@/lib/supabase-admin";
 import { prisma } from "@/lib/prisma";
+import { hasWorkspaceAccess } from "@/lib/workspace-access";
 
 const MAX_SESSIONS = 3;
 
@@ -46,12 +47,12 @@ export async function POST(
     ) {
       const target = await prisma.user.findUnique({
         where: { email: email.toLowerCase() },
-        select: { id: true, role: true, workspaceId: true },
+        select: { id: true, role: true },
       });
       if (
         target &&
         target.role === "STUDENT" &&
-        (!target.workspaceId || target.workspaceId === workspace.id)
+        (await hasWorkspaceAccess(target.id, workspace.id))
       ) {
         const admin = createAdminClient();
         await admin.auth.admin.updateUserById(target.id, {
@@ -88,20 +89,21 @@ export async function POST(
       return NextResponse.json({ error: message }, { status: 403 });
     }
 
-    // Bind STUDENTs to this workspace if not already bound.
-    // Staff (PRODUCER/ADMIN) are global and must not be workspace-bound.
+    // Students may access a workspace if they have at least one Enrollment
+    // in a course of that workspace (or an accepted Collaborator record, or
+    // they own the workspace). Staff (PRODUCER/ADMIN) are global and not
+    // subject to this gate.
     if (user.role === "STUDENT") {
-      if (user.workspaceId && user.workspaceId !== workspace.id) {
+      const allowed = await hasWorkspaceAccess(user.id, workspace.id);
+      if (!allowed) {
+        await supabase.auth.signOut();
         return NextResponse.json(
-          { error: "Este usuário pertence a outro workspace" },
+          {
+            error:
+              "Você não tem matrícula neste workspace. Entre em contato com o produtor.",
+          },
           { status: 403 }
         );
-      }
-      if (!user.workspaceId) {
-        await prisma.user.update({
-          where: { id: user.id },
-          data: { workspaceId: workspace.id },
-        });
       }
     }
 
