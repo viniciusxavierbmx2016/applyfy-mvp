@@ -28,7 +28,14 @@ export async function GET(
           include: {
             course: {
               include: {
-                workspace: { select: { ownerId: true } },
+                workspace: {
+                  select: {
+                    ownerId: true,
+                    slug: true,
+                    name: true,
+                    logoUrl: true,
+                  },
+                },
                 modules: {
                   orderBy: { order: "asc" },
                   include: {
@@ -131,12 +138,13 @@ export async function GET(
 
     const video = parseVideoUrl(lesson.videoUrl);
 
-    const viewerWorkspace = user.workspaceId
-      ? await prisma.workspace.findUnique({
-          where: { id: user.workspaceId },
-          select: { slug: true, name: true, logoUrl: true },
-        })
-      : null;
+    // Derive viewer workspace from the lesson's course, not User.workspaceId,
+    // so multi-workspace students see the correct "Voltar à vitrine" target.
+    const viewerWorkspace = {
+      slug: course.workspace.slug,
+      name: course.workspace.name,
+      logoUrl: course.workspace.logoUrl,
+    };
 
     // Masked payload — never expose raw videoUrl
     return NextResponse.json({

@@ -155,13 +155,10 @@ export async function POST(
 
     if (GRANT_EVENTS.has(event)) {
       const user = await ensureUserByEmail(email, name);
-      // Bind STUDENT user to this workspace if not bound yet.
-      if (user.role === "STUDENT" && !user.workspaceId) {
-        await prisma.user.update({
-          where: { id: user.id },
-          data: { workspaceId },
-        });
-      }
+      // Access to a workspace is derived from Enrollment (course→workspace),
+      // so we no longer write workspaceId on the User. Keeping that legacy
+      // field synced here would re-introduce a single-workspace binding for
+      // multi-workspace students.
 
       const results: Array<{
         externalId: string;

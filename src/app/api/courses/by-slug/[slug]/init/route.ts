@@ -52,7 +52,7 @@ export async function GET(
       where: { slug: params.slug },
       include: {
         workspace: {
-          select: { slug: true, name: true, logoUrl: true, ownerId: true },
+          select: { id: true, slug: true, name: true, logoUrl: true, ownerId: true },
         },
         sections: { orderBy: { order: "asc" } },
         modules: {
@@ -84,7 +84,6 @@ export async function GET(
       agg,
       myReview,
       menuItems,
-      viewerWorkspace,
       enrollmentCount,
     ] = await Promise.all([
       prisma.enrollment.findUnique({
@@ -111,18 +110,20 @@ export async function GET(
         where: { courseId: course.id },
         orderBy: { order: "asc" },
       }),
-      user.workspaceId
-        ? prisma.workspace.findUnique({
-            where: { id: user.workspaceId },
-            select: { slug: true, name: true, logoUrl: true },
-          })
-        : Promise.resolve(null),
       course.showStudentCount
         ? prisma.enrollment.count({
             where: { courseId: course.id, status: "ACTIVE" },
           })
         : Promise.resolve(0),
     ]);
+
+    // viewerWorkspace reflects the workspace of THIS course, not User.workspaceId —
+    // this is what populates useUserStore.workspace and drives "Voltar à vitrine".
+    const viewerWorkspace = {
+      slug: course.workspace.slug,
+      name: course.workspace.name,
+      logoUrl: course.workspace.logoUrl,
+    };
 
     const filteredMenu = menuItems.filter((m) => {
       if (!course.communityEnabled && m.label === "Comunidade") return false;

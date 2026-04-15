@@ -16,7 +16,7 @@ export async function GET(
       where: { slug: params.slug },
       include: {
         workspace: {
-          select: { slug: true, name: true, logoUrl: true, ownerId: true },
+          select: { id: true, slug: true, name: true, logoUrl: true, ownerId: true },
         },
         sections: { orderBy: { order: "asc" } },
         modules: {
@@ -59,12 +59,14 @@ export async function GET(
       !!enrollment.expiresAt &&
       enrollment.expiresAt.getTime() < Date.now();
 
-    const viewerWorkspace = user.workspaceId
-      ? await prisma.workspace.findUnique({
-          where: { id: user.workspaceId },
-          select: { slug: true, name: true, logoUrl: true },
-        })
-      : null;
+    // viewerWorkspace reflects the workspace of THIS course, not the user's
+    // legacy User.workspaceId binding — otherwise a multi-workspace student
+    // would get back-nav links pointing to the wrong /w/<slug>.
+    const viewerWorkspace = {
+      slug: course.workspace.slug,
+      name: course.workspace.name,
+      logoUrl: course.workspace.logoUrl,
+    };
 
     const overrideRows = enrollment
       ? await prisma.enrollmentOverride.findMany({
