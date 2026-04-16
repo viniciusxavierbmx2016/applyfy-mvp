@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { Sidebar } from "@/components/sidebar";
 import { Header } from "@/components/header";
+
+const ADMIN_FAVICON = "/applyfy-logo.png?v=2";
 
 export default function AdminLayout({
   children,
@@ -12,6 +14,23 @@ export default function AdminLayout({
 }) {
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // Force the Applyfy favicon while inside /admin/*. The root layout already
+  // emits it, but browsers aggressively cache the last-seen favicon per tab —
+  // if the admin previously visited /w/<slug> with a workspace favicon, the
+  // tab would keep that icon until re-fetched. Writing the href on every
+  // admin render pushes the correct icon back into the DOM.
+  useEffect(() => {
+    let link = document.querySelector<HTMLLinkElement>("link[rel='icon']");
+    if (!link) {
+      link = document.createElement("link");
+      link.rel = "icon";
+      document.head.appendChild(link);
+    }
+    if (link.href.endsWith(ADMIN_FAVICON) === false) {
+      link.href = ADMIN_FAVICON;
+    }
+  }, [pathname]);
 
   // Auth routes inside /admin/* should render without the staff shell.
   if (pathname === "/admin/login") return <>{children}</>;
