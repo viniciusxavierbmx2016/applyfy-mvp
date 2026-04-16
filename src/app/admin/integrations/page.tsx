@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Skeleton } from "@/components/ui/skeleton";
 import { GatewayLogo } from "@/components/gateway-logo";
@@ -21,6 +22,7 @@ interface StatusResponse {
 }
 
 export default function AdminIntegrationsIndexPage() {
+  const router = useRouter();
   const [applyfy, setApplyfy] = useState<GatewayStatus | null>(null);
   const [pendingRequests, setPendingRequests] = useState(0);
   const [viewerRole, setViewerRole] = useState<ViewerRole | null>(null);
@@ -35,10 +37,13 @@ export default function AdminIntegrationsIndexPage() {
           setApplyfy(d.gateways.applyfy);
           setPendingRequests(d.pendingRequests || 0);
           setViewerRole(d.viewerRole || null);
+          if (d.viewerRole && d.viewerRole !== "ADMIN") {
+            router.replace("/producer/integrations");
+          }
         }
       })
       .finally(() => setLoading(false));
-  }, []);
+  }, [router]);
 
   const isAdmin = viewerRole === "ADMIN";
 

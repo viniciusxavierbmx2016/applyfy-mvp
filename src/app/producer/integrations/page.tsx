@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Skeleton } from "@/components/ui/skeleton";
 import { GatewayLogo } from "@/components/gateway-logo";
@@ -20,10 +21,9 @@ interface StatusResponse {
   viewerRole?: ViewerRole;
 }
 
-export default function AdminIntegrationsIndexPage() {
+export default function ProducerIntegrationsPage() {
+  const router = useRouter();
   const [applyfy, setApplyfy] = useState<GatewayStatus | null>(null);
-  const [pendingRequests, setPendingRequests] = useState(0);
-  const [viewerRole, setViewerRole] = useState<ViewerRole | null>(null);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
 
@@ -33,14 +33,13 @@ export default function AdminIntegrationsIndexPage() {
       .then((d: StatusResponse | null) => {
         if (d) {
           setApplyfy(d.gateways.applyfy);
-          setPendingRequests(d.pendingRequests || 0);
-          setViewerRole(d.viewerRole || null);
+          if (d.viewerRole === "ADMIN") {
+            router.replace("/admin/integrations");
+          }
         }
       })
       .finally(() => setLoading(false));
-  }, []);
-
-  const isAdmin = viewerRole === "ADMIN";
+  }, [router]);
 
   function handleLogoUpdated(url: string) {
     setApplyfy((prev) =>
@@ -59,22 +58,6 @@ export default function AdminIntegrationsIndexPage() {
             Conecte gateways de pagamento para liberar cursos automaticamente.
           </p>
         </div>
-        {isAdmin && (
-        <Link
-          href="/producer/integrations/requests"
-          className="inline-flex items-center gap-2 self-start px-3.5 py-2 rounded-lg bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700 text-sm font-medium text-gray-700 dark:text-gray-200 transition"
-        >
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-          </svg>
-          Ver solicitações
-          {pendingRequests > 0 && (
-            <span className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-[11px] font-semibold rounded-full bg-amber-500 text-white">
-              {pendingRequests}
-            </span>
-          )}
-        </Link>
-        )}
       </div>
 
       {loading ? (
@@ -88,7 +71,7 @@ export default function AdminIntegrationsIndexPage() {
             connected={!!applyfy?.connected}
             logoUrl={applyfy?.logoUrl || DEFAULT_APPLYFY_LOGO}
             onLogoUpdated={handleLogoUpdated}
-            canEditLogo={isAdmin}
+            canEditLogo={false}
           />
           <RequestIntegrationCard onOpen={() => setModalOpen(true)} />
         </div>

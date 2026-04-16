@@ -1,15 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useUserStore } from "@/stores/user-store";
-import {
-  DateRangeSelector,
-  computeRange,
-  type DateRangeValue,
-} from "@/components/date-range-selector";
 
 const AdminRevenueChart = dynamic(
   () =>
@@ -19,31 +15,6 @@ const AdminRevenueChart = dynamic(
     loading: () => <div className="w-full h-[220px] animate-pulse" />,
   }
 );
-
-const AdminAnalyticsContent = dynamic(
-  () =>
-    import("@/components/admin-analytics-content").then(
-      (m) => m.AdminAnalyticsContent
-    ),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="space-y-6">
-        <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <Skeleton key={i} className="h-32" />
-          ))}
-        </div>
-        <Skeleton className="h-72" />
-      </div>
-    ),
-  }
-);
-
-interface ProducerCourseOption {
-  id: string;
-  title: string;
-}
 
 interface DashboardData {
   metrics: {
@@ -77,26 +48,27 @@ interface DashboardData {
 
 export default function AdminDashboardPage() {
   const { user } = useUserStore();
-  const isAdmin = user?.role === "ADMIN";
+  const router = useRouter();
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (isAdmin) {
-      fetch("/api/admin/dashboard")
-        .then((r) => (r.ok ? r.json() : null))
-        .then((d) => setData(d))
-        .finally(() => setLoading(false));
-    } else {
-      setLoading(false);
+    if (!user) return;
+    if (user.role !== "ADMIN") {
+      router.replace(
+        user.role === "PRODUCER" || user.role === "COLLABORATOR"
+          ? "/producer"
+          : "/"
+      );
+      return;
     }
-  }, [isAdmin]);
+    fetch("/api/admin/dashboard")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => setData(d))
+      .finally(() => setLoading(false));
+  }, [user, router]);
 
-  if (!isAdmin) {
-    return <ProducerDashboard />;
-  }
-
-  if (loading || !data) {
+  if (!user || user.role !== "ADMIN" || loading || !data) {
     return (
       <div className="space-y-6">
         <Skeleton className="h-8 w-48" />
@@ -343,56 +315,5 @@ function formatMoney(v: number) {
   } catch {
     return `R$ ${v.toFixed(2)}`;
   }
-}
-
-
-function ProducerDashboard() {
-  const [courseId, setCourseId] = useState<string>("all");
-  const [range, setRange] = useState<DateRangeValue>(() =>
-    computeRange("last_30_days")
-  );
-  const [courses, setCourses] = useState<ProducerCourseOption[]>([]);
-
-  useEffect(() => {
-    fetch("/api/admin/analytics?tab=overview&window=7")
-      .then((r) => (r.ok ? r.json() : null))
-      .then((d) => d && Array.isArray(d.courses) && setCourses(d.courses))
-      .catch(() => {});
-  }, []);
-
-  return (
-    <div className="space-y-6">
-      <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">
-            Dashboard
-          </h1>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Visão geral do seu workspace
-          </p>
-        </div>
-        <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
-          <select
-            value={courseId}
-            onChange={(e) => setCourseId(e.target.value)}
-            className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[180px]"
-          >
-            <option value="all">Todos os cursos</option>
-            {courses.map((c) => (
-              <option key={c.id} value={c.id}>{c.title}</option>
-            ))}
-          </select>
-          <DateRangeSelector value={range} onChange={setRange} />
-        </div>
-      </div>
-
-      <AdminAnalyticsContent
-        courseId={courseId}
-        startDate={range.startDate}
-        endDate={range.endDate}
-        rangeLabel={range.label}
-      />
-    </div>
-  );
 }
 
