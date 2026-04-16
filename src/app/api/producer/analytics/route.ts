@@ -560,7 +560,12 @@ export async function GET(request: Request) {
       for (const p of progressS) {
         const cid = lessonToCourseS.get(p.lessonId);
         if (!cid) continue;
-        if (p.completed) {
+        if (
+          p.completed &&
+          p.completedAt &&
+          p.completedAt >= windowStart &&
+          p.completedAt <= windowEnd
+        ) {
           if (!completedByUserCourse.has(p.userId))
             completedByUserCourse.set(p.userId, new Map());
           const m = completedByUserCourse.get(p.userId)!;
@@ -627,8 +632,9 @@ export async function GET(request: Request) {
 
       const topEngaged = [...userList]
         .sort((a, b) => {
-          if (b.points !== a.points) return b.points - a.points;
-          return b.lessonsCompleted - a.lessonsCompleted;
+          if (b.lessonsCompleted !== a.lessonsCompleted)
+            return b.lessonsCompleted - a.lessonsCompleted;
+          return b.points - a.points;
         })
         .slice(0, 10);
 
