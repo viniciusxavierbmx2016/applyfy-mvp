@@ -223,31 +223,14 @@ function ApplyfyCard({
           {connected ? "● Conectado" : "● Não configurado"}
         </span>
       </div>
-      <Link
-        href="/admin/integrations/applyfy"
-        className="group/title block focus:outline-none"
-      >
-        <h2 className="text-base font-semibold text-gray-900 dark:text-white group-hover/title:text-blue-600 dark:group-hover/title:text-blue-400 transition-colors">
+      <div>
+        <h2 className="text-base font-semibold text-gray-900 dark:text-white">
           Applyfy
         </h2>
         <p className="text-sm text-gray-600 dark:text-gray-400 mt-0.5">
           Gateway de pagamentos para infoprodutores.
         </p>
-      </Link>
-      <Link
-        href="/admin/integrations/applyfy"
-        className="group/cta mt-auto pt-1 inline-flex items-center text-xs text-blue-600 dark:text-blue-400 font-medium hover:text-blue-700 dark:hover:text-blue-300 w-fit"
-      >
-        {connected ? "Gerenciar" : "Configurar"}
-        <svg
-          className="w-3.5 h-3.5 ml-1 transition-transform group-hover/cta:translate-x-0.5"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-        </svg>
-      </Link>
+      </div>
     </div>
   );
 }

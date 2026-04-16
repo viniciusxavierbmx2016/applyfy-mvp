@@ -107,7 +107,7 @@ export function CourseForm({ initial, mode }: CourseFormProps) {
       }
 
       if (mode === "create") {
-        router.push(`/admin/courses/${data.course.id}/edit`);
+        router.push(`/producer/courses/${data.course.id}/edit`);
       } else {
         router.refresh();
       }

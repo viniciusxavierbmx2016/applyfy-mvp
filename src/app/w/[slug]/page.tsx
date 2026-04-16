@@ -130,7 +130,7 @@ export default function WorkspaceVitrinePage() {
                     expiresAt={course.expiresAt}
                     manageHref={
                       course.canManage
-                        ? `/admin/courses/${course.id}/edit`
+                        ? `/producer/courses/${course.id}/edit`
                         : undefined
                     }
                   />
@@ -184,7 +184,7 @@ export default function WorkspaceVitrinePage() {
                     locked={!course.canManage}
                     manageHref={
                       course.canManage
-                        ? `/admin/courses/${course.id}/edit`
+                        ? `/producer/courses/${course.id}/edit`
                         : undefined
                     }
                   />

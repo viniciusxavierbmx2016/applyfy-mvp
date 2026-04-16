@@ -105,13 +105,11 @@ export default function AdminDashboardPage() {
           label="Alunos totais"
           value={data.metrics.totalStudents}
           accent="text-emerald-500 dark:text-emerald-400"
-          href="/admin/users"
         />
         <Card
           label="Cursos totais"
           value={data.metrics.totalCourses}
           accent="text-amber-500 dark:text-amber-400"
-          href="/admin/courses"
         />
         <Card
           label="Produtores ativos (30d)"

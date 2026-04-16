@@ -38,7 +38,7 @@ export default function ProducerRegisterPage() {
         return;
       }
       router.push(
-        `/verify-email?email=${encodeURIComponent(email)}&next=/admin/workspaces`
+        `/verify-email?email=${encodeURIComponent(email)}&next=/producer/workspaces`
       );
     } catch {
       setError("Erro ao conectar com o servidor");

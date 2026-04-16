@@ -299,7 +299,7 @@ export default function CourseHomePage() {
             Você está visualizando como produtor
           </span>
           <Link
-            href={`/admin/courses/${course.id}/edit`}
+            href={`/producer/courses/${course.id}/edit`}
             className="text-amber-900 dark:text-amber-100 font-medium hover:underline"
           >
             Voltar ao editor →
