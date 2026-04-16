@@ -228,17 +228,17 @@ export function Sidebar({ open, onClose }: SidebarProps) {
         {/* Topo: logo/workspace switcher */}
         <div
           className={cn(
-            "relative flex items-center transition-all duration-300",
+            "relative transition-all duration-300",
             collapsed
-              ? "lg:justify-center lg:pt-4 lg:px-2 h-16 px-4 justify-between"
-              : "pt-4 px-3 pb-2 justify-between gap-2"
+              ? "lg:flex lg:flex-col lg:items-center lg:gap-2 lg:pt-4 lg:px-2 flex h-16 items-center justify-between px-4"
+              : "flex items-center pt-4 px-3 pb-2 justify-between gap-2"
           )}
         >
           {isProducer ? (
             <div
               className={cn(
                 "min-w-0",
-                collapsed ? "lg:flex lg:justify-center lg:w-full" : "flex-1"
+                collapsed ? "lg:flex lg:justify-center" : "flex-1"
               )}
             >
               <WorkspaceSwitcher
@@ -252,7 +252,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
               onClick={onClose}
               className={cn(
                 "flex items-center",
-                collapsed ? "lg:justify-center lg:w-full" : "flex-1"
+                collapsed ? "lg:justify-center" : "flex-1"
               )}
               title="Applyfy"
             >
@@ -284,6 +284,32 @@ export function Sidebar({ open, onClose }: SidebarProps) {
             <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
+          </button>
+
+          {/* Colapsar/expandir (desktop) */}
+          <button
+            onClick={toggleCollapsed}
+            aria-label={collapsed ? "Expandir menu" : "Recolher menu"}
+            title={collapsed ? "Expandir menu" : "Recolher menu"}
+            className={cn(
+              "group relative hidden lg:flex items-center justify-center w-7 h-7 rounded-md flex-shrink-0",
+              "text-gray-400 hover:text-gray-900 dark:text-gray-500 dark:hover:text-white",
+              "hover:bg-gray-100 dark:hover:bg-white/5 transition-colors duration-200"
+            )}
+          >
+            <svg
+              className="w-[18px] h-[18px]"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={1.8}
+            >
+              <rect x="3" y="4" width="18" height="16" rx="2" />
+              <path d="M9 4v16" strokeLinecap="round" />
+            </svg>
+            {collapsed && (
+              <span className={tooltipCls}>Expandir menu</span>
+            )}
           </button>
         </div>
 
@@ -396,34 +422,6 @@ export function Sidebar({ open, onClose }: SidebarProps) {
             </>
           )}
         </nav>
-
-        {/* Botão de colapsar/expandir */}
-        <div
-          className={cn(
-            "hidden lg:flex border-t border-gray-200 dark:border-white/5",
-            collapsed ? "justify-center py-2 px-2" : "justify-end py-2 px-3"
-          )}
-        >
-          <button
-            onClick={toggleCollapsed}
-            aria-label={collapsed ? "Expandir menu" : "Recolher menu"}
-            className={cn(
-              "group relative flex items-center justify-center w-6 h-6 rounded-full",
-              "bg-gray-100 hover:bg-gray-200 dark:bg-white/5 dark:hover:bg-white/10",
-              "text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white",
-              "transition-colors duration-200"
-            )}
-          >
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              {collapsed ? (
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
-              ) : (
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
-              )}
-            </svg>
-            {collapsed && <span className={tooltipCls}>Expandir menu</span>}
-          </button>
-        </div>
       </aside>
     </>
   );
