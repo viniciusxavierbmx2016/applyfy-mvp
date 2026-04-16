@@ -35,9 +35,11 @@ export function Header({ onMenuToggle }: HeaderProps) {
   }, []);
 
   async function handleLogout() {
+    const dest =
+      user?.role === "ADMIN" ? "/admin/login" : "/producer/login";
     await fetch("/api/auth/logout", { method: "POST" });
     logoutStore();
-    router.push("/login");
+    router.push(dest);
     router.refresh();
   }
 
