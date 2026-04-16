@@ -18,7 +18,7 @@ export default function AdminSettingsPage() {
 
   useEffect(() => {
     setOrigin(window.location.origin);
-    fetch("/api/admin/settings")
+    fetch("/api/producer/settings")
       .then((r) => (r.ok ? r.json() : { settings: {} }))
       .then((d) => setStatus(d.settings || {}))
       .finally(() => setLoading(false));
@@ -32,13 +32,13 @@ export default function AdminSettingsPage() {
   async function save(key: string, value: string) {
     setSaving(true);
     try {
-      const res = await fetch("/api/admin/settings", {
+      const res = await fetch("/api/producer/settings", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ settings: { [key]: value } }),
       });
       if (res.ok) {
-        const reload = await fetch("/api/admin/settings");
+        const reload = await fetch("/api/producer/settings");
         if (reload.ok) {
           const d = await reload.json();
           setStatus(d.settings || {});

@@ -84,7 +84,7 @@ function AdminAnalyticsPageInner() {
   const [courses, setCourses] = useState<CourseOption[]>([]);
 
   useEffect(() => {
-    fetch("/api/admin/analytics?tab=overview&window=7")
+    fetch("/api/producer/analytics?tab=overview&window=7")
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => d && Array.isArray(d.courses) && setCourses(d.courses))
       .catch(() => {});
@@ -103,7 +103,7 @@ function AdminAnalyticsPageInner() {
     qs.set("endDate", range.endDate);
     qs.set("tab", tab);
     qs.set("format", "csv");
-    window.location.href = `/api/admin/analytics?${qs.toString()}`;
+    window.location.href = `/api/producer/analytics?${qs.toString()}`;
   }
 
   return (

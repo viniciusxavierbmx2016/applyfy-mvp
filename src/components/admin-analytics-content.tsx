@@ -146,7 +146,7 @@ export function AdminAnalyticsContent({
     if (startDate) qs.set("startDate", startDate);
     if (endDate) qs.set("endDate", endDate);
     qs.set("tab", "overview");
-    fetch(`/api/admin/analytics?${qs.toString()}`)
+    fetch(`/api/producer/analytics?${qs.toString()}`)
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => setData(d))
       .finally(() => setLoading(false));

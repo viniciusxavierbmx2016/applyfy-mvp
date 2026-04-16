@@ -85,7 +85,7 @@ export function ReportsContentTab({ courseId, startDate, endDate }: Props) {
     if (courseId !== "all") qs.set("courseId", courseId);
     if (startDate) qs.set("startDate", startDate);
     if (endDate) qs.set("endDate", endDate);
-    fetch(`/api/admin/analytics?${qs.toString()}`)
+    fetch(`/api/producer/analytics?${qs.toString()}`)
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => setData(d))
       .finally(() => setLoading(false));

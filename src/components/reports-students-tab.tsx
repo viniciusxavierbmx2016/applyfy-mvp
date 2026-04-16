@@ -98,7 +98,7 @@ export function ReportsStudentsTab({ courseId, startDate, endDate }: Props) {
     if (courseId !== "all") qs.set("courseId", courseId);
     if (startDate) qs.set("startDate", startDate);
     if (endDate) qs.set("endDate", endDate);
-    fetch(`/api/admin/analytics?${qs.toString()}`)
+    fetch(`/api/producer/analytics?${qs.toString()}`)
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => setData(d))
       .finally(() => setLoading(false));
@@ -164,7 +164,7 @@ export function ReportsStudentsTab({ courseId, startDate, endDate }: Props) {
     if (courseId !== "all") qs.set("courseId", courseId);
     if (startDate) qs.set("startDate", startDate);
     if (endDate) qs.set("endDate", endDate);
-    window.location.href = `/api/admin/analytics?${qs.toString()}`;
+    window.location.href = `/api/producer/analytics?${qs.toString()}`;
   }
 
   if (loading && !data) {

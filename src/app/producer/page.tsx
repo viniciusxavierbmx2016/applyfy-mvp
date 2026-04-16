@@ -55,7 +55,7 @@ export default function ProducerDashboardPage() {
       router.replace("/");
       return;
     }
-    fetch("/api/admin/analytics?tab=overview&window=7")
+    fetch("/api/producer/analytics?tab=overview&window=7")
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => d && Array.isArray(d.courses) && setCourses(d.courses))
       .catch(() => {});

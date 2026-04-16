@@ -90,7 +90,7 @@ export default function AdminIntegrationsPage() {
   useEffect(() => {
     setOrigin(window.location.origin);
     Promise.all([
-      fetch("/api/admin/settings").then((r) =>
+      fetch("/api/producer/settings").then((r) =>
         r.ok ? r.json() : { settings: {} }
       ),
       fetch("/api/admin/integrations/courses").then((r) =>
@@ -128,7 +128,7 @@ export default function AdminIntegrationsPage() {
   async function saveToken(value: string) {
     setSavingToken(true);
     try {
-      const res = await fetch("/api/admin/settings", {
+      const res = await fetch("/api/producer/settings", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ settings: { applyfy_token: value } }),
@@ -137,7 +137,7 @@ export default function AdminIntegrationsPage() {
         showToast("Erro ao salvar");
         return;
       }
-      const reload = await fetch("/api/admin/settings");
+      const reload = await fetch("/api/producer/settings");
       if (reload.ok) {
         const d = await reload.json();
         setTokenStatus(d.settings?.applyfy_token ?? null);
