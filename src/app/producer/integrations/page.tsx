@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -28,7 +28,7 @@ export default function ProducerIntegrationsPage() {
   const [modalOpen, setModalOpen] = useState(false);
 
   useEffect(() => {
-    fetch("/api/admin/integrations/status")
+    fetch("/api/producer/integrations/status")
       .then((r) => (r.ok ? r.json() : null))
       .then((d: StatusResponse | null) => {
         if (d) {
@@ -40,12 +40,6 @@ export default function ProducerIntegrationsPage() {
       })
       .finally(() => setLoading(false));
   }, [router]);
-
-  function handleLogoUpdated(url: string) {
-    setApplyfy((prev) =>
-      prev ? { ...prev, logoUrl: url } : { connected: false, logoUrl: url }
-    );
-  }
 
   return (
     <div className="max-w-5xl mx-auto">
@@ -70,8 +64,6 @@ export default function ProducerIntegrationsPage() {
           <ApplyfyCard
             connected={!!applyfy?.connected}
             logoUrl={applyfy?.logoUrl || DEFAULT_APPLYFY_LOGO}
-            onLogoUpdated={handleLogoUpdated}
-            canEditLogo={false}
           />
           <RequestIntegrationCard onOpen={() => setModalOpen(true)} />
         </div>
@@ -82,115 +74,17 @@ export default function ProducerIntegrationsPage() {
   );
 }
 
-function LogoUploader({
-  gateway,
-  logoUrl,
-  onUploaded,
-}: {
-  gateway: string;
-  logoUrl: string;
-  onUploaded: (url: string) => void;
-}) {
-  const inputRef = useRef<HTMLInputElement>(null);
-  const [uploading, setUploading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  async function onPick(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    e.target.value = "";
-    setError(null);
-    setUploading(true);
-    try {
-      const fd = new FormData();
-      fd.append("file", file);
-      fd.append("gateway", gateway);
-      const res = await fetch("/api/admin/integrations/logo", {
-        method: "POST",
-        body: fd,
-      });
-      const body = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        setError(body?.error || "Erro no upload");
-        setTimeout(() => setError(null), 3000);
-        return;
-      }
-      onUploaded(body.url);
-    } finally {
-      setUploading(false);
-    }
-  }
-
-  return (
-    <div className="relative group/logo inline-block">
-      <GatewayLogo src={logoUrl} label="Applyfy" size={48} />
-      <button
-        type="button"
-        onClick={() => inputRef.current?.click()}
-        disabled={uploading}
-        aria-label="Editar logo"
-        title="Tamanho ideal: 100x100px"
-        className="absolute inset-0 z-20 flex items-center justify-center rounded-xl bg-black/60 text-white opacity-0 group-hover/logo:opacity-100 focus:opacity-100 transition-opacity disabled:cursor-wait"
-      >
-        {uploading ? (
-          <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
-            <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" className="opacity-25" />
-            <path fill="currentColor" className="opacity-75" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
-          </svg>
-        ) : (
-          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-          </svg>
-        )}
-      </button>
-      <span
-        aria-hidden
-        className="absolute -bottom-1 -right-1 z-10 w-5 h-5 rounded-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 flex items-center justify-center shadow ring-2 ring-white dark:ring-gray-900 pointer-events-none"
-      >
-        <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-        </svg>
-      </span>
-      <input
-        ref={inputRef}
-        type="file"
-        accept="image/*"
-        className="hidden"
-        onChange={onPick}
-      />
-      {error && (
-        <span className="absolute left-0 top-full mt-1 text-[10px] text-red-500 whitespace-nowrap">
-          {error}
-        </span>
-      )}
-    </div>
-  );
-}
-
 function ApplyfyCard({
   connected,
   logoUrl,
-  onLogoUpdated,
-  canEditLogo,
 }: {
   connected: boolean;
   logoUrl: string;
-  onLogoUpdated: (url: string) => void;
-  canEditLogo: boolean;
 }) {
   return (
     <div className="group relative flex flex-col gap-3 p-5 rounded-xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700 hover:shadow-lg transition-all duration-200">
       <div className="flex items-start justify-between gap-3">
-        {canEditLogo ? (
-          <LogoUploader
-            gateway="applyfy"
-            logoUrl={logoUrl}
-            onUploaded={onLogoUpdated}
-          />
-        ) : (
-          <GatewayLogo src={logoUrl} label="Applyfy" size={48} />
-        )}
+        <GatewayLogo src={logoUrl} label="Applyfy" size={48} />
         <span
           className={`text-[11px] font-medium px-2.5 py-1 rounded-full border ${
             connected
@@ -275,7 +169,7 @@ function RequestModal({ onClose }: { onClose: () => void }) {
     setError(null);
     setSubmitting(true);
     try {
-      const res = await fetch("/api/admin/integrations/requests", {
+      const res = await fetch("/api/producer/integrations/request", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

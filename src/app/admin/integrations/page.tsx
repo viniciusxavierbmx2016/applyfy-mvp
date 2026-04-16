@@ -30,7 +30,7 @@ export default function AdminIntegrationsIndexPage() {
   const [modalOpen, setModalOpen] = useState(false);
 
   useEffect(() => {
-    fetch("/api/admin/integrations/status")
+    fetch("/api/producer/integrations/status")
       .then((r) => (r.ok ? r.json() : null))
       .then((d: StatusResponse | null) => {
         if (d) {
@@ -280,7 +280,7 @@ function RequestModal({ onClose }: { onClose: () => void }) {
     setError(null);
     setSubmitting(true);
     try {
-      const res = await fetch("/api/admin/integrations/requests", {
+      const res = await fetch("/api/producer/integrations/request", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

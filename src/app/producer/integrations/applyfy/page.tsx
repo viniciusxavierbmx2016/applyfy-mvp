@@ -93,10 +93,10 @@ export default function AdminIntegrationsPage() {
       fetch("/api/producer/settings").then((r) =>
         r.ok ? r.json() : { settings: {} }
       ),
-      fetch("/api/admin/integrations/courses").then((r) =>
+      fetch("/api/producer/integrations/courses").then((r) =>
         r.ok ? r.json() : { courses: [] }
       ),
-      fetch("/api/admin/integrations/status").then((r) =>
+      fetch("/api/producer/integrations/status").then((r) =>
         r.ok ? r.json() : null
       ),
     ])
