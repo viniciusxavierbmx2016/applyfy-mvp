@@ -80,38 +80,38 @@ const studentLinks: NavLink[] = [
 ];
 
 const producerLinks: NavLink[] = [
-  { href: "/admin", label: "Dashboard", icon: iconDashboard },
-  { href: "/admin/workspaces", label: "Workspaces", icon: iconWorkspaces },
-  { href: "/admin/courses", label: "Meus Cursos", icon: iconCourses },
-  { href: "/admin/users", label: "Meus Alunos", icon: iconUsers },
-  { href: "/admin/community", label: "Comunidade", icon: iconCommunity },
-  { href: "/admin/analytics", label: "Relatórios", icon: iconAnalytics },
-  { href: "/admin/collaborators", label: "Colaboradores", icon: iconUsers },
-  { href: "/admin/integrations", label: "Integrações", icon: iconIntegrations },
+  { href: "/producer", label: "Dashboard", icon: iconDashboard },
+  { href: "/producer/workspaces", label: "Workspaces", icon: iconWorkspaces },
+  { href: "/producer/courses", label: "Meus Cursos", icon: iconCourses },
+  { href: "/producer/users", label: "Meus Alunos", icon: iconUsers },
+  { href: "/producer/community", label: "Comunidade", icon: iconCommunity },
+  { href: "/producer/analytics", label: "Relatórios", icon: iconAnalytics },
+  { href: "/producer/collaborators", label: "Colaboradores", icon: iconUsers },
+  { href: "/producer/integrations", label: "Integrações", icon: iconIntegrations },
 ];
 
 const collaboratorLinks: NavLink[] = [
-  { href: "/admin", label: "Dashboard", icon: iconDashboard },
+  { href: "/producer", label: "Dashboard", icon: iconDashboard },
   {
-    href: "/admin/courses",
+    href: "/producer/courses",
     label: "Cursos",
     icon: iconCourses,
     requires: "MANAGE_LESSONS",
   },
   {
-    href: "/admin/users",
+    href: "/producer/users",
     label: "Alunos",
     icon: iconUsers,
     requires: "MANAGE_STUDENTS",
   },
   {
-    href: "/admin/community",
+    href: "/producer/community",
     label: "Comunidade",
     icon: iconCommunity,
     requires: "MANAGE_COMMUNITY",
   },
   {
-    href: "/admin/analytics",
+    href: "/producer/analytics",
     label: "Relatórios",
     icon: iconAnalytics,
     requires: "VIEW_ANALYTICS",
@@ -172,7 +172,8 @@ export function Sidebar({ open, onClose }: SidebarProps) {
         : null;
 
   const isActive = (href: string) =>
-    pathname === href || (href !== "/admin" && href !== "/" && pathname.startsWith(href));
+    pathname === href ||
+    (href !== "/admin" && href !== "/producer" && href !== "/" && pathname.startsWith(href));
 
   function linkCls(active: boolean) {
     return cn(
@@ -317,7 +318,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
             collapsed && "lg:px-2"
           )}
         >
-          {!isCollaborator && !isAdmin && (
+          {!isCollaborator && !isAdmin && !isProducer && (
             <>
               <p
                 className={cn(
