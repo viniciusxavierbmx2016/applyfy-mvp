@@ -213,11 +213,8 @@ export function WorkspaceSwitcher({
           )}
         </div>
         <div className="flex-1 min-w-0 text-left">
-          <p className="text-sm font-medium text-gray-900 dark:text-white truncate leading-tight">
+          <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
             {active.name}
-          </p>
-          <p className="text-[10px] text-gray-500 truncate font-mono leading-tight">
-            /w/{active.slug}
           </p>
         </div>
         <svg
