@@ -122,19 +122,19 @@ interface AnalyticsData {
 const PIE_COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#ec4899"];
 const DIST_COLORS = ["#f43f5e", "#f59e0b", "#3b82f6", "#10b981"];
 
-interface AdminAnalyticsContentProps {
+interface AnalyticsOverviewProps {
   courseId?: string;
   startDate?: string;
   endDate?: string;
   rangeLabel?: string;
 }
 
-export function AdminAnalyticsContent({
+export function AnalyticsOverview({
   courseId: courseIdProp,
   startDate,
   endDate,
   rangeLabel,
-}: AdminAnalyticsContentProps = {}) {
+}: AnalyticsOverviewProps = {}) {
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
   const courseId = courseIdProp ?? "all";

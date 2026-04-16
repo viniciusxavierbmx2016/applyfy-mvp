@@ -11,10 +11,10 @@ import {
   type DateRangeValue,
 } from "@/components/date-range-selector";
 
-const AdminAnalyticsContent = dynamic(
+const AnalyticsOverview = dynamic(
   () =>
-    import("@/components/admin-analytics-content").then(
-      (m) => m.AdminAnalyticsContent
+    import("@/components/analytics-overview").then(
+      (m) => m.AnalyticsOverview
     ),
   {
     ssr: false,
@@ -101,7 +101,7 @@ export default function ProducerDashboardPage() {
         </div>
       </div>
 
-      <AdminAnalyticsContent
+      <AnalyticsOverview
         courseId={courseId}
         startDate={range.startDate}
         endDate={range.endDate}
