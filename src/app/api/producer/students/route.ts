@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireStaff, requirePermission, getStaffCourseIds } from "@/lib/auth";
 import { resolveStaffWorkspace } from "@/lib/workspace";
+import type { EnrollmentStatus } from "@prisma/client";
+
+const VISIBLE_STATUSES: EnrollmentStatus[] = ["ACTIVE", "EXPIRED"];
 
 export async function GET(request: Request) {
   try {
@@ -66,7 +69,7 @@ export async function GET(request: Request) {
           enrollments: {
             some: {
               courseId: { in: effectiveCourseIds || [] },
-              status: "ACTIVE" as const,
+              status: { in: VISIBLE_STATUSES },
             },
           },
         }
@@ -77,7 +80,7 @@ export async function GET(request: Request) {
               enrollments: {
                 some: {
                   courseId: { in: scopedCourseIds || [] },
-                  status: "ACTIVE" as const,
+                  status: { in: VISIBLE_STATUSES },
                 },
               },
             }
@@ -91,7 +94,7 @@ export async function GET(request: Request) {
                       enrollments: {
                         some: {
                           courseId: { in: scopedCourseIds || [] },
-                          status: "ACTIVE" as const,
+                          status: { in: VISIBLE_STATUSES },
                         },
                       },
                     },
@@ -116,10 +119,10 @@ export async function GET(request: Request) {
         workspaceId: true,
         enrollments: {
           where: courseFilterActive
-            ? { status: "ACTIVE", courseId: { in: effectiveCourseIds || [] } }
+            ? { status: { in: VISIBLE_STATUSES }, courseId: { in: effectiveCourseIds || [] } }
             : workspaceId
-              ? { status: "ACTIVE", courseId: { in: scopedCourseIds || [] } }
-              : { status: "ACTIVE" },
+              ? { status: { in: VISIBLE_STATUSES }, courseId: { in: scopedCourseIds || [] } }
+              : { status: { in: ["ACTIVE", "EXPIRED"] } },
           select: {
             id: true,
             courseId: true,

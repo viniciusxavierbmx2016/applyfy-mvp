@@ -93,10 +93,18 @@ export async function GET(
 
     const [total, enrollments] = await Promise.all([
       prisma.enrollment.count({
-        where: { courseId: params.id, user: whereUser },
+        where: {
+          courseId: params.id,
+          user: whereUser,
+          status: { in: ["ACTIVE", "EXPIRED"] },
+        },
       }),
       prisma.enrollment.findMany({
-        where: { courseId: params.id, user: whereUser },
+        where: {
+          courseId: params.id,
+          user: whereUser,
+          status: { in: ["ACTIVE", "EXPIRED"] },
+        },
         orderBy: { createdAt: "desc" },
         skip,
         take: PAGE_SIZE,

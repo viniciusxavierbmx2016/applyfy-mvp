@@ -108,7 +108,6 @@ export default function CourseStudentsPage({
   }, [params.id]);
 
   const load = useCallback(async () => {
-    console.log("[load] start");
     setLoading(true);
     const url = new URL(
       `/api/courses/${params.id}/students`,
@@ -117,18 +116,8 @@ export default function CourseStudentsPage({
     if (debouncedQ) url.searchParams.set("q", debouncedQ);
     url.searchParams.set("page", String(page));
     const res = await fetch(url.toString());
-    console.log("[load] fetch response", { status: res.status, ok: res.ok });
-    if (res.ok) {
-      const d = await res.json();
-      console.log("[load] fetched students", {
-        count: Array.isArray(d?.students) ? d.students.length : "?",
-        total: d?.total,
-        page: d?.page,
-      });
-      setData(d);
-    }
+    if (res.ok) setData(await res.json());
     setLoading(false);
-    console.log("[load] end");
   }, [params.id, debouncedQ, page]);
 
   useEffect(() => {
@@ -136,25 +125,14 @@ export default function CourseStudentsPage({
   }, [load]);
 
   async function handleRemove(enrollmentId: string) {
-    console.log("[handleRemove] called", { courseId: params.id, enrollmentId });
-    if (!confirm("Remover acesso deste aluno ao curso?")) {
-      console.log("[handleRemove] cancelled by user");
-      return;
-    }
+    if (!confirm("Remover acesso deste aluno ao curso?")) return;
     const url = `/api/courses/${params.id}/students/${enrollmentId}`;
-    console.log("[handleRemove] DELETE", url);
     try {
       const res = await fetch(url, { method: "DELETE" });
-      console.log("[handleRemove] response", { status: res.status, ok: res.ok });
-      const text = await res.text();
-      console.log("[handleRemove] response body:", text);
       if (res.ok) {
-        console.log("[handleRemove] success, calling load()");
         await load();
-        console.log("[handleRemove] load() complete");
       } else {
-        let data: { error?: string } = {};
-        try { data = JSON.parse(text); } catch {}
+        const data = await res.json().catch(() => ({}));
         console.error("[handleRemove] failed:", url, res.status, data);
         alert("Erro ao remover acesso: " + (data.error || `Status ${res.status}`));
       }
