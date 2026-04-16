@@ -159,24 +159,38 @@ export default function AdminUsersPage() {
 
   async function removeEnrollment(userId: string, courseId: string) {
     if (!confirm("Remover acesso a este curso?")) return;
-    const res = await fetch(
-      `/api/producer/students/${userId}/enrollments?courseId=${courseId}`,
-      { method: "DELETE" }
-    );
-    if (res.ok) {
-      setUsers((prev) =>
-        prev.map((u) =>
-          u.id === userId
-            ? {
-                ...u,
-                enrollments: u.enrollments.filter(
-                  (e) => e.courseId !== courseId
-                ),
-              }
-            : u
-        )
+    try {
+      const res = await fetch(
+        `/api/producer/students/${userId}/enrollments?courseId=${courseId}`,
+        { method: "DELETE" }
       );
-      showToast("Acesso removido");
+      if (res.ok) {
+        setUsers((prev) =>
+          prev.map((u) =>
+            u.id === userId
+              ? {
+                  ...u,
+                  enrollments: u.enrollments.filter(
+                    (e) => e.courseId !== courseId
+                  ),
+                }
+              : u
+          )
+        );
+        showToast("Acesso removido");
+      } else {
+        const data = await res.json().catch(() => ({}));
+        console.error(
+          "removeEnrollment failed:",
+          `/api/producer/students/${userId}/enrollments?courseId=${courseId}`,
+          res.status,
+          data
+        );
+        showToast("Erro: " + (data.error || `Status ${res.status}`));
+      }
+    } catch (err) {
+      console.error("removeEnrollment network error:", err);
+      showToast("Erro de rede ao remover acesso");
     }
   }
 
