@@ -166,12 +166,7 @@ export default function AdminUsersPage() {
   }
 
   async function removeEnrollment(userId: string, courseId: string) {
-    console.log("[removeEnrollment] called", { userId, courseId });
-    if (!confirm("Remover acesso a este curso?")) {
-      console.log("[removeEnrollment] cancelled by user (confirm dismissed)");
-      return;
-    }
-    console.log("[removeEnrollment] confirm accepted, issuing DELETE");
+    if (!confirm("Remover acesso a este curso?")) return;
     try {
       const res = await fetch(
         `/api/producer/students/${userId}/enrollments?courseId=${courseId}`,
