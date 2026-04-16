@@ -21,15 +21,20 @@ export default function AdminLayout({
   // tab would keep that icon until re-fetched. Writing the href on every
   // admin render pushes the correct icon back into the DOM.
   useEffect(() => {
-    let link = document.querySelector<HTMLLinkElement>("link[rel='icon']");
-    if (!link) {
-      link = document.createElement("link");
+    const apply = () => {
+      document
+        .querySelectorAll('link[rel="icon"], link[rel="shortcut icon"]')
+        .forEach((el) => el.remove());
+      const link = document.createElement("link");
       link.rel = "icon";
-      document.head.appendChild(link);
-    }
-    if (link.href.endsWith(ADMIN_FAVICON) === false) {
       link.href = ADMIN_FAVICON;
-    }
+      document.head.appendChild(link);
+    };
+    apply();
+    // Next re-injects <head> metadata after our effect on SPA navigation —
+    // reapply once shortly after to win the race.
+    const timer = setTimeout(apply, 100);
+    return () => clearTimeout(timer);
   }, [pathname]);
 
   // Auth routes inside /admin/* should render without the staff shell.
