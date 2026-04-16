@@ -80,7 +80,6 @@ export async function GET(request: Request) {
               enrollments: {
                 some: {
                   courseId: { in: scopedCourseIds || [] },
-                  status: { in: VISIBLE_STATUSES },
                 },
               },
             }
@@ -94,7 +93,6 @@ export async function GET(request: Request) {
                       enrollments: {
                         some: {
                           courseId: { in: scopedCourseIds || [] },
-                          status: { in: VISIBLE_STATUSES },
                         },
                       },
                     },
@@ -119,13 +117,14 @@ export async function GET(request: Request) {
         workspaceId: true,
         enrollments: {
           where: courseFilterActive
-            ? { status: { in: VISIBLE_STATUSES }, courseId: { in: effectiveCourseIds || [] } }
+            ? { courseId: { in: effectiveCourseIds || [] } }
             : workspaceId
-              ? { status: { in: VISIBLE_STATUSES }, courseId: { in: scopedCourseIds || [] } }
-              : { status: { in: ["ACTIVE", "EXPIRED"] } },
+              ? { courseId: { in: scopedCourseIds || [] } }
+              : {},
           select: {
             id: true,
             courseId: true,
+            status: true,
             course: { select: { id: true, title: true, slug: true } },
           },
         },

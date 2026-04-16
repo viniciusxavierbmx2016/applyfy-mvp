@@ -5,9 +5,12 @@ import { Avatar } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
+type EnrollmentStatus = "ACTIVE" | "EXPIRED" | "CANCELLED";
+
 interface AdminUserEnrollment {
   id: string;
   courseId: string;
+  status: EnrollmentStatus;
   course: { id: string; title: string; slug: string };
 }
 
@@ -86,8 +89,12 @@ export default function AdminUsersPage() {
   const availableCoursesByUser = useMemo(() => {
     const map: Record<string, CourseOption[]> = {};
     for (const u of users) {
-      const enrolledIds = new Set(u.enrollments.map((e) => e.courseId));
-      map[u.id] = courses.filter((c) => !enrolledIds.has(c.id));
+      const blockedIds = new Set(
+        u.enrollments
+          .filter((e) => e.status !== "CANCELLED")
+          .map((e) => e.courseId)
+      );
+      map[u.id] = courses.filter((c) => !blockedIds.has(c.id));
     }
     return map;
   }, [users, courses]);
@@ -112,6 +119,7 @@ export default function AdminUsersPage() {
                   {
                     id: body.enrollment.id,
                     courseId,
+                    status: "ACTIVE" as const,
                     course: body.enrollment.course,
                   },
                 ],
@@ -175,8 +183,10 @@ export default function AdminUsersPage() {
             u.id === userId
               ? {
                   ...u,
-                  enrollments: u.enrollments.filter(
-                    (e) => e.courseId !== courseId
+                  enrollments: u.enrollments.map((e) =>
+                    e.courseId === courseId
+                      ? { ...e, status: "CANCELLED" as const }
+                      : e
                   ),
                 }
               : u
@@ -341,8 +351,12 @@ export default function AdminUsersPage() {
                       </p>
                       <p className="text-xs text-gray-600 mt-0.5">
                         Nv {u.level} · {u.points} pts ·{" "}
-                        {u.enrollments.length} curso
-                        {u.enrollments.length !== 1 && "s"}
+                        {(() => {
+                          const active = u.enrollments.filter(
+                            (e) => e.status !== "CANCELLED"
+                          ).length;
+                          return `${active} curso${active !== 1 ? "s" : ""}`;
+                        })()}
                       </p>
                     </div>
                   </div>
@@ -376,7 +390,7 @@ export default function AdminUsersPage() {
                 {isOpen && (
                   <div className="border-t border-gray-200 dark:border-gray-800 p-4 bg-gray-950/40">
                     <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">
-                      Cursos com acesso
+                      Cursos
                     </p>
                     {u.enrollments.length === 0 ? (
                       <p className="text-xs text-gray-500 mb-4">
@@ -389,16 +403,43 @@ export default function AdminUsersPage() {
                             key={e.id}
                             className="flex items-center justify-between gap-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg px-3 py-2"
                           >
-                            <span className="text-sm text-gray-900 dark:text-white truncate">
-                              {e.course.title}
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() => removeEnrollment(u.id, e.courseId)}
-                              className="text-xs text-red-400 hover:text-red-300 flex-shrink-0"
-                            >
-                              Remover
-                            </button>
+                            <div className="flex items-center gap-2 min-w-0 flex-1">
+                              <span
+                                className={cn(
+                                  "text-sm truncate",
+                                  e.status === "CANCELLED"
+                                    ? "text-gray-400 dark:text-gray-500 line-through"
+                                    : "text-gray-900 dark:text-white"
+                                )}
+                              >
+                                {e.course.title}
+                              </span>
+                              <span
+                                className={cn(
+                                  "text-[10px] font-medium px-1.5 py-0.5 rounded-full border flex-shrink-0",
+                                  e.status === "ACTIVE"
+                                    ? "bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/30"
+                                    : e.status === "EXPIRED"
+                                    ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30"
+                                    : "bg-gray-500/10 text-gray-500 dark:text-gray-400 border-gray-400/30"
+                                )}
+                              >
+                                {e.status === "ACTIVE"
+                                  ? "Ativo"
+                                  : e.status === "EXPIRED"
+                                  ? "Expirado"
+                                  : "Histórico"}
+                              </span>
+                            </div>
+                            {e.status !== "CANCELLED" && (
+                              <button
+                                type="button"
+                                onClick={() => removeEnrollment(u.id, e.courseId)}
+                                className="text-xs text-red-400 hover:text-red-300 flex-shrink-0"
+                              >
+                                Remover
+                              </button>
+                            )}
                           </li>
                         ))}
                       </ul>

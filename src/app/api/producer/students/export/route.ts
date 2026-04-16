@@ -105,7 +105,6 @@ export async function GET(request: Request) {
           enrollments: {
             some: {
               courseId: { in: effectiveCourseIds || [] },
-              status: "ACTIVE" as const,
             },
           },
         }
@@ -116,7 +115,6 @@ export async function GET(request: Request) {
               enrollments: {
                 some: {
                   courseId: { in: scopedCourseIds || [] },
-                  status: "ACTIVE" as const,
                 },
               },
             }
@@ -130,7 +128,6 @@ export async function GET(request: Request) {
                       enrollments: {
                         some: {
                           courseId: { in: scopedCourseIds || [] },
-                          status: "ACTIVE" as const,
                         },
                       },
                     },
@@ -225,7 +222,9 @@ export async function GET(request: Request) {
     const headers = [
       "Nome",
       "Email",
-      "Curso",
+      "Cursos ativos",
+      "Cursos expirados",
+      "Cursos cancelados",
       "Data de matrícula",
       "Progresso",
       "Aulas concluídas",
@@ -236,8 +235,18 @@ export async function GET(request: Request) {
 
     for (const u of users) {
       if (u.enrollments.length === 0) continue;
-      const courseTitles = u.enrollments.map((e) => e.course.title).join(", ");
-      const allLessonIds = u.enrollments.flatMap((e) =>
+
+      const activeEnrollments = u.enrollments.filter((e) => e.status === "ACTIVE");
+      const expiredEnrollments = u.enrollments.filter((e) => e.status === "EXPIRED");
+      const cancelledEnrollments = u.enrollments.filter((e) => e.status === "CANCELLED");
+
+      const activeTitles = activeEnrollments.map((e) => e.course.title).join(", ");
+      const expiredTitles = expiredEnrollments.map((e) => e.course.title).join(", ");
+      const cancelledTitles = cancelledEnrollments.map((e) => e.course.title).join(", ");
+
+      // Progress only counts current enrollments (ACTIVE + EXPIRED), not cancelled.
+      const currentEnrollments = u.enrollments.filter((e) => e.status !== "CANCELLED");
+      const allLessonIds = currentEnrollments.flatMap((e) =>
         e.course.modules.flatMap((m) => m.lessons.map((l) => l.id))
       );
       const totalLessons = allLessonIds.length;
@@ -251,14 +260,14 @@ export async function GET(request: Request) {
           : 0;
       const lastAccessed = userProgress?.lastAccessed ?? null;
 
-      // Enrollment date: earliest ACTIVE enrollment in scope
+      // Enrollment date: earliest enrollment in scope (any status)
       const sortedByDate = [...u.enrollments].sort(
         (a, b) => a.createdAt.getTime() - b.createdAt.getTime()
       );
       const enrolledAt = sortedByDate[0]?.createdAt ?? null;
 
       // Access status: most permissive across enrollments (Vitalício > Expira em > Expirado)
-      let status = "Expirado";
+      let status = "Sem acesso";
       let minDaysLeft: number | null = null;
       let hasLifetime = false;
       for (const e of u.enrollments) {
@@ -275,21 +284,23 @@ export async function GET(request: Request) {
       }
       if (hasLifetime) status = "Vitalício";
       else if (minDaysLeft !== null) status = `Expira em ${minDaysLeft}d`;
-      else {
-        // Single-enrollment case (filtered by course), use that enrollment directly
-        if (courseFilterActive && u.enrollments.length === 1) {
-          status = accessStatus(
-            u.enrollments[0].status,
-            u.enrollments[0].expiresAt
-          );
-        }
+      else if (expiredEnrollments.length > 0) status = "Expirado";
+      else if (cancelledEnrollments.length > 0 && activeEnrollments.length === 0)
+        status = "Cancelado";
+      else if (courseFilterActive && u.enrollments.length === 1) {
+        status = accessStatus(
+          u.enrollments[0].status,
+          u.enrollments[0].expiresAt
+        );
       }
 
       lines.push(
         [
           csvEscape(u.name),
           csvEscape(u.email),
-          csvEscape(courseTitles),
+          csvEscape(activeTitles),
+          csvEscape(expiredTitles),
+          csvEscape(cancelledTitles),
           csvEscape(formatDate(enrolledAt)),
           csvEscape(`${percent}%`),
           csvEscape(`${completedCount} de ${totalLessons}`),
