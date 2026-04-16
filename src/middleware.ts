@@ -57,13 +57,23 @@ export function middleware(request: NextRequest) {
   if (!authed && !isPublic) {
     const url = request.nextUrl.clone();
     const wsMatch = pathname.match(/^\/w\/([^/]+)/);
-    url.pathname = wsMatch ? `/w/${wsMatch[1]}/login` : "/login";
+    url.pathname = wsMatch
+      ? `/w/${wsMatch[1]}/login`
+      : pathname.startsWith("/admin")
+        ? "/admin/login"
+        : pathname.startsWith("/producer")
+          ? "/producer/login"
+          : "/login";
     return NextResponse.redirect(url);
   }
 
   if (authed && redirectIfAuthed.has(pathname)) {
     const url = request.nextUrl.clone();
-    url.pathname = pathname === "/admin/login" ? "/admin" : "/";
+    url.pathname = pathname.startsWith("/admin")
+      ? "/admin"
+      : pathname.startsWith("/producer")
+        ? "/producer"
+        : "/";
     return NextResponse.redirect(url);
   }
 
