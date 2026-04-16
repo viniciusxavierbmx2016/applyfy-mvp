@@ -59,7 +59,7 @@ export default function AdminCollaboratorsPage() {
 
   async function load() {
     setLoading(true);
-    const r = await fetch("/api/admin/collaborators");
+    const r = await fetch("/api/producer/collaborators");
     if (r.ok) {
       const d = await r.json();
       setItems(d.collaborators || []);
@@ -74,7 +74,7 @@ export default function AdminCollaboratorsPage() {
 
   async function handleRevoke(id: string) {
     if (!confirm("Revogar acesso deste colaborador?")) return;
-    const r = await fetch(`/api/admin/collaborators/${id}`, {
+    const r = await fetch(`/api/producer/collaborators/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status: "REVOKED" }),
@@ -87,7 +87,7 @@ export default function AdminCollaboratorsPage() {
 
   async function handleDelete(id: string) {
     if (!confirm("Remover este colaborador permanentemente?")) return;
-    const r = await fetch(`/api/admin/collaborators/${id}`, {
+    const r = await fetch(`/api/producer/collaborators/${id}`, {
       method: "DELETE",
     });
     if (r.ok) {
@@ -97,7 +97,7 @@ export default function AdminCollaboratorsPage() {
   }
 
   async function handleResend(id: string) {
-    const r = await fetch(`/api/admin/collaborators/${id}/resend`, {
+    const r = await fetch(`/api/producer/collaborators/${id}/resend`, {
       method: "POST",
     });
     if (r.ok) {
@@ -326,8 +326,8 @@ function CollaboratorModal({
       courseIds: allCourses ? [] : courseIds,
     };
     const url = editing
-      ? `/api/admin/collaborators/${editing.id}`
-      : "/api/admin/collaborators";
+      ? `/api/producer/collaborators/${editing.id}`
+      : "/api/producer/collaborators";
     const method = editing ? "PATCH" : "POST";
     const r = await fetch(url, {
       method,

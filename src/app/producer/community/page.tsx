@@ -46,8 +46,8 @@ export default function AdminCommunityPage() {
     setLoading(true);
     try {
       const url = courseId
-        ? `/api/admin/community?courseId=${courseId}`
-        : "/api/admin/community";
+        ? `/api/producer/community?courseId=${courseId}`
+        : "/api/producer/community";
       const res = await fetch(url);
       if (res.ok) {
         const data = await res.json();
