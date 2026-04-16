@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { usePathname } from "next/navigation";
 import { Sidebar } from "@/components/sidebar";
 import { Header } from "@/components/header";
 
@@ -9,7 +10,11 @@ export default function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // Auth routes inside /admin/* should render without the staff shell.
+  if (pathname === "/admin/login") return <>{children}</>;
 
   return (
     <div className="min-h-screen bg-white dark:bg-gray-950 flex">
