@@ -287,44 +287,10 @@ export function Sidebar({ open, onClose }: SidebarProps) {
           </button>
         </div>
 
-        {/* Separador + botão de colapsar/expandir */}
-        <div
-          className={cn(
-            "hidden lg:block border-b border-gray-200 dark:border-white/5",
-            collapsed ? "mx-2" : "mx-3"
-          )}
-        />
-        <div
-          className={cn(
-            "hidden lg:flex mb-3",
-            collapsed ? "justify-center pt-2 px-2" : "justify-end pt-2 px-3"
-          )}
-        >
-          <button
-            onClick={toggleCollapsed}
-            aria-label={collapsed ? "Expandir menu" : "Recolher menu"}
-            className={cn(
-              "group relative flex items-center justify-center w-6 h-6 rounded-full",
-              "bg-gray-100 hover:bg-gray-200 dark:bg-white/5 dark:hover:bg-white/10",
-              "text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white",
-              "transition-colors duration-200"
-            )}
-          >
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              {collapsed ? (
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
-              ) : (
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
-              )}
-            </svg>
-            {collapsed && <span className={tooltipCls}>Expandir menu</span>}
-          </button>
-        </div>
-
         {/* Nav */}
         <nav
           className={cn(
-            "flex-1 flex flex-col gap-0.5 pb-4 overflow-y-auto px-3",
+            "flex-1 flex flex-col gap-0.5 pt-2 pb-4 overflow-y-auto px-3",
             collapsed && "lg:px-2"
           )}
         >
@@ -430,6 +396,34 @@ export function Sidebar({ open, onClose }: SidebarProps) {
             </>
           )}
         </nav>
+
+        {/* Botão de colapsar/expandir */}
+        <div
+          className={cn(
+            "hidden lg:flex border-t border-gray-200 dark:border-white/5",
+            collapsed ? "justify-center py-2 px-2" : "justify-end py-2 px-3"
+          )}
+        >
+          <button
+            onClick={toggleCollapsed}
+            aria-label={collapsed ? "Expandir menu" : "Recolher menu"}
+            className={cn(
+              "group relative flex items-center justify-center w-6 h-6 rounded-full",
+              "bg-gray-100 hover:bg-gray-200 dark:bg-white/5 dark:hover:bg-white/10",
+              "text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white",
+              "transition-colors duration-200"
+            )}
+          >
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              {collapsed ? (
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+              ) : (
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
+              )}
+            </svg>
+            {collapsed && <span className={tooltipCls}>Expandir menu</span>}
+          </button>
+        </div>
       </aside>
     </>
   );
