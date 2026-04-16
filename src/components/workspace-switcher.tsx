@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
@@ -29,6 +30,8 @@ export function WorkspaceSwitcher({
   collapsed?: boolean;
   onExpand?: () => void;
 } = {}) {
+  const pathname = usePathname();
+  const routePrefix = pathname.startsWith("/admin") ? "/admin" : "/producer";
   const [workspaces, setWorkspaces] = useState<WorkspaceRow[] | null>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
@@ -76,7 +79,7 @@ export function WorkspaceSwitcher({
     if (collapsed) {
       return (
         <Link
-          href="/admin/workspaces/new"
+          href={`${routePrefix}/workspaces/new`}
           title="Criar workspace"
           className="group relative flex items-center justify-center w-8 h-8 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-500/20 transition"
         >
@@ -98,7 +101,7 @@ export function WorkspaceSwitcher({
           Crie seu primeiro para receber alunos.
         </p>
         <Link
-          href="/admin/workspaces/new"
+          href={`${routePrefix}/workspaces/new`}
           className="inline-block text-[11px] font-medium px-2.5 py-1 rounded bg-blue-600 hover:bg-blue-700 text-white"
         >
           Criar workspace
@@ -173,7 +176,7 @@ export function WorkspaceSwitcher({
               </button>
             ))}
             <Link
-              href="/admin/workspaces/new"
+              href={`${routePrefix}/workspaces/new`}
               onClick={() => setOpen(false)}
               className="mt-1 w-full flex items-center gap-2 px-2 py-1.5 rounded text-xs text-blue-600 dark:text-blue-400 hover:bg-blue-500/10"
             >
@@ -265,7 +268,7 @@ export function WorkspaceSwitcher({
             </button>
           ))}
           <Link
-            href="/admin/workspaces/new"
+            href={`${routePrefix}/workspaces/new`}
             onClick={() => setOpen(false)}
             className="mt-1 w-full flex items-center gap-2 px-2 py-1.5 rounded text-xs text-blue-600 dark:text-blue-400 hover:bg-blue-500/10"
           >

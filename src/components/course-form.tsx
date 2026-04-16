@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { ThumbnailUpload } from "./thumbnail-upload";
 import { BannerUpload } from "./banner-upload";
 import { slugify } from "@/lib/utils";
@@ -30,6 +30,8 @@ interface CourseFormProps {
 
 export function CourseForm({ initial, mode }: CourseFormProps) {
   const router = useRouter();
+  const pathname = usePathname();
+  const routePrefix = pathname.startsWith("/admin") ? "/admin" : "/producer";
   const [title, setTitle] = useState(initial?.title || "");
   const [slug, setSlug] = useState(initial?.slug || "");
   const [slugEdited, setSlugEdited] = useState(mode === "edit");
@@ -346,7 +348,7 @@ export function CourseForm({ initial, mode }: CourseFormProps) {
       <div className="flex justify-end gap-3">
         <button
           type="button"
-          onClick={() => router.push("/admin/courses")}
+          onClick={() => router.push(`${routePrefix}/courses`)}
           className="px-4 py-2.5 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 text-sm font-medium rounded-lg transition"
         >
           Cancelar
