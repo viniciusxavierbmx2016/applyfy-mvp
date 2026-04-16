@@ -58,7 +58,9 @@ export default function AdminUsersPage() {
     if (debounced) params.set("q", debounced);
     if (courseFilter) params.set("courseId", courseFilter);
     const qs = params.toString();
-    const url = qs ? `/api/admin/users?${qs}` : "/api/admin/users";
+    const url = qs
+      ? `/api/producer/students?${qs}`
+      : "/api/producer/students";
     fetch(url)
       .then((r) => (r.ok ? r.json() : { users: [], courses: [] }))
       .then((d) => {
@@ -90,27 +92,10 @@ export default function AdminUsersPage() {
     return map;
   }, [users, courses]);
 
-  async function changeRole(userId: string, role: Role) {
-    const res = await fetch(`/api/admin/users/${userId}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ role }),
-    });
-    if (res.ok) {
-      setUsers((prev) =>
-        prev.map((u) => (u.id === userId ? { ...u, role } : u))
-      );
-      showToast("Role atualizada");
-    } else {
-      const body = await res.json().catch(() => ({}));
-      showToast(body.error || "Erro");
-    }
-  }
-
   async function addEnrollment(userId: string) {
     const courseId = enrollCourseId[userId];
     if (!courseId) return;
-    const res = await fetch(`/api/admin/users/${userId}/enrollments`, {
+    const res = await fetch(`/api/producer/students/${userId}/enrollments`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ courseId }),
@@ -148,8 +133,8 @@ export default function AdminUsersPage() {
       if (courseFilter) params.set("courseId", courseFilter);
       const qs = params.toString();
       const url = qs
-        ? `/api/admin/users/export?${qs}`
-        : "/api/admin/users/export";
+        ? `/api/producer/students/export?${qs}`
+        : "/api/producer/students/export";
       const res = await fetch(url);
       if (!res.ok) throw new Error("fail");
       const disposition = res.headers.get("Content-Disposition") || "";
@@ -175,7 +160,7 @@ export default function AdminUsersPage() {
   async function removeEnrollment(userId: string, courseId: string) {
     if (!confirm("Remover acesso a este curso?")) return;
     const res = await fetch(
-      `/api/admin/users/${userId}/enrollments?courseId=${courseId}`,
+      `/api/producer/students/${userId}/enrollments?courseId=${courseId}`,
       { method: "DELETE" }
     );
     if (res.ok) {
@@ -343,36 +328,22 @@ export default function AdminUsersPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2 flex-wrap">
-                    {viewerRole === "ADMIN" ? (
-                      <select
-                        value={u.role}
-                        onChange={(e) =>
-                          changeRole(u.id, e.target.value as Role)
-                        }
-                        className="bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg px-2.5 py-1.5 text-xs text-gray-900 dark:text-white focus:outline-none focus:border-blue-500"
-                      >
-                        <option value="STUDENT">Aluno</option>
-                        <option value="PRODUCER">Produtor</option>
-                        <option value="ADMIN">Admin</option>
-                      </select>
-                    ) : (
-                      <span
-                        className={cn(
-                          "text-[11px] font-medium px-2 py-0.5 rounded-full border",
-                          u.role === "ADMIN"
-                            ? "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/30"
-                            : u.role === "PRODUCER"
-                            ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/30"
-                            : "bg-gray-500/10 text-gray-600 dark:text-gray-400 border-gray-400/30"
-                        )}
-                      >
-                        {u.role === "ADMIN"
-                          ? "Admin"
+                    <span
+                      className={cn(
+                        "text-[11px] font-medium px-2 py-0.5 rounded-full border",
+                        u.role === "ADMIN"
+                          ? "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/30"
                           : u.role === "PRODUCER"
-                          ? "Produtor"
-                          : "Aluno"}
-                      </span>
-                    )}
+                          ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/30"
+                          : "bg-gray-500/10 text-gray-600 dark:text-gray-400 border-gray-400/30"
+                      )}
+                    >
+                      {u.role === "ADMIN"
+                        ? "Admin"
+                        : u.role === "PRODUCER"
+                        ? "Produtor"
+                        : "Aluno"}
+                    </span>
                     <button
                       type="button"
                       onClick={() => setExpanded(isOpen ? null : u.id)}
