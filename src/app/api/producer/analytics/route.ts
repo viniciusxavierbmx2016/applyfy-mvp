@@ -131,6 +131,23 @@ export async function GET(request: Request) {
         ? courseIdParam
         : "";
 
+    const now = new Date();
+    const todayStart = startOfDay(now);
+    let windowStart: Date;
+    let windowEnd: Date;
+    if (startDateParam && endDateParam) {
+      const sd = new Date(startDateParam);
+      const ed = new Date(endDateParam);
+      windowStart = startOfDay(Number.isNaN(sd.getTime()) ? todayStart : sd);
+      const endBase = Number.isNaN(ed.getTime()) ? now : ed;
+      windowEnd = new Date(endBase);
+      windowEnd.setHours(23, 59, 59, 999);
+    } else {
+      windowStart = new Date(todayStart);
+      windowStart.setDate(windowStart.getDate() - legacyWindow);
+      windowEnd = new Date(now);
+    }
+
     if (tab === "content") {
       if (courseIds.length === 0) {
         if (format === "csv") {
@@ -226,12 +243,19 @@ export async function GET(request: Request) {
 
       const progressC = allLessonIds.length
         ? await prisma.lessonProgress.findMany({
-            where: { lessonId: { in: allLessonIds } },
+            where: {
+              lessonId: { in: allLessonIds },
+              OR: [
+                { lastAccessedAt: { gte: windowStart, lte: windowEnd } },
+                { completedAt: { gte: windowStart, lte: windowEnd } },
+              ],
+            },
             select: {
               userId: true,
               lessonId: true,
               completed: true,
               completedAt: true,
+              lastAccessedAt: true,
             },
           })
         : [];
@@ -248,17 +272,20 @@ export async function GET(request: Request) {
         if (!viewersByLesson.has(p.lessonId))
           viewersByLesson.set(p.lessonId, new Set());
         viewersByLesson.get(p.lessonId)!.add(p.userId);
-        if (p.completed) {
+        if (
+          p.completed &&
+          p.completedAt &&
+          p.completedAt >= windowStart &&
+          p.completedAt <= windowEnd
+        ) {
           if (!completersByLesson.has(p.lessonId))
             completersByLesson.set(p.lessonId, new Set());
           completersByLesson.get(p.lessonId)!.add(p.userId);
-          if (p.completedAt) {
-            const key = `${p.userId}|${meta.courseId}`;
-            const t = p.completedAt.getTime();
-            if (t > (lastTimeByUserCourse.get(key) || 0)) {
-              lastTimeByUserCourse.set(key, t);
-              lastLessonByUserCourse.set(key, p.lessonId);
-            }
+          const key = `${p.userId}|${meta.courseId}`;
+          const t = p.completedAt.getTime();
+          if (t > (lastTimeByUserCourse.get(key) || 0)) {
+            lastTimeByUserCourse.set(key, t);
+            lastLessonByUserCourse.set(key, p.lessonId);
           }
         }
       }
@@ -424,12 +451,12 @@ export async function GET(request: Request) {
 
     if (tab === "students") {
       const nowS = new Date();
-      const todayS = startOfDay(nowS);
-      const thirtyAgoS = new Date(todayS);
+      const refDayS = startOfDay(windowEnd);
+      const thirtyAgoS = new Date(refDayS);
       thirtyAgoS.setDate(thirtyAgoS.getDate() - 30);
-      const sixtyAgoS = new Date(todayS);
+      const sixtyAgoS = new Date(refDayS);
       sixtyAgoS.setDate(sixtyAgoS.getDate() - 60);
-      const ninetyAgoS = new Date(todayS);
+      const ninetyAgoS = new Date(refDayS);
       ninetyAgoS.setDate(ninetyAgoS.getDate() - 90);
 
       if (courseIds.length === 0) {
@@ -508,6 +535,10 @@ export async function GET(request: Request) {
               where: {
                 userId: { in: activeUserIds },
                 lessonId: { in: allLessonIdsS },
+                OR: [
+                  { lastAccessedAt: { lte: windowEnd } },
+                  { completedAt: { lte: windowEnd } },
+                ],
               },
               select: {
                 userId: true,
@@ -537,7 +568,7 @@ export async function GET(request: Request) {
         }
         const t =
           p.lastAccessedAt ?? p.completedAt ?? null;
-        if (t) {
+        if (t && t <= windowEnd) {
           const prev = userLastActive.get(p.userId);
           if (!prev || t > prev) userLastActive.set(p.userId, t);
         }
@@ -655,7 +686,7 @@ export async function GET(request: Request) {
           (e) =>
             e.expiresAt !== null &&
             e.expiresAt !== undefined &&
-            e.expiresAt < nowS
+            e.expiresAt < windowEnd
         )
         .map((e) => {
           const completed =
@@ -782,27 +813,11 @@ export async function GET(request: Request) {
       });
     }
 
-    const now = new Date();
-    const todayStart = startOfDay(now);
     const sevenAgo = new Date(todayStart);
     sevenAgo.setDate(sevenAgo.getDate() - 7);
     const thirtyAgo = new Date(todayStart);
     thirtyAgo.setDate(thirtyAgo.getDate() - 30);
 
-    let windowStart: Date;
-    let windowEnd: Date;
-    if (startDateParam && endDateParam) {
-      const sd = new Date(startDateParam);
-      const ed = new Date(endDateParam);
-      windowStart = startOfDay(Number.isNaN(sd.getTime()) ? todayStart : sd);
-      const endBase = Number.isNaN(ed.getTime()) ? now : ed;
-      windowEnd = new Date(endBase);
-      windowEnd.setHours(23, 59, 59, 999);
-    } else {
-      windowStart = new Date(todayStart);
-      windowStart.setDate(windowStart.getDate() - legacyWindow);
-      windowEnd = new Date(now);
-    }
     const windowDays = Math.max(
       1,
       Math.round(
