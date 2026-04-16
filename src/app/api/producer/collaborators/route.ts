@@ -6,7 +6,6 @@ import {
   COLLABORATOR_PERMISSIONS,
   type CollaboratorPermission,
 } from "@/lib/collaborator";
-import { createAdminClient } from "@/lib/supabase-admin";
 
 export async function GET() {
   try {
@@ -128,35 +127,12 @@ export async function POST(request: Request) {
           },
         });
 
-    // Generate magic link via Supabase Admin
-    let inviteLink: string | null = null;
-    try {
-      const supabase = createAdminClient();
-      const origin =
-        request.headers.get("origin") ||
-        process.env.NEXT_PUBLIC_SITE_URL ||
-        "";
-      const redirectTo = `${origin}/invite/${collaborator.id}`;
-      const { data, error } = await supabase.auth.admin.generateLink({
-        type: "magiclink",
-        email,
-        options: { redirectTo },
-      });
-      if (!error) {
-        inviteLink = data?.properties?.action_link ?? null;
-      }
-    } catch (e) {
-      console.error("generateLink failed:", e);
-    }
-
-    // Fallback link if magic link could not be generated
-    if (!inviteLink) {
-      const origin =
-        request.headers.get("origin") ||
-        process.env.NEXT_PUBLIC_SITE_URL ||
-        "";
-      inviteLink = `${origin}/invite/${collaborator.id}`;
-    }
+    const origin =
+      request.headers.get("origin") ||
+      process.env.NEXT_PUBLIC_APP_URL ||
+      process.env.NEXT_PUBLIC_SITE_URL ||
+      "";
+    const inviteLink = `${origin}/invite/${collaborator.id}`;
 
     return NextResponse.json({ collaborator, inviteLink });
   } catch (e) {

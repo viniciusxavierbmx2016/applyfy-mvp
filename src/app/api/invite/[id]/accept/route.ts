@@ -91,11 +91,56 @@ export async function POST(
         email_confirm: true,
         user_metadata: { name },
       });
-    if (createErr || !created?.user) {
-      return NextResponse.json(
-        { error: createErr?.message || "Falha ao criar usuário" },
-        { status: 400 }
+
+    const authUserId: string | null = created?.user?.id ?? null;
+
+    if (createErr || !authUserId) {
+      const msg = createErr?.message || "";
+      const alreadyExists = /already.*registered|already been registered/i.test(
+        msg
       );
+      if (!alreadyExists) {
+        return NextResponse.json(
+          { error: msg || "Falha ao criar usuário" },
+          { status: 400 }
+        );
+      }
+
+      // Recover: find existing auth user by email and reset its password.
+      // listUsers is paginated — search across pages until we find the email.
+      const targetEmail = invite.email.toLowerCase();
+      let foundId: string | null = null;
+      for (let page = 1; page <= 20 && !foundId; page++) {
+        const { data: list, error: listErr } =
+          await admin.auth.admin.listUsers({ page, perPage: 200 });
+        if (listErr) {
+          return NextResponse.json(
+            { error: listErr.message || "Falha ao localizar usuário" },
+            { status: 400 }
+          );
+        }
+        const match = list?.users?.find(
+          (u) => (u.email ?? "").toLowerCase() === targetEmail
+        );
+        if (match) foundId = match.id;
+        if (!list?.users || list.users.length < 200) break;
+      }
+      if (!foundId) {
+        return NextResponse.json(
+          { error: "Usuário não encontrado no Auth" },
+          { status: 400 }
+        );
+      }
+      const { error: updErr } = await admin.auth.admin.updateUserById(
+        foundId,
+        { password, email_confirm: true, user_metadata: { name } }
+      );
+      if (updErr) {
+        return NextResponse.json(
+          { error: updErr.message || "Falha ao atualizar senha" },
+          { status: 400 }
+        );
+      }
     }
 
     const user = await prisma.user.upsert({
