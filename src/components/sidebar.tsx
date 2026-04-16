@@ -231,14 +231,14 @@ export function Sidebar({ open, onClose }: SidebarProps) {
             "relative transition-all duration-300",
             collapsed
               ? "lg:flex lg:flex-col lg:items-center lg:gap-2 lg:pt-4 lg:px-2 flex h-16 items-center justify-between px-4"
-              : "flex items-center pt-4 px-3 pb-2 justify-between gap-2"
+              : "flex items-center pt-4 px-2.5 pb-2 justify-between gap-1.5"
           )}
         >
           {isProducer ? (
             <div
               className={cn(
                 "min-w-0",
-                collapsed ? "lg:flex lg:justify-center" : "flex-1"
+                collapsed ? "lg:flex lg:justify-center" : "flex-1 min-w-0"
               )}
             >
               <WorkspaceSwitcher
