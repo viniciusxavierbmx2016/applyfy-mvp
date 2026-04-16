@@ -28,16 +28,17 @@ export async function POST(request: Request) {
 
     const user = await prisma.user.findUnique({ where: { email } });
 
-    if (!user || user.role !== "PRODUCER") {
+    if (
+      !user ||
+      (user.role !== "PRODUCER" && user.role !== "COLLABORATOR")
+    ) {
       await supabase.auth.signOut();
       const message =
         user?.role === "ADMIN"
           ? "Use /admin/login para acessar o painel admin"
           : user?.role === "STUDENT"
             ? "Acesse pelo link do seu curso"
-            : user?.role === "COLLABORATOR"
-              ? "Acesse pelo link do workspace onde você colabora"
-              : "Conta sem permissão de produtor";
+            : "Conta sem permissão de produtor ou colaborador";
       return NextResponse.json({ error: message }, { status: 403 });
     }
 

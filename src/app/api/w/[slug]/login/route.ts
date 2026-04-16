@@ -84,7 +84,7 @@ export async function POST(
           : user.role === "PRODUCER"
             ? "Use /producer/login para acessar o painel do produtor"
             : user.role === "COLLABORATOR"
-              ? "Acesse pelo link do workspace onde você colabora"
+              ? "Use /producer/login para acessar o painel de colaborador"
               : "Conta sem permissão para esta área de membros";
       return NextResponse.json({ error: message }, { status: 403 });
     }

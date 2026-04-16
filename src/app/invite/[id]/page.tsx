@@ -62,13 +62,13 @@ export default function InviteAcceptPage() {
       return;
     }
     // Auto-login
-    await fetch("/api/auth/login", {
+    await fetch("/api/auth/producer-login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
       body: JSON.stringify({ email: invite!.email, password }),
     });
-    window.location.href = "/admin";
+    window.location.href = "/producer";
   }
 
   async function acceptWithLogin(e: React.FormEvent) {

@@ -49,7 +49,7 @@ export default function ProducerLoginPage() {
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Applyfy</h1>
           <p className="text-sm font-medium text-blue-600 dark:text-blue-400 mt-2">
-            Área do Produtor
+            Área do produtor e colaborador
           </p>
         </div>
 
