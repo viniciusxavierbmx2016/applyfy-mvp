@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { useUserStore } from "@/stores/user-store";
+import { useActiveWorkspace } from "@/hooks/use-active-workspace";
 import { WorkspaceSwitcher } from "./workspace-switcher";
 
 interface SidebarProps {
@@ -140,6 +141,8 @@ export function Sidebar({ open, onClose }: SidebarProps) {
   const isAdmin = user?.role === "ADMIN";
   const isProducer = user?.role === "PRODUCER";
   const isCollaborator = user?.role === "COLLABORATOR";
+  const activeWorkspace = useActiveWorkspace();
+  const showVitrine = (isProducer || isCollaborator) && !!activeWorkspace;
 
   const [collapsed, setCollapsed] = useState(false);
   useEffect(() => {
@@ -325,6 +328,30 @@ export function Sidebar({ open, onClose }: SidebarProps) {
             collapsed && "lg:px-2"
           )}
         >
+          {showVitrine && activeWorkspace && (
+            <a
+              href={`/w/${activeWorkspace.slug}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={onClose}
+              title="Ver vitrine"
+              className={cn(
+                linkCls(false),
+                "mb-2 pb-2 border-b border-gray-200 dark:border-white/5 rounded-none"
+              )}
+            >
+              <span className={iconWrapCls(false)}>
+                <svg className={iconCls} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                </svg>
+              </span>
+              <span className={cn("truncate", collapsed && "lg:hidden")}>
+                Ver vitrine
+              </span>
+              {collapsed && <span className={tooltipCls}>Ver vitrine</span>}
+            </a>
+          )}
+
           {!isCollaborator && !isAdmin && !isProducer && (
             <>
               <p
