@@ -125,13 +125,26 @@ export default function CourseStudentsPage({
   }, [load]);
 
   async function handleRemove(enrollmentId: string) {
-    if (!confirm("Remover acesso deste aluno ao curso?")) return;
-    const res = await fetch(
-      `/api/courses/${params.id}/students/${enrollmentId}`,
-      { method: "DELETE" }
-    );
-    if (res.ok) load();
-    else alert("Erro ao remover acesso");
+    console.log("[handleRemove] called", { courseId: params.id, enrollmentId });
+    if (!confirm("Remover acesso deste aluno ao curso?")) {
+      console.log("[handleRemove] cancelled by user");
+      return;
+    }
+    const url = `/api/courses/${params.id}/students/${enrollmentId}`;
+    console.log("[handleRemove] DELETE", url);
+    try {
+      const res = await fetch(url, { method: "DELETE" });
+      if (res.ok) {
+        load();
+      } else {
+        const data = await res.json().catch(() => ({}));
+        console.error("[handleRemove] failed:", url, res.status, data);
+        alert("Erro ao remover acesso: " + (data.error || `Status ${res.status}`));
+      }
+    } catch (err) {
+      console.error("[handleRemove] network error:", err);
+      alert("Erro de rede ao remover acesso");
+    }
   }
 
   function patchStudent(enrollmentId: string, patch: Partial<Student>) {
