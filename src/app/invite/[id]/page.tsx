@@ -76,7 +76,7 @@ export default function InviteAcceptPage() {
     setError(null);
     setSubmitting(true);
     // Login first
-    const l = await fetch("/api/auth/login", {
+    const l = await fetch("/api/auth/producer-login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
@@ -100,7 +100,7 @@ export default function InviteAcceptPage() {
       setSubmitting(false);
       return;
     }
-    window.location.href = "/admin";
+    window.location.href = "/producer";
   }
 
   if (loading) {
