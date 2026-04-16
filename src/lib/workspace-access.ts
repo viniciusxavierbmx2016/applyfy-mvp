@@ -13,7 +13,11 @@ export async function hasWorkspaceAccess(
 ): Promise<boolean> {
   const [enrollment, collab, ws] = await Promise.all([
     prisma.enrollment.findFirst({
-      where: { userId, course: { workspaceId } },
+      where: {
+        userId,
+        course: { workspaceId },
+        status: { in: ["ACTIVE", "EXPIRED"] },
+      },
       select: { id: true },
     }),
     prisma.collaborator.findFirst({

@@ -42,7 +42,10 @@ export async function GET(request: Request) {
         orderBy: { order: "asc" },
         include: {
           _count: {
-            select: { modules: true, enrollments: true },
+            select: {
+              modules: true,
+              enrollments: { where: { status: { in: ["ACTIVE", "EXPIRED"] } } },
+            },
           },
         },
       });
