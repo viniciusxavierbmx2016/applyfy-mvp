@@ -335,10 +335,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
               rel="noopener noreferrer"
               onClick={onClose}
               title="Ver vitrine"
-              className={cn(
-                linkCls(false),
-                "mb-2 pb-2 border-b border-gray-200 dark:border-white/5 rounded-none"
-              )}
+              className={linkCls(false)}
             >
               <span className={iconWrapCls(false)}>
                 <svg className={iconCls} fill="none" viewBox="0 0 24 24" stroke="currentColor">
