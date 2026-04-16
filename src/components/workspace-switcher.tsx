@@ -213,7 +213,7 @@ export function WorkspaceSwitcher({
           )}
         </div>
         <div className="flex-1 min-w-0 text-left">
-          <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+          <p className="text-xs text-gray-900 dark:text-white truncate">
             {active.name}
           </p>
         </div>
