@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 export type CourseEditTab =
   | "info"
@@ -34,6 +35,8 @@ export function CourseEditTabs({
   onSelectInfo,
   onSelectContent,
 }: Props) {
+  const pathname = usePathname();
+  const prefix = pathname.startsWith("/admin") ? "/admin" : "/producer";
   const infoLabel = "Informações";
   const contentLabel =
     typeof modulesCount === "number"
@@ -57,7 +60,7 @@ export function CourseEditTabs({
           </button>
         ) : (
           <Link
-            href={`/admin/courses/${courseId}/edit`}
+            href={`${prefix}/courses/${courseId}/edit`}
             className={`${baseCls} ${active === "info" ? activeCls : inactiveCls}`}
           >
             {infoLabel}
@@ -74,7 +77,7 @@ export function CourseEditTabs({
           </button>
         ) : (
           <Link
-            href={`/admin/courses/${courseId}/edit?tab=content`}
+            href={`${prefix}/courses/${courseId}/edit?tab=content`}
             className={`${baseCls} ${active === "content" ? activeCls : inactiveCls}`}
           >
             {contentLabel}
@@ -82,21 +85,21 @@ export function CourseEditTabs({
         )}
 
         <Link
-          href={`/admin/courses/${courseId}/students`}
+          href={`${prefix}/courses/${courseId}/students`}
           className={`${baseCls} ${active === "students" ? activeCls : inactiveCls}`}
         >
           {studentsLabel}
         </Link>
 
         <Link
-          href={`/admin/courses/${courseId}/menu`}
+          href={`${prefix}/courses/${courseId}/menu`}
           className={`${baseCls} ${active === "menu" ? activeCls : inactiveCls}`}
         >
           Menu lateral
         </Link>
 
         <Link
-          href={`/admin/courses/${courseId}/settings`}
+          href={`${prefix}/courses/${courseId}/settings`}
           className={`${baseCls} inline-flex items-center gap-1.5 ${active === "settings" ? activeCls : inactiveCls}`}
         >
           <svg

@@ -175,16 +175,30 @@ export function WorkspaceSwitcher({
                 <span className="flex-1 truncate">{ws.name}</span>
               </button>
             ))}
-            <Link
-              href={`${routePrefix}/workspaces/new`}
-              onClick={() => setOpen(false)}
-              className="mt-1 w-full flex items-center gap-2 px-2 py-1.5 rounded text-xs text-blue-600 dark:text-blue-400 hover:bg-blue-500/10"
-            >
-              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
-              Novo workspace
-            </Link>
+            <div className="mt-1 pt-1 border-t border-gray-200 dark:border-gray-800">
+              <a
+                href={`/w/${active.slug}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => setOpen(false)}
+                className="w-full flex items-center gap-2 px-2 py-1.5 rounded text-xs text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                </svg>
+                Ver vitrine
+              </a>
+              <Link
+                href={`${routePrefix}/workspaces/new`}
+                onClick={() => setOpen(false)}
+                className="w-full flex items-center gap-2 px-2 py-1.5 rounded text-xs text-blue-600 dark:text-blue-400 hover:bg-blue-500/10"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                Novo workspace
+              </Link>
+            </div>
           </div>
         )}
       </div>
@@ -267,16 +281,30 @@ export function WorkspaceSwitcher({
               )}
             </button>
           ))}
-          <Link
-            href={`${routePrefix}/workspaces/new`}
-            onClick={() => setOpen(false)}
-            className="mt-1 w-full flex items-center gap-2 px-2 py-1.5 rounded text-xs text-blue-600 dark:text-blue-400 hover:bg-blue-500/10"
-          >
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-            </svg>
-            Novo workspace
-          </Link>
+          <div className="mt-1 pt-1 border-t border-gray-200 dark:border-gray-800">
+            <a
+              href={`/w/${active.slug}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => setOpen(false)}
+              className="w-full flex items-center gap-2 px-2 py-1.5 rounded text-xs text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+              </svg>
+              Ver vitrine
+            </a>
+            <Link
+              href={`${routePrefix}/workspaces/new`}
+              onClick={() => setOpen(false)}
+              className="w-full flex items-center gap-2 px-2 py-1.5 rounded text-xs text-blue-600 dark:text-blue-400 hover:bg-blue-500/10"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              Novo workspace
+            </Link>
+          </div>
         </div>
       )}
     </div>

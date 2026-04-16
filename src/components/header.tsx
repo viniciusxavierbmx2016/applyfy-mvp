@@ -114,15 +114,22 @@ export function Header({ onMenuToggle }: HeaderProps) {
                     {user?.email}
                   </p>
                 </div>
-                <button
-                  onClick={() => {
-                    setDropdownOpen(false);
-                    router.push("/profile");
-                  }}
-                  className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition"
-                >
-                  Meu Perfil
-                </button>
+                {user?.role !== "ADMIN" && (
+                  <button
+                    onClick={() => {
+                      setDropdownOpen(false);
+                      const dest =
+                        user?.role === "PRODUCER" ||
+                        user?.role === "COLLABORATOR"
+                          ? "/producer/profile"
+                          : "/profile";
+                      router.push(dest);
+                    }}
+                    className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition"
+                  >
+                    Meu Perfil
+                  </button>
+                )}
                 <button
                   onClick={handleLogout}
                   className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition"
