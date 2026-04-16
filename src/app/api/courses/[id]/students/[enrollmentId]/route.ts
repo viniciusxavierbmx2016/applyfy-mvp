@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { canEditCourse, requireStaff } from "@/lib/auth";
+import { canManageStudentsOfCourse, requireStaff } from "@/lib/auth";
 
 export async function PATCH(
   request: Request,
@@ -8,7 +8,7 @@ export async function PATCH(
 ) {
   try {
     const staff = await requireStaff();
-    if (!(await canEditCourse(staff, params.id))) {
+    if (!(await canManageStudentsOfCourse(staff, params.id))) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
@@ -68,7 +68,7 @@ export async function DELETE(
 ) {
   try {
     const staff = await requireStaff();
-    if (!(await canEditCourse(staff, params.id))) {
+    if (!(await canManageStudentsOfCourse(staff, params.id))) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireStaff, requirePermission, canEditCourse } from "@/lib/auth";
+import { requireStaff, canManageStudentsOfCourse } from "@/lib/auth";
 import type { Role } from "@prisma/client";
 import { createNotification } from "@/lib/notifications";
 
@@ -8,16 +8,9 @@ async function assertCanManageCourse(
   staff: { id: string; role: Role },
   courseId: string
 ) {
-  if (staff.role === "COLLABORATOR") {
-    await requirePermission(staff, "MANAGE_STUDENTS");
-  }
-  const ok = await canEditCourse(staff, courseId);
-  if (!ok && staff.role !== "ADMIN" && staff.role !== "PRODUCER") {
+  if (!(await canManageStudentsOfCourse(staff, courseId))) {
     throw new Error("Forbidden");
   }
-  // PRODUCER: canEditCourse covers ownership — but we still allow if owned.
-  // ADMIN: always allowed.
-  if (!ok && staff.role === "PRODUCER") throw new Error("Forbidden");
 }
 
 export async function POST(

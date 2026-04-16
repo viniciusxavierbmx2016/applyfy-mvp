@@ -253,6 +253,34 @@ export async function canEditCourse(
   return c.ownerId === staff.id || c.workspace.ownerId === staff.id;
 }
 
+// Returns true if the staff user can manage student enrollments for the course.
+// ADMIN: always. PRODUCER: only if owns course or workspace.
+// COLLABORATOR: needs MANAGE_STUDENTS permission + course in scope.
+export async function canManageStudentsOfCourse(
+  staff: Pick<User, "id" | "role">,
+  courseId: string
+): Promise<boolean> {
+  if (staff.role === "ADMIN") return true;
+  if (staff.role === "COLLABORATOR") {
+    const ctx = await requireCollaboratorContextIfAny(staff).catch(() => null);
+    if (!ctx || !ctx.permissions.includes("MANAGE_STUDENTS")) return false;
+    const c = await prisma.course.findUnique({
+      where: { id: courseId },
+      select: { workspaceId: true },
+    });
+    if (!c || c.workspaceId !== ctx.workspaceId) return false;
+    if (ctx.courseIds.length === 0) return true;
+    return ctx.courseIds.includes(courseId);
+  }
+  if (staff.role !== "PRODUCER") return false;
+  const c = await prisma.course.findUnique({
+    where: { id: courseId },
+    select: { ownerId: true, workspace: { select: { ownerId: true } } },
+  });
+  if (!c) return false;
+  return c.ownerId === staff.id || c.workspace.ownerId === staff.id;
+}
+
 export async function canEditModule(
   staff: Pick<User, "id" | "role">,
   moduleId: string
