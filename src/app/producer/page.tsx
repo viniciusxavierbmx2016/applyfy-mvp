@@ -79,7 +79,7 @@ export default function ProducerDashboardPage() {
     <div className="space-y-6">
       <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">
+          <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
             Dashboard
           </h1>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">

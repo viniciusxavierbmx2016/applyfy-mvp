@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { cn } from "@/lib/utils";
 
 export const ACTIVE_WORKSPACE_COOKIE = "active_workspace_id";
@@ -137,8 +138,7 @@ export function WorkspaceSwitcher({
           aria-label={`Workspace: ${active.name}`}
         >
           {active.logoUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={active.logoUrl} alt={active.name} className="w-full h-full object-cover" />
+            <Image src={active.logoUrl} alt={active.name} width={32} height={32} className="w-full h-full object-cover" />
           ) : (
             <span className="text-xs font-bold text-gray-700 dark:text-gray-300">
               {active.name.charAt(0).toUpperCase()}
@@ -164,8 +164,7 @@ export function WorkspaceSwitcher({
               >
                 <div className="w-5 h-5 rounded bg-gray-200 dark:bg-gray-700 flex items-center justify-center flex-shrink-0 overflow-hidden">
                   {ws.logoUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={ws.logoUrl} alt={ws.name} className="w-full h-full object-cover" />
+                    <Image src={ws.logoUrl} alt={ws.name} width={20} height={20} className="w-full h-full object-cover" />
                   ) : (
                     <span className="text-[9px] font-bold text-gray-700 dark:text-gray-300">
                       {ws.name.charAt(0).toUpperCase()}
@@ -200,10 +199,11 @@ export function WorkspaceSwitcher({
       >
         <div className="w-8 h-8 rounded-lg bg-gray-200 dark:bg-gray-700 flex items-center justify-center flex-shrink-0 overflow-hidden">
           {active.logoUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
+            <Image
               src={active.logoUrl}
               alt={active.name}
+              width={32}
+              height={32}
               className="w-full h-full object-cover"
             />
           ) : (
@@ -246,10 +246,11 @@ export function WorkspaceSwitcher({
             >
               <div className="w-5 h-5 rounded bg-gray-200 dark:bg-gray-700 flex items-center justify-center flex-shrink-0 overflow-hidden">
                 {ws.logoUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
+                  <Image
                     src={ws.logoUrl}
                     alt={ws.name}
+                    width={20}
+                    height={20}
                     className="w-full h-full object-cover"
                   />
                 ) : (

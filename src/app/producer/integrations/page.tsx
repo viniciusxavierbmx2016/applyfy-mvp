@@ -45,7 +45,7 @@ export default function ProducerIntegrationsPage() {
     <div className="max-w-5xl mx-auto">
       <div className="mb-6 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
+          <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white mb-1">
             Integrações
           </h1>
           <p className="text-sm text-gray-600 dark:text-gray-400">

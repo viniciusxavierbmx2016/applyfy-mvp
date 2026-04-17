@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
+import Image from "next/image";
 import { InsightCard } from "@/components/reports-content-tab";
 
 interface UserRow {
@@ -589,8 +590,7 @@ function Avatar({ name, url }: { name: string; url?: string | null }) {
   for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0;
   const cls = palette[h % palette.length];
   if (url) {
-    // eslint-disable-next-line @next/next/no-img-element
-    return <img src={url} alt={name} className="w-9 h-9 rounded-full object-cover shrink-0" />;
+    return <Image src={url} alt={name} width={36} height={36} className="w-9 h-9 rounded-full object-cover shrink-0" />;
   }
   return (
     <span className={`inline-flex items-center justify-center w-9 h-9 rounded-full text-xs font-semibold shrink-0 ${cls}`}>

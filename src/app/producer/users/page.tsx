@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Avatar } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 type EnrollmentStatus = "ACTIVE" | "EXPIRED" | "CANCELLED";
@@ -206,7 +207,7 @@ export default function AdminUsersPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+      <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white mb-4">
         {viewerRole === "PRODUCER" ? "Meus Alunos" : "Usuários"}
       </h1>
 
@@ -372,13 +373,13 @@ export default function AdminUsersPage() {
                         ? "Produtor"
                         : "Aluno"}
                     </span>
-                    <button
-                      type="button"
+                    <Button
+                      variant="secondary"
+                      size="sm"
                       onClick={() => setExpanded(isOpen ? null : u.id)}
-                      className="px-3 py-1.5 text-xs font-medium text-gray-900 dark:text-white bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg"
                     >
                       {isOpen ? "Fechar" : "Gerenciar acesso"}
-                    </button>
+                    </Button>
                   </div>
                 </div>
 
@@ -461,14 +462,14 @@ export default function AdminUsersPage() {
                           </option>
                         ))}
                       </select>
-                      <button
-                        type="button"
+                      <Button
+                        variant="primary"
+                        size="md"
                         onClick={() => addEnrollment(u.id)}
                         disabled={!enrollCourseId[u.id]}
-                        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg disabled:opacity-50"
                       >
                         Liberar
-                      </button>
+                      </Button>
                     </div>
                   </div>
                 )}

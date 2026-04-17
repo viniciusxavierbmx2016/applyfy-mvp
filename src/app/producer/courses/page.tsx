@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
 
 interface AdminCourse {
   id: string;
@@ -58,7 +59,7 @@ export default function AdminCoursesPage() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Cursos</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">Cursos</h1>
           <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
             Gerencie seus cursos, módulos e aulas
           </p>
@@ -138,19 +139,22 @@ export default function AdminCoursesPage() {
                 </div>
 
                 <div className="flex gap-2 mt-4">
-                  <button
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className="flex-1"
                     onClick={() => router.push(`/producer/courses/${course.id}/edit`)}
-                    className="flex-1 px-3 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 text-sm font-medium rounded-lg transition"
                   >
                     Editar
-                  </button>
-                  <button
+                  </Button>
+                  <Button
+                    variant="danger"
+                    size="sm"
                     onClick={() => handleDelete(course.id)}
                     disabled={deletingId === course.id}
-                    className="px-3 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 text-sm font-medium rounded-lg transition disabled:opacity-50"
                   >
                     {deletingId === course.id ? "..." : "Excluir"}
-                  </button>
+                  </Button>
                 </div>
               </div>
             </div>
