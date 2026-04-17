@@ -131,16 +131,27 @@ export default function AdminCollaboratorsPage() {
       </div>
 
       {loading ? (
-        <div className="py-16 text-center text-gray-500 text-sm">
-          Carregando…
+        <div className="bg-white dark:bg-white/5 border border-gray-200/70 dark:border-white/5 rounded-2xl overflow-hidden">
+          <div className="bg-gray-50 dark:bg-white/[0.03] px-5 py-3">
+            <div className="h-3 w-24 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+          </div>
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="flex items-center gap-4 px-5 py-4 border-t border-gray-100 dark:border-white/5">
+              <div className="h-4 w-36 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+              <div className="h-5 w-16 bg-gray-200 dark:bg-gray-700 rounded-full animate-pulse" />
+              <div className="h-4 w-24 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+              <div className="h-4 w-16 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+              <div className="ml-auto h-4 w-20 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+            </div>
+          ))}
         </div>
       ) : items.length === 0 ? (
         <div className="py-16 text-center bg-gray-50 dark:bg-white/5 border border-gray-200/70 dark:border-white/5 rounded-2xl">
           <p className="text-gray-500">Nenhum colaborador ainda.</p>
         </div>
       ) : (
-        <div className="bg-white dark:bg-white/5 border border-gray-200/70 dark:border-white/5 rounded-2xl overflow-hidden">
-          <table className="w-full text-sm">
+        <div className="bg-white dark:bg-white/5 border border-gray-200/70 dark:border-white/5 rounded-2xl overflow-x-auto">
+          <table className="w-full text-sm min-w-[640px]">
             <thead className="bg-gray-50 dark:bg-white/[0.03] text-xs uppercase tracking-wider text-gray-500">
               <tr>
                 <th className="text-left px-5 py-3 font-semibold">Pessoa</th>
@@ -252,11 +263,11 @@ export default function AdminCollaboratorsPage() {
           <p className="text-xs text-gray-500 mb-2">
             Envie este link para o colaborador aceitar o convite:
           </p>
-          <div className="flex gap-2">
+          <div className="flex flex-col sm:flex-row gap-2">
             <input
               readOnly
               value={inviteLink}
-              className="flex-1 px-3 py-2 text-xs bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-md font-mono"
+              className="flex-1 min-w-0 px-3 py-2 text-xs bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-md font-mono truncate"
             />
             <button
               onClick={() => {

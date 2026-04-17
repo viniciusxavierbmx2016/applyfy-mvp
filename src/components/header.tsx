@@ -105,7 +105,7 @@ export function Header({ onMenuToggle }: HeaderProps) {
             </button>
 
             {dropdownOpen && (
-              <div className="absolute right-0 mt-2 w-48 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg shadow-xl py-1 z-50">
+              <div className="absolute right-0 mt-2 w-48 max-w-[calc(100vw-2rem)] bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg shadow-xl py-1 z-50">
                 <div className="px-4 py-2 border-b border-gray-300 dark:border-gray-700">
                   <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
                     {user?.name}
