@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { useUserStore } from "@/stores/user-store";
 
 interface AdminCourse {
   id: string;
@@ -22,6 +23,17 @@ export default function AdminCoursesPage() {
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const router = useRouter();
+  const { user, collaborator } = useUserStore();
+  const collabPerms = collaborator?.permissions ?? [];
+  const isCollaborator = user?.role === "COLLABORATOR";
+  const hasManageLessons = !isCollaborator || collabPerms.includes("MANAGE_LESSONS");
+
+  function courseHref(id: string) {
+    if (isCollaborator && !collabPerms.includes("MANAGE_LESSONS")) {
+      return `/producer/courses/${id}/comments`;
+    }
+    return `/producer/courses/${id}/edit`;
+  }
 
   useEffect(() => {
     loadCourses();
@@ -64,15 +76,17 @@ export default function AdminCoursesPage() {
             Gerencie seus cursos, módulos e aulas
           </p>
         </div>
-        <Link
-          href="/producer/courses/new"
-          className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition"
-        >
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
-          Novo curso
-        </Link>
+        {hasManageLessons && (
+          <Link
+            href="/producer/courses/new"
+            className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            Novo curso
+          </Link>
+        )}
       </div>
 
       {loading ? (
@@ -152,18 +166,20 @@ export default function AdminCoursesPage() {
                     variant="secondary"
                     size="sm"
                     className="flex-1"
-                    onClick={() => router.push(`/producer/courses/${course.id}/edit`)}
+                    onClick={() => router.push(courseHref(course.id))}
                   >
-                    Editar
+                    {hasManageLessons ? "Editar" : "Comentários"}
                   </Button>
-                  <Button
-                    variant="danger"
-                    size="sm"
-                    onClick={() => handleDelete(course.id)}
-                    disabled={deletingId === course.id}
-                  >
-                    {deletingId === course.id ? "..." : "Excluir"}
-                  </Button>
+                  {hasManageLessons && (
+                    <Button
+                      variant="danger"
+                      size="sm"
+                      onClick={() => handleDelete(course.id)}
+                      disabled={deletingId === course.id}
+                    >
+                      {deletingId === course.id ? "..." : "Excluir"}
+                    </Button>
+                  )}
                 </div>
               </div>
             </div>

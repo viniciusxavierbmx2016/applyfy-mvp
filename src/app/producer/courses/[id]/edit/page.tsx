@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { CourseForm } from "@/components/course-form";
 import { CourseEditTabs } from "@/components/course-edit-tabs";
+import { useUserStore } from "@/stores/user-store";
 import type { ModuleData, SectionData } from "@/components/modules-manager";
 
 const ModulesManager = dynamic(
@@ -43,15 +44,23 @@ export default function EditCoursePage({
   params: { id: string };
 }) {
   const router = useRouter();
+  const { user, collaborator } = useUserStore();
   const [course, setCourse] = useState<CourseData | null>(null);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<"info" | "content">("info");
 
+  const isCollaborator = user?.role === "COLLABORATOR";
+  const collabPerms = collaborator?.permissions ?? [];
+
   useEffect(() => {
+    if (isCollaborator && !collabPerms.includes("MANAGE_LESSONS")) {
+      router.replace(`/producer/courses/${params.id}/comments`);
+      return;
+    }
     if (typeof window === "undefined") return;
     const t = new URL(window.location.href).searchParams.get("tab");
     if (t === "content") setTab("content");
-  }, []);
+  }, [isCollaborator, collabPerms, params.id, router]);
 
   function selectTab(next: "info" | "content") {
     setTab(next);

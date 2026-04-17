@@ -99,7 +99,7 @@ const producerLinks: NavLink[] = [
 ];
 
 const collaboratorLinks: NavLink[] = [
-  { href: "/producer", label: "Dashboard", icon: iconDashboard },
+  { href: "/producer", label: "Dashboard", icon: iconDashboard, requires: "VIEW_ANALYTICS" },
   {
     href: "/producer/courses",
     label: "Cursos",
