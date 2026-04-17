@@ -12,6 +12,19 @@ interface LessonOption {
   module: { title: string };
 }
 
+interface ReplyItem {
+  id: string;
+  content: string;
+  createdAt: string;
+  user: {
+    id: string;
+    name: string;
+    email: string;
+    avatarUrl: string | null;
+    role: string;
+  };
+}
+
 interface CommentItem {
   id: string;
   content: string;
@@ -28,6 +41,17 @@ interface CommentItem {
     title: string;
     module: { id: string; title: string };
   };
+  replies: ReplyItem[];
+}
+
+function RoleBadge({ role }: { role: string }) {
+  if (role === "ADMIN")
+    return <span className="text-[9px] px-1 rounded bg-blue-600/30 text-blue-300">ADMIN</span>;
+  if (role === "PRODUCER")
+    return <span className="text-[9px] px-1 rounded bg-purple-600/30 text-purple-300">PRODUTOR</span>;
+  if (role === "COLLABORATOR")
+    return <span className="text-[9px] px-1 rounded bg-emerald-600/30 text-emerald-300">EQUIPE</span>;
+  return null;
 }
 
 export default function CourseCommentsPage({
@@ -70,28 +94,24 @@ export default function CourseCommentsPage({
       .finally(() => setLoading(false));
   }, [params.id, lessonFilter]);
 
-  async function handleReply(lessonId: string) {
+  async function handleReply(commentId: string, lessonId: string) {
     if (!replyText.trim() || sending) return;
     setSending(true);
     try {
       const res = await fetch(`/api/lessons/${lessonId}/comments`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content: replyText.trim() }),
+        body: JSON.stringify({ content: replyText.trim(), parentId: commentId }),
       });
       if (res.ok) {
         const d = await res.json();
-        setComments((prev) => [
-          {
-            ...d.comment,
-            lesson: comments.find((c) => c.lesson.id === lessonId)?.lesson ?? {
-              id: lessonId,
-              title: "",
-              module: { id: "", title: "" },
-            },
-          },
-          ...prev,
-        ]);
+        setComments((prev) =>
+          prev.map((c) =>
+            c.id === commentId
+              ? { ...c, replies: [...c.replies, d.comment] }
+              : c
+          )
+        );
         setReplyText("");
         setReplyingTo(null);
         showToast("Resposta enviada");
@@ -102,6 +122,34 @@ export default function CourseCommentsPage({
       showToast("Erro de rede");
     } finally {
       setSending(false);
+    }
+  }
+
+  async function handleDelete(commentId: string, lessonId: string, isReply: boolean, parentId?: string) {
+    if (!confirm("Excluir este comentário?")) return;
+    try {
+      const res = await fetch(
+        `/api/lessons/${lessonId}/comments?commentId=${commentId}`,
+        { method: "DELETE" }
+      );
+      if (res.ok) {
+        if (isReply && parentId) {
+          setComments((prev) =>
+            prev.map((c) =>
+              c.id === parentId
+                ? { ...c, replies: c.replies.filter((r) => r.id !== commentId) }
+                : c
+            )
+          );
+        } else {
+          setComments((prev) => prev.filter((c) => c.id !== commentId));
+        }
+        showToast("Comentário excluído");
+      } else {
+        showToast("Erro ao excluir");
+      }
+    } catch {
+      showToast("Erro de rede");
     }
   }
 
@@ -174,6 +222,7 @@ export default function CourseCommentsPage({
                     <span className="text-sm font-medium text-gray-900 dark:text-white">
                       {c.user.name}
                     </span>
+                    <RoleBadge role={c.user.role} />
                     <span className="text-xs text-gray-500">
                       {formatRelativeTime(new Date(c.createdAt))}
                     </span>
@@ -185,19 +234,37 @@ export default function CourseCommentsPage({
                     {c.content}
                   </p>
 
-                  {replyingTo === c.id ? (
+                  <div className="flex items-center gap-3 mt-2">
+                    <button
+                      onClick={() => {
+                        setReplyingTo(replyingTo === c.id ? null : c.id);
+                        setReplyText("");
+                      }}
+                      className="text-xs text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-medium"
+                    >
+                      Responder
+                    </button>
+                    <button
+                      onClick={() => handleDelete(c.id, c.lesson.id, false)}
+                      className="text-xs text-red-500 hover:text-red-400 font-medium"
+                    >
+                      Excluir
+                    </button>
+                  </div>
+
+                  {replyingTo === c.id && (
                     <div className="mt-3 flex gap-2">
                       <input
                         type="text"
                         value={replyText}
                         onChange={(e) => setReplyText(e.target.value)}
-                        onKeyDown={(e) => e.key === "Enter" && handleReply(c.lesson.id)}
+                        onKeyDown={(e) => e.key === "Enter" && handleReply(c.id, c.lesson.id)}
                         placeholder="Escreva sua resposta..."
                         className="flex-1 min-w-0 px-3 py-2 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
                         autoFocus
                       />
                       <button
-                        onClick={() => handleReply(c.lesson.id)}
+                        onClick={() => handleReply(c.id, c.lesson.id)}
                         disabled={sending || !replyText.trim()}
                         className="px-3 py-2 bg-primary-500 hover:bg-primary-600 text-white text-sm font-medium rounded-lg disabled:opacity-50 transition-colors"
                       >
@@ -210,16 +277,39 @@ export default function CourseCommentsPage({
                         Cancelar
                       </button>
                     </div>
-                  ) : (
-                    <button
-                      onClick={() => setReplyingTo(c.id)}
-                      className="mt-2 text-xs text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-medium"
-                    >
-                      Responder
-                    </button>
                   )}
                 </div>
               </div>
+
+              {c.replies.length > 0 && (
+                <div className="ml-12 mt-3 space-y-2 border-l-2 border-gray-200 dark:border-gray-700 pl-4">
+                  {c.replies.map((r) => (
+                    <div key={r.id} className="flex items-start gap-2">
+                      <Avatar src={r.user.avatarUrl} name={r.user.name} size="sm" />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="text-sm font-medium text-gray-900 dark:text-white">
+                            {r.user.name}
+                          </span>
+                          <RoleBadge role={r.user.role} />
+                          <span className="text-xs text-gray-500">
+                            {formatRelativeTime(new Date(r.createdAt))}
+                          </span>
+                        </div>
+                        <p className="text-sm text-gray-700 dark:text-gray-300 mt-1 whitespace-pre-wrap break-words">
+                          {r.content}
+                        </p>
+                        <button
+                          onClick={() => handleDelete(r.id, c.lesson.id, true, c.id)}
+                          className="text-xs text-red-500 hover:text-red-400 font-medium mt-1"
+                        >
+                          Excluir
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           ))}
         </div>

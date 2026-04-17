@@ -72,10 +72,16 @@ export async function GET(
     }
 
     const comments = await prisma.lessonComment.findMany({
-      where: { lessonId: lesson.id },
+      where: { lessonId: lesson.id, parentId: null },
       orderBy: { createdAt: "desc" },
       include: {
         user: { select: { id: true, name: true, avatarUrl: true, role: true } },
+        replies: {
+          orderBy: { createdAt: "asc" },
+          include: {
+            user: { select: { id: true, name: true, avatarUrl: true, role: true } },
+          },
+        },
       },
     });
 
@@ -99,7 +105,7 @@ export async function POST(
       return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
     }
 
-    const { content } = await request.json();
+    const { content, parentId } = await request.json();
     if (!content || typeof content !== "string" || !content.trim()) {
       return NextResponse.json(
         { error: "Conteúdo obrigatório" },
@@ -150,11 +156,25 @@ export async function POST(
       }
     }
 
+    if (parentId) {
+      const parent = await prisma.lessonComment.findUnique({
+        where: { id: parentId },
+        select: { lessonId: true },
+      });
+      if (!parent || parent.lessonId !== lesson.id) {
+        return NextResponse.json(
+          { error: "Comentário pai inválido" },
+          { status: 400 }
+        );
+      }
+    }
+
     const comment = await prisma.lessonComment.create({
       data: {
         content: content.trim(),
         userId: user.id,
         lessonId: lesson.id,
+        parentId: parentId || null,
       },
       include: {
         user: { select: { id: true, name: true, avatarUrl: true, role: true } },
@@ -193,5 +213,57 @@ export async function POST(
   } catch (error) {
     console.error("POST lesson comments error:", error);
     return NextResponse.json({ error: "Erro ao comentar" }, { status: 500 });
+  }
+}
+
+export async function DELETE(
+  request: Request,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
+    }
+
+    const { searchParams } = new URL(request.url);
+    const commentId = searchParams.get("commentId");
+    if (!commentId) {
+      return NextResponse.json({ error: "commentId obrigatório" }, { status: 400 });
+    }
+
+    const comment = await prisma.lessonComment.findUnique({
+      where: { id: commentId },
+      include: { lesson: { include: { module: true } } },
+    });
+    if (!comment || comment.lessonId !== params.id) {
+      return NextResponse.json({ error: "Comentário não encontrado" }, { status: 404 });
+    }
+
+    const isOwner = comment.userId === user.id;
+    const isAdmin = user.role === "ADMIN";
+    let isStaffAllowed = false;
+    if (user.role === "COLLABORATOR") {
+      isStaffAllowed = await collaboratorAllowed(
+        user.id,
+        comment.lesson.module.courseId
+      );
+    }
+    if (user.role === "PRODUCER") {
+      isStaffAllowed = true;
+    }
+
+    if (!isOwner && !isAdmin && !isStaffAllowed) {
+      return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
+    }
+
+    await prisma.lessonComment.deleteMany({
+      where: { OR: [{ id: commentId }, { parentId: commentId }] },
+    });
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("DELETE lesson comment error:", error);
+    return NextResponse.json({ error: "Erro ao excluir" }, { status: 500 });
   }
 }

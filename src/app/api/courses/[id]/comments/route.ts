@@ -33,7 +33,7 @@ export async function GET(
     }
 
     const comments = await prisma.lessonComment.findMany({
-      where,
+      where: { ...where, parentId: null },
       orderBy: { createdAt: "desc" },
       include: {
         user: {
@@ -44,6 +44,14 @@ export async function GET(
             id: true,
             title: true,
             module: { select: { id: true, title: true } },
+          },
+        },
+        replies: {
+          orderBy: { createdAt: "asc" },
+          include: {
+            user: {
+              select: { id: true, name: true, email: true, avatarUrl: true, role: true },
+            },
           },
         },
       },
