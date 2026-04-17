@@ -17,7 +17,7 @@ type NavLink = {
   href: string;
   label: string;
   icon: React.ReactNode;
-  requires?: string;
+  requires?: string | string[];
 };
 
 const COLLAPSED_KEY = "admin_sidebar_collapsed";
@@ -104,7 +104,7 @@ const collaboratorLinks: NavLink[] = [
     href: "/producer/courses",
     label: "Cursos",
     icon: iconCourses,
-    requires: "MANAGE_LESSONS",
+    requires: ["MANAGE_LESSONS", "REPLY_COMMENTS"],
   },
   {
     href: "/producer/users",
@@ -162,9 +162,12 @@ export function Sidebar({ open, onClose }: SidebarProps) {
   }
 
   const collabPerms = collaborator?.permissions ?? [];
-  const filteredCollabLinks = collaboratorLinks.filter(
-    (l) => !l.requires || collabPerms.includes(l.requires)
-  );
+  const filteredCollabLinks = collaboratorLinks.filter((l) => {
+    if (!l.requires) return true;
+    if (Array.isArray(l.requires))
+      return l.requires.some((p) => collabPerms.includes(p));
+    return collabPerms.includes(l.requires);
+  });
 
   const staffLinks = isAdmin
     ? adminLinks
