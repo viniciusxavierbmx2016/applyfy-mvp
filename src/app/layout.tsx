@@ -18,7 +18,7 @@ const geistMono = localFont({
 export const metadata: Metadata = {
   title: "Members Club",
   description: "Members Club — Plataforma de cursos online com comunidade integrada",
-  icons: { icon: "/applyfy-logo.png" },
+  icons: { icon: "/logo.png" },
 };
 
 export default function RootLayout({
