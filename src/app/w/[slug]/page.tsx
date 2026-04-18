@@ -56,6 +56,7 @@ export default function WorkspaceVitrinePage() {
   const [enrolled, setEnrolled] = useState<EnrolledCourse[]>([]);
   const [store, setStore] = useState<StoreCourse[]>([]);
   const [loading, setLoading] = useState(true);
+  const [suspended, setSuspended] = useState(false);
 
   useEffect(() => {
     if (userLoading) return;
@@ -73,6 +74,13 @@ export default function WorkspaceVitrinePage() {
           );
           return;
         }
+        if (res.status === 503) {
+          const data = await res.json().catch(() => ({}));
+          if (data.suspended) {
+            setSuspended(true);
+            return;
+          }
+        }
         if (res.ok) {
           const data = await res.json();
           setWs(data.workspace);
@@ -89,6 +97,26 @@ export default function WorkspaceVitrinePage() {
   const displayName = ws?.name || "Workspace";
   const active = enrolled.filter((c) => !c.isExpired);
   const expired = enrolled.filter((c) => c.isExpired);
+
+  if (suspended) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white dark:bg-gray-950 px-4">
+        <div className="text-center max-w-md">
+          <div className="mx-auto w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center mb-6">
+            <svg className="w-8 h-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+          </div>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+            Área temporariamente indisponível
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400">
+            O administrador desta área de membros está com o acesso suspenso. Por favor, entre em contato com o responsável.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="px-4 sm:px-6 lg:px-8 py-6 lg:py-8 max-w-6xl mx-auto">

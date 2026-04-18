@@ -6,6 +6,7 @@ import {
   getStaffCourseIds,
 } from "@/lib/auth";
 import { canAccessWorkspace, resolveStaffWorkspace } from "@/lib/workspace";
+import { getProducerSubscriptionStatus } from "@/lib/subscription";
 import { hasWorkspaceAccess } from "@/lib/workspace-access";
 
 export async function GET(request: Request) {
@@ -231,8 +232,17 @@ export async function POST(request: Request) {
   try {
     const staff = await requireStaff();
     if (staff.role === "COLLABORATOR") {
-      // Collaborators cannot create new courses — only manage existing ones.
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    if (staff.role === "PRODUCER") {
+      const subCheck = await getProducerSubscriptionStatus(staff.id);
+      if (subCheck.blocked || subCheck.restricted) {
+        return NextResponse.json(
+          { error: "Regularize sua assinatura para criar novos cursos" },
+          { status: 403 }
+        );
+      }
     }
 
     const body = await request.json();
@@ -255,7 +265,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // Resolve workspace: explicit > staff active workspace
     let targetWorkspaceId: string | null = null;
     if (explicitWorkspaceId) {
       if (!(await canAccessWorkspace(staff, explicitWorkspaceId))) {
@@ -272,6 +281,19 @@ export async function POST(request: Request) {
         { error: "Nenhum workspace ativo. Crie um workspace antes de criar cursos." },
         { status: 400 }
       );
+    }
+
+    if (staff.role === "PRODUCER") {
+      const subCheck = await getProducerSubscriptionStatus(staff.id);
+      if (subCheck.plan) {
+        const courseCount = await prisma.course.count({ where: { workspaceId: targetWorkspaceId } });
+        if (courseCount >= subCheck.plan.maxCoursesPerWorkspace) {
+          return NextResponse.json(
+            { error: "Limite de cursos por workspace atingido" },
+            { status: 403 }
+          );
+        }
+      }
     }
 
     const existing = await prisma.course.findUnique({ where: { slug } });

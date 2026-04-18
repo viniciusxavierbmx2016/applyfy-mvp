@@ -4,6 +4,7 @@ import { useState } from "react";
 import { usePathname } from "next/navigation";
 import { Sidebar } from "@/components/sidebar";
 import { Header } from "@/components/header";
+import { SubscriptionGate } from "@/components/subscription-gate";
 
 export default function ProducerLayout({
   children,
@@ -28,7 +29,9 @@ export default function ProducerLayout({
         <Header onMenuToggle={() => setSidebarOpen(!sidebarOpen)} />
 
         <main className="flex-1 p-4 lg:p-6 overflow-y-auto">
-          {children}
+          <SubscriptionGate>
+            {children}
+          </SubscriptionGate>
         </main>
       </div>
     </div>

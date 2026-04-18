@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { hasWorkspaceAccess } from "@/lib/workspace-access";
+import { isWorkspaceSuspended } from "@/lib/subscription";
 
 export async function GET(
   _request: Request,
@@ -44,6 +45,16 @@ export async function GET(
         return NextResponse.json(
           { error: "Você não tem acesso a esta área de membros" },
           { status: 403 }
+        );
+      }
+    }
+
+    if (user.role === "STUDENT" || user.role === "COLLABORATOR") {
+      const suspended = await isWorkspaceSuspended(workspace.id);
+      if (suspended) {
+        return NextResponse.json(
+          { suspended: true, error: "Esta área de membros está temporariamente indisponível." },
+          { status: 503 }
         );
       }
     }
