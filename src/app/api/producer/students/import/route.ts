@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireStaff, requireCollaboratorContextIfAny } from "@/lib/auth";
+import { requireStaff } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase-admin";
 import { createNotification } from "@/lib/notifications";
+import { resolveStaffWorkspace } from "@/lib/workspace";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 const MAX_ROWS = 500;
@@ -52,36 +53,14 @@ export async function POST(request: Request) {
   try {
     const staff = await requireStaff();
 
-    let workspaceId: string;
-    if (staff.role === "ADMIN") {
-      const wsId =
-        new URL(request.url).searchParams.get("workspaceId") ?? null;
-      if (!wsId) {
-        return NextResponse.json(
-          { error: "workspaceId obrigatório para admin" },
-          { status: 400 }
-        );
-      }
-      workspaceId = wsId;
-    } else if (staff.role === "COLLABORATOR") {
-      const ctx = await requireCollaboratorContextIfAny(staff);
-      if (!ctx || !ctx.permissions.includes("MANAGE_STUDENTS")) {
-        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-      }
-      workspaceId = ctx.workspaceId;
-    } else {
-      const ws = await prisma.workspace.findFirst({
-        where: { ownerId: staff.id },
-        select: { id: true },
-      });
-      if (!ws) {
-        return NextResponse.json(
-          { error: "Workspace não encontrado" },
-          { status: 404 }
-        );
-      }
-      workspaceId = ws.id;
+    const { workspace: resolvedWs } = await resolveStaffWorkspace(staff);
+    if (!resolvedWs) {
+      return NextResponse.json(
+        { error: "Workspace não encontrado" },
+        { status: 400 }
+      );
     }
+    const workspaceId = resolvedWs.id;
 
     const formData = await request.formData();
     const file = formData.get("file") as File | null;
