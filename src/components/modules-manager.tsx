@@ -28,6 +28,7 @@ export interface ModuleData {
   order: number;
   daysToRelease: number;
   thumbnailUrl: string | null;
+  hideTitle: boolean;
   sectionId: string | null;
   lessons: LessonData[];
 }
@@ -147,6 +148,7 @@ export function ModulesManager({
           ...data.module,
           daysToRelease: data.module.daysToRelease ?? 0,
           thumbnailUrl: data.module.thumbnailUrl ?? null,
+          hideTitle: data.module.hideTitle ?? false,
           sectionId: data.module.sectionId ?? null,
           lessons: [],
         },
@@ -177,6 +179,7 @@ export function ModulesManager({
       title?: string;
       daysToRelease?: number;
       thumbnailUrl?: string | null;
+      hideTitle?: boolean;
     }
   ) {
     const res = await fetch(`/api/modules/${id}`, {
@@ -485,6 +488,7 @@ function SortableModule({
       title?: string;
       daysToRelease?: number;
       thumbnailUrl?: string | null;
+      hideTitle?: boolean;
     }
   ) => void;
   onDelete: (id: string) => void;
@@ -621,6 +625,23 @@ function SortableModule({
             uploadPath={`modules/${module.id}`}
             aspectClass="aspect-[9/16] max-w-[180px]"
           />
+
+          <label className="flex items-center gap-2 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={module.hideTitle}
+              onChange={(e) =>
+                onUpdate(module.id, { hideTitle: e.target.checked })
+              }
+              className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500 bg-white dark:bg-gray-800"
+            />
+            <span className="text-sm text-gray-700 dark:text-gray-300">
+              Esconder título no card
+            </span>
+            <span className="text-xs text-gray-500" title="Quando ativado, apenas a imagem aparece no card do módulo no carrossel">
+              ⓘ
+            </span>
+          </label>
 
           <div>
             <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">

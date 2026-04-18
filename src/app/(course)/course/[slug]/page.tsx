@@ -31,6 +31,7 @@ interface ModuleItem {
   order: number;
   daysToRelease: number;
   thumbnailUrl: string | null;
+  hideTitle?: boolean;
   sectionId: string | null;
   lessons: LessonItem[];
   firstIncompleteLesson: string | null;
@@ -109,6 +110,7 @@ function toCarouselModule(
     progressPct: stats.pct,
     locked,
     empty,
+    hideTitle: m.hideTitle,
     releaseAt: rel.releaseAt,
     href:
       clickable && resumeLessonId

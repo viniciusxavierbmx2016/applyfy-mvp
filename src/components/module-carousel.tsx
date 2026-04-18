@@ -13,6 +13,7 @@ export interface CarouselModule {
   progressPct: number;
   locked: boolean;
   empty?: boolean;
+  hideTitle?: boolean;
   releaseAt?: Date;
   href: string;
   clickable: boolean;
@@ -124,9 +125,11 @@ function ModuleCard({ mod }: { mod: CarouselModule }) {
         </div>
       )}
 
-      <div className="absolute top-3 left-1/2 -translate-x-1/2 px-2.5 py-[3px] rounded-full bg-black/40 backdrop-blur-md text-[10px] font-semibold uppercase tracking-[0.14em] text-white">
-        Módulo
-      </div>
+      {!mod.hideTitle && (
+        <div className="absolute top-3 left-1/2 -translate-x-1/2 px-2.5 py-[3px] rounded-full bg-black/40 backdrop-blur-md text-[10px] font-semibold uppercase tracking-[0.14em] text-white">
+          Módulo
+        </div>
+      )}
 
       {mod.locked && (
         <div className="absolute inset-0 bg-black/65 flex flex-col items-center justify-center gap-2 text-white">
@@ -153,24 +156,37 @@ function ModuleCard({ mod }: { mod: CarouselModule }) {
         </div>
       )}
 
-      <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 via-black/40 to-transparent pt-20">
-        <p className="text-base font-bold tracking-tight text-white line-clamp-2 drop-shadow-lg">
-          {mod.title}
-        </p>
-        <p className="text-xs text-gray-300/90 mt-1">
-          {mod.lessonsTotal > 0
-            ? `${mod.lessonsDone}/${mod.lessonsTotal} aulas`
-            : "Sem aulas"}
-        </p>
-        {mod.progressPct > 0 && mod.progressPct < 100 && !mod.locked && (
-          <div className="mt-2 h-1 bg-white/20 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-blue-500"
-              style={{ width: `${mod.progressPct}%` }}
-            />
+      {mod.hideTitle ? (
+        mod.progressPct > 0 && mod.progressPct < 100 && !mod.locked ? (
+          <div className="absolute bottom-0 left-0 right-0 p-3">
+            <div className="h-1 bg-white/20 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-blue-500"
+                style={{ width: `${mod.progressPct}%` }}
+              />
+            </div>
           </div>
-        )}
-      </div>
+        ) : null
+      ) : (
+        <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 via-black/40 to-transparent pt-20">
+          <p className="text-base font-bold tracking-tight text-white line-clamp-2 drop-shadow-lg">
+            {mod.title}
+          </p>
+          <p className="text-xs text-gray-300/90 mt-1">
+            {mod.lessonsTotal > 0
+              ? `${mod.lessonsDone}/${mod.lessonsTotal} aulas`
+              : "Sem aulas"}
+          </p>
+          {mod.progressPct > 0 && mod.progressPct < 100 && !mod.locked && (
+            <div className="mt-2 h-1 bg-white/20 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-blue-500"
+                style={{ width: `${mod.progressPct}%` }}
+              />
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 

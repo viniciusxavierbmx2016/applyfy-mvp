@@ -200,6 +200,7 @@ model Module {
   order          Int      @default(0)
   daysToRelease  Int      @default(0)
   thumbnailUrl   String?
+  hideTitle      Boolean  @default(false)
   sectionId      String?
   courseId       String
   course         Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
