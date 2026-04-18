@@ -158,8 +158,10 @@ export async function POST(request: Request) {
       errors: [] as Array<{ line: number; email: string; reason: string }>,
     };
 
+    const loginUrl = `${baseUrl}/w/${workspace.slug}/login`;
+
     const csvResultRows: string[][] = [
-      ["Nome", "Email", "Status", "Senha", "Link de Acesso", "Cursos Matriculados", "Erro"],
+      ["Nome", "Email", "Status", "Senha", "Link de Login", "Cursos Matriculados", "Erro"],
     ];
 
     for (let i = 0; i < dataRows.length; i++) {
@@ -187,18 +189,16 @@ export async function POST(request: Request) {
           where: { email },
         });
         const isNewUser = !user;
-        let accessLink = "";
-        let sharedPassword = "";
+        let tempPassword = "";
 
         if (!user) {
           let authId: string | undefined;
+          tempPassword = workspace.masterPassword || generateTempPassword();
 
           const { data: createData, error: createError } =
             await admin.auth.admin.createUser({
               email,
-              password:
-                Math.random().toString(36).slice(2) +
-                Math.random().toString(36).slice(2),
+              password: tempPassword,
               email_confirm: true,
               user_metadata: { name },
             });
@@ -212,7 +212,14 @@ export async function POST(request: Request) {
               const found = listData?.users.find(
                 (u) => u.email?.toLowerCase() === email
               );
-              authId = found?.id;
+              if (found) {
+                authId = found.id;
+                try {
+                  await admin.auth.admin.updateUserById(found.id, {
+                    password: tempPassword,
+                  });
+                } catch {}
+              }
             }
             if (!authId) {
               summary.errors.push({
@@ -243,34 +250,6 @@ export async function POST(request: Request) {
               workspaceId,
             },
           });
-
-          if (workspace.masterPassword) {
-            sharedPassword = workspace.masterPassword;
-            try {
-              await admin.auth.admin.updateUserById(user.id, {
-                password: workspace.masterPassword,
-              });
-            } catch {}
-          } else {
-            const tempPw = generateTempPassword();
-            try {
-              await admin.auth.admin.updateUserById(user.id, {
-                password: tempPw,
-              });
-              sharedPassword = tempPw;
-            } catch {}
-          }
-
-          try {
-            const { data: linkData } = await admin.auth.admin.generateLink({
-              type: "recovery",
-              email,
-              options: {
-                redirectTo: `${baseUrl}/reset-password?next=/w/${workspace.slug}`,
-              },
-            });
-            accessLink = linkData?.properties?.action_link || "";
-          } catch {}
 
           summary.created++;
         } else {
@@ -322,8 +301,8 @@ export async function POST(request: Request) {
           name,
           email,
           isNewUser ? "Criado" : "Já existia",
-          isNewUser ? sharedPassword : "",
-          isNewUser ? accessLink : "",
+          isNewUser ? tempPassword : "",
+          isNewUser ? loginUrl : "",
           enrolledCourseNames.join(", ") || "Já matriculado",
           "",
         ]);
@@ -369,11 +348,13 @@ export async function POST(request: Request) {
   }
 }
 
-function generateTempPassword(len = 8): string {
-  const chars = "abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-  let out = "";
-  for (let i = 0; i < len; i++) {
-    out += chars[Math.floor(Math.random() * chars.length)];
-  }
-  return out;
+function generateTempPassword(): string {
+  const letters = "ABCDEFGHJKLMNPQRSTUVWXYZ";
+  const numbers = "0123456789";
+  const specials = "!@#$";
+  let pwd = "";
+  for (let i = 0; i < 3; i++) pwd += letters[Math.floor(Math.random() * letters.length)];
+  for (let i = 0; i < 4; i++) pwd += numbers[Math.floor(Math.random() * numbers.length)];
+  pwd += specials[Math.floor(Math.random() * specials.length)];
+  return pwd;
 }
