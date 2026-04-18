@@ -5,6 +5,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { ImportStudentsModal } from "@/components/import-students-modal";
 
 type EnrollmentStatus = "ACTIVE" | "EXPIRED" | "CANCELLED";
 
@@ -49,6 +50,7 @@ export default function AdminUsersPage() {
     {}
   );
   const [toast, setToast] = useState<string | null>(null);
+  const [importOpen, setImportOpen] = useState(false);
 
   useEffect(() => {
     const t = setTimeout(() => setDebounced(query), 300);
@@ -231,6 +233,16 @@ export default function AdminUsersPage() {
             </select>
           </div>
         )}
+        <button
+          type="button"
+          onClick={() => setImportOpen(true)}
+          className="inline-flex items-center justify-center gap-2 px-3.5 py-2.5 text-sm font-medium rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition"
+        >
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M16 8l-4-4-4 4M12 4v12" />
+          </svg>
+          <span>Importar CSV</span>
+        </button>
         <button
           type="button"
           onClick={handleExportCsv}
@@ -478,6 +490,12 @@ export default function AdminUsersPage() {
           })}
         </div>
       )}
+
+      <ImportStudentsModal
+        open={importOpen}
+        onClose={() => setImportOpen(false)}
+        courses={courses}
+      />
 
       {toast && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-5 py-3 bg-blue-600 text-white rounded-lg shadow-xl text-sm font-medium">
