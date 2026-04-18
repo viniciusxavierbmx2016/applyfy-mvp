@@ -1,10 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase";
 
-export default function ForgotPasswordPage() {
+function ForgotPasswordForm() {
+  const searchParams = useSearchParams();
+  const workspace = searchParams.get("workspace");
+  const loginHref = workspace ? `/w/${workspace}/login` : "/login";
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
   const [sent, setSent] = useState(false);
@@ -71,7 +75,7 @@ export default function ForgotPasswordPage() {
                 Verifique também a pasta de spam
               </p>
               <Link
-                href="/login"
+                href={loginHref}
                 className="mt-6 inline-block text-sm text-blue-600 dark:text-blue-400 hover:underline"
               >
                 Voltar ao login
@@ -109,7 +113,7 @@ export default function ForgotPasswordPage() {
               </form>
               <p className="mt-6 text-center text-sm text-gray-600 dark:text-gray-400">
                 <Link
-                  href="/login"
+                  href={loginHref}
                   className="text-blue-600 dark:text-blue-400 hover:underline"
                 >
                   Voltar ao login
@@ -120,5 +124,13 @@ export default function ForgotPasswordPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function ForgotPasswordPage() {
+  return (
+    <Suspense>
+      <ForgotPasswordForm />
+    </Suspense>
   );
 }
