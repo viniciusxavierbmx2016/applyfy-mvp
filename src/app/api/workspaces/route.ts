@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireStaff } from "@/lib/auth";
-import { getProducerSubscriptionStatus } from "@/lib/subscription";
+import { checkPlanLimits, PlanLimitError } from "@/lib/plan-limits";
 
 const SLUG_RE = /^[a-z0-9][a-z0-9-]{1,48}[a-z0-9]$/;
 
@@ -30,21 +30,13 @@ export async function POST(request: Request) {
     const staff = await requireStaff();
 
     if (staff.role === "PRODUCER") {
-      const subCheck = await getProducerSubscriptionStatus(staff.id);
-      if (subCheck.blocked || subCheck.restricted) {
-        return NextResponse.json(
-          { error: "Regularize sua assinatura para criar novos workspaces" },
-          { status: 403 }
-        );
-      }
-      if (subCheck.plan) {
-        const wsCount = await prisma.workspace.count({ where: { ownerId: staff.id } });
-        if (wsCount >= subCheck.plan.maxWorkspaces) {
-          return NextResponse.json(
-            { error: "Limite de workspaces atingido" },
-            { status: 403 }
-          );
+      try {
+        await checkPlanLimits(staff.id, "workspace");
+      } catch (err) {
+        if (err instanceof PlanLimitError) {
+          return NextResponse.json({ error: err.message }, { status: 403 });
         }
+        throw err;
       }
     }
 

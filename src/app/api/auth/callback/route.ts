@@ -67,16 +67,33 @@ export async function GET(request: Request) {
 
     const existing = await prisma.user.findUnique({ where: { email } });
     if (!existing) {
+      const userRole = role === "PRODUCER" ? "PRODUCER" : "STUDENT";
       await prisma.user.create({
         data: {
           id: authUser.id,
           email,
           name: fullName,
           avatarUrl,
-          role: role === "PRODUCER" ? "PRODUCER" : "STUDENT",
+          role: userRole,
           workspaceId: workspaceId ?? undefined,
         },
       });
+
+      if (userRole === "PRODUCER") {
+        const defaultPlan = await prisma.plan.findFirst({
+          where: { active: true },
+          orderBy: { price: "asc" },
+        });
+        if (defaultPlan) {
+          await prisma.subscription.create({
+            data: {
+              userId: authUser.id,
+              planId: defaultPlan.id,
+              status: "PENDING",
+            },
+          });
+        }
+      }
     } else {
       const updates: Record<string, unknown> = {};
       if (!existing.avatarUrl && avatarUrl) updates.avatarUrl = avatarUrl;

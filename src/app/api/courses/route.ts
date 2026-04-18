@@ -6,8 +6,8 @@ import {
   getStaffCourseIds,
 } from "@/lib/auth";
 import { canAccessWorkspace, resolveStaffWorkspace } from "@/lib/workspace";
-import { getProducerSubscriptionStatus } from "@/lib/subscription";
 import { hasWorkspaceAccess } from "@/lib/workspace-access";
+import { checkPlanLimits, PlanLimitError } from "@/lib/plan-limits";
 
 export async function GET(request: Request) {
   const t0 = Date.now();
@@ -235,16 +235,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    if (staff.role === "PRODUCER") {
-      const subCheck = await getProducerSubscriptionStatus(staff.id);
-      if (subCheck.blocked || subCheck.restricted) {
-        return NextResponse.json(
-          { error: "Regularize sua assinatura para criar novos cursos" },
-          { status: 403 }
-        );
-      }
-    }
-
     const body = await request.json();
     const {
       title,
@@ -284,15 +274,13 @@ export async function POST(request: Request) {
     }
 
     if (staff.role === "PRODUCER") {
-      const subCheck = await getProducerSubscriptionStatus(staff.id);
-      if (subCheck.plan) {
-        const courseCount = await prisma.course.count({ where: { workspaceId: targetWorkspaceId } });
-        if (courseCount >= subCheck.plan.maxCoursesPerWorkspace) {
-          return NextResponse.json(
-            { error: "Limite de cursos por workspace atingido" },
-            { status: 403 }
-          );
+      try {
+        await checkPlanLimits(staff.id, "course", targetWorkspaceId);
+      } catch (err) {
+        if (err instanceof PlanLimitError) {
+          return NextResponse.json({ error: err.message }, { status: 403 });
         }
+        throw err;
       }
     }
 

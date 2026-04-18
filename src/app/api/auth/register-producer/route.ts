@@ -39,6 +39,20 @@ export async function POST(request: Request) {
           role: "PRODUCER",
         },
       });
+
+      const defaultPlan = await prisma.plan.findFirst({
+        where: { active: true },
+        orderBy: { price: "asc" },
+      });
+      if (defaultPlan) {
+        await prisma.subscription.create({
+          data: {
+            userId: data.user.id,
+            planId: defaultPlan.id,
+            status: "PENDING",
+          },
+        });
+      }
     }
 
     return NextResponse.json(
