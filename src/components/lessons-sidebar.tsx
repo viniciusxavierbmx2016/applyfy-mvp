@@ -88,20 +88,20 @@ function LessonLink({
   return (
     <Link
       href={`/course/${courseSlug}/lesson/${lesson.id}`}
-      className={`relative flex items-start gap-3 pl-4 pr-3 py-2 rounded-[10px] text-sm transition-all duration-150 ${
+      className={`relative flex items-start gap-3 pl-4 pr-3 py-2 rounded-[10px] text-sm transition-all duration-200 ${
         isCurrent
-          ? "bg-blue-500/10 text-gray-900 dark:text-white"
+          ? "bg-blue-500/10 dark:bg-blue-500/15 text-gray-900 dark:text-white shadow-sm"
           : lesson.completed
             ? "text-gray-500 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white"
             : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white"
       }`}
     >
       {isCurrent && (
-        <span className="absolute left-0 top-1.5 bottom-1.5 w-[3px] rounded-full bg-blue-500" />
+        <span className="absolute left-0 top-1.5 bottom-1.5 w-[3px] rounded-full bg-blue-500 shadow-sm shadow-blue-500/50" />
       )}
       <div className="pt-[3px] flex-shrink-0">
         {lesson.completed ? (
-          <div className="w-3.5 h-3.5 rounded-full bg-emerald-500/90 flex items-center justify-center">
+          <div className="w-4 h-4 rounded-full bg-emerald-500 flex items-center justify-center shadow-sm shadow-emerald-500/30 transition-all duration-300">
             <svg
               className="w-2.5 h-2.5 text-white"
               fill="none"

@@ -53,10 +53,10 @@ export function ModuleCarousel({ title, modules }: Props) {
   }
 
   return (
-    <section className="mb-10">
+    <section className="mb-12">
       {title && (
-        <div className="flex items-center gap-4 mb-4 px-1">
-          <h2 className="text-xs font-semibold tracking-[0.14em] uppercase text-gray-400 dark:text-gray-500 whitespace-nowrap">
+        <div className="flex items-center gap-4 mb-5 px-1">
+          <h2 className="text-lg font-semibold tracking-tight text-gray-900 dark:text-white whitespace-nowrap">
             {title}
           </h2>
           <div className="flex-1 h-px bg-gradient-to-r from-gray-200 via-gray-200 to-transparent dark:from-white/10 dark:via-white/10" />
@@ -153,11 +153,11 @@ function ModuleCard({ mod }: { mod: CarouselModule }) {
         </div>
       )}
 
-      <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/90 via-black/60 to-transparent pt-16">
-        <p className="text-sm sm:text-base font-semibold tracking-tight text-white line-clamp-2 drop-shadow">
+      <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 via-black/40 to-transparent pt-20">
+        <p className="text-base font-bold tracking-tight text-white line-clamp-2 drop-shadow-lg">
           {mod.title}
         </p>
-        <p className="text-xs text-gray-300 mt-1">
+        <p className="text-xs text-gray-300/90 mt-1">
           {mod.lessonsTotal > 0
             ? `${mod.lessonsDone}/${mod.lessonsTotal} aulas`
             : "Sem aulas"}
@@ -174,8 +174,8 @@ function ModuleCard({ mod }: { mod: CarouselModule }) {
     </div>
   );
 
-  const className = `group shrink-0 snap-start basis-[65%] sm:basis-[32%] lg:basis-[23%] xl:basis-[19%] transition-transform duration-300 ${
-    mod.clickable ? "hover:scale-[1.03]" : "cursor-not-allowed"
+  const className = `group shrink-0 snap-start basis-[75%] sm:basis-[45%] md:basis-[35%] lg:basis-[28%] xl:basis-[22%] transition-all duration-300 ease-out ${
+    mod.clickable ? "hover:scale-[1.05] hover:shadow-2xl hover:shadow-black/30 hover:z-10" : "cursor-not-allowed"
   }`;
 
   if (!mod.clickable) {

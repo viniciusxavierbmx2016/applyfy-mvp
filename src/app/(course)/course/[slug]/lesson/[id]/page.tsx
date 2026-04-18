@@ -210,7 +210,7 @@ export default function LessonPage({
     <div className="px-4 sm:px-6 lg:px-8 py-5 lg:py-6 max-w-[1600px] mx-auto grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6">
       {/* Main content */}
       <div className="min-w-0">
-        <div className="relative">
+        <div className="relative bg-black rounded-xl overflow-hidden shadow-2xl shadow-black/20 dark:shadow-black/50 ring-1 ring-white/5">
           <VideoPlayer video={data.lesson.video} onEnded={handleEnded} />
           {showCountdown && data.next && (
             <AutoplayCountdown
@@ -246,23 +246,21 @@ export default function LessonPage({
             {data.lesson.title}
           </h1>
 
-          <div className="mt-5 flex flex-wrap items-center gap-2.5">
+          <div className="mt-5 flex flex-wrap items-center gap-3">
             <button
               type="button"
               onClick={() => markCompleted(!data.lesson.completed)}
               disabled={marking}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 disabled:opacity-50 ${
+              className={`px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 disabled:opacity-50 ${
                 data.lesson.completed
-                  ? "bg-gradient-to-b from-emerald-500/15 to-emerald-500/10 text-emerald-600 dark:text-emerald-400 ring-1 ring-inset ring-emerald-500/20 hover:ring-emerald-500/40"
-                  : "bg-gradient-to-b from-emerald-500 to-emerald-600 text-white shadow-sm hover:from-emerald-500 hover:to-emerald-500 hover:shadow"
+                  ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 ring-1 ring-inset ring-emerald-500/20 hover:ring-emerald-500/40 hover:bg-emerald-500/15"
+                  : "bg-gradient-to-r from-emerald-500 to-emerald-600 text-white shadow-md shadow-emerald-500/25 hover:shadow-lg hover:shadow-emerald-500/30 hover:from-emerald-400 hover:to-emerald-500"
               }`}
             >
-              <span className="inline-flex items-center gap-1.5">
-                {data.lesson.completed && (
-                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                  </svg>
-                )}
+              <span className="inline-flex items-center gap-2">
+                <svg className={`w-4 h-4 transition-transform duration-300 ${data.lesson.completed ? "scale-100" : "scale-90"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
                 {data.lesson.completed ? "Concluída" : "Marcar como concluída"}
               </span>
             </button>
@@ -270,19 +268,19 @@ export default function LessonPage({
             {data.prev && (
               <Link
                 href={`/course/${data.course.slug}/lesson/${data.prev.id}`}
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border border-gray-200 dark:border-white/10 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-white/5 text-sm font-medium transition-all duration-200"
+                className="group inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5 text-sm font-medium transition-all duration-200"
               >
-                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" /></svg>
+                <svg className="w-4 h-4 transition-transform duration-200 group-hover:-translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
                 Anterior
               </Link>
             )}
             {data.next && (
               <Link
                 href={`/course/${data.course.slug}/lesson/${data.next.id}`}
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border border-gray-200 dark:border-white/10 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-white/5 text-sm font-medium transition-all duration-200"
+                className="group inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5 text-sm font-medium transition-all duration-200"
               >
                 Próxima
-                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" /></svg>
+                <svg className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
               </Link>
             )}
           </div>
