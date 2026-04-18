@@ -182,15 +182,26 @@ export function ModulesManager({
       hideTitle?: boolean;
     }
   ) {
+    setModules((prev) =>
+      prev.map((m) => (m.id === id ? { ...m, ...data } : m))
+    );
     const res = await fetch(`/api/modules/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
     });
-    if (res.ok) {
-      setModules((prev) =>
-        prev.map((m) => (m.id === id ? { ...m, ...data } : m))
-      );
+    if (!res.ok) {
+      console.error("Failed to update module", id, await res.text());
+      const mod = modules.find((m) => m.id === id);
+      if (mod) {
+        const revert: Record<string, unknown> = {};
+        for (const key of Object.keys(data) as (keyof typeof data)[]) {
+          revert[key] = mod[key];
+        }
+        setModules((prev) =>
+          prev.map((m) => (m.id === id ? { ...m, ...revert } : m))
+        );
+      }
     }
   }
 
