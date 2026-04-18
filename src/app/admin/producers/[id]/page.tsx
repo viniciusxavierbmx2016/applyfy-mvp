@@ -33,10 +33,9 @@ interface CourseRow {
 }
 interface Subscription {
   id: string;
-  plan: string;
-  amount: number;
-  currency: string;
   status: string;
+  exempt: boolean;
+  plan: { id: string; name: string; price: number; currency: string };
 }
 interface DetailResponse {
   producer: Producer;

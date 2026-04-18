@@ -143,9 +143,10 @@ export async function GET(
       };
     });
 
-    const activeSub = await prisma.producerSubscription.findFirst({
-      where: { producerId: producer.id, status: "ACTIVE" },
+    const activeSub = await prisma.subscription.findFirst({
+      where: { userId: producer.id, status: { in: ["ACTIVE", "PAST_DUE", "PENDING"] } },
       orderBy: { createdAt: "desc" },
+      include: { plan: { select: { id: true, name: true, price: true, currency: true } } },
     });
 
     return NextResponse.json({

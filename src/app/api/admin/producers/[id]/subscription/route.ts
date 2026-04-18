@@ -1,14 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
-import type { ProducerSubscriptionStatus } from "@prisma/client";
-
-const VALID_PLANS = ["Free", "Basic", "Pro", "Enterprise"];
-const VALID_STATUS: ProducerSubscriptionStatus[] = [
-  "ACTIVE",
-  "EXPIRED",
-  "CANCELLED",
-];
 
 export async function GET(
   _request: Request,
@@ -18,7 +10,7 @@ export async function GET(
     await requireAdmin();
     const producer = await prisma.user.findUnique({
       where: { id: params.id },
-      select: { id: true, role: true, name: true, email: true },
+      select: { id: true, role: true, name: true, email: true, avatarUrl: true },
     });
     if (!producer || producer.role !== "PRODUCER") {
       return NextResponse.json(
@@ -27,16 +19,33 @@ export async function GET(
       );
     }
 
-    const subscriptions = await prisma.producerSubscription.findMany({
-      where: { producerId: producer.id },
+    const subscription = await prisma.subscription.findFirst({
+      where: { userId: producer.id },
       orderBy: { createdAt: "desc" },
+      include: {
+        plan: true,
+        invoices: { orderBy: { createdAt: "desc" } },
+      },
     });
 
-    const current = subscriptions.find((s) => s.status === "ACTIVE") || null;
+    const plans = await prisma.plan.findMany({
+      where: { active: true },
+      orderBy: { price: "asc" },
+    });
 
-    return NextResponse.json({ producer, current, subscriptions });
+    const [workspacesUsed, coursesUsed] = await Promise.all([
+      prisma.workspace.count({ where: { ownerId: producer.id } }),
+      prisma.course.count({ where: { ownerId: producer.id } }),
+    ]);
+
+    return NextResponse.json({
+      producer,
+      subscription,
+      plans,
+      usage: { workspacesUsed, coursesUsed },
+    });
   } catch (error) {
-    console.error("GET subscription error:", error);
+    console.error("GET producer subscription error:", error);
     const msg = error instanceof Error ? error.message : "";
     const status =
       msg === "Unauthorized" ? 401 : msg === "Forbidden" ? 403 : 500;
@@ -62,96 +71,53 @@ export async function POST(
     }
 
     const body = await request.json();
-    const { plan, amount, currency, startedAt, expiresAt } = body;
+    const { planId, exempt, exemptReason } = body;
 
-    if (!plan || !VALID_PLANS.includes(plan)) {
-      return NextResponse.json(
-        { error: "Plano inválido" },
-        { status: 400 }
-      );
+    if (!planId) {
+      return NextResponse.json({ error: "planId obrigatório" }, { status: 400 });
     }
-    const amt =
-      typeof amount === "number" ? amount : parseFloat(String(amount || 0));
-    if (!Number.isFinite(amt) || amt < 0) {
+
+    const plan = await prisma.plan.findUnique({ where: { id: planId } });
+    if (!plan || !plan.active) {
       return NextResponse.json(
-        { error: "Valor inválido" },
+        { error: "Plano inválido ou inativo" },
         { status: 400 }
       );
     }
 
-    // Close any current ACTIVE subscription
-    await prisma.producerSubscription.updateMany({
-      where: { producerId: producer.id, status: "ACTIVE" },
-      data: { status: "CANCELLED" },
+    const existing = await prisma.subscription.findFirst({
+      where: {
+        userId: producer.id,
+        status: { in: ["ACTIVE", "PENDING", "PAST_DUE"] },
+      },
     });
+    if (existing) {
+      return NextResponse.json(
+        { error: "Produtor já possui uma assinatura ativa" },
+        { status: 409 }
+      );
+    }
 
-    const created = await prisma.producerSubscription.create({
+    const now = new Date();
+    const periodEnd = new Date(now);
+    periodEnd.setMonth(periodEnd.getMonth() + 1);
+
+    const subscription = await prisma.subscription.create({
       data: {
-        producerId: producer.id,
-        plan,
-        amount: amt,
-        currency: (currency || "BRL").toString().toUpperCase().slice(0, 3),
+        userId: producer.id,
+        planId,
         status: "ACTIVE",
-        startedAt: startedAt ? new Date(startedAt) : new Date(),
-        expiresAt: expiresAt ? new Date(expiresAt) : null,
+        currentPeriodStart: now,
+        currentPeriodEnd: exempt ? null : periodEnd,
+        exempt: Boolean(exempt),
+        exemptReason: exempt ? (exemptReason || null) : null,
       },
+      include: { plan: true },
     });
 
-    return NextResponse.json({ subscription: created }, { status: 201 });
+    return NextResponse.json({ subscription }, { status: 201 });
   } catch (error) {
-    console.error("POST subscription error:", error);
-    const msg = error instanceof Error ? error.message : "";
-    const status =
-      msg === "Unauthorized" ? 401 : msg === "Forbidden" ? 403 : 500;
-    return NextResponse.json({ error: msg || "Erro" }, { status });
-  }
-}
-
-export async function PATCH(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
-  try {
-    await requireAdmin();
-    const body = await request.json();
-    const { subscriptionId, status, amount, expiresAt } = body;
-    if (!subscriptionId) {
-      return NextResponse.json(
-        { error: "subscriptionId obrigatório" },
-        { status: 400 }
-      );
-    }
-
-    const sub = await prisma.producerSubscription.findUnique({
-      where: { id: subscriptionId },
-    });
-    if (!sub || sub.producerId !== params.id) {
-      return NextResponse.json(
-        { error: "Assinatura não encontrada" },
-        { status: 404 }
-      );
-    }
-
-    if (status && !VALID_STATUS.includes(status)) {
-      return NextResponse.json({ error: "Status inválido" }, { status: 400 });
-    }
-
-    const updated = await prisma.producerSubscription.update({
-      where: { id: subscriptionId },
-      data: {
-        ...(status ? { status } : {}),
-        ...(amount !== undefined
-          ? { amount: parseFloat(String(amount)) || 0 }
-          : {}),
-        ...(expiresAt !== undefined
-          ? { expiresAt: expiresAt ? new Date(expiresAt) : null }
-          : {}),
-      },
-    });
-
-    return NextResponse.json({ subscription: updated });
-  } catch (error) {
-    console.error("PATCH subscription error:", error);
+    console.error("POST producer subscription error:", error);
     const msg = error instanceof Error ? error.message : "";
     const status =
       msg === "Unauthorized" ? 401 : msg === "Forbidden" ? 403 : 500;
