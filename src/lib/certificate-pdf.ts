@@ -49,7 +49,7 @@ export function buildCertificatePdf(data: CertificateData): Buffer {
   doc.setFont("helvetica", "bold");
   doc.setTextColor(37, 99, 235);
   doc.setFontSize(24);
-  doc.text("Applyfy", W / 2, 90, { align: "center" });
+  doc.text("Members Club", W / 2, 90, { align: "center" });
 
   doc.setDrawColor(37, 99, 235);
   doc.setLineWidth(1);
@@ -114,7 +114,7 @@ export function buildCertificatePdf(data: CertificateData): Buffer {
   doc.line(W / 2 - 100, sigY, W / 2 + 100, sigY);
   doc.setFontSize(11);
   doc.setTextColor(107, 114, 128);
-  doc.text("Applyfy — Plataforma de Cursos", W / 2, sigY + 15, {
+  doc.text("Members Club — Plataforma de Cursos", W / 2, sigY + 15, {
     align: "center",
   });
 

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Configurações · Applyfy",
+  title: "Configurações · Members Club",
   description: "Configurações de integração e webhooks",
 };
 

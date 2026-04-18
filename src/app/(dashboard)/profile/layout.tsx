@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Meu Perfil · Applyfy",
+  title: "Meu Perfil · Members Club",
   description: "Seu progresso, pontos e cursos",
 };
 

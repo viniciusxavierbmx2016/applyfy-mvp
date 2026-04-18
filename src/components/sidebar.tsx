@@ -257,7 +257,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
                 "flex items-center",
                 collapsed ? "lg:justify-center" : "flex-1"
               )}
-              title="Applyfy"
+              title="Members Club"
             >
               {collapsed ? (
                 <span className="hidden lg:flex w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 text-white items-center justify-center text-sm font-bold shadow-sm">
@@ -270,7 +270,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
                   collapsed && "lg:hidden"
                 )}
               >
-                Applyfy
+                Members Club
               </span>
             </Link>
           )}

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Moderação · Applyfy",
+  title: "Moderação · Members Club",
   description: "Moderação da comunidade",
 };
 

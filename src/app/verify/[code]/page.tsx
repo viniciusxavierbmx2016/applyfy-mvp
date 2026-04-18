@@ -3,8 +3,8 @@ import Link from "next/link";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Verificar Certificado · Applyfy",
-  description: "Confirme a autenticidade de um certificado emitido pela Applyfy.",
+  title: "Verificar Certificado · Members Club",
+  description: "Confirme a autenticidade de um certificado emitido pela Members Club.",
 };
 
 interface PageProps {
@@ -29,7 +29,7 @@ export default async function VerifyPage({ params }: PageProps) {
       <header className="border-b border-gray-200 dark:border-gray-800">
         <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
           <Link href="/" className="text-xl font-bold text-blue-500">
-            Applyfy
+            Members Club
           </Link>
           <span className="text-xs text-gray-500">Verificação de certificado</span>
         </div>
@@ -59,7 +59,7 @@ export default async function VerifyPage({ params }: PageProps) {
                   Certificado autêntico
                 </h1>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Este certificado foi emitido pela Applyfy e é válido.
+                  Este certificado foi emitido pela Members Club e é válido.
                 </p>
               </div>
 
