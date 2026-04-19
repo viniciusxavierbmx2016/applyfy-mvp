@@ -68,7 +68,7 @@ export async function PATCH(
     return NextResponse.json({ collaborator: updated });
   } catch (e) {
     const msg = e instanceof Error ? e.message : "Erro";
-    const code = msg === "Unauthorized" ? 401 : msg === "Forbidden" ? 403 : 500;
+    const code = msg === "Não autorizado" ? 401 : msg === "Sem permissão" ? 403 : 500;
     return NextResponse.json({ error: msg }, { status: code });
   }
 }
@@ -87,7 +87,7 @@ export async function DELETE(
     return NextResponse.json({ ok: true });
   } catch (e) {
     const msg = e instanceof Error ? e.message : "Erro";
-    const code = msg === "Unauthorized" ? 401 : msg === "Forbidden" ? 403 : 500;
+    const code = msg === "Não autorizado" ? 401 : msg === "Sem permissão" ? 403 : 500;
     return NextResponse.json({ error: msg }, { status: code });
   }
 }

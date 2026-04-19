@@ -28,7 +28,7 @@ export async function POST(
           ])
         : await canEditCourse(staff, post.courseId);
     if (!allowed) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      return NextResponse.json({ error: "Sem permissão" }, { status: 403 });
     }
 
     const updated = await prisma.post.update({
@@ -41,7 +41,7 @@ export async function POST(
     console.error("POST pin error:", error);
     const msg = error instanceof Error ? error.message : "";
     const status =
-      msg === "Unauthorized" ? 401 : msg === "Forbidden" ? 403 : 500;
+      msg === "Não autorizado" ? 401 : msg === "Sem permissão" ? 403 : 500;
     return NextResponse.json({ error: msg || "Erro" }, { status });
   }
 }

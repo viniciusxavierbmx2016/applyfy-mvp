@@ -18,7 +18,7 @@ export async function GET(
         "MANAGE_LESSONS",
       ]);
       if (!allowed) {
-        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+        return NextResponse.json({ error: "Sem permissão" }, { status: 403 });
       }
     }
 

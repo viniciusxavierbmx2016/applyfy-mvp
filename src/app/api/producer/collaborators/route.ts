@@ -36,7 +36,7 @@ export async function GET() {
     return NextResponse.json({ collaborators, courses });
   } catch (e) {
     const msg = e instanceof Error ? e.message : "Erro";
-    const code = msg === "Unauthorized" ? 401 : msg === "Forbidden" ? 403 : 500;
+    const code = msg === "Não autorizado" ? 401 : msg === "Sem permissão" ? 403 : 500;
     return NextResponse.json({ error: msg }, { status: code });
   }
 }
@@ -151,7 +151,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ collaborator, inviteLink });
   } catch (e) {
     const msg = e instanceof Error ? e.message : "Erro";
-    const code = msg === "Unauthorized" ? 401 : msg === "Forbidden" ? 403 : 500;
+    const code = msg === "Não autorizado" ? 401 : msg === "Sem permissão" ? 403 : 500;
     console.error("POST /api/admin/collaborators error:", e);
     return NextResponse.json({ error: msg }, { status: code });
   }

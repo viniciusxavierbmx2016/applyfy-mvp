@@ -232,7 +232,7 @@ export async function POST(request: Request) {
   try {
     const staff = await requireStaff();
     if (staff.role === "COLLABORATOR") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      return NextResponse.json({ error: "Sem permissão" }, { status: 403 });
     }
 
     const body = await request.json();

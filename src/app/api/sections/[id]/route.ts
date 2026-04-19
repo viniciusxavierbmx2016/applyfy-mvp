@@ -10,7 +10,7 @@ async function authorize(sectionId: string) {
   });
   if (!section) return { error: "Seção não encontrada", status: 404 as const };
   if (!(await canEditCourse(staff, section.courseId))) {
-    return { error: "Forbidden", status: 403 as const };
+    return { error: "Sem permissão", status: 403 as const };
   }
   return { ok: true as const, courseId: section.courseId };
 }
@@ -34,7 +34,7 @@ export async function PUT(
     console.error("PUT section error:", error);
     const msg = error instanceof Error ? error.message : "";
     const status =
-      msg === "Unauthorized" ? 401 : msg === "Forbidden" ? 403 : 500;
+      msg === "Não autorizado" ? 401 : msg === "Sem permissão" ? 403 : 500;
     return NextResponse.json({ error: msg || "Erro" }, { status });
   }
 }
@@ -59,7 +59,7 @@ export async function DELETE(
     console.error("DELETE section error:", error);
     const msg = error instanceof Error ? error.message : "";
     const status =
-      msg === "Unauthorized" ? 401 : msg === "Forbidden" ? 403 : 500;
+      msg === "Não autorizado" ? 401 : msg === "Sem permissão" ? 403 : 500;
     return NextResponse.json({ error: msg || "Erro" }, { status });
   }
 }

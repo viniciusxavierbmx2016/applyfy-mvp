@@ -177,7 +177,7 @@ export async function PUT(
     console.error("PUT /api/courses/[id] error:", error);
     const msg = error instanceof Error ? error.message : "";
     const status =
-      msg === "Unauthorized" ? 401 : msg === "Forbidden" ? 403 : 500;
+      msg === "Não autorizado" ? 401 : msg === "Sem permissão" ? 403 : 500;
     return NextResponse.json({ error: msg || "Erro" }, { status });
   }
 }
@@ -189,7 +189,7 @@ export async function DELETE(
   try {
     const staff = await requireStaff();
     if (staff.role === "COLLABORATOR") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      return NextResponse.json({ error: "Sem permissão" }, { status: 403 });
     }
     const check = await assertCanEditCourse(params.id);
     if ("error" in check) {
@@ -203,7 +203,7 @@ export async function DELETE(
     console.error("DELETE /api/courses/[id] error:", error);
     const msg = error instanceof Error ? error.message : "";
     const status =
-      msg === "Unauthorized" ? 401 : msg === "Forbidden" ? 403 : 500;
+      msg === "Não autorizado" ? 401 : msg === "Sem permissão" ? 403 : 500;
     return NextResponse.json({ error: msg || "Erro" }, { status });
   }
 }

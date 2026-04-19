@@ -29,7 +29,7 @@ export async function GET(_req: Request, { params }: Ctx) {
     return NextResponse.json({ plan });
   } catch (error) {
     const msg = error instanceof Error ? error.message : "";
-    const status = msg === "Unauthorized" ? 401 : msg === "Forbidden" ? 403 : 500;
+    const status = msg === "Não autorizado" ? 401 : msg === "Sem permissão" ? 403 : 500;
     return NextResponse.json({ error: msg || "Erro interno" }, { status });
   }
 }
@@ -61,7 +61,7 @@ export async function PATCH(request: Request, { params }: Ctx) {
     return NextResponse.json({ plan: updated });
   } catch (error) {
     const msg = error instanceof Error ? error.message : "";
-    const status = msg === "Unauthorized" ? 401 : msg === "Forbidden" ? 403 : 500;
+    const status = msg === "Não autorizado" ? 401 : msg === "Sem permissão" ? 403 : 500;
     return NextResponse.json({ error: msg || "Erro interno" }, { status });
   }
 }
@@ -92,7 +92,7 @@ export async function DELETE(_req: Request, { params }: Ctx) {
     if (msg.includes("Record to delete does not exist")) {
       return NextResponse.json({ error: "Plano não encontrado" }, { status: 404 });
     }
-    const status = msg === "Unauthorized" ? 401 : msg === "Forbidden" ? 403 : 500;
+    const status = msg === "Não autorizado" ? 401 : msg === "Sem permissão" ? 403 : 500;
     return NextResponse.json({ error: msg || "Erro interno" }, { status });
   }
 }

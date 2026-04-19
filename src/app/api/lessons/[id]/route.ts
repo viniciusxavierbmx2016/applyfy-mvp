@@ -9,7 +9,7 @@ export async function PUT(
   try {
     const staff = await requireStaff();
     if (!(await canEditLesson(staff, params.id))) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      return NextResponse.json({ error: "Sem permissão" }, { status: 403 });
     }
     const { title, description, videoUrl, duration, daysToRelease } =
       await request.json();
@@ -34,7 +34,7 @@ export async function PUT(
     console.error("PUT lesson error:", error);
     const msg = error instanceof Error ? error.message : "";
     const status =
-      msg === "Unauthorized" ? 401 : msg === "Forbidden" ? 403 : 500;
+      msg === "Não autorizado" ? 401 : msg === "Sem permissão" ? 403 : 500;
     return NextResponse.json({ error: msg || "Erro" }, { status });
   }
 }
@@ -46,7 +46,7 @@ export async function DELETE(
   try {
     const staff = await requireStaff();
     if (!(await canEditLesson(staff, params.id))) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      return NextResponse.json({ error: "Sem permissão" }, { status: 403 });
     }
     await prisma.lesson.delete({ where: { id: params.id } });
     return NextResponse.json({ success: true });
@@ -54,7 +54,7 @@ export async function DELETE(
     console.error("DELETE lesson error:", error);
     const msg = error instanceof Error ? error.message : "";
     const status =
-      msg === "Unauthorized" ? 401 : msg === "Forbidden" ? 403 : 500;
+      msg === "Não autorizado" ? 401 : msg === "Sem permissão" ? 403 : 500;
     return NextResponse.json({ error: msg || "Erro" }, { status });
   }
 }

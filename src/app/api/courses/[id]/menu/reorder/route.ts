@@ -10,7 +10,7 @@ export async function PATCH(
   try {
     const staff = await requireStaff();
     if (!(await canEditCourse(staff, params.id))) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      return NextResponse.json({ error: "Sem permissão" }, { status: 403 });
     }
     const { itemIds } = await request.json();
     if (!Array.isArray(itemIds)) {

@@ -121,7 +121,7 @@ export async function GET(request: Request) {
     let courseIds = scopedIds;
     if (courseIdParam && courseIdParam !== "all") {
       if (!scopedIds.includes(courseIdParam)) {
-        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+        return NextResponse.json({ error: "Sem permissão" }, { status: 403 });
       }
       courseIds = [courseIdParam];
     }
@@ -1388,7 +1388,7 @@ export async function GET(request: Request) {
     console.error("GET /api/admin/analytics error:", error);
     const msg = error instanceof Error ? error.message : "";
     const status =
-      msg === "Unauthorized" ? 401 : msg === "Forbidden" ? 403 : 500;
+      msg === "Não autorizado" ? 401 : msg === "Sem permissão" ? 403 : 500;
     return NextResponse.json({ error: msg || "Erro" }, { status });
   }
 }

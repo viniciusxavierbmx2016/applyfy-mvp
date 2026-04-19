@@ -20,7 +20,7 @@ export async function GET() {
     return NextResponse.json({ plans });
   } catch (error) {
     const msg = error instanceof Error ? error.message : "";
-    const status = msg === "Unauthorized" ? 401 : msg === "Forbidden" ? 403 : 500;
+    const status = msg === "Não autorizado" ? 401 : msg === "Sem permissão" ? 403 : 500;
     return NextResponse.json({ error: msg || "Erro interno" }, { status });
   }
 }
@@ -57,7 +57,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ plan }, { status: 201 });
   } catch (error) {
     const msg = error instanceof Error ? error.message : "";
-    const status = msg === "Unauthorized" ? 401 : msg === "Forbidden" ? 403 : 500;
+    const status = msg === "Não autorizado" ? 401 : msg === "Sem permissão" ? 403 : 500;
     return NextResponse.json({ error: msg || "Erro interno" }, { status });
   }
 }

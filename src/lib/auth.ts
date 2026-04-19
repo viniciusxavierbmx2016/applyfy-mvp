@@ -135,7 +135,7 @@ export const getCurrentUser = cache(async (): Promise<User | null> => {
 export async function requireAuth(): Promise<User> {
   const user = await getCurrentUser();
   if (!user) {
-    throw new Error("Unauthorized");
+    throw new Error("Não autorizado");
   }
   return user;
 }
@@ -143,7 +143,7 @@ export async function requireAuth(): Promise<User> {
 export async function requireAdmin(): Promise<User> {
   const user = await requireAuth();
   if (user.role !== "ADMIN") {
-    throw new Error("Forbidden");
+    throw new Error("Sem permissão");
   }
   return user;
 }
@@ -155,7 +155,7 @@ export async function requireStaff(): Promise<User> {
     user.role !== "PRODUCER" &&
     user.role !== "COLLABORATOR"
   ) {
-    throw new Error("Forbidden");
+    throw new Error("Sem permissão");
   }
   return user;
 }
@@ -186,7 +186,7 @@ export async function requireCollaboratorContextIfAny(
     where: { userId: user.id, status: "ACCEPTED" },
     select: { workspaceId: true, permissions: true, courseIds: true },
   });
-  if (!c) throw new Error("Forbidden");
+  if (!c) throw new Error("Sem permissão");
   return c;
 }
 
@@ -219,10 +219,10 @@ export async function requirePermission(
   permission: string
 ): Promise<void> {
   if (staff.role === "ADMIN" || staff.role === "PRODUCER") return;
-  if (staff.role !== "COLLABORATOR") throw new Error("Forbidden");
+  if (staff.role !== "COLLABORATOR") throw new Error("Sem permissão");
   const ctx = await requireCollaboratorContextIfAny(staff);
   if (!ctx || !ctx.permissions.includes(permission)) {
-    throw new Error("Forbidden");
+    throw new Error("Sem permissão");
   }
 }
 

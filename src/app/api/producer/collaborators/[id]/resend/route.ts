@@ -18,7 +18,7 @@ export async function POST(
     }
     const ok = await canAccessWorkspace(staff, c.workspaceId);
     if (!ok) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      return NextResponse.json({ error: "Sem permissão" }, { status: 403 });
     }
     if (c.status === "REVOKED") {
       return NextResponse.json(
@@ -61,7 +61,7 @@ export async function POST(
     return NextResponse.json({ inviteLink });
   } catch (e) {
     const msg = e instanceof Error ? e.message : "Erro";
-    const code = msg === "Unauthorized" ? 401 : msg === "Forbidden" ? 403 : 500;
+    const code = msg === "Não autorizado" ? 401 : msg === "Sem permissão" ? 403 : 500;
     return NextResponse.json({ error: msg }, { status: code });
   }
 }

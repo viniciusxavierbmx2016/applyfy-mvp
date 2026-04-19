@@ -9,7 +9,7 @@ export async function PATCH(
   try {
     const staff = await requireStaff();
     if (!(await canManageStudentsOfCourse(staff, params.id))) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      return NextResponse.json({ error: "Sem permissão" }, { status: 403 });
     }
 
     const enrollment = await prisma.enrollment.findUnique({
@@ -57,7 +57,7 @@ export async function PATCH(
     console.error("PATCH enrollment error:", error);
     const msg = error instanceof Error ? error.message : "";
     const status =
-      msg === "Unauthorized" ? 401 : msg === "Forbidden" ? 403 : 500;
+      msg === "Não autorizado" ? 401 : msg === "Sem permissão" ? 403 : 500;
     return NextResponse.json({ error: msg || "Erro" }, { status });
   }
 }
@@ -69,7 +69,7 @@ export async function DELETE(
   try {
     const staff = await requireStaff();
     if (!(await canManageStudentsOfCourse(staff, params.id))) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      return NextResponse.json({ error: "Sem permissão" }, { status: 403 });
     }
 
     const enrollment = await prisma.enrollment.findUnique({
@@ -93,7 +93,7 @@ export async function DELETE(
     console.error("DELETE enrollment error:", error);
     const msg = error instanceof Error ? error.message : "";
     const status =
-      msg === "Unauthorized" ? 401 : msg === "Forbidden" ? 403 : 500;
+      msg === "Não autorizado" ? 401 : msg === "Sem permissão" ? 403 : 500;
     return NextResponse.json({ error: msg || "Erro" }, { status });
   }
 }

@@ -357,7 +357,7 @@ export async function POST(request: Request) {
     console.error("POST /api/producer/students/import error:", error);
     const msg = error instanceof Error ? error.message : "";
     const status =
-      msg === "Unauthorized" ? 401 : msg === "Forbidden" ? 403 : 500;
+      msg === "Não autorizado" ? 401 : msg === "Sem permissão" ? 403 : 500;
     return NextResponse.json({ error: msg || "Erro na importação" }, { status });
   }
 }

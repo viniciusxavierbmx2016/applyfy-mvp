@@ -29,7 +29,7 @@ export async function POST(request: Request) {
   } catch (error) {
     const msg = error instanceof Error ? error.message : "";
     const status =
-      msg === "Unauthorized" ? 401 : msg === "Forbidden" ? 403 : 500;
+      msg === "Não autorizado" ? 401 : msg === "Sem permissão" ? 403 : 500;
     console.error("POST /api/producer/integrations/request error:", error);
     return NextResponse.json({ error: msg || "Erro" }, { status });
   }

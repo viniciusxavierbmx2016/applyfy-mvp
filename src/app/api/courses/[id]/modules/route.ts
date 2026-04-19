@@ -9,7 +9,7 @@ export async function POST(
   try {
     const staff = await requireStaff();
     if (!(await canEditCourse(staff, params.id))) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      return NextResponse.json({ error: "Sem permissão" }, { status: 403 });
     }
 
     const { title, daysToRelease } = await request.json();
@@ -43,7 +43,7 @@ export async function POST(
     console.error("POST module error:", error);
     const msg = error instanceof Error ? error.message : "";
     const status =
-      msg === "Unauthorized" ? 401 : msg === "Forbidden" ? 403 : 500;
+      msg === "Não autorizado" ? 401 : msg === "Sem permissão" ? 403 : 500;
     return NextResponse.json({ error: msg || "Erro" }, { status });
   }
 }

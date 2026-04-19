@@ -27,7 +27,7 @@ export async function GET(_req: Request, { params }: Ctx) {
     return NextResponse.json({ subscription });
   } catch (error) {
     const msg = error instanceof Error ? error.message : "";
-    const status = msg === "Unauthorized" ? 401 : msg === "Forbidden" ? 403 : 500;
+    const status = msg === "Não autorizado" ? 401 : msg === "Sem permissão" ? 403 : 500;
     return NextResponse.json({ error: msg || "Erro interno" }, { status });
   }
 }
@@ -162,7 +162,7 @@ export async function PATCH(request: Request, { params }: Ctx) {
     return NextResponse.json({ subscription: updated });
   } catch (error) {
     const msg = error instanceof Error ? error.message : "";
-    const status = msg === "Unauthorized" ? 401 : msg === "Forbidden" ? 403 : 500;
+    const status = msg === "Não autorizado" ? 401 : msg === "Sem permissão" ? 403 : 500;
     return NextResponse.json({ error: msg || "Erro interno" }, { status });
   }
 }

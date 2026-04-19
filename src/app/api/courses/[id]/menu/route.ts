@@ -67,7 +67,7 @@ export async function POST(
   try {
     const staff = await requireStaff();
     if (!(await canEditCourse(staff, params.id))) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      return NextResponse.json({ error: "Sem permissão" }, { status: 403 });
     }
     const { label, icon, url } = await request.json();
     if (!label || !url) {
@@ -93,7 +93,7 @@ export async function POST(
   } catch (error) {
     console.error("POST menu error:", error);
     const msg = error instanceof Error ? error.message : "";
-    const status = msg === "Unauthorized" ? 401 : msg === "Forbidden" ? 403 : 500;
+    const status = msg === "Não autorizado" ? 401 : msg === "Sem permissão" ? 403 : 500;
     return NextResponse.json({ error: msg || "Erro" }, { status });
   }
 }
