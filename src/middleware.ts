@@ -63,7 +63,7 @@ export function middleware(request: NextRequest) {
         ? "/admin/login"
         : pathname.startsWith("/producer")
           ? "/producer/login"
-          : "/login";
+          : "/producer/login";
     return NextResponse.redirect(url);
   }
 
