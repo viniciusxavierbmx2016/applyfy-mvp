@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Planos · Members Club",
+  title: "Planos",
   description: "Gerenciamento de planos da plataforma",
 };
 

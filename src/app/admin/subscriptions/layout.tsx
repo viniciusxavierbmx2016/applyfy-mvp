@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Assinaturas · Members Club",
+  title: "Assinaturas",
   description: "Gerenciamento de assinaturas dos produtores",
 };
 

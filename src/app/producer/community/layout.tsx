@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Moderação · Members Club",
+  title: "Moderação",
   description: "Moderação da comunidade",
 };
 

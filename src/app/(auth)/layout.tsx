@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Entrar · Members Club",
+  title: "Entrar",
   description: "Acesse sua área de membros Members Club",
 };
 

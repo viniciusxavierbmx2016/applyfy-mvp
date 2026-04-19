@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Cursos · Members Club",
+  title: "Cursos",
   description: "Gerenciamento de cursos",
 };
 

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Usuários · Members Club",
+  title: "Usuários",
   description: "Gerenciamento de usuários e acessos",
 };
 

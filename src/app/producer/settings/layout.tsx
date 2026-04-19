@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Configurações · Members Club",
+  title: "Configurações",
   description: "Configurações de integração e webhooks",
 };
 

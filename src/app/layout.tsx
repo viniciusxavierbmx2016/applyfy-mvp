@@ -16,9 +16,43 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "Members Club",
-  description: "Members Club — Plataforma de cursos online com comunidade integrada",
+  title: {
+    default: "Members Club",
+    template: "%s | Members Club",
+  },
+  description:
+    "Plataforma completa para criar e gerenciar sua area de membros. Cursos online, comunidade, certificados e muito mais.",
+  keywords: [
+    "area de membros",
+    "cursos online",
+    "plataforma de cursos",
+    "members club",
+    "infoproduto",
+  ],
+  authors: [{ name: "Members Club" }],
+  creator: "Members Club",
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_APP_URL || "https://app.mymembersclub.com.br"
+  ),
   icons: { icon: "/logo.png" },
+  openGraph: {
+    type: "website",
+    locale: "pt_BR",
+    siteName: "Members Club",
+    title: "Members Club",
+    description:
+      "Plataforma completa para criar e gerenciar sua area de membros.",
+  },
+  twitter: {
+    card: "summary",
+    title: "Members Club",
+    description:
+      "Plataforma completa para criar e gerenciar sua area de membros.",
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 export default function RootLayout({
