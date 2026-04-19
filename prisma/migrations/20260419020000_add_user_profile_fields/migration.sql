@@ -1,0 +1,6 @@
+ALTER TABLE "User" ADD COLUMN "phone" TEXT;
+ALTER TABLE "User" ADD COLUMN "businessType" TEXT;
+ALTER TABLE "User" ADD COLUMN "niche" TEXT;
+ALTER TABLE "User" ADD COLUMN "monthlyRevenue" TEXT;
+ALTER TABLE "User" ADD COLUMN "referralSource" TEXT;
+ALTER TABLE "User" ADD COLUMN "document" TEXT;

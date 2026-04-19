@@ -11,7 +11,7 @@ export async function POST() {
 
     const user = await prisma.user.findUnique({
       where: { id: staff.id },
-      select: { id: true, name: true, email: true },
+      select: { id: true, name: true, email: true, phone: true, document: true },
     });
     if (!user) {
       return NextResponse.json({ error: "Usuário não encontrado" }, { status: 404 });
@@ -24,6 +24,8 @@ export async function POST() {
     const params = new URLSearchParams();
     if (user.name) params.set("name", user.name);
     if (user.email) params.set("email", user.email);
+    if (user.phone) params.set("phone", user.phone);
+    if (user.document) params.set("document", user.document);
 
     const separator = baseCheckoutUrl.includes("?") ? "&" : "?";
     const checkoutUrl = `${baseCheckoutUrl}${separator}${params.toString()}`;

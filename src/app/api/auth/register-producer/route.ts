@@ -6,7 +6,10 @@ import { welcomeProducer } from "@/lib/email-templates";
 
 export async function POST(request: Request) {
   try {
-    const { email, password, name } = await request.json();
+    const {
+      email, password, name, phone, businessType, niche,
+      monthlyRevenue, referralSource, document,
+    } = await request.json();
 
     if (!email || !password || !name) {
       return NextResponse.json(
@@ -39,6 +42,12 @@ export async function POST(request: Request) {
           email,
           name,
           role: "PRODUCER",
+          phone: phone || null,
+          businessType: businessType || null,
+          niche: niche || null,
+          monthlyRevenue: monthlyRevenue || null,
+          referralSource: referralSource || null,
+          document: document || null,
         },
       });
 

@@ -17,6 +17,12 @@ model User {
   points        Int       @default(0)
   level         Int       @default(1)
   workspaceId   String?
+  phone           String?
+  businessType    String?
+  niche           String?
+  monthlyRevenue  String?
+  referralSource  String?
+  document        String?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
