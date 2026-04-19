@@ -31,10 +31,11 @@ type ApplyfyPayload = {
 
 const GRANT_EVENTS = new Set(["TRANSACTION_PAID"]);
 const REVOKE_EVENTS = new Set([
+  "TRANSACTION_CANCELED",
   "TRANSACTION_REFUNDED",
   "TRANSACTION_CHARGED_BACK",
 ]);
-const IGNORED_EVENTS = new Set(["TRANSACTION_CREATED", "TRANSACTION_CANCELED"]);
+const IGNORED_EVENTS = new Set(["TRANSACTION_CREATED"]);
 
 async function logWebhook(entry: {
   event: string;
