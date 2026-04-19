@@ -4,6 +4,8 @@ import { requireStaff } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase-admin";
 import { createNotification } from "@/lib/notifications";
 import { resolveStaffWorkspace } from "@/lib/workspace";
+import { sendEmail } from "@/lib/email";
+import { studentAccessGranted } from "@/lib/email-templates";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 const MAX_ROWS = 500;
@@ -109,7 +111,7 @@ export async function POST(request: Request) {
 
     const workspace = await prisma.workspace.findUnique({
       where: { id: workspaceId },
-      select: { slug: true, masterPassword: true },
+      select: { slug: true, name: true, masterPassword: true },
     });
     if (!workspace) {
       return NextResponse.json(
@@ -295,6 +297,18 @@ export async function POST(request: Request) {
           } else {
             summary.enrollmentsSkipped++;
           }
+        }
+
+        if (isNewUser && enrolledCourseNames.length > 0) {
+          const courseName = enrolledCourseNames.join(", ");
+          const template = studentAccessGranted(
+            name,
+            courseName,
+            workspace.name,
+            loginUrl,
+            tempPassword || undefined
+          );
+          sendEmail({ to: { email, name }, ...template }).catch(() => {});
         }
 
         csvResultRows.push([

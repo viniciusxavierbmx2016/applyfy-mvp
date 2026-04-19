@@ -1,0 +1,245 @@
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://app.mymembersclub.com.br";
+
+function baseTemplate(content: string): string {
+  return `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Members Club</title>
+</head>
+<body style="margin:0;padding:0;background-color:#0a0a1a;font-family:Arial,Helvetica,sans-serif;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#0a0a1a;">
+    <tr>
+      <td align="center" style="padding:40px 16px;">
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;">
+          <!-- Logo -->
+          <tr>
+            <td align="center" style="padding-bottom:32px;">
+              <span style="font-size:24px;font-weight:bold;color:#ffffff;letter-spacing:-0.5px;">Members Club</span>
+            </td>
+          </tr>
+          <!-- Card -->
+          <tr>
+            <td style="background-color:#1a1a2e;border-radius:16px;padding:40px 32px;">
+              ${content}
+            </td>
+          </tr>
+          <!-- Footer -->
+          <tr>
+            <td align="center" style="padding-top:32px;">
+              <p style="margin:0;font-size:13px;color:#6b7280;">
+                Members Club &bull; mymembersclub.com.br
+              </p>
+              <p style="margin:8px 0 0;font-size:12px;color:#4b5563;">
+                Este é um email automático. Não responda a esta mensagem.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+}
+
+function ctaButton(text: string, url: string, color: string = "#6366F1"): string {
+  return `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:28px 0 0;">
+  <tr>
+    <td style="background-color:${color};border-radius:10px;">
+      <a href="${url}" target="_blank" style="display:inline-block;padding:14px 32px;font-size:15px;font-weight:600;color:#ffffff;text-decoration:none;">
+        ${text}
+      </a>
+    </td>
+  </tr>
+</table>`;
+}
+
+function heading(text: string): string {
+  return `<h1 style="margin:0 0 16px;font-size:22px;font-weight:bold;color:#ffffff;line-height:1.3;">${text}</h1>`;
+}
+
+function paragraph(text: string): string {
+  return `<p style="margin:0 0 14px;font-size:15px;color:#d1d5db;line-height:1.6;">${text}</p>`;
+}
+
+function divider(): string {
+  return `<hr style="border:none;border-top:1px solid #2d2d44;margin:24px 0;">`;
+}
+
+// ---------------------------------------------------------------------------
+// Templates
+// ---------------------------------------------------------------------------
+
+export function welcomeProducer(name: string) {
+  const firstName = name.split(" ")[0];
+  const html = baseTemplate(`
+    ${heading(`Bem-vindo ao Members Club, ${firstName}!`)}
+    ${paragraph("Sua conta de produtor foi criada com sucesso. Agora você pode começar a criar sua área de membros.")}
+    ${divider()}
+    ${paragraph("<strong style='color:#ffffff;'>Próximos passos:</strong>")}
+    ${paragraph("1. Crie seu primeiro workspace (sua área de membros)")}
+    ${paragraph("2. Adicione seus cursos e módulos")}
+    ${paragraph("3. Configure a integração de pagamento")}
+    ${paragraph("4. Convide seus alunos")}
+    ${ctaButton("Acessar o painel", `${APP_URL}/producer`)}
+  `);
+  return {
+    subject: "Bem-vindo ao Members Club!",
+    htmlContent: html,
+  };
+}
+
+export function welcomeStudent(
+  name: string,
+  workspaceName: string,
+  loginUrl: string
+) {
+  const firstName = name.split(" ")[0];
+  const html = baseTemplate(`
+    ${heading(`Olá, ${firstName}!`)}
+    ${paragraph(`Seu acesso à área de membros <strong style="color:#ffffff;">${workspaceName}</strong> foi liberado.`)}
+    ${paragraph("Acesse a plataforma para começar a estudar seus cursos.")}
+    ${ctaButton("Acessar agora", loginUrl)}
+  `);
+  return {
+    subject: `Seu acesso foi liberado - ${workspaceName}`,
+    htmlContent: html,
+  };
+}
+
+export function studentAccessGranted(
+  name: string,
+  courseName: string,
+  workspaceName: string,
+  loginUrl: string,
+  tempPassword?: string
+) {
+  const firstName = name.split(" ")[0];
+  const credentialsBlock = tempPassword
+    ? `${divider()}
+       ${paragraph("<strong style='color:#ffffff;'>Suas credenciais de acesso:</strong>")}
+       <table role="presentation" cellpadding="0" cellspacing="0" style="background-color:#0f0f23;border-radius:8px;padding:16px;width:100%;margin-bottom:14px;">
+         <tr><td style="padding:12px 16px;">
+           <p style="margin:0 0 8px;font-size:13px;color:#9ca3af;">Senha temporária:</p>
+           <p style="margin:0;font-size:18px;font-weight:bold;color:#ffffff;font-family:monospace;letter-spacing:2px;">${tempPassword}</p>
+           <p style="margin:8px 0 0;font-size:12px;color:#6b7280;">Recomendamos alterar sua senha após o primeiro login.</p>
+         </td></tr>
+       </table>`
+    : "";
+
+  const html = baseTemplate(`
+    ${heading(`Acesso liberado: ${courseName}`)}
+    ${paragraph(`Olá, ${firstName}! Seu acesso ao curso <strong style="color:#ffffff;">${courseName}</strong> na área <strong style="color:#ffffff;">${workspaceName}</strong> foi liberado.`)}
+    ${credentialsBlock}
+    ${ctaButton("Acessar o curso", loginUrl)}
+  `);
+  return {
+    subject: `Acesso liberado: ${courseName}`,
+    htmlContent: html,
+  };
+}
+
+export function passwordReset(name: string, resetUrl: string) {
+  const firstName = name.split(" ")[0];
+  const html = baseTemplate(`
+    ${heading("Redefinir sua senha")}
+    ${paragraph(`Olá, ${firstName}. Recebemos uma solicitação para redefinir a senha da sua conta.`)}
+    ${paragraph("Clique no botão abaixo para criar uma nova senha. Este link expira em 1 hora.")}
+    ${ctaButton("Redefinir senha", resetUrl)}
+    ${divider()}
+    ${paragraph("<span style='font-size:13px;color:#6b7280;'>Se você não solicitou esta alteração, ignore este email. Sua senha permanecerá a mesma.</span>")}
+  `);
+  return {
+    subject: "Redefinir sua senha - Members Club",
+    htmlContent: html,
+  };
+}
+
+export function collaboratorInvite(
+  name: string,
+  workspaceName: string,
+  inviteUrl: string,
+  permissions: string[]
+) {
+  const permLabels: Record<string, string> = {
+    MANAGE_COURSES: "Gerenciar cursos",
+    MANAGE_STUDENTS: "Gerenciar alunos",
+    MANAGE_COMMUNITY: "Gerenciar comunidade",
+    VIEW_ANALYTICS: "Ver relatórios",
+  };
+  const permList = permissions
+    .map((p) => `<li style="margin:0 0 6px;font-size:14px;color:#d1d5db;">${permLabels[p] || p}</li>`)
+    .join("");
+
+  const html = baseTemplate(`
+    ${heading(`Convite para colaborar`)}
+    ${paragraph(`Olá, ${name}! Você foi convidado para colaborar na área de membros <strong style="color:#ffffff;">${workspaceName}</strong>.`)}
+    ${divider()}
+    ${paragraph("<strong style='color:#ffffff;'>Suas permissões:</strong>")}
+    <ul style="margin:0 0 14px;padding-left:20px;">${permList}</ul>
+    ${ctaButton("Aceitar convite", inviteUrl, "#10b981")}
+  `);
+  return {
+    subject: `Convite para colaborar - ${workspaceName}`,
+    htmlContent: html,
+  };
+}
+
+export function subscriptionActivated(
+  name: string,
+  planName: string,
+  amount: string
+) {
+  const firstName = name.split(" ")[0];
+  const html = baseTemplate(`
+    ${heading("Assinatura ativada!")}
+    ${paragraph(`Olá, ${firstName}! Sua assinatura do plano <strong style="color:#ffffff;">${planName}</strong> foi ativada com sucesso.`)}
+    <table role="presentation" cellpadding="0" cellspacing="0" style="background-color:#0f0f23;border-radius:8px;width:100%;margin-bottom:14px;">
+      <tr><td style="padding:16px;">
+        <p style="margin:0 0 4px;font-size:13px;color:#9ca3af;">Plano</p>
+        <p style="margin:0 0 12px;font-size:16px;font-weight:bold;color:#ffffff;">${planName}</p>
+        <p style="margin:0 0 4px;font-size:13px;color:#9ca3af;">Valor</p>
+        <p style="margin:0 0 12px;font-size:16px;font-weight:bold;color:#ffffff;">${amount}/mês</p>
+        <p style="margin:0 0 4px;font-size:13px;color:#9ca3af;">Próxima cobrança</p>
+        <p style="margin:0;font-size:16px;font-weight:bold;color:#ffffff;">em 30 dias</p>
+      </td></tr>
+    </table>
+    ${paragraph("Agora você tem acesso completo a todos os recursos da plataforma.")}
+    ${ctaButton("Acessar o painel", `${APP_URL}/producer`)}
+  `);
+  return {
+    subject: "Assinatura ativada - Members Club",
+    htmlContent: html,
+  };
+}
+
+export function subscriptionExpiring(name: string, daysLeft: number) {
+  const firstName = name.split(" ")[0];
+  const html = baseTemplate(`
+    ${heading(`Sua assinatura vence em ${daysLeft} dia${daysLeft > 1 ? "s" : ""}`)}
+    ${paragraph(`Olá, ${firstName}. Sua assinatura do Members Club está próxima do vencimento.`)}
+    ${paragraph("Regularize seu pagamento para continuar com acesso completo e evitar a suspensão da sua área de membros.")}
+    ${ctaButton("Renovar agora", `${APP_URL}/producer/billing`, "#f59e0b")}
+  `);
+  return {
+    subject: `Sua assinatura vence em ${daysLeft} dias`,
+    htmlContent: html,
+  };
+}
+
+export function subscriptionSuspended(name: string) {
+  const firstName = name.split(" ")[0];
+  const html = baseTemplate(`
+    ${heading("Sua conta foi suspensa")}
+    ${paragraph(`Olá, ${firstName}. Sua conta no Members Club foi suspensa por falta de pagamento.`)}
+    ${paragraph("<strong style='color:#ef4444;'>Seus alunos não conseguem acessar os cursos enquanto a conta estiver suspensa.</strong>")}
+    ${paragraph("Regularize seu pagamento para reativar imediatamente o acesso.")}
+    ${ctaButton("Regularizar agora", `${APP_URL}/producer/billing`, "#ef4444")}
+  `);
+  return {
+    subject: "Sua conta foi suspensa - Members Club",
+    htmlContent: html,
+  };
+}

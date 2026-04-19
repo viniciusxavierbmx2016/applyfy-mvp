@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import type { SubscriptionStatus } from "@prisma/client";
+import { sendEmail } from "@/lib/email";
+import { subscriptionActivated, subscriptionSuspended } from "@/lib/email-templates";
 
 type ApplyfyPayload = {
   event?: string;
@@ -53,7 +55,7 @@ export async function POST(request: Request) {
 
     const producer = await prisma.user.findFirst({
       where: { email, role: "PRODUCER" },
-      select: { id: true },
+      select: { id: true, name: true, email: true },
     });
 
     if (!producer) {
@@ -63,14 +65,14 @@ export async function POST(request: Request) {
 
     switch (event) {
       case "TRANSACTION_PAID":
-        await handlePaid(producer.id, body);
+        await handlePaid(producer, body);
         break;
       case "TRANSACTION_CANCELED":
         await handleCanceled(producer.id, body);
         break;
       case "TRANSACTION_REFUNDED":
       case "TRANSACTION_CHARGED_BACK":
-        await handleRefund(producer.id, body, event);
+        await handleRefund(producer, body, event);
         break;
       default:
         log(event, email, txId, "ignored event");
@@ -83,7 +85,11 @@ export async function POST(request: Request) {
   return NextResponse.json({ received: true });
 }
 
-async function handlePaid(producerId: string, body: ApplyfyPayload) {
+async function handlePaid(
+  producer: { id: string; name: string | null; email: string },
+  body: ApplyfyPayload
+) {
+  const producerId = producer.id;
   const email = body.client?.email;
   const txId = body.transaction?.id;
   const amount = body.transaction?.amount ?? 0;
@@ -132,6 +138,15 @@ async function handlePaid(producerId: string, body: ApplyfyPayload) {
     });
 
     await createInvoice(created.id, amount, txId, paidAt);
+
+    const fmt = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
+    const template = subscriptionActivated(
+      producer.name || "Produtor",
+      defaultPlan.name,
+      fmt.format(defaultPlan.price)
+    );
+    sendEmail({ to: { email: producer.email, name: producer.name || undefined }, ...template }).catch(() => {});
+
     log("TRANSACTION_PAID", email, txId, "created subscription");
     return;
   }
@@ -155,6 +170,14 @@ async function handlePaid(producerId: string, body: ApplyfyPayload) {
     });
 
     await createInvoice(sub.id, amount, txId, paidAt);
+
+    const plan = await prisma.plan.findUnique({ where: { id: sub.planId }, select: { name: true, price: true } });
+    if (plan) {
+      const fmt = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
+      const template = subscriptionActivated(producer.name || "Produtor", plan.name, fmt.format(plan.price));
+      sendEmail({ to: { email: producer.email, name: producer.name || undefined }, ...template }).catch(() => {});
+    }
+
     log("TRANSACTION_PAID", email, txId, `reactivated from ${sub.status}`);
     return;
   }
@@ -220,13 +243,17 @@ async function handleCanceled(producerId: string, body: ApplyfyPayload) {
   log("TRANSACTION_CANCELED", email, txId, "cancelled subscription");
 }
 
-async function handleRefund(producerId: string, body: ApplyfyPayload, event: string) {
+async function handleRefund(
+  producer: { id: string; name: string | null; email: string },
+  body: ApplyfyPayload,
+  event: string
+) {
   const email = body.client?.email;
   const txId = body.transaction?.id;
 
   const sub = await prisma.subscription.findFirst({
     where: {
-      userId: producerId,
+      userId: producer.id,
       status: { in: ["ACTIVE", "PAST_DUE", "PENDING"] },
     },
     orderBy: { createdAt: "desc" },
@@ -240,6 +267,9 @@ async function handleRefund(producerId: string, body: ApplyfyPayload, event: str
         suspendedAt: new Date(),
       },
     });
+
+    const template = subscriptionSuspended(producer.name || "Produtor");
+    sendEmail({ to: { email: producer.email, name: producer.name || undefined }, ...template }).catch(() => {});
   }
 
   if (txId) {

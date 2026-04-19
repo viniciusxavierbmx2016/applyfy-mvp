@@ -6,6 +6,8 @@ import {
   COLLABORATOR_PERMISSIONS,
   type CollaboratorPermission,
 } from "@/lib/collaborator";
+import { sendEmail } from "@/lib/email";
+import { collaboratorInvite } from "@/lib/email-templates";
 
 export async function GET() {
   try {
@@ -133,6 +135,18 @@ export async function POST(request: Request) {
       process.env.NEXT_PUBLIC_SITE_URL ||
       "";
     const inviteLink = `${origin}/invite/${collaborator.id}`;
+
+    const ws = await prisma.workspace.findUnique({
+      where: { id: workspaceId },
+      select: { name: true },
+    });
+    const template = collaboratorInvite(
+      name || email,
+      ws?.name || "Workspace",
+      inviteLink,
+      validPerms
+    );
+    sendEmail({ to: { email, name: name || undefined }, ...template }).catch(() => {});
 
     return NextResponse.json({ collaborator, inviteLink });
   } catch (e) {

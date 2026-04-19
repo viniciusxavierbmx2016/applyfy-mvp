@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { createRouteHandlerClient } from "@/lib/supabase-route";
 import { prisma } from "@/lib/prisma";
+import { sendEmail } from "@/lib/email";
+import { welcomeProducer } from "@/lib/email-templates";
 
 export async function POST(request: Request) {
   try {
@@ -53,6 +55,9 @@ export async function POST(request: Request) {
           },
         });
       }
+
+      const template = welcomeProducer(name);
+      sendEmail({ to: { email, name }, ...template }).catch(() => {});
     }
 
     return NextResponse.json(

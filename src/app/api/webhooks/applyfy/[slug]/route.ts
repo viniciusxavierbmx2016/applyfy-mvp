@@ -6,6 +6,8 @@ import {
   ensureUserByEmail,
   getSetting,
 } from "@/lib/webhook-helpers";
+import { sendEmail } from "@/lib/email";
+import { studentAccessGranted } from "@/lib/email-templates";
 
 // Workspace-scoped Applyfy webhook.
 // The workspace is identified by the `[slug]` segment (the workspace slug).
@@ -74,7 +76,7 @@ export async function POST(
 
     const workspace = await prisma.workspace.findUnique({
       where: { slug: params.slug },
-      select: { id: true, isActive: true },
+      select: { id: true, slug: true, name: true, isActive: true },
     });
     if (!workspace || !workspace.isActive) {
       await logWebhook({
@@ -182,9 +184,9 @@ export async function POST(
           continue;
         }
 
-        // Only match courses within this workspace.
         const course = await prisma.course.findFirst({
           where: { externalProductId: externalId, workspaceId },
+          select: { id: true, title: true, slug: true },
         });
         if (!course) {
           await logWebhook({
@@ -201,6 +203,17 @@ export async function POST(
         }
 
         await activateEnrollment(user.id, course.id);
+
+        const appUrl = process.env.NEXT_PUBLIC_APP_URL || "";
+        const loginUrl = `${appUrl}/w/${workspace.slug}/login`;
+        const template = studentAccessGranted(
+          name || email,
+          course.title,
+          workspace.name,
+          loginUrl
+        );
+        sendEmail({ to: { email, name: name || undefined }, ...template }).catch(() => {});
+
         await logWebhook({
           event,
           email,
