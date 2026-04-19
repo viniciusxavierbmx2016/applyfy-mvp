@@ -35,13 +35,6 @@ export async function POST() {
     const productId = process.env.MEMBERS_CLUB_PRODUCT_ID;
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || "";
 
-    console.log("[checkout] env check:", {
-      hasPublicKey: !!publicKey,
-      hasSecretKey: !!secretKey,
-      hasProductId: !!productId,
-      appUrl,
-    });
-
     if (!publicKey || !secretKey || !productId) {
       console.error("[checkout] Missing Applyfy keys or product ID");
       return NextResponse.json(
@@ -64,6 +57,8 @@ export async function POST() {
       },
       settings: {
         paymentMethods: ["PIX", "CREDIT_CARD", "BOLETO"],
+        askForAddress: false,
+        acceptedDocs: ["CPF"],
         thankYouPage: `${appUrl}/producer/billing?success=true`,
         colors: {
           primaryColor: "#6366F1",
@@ -85,8 +80,6 @@ export async function POST() {
         subscriptionId: subscription?.id || "new",
       },
     };
-    console.log("[checkout] payload:", JSON.stringify(payload));
-
     const res = await fetch("https://app.applyfy.com.br/api/v1/gateway/checkout", {
       method: "POST",
       headers: {
@@ -96,8 +89,6 @@ export async function POST() {
       },
       body: JSON.stringify(payload),
     });
-
-    console.log("[checkout] Applyfy response status:", res.status);
 
     if (!res.ok) {
       const errBody = await res.text().catch(() => "");
@@ -109,7 +100,6 @@ export async function POST() {
     }
 
     const data = await res.json();
-    console.log("[checkout] Applyfy response body:", JSON.stringify(data));
     const checkoutUrl = data.checkoutUrl || data.url || data.checkout_url;
 
     if (!checkoutUrl) {
