@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState, useCallback } from "react";
+import { useSearchParams } from "next/navigation";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface Plan {
@@ -67,19 +68,64 @@ const INVOICE_STATUS: Record<string, { label: string; cls: string }> = {
 };
 
 export default function ProducerBillingPage() {
+  return (
+    <Suspense fallback={<div className="space-y-6"><Skeleton className="h-8 w-48" /><Skeleton className="h-64 rounded-xl" /></div>}>
+      <BillingContent />
+    </Suspense>
+  );
+}
+
+function BillingContent() {
+  const searchParams = useSearchParams();
   const [data, setData] = useState<BillingData | null>(null);
   const [loading, setLoading] = useState(true);
   const [cancelling, setCancelling] = useState(false);
+  const [checkingOut, setCheckingOut] = useState(false);
+  const [toast, setToast] = useState<{ message: string; color: string } | null>(null);
 
-  function load() {
+  const showToast = useCallback((message: string, color: string = "green") => {
+    setToast({ message, color });
+    setTimeout(() => setToast(null), 5000);
+  }, []);
+
+  const load = useCallback(() => {
     setLoading(true);
     fetch("/api/producer/billing")
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => d && setData(d))
       .finally(() => setLoading(false));
-  }
+  }, []);
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  useEffect(() => {
+    if (searchParams.get("success") === "true") {
+      showToast("Pagamento realizado! Sua assinatura será ativada em instantes.", "green");
+      setTimeout(() => load(), 3000);
+      const url = new URL(window.location.href);
+      url.searchParams.delete("success");
+      window.history.replaceState({}, "", url.pathname);
+    }
+  }, [searchParams, showToast, load]);
+
+  async function handleCheckout() {
+    setCheckingOut(true);
+    try {
+      const res = await fetch("/api/producer/billing/checkout", { method: "POST" });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok || !body.checkoutUrl) {
+        showToast(body.error || "Erro ao gerar checkout", "red");
+        return;
+      }
+      window.location.href = body.checkoutUrl;
+    } catch {
+      showToast("Erro ao gerar checkout. Tente novamente.", "red");
+    } finally {
+      setCheckingOut(false);
+    }
+  }
 
   async function handleCancel() {
     if (!confirm("Tem certeza que deseja cancelar sua assinatura? Você manterá acesso até o fim do período pago.")) return;
@@ -89,7 +135,7 @@ export default function ProducerBillingPage() {
       if (res.ok) load();
       else {
         const d = await res.json().catch(() => ({}));
-        alert(d.error || "Erro ao cancelar");
+        showToast(d.error || "Erro ao cancelar", "red");
       }
     } finally {
       setCancelling(false);
@@ -109,16 +155,26 @@ export default function ProducerBillingPage() {
   if (!data) return null;
 
   const { subscription: sub, plans, usage } = data;
+  const checkoutLabel = checkingOut ? "Gerando checkout..." : "Assinar agora";
 
   return (
     <div className="space-y-6 max-w-3xl">
+      {/* Toast */}
+      {toast && (
+        <div className={`fixed top-4 right-4 z-50 px-4 py-3 rounded-xl text-white text-sm font-medium shadow-lg animate-in fade-in slide-in-from-top-2 ${
+          toast.color === "red" ? "bg-red-600" : "bg-green-600"
+        }`}>
+          {toast.message}
+        </div>
+      )}
+
       <div>
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Assinatura</h1>
         <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Gerencie seu plano e pagamentos</p>
       </div>
 
       {/* Alert banners */}
-      {!sub && (
+      {(!sub || sub.status === "PENDING") && (
         <Banner color="blue">
           Assine o Members Club para liberar todos os recursos.
         </Banner>
@@ -134,8 +190,8 @@ export default function ProducerBillingPage() {
         </Banner>
       )}
 
-      {!sub ? (
-        /* No subscription — show available plans */
+      {!sub || sub.status === "PENDING" ? (
+        /* No subscription or PENDING — show available plans */
         <div className="space-y-4">
           <p className="text-gray-600 dark:text-gray-400">
             Escolha seu plano para começar
@@ -167,12 +223,13 @@ export default function ProducerBillingPage() {
                 <Feature>Certificados automáticos</Feature>
                 <Feature>Suporte prioritário</Feature>
               </ul>
-              <a
-                href="#"
-                className="block w-full text-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl transition text-sm"
+              <button
+                onClick={handleCheckout}
+                disabled={checkingOut}
+                className="block w-full text-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl transition text-sm disabled:opacity-50"
               >
-                Assinar agora
-              </a>
+                {checkoutLabel}
+              </button>
             </div>
           ))}
         </div>
@@ -225,20 +282,22 @@ export default function ProducerBillingPage() {
                 </button>
               )}
               {sub.status === "PAST_DUE" && (
-                <a
-                  href="#"
-                  className="px-4 py-2 text-sm font-medium text-white bg-amber-600 hover:bg-amber-700 rounded-lg transition"
+                <button
+                  onClick={handleCheckout}
+                  disabled={checkingOut}
+                  className="px-4 py-2 text-sm font-medium text-white bg-amber-600 hover:bg-amber-700 rounded-lg transition disabled:opacity-50"
                 >
-                  Regularizar pagamento
-                </a>
+                  {checkingOut ? "Gerando checkout..." : "Regularizar pagamento"}
+                </button>
               )}
               {(sub.status === "SUSPENDED" || sub.status === "CANCELLED") && (
-                <a
-                  href="#"
-                  className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition"
+                <button
+                  onClick={handleCheckout}
+                  disabled={checkingOut}
+                  className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition disabled:opacity-50"
                 >
-                  Reativar assinatura
-                </a>
+                  {checkingOut ? "Gerando checkout..." : "Reativar assinatura"}
+                </button>
               )}
             </div>
           </div>

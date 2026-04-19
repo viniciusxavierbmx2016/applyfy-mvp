@@ -49,7 +49,7 @@ export default function NewWorkspacePage() {
   }
 
   const origin =
-    typeof window !== "undefined" ? window.location.origin : "https://applyfy-mvp.vercel.app";
+    typeof window !== "undefined" ? window.location.origin : (process.env.NEXT_PUBLIC_APP_URL || "");
 
   return (
     <div className="max-w-xl mx-auto">

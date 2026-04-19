@@ -64,7 +64,7 @@ export default function AdminIntegrationsPage() {
 
   const webhookUrl = origin
     ? `${origin}/api/webhooks/applyfy`
-    : "https://applyfy-mvp.vercel.app/api/webhooks/applyfy";
+    : `${process.env.NEXT_PUBLIC_APP_URL || ""}/api/webhooks/applyfy`;
 
   const isActive = !!tokenStatus?.set;
 

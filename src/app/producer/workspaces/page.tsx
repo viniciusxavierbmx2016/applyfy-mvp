@@ -36,7 +36,7 @@ export default function AdminWorkspacesPage() {
     if (typeof window !== "undefined") {
       return `${window.location.origin}/w/${slug}`;
     }
-    return `https://applyfy-mvp.vercel.app/w/${slug}`;
+    return `${process.env.NEXT_PUBLIC_APP_URL || ""}/w/${slug}`;
   }
 
   async function copyLink(slug: string) {
