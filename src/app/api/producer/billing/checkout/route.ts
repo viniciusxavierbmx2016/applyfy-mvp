@@ -35,6 +35,13 @@ export async function POST() {
     const productId = process.env.MEMBERS_CLUB_PRODUCT_ID;
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || "";
 
+    console.log("[checkout] env check:", {
+      hasPublicKey: !!publicKey,
+      hasSecretKey: !!secretKey,
+      hasProductId: !!productId,
+      appUrl,
+    });
+
     if (!publicKey || !secretKey || !productId) {
       console.error("[checkout] Missing Applyfy keys or product ID");
       return NextResponse.json(
@@ -43,6 +50,43 @@ export async function POST() {
       );
     }
 
+    const payload = {
+      product: {
+        externalId: productId,
+        name: `Members Club ${plan.name}`,
+        offer: {
+          name: "Assinatura Mensal",
+          price: Math.round(plan.price * 100),
+          offerType: "NATIONAL",
+          currency: "BRL",
+          lang: "pt-BR",
+        },
+      },
+      settings: {
+        paymentMethods: ["PIX", "CREDIT_CARD", "BOLETO"],
+        thankYouPage: `${appUrl}/producer/billing?success=true`,
+        colors: {
+          primaryColor: "#6366F1",
+          text: "#FFFFFF",
+          background: "#0a0a1a",
+          purchaseButtonBackground: "#6366F1",
+          purchaseButtonText: "#FFFFFF",
+          widgets: "#1a1a2e",
+          inputBackground: "#1f2937",
+          inputText: "#FFFFFF",
+        },
+      },
+      customer: {
+        name: user.name,
+        email: user.email,
+      },
+      trackProps: {
+        userId: user.id,
+        subscriptionId: subscription?.id || "new",
+      },
+    };
+    console.log("[checkout] payload:", JSON.stringify(payload));
+
     const res = await fetch("https://app.applyfy.com.br/api/v1/gateway/checkout", {
       method: "POST",
       headers: {
@@ -50,42 +94,10 @@ export async function POST() {
         "x-public-key": publicKey,
         "x-secret-key": secretKey,
       },
-      body: JSON.stringify({
-        product: {
-          externalId: productId,
-          name: `Members Club ${plan.name}`,
-          offer: {
-            name: "Assinatura Mensal",
-            price: Math.round(plan.price * 100),
-            offerType: "NATIONAL",
-            currency: "BRL",
-            lang: "pt-BR",
-          },
-        },
-        settings: {
-          paymentMethods: ["PIX", "CREDIT_CARD", "BOLETO"],
-          thankYouPage: `${appUrl}/producer/billing?success=true`,
-          colors: {
-            primaryColor: "#6366F1",
-            text: "#FFFFFF",
-            background: "#0a0a1a",
-            purchaseButtonBackground: "#6366F1",
-            purchaseButtonText: "#FFFFFF",
-            widgets: "#1a1a2e",
-            inputBackground: "#1f2937",
-            inputText: "#FFFFFF",
-          },
-        },
-        customer: {
-          name: user.name,
-          email: user.email,
-        },
-        trackProps: {
-          userId: user.id,
-          subscriptionId: subscription?.id || "new",
-        },
-      }),
+      body: JSON.stringify(payload),
     });
+
+    console.log("[checkout] Applyfy response status:", res.status);
 
     if (!res.ok) {
       const errBody = await res.text().catch(() => "");
@@ -97,6 +109,7 @@ export async function POST() {
     }
 
     const data = await res.json();
+    console.log("[checkout] Applyfy response body:", JSON.stringify(data));
     const checkoutUrl = data.checkoutUrl || data.url || data.checkout_url;
 
     if (!checkoutUrl) {
