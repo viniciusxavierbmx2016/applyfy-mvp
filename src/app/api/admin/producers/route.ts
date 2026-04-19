@@ -41,10 +41,10 @@ export async function GET(request: Request) {
           isActive: true,
         },
       }),
-      prisma.producerSubscription.findMany({
-        where: { producerId: { in: producerIds }, status: "ACTIVE" },
+      prisma.subscription.findMany({
+        where: { userId: { in: producerIds }, status: "ACTIVE" },
         orderBy: { createdAt: "desc" },
-        select: { producerId: true, plan: true, amount: true, status: true },
+        select: { userId: true, plan: { select: { name: true, price: true } }, status: true },
       }),
     ]);
 
@@ -87,8 +87,8 @@ export async function GET(request: Request) {
 
     const subByProducer = new Map<string, { plan: string; amount: number }>();
     for (const s of subs) {
-      if (!subByProducer.has(s.producerId))
-        subByProducer.set(s.producerId, { plan: s.plan, amount: s.amount });
+      if (!subByProducer.has(s.userId))
+        subByProducer.set(s.userId, { plan: s.plan.name, amount: s.plan.price });
     }
 
     const thirtyDaysAgo = new Date();

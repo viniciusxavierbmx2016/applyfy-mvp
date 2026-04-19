@@ -34,7 +34,6 @@ model User {
   ownedWorkspaces  Workspace[]      @relation("WorkspaceOwner")
   workspace        Workspace?       @relation("WorkspaceMembers", fields: [workspaceId], references: [id], onDelete: SetNull)
   collaborators    Collaborator[]
-  legacySubscriptions ProducerSubscription[]
   subscriptions    Subscription[]
 
   @@index([workspaceId])
@@ -107,28 +106,6 @@ enum CollaboratorStatus {
   REVOKED
 }
 
-model ProducerSubscription {
-  id         String                      @id @default(uuid())
-  producerId String
-  plan       String
-  amount     Float                       @default(0)
-  currency   String                      @default("BRL")
-  status     ProducerSubscriptionStatus  @default(ACTIVE)
-  startedAt  DateTime                    @default(now())
-  expiresAt  DateTime?
-  createdAt  DateTime                    @default(now())
-
-  producer User @relation(fields: [producerId], references: [id], onDelete: Cascade)
-
-  @@index([producerId, createdAt])
-  @@index([status])
-}
-
-enum ProducerSubscriptionStatus {
-  ACTIVE
-  EXPIRED
-  CANCELLED
-}
 
 model Course {
   id                 String    @id @default(uuid())

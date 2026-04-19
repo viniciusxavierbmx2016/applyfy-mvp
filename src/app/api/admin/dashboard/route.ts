@@ -44,31 +44,29 @@ export async function GET() {
           createdAt: true,
         },
       }),
-      prisma.producerSubscription.findMany({
+      prisma.subscription.findMany({
         where: { status: "ACTIVE" },
-        select: { producerId: true, amount: true, plan: true },
+        select: { userId: true, plan: { select: { price: true } } },
       }),
-      prisma.producerSubscription.findMany({
+      prisma.subscription.findMany({
         select: {
-          amount: true,
-          plan: true,
+          userId: true,
           status: true,
-          startedAt: true,
+          currentPeriodStart: true,
+          currentPeriodEnd: true,
           createdAt: true,
-          expiresAt: true,
+          plan: { select: { price: true } },
         },
       }),
     ]);
 
-    // MRR: sum of active subscription amounts
-    const mrr = activeSubs.reduce((s, x) => s + (x.amount || 0), 0);
+    const mrr = activeSubs.reduce((s, x) => s + (x.plan?.price || 0), 0);
     const paidProducers = new Set(
-      activeSubs.filter((s) => (s.amount || 0) > 0).map((s) => s.producerId)
+      activeSubs.filter((s) => (s.plan?.price || 0) > 0).map((s) => s.userId)
     ).size;
-    const activeSubProducers = new Set(activeSubs.map((s) => s.producerId)).size;
+    const activeSubProducers = new Set(activeSubs.map((s) => s.userId)).size;
     const freeProducers = Math.max(0, totalProducers - paidProducers);
 
-    // Revenue per month (last 12 months): sum of amounts of subs active during that month
     const now = new Date();
     const months: Array<{ key: string; label: string; date: Date }> = [];
     for (let i = 11; i >= 0; i--) {
@@ -79,12 +77,12 @@ export async function GET() {
       const endOfMonth = new Date(m.date.getFullYear(), m.date.getMonth() + 1, 0, 23, 59, 59);
       let revenue = 0;
       for (const s of allSubs) {
-        const started = s.startedAt || s.createdAt;
+        const started = s.currentPeriodStart || s.createdAt;
         if (started > endOfMonth) continue;
-        const expires = s.expiresAt;
+        const expires = s.currentPeriodEnd;
         if (expires && expires < m.date) continue;
         if (s.status === "CANCELLED" && started < m.date) continue;
-        revenue += s.amount || 0;
+        revenue += s.plan?.price || 0;
       }
       return { month: m.label, revenue: Math.round(revenue * 100) / 100 };
     });
