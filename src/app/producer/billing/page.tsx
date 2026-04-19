@@ -82,33 +82,50 @@ function BillingContent() {
   const [cancelling, setCancelling] = useState(false);
   const [checkingOut, setCheckingOut] = useState(false);
   const [toast, setToast] = useState<{ message: string; color: string } | null>(null);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [pollingTimeout, setPollingTimeout] = useState(false);
 
   const showToast = useCallback((message: string, color: string = "green") => {
     setToast({ message, color });
     setTimeout(() => setToast(null), 5000);
   }, []);
 
+  const loadSilent = useCallback(() => {
+    return fetch("/api/producer/billing")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (d) setData(d); return d; });
+  }, []);
+
   const load = useCallback(() => {
     setLoading(true);
-    fetch("/api/producer/billing")
-      .then((r) => (r.ok ? r.json() : null))
-      .then((d) => d && setData(d))
-      .finally(() => setLoading(false));
-  }, []);
+    loadSilent().finally(() => setLoading(false));
+  }, [loadSilent]);
 
   useEffect(() => {
     load();
   }, [load]);
 
   useEffect(() => {
-    if (searchParams.get("success") === "true") {
-      showToast("Pagamento realizado! Sua assinatura será ativada em instantes.", "green");
-      setTimeout(() => load(), 3000);
-      const url = new URL(window.location.href);
-      url.searchParams.delete("success");
-      window.history.replaceState({}, "", url.pathname);
-    }
-  }, [searchParams, showToast, load]);
+    if (searchParams.get("success") !== "true") return;
+
+    setShowSuccess(true);
+    window.history.replaceState({}, "", window.location.pathname);
+
+    const startedAt = Date.now();
+    const interval = setInterval(async () => {
+      const d = await loadSilent();
+      if (d?.subscription?.status === "ACTIVE") {
+        clearInterval(interval);
+        setShowSuccess(false);
+        showToast("Assinatura ativada com sucesso!", "green");
+      } else if (Date.now() - startedAt > 60000) {
+        clearInterval(interval);
+        setPollingTimeout(true);
+      }
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [searchParams, loadSilent, showToast]);
 
   async function handleCheckout() {
     setCheckingOut(true);
@@ -165,6 +182,45 @@ function BillingContent() {
           toast.color === "red" ? "bg-red-600" : "bg-green-600"
         }`}>
           {toast.message}
+        </div>
+      )}
+
+      {showSuccess && (
+        <div className="bg-white dark:bg-gray-900 border border-green-200 dark:border-green-500/20 rounded-2xl p-8 text-center space-y-4">
+          <div className="mx-auto w-16 h-16 rounded-full bg-green-500/10 flex items-center justify-center">
+            <svg className="w-8 h-8 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+            Pagamento realizado com sucesso!
+          </h2>
+          <p className="text-gray-600 dark:text-gray-400">
+            Sua assinatura será ativada em alguns instantes.
+          </p>
+          <p className="text-sm text-gray-500">
+            Você receberá um email de confirmação.
+          </p>
+          {pollingTimeout && (
+            <div className="px-4 py-3 rounded-xl bg-amber-50 dark:bg-amber-500/5 border border-amber-200 dark:border-amber-500/20 text-sm text-amber-700 dark:text-amber-400">
+              A ativação está demorando mais que o esperado. Recarregue a página em alguns minutos.
+            </div>
+          )}
+          {!pollingTimeout && (
+            <div className="flex items-center justify-center gap-2 text-sm text-gray-500">
+              <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              </svg>
+              Aguardando confirmação...
+            </div>
+          )}
+          <a
+            href="/producer"
+            className="inline-block px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-medium rounded-xl transition text-sm"
+          >
+            Ir para o painel
+          </a>
         </div>
       )}
 
