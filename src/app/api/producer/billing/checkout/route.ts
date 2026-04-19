@@ -46,10 +46,10 @@ export async function POST() {
     const payload = {
       product: {
         externalId: productId,
-        name: `Members Club ${plan.name}`,
+        name: "Members Club Pro",
         offer: {
           name: "Assinatura Mensal",
-          price: Math.round(plan.price * 100),
+          price: plan.price,
           offerType: "NATIONAL",
           currency: "BRL",
           lang: "pt-BR",
