@@ -50,17 +50,17 @@ export default function EditCoursePage({
   const [tab, setTab] = useState<"info" | "content">("info");
 
   const isCollaborator = user?.role === "COLLABORATOR";
-  const collabPerms = collaborator?.permissions ?? [];
 
   useEffect(() => {
-    if (isCollaborator && !collabPerms.includes("MANAGE_LESSONS")) {
+    const perms = collaborator?.permissions ?? [];
+    if (isCollaborator && !perms.includes("MANAGE_LESSONS")) {
       router.replace(`/producer/courses/${params.id}/comments`);
       return;
     }
     if (typeof window === "undefined") return;
     const t = new URL(window.location.href).searchParams.get("tab");
     if (t === "content") setTab("content");
-  }, [isCollaborator, collabPerms, params.id, router]);
+  }, [isCollaborator, collaborator?.permissions, params.id, router]);
 
   function selectTab(next: "info" | "content") {
     setTab(next);

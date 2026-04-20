@@ -126,7 +126,7 @@ function BillingContent() {
     }, 5000);
 
     return () => clearInterval(interval);
-  }, [searchParams, loadSilent, showToast]);
+  }, [searchParams, loadSilent, showToast, router]);
 
   async function handleCheckout() {
     setCheckingOut(true);
