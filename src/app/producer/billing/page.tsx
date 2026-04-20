@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense, useEffect, useState, useCallback } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface Plan {
@@ -77,6 +77,7 @@ export default function ProducerBillingPage() {
 
 function BillingContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const [data, setData] = useState<BillingData | null>(null);
   const [loading, setLoading] = useState(true);
   const [cancelling, setCancelling] = useState(false);
@@ -116,8 +117,8 @@ function BillingContent() {
       const d = await loadSilent();
       if (d?.subscription?.status === "ACTIVE") {
         clearInterval(interval);
-        setShowSuccess(false);
-        showToast("Assinatura ativada com sucesso!", "green");
+        router.replace("/producer?welcome=true");
+        return;
       } else if (Date.now() - startedAt > 60000) {
         clearInterval(interval);
         setPollingTimeout(true);
