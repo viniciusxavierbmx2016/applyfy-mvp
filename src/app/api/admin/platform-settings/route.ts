@@ -40,6 +40,7 @@ export async function PUT(request: Request) {
     invalidatePlatformSettingsCache();
     return NextResponse.json({ settings });
   } catch (error) {
+    console.error("[platform-settings] save error:", error);
     const msg = error instanceof Error ? error.message : "";
     const status =
       msg === "Não autorizado" ? 401 : msg === "Sem permissão" ? 403 : 500;

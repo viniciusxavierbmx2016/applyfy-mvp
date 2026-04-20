@@ -46,6 +46,7 @@ export async function POST(request: Request) {
       });
 
     if (uploadError) {
+      console.error("[platform-upload] storage error:", uploadError);
       return NextResponse.json(
         { error: `Falha no upload: ${uploadError.message}` },
         { status: 500 }
@@ -58,6 +59,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ url: publicUrl.publicUrl });
   } catch (error) {
+    console.error("[platform-upload] error:", error);
     const msg = error instanceof Error ? error.message : "";
     const status =
       msg === "Não autorizado" ? 401 : msg === "Sem permissão" ? 403 : 500;
