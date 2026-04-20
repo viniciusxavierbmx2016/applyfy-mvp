@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { createRouteHandlerClient } from "@/lib/supabase-route";
 import { prisma } from "@/lib/prisma";
+import { sendEmail } from "@/lib/email";
+import { welcomeStudent } from "@/lib/email-templates";
 
 export async function POST(
   request: Request,
@@ -18,7 +20,7 @@ export async function POST(
 
     const workspace = await prisma.workspace.findUnique({
       where: { slug: params.slug },
-      select: { id: true, isActive: true },
+      select: { id: true, name: true, slug: true, isActive: true },
     });
     if (!workspace || !workspace.isActive) {
       return NextResponse.json(
@@ -47,6 +49,11 @@ export async function POST(
           workspaceId: workspace.id,
         },
       });
+
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL || "";
+      const loginUrl = `${appUrl}/w/${workspace.slug}/login`;
+      const template = welcomeStudent(name, workspace.name, loginUrl);
+      sendEmail({ to: { email, name }, ...template }).catch(() => {});
     }
 
     return NextResponse.json(

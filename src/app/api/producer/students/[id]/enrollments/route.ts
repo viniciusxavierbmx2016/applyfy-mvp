@@ -3,6 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { requireStaff, canManageStudentsOfCourse } from "@/lib/auth";
 import type { Role } from "@prisma/client";
 import { createNotification } from "@/lib/notifications";
+import { sendEmail } from "@/lib/email";
+import { studentAccessGranted } from "@/lib/email-templates";
 
 async function assertCanManageCourse(
   staff: { id: string; role: Role },
@@ -40,7 +42,13 @@ export async function POST(
       create: { userId: params.id, courseId, status: "ACTIVE" },
       update: { status: "ACTIVE" },
       include: {
-        course: { select: { id: true, title: true, slug: true } },
+        course: {
+          select: {
+            id: true, title: true, slug: true,
+            workspace: { select: { name: true, slug: true } },
+          },
+        },
+        user: { select: { name: true, email: true } },
       },
     });
 
@@ -51,6 +59,16 @@ export async function POST(
         message: `Você foi matriculado no curso ${enrollment.course.title}`,
         link: `/course/${enrollment.course.slug}`,
       });
+
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL || "";
+      const loginUrl = `${appUrl}/w/${enrollment.course.workspace.slug}/login`;
+      const template = studentAccessGranted(
+        enrollment.user.name || enrollment.user.email,
+        enrollment.course.title,
+        enrollment.course.workspace.name,
+        loginUrl
+      );
+      sendEmail({ to: { email: enrollment.user.email, name: enrollment.user.name || undefined }, ...template }).catch(() => {});
     }
 
     return NextResponse.json({ enrollment });

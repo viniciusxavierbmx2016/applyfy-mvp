@@ -7,6 +7,8 @@ import {
 } from "@/lib/webhook-helpers";
 import { createAdminClient } from "@/lib/supabase-admin";
 import { createNotification } from "@/lib/notifications";
+import { sendEmail } from "@/lib/email";
+import { studentAccessGranted } from "@/lib/email-templates";
 
 function randomTempPassword(len = 8) {
   const alphabet = "abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -191,7 +193,7 @@ export async function POST(
         title: true,
         slug: true,
         workspace: {
-          select: { id: true, slug: true, masterPassword: true },
+          select: { id: true, name: true, slug: true, masterPassword: true },
         },
       },
     });
@@ -262,6 +264,19 @@ export async function POST(
     }
 
     const workspaceUrl = `${baseUrl}/w/${course.workspace.slug}`;
+
+    if (!wasActive) {
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL || baseUrl;
+      const loginUrl = `${appUrl}/w/${course.workspace.slug}/login`;
+      const template = studentAccessGranted(
+        name || email,
+        course.title,
+        course.workspace.name,
+        loginUrl,
+        sharedPassword || undefined
+      );
+      sendEmail({ to: { email: user.email, name: name || undefined }, ...template }).catch(() => {});
+    }
 
     return NextResponse.json({
       enrollment,
