@@ -206,8 +206,8 @@ export function Sidebar({ open, onClose }: SidebarProps) {
 
   function linkCls(active: boolean) {
     return cn(
-      "group relative flex items-center gap-3 rounded-[10px] text-[14px] font-medium transition-all duration-200",
-      collapsed ? "lg:justify-center lg:p-2.5 py-2.5 px-3" : "py-2.5 px-3",
+      "group relative flex items-center rounded-[10px] text-[14px] font-medium transition-all duration-200",
+      collapsed ? "lg:justify-center lg:w-10 lg:h-10 lg:p-0 lg:gap-0 gap-3 py-2.5 px-3" : "gap-3 py-2.5 px-3",
       active
         ? "bg-gray-100 text-gray-900 dark:bg-white/[0.08] dark:text-white"
         : "text-gray-500 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-white/[0.05] dark:hover:text-white"
@@ -347,7 +347,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
         <nav
           className={cn(
             "flex-1 flex flex-col gap-0.5 pt-2 pb-4 overflow-y-auto px-3",
-            collapsed && "lg:px-2"
+            collapsed && "lg:px-2 lg:items-center"
           )}
         >
           {showVitrine && activeWorkspace && (
