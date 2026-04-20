@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { useUserStore } from "@/stores/user-store";
 import { useActiveWorkspace } from "@/hooks/use-active-workspace";
 import { WorkspaceSwitcher } from "./workspace-switcher";
+import { PlatformLogo } from "./platform-logo";
 
 interface SidebarProps {
   open: boolean;
@@ -144,6 +145,7 @@ const adminLinks: NavLink[] = [
   { href: "/admin/plans", label: "Planos", icon: iconPlans },
   { href: "/admin/subscriptions", label: "Assinaturas", icon: iconSubscriptions },
   { href: "/admin/integrations", label: "Integrações", icon: iconIntegrations },
+  { href: "/admin/settings", label: "Configurações", icon: iconSettings },
 ];
 
 const tooltipCls =
@@ -274,18 +276,28 @@ export function Sidebar({ open, onClose }: SidebarProps) {
               title="Members Club"
             >
               {collapsed ? (
-                <span className="hidden lg:flex w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 text-white items-center justify-center text-sm font-bold shadow-sm">
-                  A
-                </span>
+                <PlatformLogo
+                  className="hidden lg:block w-8 h-8 object-contain"
+                  fallback={
+                    <span className="hidden lg:flex w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 text-white items-center justify-center text-sm font-bold shadow-sm">
+                      M
+                    </span>
+                  }
+                />
               ) : null}
-              <span
-                className={cn(
-                  "text-xl font-bold text-gray-900 dark:text-white",
-                  collapsed && "lg:hidden"
-                )}
-              >
-                Members Club
-              </span>
+              <PlatformLogo
+                className={cn("h-8 w-auto object-contain", collapsed && "lg:hidden")}
+                fallback={
+                  <span
+                    className={cn(
+                      "text-xl font-bold text-gray-900 dark:text-white",
+                      collapsed && "lg:hidden"
+                    )}
+                  >
+                    Members Club
+                  </span>
+                }
+              />
             </Link>
           )}
 

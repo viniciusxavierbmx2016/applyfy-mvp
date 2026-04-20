@@ -531,3 +531,10 @@ enum InvoiceStatus {
   FAILED
   REFUNDED
 }
+
+model PlatformSettings {
+  id         String   @id @default("platform")
+  logoUrl    String?
+  faviconUrl String?
+  updatedAt  DateTime @updatedAt
+}
