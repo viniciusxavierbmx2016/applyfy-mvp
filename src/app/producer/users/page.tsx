@@ -208,12 +208,12 @@ export default function AdminUsersPage() {
   }
 
   return (
-    <div>
-      <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white mb-4">
+    <div className="space-y-6">
+      <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
         {viewerRole === "PRODUCER" ? "Meus Alunos" : "Usuários"}
       </h1>
 
-      <div className="mb-3 flex flex-col sm:flex-row sm:items-end gap-2">
+      <div className="flex flex-col sm:flex-row sm:items-end gap-2">
         {courses.length > 0 && (
           <div className="flex-1 sm:max-w-sm">
             <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">

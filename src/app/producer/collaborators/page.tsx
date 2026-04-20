@@ -108,8 +108,8 @@ export default function AdminCollaboratorsPage() {
   }
 
   return (
-    <div className="px-4 sm:px-6 lg:px-10 py-6 max-w-[1200px] mx-auto w-full">
-      <div className="flex items-center justify-between mb-6">
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
             Colaboradores
