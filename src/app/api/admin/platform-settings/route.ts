@@ -3,6 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
 import { invalidatePlatformSettingsCache } from "@/lib/platform-settings";
 
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   try {
     const settings = await prisma.platformSettings.upsert({
