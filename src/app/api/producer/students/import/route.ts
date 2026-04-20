@@ -299,14 +299,14 @@ export async function POST(request: Request) {
           }
         }
 
-        if (isNewUser && enrolledCourseNames.length > 0) {
+        if (enrolledCourseNames.length > 0) {
           const courseName = enrolledCourseNames.join(", ");
           const template = studentAccessGranted(
             name,
             courseName,
             workspace.name,
             loginUrl,
-            tempPassword || undefined
+            isNewUser ? tempPassword || undefined : undefined
           );
           sendEmail({ to: { email, name }, ...template }).catch(() => {});
         }
