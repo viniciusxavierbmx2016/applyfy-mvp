@@ -149,7 +149,7 @@ export function WorkspaceSwitcher({
           </span>
         </button>
         {open && !onExpand && (
-          <div className="absolute left-full ml-2 top-0 z-50 w-56 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow-lg p-1">
+          <div className="absolute left-full ml-2 top-0 z-50 w-56 bg-white dark:bg-[#0f0f1e] border border-gray-200 dark:border-white/[0.08] rounded-xl shadow-2xl p-1">
             {workspaces.map((ws) => (
               <button
                 key={ws.id}
@@ -231,7 +231,7 @@ export function WorkspaceSwitcher({
       </button>
 
       {open && (
-        <div className="absolute left-0 right-0 mt-1 z-50 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow-lg p-1">
+        <div className="absolute left-0 right-0 mt-1 z-50 bg-white dark:bg-[#0f0f1e] border border-gray-200 dark:border-white/[0.08] rounded-xl shadow-2xl p-1">
           {workspaces.map((ws) => (
             <button
               key={ws.id}

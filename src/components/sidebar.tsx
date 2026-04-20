@@ -23,7 +23,7 @@ type NavLink = {
 
 const COLLAPSED_KEY = "admin_sidebar_collapsed";
 
-const iconCls = "w-[18px] h-[18px]";
+const iconCls = "w-5 h-5";
 
 const iconHome = (
   <svg className={iconCls} fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -206,11 +206,11 @@ export function Sidebar({ open, onClose }: SidebarProps) {
 
   function linkCls(active: boolean) {
     return cn(
-      "group relative flex items-center gap-3 rounded-lg text-sm font-medium transition-all duration-200",
+      "group relative flex items-center gap-3 rounded-[10px] text-[14px] font-medium transition-all duration-200",
       collapsed ? "lg:justify-center lg:p-2.5 py-2.5 px-3" : "py-2.5 px-3",
       active
-        ? "bg-blue-500/10 text-blue-600 dark:text-blue-400"
-        : "text-gray-600 dark:text-gray-400 hover:bg-gray-50 hover:text-gray-900 dark:hover:bg-white/5 dark:hover:text-white"
+        ? "bg-gray-100 text-gray-900 dark:bg-white/[0.08] dark:text-white"
+        : "text-gray-500 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-white/[0.05] dark:hover:text-white"
     );
   }
 
@@ -219,8 +219,8 @@ export function Sidebar({ open, onClose }: SidebarProps) {
       "flex-shrink-0 transition-colors duration-200",
       collapsed && "lg:mx-auto",
       active
-        ? "text-blue-600 dark:text-blue-400"
-        : "text-gray-400 dark:text-gray-500 group-hover:text-gray-900 dark:group-hover:text-white"
+        ? "text-gray-900 dark:text-white opacity-100"
+        : "text-gray-400 dark:text-gray-500 opacity-70 group-hover:opacity-100 group-hover:text-gray-900 dark:group-hover:text-white"
     );
   }
 
@@ -236,8 +236,9 @@ export function Sidebar({ open, onClose }: SidebarProps) {
       <aside
         className={cn(
           "fixed top-0 left-0 z-50 h-screen w-64 flex flex-col",
-          "bg-white dark:bg-gray-950",
-          "border-r border-gray-200 dark:border-white/5",
+          "bg-white dark:bg-[linear-gradient(180deg,rgba(15,15,30,0.98)_0%,rgba(8,8,20,0.99)_100%)]",
+          "border-r border-gray-200 dark:border-white/[0.06]",
+          "dark:backdrop-blur-xl",
           "transform transition-all duration-300 ease-in-out",
           "lg:translate-x-0 lg:sticky lg:top-0 lg:z-auto",
           collapsed ? "lg:w-16" : "lg:w-56",
@@ -249,8 +250,8 @@ export function Sidebar({ open, onClose }: SidebarProps) {
           className={cn(
             "relative transition-all duration-300",
             collapsed
-              ? "lg:flex lg:flex-col lg:items-center lg:gap-2 lg:pt-4 lg:px-2 flex h-16 items-center justify-between px-4"
-              : "flex items-center pt-4 px-2.5 pb-2 justify-between gap-1.5"
+              ? "lg:flex lg:flex-col lg:items-center lg:gap-2 lg:pt-5 lg:px-2 flex h-16 items-center justify-between px-5"
+              : "flex items-center py-5 px-5 justify-between gap-1.5"
           )}
         >
           {isProducer ? (
@@ -290,7 +291,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
                 fallback={
                   <span
                     className={cn(
-                      "text-xl font-bold text-gray-900 dark:text-white",
+                      "text-lg font-bold tracking-tight text-gray-900 dark:text-white",
                       collapsed && "lg:hidden"
                     )}
                   >
@@ -406,7 +407,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
               {isProducer ? (
                 <div
                   className={cn(
-                    "my-2 border-t border-gray-200 dark:border-white/5",
+                    "my-2 border-t border-gray-200 dark:border-white/[0.04]",
                     !isCollaborator && !isAdmin ? "" : "hidden"
                   )}
                 />
@@ -415,7 +416,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
                   className={cn(
                     "pt-4 pb-1",
                     !isCollaborator && !isAdmin
-                      ? "mt-2 border-t border-gray-200 dark:border-white/5"
+                      ? "mt-2 border-t border-gray-200 dark:border-white/[0.04]"
                       : ""
                   )}
                 >

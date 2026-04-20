@@ -52,6 +52,13 @@
     background: var(--card-hover-bg);
     border: var(--card-hover-border);
   }
+  .hover-lift {
+    transition: transform 200ms ease, box-shadow 200ms ease;
+  }
+  .hover-lift:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  }
   .page-enter {
     animation: fadeIn var(--transition-normal) ease-out;
   }
@@ -60,6 +67,10 @@
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(4px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+main, [role="main"] {
+  animation: fadeIn 200ms ease-out;
 }
 
 html,

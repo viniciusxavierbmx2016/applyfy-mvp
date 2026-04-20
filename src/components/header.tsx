@@ -44,7 +44,7 @@ export function Header({ onMenuToggle }: HeaderProps) {
   }
 
   return (
-    <header className="sticky top-0 z-30 h-16 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-800">
+    <header className="sticky top-0 z-30 h-16 bg-white/80 dark:bg-[rgba(10,10,26,0.8)] backdrop-blur-xl border-b border-gray-200 dark:border-white/[0.04]">
       <div className="flex items-center justify-between h-full px-4 lg:px-6">
         {/* Mobile menu button */}
         <button
@@ -67,13 +67,13 @@ export function Header({ onMenuToggle }: HeaderProps) {
         <div className="flex items-center gap-4">
           {/* Gamification badge */}
           {user && currentLevel && (
-            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-gray-100 dark:bg-gray-800 rounded-full">
+            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-gray-100 dark:bg-white/[0.06] border border-gray-200 dark:border-white/[0.08] rounded-full">
               <span className="text-yellow-400 text-sm">★</span>
               <span className="text-xs text-gray-700 dark:text-gray-300 font-medium">
                 {user.points} pts
               </span>
-              <span className="text-xs text-gray-500">|</span>
-              <span className="text-xs text-blue-400 font-medium">
+              <span className="text-xs text-gray-400 dark:text-gray-600">|</span>
+              <span className="text-xs text-indigo-500 dark:text-indigo-400 font-medium">
                 {currentLevel.name}
               </span>
             </div>
@@ -89,7 +89,7 @@ export function Header({ onMenuToggle }: HeaderProps) {
           <div className="relative" ref={dropdownRef}>
             <button
               onClick={() => setDropdownOpen(!dropdownOpen)}
-              className="flex items-center gap-2 hover:opacity-80 transition"
+              className="flex items-center gap-2 hover:opacity-80 transition-all duration-200"
             >
               <Avatar
                 src={user?.avatarUrl}
@@ -105,8 +105,8 @@ export function Header({ onMenuToggle }: HeaderProps) {
             </button>
 
             {dropdownOpen && (
-              <div className="absolute right-0 mt-2 w-48 max-w-[calc(100vw-2rem)] bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg shadow-xl py-1 z-50">
-                <div className="px-4 py-2 border-b border-gray-300 dark:border-gray-700">
+              <div className="absolute right-0 mt-2 w-48 max-w-[calc(100vw-2rem)] bg-white dark:bg-[#0f0f1e] border border-gray-200 dark:border-white/[0.08] rounded-xl shadow-2xl py-1 z-50">
+                <div className="px-4 py-2 border-b border-gray-200 dark:border-white/[0.06]">
                   <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
                     {user?.name}
                   </p>
@@ -125,14 +125,14 @@ export function Header({ onMenuToggle }: HeaderProps) {
                           : "/profile";
                       router.push(dest);
                     }}
-                    className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition"
+                    className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/[0.05] transition-colors duration-200"
                   >
                     Meu Perfil
                   </button>
                 )}
                 <button
                   onClick={handleLogout}
-                  className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition"
+                  className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-gray-100 dark:hover:bg-white/[0.05] transition-colors duration-200"
                 >
                   Sair
                 </button>
