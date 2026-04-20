@@ -67,6 +67,12 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  if (authed && pathname === "/") {
+    const url = request.nextUrl.clone();
+    url.pathname = "/producer";
+    return NextResponse.redirect(url);
+  }
+
   if (authed && redirectIfAuthed.has(pathname)) {
     const url = request.nextUrl.clone();
     url.pathname = pathname.startsWith("/admin")

@@ -8,6 +8,8 @@ import { createClient } from "@/lib/supabase";
 function VerifyEmailContent() {
   const searchParams = useSearchParams();
   const email = searchParams.get("email") || "";
+  const next = searchParams.get("next") || "";
+  const loginHref = next.includes("/producer") ? "/producer/login" : "/login";
   const [resending, setResending] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -93,7 +95,7 @@ function VerifyEmailContent() {
           </button>
 
           <Link
-            href="/login"
+            href={loginHref}
             className="inline-block text-sm text-blue-600 dark:text-blue-400 hover:underline"
           >
             Voltar ao login
