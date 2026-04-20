@@ -57,6 +57,12 @@ export default function ProducerDetailPage({
   const [data, setData] = useState<DetailResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
+
+  function showToast(msg: string) {
+    setToast(msg);
+    setTimeout(() => setToast(null), 3000);
+  }
 
   useEffect(() => {
     fetch(`/api/admin/producers/${p.id}`)
@@ -84,7 +90,7 @@ export default function ProducerDetailPage({
       router.refresh();
       location.reload();
     } catch {
-      alert("Erro ao suspender");
+      showToast("Erro ao suspender");
     } finally {
       setBusy(false);
     }
@@ -272,6 +278,12 @@ export default function ProducerDetailPage({
           </div>
         )}
       </section>
+
+      {toast && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-4 py-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-sm font-medium rounded-lg shadow-lg">
+          {toast}
+        </div>
+      )}
     </div>
   );
 }

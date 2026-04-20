@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { PlatformLogo } from "@/components/platform-logo";
 
 export default function ProducerLoginPage() {
   const [email, setEmail] = useState("");
@@ -47,8 +48,15 @@ export default function ProducerLoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-white dark:bg-gray-950 px-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Members Club</h1>
-          <p className="text-sm font-medium text-blue-600 dark:text-blue-400 mt-2">
+          <div className="flex justify-center mb-4">
+            <PlatformLogo
+              className="h-10 w-auto object-contain"
+              fallback={
+                <span className="text-3xl font-bold text-gray-900 dark:text-white">Members Club</span>
+              }
+            />
+          </div>
+          <p className="text-sm font-medium text-blue-600 dark:text-blue-400">
             Área do produtor e colaborador
           </p>
         </div>
@@ -121,6 +129,10 @@ export default function ProducerLoginPage() {
             </Link>
           </div>
         </div>
+
+        <p className="text-center text-xs text-gray-500 mt-8">
+          Members Club &copy; {new Date().getFullYear()}
+        </p>
       </div>
     </div>
   );

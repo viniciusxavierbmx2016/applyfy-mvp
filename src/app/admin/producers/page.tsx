@@ -28,6 +28,12 @@ export default function AdminProducersPage() {
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
+  const [toast, setToast] = useState<string | null>(null);
+
+  function showToast(msg: string) {
+    setToast(msg);
+    setTimeout(() => setToast(null), 3000);
+  }
 
   useEffect(() => {
     loadData("");
@@ -64,7 +70,7 @@ export default function AdminProducersPage() {
       if (!res.ok) throw new Error("Falha");
       loadData(query);
     } catch {
-      alert("Erro ao atualizar status");
+      showToast("Erro ao atualizar status");
     } finally {
       setBusy(null);
     }
@@ -232,6 +238,12 @@ export default function AdminProducersPage() {
           </div>
         )}
       </div>
+
+      {toast && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-4 py-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-sm font-medium rounded-lg shadow-lg">
+          {toast}
+        </div>
+      )}
     </div>
   );
 }

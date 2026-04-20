@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { PlatformLogo } from "@/components/platform-logo";
 
 export default function AdminLoginPage() {
   const [email, setEmail] = useState("");
@@ -51,10 +52,18 @@ export default function AdminLoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-white dark:bg-gray-950 px-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+          <div className="flex justify-center mb-4">
+            <PlatformLogo
+              className="h-10 w-auto object-contain"
+              fallback={
+                <span className="text-3xl font-bold text-gray-900 dark:text-white">Members Club</span>
+              }
+            />
+          </div>
+          <h1 className="text-xl font-semibold text-gray-900 dark:text-white">
             Painel Administrativo
           </h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-2">
+          <p className="text-gray-600 dark:text-gray-400 mt-1 text-sm">
             Acesso restrito a administradores
           </p>
         </div>
@@ -131,6 +140,10 @@ export default function AdminLoginPage() {
             </Link>
           </div>
         </div>
+
+        <p className="text-center text-xs text-gray-500 mt-8">
+          Members Club &copy; {new Date().getFullYear()}
+        </p>
       </div>
     </div>
   );

@@ -57,6 +57,12 @@ export default function AdminPlansPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
+  const [toast, setToast] = useState<string | null>(null);
+
+  function showToast(msg: string) {
+    setToast(msg);
+    setTimeout(() => setToast(null), 3000);
+  }
 
   function loadPlans() {
     setLoading(true);
@@ -146,7 +152,7 @@ export default function AdminPlansPage() {
     const res = await fetch(`/api/admin/plans/${p.id}`, { method: "DELETE" });
     if (!res.ok) {
       const d = await res.json().catch(() => ({}));
-      alert(d.error || "Erro ao excluir");
+      showToast(d.error || "Erro ao excluir");
     }
     loadPlans();
     setBusy(null);
@@ -171,8 +177,13 @@ export default function AdminPlansPage() {
           ))}
         </div>
       ) : plans.length === 0 ? (
-        <div className="text-center py-16 text-gray-500 dark:text-gray-400">
-          Nenhum plano cadastrado
+        <div className="text-center py-16">
+          <div className="w-14 h-14 mx-auto rounded-full bg-indigo-500/10 flex items-center justify-center mb-4">
+            <svg className="w-7 h-7 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+            </svg>
+          </div>
+          <p className="text-gray-500 dark:text-gray-400">Nenhum plano cadastrado.</p>
         </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -358,6 +369,12 @@ export default function AdminPlansPage() {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {toast && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-4 py-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-sm font-medium rounded-lg shadow-lg">
+          {toast}
         </div>
       )}
     </div>

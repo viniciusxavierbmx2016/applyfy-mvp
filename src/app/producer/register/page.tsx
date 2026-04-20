@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { PlatformLogo } from "@/components/platform-logo";
 
 const STEPS = ["Conta", "Negócio", "Nicho", "Final"];
 
@@ -135,7 +136,14 @@ export default function ProducerRegisterPage() {
     <div className="min-h-screen flex items-center justify-center bg-[#0a0a1a] px-4 py-8">
       <div className="w-full max-w-lg">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-white">Members Club</h1>
+          <div className="flex justify-center mb-2">
+            <PlatformLogo
+              className="h-10 w-auto object-contain"
+              fallback={
+                <span className="text-3xl font-bold text-white">Members Club</span>
+              }
+            />
+          </div>
           <p className="text-sm font-medium text-indigo-400 mt-2">Crie sua conta de produtor</p>
         </div>
 
@@ -268,6 +276,10 @@ export default function ProducerRegisterPage() {
             </Link>
           </p>
         </div>
+
+        <p className="text-center text-xs text-gray-600 mt-8">
+          Members Club &copy; {new Date().getFullYear()}
+        </p>
       </div>
     </div>
   );
