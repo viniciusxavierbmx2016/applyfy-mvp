@@ -103,7 +103,7 @@ export default function CourseGroupLayout({
             {course.title}
           </p>
         </header>
-        <main className="flex-1 overflow-y-auto">{children}</main>
+        <main className="flex-1">{children}</main>
       </div>
     </div>
   );
