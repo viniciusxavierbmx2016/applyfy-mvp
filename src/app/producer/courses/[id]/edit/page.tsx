@@ -14,7 +14,7 @@ const ModulesManager = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="h-64 rounded-xl border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/40 animate-pulse" />
+      <div className="h-64 rounded-xl border border-gray-200 dark:border-[#1a1e2e] bg-gray-50 dark:bg-[#0a0e19] animate-pulse" />
     ),
   }
 );
@@ -86,7 +86,7 @@ export default function EditCoursePage({
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -97,7 +97,7 @@ export default function EditCoursePage({
         <p className="text-gray-600 dark:text-gray-400">Curso não encontrado</p>
         <Link
           href="/producer/courses"
-          className="inline-block mt-4 text-blue-400 hover:text-blue-300"
+          className="inline-block mt-4 text-indigo-400 hover:text-indigo-300"
         >
           Voltar para cursos
         </Link>
@@ -106,7 +106,7 @@ export default function EditCoursePage({
   }
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="max-w-6xl mx-auto">
       <div className="mb-6">
         <Link
           href="/producer/courses"
@@ -130,7 +130,7 @@ export default function EditCoursePage({
             href={`/course/${course.slug}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 px-3 py-2 border border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200 text-sm font-medium rounded-lg transition flex-shrink-0"
+            className="inline-flex items-center gap-2 px-3 py-2 bg-transparent dark:bg-[#1a1e2e] border border-gray-300 dark:border-[#1f2335] hover:bg-gray-100 dark:hover:bg-[#1f2335] text-gray-700 dark:text-gray-300 text-sm font-medium rounded-xl transition flex-shrink-0"
           >
             <svg
               className="w-4 h-4"

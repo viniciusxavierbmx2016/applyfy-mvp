@@ -24,8 +24,8 @@ interface Props {
 const baseCls =
   "px-4 py-2.5 text-sm font-medium border-b-2 transition whitespace-nowrap";
 const inactiveCls =
-  "border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white";
-const activeCls = "border-blue-500 text-gray-900 dark:text-white";
+  "border-transparent text-gray-600 dark:text-gray-500 hover:text-gray-900 dark:hover:text-gray-300";
+const activeCls = "border-indigo-500 text-gray-900 dark:text-white";
 
 type TabDef = {
   key: CourseEditTab;
@@ -77,7 +77,7 @@ export function CourseEditTabs({
   }
 
   return (
-    <div className="-mx-4 sm:mx-0 mb-6 border-b border-gray-200 dark:border-gray-800">
+    <div className="-mx-4 sm:mx-0 mb-6 border-b border-gray-200 dark:border-[#1a1e2e]">
       <div className="flex gap-1 px-4 sm:px-0 overflow-x-auto">
         {visibleTabs.map((tab) => {
           const cls = `${baseCls} ${active === tab.key ? activeCls : inactiveCls}`;

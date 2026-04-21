@@ -155,7 +155,7 @@ export default function CourseCommentsPage({
   }
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="max-w-6xl mx-auto">
       <div className="mb-6">
         <Link
           href="/producer/courses"
@@ -182,7 +182,7 @@ export default function CourseCommentsPage({
               href={`/course/${courseSlug}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-3 py-2 border border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200 text-sm font-medium rounded-lg transition flex-shrink-0"
+              className="inline-flex items-center gap-2 px-3 py-2 bg-transparent dark:bg-[#1a1e2e] border border-gray-300 dark:border-[#1f2335] hover:bg-gray-100 dark:hover:bg-[#1f2335] text-gray-700 dark:text-gray-300 text-sm font-medium rounded-xl transition flex-shrink-0"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -200,7 +200,7 @@ export default function CourseCommentsPage({
         <select
           value={lessonFilter}
           onChange={(e) => setLessonFilter(e.target.value)}
-          className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 w-full sm:w-auto sm:min-w-[280px]"
+          className="bg-white dark:bg-[#0f1320] border border-gray-200 dark:border-[#1a1e2e] rounded-xl px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/20 w-full sm:w-auto sm:min-w-[280px]"
         >
           <option value="">Todas as aulas</option>
           {lessons.map((l) => (
@@ -214,9 +214,9 @@ export default function CourseCommentsPage({
       {loading ? (
         <div className="space-y-3">
           {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4">
+            <div key={i} className="bg-white dark:bg-[#0a0e19] border border-gray-200 dark:border-[#1a1e2e] rounded-xl p-4">
               <div className="flex items-start gap-3">
-                <div className="w-9 h-9 rounded-full bg-gray-200 dark:bg-gray-700 animate-pulse shrink-0" />
+                <div className="w-9 h-9 rounded-full bg-gray-200 dark:bg-[#1a1e2e] animate-pulse shrink-0" />
                 <div className="flex-1 space-y-2">
                   <div className="h-3 w-32 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
                   <div className="h-3 w-full bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
@@ -227,7 +227,7 @@ export default function CourseCommentsPage({
           ))}
         </div>
       ) : comments.length === 0 ? (
-        <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-8 text-center">
+        <div className="bg-white dark:bg-[#0a0e19] border border-gray-200 dark:border-[#1a1e2e] rounded-xl p-8 text-center">
           <p className="text-gray-500 text-sm">
             {lessonFilter ? "Nenhum comentário nesta aula." : "Nenhum comentário neste curso ainda."}
           </p>
@@ -237,7 +237,7 @@ export default function CourseCommentsPage({
           {comments.map((c) => (
             <div
               key={c.id}
-              className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4"
+              className="bg-white dark:bg-[#0a0e19] border border-gray-200 dark:border-[#1a1e2e] rounded-xl p-4"
             >
               <div className="flex items-start gap-3">
                 <Avatar src={c.user.avatarUrl} name={c.user.name} size="sm" />
@@ -251,7 +251,7 @@ export default function CourseCommentsPage({
                       {formatRelativeTime(new Date(c.createdAt))}
                     </span>
                   </div>
-                  <p className="text-xs text-primary-600 dark:text-primary-400 mt-0.5">
+                  <p className="text-xs text-indigo-600 dark:text-indigo-400 mt-0.5">
                     {c.lesson.module.title} → {c.lesson.title}
                   </p>
                   <p className="text-sm text-gray-700 dark:text-gray-300 mt-2 whitespace-pre-wrap break-words">
@@ -264,7 +264,7 @@ export default function CourseCommentsPage({
                         setReplyingTo(replyingTo === c.id ? null : c.id);
                         setReplyText("");
                       }}
-                      className="text-xs text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-medium"
+                      className="text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 font-medium"
                     >
                       Responder
                     </button>
@@ -284,13 +284,13 @@ export default function CourseCommentsPage({
                         onChange={(e) => setReplyText(e.target.value)}
                         onKeyDown={(e) => e.key === "Enter" && handleReply(c.id, c.lesson.id)}
                         placeholder="Escreva sua resposta..."
-                        className="flex-1 min-w-0 px-3 py-2 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+                        className="flex-1 min-w-0 px-3 py-2 bg-gray-100 dark:bg-[#0f1320] border border-gray-300 dark:border-[#1a1e2e] rounded-xl text-sm text-gray-900 dark:text-white focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/20"
                         autoFocus
                       />
                       <button
                         onClick={() => handleReply(c.id, c.lesson.id)}
                         disabled={sending || !replyText.trim()}
-                        className="px-3 py-2 bg-primary-500 hover:bg-primary-600 text-white text-sm font-medium rounded-lg disabled:opacity-50 transition-colors"
+                        className="px-3 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-lg disabled:opacity-50 transition-colors"
                       >
                         {sending ? "..." : "Enviar"}
                       </button>
@@ -306,7 +306,7 @@ export default function CourseCommentsPage({
               </div>
 
               {c.replies.length > 0 && (
-                <div className="ml-12 mt-3 space-y-2 border-l-2 border-gray-200 dark:border-gray-700 pl-4">
+                <div className="ml-12 mt-3 space-y-2 border-l-2 border-gray-200 dark:border-[#1a1e2e] pl-4">
                   {c.replies.map((r) => (
                     <div key={r.id} className="flex items-start gap-2">
                       <Avatar src={r.user.avatarUrl} name={r.user.name} size="sm" />
@@ -340,7 +340,7 @@ export default function CourseCommentsPage({
       )}
 
       {toast && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-5 py-3 bg-primary-600 text-white rounded-lg shadow-xl text-sm font-medium">
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-5 py-3 bg-indigo-600 text-white rounded-xl shadow-xl text-sm font-medium">
           {toast}
         </div>
       )}

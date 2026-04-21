@@ -121,7 +121,7 @@ export default function CourseMenuPage({ params }: { params: { id: string } }) {
   }
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="max-w-6xl mx-auto">
       <div className="mb-6">
         <Link
           href="/producer/courses"
@@ -148,7 +148,7 @@ export default function CourseMenuPage({ params }: { params: { id: string } }) {
               href={`/course/${courseSlug}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-3 py-2 border border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200 text-sm font-medium rounded-lg transition flex-shrink-0"
+              className="inline-flex items-center gap-2 px-3 py-2 bg-transparent dark:bg-[#1a1e2e] border border-gray-300 dark:border-[#1f2335] hover:bg-gray-100 dark:hover:bg-[#1f2335] text-gray-700 dark:text-gray-300 text-sm font-medium rounded-xl transition flex-shrink-0"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -164,7 +164,7 @@ export default function CourseMenuPage({ params }: { params: { id: string } }) {
 
       {loading ? (
         <div className="flex items-center justify-center h-32">
-          <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+          <div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
         </div>
       ) : (
         <>
@@ -191,7 +191,7 @@ export default function CourseMenuPage({ params }: { params: { id: string } }) {
           </DndContext>
 
           {creating ? (
-            <div className="mt-4 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4 space-y-3">
+            <div className="mt-4 bg-white dark:bg-[#0a0e19] border border-gray-200 dark:border-[#1a1e2e] rounded-xl p-4 space-y-3">
               <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
                 Novo item
               </h3>
@@ -202,7 +202,7 @@ export default function CourseMenuPage({ params }: { params: { id: string } }) {
                   value={newLabel}
                   onChange={(e) => setNewLabel(e.target.value)}
                   placeholder="Nome (ex: Instagram)"
-                  className="px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="px-3 py-2 bg-gray-50 dark:bg-[#0f1320] border border-gray-300 dark:border-[#1a1e2e] rounded-xl text-sm text-gray-900 dark:text-white focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/20"
                 />
               </div>
               <input
@@ -210,12 +210,12 @@ export default function CourseMenuPage({ params }: { params: { id: string } }) {
                 value={newUrl}
                 onChange={(e) => setNewUrl(e.target.value)}
                 placeholder="URL (ex: https://instagram.com/seucanal)"
-                className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 bg-gray-50 dark:bg-[#0f1320] border border-gray-300 dark:border-[#1a1e2e] rounded-xl text-sm text-gray-900 dark:text-white focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/20"
               />
               <div className="flex gap-2">
                 <button
                   onClick={handleCreate}
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition"
+                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-lg transition"
                 >
                   Adicionar
                 </button>
@@ -225,7 +225,7 @@ export default function CourseMenuPage({ params }: { params: { id: string } }) {
                     setNewLabel("");
                     setNewUrl("");
                   }}
-                  className="px-4 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 text-sm font-medium rounded-lg transition"
+                  className="px-4 py-2 bg-gray-100 dark:bg-[#1a1e2e] hover:bg-gray-200 dark:hover:bg-[#1f2335] text-gray-800 dark:text-gray-200 text-sm font-medium rounded-lg transition"
                 >
                   Cancelar
                 </button>
@@ -234,7 +234,7 @@ export default function CourseMenuPage({ params }: { params: { id: string } }) {
           ) : (
             <button
               onClick={() => setCreating(true)}
-              className="mt-4 w-full px-4 py-3 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-xl border border-dashed border-gray-300 dark:border-gray-700 transition"
+              className="mt-4 w-full px-4 py-3 bg-gray-100 dark:bg-[#1a1e2e] hover:bg-gray-200 dark:hover:bg-[#1f2335] text-gray-700 dark:text-gray-300 text-sm font-medium rounded-xl border border-dashed border-gray-300 dark:border-[#1a1e2e] transition"
             >
               + Adicionar item
             </button>
@@ -298,7 +298,7 @@ function SortableRow({
     <li
       ref={setNodeRef}
       style={style}
-      className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-3 flex items-center gap-3"
+      className="bg-white dark:bg-[#0a0e19] border border-gray-200 dark:border-[#1a1e2e] rounded-xl p-3 flex items-center gap-3"
     >
       <button
         {...attributes}
@@ -320,7 +320,7 @@ function SortableRow({
         type="text"
         value={item.label}
         onChange={(e) => onUpdate(item.id, { label: e.target.value })}
-        className="flex-1 min-w-0 px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+        className="flex-1 min-w-0 px-3 py-2 bg-gray-50 dark:bg-[#0f1320] border border-gray-300 dark:border-[#1a1e2e] rounded-xl text-sm text-gray-900 dark:text-white focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/20"
       />
 
       <input
