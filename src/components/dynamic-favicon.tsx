@@ -2,8 +2,13 @@
 
 import { useEffect } from "react";
 
+let fetched = false;
+
 export function DynamicFavicon() {
   useEffect(() => {
+    if (fetched) return;
+    fetched = true;
+
     fetch("/api/admin/platform-settings")
       .then((r) => {
         if (!r.ok) return null;

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useUserStore } from "@/stores/user-store";
 
@@ -12,12 +12,15 @@ interface BillingStatus {
   } | null;
 }
 
+const cache: { data: BillingStatus | null; ts: number } = { data: null, ts: 0 };
+const CACHE_TTL = 60_000;
+
 export function SubscriptionGate({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const { user, isLoading } = useUserStore();
-  const [checked, setChecked] = useState(false);
   const [pastDueDays, setPastDueDays] = useState<number | null>(null);
+  const fetched = useRef(false);
 
   const skip =
     pathname === "/producer/billing" ||
@@ -25,62 +28,58 @@ export function SubscriptionGate({ children }: { children: React.ReactNode }) {
     pathname === "/producer/register";
 
   useEffect(() => {
-    if (skip || isLoading || !user) {
-      setChecked(true);
+    if (skip || isLoading || !user) return;
+    if (user.role === "ADMIN" || user.role === "COLLABORATOR") return;
+
+    const now = Date.now();
+    if (cache.data && now - cache.ts < CACHE_TTL) {
+      processResult(cache.data);
       return;
     }
 
-    if (user.role === "ADMIN") {
-      setChecked(true);
-      return;
-    }
-
-    if (user.role === "COLLABORATOR") {
-      setChecked(true);
-      return;
-    }
+    if (fetched.current) return;
+    fetched.current = true;
 
     fetch("/api/producer/billing")
       .then((r) => (r.ok ? r.json() : null))
       .then((data: BillingStatus | null) => {
-        if (!data) {
-          setChecked(true);
-          return;
+        if (data) {
+          cache.data = data;
+          cache.ts = Date.now();
         }
-
-        const sub = data.subscription;
-
-        if (!sub) {
-          router.replace("/producer/billing?reason=subscription_required");
-          return;
-        }
-
-        if (sub.exempt || sub.status === "ACTIVE") {
-          setChecked(true);
-          return;
-        }
-
-        if (sub.status === "PAST_DUE") {
-          if (sub.currentPeriodEnd) {
-            const daysSince = Math.floor(
-              (Date.now() - new Date(sub.currentPeriodEnd).getTime()) / (1000 * 60 * 60 * 24)
-            );
-            if (daysSince <= 3) {
-              setPastDueDays(3 - daysSince);
-              setChecked(true);
-              return;
-            }
-          }
-          router.replace("/producer/billing?reason=subscription_required");
-          return;
-        }
-
-        router.replace("/producer/billing?reason=subscription_required");
+        processResult(data);
       })
-      .catch(() => setChecked(true));
-  }, [skip, isLoading, user, router, pathname]);
+      .catch(() => {});
 
-  if (!checked && !skip) return null;
+    function processResult(data: BillingStatus | null) {
+      if (!data) return;
+
+      const sub = data.subscription;
+
+      if (!sub) {
+        router.replace("/producer/billing?reason=subscription_required");
+        return;
+      }
+
+      if (sub.exempt || sub.status === "ACTIVE") return;
+
+      if (sub.status === "PAST_DUE") {
+        if (sub.currentPeriodEnd) {
+          const daysSince = Math.floor(
+            (Date.now() - new Date(sub.currentPeriodEnd).getTime()) / (1000 * 60 * 60 * 24)
+          );
+          if (daysSince <= 3) {
+            setPastDueDays(3 - daysSince);
+            return;
+          }
+        }
+        router.replace("/producer/billing?reason=subscription_required");
+        return;
+      }
+
+      router.replace("/producer/billing?reason=subscription_required");
+    }
+  }, [skip, isLoading, user, router, pathname]);
 
   return (
     <>
