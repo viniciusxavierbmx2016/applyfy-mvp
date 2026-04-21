@@ -46,9 +46,16 @@ export function ModuleCarousel({ title, modules }: Props) {
     };
   }, [modules.length]);
 
+  const rafRef = useRef(0);
   const handleWheel = useCallback((e: React.WheelEvent<HTMLDivElement>) => {
     if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
-      window.scrollBy(0, e.deltaY);
+      if (!rafRef.current) {
+        const dy = e.deltaY;
+        rafRef.current = requestAnimationFrame(() => {
+          window.scrollBy(0, dy);
+          rafRef.current = 0;
+        });
+      }
       return;
     }
     e.currentTarget.scrollLeft += e.deltaX;
@@ -74,7 +81,7 @@ export function ModuleCarousel({ title, modules }: Props) {
               onClick={() => scrollBy(-1)}
               disabled={!canLeft}
               aria-label="Anterior"
-              className="p-2 rounded-full bg-gray-100 dark:bg-white/10 backdrop-blur text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-white/20 disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-200"
+              className="p-2 rounded-full bg-gray-100 dark:bg-white/10 backdrop-blur text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-white/20 disabled:opacity-30 disabled:cursor-not-allowed transition-colors duration-200"
             >
               <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
@@ -84,7 +91,7 @@ export function ModuleCarousel({ title, modules }: Props) {
               onClick={() => scrollBy(1)}
               disabled={!canRight}
               aria-label="Próximo"
-              className="p-2 rounded-full bg-gray-100 dark:bg-white/10 backdrop-blur text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-white/20 disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-200"
+              className="p-2 rounded-full bg-gray-100 dark:bg-white/10 backdrop-blur text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-white/20 disabled:opacity-30 disabled:cursor-not-allowed transition-colors duration-200"
             >
               <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
@@ -109,7 +116,7 @@ export function ModuleCarousel({ title, modules }: Props) {
 
 function ModuleCard({ mod }: { mod: CarouselModule }) {
   const content = (
-    <div className="relative w-full aspect-[9/16] rounded-xl overflow-hidden bg-gray-900 shadow-md shadow-black/10 dark:shadow-black/40 ring-1 ring-black/5 dark:ring-white/5 group-hover:shadow-xl group-hover:shadow-black/20 dark:group-hover:shadow-black/60 transition-all duration-300">
+    <div className="relative w-full aspect-[9/16] rounded-xl overflow-hidden bg-gray-900 shadow-md shadow-black/10 dark:shadow-black/40 ring-1 ring-black/5 dark:ring-white/5 group-hover:shadow-xl group-hover:shadow-black/20 dark:group-hover:shadow-black/60 transition-[transform,box-shadow] duration-300">
       {mod.thumbnailUrl ? (
         <Image
           src={mod.thumbnailUrl}

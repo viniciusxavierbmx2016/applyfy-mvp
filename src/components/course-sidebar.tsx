@@ -99,7 +99,7 @@ export function CourseSidebar({
           "fixed top-0 left-0 z-50 h-screen w-60 flex flex-col",
           "bg-gray-50 dark:bg-gray-950",
           "border-r border-gray-200 dark:border-white/5",
-          "transform transition-all duration-300 ease-in-out",
+          "transform transition-[width,transform] duration-300 ease-in-out",
           "lg:translate-x-0 lg:sticky lg:top-0 lg:z-auto",
           widthClass,
           mobileOpen ? "translate-x-0" : "-translate-x-full"
@@ -108,7 +108,7 @@ export function CourseSidebar({
         {/* Header — logo do workspace */}
         <div
           className={cn(
-            "relative flex items-center border-b border-gray-200 dark:border-white/5 transition-all duration-300",
+            "relative flex items-center border-b border-gray-200 dark:border-white/5 transition-[padding,gap,height] duration-300",
             collapsed
               ? "lg:justify-center lg:py-4 lg:px-2 p-5"
               : "p-5 justify-between"
@@ -257,7 +257,7 @@ export function CourseSidebar({
                 (pathname === href ||
                   (href !== `/course/${course.slug}` && pathname.startsWith(href)));
               const baseCls = cn(
-                "group relative flex items-center gap-3 rounded-lg text-sm font-medium transition-all duration-200",
+                "group relative flex items-center gap-3 rounded-lg text-sm font-medium transition-colors duration-200",
                 collapsed ? "lg:justify-center lg:p-2.5 py-2.5 px-3" : "py-2.5 px-3",
                 isActive
                   ? "bg-gray-200 text-gray-900 dark:bg-white/10 dark:text-white"
