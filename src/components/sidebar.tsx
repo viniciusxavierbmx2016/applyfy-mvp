@@ -206,7 +206,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
 
   function linkCls(active: boolean) {
     return cn(
-      "group relative flex items-center rounded-[10px] text-[14px] font-medium transition-all duration-200",
+      "group relative flex items-center rounded-[10px] text-[14px] font-medium transition-colors duration-200",
       collapsed ? "lg:justify-center lg:w-10 lg:h-10 lg:p-0 lg:gap-0 gap-3 py-2.5 px-3" : "gap-3 py-2.5 px-3",
       active
         ? "bg-gray-100 text-gray-900 dark:bg-white/[0.08] dark:text-white"

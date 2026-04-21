@@ -89,7 +89,7 @@ export function Header({ onMenuToggle }: HeaderProps) {
           <div className="relative" ref={dropdownRef}>
             <button
               onClick={() => setDropdownOpen(!dropdownOpen)}
-              className="flex items-center gap-2 hover:opacity-80 transition-all duration-200"
+              className="flex items-center gap-2 hover:opacity-80 transition-opacity duration-200"
             >
               <Avatar
                 src={user?.avatarUrl}

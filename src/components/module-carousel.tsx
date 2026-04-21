@@ -71,6 +71,18 @@ export function ModuleCarousel({ title, modules }: Props) {
     }
   }
 
+  const handleWheel = useCallback(
+    (e: React.WheelEvent<HTMLDivElement>) => {
+      if (!isMd) return;
+      if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) return;
+      if (Math.abs(e.deltaX) > 0) {
+        e.preventDefault();
+        setOffset((prev) => Math.max(0, Math.min(maxOffset, prev + e.deltaX)));
+      }
+    },
+    [isMd, maxOffset]
+  );
+
   const canLeft = isMd ? offset > 0 : false;
   const canRight = isMd ? offset < maxOffset - 4 : false;
 
@@ -109,6 +121,7 @@ export function ModuleCarousel({ title, modules }: Props) {
 
       <div
         ref={containerRef}
+        onWheel={handleWheel}
         className={
           isMd
             ? "overflow-hidden"
