@@ -207,7 +207,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
   function linkCls(active: boolean) {
     return cn(
       "group relative flex items-center rounded-[10px] text-[14px] font-medium transition-all duration-200",
-      collapsed ? "lg:justify-center lg:w-10 lg:h-10 lg:p-0 lg:gap-0 gap-3 py-2.5 px-3" : "gap-3 py-2.5 px-3",
+      collapsed ? "lg:justify-center lg:w-10 lg:h-10 lg:min-w-0 lg:min-h-0 lg:p-0 lg:gap-0 lg:overflow-hidden gap-3 py-2.5 px-3" : "gap-3 py-2.5 px-3",
       active
         ? "bg-gray-100 text-gray-900 dark:bg-white/[0.08] dark:text-white"
         : "text-gray-500 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-white/[0.05] dark:hover:text-white"
