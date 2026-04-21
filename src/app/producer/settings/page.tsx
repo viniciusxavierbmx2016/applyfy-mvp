@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTheme } from "next-themes";
 import { useProducerTheme } from "@/components/producer-theme-provider";
 
 interface ThemeConfig {
@@ -27,8 +28,25 @@ const DEFAULTS: ThemeConfig = {
 
 const HEX_RE = /^#[0-9a-fA-F]{6}$/;
 
+function darkenHex(hex: string, amount: number = 0.15): string {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return (
+    "#" +
+    [r, g, b]
+      .map((c) =>
+        Math.max(0, Math.round(c * (1 - amount)))
+          .toString(16)
+          .padStart(2, "0")
+      )
+      .join("")
+  );
+}
+
 export default function ProducerSettingsPage() {
   const { refresh } = useProducerTheme();
+  const { setTheme: setNextTheme } = useTheme();
   const [theme, setTheme] = useState<ThemeConfig>(DEFAULTS);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -52,12 +70,16 @@ export default function ProducerSettingsPage() {
     setTheme(next);
     const root = document.documentElement;
     root.style.setProperty("--producer-primary", next.primaryColor);
+    root.style.setProperty("--producer-primary-hover", darkenHex(next.primaryColor, 0.15));
     root.style.setProperty("--producer-secondary", next.secondaryColor);
     root.style.setProperty("--producer-bg", next.bgColor);
     root.style.setProperty("--producer-header", next.headerColor);
     root.style.setProperty("--producer-sidebar", next.sidebarColor);
     root.style.setProperty("--producer-card", next.cardColor);
     root.style.setProperty("--producer-button-text", next.buttonTextColor);
+    if (next.mode === "light" || next.mode === "dark") {
+      setNextTheme(next.mode);
+    }
   }
 
   function updateField(key: keyof ThemeConfig, value: string) {

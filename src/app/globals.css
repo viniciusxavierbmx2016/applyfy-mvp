@@ -198,3 +198,24 @@ body {
 .dark .post-content code {
   background: #1f2937;
 }
+
+/* ─── Producer theme overrides ───────────────────────────────── */
+/* Override indigo utilities with producer primary color */
+.producer-layout .bg-indigo-600 { background-color: var(--producer-primary, #6366F1) !important; }
+.producer-layout .bg-indigo-500 { background-color: var(--producer-primary-hover, #5558E3) !important; }
+.producer-layout .hover\:bg-indigo-500:hover { background-color: var(--producer-primary-hover, #5558E3) !important; }
+.producer-layout .hover\:bg-indigo-600:hover { background-color: var(--producer-primary, #6366F1) !important; }
+.producer-layout .text-indigo-400 { color: var(--producer-primary, #6366F1) !important; }
+.producer-layout .text-indigo-500 { color: var(--producer-primary, #6366F1) !important; }
+.producer-layout .text-indigo-600 { color: var(--producer-primary, #6366F1) !important; }
+.producer-layout .border-indigo-500 { border-color: var(--producer-primary, #6366F1) !important; }
+.producer-layout .border-indigo-600 { border-color: var(--producer-primary, #6366F1) !important; }
+.producer-layout .ring-indigo-500 { --tw-ring-color: var(--producer-primary, #6366F1) !important; }
+.producer-layout .focus\:border-indigo-500\/50:focus { border-color: var(--producer-primary, #6366F1) !important; }
+.producer-layout .focus\:ring-indigo-500\/20:focus { --tw-ring-color: var(--producer-primary, #6366F1) !important; }
+
+/* Override hardcoded dark-mode card/bg colors with producer variables */
+.producer-layout .dark\:bg-\[\#0a0e19\] { background-color: var(--producer-card, #0a0e19) !important; }
+.producer-layout .dark\:bg-\[\#0a0a1a\] { background-color: var(--producer-bg, #0a0a1a) !important; }
+.producer-layout .dark\:bg-\[\#0f1320\] { background-color: var(--producer-card, #0f1320) !important; }
+.producer-layout .dark\:bg-\[\#1a1e2e\] { background-color: var(--producer-secondary, #1a1e2e) !important; }

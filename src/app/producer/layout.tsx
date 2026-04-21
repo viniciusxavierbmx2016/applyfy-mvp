@@ -24,7 +24,7 @@ export default function ProducerLayout({
 
   return (
     <ProducerThemeProvider>
-      <div className="min-h-screen bg-white dark:bg-[var(--producer-bg,#0a0a1a)] flex">
+      <div className="producer-layout min-h-screen bg-white dark:bg-[var(--producer-bg,#0a0a1a)] flex">
         <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
         <div className="flex-1 flex flex-col min-w-0">
