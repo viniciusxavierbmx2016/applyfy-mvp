@@ -23,6 +23,7 @@ model User {
   monthlyRevenue  String?
   referralSource  String?
   document        String?
+  themeConfig   String?   @default("{}")
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 

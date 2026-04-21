@@ -236,7 +236,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
       <aside
         className={cn(
           "fixed top-0 left-0 z-50 h-screen w-64 flex flex-col",
-          "bg-white dark:bg-[#0a0a1a]",
+          "bg-white dark:bg-[var(--producer-sidebar,#0a0a1a)]",
           "border-r border-gray-200 dark:border-white/[0.06]",
           "transform transition-[width,transform] duration-300 ease-in-out",
           "lg:translate-x-0 lg:sticky lg:top-0 lg:z-auto",

@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { Sidebar } from "@/components/sidebar";
 import { Header } from "@/components/header";
 import { SubscriptionGate } from "@/components/subscription-gate";
+import { ProducerThemeProvider } from "@/components/producer-theme-provider";
 
 export default function ProducerLayout({
   children,
@@ -22,18 +23,20 @@ export default function ProducerLayout({
   }
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-950 flex">
-      <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+    <ProducerThemeProvider>
+      <div className="min-h-screen bg-white dark:bg-[var(--producer-bg,#0a0a1a)] flex">
+        <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
-      <div className="flex-1 flex flex-col min-w-0">
-        <Header onMenuToggle={() => setSidebarOpen(!sidebarOpen)} />
+        <div className="flex-1 flex flex-col min-w-0">
+          <Header onMenuToggle={() => setSidebarOpen(!sidebarOpen)} />
 
-        <main className="flex-1 p-4 lg:p-6">
-          <SubscriptionGate>
-            {children}
-          </SubscriptionGate>
-        </main>
+          <main className="flex-1 p-4 lg:p-6">
+            <SubscriptionGate>
+              {children}
+            </SubscriptionGate>
+          </main>
+        </div>
       </div>
-    </div>
+    </ProducerThemeProvider>
   );
 }
