@@ -238,8 +238,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
           "fixed top-0 left-0 z-50 h-screen w-64 flex flex-col",
           "bg-white dark:bg-[linear-gradient(180deg,rgba(15,15,30,0.98)_0%,rgba(8,8,20,0.99)_100%)]",
           "border-r border-gray-200 dark:border-white/[0.06]",
-          "dark:backdrop-blur-xl",
-          "transform transition-all duration-300 ease-in-out",
+          "transform transition-[width,transform] duration-300 ease-in-out",
           "lg:translate-x-0 lg:sticky lg:top-0 lg:z-auto",
           collapsed ? "lg:w-16" : "lg:w-56",
           open ? "translate-x-0" : "-translate-x-full"
@@ -248,7 +247,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
         {/* Topo: logo/workspace switcher */}
         <div
           className={cn(
-            "relative transition-all duration-300",
+            "relative transition-[padding,gap,height] duration-300",
             collapsed
               ? "flex h-16 items-center justify-between px-5 lg:h-auto lg:flex-col lg:items-center lg:justify-start lg:gap-2 lg:py-3 lg:px-0"
               : "flex items-center py-5 px-5 justify-between gap-1.5"
