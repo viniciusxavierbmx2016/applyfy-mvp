@@ -39,6 +39,8 @@ export default function CourseMenuPage({ params }: { params: { id: string } }) {
   const [newLabel, setNewLabel] = useState("");
   const [newIcon, setNewIcon] = useState("link");
   const [newUrl, setNewUrl] = useState("");
+  const [courseTitle, setCourseTitle] = useState("");
+  const [courseSlug, setCourseSlug] = useState("");
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -47,6 +49,10 @@ export default function CourseMenuPage({ params }: { params: { id: string } }) {
 
   useEffect(() => {
     load();
+    fetch(`/api/courses/${params.id}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (d?.course) { setCourseTitle(d.course.title); setCourseSlug(d.course.slug); } })
+      .catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -126,12 +132,32 @@ export default function CourseMenuPage({ params }: { params: { id: string } }) {
           </svg>
           Voltar
         </Link>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-          Menu lateral
-        </h1>
-        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-          Configure os itens que aparecem na sidebar quando o aluno entra no curso.
-        </p>
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white truncate">
+              {courseTitle || "Curso"}
+            </h1>
+            {courseSlug && (
+              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                /{courseSlug}
+              </p>
+            )}
+          </div>
+          {courseSlug && (
+            <a
+              href={`/course/${courseSlug}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-3 py-2 border border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200 text-sm font-medium rounded-lg transition flex-shrink-0"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              </svg>
+              Pré-visualizar
+            </a>
+          )}
+        </div>
       </div>
 
       <CourseEditTabs courseId={params.id} active="menu" />

@@ -92,6 +92,8 @@ export default function CourseSettingsPage({
   const [loading, setLoading] = useState(true);
   const [savingKey, setSavingKey] = useState<FlagKey | null>(null);
   const [toast, setToast] = useState<string | null>(null);
+  const [courseTitle, setCourseTitle] = useState("");
+  const [courseSlug, setCourseSlug] = useState("");
 
   useEffect(() => {
     let alive = true;
@@ -100,6 +102,8 @@ export default function CourseSettingsPage({
       .then((data) => {
         if (!alive || !data?.course) return;
         const c = data.course;
+        setCourseTitle(c.title);
+        setCourseSlug(c.slug);
         setFlags({
           communityEnabled: Boolean(c.communityEnabled),
           lessonCommentsEnabled: Boolean(c.lessonCommentsEnabled),
@@ -150,27 +154,37 @@ export default function CourseSettingsPage({
           href="/producer/courses"
           className="inline-flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white mb-2"
         >
-          <svg
-            className="w-4 h-4"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M15 19l-7-7 7-7"
-            />
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
           Voltar
         </Link>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-          Configurações do curso
-        </h1>
-        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-          Controle quais funcionalidades estão ativas para os alunos.
-        </p>
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white truncate">
+              {courseTitle || "Curso"}
+            </h1>
+            {courseSlug && (
+              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                /{courseSlug}
+              </p>
+            )}
+          </div>
+          {courseSlug && (
+            <a
+              href={`/course/${courseSlug}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-3 py-2 border border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200 text-sm font-medium rounded-lg transition flex-shrink-0"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              </svg>
+              Pré-visualizar
+            </a>
+          )}
+        </div>
       </div>
 
       <CourseEditTabs courseId={params.id} active="settings" />
