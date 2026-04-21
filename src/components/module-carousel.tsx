@@ -25,48 +25,54 @@ interface Props {
 }
 
 export function ModuleCarousel({ title, modules }: Props) {
-  const scrollerRef = useRef<HTMLDivElement>(null);
-  const [canLeft, setCanLeft] = useState(false);
-  const [canRight, setCanRight] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const trackRef = useRef<HTMLDivElement>(null);
+  const [offset, setOffset] = useState(0);
+  const [maxOffset, setMaxOffset] = useState(0);
+  const [isMd, setIsMd] = useState(false);
 
   useEffect(() => {
-    const el = scrollerRef.current;
-    if (!el) return;
-    const update = () => {
-      setCanLeft(el.scrollLeft > 4);
-      setCanRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 4);
-    };
-    update();
-    el.addEventListener("scroll", update, { passive: true });
-    const ro = new ResizeObserver(update);
-    ro.observe(el);
-    return () => {
-      el.removeEventListener("scroll", update);
-      ro.disconnect();
-    };
-  }, [modules.length]);
-
-  const rafRef = useRef(0);
-  const handleWheel = useCallback((e: React.WheelEvent<HTMLDivElement>) => {
-    if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
-      if (!rafRef.current) {
-        const dy = e.deltaY;
-        rafRef.current = requestAnimationFrame(() => {
-          window.scrollBy(0, dy);
-          rafRef.current = 0;
-        });
-      }
-      return;
-    }
-    e.currentTarget.scrollLeft += e.deltaX;
+    const mq = window.matchMedia("(min-width: 768px)");
+    setIsMd(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setIsMd(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
   }, []);
 
-  function scrollBy(dir: 1 | -1) {
-    const el = scrollerRef.current;
-    if (!el) return;
-    const amount = el.clientWidth * 0.85 * dir;
-    el.scrollBy({ left: amount, behavior: "smooth" });
+  const measure = useCallback(() => {
+    const container = containerRef.current;
+    const track = trackRef.current;
+    if (!container || !track) return;
+    const max = Math.max(0, track.scrollWidth - container.clientWidth);
+    setMaxOffset(max);
+    setOffset((prev) => Math.min(prev, max));
+  }, []);
+
+  useEffect(() => {
+    measure();
+    const ro = new ResizeObserver(measure);
+    if (containerRef.current) ro.observe(containerRef.current);
+    if (trackRef.current) ro.observe(trackRef.current);
+    return () => ro.disconnect();
+  }, [modules.length, measure]);
+
+  function scrollByDir(dir: 1 | -1) {
+    const container = containerRef.current;
+    if (!container) return;
+
+    if (isMd) {
+      const step = container.clientWidth * 0.85;
+      setOffset((prev) => {
+        const next = prev + step * dir;
+        return Math.max(0, Math.min(maxOffset, next));
+      });
+    } else {
+      container.scrollBy({ left: container.clientWidth * 0.85 * dir, behavior: "smooth" });
+    }
   }
+
+  const canLeft = isMd ? offset > 0 : false;
+  const canRight = isMd ? offset < maxOffset - 4 : false;
 
   return (
     <section className="mb-12">
@@ -76,9 +82,9 @@ export function ModuleCarousel({ title, modules }: Props) {
             {title}
           </h2>
           <div className="flex-1 h-px bg-gradient-to-r from-gray-200 via-gray-200 to-transparent dark:from-white/10 dark:via-white/10" />
-          <div className="hidden sm:flex gap-2">
+          <div className="hidden md:flex gap-2">
             <button
-              onClick={() => scrollBy(-1)}
+              onClick={() => scrollByDir(-1)}
               disabled={!canLeft}
               aria-label="Anterior"
               className="p-2 rounded-full bg-gray-100 dark:bg-white/10 backdrop-blur text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-white/20 disabled:opacity-30 disabled:cursor-not-allowed transition-colors duration-200"
@@ -88,7 +94,7 @@ export function ModuleCarousel({ title, modules }: Props) {
               </svg>
             </button>
             <button
-              onClick={() => scrollBy(1)}
+              onClick={() => scrollByDir(1)}
               disabled={!canRight}
               aria-label="Próximo"
               className="p-2 rounded-full bg-gray-100 dark:bg-white/10 backdrop-blur text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-white/20 disabled:opacity-30 disabled:cursor-not-allowed transition-colors duration-200"
@@ -102,13 +108,26 @@ export function ModuleCarousel({ title, modules }: Props) {
       )}
 
       <div
-        ref={scrollerRef}
-        onWheel={handleWheel}
-        className="flex gap-3 sm:gap-4 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 overscroll-contain [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+        ref={containerRef}
+        className={
+          isMd
+            ? "overflow-hidden"
+            : "overflow-x-auto pb-2 -mx-4 px-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+        }
       >
-        {modules.map((m) => (
-          <ModuleCard key={m.id} mod={m} />
-        ))}
+        <div
+          ref={trackRef}
+          className="flex gap-3 sm:gap-4"
+          style={
+            isMd
+              ? { transform: `translateX(-${offset}px)`, transition: "transform 300ms ease" }
+              : undefined
+          }
+        >
+          {modules.map((m) => (
+            <ModuleCard key={m.id} mod={m} />
+          ))}
+        </div>
       </div>
     </section>
   );
