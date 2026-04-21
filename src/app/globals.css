@@ -40,41 +40,6 @@
   --card-hover-border: 1px solid #1f2335;
 }
 
-/* ─── Membership area tokens (student-facing only) ──────────── */
-.membership-area {
-  --font-display: 'Cabinet Grotesk', system-ui, sans-serif;
-  --font-body: 'Geist', system-ui, sans-serif;
-
-  --ground-0: #0a0a0b;
-  --ground-1: #141416;
-  --ground-2: #1d1d21;
-  --ground-3: #28282e;
-
-  --ink-1: #fafafa;
-  --ink-2: #b8b8bf;
-  --ink-3: #7a7a82;
-  --ink-disabled: #4a4a52;
-
-  --brand: #0071FF;
-  --brand-hover: #0063E0;
-  --brand-ink: #ffffff;
-  --brand-glow: rgba(0, 113, 255, 0.15);
-
-  --signal-complete: #00E676;
-  --signal-hot: #FF5252;
-  --signal-locked: var(--ink-3);
-
-  --r-sm: 6px;
-  --r-md: 12px;
-  --r-lg: 20px;
-  --r-xl: 32px;
-
-  --shadow-raise: 0 1px 2px rgb(0 0 0 / .4), 0 8px 24px rgb(0 0 0 / .3);
-  --ease: cubic-bezier(0.22, 1, 0.36, 1);
-  --dur-fast: 160ms;
-  --dur: 240ms;
-}
-
 @layer components {
   .glass-card {
     background: var(--card-bg);

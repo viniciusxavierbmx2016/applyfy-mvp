@@ -18,7 +18,7 @@ interface WorkspaceInfo {
 const COLLAPSED_KEY = "student_sidebar_collapsed";
 
 const tooltipCls =
-  "hidden lg:group-hover:block absolute left-full ml-2 px-2 py-1 text-xs rounded-md bg-gray-900 dark:bg-[var(--ground-2)] text-white whitespace-nowrap z-50 pointer-events-none shadow-lg";
+  "hidden lg:group-hover:block absolute left-full ml-2 px-2 py-1 text-xs rounded-md bg-gray-900 dark:bg-gray-800 text-white whitespace-nowrap z-50 pointer-events-none shadow-lg";
 
 export function WorkspaceShell({
   slug,
@@ -118,10 +118,10 @@ export function WorkspaceShell({
   function linkCls(active: boolean) {
     return cn(
       "group relative flex items-center gap-3 rounded-lg text-sm font-medium transition-colors duration-200",
-      collapsed ? "lg:justify-center lg:p-2.5 py-3 px-4" : "py-3 px-4",
+      collapsed ? "lg:justify-center lg:p-2.5 py-2.5 px-3" : "py-2.5 px-3",
       active
-        ? "bg-[var(--brand)]/10 text-[var(--ink-1)] border-l-2 border-[var(--brand)]"
-        : "text-[var(--ink-2)] hover:text-[var(--ink-1)] hover:bg-gray-50 dark:hover:bg-[var(--ground-2)] border-l-2 border-transparent"
+        ? "bg-blue-500/10 text-blue-600 dark:text-blue-400"
+        : "text-gray-600 dark:text-gray-400 hover:bg-gray-50 hover:text-gray-900 dark:hover:bg-white/5 dark:hover:text-white"
     );
   }
 
@@ -130,15 +130,15 @@ export function WorkspaceShell({
       "flex-shrink-0 transition-colors duration-200",
       collapsed && "lg:mx-auto",
       active
-        ? "text-[var(--brand)]"
-        : "text-[var(--ink-3)] group-hover:text-[var(--ink-1)]"
+        ? "text-blue-600 dark:text-blue-400"
+        : "text-gray-400 dark:text-gray-500 group-hover:text-gray-900 dark:group-hover:text-white"
     );
   }
 
   return (
-    <div className="membership-area min-h-screen bg-gray-50 dark:bg-[var(--ground-0)]">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
       {/* Header */}
-      <header className="sticky top-0 z-30 bg-white dark:bg-[var(--ground-1)] border-b border-gray-200 dark:border-[var(--ground-3)]">
+      <header className="sticky top-0 z-30 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-white/5">
         <div className="px-4 sm:px-6 h-14 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
             <button
@@ -150,7 +150,7 @@ export function WorkspaceShell({
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
               </svg>
             </button>
-            <div className="w-8 h-8 rounded-lg bg-gray-100 dark:bg-[var(--ground-2)] flex items-center justify-center overflow-hidden flex-shrink-0">
+            <div className="w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center overflow-hidden flex-shrink-0">
               {ws?.logoUrl ? (
                 <Image
                   src={ws.logoUrl}
@@ -192,7 +192,7 @@ export function WorkspaceShell({
                   className="w-7 h-7 rounded-full object-cover flex-shrink-0"
                 />
               ) : (
-                <span className="w-7 h-7 rounded-full bg-gray-200 dark:bg-[var(--ground-2)] flex items-center justify-center text-xs font-semibold text-gray-700 dark:text-gray-200 flex-shrink-0">
+                <span className="w-7 h-7 rounded-full bg-gray-200 dark:bg-gray-800 flex items-center justify-center text-xs font-semibold text-gray-700 dark:text-gray-200 flex-shrink-0">
                   {(user?.name || "?").charAt(0).toUpperCase()}
                 </span>
               )}
@@ -220,7 +220,7 @@ export function WorkspaceShell({
           className={cn(
             "fixed lg:sticky top-14 lg:top-14 left-0 z-40 flex flex-col",
             "h-[calc(100vh-3.5rem)]",
-            "bg-white dark:bg-[var(--ground-1)] border-r border-gray-200 dark:border-[var(--ground-3)]",
+            "bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-white/5",
             "transform transition-[width,transform] duration-300 ease-in-out",
             "lg:translate-x-0",
             "w-64",
@@ -231,7 +231,7 @@ export function WorkspaceShell({
           {/* Topo da sidebar com botão de colapsar */}
           <div
             className={cn(
-              "relative border-b border-gray-200 dark:border-[var(--ground-3)]",
+              "relative border-b border-gray-200 dark:border-white/5",
               collapsed ? "lg:h-12 h-12" : "h-12"
             )}
           >
@@ -241,7 +241,7 @@ export function WorkspaceShell({
                 aria-label="Recolher menu"
                 className={cn(
                   "hidden lg:flex absolute top-1/2 -translate-y-1/2 right-3 items-center justify-center w-6 h-6 rounded-full",
-                  "bg-gray-100 hover:bg-gray-200 dark:bg-[var(--ground-2)] dark:hover:bg-[var(--ground-3)]",
+                  "bg-gray-100 hover:bg-gray-200 dark:bg-white/5 dark:hover:bg-white/10",
                   "text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white",
                   "transition-colors duration-200"
                 )}
@@ -258,7 +258,7 @@ export function WorkspaceShell({
                   aria-label="Expandir menu"
                   className={cn(
                     "group relative flex items-center justify-center w-7 h-7 rounded-full",
-                    "bg-gray-100 hover:bg-gray-200 dark:bg-[var(--ground-2)] dark:hover:bg-[var(--ground-3)]",
+                    "bg-gray-100 hover:bg-gray-200 dark:bg-white/5 dark:hover:bg-white/10",
                     "text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white",
                     "transition-colors duration-200"
                   )}
