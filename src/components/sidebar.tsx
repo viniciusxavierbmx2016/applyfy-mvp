@@ -250,7 +250,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
           className={cn(
             "relative transition-all duration-300",
             collapsed
-              ? "lg:flex lg:flex-col lg:items-center lg:gap-3 lg:py-4 lg:px-2 flex h-16 items-center justify-between px-5"
+              ? "flex h-16 items-center justify-between px-5 lg:h-auto lg:flex-col lg:items-center lg:justify-start lg:gap-2 lg:py-3 lg:px-0"
               : "flex items-center py-5 px-5 justify-between gap-1.5"
           )}
         >
