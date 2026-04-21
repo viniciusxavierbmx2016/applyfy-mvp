@@ -88,7 +88,7 @@ export function ModuleCarousel({ title, modules }: Props) {
 
       <div
         ref={scrollerRef}
-        className="flex gap-3 sm:gap-4 overflow-x-auto snap-x snap-mandatory scroll-smooth pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+        className="flex gap-3 sm:gap-4 overflow-x-auto snap-x snap-proximity scroll-smooth pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 overscroll-x-contain [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
       >
         {modules.map((m) => (
           <ModuleCard key={m.id} mod={m} />
