@@ -214,7 +214,7 @@ export default function CourseStudentsPage({
             setQ(e.target.value);
             setPage(1);
           }}
-          className="w-full sm:max-w-sm px-4 py-2.5 bg-white dark:bg-white/[0.04] border border-gray-300 dark:border-white/[0.08] rounded-xl text-gray-900 dark:text-white text-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/20 transition-all duration-200"
+          className="w-full sm:max-w-sm px-4 py-2.5 bg-white dark:bg-white/[0.04] border border-gray-300 dark:border-white/[0.08] rounded-xl text-gray-900 dark:text-white text-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/20 transition-colors duration-200"
         />
       </div>
 

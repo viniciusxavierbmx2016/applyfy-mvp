@@ -50,7 +50,7 @@ export function SupportPopover({
         aria-haspopup="menu"
         aria-expanded={open}
         className={cn(
-          "group relative inline-flex items-center gap-3 rounded-[10px] text-[14px] font-medium transition-all duration-200",
+          "group relative inline-flex items-center gap-3 rounded-[10px] text-[14px] font-medium transition-colors duration-200",
           triggerClassName
         )}
       >

@@ -124,7 +124,7 @@ export default function AdminCollaboratorsPage() {
             setEditing(null);
             setShowModal(true);
           }}
-          className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-xl shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/30 transition-all"
+          className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-xl shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/30 transition-colors"
         >
           Convidar colaborador
         </button>

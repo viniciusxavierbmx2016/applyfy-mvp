@@ -54,7 +54,7 @@ export function CourseCard({
         : null;
   const daysLeft = expiresAtDate ? daysUntil(expiresAtDate) : null;
   const wrapperClassName = cn(
-    "group block bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden hover:border-gray-400 dark:hover:border-gray-700 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200",
+    "group block bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden hover:border-gray-400 dark:hover:border-gray-700 hover:shadow-xl hover:-translate-y-0.5 transition-[border-color,box-shadow,transform] duration-200",
     expired && "opacity-75 grayscale-[0.4]",
     className
   );

@@ -298,7 +298,7 @@ function Card({
   accent: string;
 }) {
   return (
-    <div className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.06] rounded-xl p-5 hover:border-gray-300 dark:hover:border-white/[0.1] transition-all duration-200">
+    <div className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.06] rounded-xl p-5 hover:border-gray-300 dark:hover:border-white/[0.1] transition-colors duration-200">
       <p className="text-[11px] font-medium uppercase tracking-widest text-gray-500">
         {label}
       </p>

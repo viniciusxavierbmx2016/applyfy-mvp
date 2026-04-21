@@ -259,7 +259,7 @@ function Card({
   href?: string;
 }) {
   const content = (
-    <div className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.06] rounded-xl p-5 transition-all duration-200 hover:border-gray-300 dark:hover:border-white/[0.1] h-full">
+    <div className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.06] rounded-xl p-5 transition-colors duration-200 hover:border-gray-300 dark:hover:border-white/[0.1] h-full">
       <p className="text-[11px] font-medium uppercase tracking-widest text-gray-500">
         {label}
       </p>

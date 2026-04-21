@@ -107,7 +107,7 @@ export function CoursePreview({
       href={course.checkoutUrl}
       target="_blank"
       rel="noopener noreferrer"
-      className="w-full inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-gradient-to-b from-blue-500 to-blue-600 hover:from-blue-500 hover:to-blue-500 text-white text-[15px] font-semibold rounded-xl shadow-lg shadow-blue-600/20 hover:shadow-blue-500/30 transition-all duration-200"
+      className="w-full inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-gradient-to-b from-blue-500 to-blue-600 hover:from-blue-500 hover:to-blue-500 text-white text-[15px] font-semibold rounded-xl shadow-lg shadow-blue-600/20 hover:shadow-blue-500/30 transition-[colors,box-shadow] duration-200"
     >
       Comprar agora
       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -117,7 +117,7 @@ export function CoursePreview({
   ) : (
     <a
       href="mailto:contato@exemplo.com"
-      className="w-full inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-[15px] font-semibold rounded-xl transition-all duration-200 hover:opacity-90"
+      className="w-full inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-[15px] font-semibold rounded-xl transition-opacity duration-200 hover:opacity-90"
     >
       Entre em contato
     </a>
@@ -230,7 +230,7 @@ export function CoursePreview({
                     {group.modules.map((m) => (
                       <details
                         key={m.id}
-                        className="group bg-gray-50 dark:bg-white/5 border border-gray-200/70 dark:border-white/5 rounded-2xl overflow-hidden transition-all duration-200 hover:border-gray-300 dark:hover:border-white/10 open:shadow-sm"
+                        className="group bg-gray-50 dark:bg-white/5 border border-gray-200/70 dark:border-white/5 rounded-2xl overflow-hidden transition-colors duration-200 hover:border-gray-300 dark:hover:border-white/10 open:shadow-sm"
                       >
                         <summary className="flex items-center gap-3 p-4 cursor-pointer list-none select-none">
                           {m.thumbnailUrl ? (

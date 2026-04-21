@@ -88,7 +88,7 @@ function LessonLink({
   return (
     <Link
       href={`/course/${courseSlug}/lesson/${lesson.id}`}
-      className={`relative flex items-start gap-3 pl-4 pr-3 py-2 rounded-[10px] text-sm transition-all duration-200 ${
+      className={`relative flex items-start gap-3 pl-4 pr-3 py-2 rounded-[10px] text-sm transition-colors duration-200 ${
         isCurrent
           ? "bg-blue-500/10 dark:bg-blue-500/15 text-gray-900 dark:text-white shadow-sm"
           : lesson.completed
@@ -170,7 +170,7 @@ export function LessonsSidebar({
               <button
                 type="button"
                 onClick={() => toggle(mod.id)}
-                className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-[10px] hover:bg-gray-100 dark:hover:bg-white/5 text-left transition-all duration-200"
+                className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-[10px] hover:bg-gray-100 dark:hover:bg-white/5 text-left transition-colors duration-200"
               >
                 <svg
                   className={`w-3 h-3 text-gray-400 dark:text-gray-500 transition-transform duration-200 flex-shrink-0 ${

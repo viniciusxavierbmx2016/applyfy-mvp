@@ -128,7 +128,7 @@ export function GlobalSearch() {
         }}
         onFocus={() => setOpen(true)}
         placeholder="Buscar cursos, aulas, posts..."
-        className="w-full pl-10 pr-4 py-2 bg-gray-100 dark:bg-white/[0.04] border border-gray-300 dark:border-white/[0.08] rounded-xl text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all duration-200"
+        className="w-full pl-10 pr-4 py-2 bg-gray-100 dark:bg-white/[0.04] border border-gray-300 dark:border-white/[0.08] rounded-xl text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-colors duration-200"
       />
 
       {showDropdown && (

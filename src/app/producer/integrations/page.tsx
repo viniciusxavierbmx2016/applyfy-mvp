@@ -82,7 +82,7 @@ function ApplyfyCard({
   logoUrl: string;
 }) {
   return (
-    <div className="group relative flex flex-col gap-3 p-5 rounded-xl bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.06] hover:border-gray-300 dark:hover:border-white/[0.1] hover:shadow-lg transition-all duration-200">
+    <div className="group relative flex flex-col gap-3 p-5 rounded-xl bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.06] hover:border-gray-300 dark:hover:border-white/[0.1] hover:shadow-lg transition-[border-color,box-shadow] duration-200">
       <div className="flex items-start justify-between gap-3">
         <GatewayLogo src={logoUrl} label="Applyfy" size={48} />
         <span
@@ -129,7 +129,7 @@ function RequestIntegrationCard({ onOpen }: { onOpen: () => void }) {
     <button
       type="button"
       onClick={onOpen}
-      className="group flex flex-col items-center justify-center gap-3 p-5 rounded-xl bg-transparent border-2 border-dashed border-gray-300 dark:border-white/[0.08] hover:border-indigo-400 dark:hover:border-indigo-500 hover:bg-indigo-50/40 dark:hover:bg-indigo-950/20 transition-all duration-200 text-center min-h-[176px]"
+      className="group flex flex-col items-center justify-center gap-3 p-5 rounded-xl bg-transparent border-2 border-dashed border-gray-300 dark:border-white/[0.08] hover:border-indigo-400 dark:hover:border-indigo-500 hover:bg-indigo-50/40 dark:hover:bg-indigo-950/20 transition-colors duration-200 text-center min-h-[176px]"
     >
       <div className="w-12 h-12 rounded-xl border-2 border-dashed border-gray-300 dark:border-white/[0.08] group-hover:border-indigo-400 dark:group-hover:border-indigo-500 flex items-center justify-center flex-shrink-0 transition">
         <svg

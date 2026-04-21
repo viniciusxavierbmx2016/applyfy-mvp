@@ -226,7 +226,7 @@ export default function LessonPage({
           <button
             type="button"
             onClick={() => setMobileSidebarOpen(true)}
-            className="w-full px-4 py-2.5 bg-white dark:bg-gray-900/60 border border-gray-200 dark:border-white/5 text-gray-900 dark:text-white rounded-xl text-sm font-medium flex items-center justify-between transition-all duration-200 hover:bg-gray-50 dark:hover:bg-white/5"
+            className="w-full px-4 py-2.5 bg-white dark:bg-gray-900/60 border border-gray-200 dark:border-white/5 text-gray-900 dark:text-white rounded-xl text-sm font-medium flex items-center justify-between transition-colors duration-200 hover:bg-gray-50 dark:hover:bg-white/5"
           >
             <span>Lista de aulas</span>
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -251,7 +251,7 @@ export default function LessonPage({
               type="button"
               onClick={() => markCompleted(!data.lesson.completed)}
               disabled={marking}
-              className={`px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 disabled:opacity-50 ${
+              className={`px-5 py-2.5 rounded-xl text-sm font-semibold transition-[colors,box-shadow] duration-300 disabled:opacity-50 ${
                 data.lesson.completed
                   ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 ring-1 ring-inset ring-emerald-500/20 hover:ring-emerald-500/40 hover:bg-emerald-500/15"
                   : "bg-gradient-to-r from-emerald-500 to-emerald-600 text-white shadow-md shadow-emerald-500/25 hover:shadow-lg hover:shadow-emerald-500/30 hover:from-emerald-400 hover:to-emerald-500"
@@ -268,7 +268,7 @@ export default function LessonPage({
             {data.prev && (
               <Link
                 href={`/course/${data.course.slug}/lesson/${data.prev.id}`}
-                className="group inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5 text-sm font-medium transition-all duration-200"
+                className="group inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5 text-sm font-medium transition-colors duration-200"
               >
                 <svg className="w-4 h-4 transition-transform duration-200 group-hover:-translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
                 Anterior
@@ -277,7 +277,7 @@ export default function LessonPage({
             {data.next && (
               <Link
                 href={`/course/${data.course.slug}/lesson/${data.next.id}`}
-                className="group inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5 text-sm font-medium transition-all duration-200"
+                className="group inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5 text-sm font-medium transition-colors duration-200"
               >
                 Próxima
                 <svg className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>

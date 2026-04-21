@@ -202,7 +202,7 @@ function ApplyfyCard({
   canEditLogo: boolean;
 }) {
   return (
-    <div className="group relative flex flex-col gap-3 p-5 rounded-xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700 hover:shadow-lg transition-all duration-200">
+    <div className="group relative flex flex-col gap-3 p-5 rounded-xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700 hover:shadow-lg transition-[border-color,box-shadow] duration-200">
       <div className="flex items-start justify-between gap-3">
         {canEditLogo ? (
           <LogoUploader
@@ -240,7 +240,7 @@ function RequestIntegrationCard({ onOpen }: { onOpen: () => void }) {
     <button
       type="button"
       onClick={onOpen}
-      className="group flex flex-col items-center justify-center gap-3 p-5 rounded-xl bg-transparent border-2 border-dashed border-gray-300 dark:border-gray-700 hover:border-blue-400 dark:hover:border-blue-500 hover:bg-blue-50/40 dark:hover:bg-blue-950/20 transition-all duration-200 text-center min-h-[176px]"
+      className="group flex flex-col items-center justify-center gap-3 p-5 rounded-xl bg-transparent border-2 border-dashed border-gray-300 dark:border-gray-700 hover:border-blue-400 dark:hover:border-blue-500 hover:bg-blue-50/40 dark:hover:bg-blue-950/20 transition-colors duration-200 text-center min-h-[176px]"
     >
       <div className="w-12 h-12 rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-700 group-hover:border-blue-400 dark:group-hover:border-blue-500 flex items-center justify-center flex-shrink-0 transition">
         <svg

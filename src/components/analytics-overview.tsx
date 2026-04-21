@@ -474,7 +474,7 @@ function KpiCard({
   const trendUp = delta != null && delta > 0;
   const trendDown = delta != null && delta < 0;
   return (
-    <div className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.06] rounded-xl p-4 sm:p-5 hover:border-gray-300 dark:hover:border-white/[0.1] transition-all duration-200">
+    <div className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.06] rounded-xl p-4 sm:p-5 hover:border-gray-300 dark:hover:border-white/[0.1] transition-colors duration-200">
       <div className="flex items-center justify-between">
         <span className={`inline-flex items-center justify-center w-10 h-10 rounded-lg ${a.bg} ${a.text}`}>
           {icon}
