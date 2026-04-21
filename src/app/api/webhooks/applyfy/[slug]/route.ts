@@ -205,6 +205,29 @@ export async function POST(
 
         await activateEnrollment(user.id, course.id);
 
+        const txExternalId = body?.transaction?.id?.trim() || null;
+        if (txExternalId) {
+          const exists = await prisma.producerTransaction.findUnique({
+            where: { externalId: txExternalId },
+            select: { id: true },
+          });
+          if (!exists) {
+            await prisma.producerTransaction.create({
+              data: {
+                workspaceId,
+                userId: user.id,
+                courseId: course.id,
+                amount: body?.transaction?.amount ?? item?.price ?? 0,
+                status: "COMPLETED",
+                paymentMethod: body?.transaction?.paymentMethod ?? null,
+                externalId: txExternalId,
+                customerEmail: email,
+                customerName: name ?? null,
+              },
+            });
+          }
+        }
+
         const appUrl = process.env.NEXT_PUBLIC_APP_URL || "";
         const loginUrl = `${appUrl}/w/${workspace.slug}/login`;
         const template = studentAccessGranted(
@@ -231,6 +254,15 @@ export async function POST(
     }
 
     if (REVOKE_EVENTS.has(event)) {
+      const txExternalId = body?.transaction?.id?.trim() || null;
+      if (txExternalId) {
+        const txStatus = event === "TRANSACTION_REFUNDED" ? "REFUNDED" : "CHARGED_BACK";
+        await prisma.producerTransaction.updateMany({
+          where: { externalId: txExternalId },
+          data: { status: txStatus },
+        });
+      }
+
       const user = await prisma.user.findUnique({ where: { email } });
       if (!user) {
         await logWebhook({

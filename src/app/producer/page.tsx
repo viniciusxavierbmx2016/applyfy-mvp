@@ -11,6 +11,16 @@ import {
   type DateRangeValue,
 } from "@/components/date-range-selector";
 
+interface SalesStats {
+  totalRevenue: number;
+  totalRefunds: number;
+  netRevenue: number;
+  transactionCount: number;
+  averageTicket: number;
+}
+
+const fmt = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
+
 const AnalyticsOverview = dynamic(
   () =>
     import("@/components/analytics-overview").then(
@@ -166,12 +176,125 @@ function DashboardContent() {
         </div>
       </div>
 
+      <SalesKpis startDate={range.startDate} endDate={range.endDate} />
+
       <AnalyticsOverview
         courseId={courseId}
         startDate={range.startDate}
         endDate={range.endDate}
         rangeLabel={range.label}
       />
+    </div>
+  );
+}
+
+function SalesKpis({ startDate, endDate }: { startDate?: string; endDate?: string }) {
+  const [data, setData] = useState<SalesStats | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    setLoading(true);
+    const qs = new URLSearchParams();
+    if (startDate) qs.set("startDate", startDate);
+    if (endDate) qs.set("endDate", endDate);
+    fetch(`/api/producer/sales/stats?${qs.toString()}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => setData(d))
+      .finally(() => setLoading(false));
+  }, [startDate, endDate]);
+
+  if (loading) {
+    return (
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <Skeleton key={i} className="h-32" />
+        ))}
+      </div>
+    );
+  }
+
+  const stats = data ?? { netRevenue: 0, transactionCount: 0, averageTicket: 0, totalRefunds: 0, totalRevenue: 0 };
+  const noSales = stats.transactionCount === 0;
+
+  return (
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+      <SalesCard
+        icon={
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
+            <line x1="12" y1="1" x2="12" y2="23" /><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+          </svg>
+        }
+        label="Receita líquida"
+        value={fmt.format(stats.netRevenue)}
+        accent="emerald"
+        hint={noSales ? "Nenhuma venda no período" : "no período"}
+      />
+      <SalesCard
+        icon={
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
+            <circle cx="9" cy="21" r="1" /><circle cx="20" cy="21" r="1" /><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
+          </svg>
+        }
+        label="Vendas"
+        value={stats.transactionCount}
+        accent="blue"
+        hint="transações"
+      />
+      <SalesCard
+        icon={
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
+            <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" /><line x1="7" y1="7" x2="7.01" y2="7" />
+          </svg>
+        }
+        label="Ticket médio"
+        value={fmt.format(stats.averageTicket)}
+        accent="purple"
+        hint="por venda"
+      />
+      <SalesCard
+        icon={
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
+            <polyline points="23 18 13.5 8.5 8.5 13.5 1 6" /><polyline points="17 18 23 18 23 12" />
+          </svg>
+        }
+        label="Reembolsos"
+        value={fmt.format(stats.totalRefunds)}
+        accent="red"
+        hint="devolvidos"
+      />
+    </div>
+  );
+}
+
+const SALES_ACCENT: Record<string, { text: string; bg: string }> = {
+  emerald: { text: "text-emerald-600 dark:text-emerald-400", bg: "bg-emerald-50 dark:bg-emerald-900/30" },
+  blue: { text: "text-blue-600 dark:text-blue-400", bg: "bg-blue-50 dark:bg-blue-900/30" },
+  purple: { text: "text-purple-600 dark:text-purple-400", bg: "bg-purple-50 dark:bg-purple-900/30" },
+  red: { text: "text-red-600 dark:text-red-400", bg: "bg-red-50 dark:bg-red-900/30" },
+};
+
+function SalesCard({
+  icon,
+  label,
+  value,
+  accent,
+  hint,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string | number;
+  accent: keyof typeof SALES_ACCENT;
+  hint?: string;
+}) {
+  const a = SALES_ACCENT[accent];
+  return (
+    <div className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.06] rounded-xl p-4 sm:p-5 hover:border-gray-300 dark:hover:border-white/[0.1] transition-colors duration-200">
+      <span className={`inline-flex items-center justify-center w-10 h-10 rounded-lg ${a.bg} ${a.text}`}>
+        {icon}
+      </span>
+      <p className="mt-4 text-[11px] font-medium uppercase tracking-widest text-gray-500">{label}</p>
+      <p className={`mt-1 text-2xl sm:text-3xl font-bold ${a.text}`}>{value}</p>
+      {hint && <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{hint}</p>}
     </div>
   );
 }

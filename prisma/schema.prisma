@@ -76,6 +76,7 @@ model Workspace {
   courses     Course[]
   webhookLogs WebhookLog[]
   collaborators Collaborator[]
+  transactions ProducerTransaction[]
 
   @@index([ownerId])
 }
@@ -423,6 +424,28 @@ enum WebhookLogStatus {
   SUCCESS
   ERROR
   IGNORED
+}
+
+model ProducerTransaction {
+  id            String   @id @default(uuid())
+  workspaceId   String
+  userId        String?
+  courseId       String?
+  amount        Float
+  currency      String   @default("BRL")
+  status        String
+  paymentMethod String?
+  externalId    String?  @unique
+  customerEmail String?
+  customerName  String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId])
+  @@index([status])
+  @@index([createdAt])
 }
 
 model IntegrationRequest {
