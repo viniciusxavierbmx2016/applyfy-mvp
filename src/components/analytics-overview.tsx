@@ -245,15 +245,15 @@ export function AnalyticsOverview({
             <AreaChart data={data.newEnrollmentsPerDay} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
               <defs>
                 <linearGradient id="enrollGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.4} />
-                  <stop offset="100%" stopColor="#3b82f6" stopOpacity={0} />
+                  <stop offset="0%" stopColor="#6366f1" stopOpacity={0.4} />
+                  <stop offset="100%" stopColor="#6366f1" stopOpacity={0} />
                 </linearGradient>
               </defs>
               <CartesianGrid stroke="currentColor" className="text-gray-200 dark:text-gray-800" strokeDasharray="3 3" vertical={false} />
               <XAxis dataKey="day" stroke="currentColor" className="text-gray-400" fontSize={11} tickLine={false} axisLine={false} interval="preserveStartEnd" minTickGap={28} />
               <YAxis stroke="currentColor" className="text-gray-400" fontSize={11} tickLine={false} axisLine={false} allowDecimals={false} />
-              <Tooltip content={<CustomTooltip color="#3b82f6" />} />
-              <Area type="monotone" dataKey="count" name="Matrículas" stroke="#3b82f6" strokeWidth={2.5} fill="url(#enrollGrad)" />
+              <Tooltip content={<CustomTooltip color="#6366f1" />} />
+              <Area type="monotone" dataKey="count" name="Matrículas" stroke="#6366f1" strokeWidth={2.5} fill="url(#enrollGrad)" />
             </AreaChart>
           </ResponsiveContainer>
         </ChartCard>
@@ -474,9 +474,9 @@ function KpiCard({
   const trendUp = delta != null && delta > 0;
   const trendDown = delta != null && delta < 0;
   return (
-    <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-4 sm:p-5 hover:shadow-md hover:border-gray-300 dark:hover:border-gray-700 transition">
+    <div className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.06] rounded-xl p-4 sm:p-5 hover:border-gray-300 dark:hover:border-white/[0.1] transition-all duration-200">
       <div className="flex items-center justify-between">
-        <span className={`inline-flex items-center justify-center w-8 h-8 rounded-lg ${a.bg} ${a.text}`}>
+        <span className={`inline-flex items-center justify-center w-10 h-10 rounded-lg ${a.bg} ${a.text}`}>
           {icon}
         </span>
         {delta != null && (
@@ -487,7 +487,7 @@ function KpiCard({
           </span>
         )}
       </div>
-      <p className="mt-3 text-[11px] font-medium uppercase tracking-wider text-gray-500">{label}</p>
+      <p className="mt-4 text-[11px] font-medium uppercase tracking-widest text-gray-500">{label}</p>
       <p className={`mt-1 text-2xl sm:text-3xl font-bold ${a.text}`}>{value}</p>
       {hint && <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{hint}</p>}
     </div>
@@ -496,9 +496,9 @@ function KpiCard({
 
 function ChartCard({ title, subtitle, children }: { title: string; subtitle?: string; children: React.ReactNode }) {
   return (
-    <section className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-4 sm:p-6">
+    <section className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.06] rounded-xl p-4 sm:p-6">
       <div className="mb-4">
-        <h2 className="text-sm font-semibold text-gray-900 dark:text-white">{title}</h2>
+        <h2 className="text-base font-semibold text-gray-900 dark:text-white">{title}</h2>
         {subtitle && <p className="text-xs text-gray-500 mt-0.5">{subtitle}</p>}
       </div>
       {children}
@@ -508,9 +508,9 @@ function ChartCard({ title, subtitle, children }: { title: string; subtitle?: st
 
 function SectionCard({ title, subtitle, children }: { title: string; subtitle?: string; children: React.ReactNode }) {
   return (
-    <section className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-4 sm:p-6">
+    <section className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.06] rounded-xl p-4 sm:p-6">
       <div className="mb-4">
-        <h2 className="text-sm font-semibold text-gray-900 dark:text-white">{title}</h2>
+        <h2 className="text-base font-semibold text-gray-900 dark:text-white">{title}</h2>
         {subtitle && <p className="text-xs text-gray-500 mt-0.5">{subtitle}</p>}
       </div>
       {children}

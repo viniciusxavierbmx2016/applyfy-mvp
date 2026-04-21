@@ -284,7 +284,7 @@ export default function ProducerSubscriptionPage({
 
       {!sub ? (
         /* No subscription — create form */
-        <section className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6 space-y-4">
+        <section className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.06] rounded-2xl p-6 space-y-4">
           <div className="flex items-center gap-2">
             <h2 className="text-sm font-semibold text-gray-900 dark:text-white">
               Sem assinatura ativa
@@ -346,7 +346,7 @@ export default function ProducerSubscriptionPage({
       ) : (
         <>
           {/* Plan card */}
-          <section className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6 space-y-4">
+          <section className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.06] rounded-2xl p-6 space-y-4">
             <div className="flex items-start justify-between flex-wrap gap-3">
               <div>
                 <div className="flex items-center gap-2">
@@ -409,7 +409,7 @@ export default function ProducerSubscriptionPage({
 
             {/* Actions */}
             {allActions.length > 0 && (
-              <div className="flex flex-wrap gap-2 pt-3 border-t border-gray-100 dark:border-gray-800">
+              <div className="flex flex-wrap gap-2 pt-3 border-t border-gray-100 dark:border-white/[0.04]">
                 {allActions.map(({ action, label, variant }) => (
                   <button
                     key={action}
@@ -430,7 +430,7 @@ export default function ProducerSubscriptionPage({
           </section>
 
           {/* Usage */}
-          <section className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6 space-y-4">
+          <section className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.06] rounded-2xl p-6 space-y-4">
             <h3 className="text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wider">
               Uso atual
             </h3>
@@ -447,8 +447,8 @@ export default function ProducerSubscriptionPage({
           </section>
 
           {/* Invoices */}
-          <section className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden">
-            <div className="px-6 py-4 border-b border-gray-100 dark:border-gray-800">
+          <section className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.06] rounded-2xl overflow-hidden">
+            <div className="px-6 py-4 border-b border-gray-100 dark:border-white/[0.04]">
               <h3 className="text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wider">
                 Faturas
               </h3>
@@ -461,7 +461,7 @@ export default function ProducerSubscriptionPage({
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="text-left text-xs uppercase tracking-wider text-gray-500 border-b border-gray-100 dark:border-gray-800">
+                    <tr className="text-left text-[11px] uppercase tracking-widest text-gray-500 border-b border-gray-200 dark:border-white/[0.06]">
                       <th className="px-6 py-3 font-medium">Data</th>
                       <th className="px-6 py-3 font-medium">Vencimento</th>
                       <th className="px-6 py-3 font-medium">Valor</th>
@@ -472,7 +472,7 @@ export default function ProducerSubscriptionPage({
                     {sub.invoices.map((inv) => {
                       const s = INVOICE_STATUS[inv.status] || { label: inv.status, cls: "" };
                       return (
-                        <tr key={inv.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/40">
+                        <tr key={inv.id} className="border-b border-gray-100 dark:border-white/[0.04] last:border-0 hover:bg-gray-50 dark:hover:bg-white/[0.02] transition-colors duration-150">
                           <td className="px-6 py-3 text-gray-900 dark:text-white">
                             {fmtDate(inv.paidAt || inv.createdAt)}
                           </td>
@@ -501,7 +501,7 @@ export default function ProducerSubscriptionPage({
       {/* Action modal */}
       {modal?.open && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6 w-full max-w-md space-y-4">
+          <div className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.06] rounded-2xl p-6 w-full max-w-md space-y-4">
             <h3 className="text-lg font-bold text-gray-900 dark:text-white">
               {actionTitle(modal.action)}
             </h3>
@@ -587,7 +587,7 @@ export default function ProducerSubscriptionPage({
 }
 
 const inputCls =
-  "w-full bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500";
+  "w-full bg-gray-50 dark:bg-white/[0.04] border border-gray-300 dark:border-white/[0.08] rounded-xl px-4 py-3 text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/20 transition-all duration-200";
 
 function StatusBadge({ status, exempt }: { status: string; exempt: boolean }) {
   const cfg = STATUS_CONFIG[status];

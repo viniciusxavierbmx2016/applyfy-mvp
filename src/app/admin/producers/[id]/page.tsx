@@ -129,7 +129,7 @@ export default function ProducerDetailPage({
       </Link>
 
       {/* Producer header */}
-      <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-6 flex flex-col sm:flex-row gap-4 sm:items-center sm:justify-between">
+      <div className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.06] rounded-xl p-6 flex flex-col sm:flex-row gap-4 sm:items-center sm:justify-between">
         <div className="flex items-center gap-4">
           {data.producer.avatarUrl ? (
             <img
@@ -178,8 +178,8 @@ export default function ProducerDetailPage({
       </div>
 
       {/* Workspaces */}
-      <section className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-6">
-        <h2 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">
+      <section className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.06] rounded-xl p-6">
+        <h2 className="text-base font-semibold text-gray-900 dark:text-white mb-4">
           Workspaces
         </h2>
         {data.workspaces.length === 0 ? (
@@ -188,29 +188,29 @@ export default function ProducerDetailPage({
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-left border-b border-gray-200 dark:border-gray-800 text-xs uppercase tracking-wider text-gray-500">
-                  <th className="py-2 pr-4 font-medium">Nome</th>
-                  <th className="py-2 pr-4 font-medium">Slug</th>
-                  <th className="py-2 pr-4 font-medium">Cursos</th>
-                  <th className="py-2 pr-4 font-medium">Alunos</th>
-                  <th className="py-2 pr-4 font-medium">Status</th>
-                  <th className="py-2 pr-4 font-medium"></th>
+                <tr className="text-left border-b border-gray-200 dark:border-white/[0.06] text-[11px] uppercase tracking-widest text-gray-500">
+                  <th className="py-3 px-4 font-medium">Nome</th>
+                  <th className="py-3 px-4 font-medium">Slug</th>
+                  <th className="py-3 px-4 font-medium">Cursos</th>
+                  <th className="py-3 px-4 font-medium">Alunos</th>
+                  <th className="py-3 px-4 font-medium">Status</th>
+                  <th className="py-3 px-4 font-medium"></th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+              <tbody>
                 {data.workspaces.map((w) => (
-                  <tr key={w.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/40">
-                    <td className="py-3 pr-4 text-gray-900 dark:text-white font-medium">
+                  <tr key={w.id} className="border-b border-gray-100 dark:border-white/[0.04] last:border-0 hover:bg-gray-50 dark:hover:bg-white/[0.02] transition-colors duration-150">
+                    <td className="py-4 px-4 text-gray-900 dark:text-white font-medium">
                       {w.name}
                     </td>
-                    <td className="py-3 pr-4 text-gray-500">{w.slug}</td>
-                    <td className="py-3 pr-4 text-gray-700 dark:text-gray-300">
+                    <td className="py-4 px-4 text-gray-500">{w.slug}</td>
+                    <td className="py-4 px-4 text-gray-700 dark:text-gray-300">
                       {w.courseCount}
                     </td>
-                    <td className="py-3 pr-4 text-gray-700 dark:text-gray-300">
+                    <td className="py-4 px-4 text-gray-700 dark:text-gray-300">
                       {w.studentCount}
                     </td>
-                    <td className="py-3 pr-4">
+                    <td className="py-4 px-4">
                       <span
                         className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium ${
                           w.isActive
@@ -221,7 +221,7 @@ export default function ProducerDetailPage({
                         {w.isActive ? "Ativo" : "Inativo"}
                       </span>
                     </td>
-                    <td className="py-3 pr-4 text-right">
+                    <td className="py-4 px-4 text-right">
                       <button
                         type="button"
                         onClick={() => accessWorkspace(w.id)}
@@ -239,8 +239,8 @@ export default function ProducerDetailPage({
       </section>
 
       {/* Courses */}
-      <section className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-6">
-        <h2 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">
+      <section className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.06] rounded-xl p-6">
+        <h2 className="text-base font-semibold text-gray-900 dark:text-white mb-4">
           Cursos
         </h2>
         {data.courses.length === 0 ? (
@@ -298,8 +298,8 @@ function Card({
   accent: string;
 }) {
   return (
-    <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-5">
-      <p className="text-xs font-medium uppercase tracking-wider text-gray-500">
+    <div className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.06] rounded-xl p-5 hover:border-gray-300 dark:hover:border-white/[0.1] transition-all duration-200">
+      <p className="text-[11px] font-medium uppercase tracking-widest text-gray-500">
         {label}
       </p>
       <p className={`mt-2 text-3xl font-bold ${accent}`}>{value}</p>

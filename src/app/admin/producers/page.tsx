@@ -114,14 +114,14 @@ export default function AdminProducersPage() {
             if (e.key === "Enter") loadData(query);
           }}
           placeholder="Buscar por nome ou email…"
-          className="flex-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="flex-1 bg-white dark:bg-white/[0.04] border border-gray-300 dark:border-white/[0.08] rounded-xl px-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/20 transition-all duration-200"
         />
         <Button size="sm" onClick={() => loadData(query)}>
           Buscar
         </Button>
       </div>
 
-      <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden">
+      <div className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.06] rounded-xl overflow-hidden">
         {loading ? (
           <div className="p-4 space-y-2">
             {Array.from({ length: 6 }).map((_, i) => (
@@ -136,7 +136,7 @@ export default function AdminProducersPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-left border-b border-gray-200 dark:border-gray-800 text-xs uppercase tracking-wider text-gray-500">
+                <tr className="text-left border-b border-gray-200 dark:border-white/[0.06] text-[11px] uppercase tracking-widest text-gray-500">
                   <th className="py-3 px-4 font-medium">Produtor</th>
                   <th className="py-3 px-4 font-medium">Cadastro</th>
                   <th className="py-3 px-4 font-medium">Workspaces</th>
@@ -147,13 +147,13 @@ export default function AdminProducersPage() {
                   <th className="py-3 px-4 font-medium text-right">Ações</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+              <tbody>
                 {filtered.map((p) => (
                   <tr
                     key={p.id}
-                    className="hover:bg-gray-50 dark:hover:bg-gray-800/40"
+                    className="border-b border-gray-100 dark:border-white/[0.04] last:border-0 hover:bg-gray-50 dark:hover:bg-white/[0.02] transition-colors duration-150"
                   >
-                    <td className="py-3 px-4">
+                    <td className="py-4 px-4">
                       <div className="flex items-center gap-3">
                         {p.avatarUrl ? (
                           <img
@@ -202,7 +202,7 @@ export default function AdminProducersPage() {
                         <span className="text-xs text-gray-500">Free</span>
                       )}
                     </td>
-                    <td className="py-3 px-4">
+                    <td className="py-4 px-4">
                       <StatusPill status={p.status} />
                     </td>
                     <td className="py-3 px-4 text-right">
@@ -258,8 +258,8 @@ function MetricCard({
   accent: string;
 }) {
   return (
-    <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-5">
-      <p className="text-xs font-medium uppercase tracking-wider text-gray-500">
+    <div className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.06] rounded-xl p-5 hover:border-gray-300 dark:hover:border-white/[0.1] transition-all duration-200">
+      <p className="text-[11px] font-medium uppercase tracking-widest text-gray-500">
         {label}
       </p>
       <p className={`mt-2 text-3xl font-bold ${accent}`}>{value}</p>
@@ -270,17 +270,12 @@ function MetricCard({
 function StatusPill({ status }: { status: "ACTIVE" | "SUSPENDED" }) {
   return (
     <span
-      className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium ${
+      className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium border ${
         status === "ACTIVE"
-          ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-          : "bg-rose-500/10 text-rose-600 dark:text-rose-400"
+          ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
+          : "bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20"
       }`}
     >
-      <span
-        className={`w-1.5 h-1.5 rounded-full ${
-          status === "ACTIVE" ? "bg-emerald-500" : "bg-rose-500"
-        }`}
-      />
       {status === "ACTIVE" ? "Ativo" : "Suspenso"}
     </span>
   );

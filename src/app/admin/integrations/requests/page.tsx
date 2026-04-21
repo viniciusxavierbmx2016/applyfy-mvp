@@ -205,20 +205,20 @@ export default function AdminIntegrationRequestsPage() {
           </div>
 
           {/* Desktop table */}
-          <div className="hidden sm:block rounded-xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 overflow-hidden">
+          <div className="hidden sm:block rounded-xl bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.06] overflow-hidden">
             <table className="w-full text-sm">
-              <thead className="bg-gray-50 dark:bg-gray-950/50 text-gray-600 dark:text-gray-400">
-                <tr>
-                  <th className="text-left font-medium px-4 py-3">Gateway</th>
-                  <th className="text-left font-medium px-4 py-3">Email</th>
-                  <th className="text-left font-medium px-4 py-3">Observações</th>
-                  <th className="text-left font-medium px-4 py-3">Data</th>
-                  <th className="text-left font-medium px-4 py-3">Status</th>
+              <thead>
+                <tr className="border-b border-gray-200 dark:border-white/[0.06]">
+                  <th className="text-left px-4 py-3 text-[11px] uppercase tracking-widest text-gray-500 font-medium">Gateway</th>
+                  <th className="text-left px-4 py-3 text-[11px] uppercase tracking-widest text-gray-500 font-medium">Email</th>
+                  <th className="text-left px-4 py-3 text-[11px] uppercase tracking-widest text-gray-500 font-medium">Observações</th>
+                  <th className="text-left px-4 py-3 text-[11px] uppercase tracking-widest text-gray-500 font-medium">Data</th>
+                  <th className="text-left px-4 py-3 text-[11px] uppercase tracking-widest text-gray-500 font-medium">Status</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
+              <tbody>
                 {filtered.map((r) => (
-                  <tr key={r.id} className="align-top">
+                  <tr key={r.id} className="align-top border-b border-gray-100 dark:border-white/[0.04] last:border-0 hover:bg-gray-50 dark:hover:bg-white/[0.02] transition-colors duration-150">
                     <td className="px-4 py-3 font-medium text-gray-900 dark:text-white whitespace-nowrap">
                       {r.gateway}
                     </td>

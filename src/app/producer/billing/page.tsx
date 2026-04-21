@@ -256,7 +256,7 @@ function BillingContent() {
           {plans.map((plan) => (
             <div
               key={plan.id}
-              className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6 space-y-4"
+              className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.06] rounded-2xl p-6 space-y-4"
             >
               <div className="flex items-start justify-between">
                 <div>
@@ -294,7 +294,7 @@ function BillingContent() {
         /* Has subscription */
         <>
           {/* Plan card */}
-          <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6 space-y-4">
+          <div className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.06] rounded-2xl p-6 space-y-4">
             <div className="flex items-start justify-between flex-wrap gap-3">
               <div>
                 <div className="flex items-center gap-2">
@@ -328,7 +328,7 @@ function BillingContent() {
             )}
 
             {/* Actions */}
-            <div className="flex flex-wrap gap-3 pt-2 border-t border-gray-100 dark:border-gray-800">
+            <div className="flex flex-wrap gap-3 pt-2 border-t border-gray-100 dark:border-white/[0.04]">
               {(sub.status === "ACTIVE" || sub.status === "PAST_DUE") && !sub.exempt && (
                 <button
                   onClick={handleCancel}
@@ -360,7 +360,7 @@ function BillingContent() {
           </div>
 
           {/* Usage bars */}
-          <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6 space-y-4">
+          <div className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.06] rounded-2xl p-6 space-y-4">
             <h3 className="text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wider">Uso atual</h3>
             <UsageBar
               label="Workspaces"
@@ -375,8 +375,8 @@ function BillingContent() {
           </div>
 
           {/* Invoices */}
-          <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden">
-            <div className="px-6 py-4 border-b border-gray-100 dark:border-gray-800">
+          <div className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.06] rounded-2xl overflow-hidden">
+            <div className="px-6 py-4 border-b border-gray-100 dark:border-white/[0.04]">
               <h3 className="text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wider">Histórico de faturas</h3>
             </div>
             {sub.invoices.length === 0 ? (
@@ -386,10 +386,10 @@ function BillingContent() {
             ) : (
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="text-left text-xs uppercase tracking-wider text-gray-500 border-b border-gray-100 dark:border-gray-800">
-                    <th className="px-6 py-3">Data</th>
-                    <th className="px-6 py-3">Valor</th>
-                    <th className="px-6 py-3">Status</th>
+                  <tr className="text-left text-[11px] uppercase tracking-widest text-gray-500 border-b border-gray-200 dark:border-white/[0.06]">
+                    <th className="px-6 py-3 font-medium">Data</th>
+                    <th className="px-6 py-3 font-medium">Valor</th>
+                    <th className="px-6 py-3 font-medium">Status</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100 dark:divide-gray-800">

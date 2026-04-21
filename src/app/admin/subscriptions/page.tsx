@@ -56,11 +56,11 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 const STATUS_COLORS: Record<string, string> = {
-  ACTIVE: "bg-green-500/10 text-green-600 dark:text-green-400",
-  PENDING: "bg-blue-500/10 text-blue-600 dark:text-blue-400",
-  PAST_DUE: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
-  SUSPENDED: "bg-red-500/10 text-red-600 dark:text-red-400",
-  CANCELLED: "bg-gray-500/10 text-gray-500",
+  ACTIVE: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20",
+  PENDING: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20",
+  PAST_DUE: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20",
+  SUSPENDED: "bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20",
+  CANCELLED: "bg-gray-500/10 text-gray-500 border border-gray-500/20",
 };
 
 type ActionType = "activate" | "suspend" | "cancel" | "reactivate" | "exempt" | "remove_exempt" | "extend" | "change_plan";
@@ -244,7 +244,7 @@ export default function AdminSubscriptionsPage() {
         <select
           value={statusFilter}
           onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
-          className="px-3 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="px-3 py-2 bg-white dark:bg-white/[0.04] border border-gray-300 dark:border-white/[0.08] rounded-xl text-sm text-gray-900 dark:text-gray-300 focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/20 transition-all duration-200"
         >
           <option value="">Todos os status</option>
           {Object.entries(STATUS_LABELS).map(([k, v]) => (
@@ -254,7 +254,7 @@ export default function AdminSubscriptionsPage() {
         <select
           value={planFilter}
           onChange={(e) => { setPlanFilter(e.target.value); setPage(1); }}
-          className="px-3 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="px-3 py-2 bg-white dark:bg-white/[0.04] border border-gray-300 dark:border-white/[0.08] rounded-xl text-sm text-gray-900 dark:text-gray-300 focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/20 transition-all duration-200"
         >
           <option value="">Todos os planos</option>
           {plans.map((p) => (
@@ -264,20 +264,20 @@ export default function AdminSubscriptionsPage() {
       </div>
 
       {/* Table */}
-      <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden">
+      <div className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.06] rounded-xl overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-gray-200 dark:border-gray-800 text-left text-xs uppercase tracking-wider text-gray-500">
-                <th className="px-4 py-3">Produtor</th>
-                <th className="px-4 py-3">Plano</th>
-                <th className="px-4 py-3">Status</th>
-                <th className="px-4 py-3 hidden sm:table-cell">Vencimento</th>
-                <th className="px-4 py-3 hidden sm:table-cell">Valor</th>
-                <th className="px-4 py-3 text-right">Ações</th>
+              <tr className="border-b border-gray-200 dark:border-white/[0.06] text-left text-[11px] uppercase tracking-widest text-gray-500">
+                <th className="px-4 py-3 font-medium">Produtor</th>
+                <th className="px-4 py-3 font-medium">Plano</th>
+                <th className="px-4 py-3 font-medium">Status</th>
+                <th className="px-4 py-3 hidden sm:table-cell font-medium">Vencimento</th>
+                <th className="px-4 py-3 hidden sm:table-cell font-medium">Valor</th>
+                <th className="px-4 py-3 text-right font-medium">Ações</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+            <tbody>
               {loading ? (
                 Array.from({ length: 5 }).map((_, i) => (
                   <tr key={i}>
@@ -300,7 +300,7 @@ export default function AdminSubscriptionsPage() {
                       (a.action !== "remove_exempt" || s.exempt)
                   );
                   return (
-                    <tr key={s.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition">
+                    <tr key={s.id} className="border-b border-gray-100 dark:border-white/[0.04] last:border-0 hover:bg-gray-50 dark:hover:bg-white/[0.02] transition-colors duration-150">
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-3">
                           {s.user.avatarUrl ? (
@@ -396,7 +396,7 @@ export default function AdminSubscriptionsPage() {
                   type="text"
                   value={actionInput}
                   onChange={(e) => setActionInput(e.target.value)}
-                  className="w-full px-3 py-2 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-3 bg-gray-50 dark:bg-white/[0.04] border border-gray-300 dark:border-white/[0.08] rounded-xl text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/20 transition-all duration-200"
                   placeholder="Ex: Parceiro estratégico"
                   autoFocus
                 />
@@ -411,7 +411,7 @@ export default function AdminSubscriptionsPage() {
                   min={1}
                   value={actionInput}
                   onChange={(e) => setActionInput(e.target.value)}
-                  className="w-full px-3 py-2 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-3 bg-gray-50 dark:bg-white/[0.04] border border-gray-300 dark:border-white/[0.08] rounded-xl text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/20 transition-all duration-200"
                   placeholder="30"
                   autoFocus
                 />
@@ -424,7 +424,7 @@ export default function AdminSubscriptionsPage() {
                 <select
                   value={actionInput}
                   onChange={(e) => setActionInput(e.target.value)}
-                  className="w-full px-3 py-2 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-3 bg-gray-50 dark:bg-white/[0.04] border border-gray-300 dark:border-white/[0.08] rounded-xl text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/20 transition-all duration-200"
                 >
                   <option value="">Selecione...</option>
                   {plans
@@ -480,8 +480,8 @@ function StatCard({ label, value, color }: { label: string; value: string; color
     gray: "text-gray-600 dark:text-gray-400",
   };
   return (
-    <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4">
-      <p className="text-xs text-gray-500 uppercase tracking-wider">{label}</p>
+    <div className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.06] rounded-xl p-4 hover:border-gray-300 dark:hover:border-white/[0.1] transition-all duration-200">
+      <p className="text-[11px] text-gray-500 uppercase tracking-widest font-medium">{label}</p>
       <p className={`text-xl font-bold mt-1 ${colors[color] || ""}`}>{value}</p>
     </div>
   );

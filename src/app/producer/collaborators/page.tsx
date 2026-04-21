@@ -37,10 +37,10 @@ const STATUS_LABEL: Record<CollaboratorItem["status"], string> = {
 };
 const STATUS_STYLE: Record<CollaboratorItem["status"], string> = {
   PENDING:
-    "bg-amber-100 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400",
+    "bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20",
   ACCEPTED:
-    "bg-emerald-100 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",
-  REVOKED: "bg-gray-100 dark:bg-white/5 text-gray-500",
+    "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20",
+  REVOKED: "bg-gray-500/10 text-gray-500 border border-gray-500/20",
 };
 
 export default function AdminCollaboratorsPage() {
@@ -124,7 +124,7 @@ export default function AdminCollaboratorsPage() {
             setEditing(null);
             setShowModal(true);
           }}
-          className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium rounded-lg transition-colors"
+          className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-xl shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/30 transition-all"
         >
           Convidar colaborador
         </button>
@@ -155,27 +155,27 @@ export default function AdminCollaboratorsPage() {
           <p className="text-gray-500">Nenhum colaborador convidado ainda.</p>
         </div>
       ) : (
-        <div className="bg-white dark:bg-white/5 border border-gray-200/70 dark:border-white/5 rounded-2xl overflow-x-auto">
+        <div className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.06] rounded-xl overflow-x-auto">
           <table className="w-full text-sm min-w-[640px]">
-            <thead className="bg-gray-50 dark:bg-white/[0.03] text-xs uppercase tracking-wider text-gray-500">
-              <tr>
-                <th className="text-left px-5 py-3 font-semibold">Pessoa</th>
-                <th className="text-left px-5 py-3 font-semibold">Status</th>
-                <th className="text-left px-5 py-3 font-semibold">Permissões</th>
-                <th className="text-left px-5 py-3 font-semibold">Cursos</th>
-                <th className="text-right px-5 py-3 font-semibold">Ações</th>
+            <thead>
+              <tr className="border-b border-gray-200 dark:border-white/[0.06]">
+                <th className="text-left px-4 py-3 text-[11px] uppercase tracking-widest text-gray-500 font-medium">Pessoa</th>
+                <th className="text-left px-4 py-3 text-[11px] uppercase tracking-widest text-gray-500 font-medium">Status</th>
+                <th className="text-left px-4 py-3 text-[11px] uppercase tracking-widest text-gray-500 font-medium">Permissões</th>
+                <th className="text-left px-4 py-3 text-[11px] uppercase tracking-widest text-gray-500 font-medium">Cursos</th>
+                <th className="text-right px-4 py-3 text-[11px] uppercase tracking-widest text-gray-500 font-medium">Ações</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100 dark:divide-white/5">
+            <tbody>
               {items.map((c) => (
-                <tr key={c.id}>
-                  <td className="px-5 py-4">
+                <tr key={c.id} className="border-b border-gray-100 dark:border-white/[0.04] last:border-0 hover:bg-gray-50 dark:hover:bg-white/[0.02] transition-colors duration-150">
+                  <td className="px-4 py-4">
                     <div className="font-medium text-gray-900 dark:text-white">
                       {c.user?.name || c.name || c.email}
                     </div>
                     <div className="text-xs text-gray-500">{c.email}</div>
                   </td>
-                  <td className="px-5 py-4">
+                  <td className="px-4 py-4">
                     <span
                       className={`text-xs font-semibold px-2 py-1 rounded-full ${STATUS_STYLE[c.status]}`}
                     >
@@ -191,21 +191,21 @@ export default function AdminCollaboratorsPage() {
                       ? "Todos"
                       : `${c.courseIds.length} curso${c.courseIds.length === 1 ? "" : "s"}`}
                   </td>
-                  <td className="px-5 py-4">
+                  <td className="px-4 py-4">
                     <div className="flex items-center gap-1.5 justify-end">
                       <button
                         onClick={() => {
                           setEditing(c);
                           setShowModal(true);
                         }}
-                        className="px-2.5 py-1 text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/10 rounded-md"
+                        className="px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-300 bg-white/[0.06] hover:bg-white/[0.1] rounded-lg border border-gray-200 dark:border-white/[0.08] transition"
                       >
                         Editar
                       </button>
                       {c.status === "PENDING" && (
                         <button
                           onClick={() => handleResend(c.id)}
-                          className="px-2.5 py-1 text-xs font-medium text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-500/10 rounded-md"
+                          className="px-3 py-1.5 text-xs font-medium text-blue-600 dark:text-blue-400 bg-white/[0.06] hover:bg-white/[0.1] rounded-lg border border-gray-200 dark:border-white/[0.08] transition"
                         >
                           Reenviar
                         </button>
@@ -213,14 +213,14 @@ export default function AdminCollaboratorsPage() {
                       {c.status !== "REVOKED" && (
                         <button
                           onClick={() => handleRevoke(c.id)}
-                          className="px-2.5 py-1 text-xs font-medium text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-500/10 rounded-md"
+                          className="px-3 py-1.5 text-xs font-medium text-amber-600 dark:text-amber-400 bg-amber-500/5 hover:bg-amber-500/10 rounded-lg border border-amber-500/20 transition"
                         >
                           Revogar
                         </button>
                       )}
                       <button
                         onClick={() => handleDelete(c.id)}
-                        className="px-2.5 py-1 text-xs font-medium text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-md"
+                        className="px-3 py-1.5 text-xs font-medium text-red-600 dark:text-red-400 bg-red-500/10 hover:bg-red-500/20 rounded-lg border border-red-500/20 transition"
                       >
                         Remover
                       </button>

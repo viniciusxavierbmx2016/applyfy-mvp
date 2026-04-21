@@ -119,8 +119,8 @@ export default function AdminDashboardPage() {
       </div>
 
       {/* Revenue section */}
-      <section className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-6">
-        <h2 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">
+      <section className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.06] rounded-xl p-6">
+        <h2 className="text-base font-semibold text-gray-900 dark:text-white mb-4">
           Receita da plataforma
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
@@ -149,9 +149,9 @@ export default function AdminDashboardPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Recent producers */}
-        <section className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-6">
+        <section className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.06] rounded-xl p-6">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-sm font-semibold text-gray-900 dark:text-white">
+            <h2 className="text-base font-semibold text-gray-900 dark:text-white">
               Últimos produtores cadastrados
             </h2>
             <Link
@@ -164,26 +164,26 @@ export default function AdminDashboardPage() {
           {data.recentProducers.length === 0 ? (
             <p className="text-sm text-gray-500">Sem produtores ainda.</p>
           ) : (
-            <ul className="divide-y divide-gray-100 dark:divide-gray-800">
+            <ul>
               {data.recentProducers.map((p) => (
-                <li key={p.id}>
+                <li key={p.id} className="border-b border-gray-100 dark:border-white/[0.04] last:border-0">
                   <Link
                     href={`/admin/producers/${p.id}`}
-                    className="flex items-center gap-3 py-3 hover:bg-gray-50 dark:hover:bg-gray-800/40 -mx-2 px-2 rounded-lg"
+                    className="flex items-center gap-3 py-3 hover:bg-gray-50 dark:hover:bg-white/[0.02] -mx-2 px-2 rounded-lg transition-colors duration-150"
                   >
                     {p.avatarUrl ? (
                       <img
                         src={p.avatarUrl}
                         alt={p.name}
-                        className="w-8 h-8 rounded-full object-cover"
+                        className="w-9 h-9 rounded-full object-cover"
                       />
                     ) : (
-                      <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-semibold">
+                      <div className="w-9 h-9 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-semibold">
                         {p.name.charAt(0).toUpperCase()}
                       </div>
                     )}
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm text-gray-900 dark:text-white truncate">
+                      <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
                         {p.name}
                       </p>
                       <p className="text-xs text-gray-500 truncate">{p.email}</p>
@@ -199,19 +199,19 @@ export default function AdminDashboardPage() {
         </section>
 
         {/* Top producers */}
-        <section className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-6">
-          <h2 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">
+        <section className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.06] rounded-xl p-6">
+          <h2 className="text-base font-semibold text-gray-900 dark:text-white mb-4">
             Top 5 produtores (mais alunos)
           </h2>
           {data.topProducers.length === 0 ? (
             <p className="text-sm text-gray-500">Sem dados ainda.</p>
           ) : (
-            <ul className="divide-y divide-gray-100 dark:divide-gray-800">
+            <ul>
               {data.topProducers.map((p, i) => (
-                <li key={p.id}>
+                <li key={p.id} className="border-b border-gray-100 dark:border-white/[0.04] last:border-0">
                   <Link
                     href={`/admin/producers/${p.id}`}
-                    className="flex items-center gap-3 py-3 hover:bg-gray-50 dark:hover:bg-gray-800/40 -mx-2 px-2 rounded-lg"
+                    className="flex items-center gap-3 py-3 hover:bg-gray-50 dark:hover:bg-white/[0.02] -mx-2 px-2 rounded-lg transition-colors duration-150"
                   >
                     <span className="w-6 text-center text-xs font-semibold text-gray-500">
                       {i + 1}
@@ -220,15 +220,15 @@ export default function AdminDashboardPage() {
                       <img
                         src={p.avatarUrl}
                         alt={p.name}
-                        className="w-8 h-8 rounded-full object-cover"
+                        className="w-9 h-9 rounded-full object-cover"
                       />
                     ) : (
-                      <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-semibold">
+                      <div className="w-9 h-9 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-semibold">
                         {p.name.charAt(0).toUpperCase()}
                       </div>
                     )}
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm text-gray-900 dark:text-white truncate">
+                      <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
                         {p.name}
                       </p>
                       <p className="text-xs text-gray-500 truncate">{p.email}</p>
@@ -259,8 +259,8 @@ function Card({
   href?: string;
 }) {
   const content = (
-    <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-5 transition hover:border-gray-400 dark:hover:border-gray-700 h-full">
-      <p className="text-xs font-medium uppercase tracking-wider text-gray-500">
+    <div className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.06] rounded-xl p-5 transition-all duration-200 hover:border-gray-300 dark:hover:border-white/[0.1] h-full">
+      <p className="text-[11px] font-medium uppercase tracking-widest text-gray-500">
         {label}
       </p>
       <p className={`mt-2 text-3xl font-bold ${accent}`}>{value}</p>
@@ -286,7 +286,7 @@ function MetricBlock({
 }) {
   return (
     <div>
-      <p className="text-xs font-medium uppercase tracking-wider text-gray-500">
+      <p className="text-[11px] font-medium uppercase tracking-widest text-gray-500">
         {label}
       </p>
       <p className={`mt-1 text-2xl font-bold ${accent}`}>{value}</p>

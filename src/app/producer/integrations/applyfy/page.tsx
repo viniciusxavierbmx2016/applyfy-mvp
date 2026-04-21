@@ -219,7 +219,7 @@ export default function AdminIntegrationsPage() {
       ) : (
         <div className="space-y-6">
           {/* Webhook Applyfy */}
-          <section className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-5 sm:p-6">
+          <section className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.06] rounded-xl p-5 sm:p-6">
             <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
               <div>
                 <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
@@ -302,7 +302,7 @@ export default function AdminIntegrationsPage() {
           </section>
 
           {/* Mapeamento de Produtos */}
-          <section className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-5 sm:p-6">
+          <section className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.06] rounded-xl p-5 sm:p-6">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">
               Mapeamento de Produtos
             </h2>
@@ -369,7 +369,7 @@ export default function AdminIntegrationsPage() {
           </section>
 
           {/* Histórico de Webhooks */}
-          <section className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-5 sm:p-6">
+          <section className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.06] rounded-xl p-5 sm:p-6">
             <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
               <div>
                 <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
@@ -456,12 +456,12 @@ export default function AdminIntegrationsPage() {
                 <div className="hidden sm:block overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
-                      <tr className="text-left text-xs uppercase tracking-wide text-gray-500 border-b border-gray-200 dark:border-gray-800">
-                        <th className="py-2 pr-3 font-medium">Evento</th>
-                        <th className="py-2 px-3 font-medium">Email</th>
-                        <th className="py-2 px-3 font-medium">externalId</th>
-                        <th className="py-2 px-3 font-medium">Status</th>
-                        <th className="py-2 pl-3 font-medium text-right">
+                      <tr className="text-left text-[11px] uppercase tracking-widest text-gray-500 border-b border-gray-200 dark:border-white/[0.06]">
+                        <th className="py-3 pr-3 px-4 font-medium">Evento</th>
+                        <th className="py-3 px-3 font-medium">Email</th>
+                        <th className="py-3 px-3 font-medium">externalId</th>
+                        <th className="py-3 px-3 font-medium">Status</th>
+                        <th className="py-3 pl-3 px-4 font-medium text-right">
                           Quando
                         </th>
                       </tr>
@@ -470,7 +470,7 @@ export default function AdminIntegrationsPage() {
                       {logs.map((l) => (
                         <tr
                           key={l.id}
-                          className="border-b border-gray-100 dark:border-gray-800/60 last:border-0"
+                          className="border-b border-gray-100 dark:border-white/[0.04] last:border-0 hover:bg-gray-50 dark:hover:bg-white/[0.02] transition-colors duration-150"
                         >
                           <td className="py-2 pr-3 font-mono text-xs text-gray-800 dark:text-gray-200 whitespace-nowrap">
                             {l.event}
@@ -505,7 +505,7 @@ export default function AdminIntegrationsPage() {
           </section>
 
           {/* Como configurar */}
-          <section className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-5 sm:p-6">
+          <section className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.06] rounded-xl p-5 sm:p-6">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
               Como configurar
             </h2>

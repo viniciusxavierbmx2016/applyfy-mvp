@@ -214,7 +214,7 @@ export default function CourseStudentsPage({
             setQ(e.target.value);
             setPage(1);
           }}
-          className="w-full sm:max-w-sm px-4 py-2.5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full sm:max-w-sm px-4 py-2.5 bg-white dark:bg-white/[0.04] border border-gray-300 dark:border-white/[0.08] rounded-xl text-gray-900 dark:text-white text-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/20 transition-all duration-200"
         />
       </div>
 
@@ -241,25 +241,25 @@ export default function CourseStudentsPage({
       ) : (
         <>
           {/* Desktop table */}
-          <div className="hidden md:block bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden">
+          <div className="hidden md:block bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.06] rounded-xl overflow-hidden">
             <table className="w-full text-sm">
-              <thead className="bg-gray-50 dark:bg-gray-800/60 text-left text-xs uppercase tracking-wider text-gray-600 dark:text-gray-400">
-                <tr>
-                  <th className="px-4 py-3">Aluno</th>
-                  <th className="px-4 py-3">Matrícula</th>
-                  <th className="px-4 py-3">Progresso</th>
-                  <th className="px-4 py-3">Aulas</th>
-                  <th className="px-4 py-3">Último acesso</th>
-                  <th className="px-4 py-3">Acesso</th>
-                  <th className="px-4 py-3 text-right">Ações</th>
+              <thead>
+                <tr className="border-b border-gray-200 dark:border-white/[0.06]">
+                  <th className="text-left px-4 py-3 text-[11px] uppercase tracking-widest text-gray-500 font-medium">Aluno</th>
+                  <th className="text-left px-4 py-3 text-[11px] uppercase tracking-widest text-gray-500 font-medium">Matrícula</th>
+                  <th className="text-left px-4 py-3 text-[11px] uppercase tracking-widest text-gray-500 font-medium">Progresso</th>
+                  <th className="text-left px-4 py-3 text-[11px] uppercase tracking-widest text-gray-500 font-medium">Aulas</th>
+                  <th className="text-left px-4 py-3 text-[11px] uppercase tracking-widest text-gray-500 font-medium">Último acesso</th>
+                  <th className="text-left px-4 py-3 text-[11px] uppercase tracking-widest text-gray-500 font-medium">Acesso</th>
+                  <th className="text-right px-4 py-3 text-[11px] uppercase tracking-widest text-gray-500 font-medium">Ações</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
+              <tbody>
                 {data.students.map((s) => {
                   const exp = formatExpiry(s.expiresAt);
                   return (
-                    <tr key={s.enrollmentId}>
-                      <td className="px-4 py-3">
+                    <tr key={s.enrollmentId} className="border-b border-gray-100 dark:border-white/[0.04] last:border-0 hover:bg-gray-50 dark:hover:bg-white/[0.02] transition-colors duration-150">
+                      <td className="px-4 py-4">
                         <div className="flex items-center gap-3">
                           <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden flex items-center justify-center flex-shrink-0">
                             {s.avatarUrl ? (
@@ -326,13 +326,13 @@ export default function CourseStudentsPage({
                         <div className="flex items-center gap-2 justify-end">
                           <button
                             onClick={() => handleResend(s.enrollmentId)}
-                            className="px-2.5 py-1.5 text-xs rounded bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200"
+                            className="px-3 py-1.5 text-xs font-medium rounded-lg bg-white/[0.06] hover:bg-white/[0.1] text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-white/[0.08] transition"
                           >
                             Reenviar
                           </button>
                           <button
                             onClick={() => handleRemove(s.enrollmentId)}
-                            className="px-2.5 py-1.5 text-xs rounded bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400"
+                            className="px-3 py-1.5 text-xs font-medium rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 border border-red-500/20 transition"
                           >
                             Remover
                           </button>
