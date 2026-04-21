@@ -34,10 +34,10 @@
 }
 
 .dark {
-  --card-border: 1px solid rgba(255, 255, 255, 0.06);
-  --card-bg: rgba(255, 255, 255, 0.03);
-  --card-hover-bg: rgba(255, 255, 255, 0.05);
-  --card-hover-border: 1px solid rgba(255, 255, 255, 0.1);
+  --card-border: 1px solid #1a1e2e;
+  --card-bg: #0a0e19;
+  --card-hover-bg: #0f1320;
+  --card-hover-border: 1px solid #1f2335;
 }
 
 @layer components {
