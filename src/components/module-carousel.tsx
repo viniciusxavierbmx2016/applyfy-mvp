@@ -88,7 +88,7 @@ export function ModuleCarousel({ title, modules }: Props) {
 
       <div
         ref={scrollerRef}
-        className="flex gap-3 sm:gap-4 overflow-x-auto snap-x snap-proximity scroll-smooth pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 overscroll-x-contain [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+        className="flex gap-3 sm:gap-4 overflow-x-auto snap-x snap-proximity pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 overscroll-x-contain [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
       >
         {modules.map((m) => (
           <ModuleCard key={m.id} mod={m} />
@@ -190,7 +190,7 @@ function ModuleCard({ mod }: { mod: CarouselModule }) {
     </div>
   );
 
-  const className = `group shrink-0 snap-start basis-[75%] sm:basis-[45%] md:basis-[35%] lg:basis-[28%] xl:basis-[22%] transition-all duration-300 ease-out ${
+  const className = `group shrink-0 snap-start basis-[75%] sm:basis-[45%] md:basis-[35%] lg:basis-[28%] xl:basis-[22%] transition-[transform,box-shadow] duration-300 ease-out ${
     mod.clickable ? "hover:scale-[1.05] hover:shadow-2xl hover:shadow-black/30 hover:z-10" : "cursor-not-allowed"
   }`;
 
