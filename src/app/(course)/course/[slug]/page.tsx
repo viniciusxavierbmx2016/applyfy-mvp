@@ -235,7 +235,7 @@ export default function CourseHomePage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-[var(--brand)] border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -290,7 +290,7 @@ export default function CourseHomePage() {
   const groups = groupBySection(course.modules, course.sections || []);
 
   return (
-    <div className="px-4 sm:px-6 lg:px-10 py-4 lg:py-6 max-w-[1400px] mx-auto w-full">
+    <div className="membership-area px-4 sm:px-6 lg:px-10 py-4 lg:py-6 max-w-[1400px] mx-auto w-full">
       {isStaffViewer && (
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3 px-4 py-2.5 rounded-lg border border-amber-200 dark:border-amber-900/40 bg-amber-50 dark:bg-amber-950/30 text-sm">
           <span className="text-amber-800 dark:text-amber-200 flex items-center gap-2">
@@ -322,13 +322,13 @@ export default function CourseHomePage() {
             className="object-cover"
             priority
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-white via-white/0 to-transparent dark:from-gray-950 dark:via-gray-950/0 dark:to-transparent" />
-          <div className="absolute inset-0 bg-gradient-to-r from-white/30 via-transparent to-white/30 dark:from-gray-950/40 dark:via-transparent dark:to-gray-950/40" />
+          <div className="absolute inset-0 bg-gradient-to-t from-white via-white/0 to-transparent dark:from-[var(--ground-0)] dark:via-[var(--ground-0)]/0 dark:to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-r from-white/30 via-transparent to-white/30 dark:from-[var(--ground-0)]/40 dark:via-transparent dark:to-[var(--ground-0)]/40" />
         </div>
       )}
 
       {/* Course header row */}
-      <div className={`mb-10 flex flex-col lg:flex-row lg:items-center gap-5 lg:gap-6 bg-white/80 dark:bg-white/5 backdrop-blur-xl border border-gray-200/70 dark:border-white/5 rounded-2xl p-5 shadow-sm shadow-black/[0.02] dark:shadow-none relative z-10 ${course.bannerUrl ? "-mt-16 sm:-mt-20" : ""}`}>
+      <div className={`mb-10 flex flex-col lg:flex-row lg:items-center gap-5 lg:gap-6 bg-white/80 dark:bg-[var(--ground-1)] border border-gray-200/70 dark:border-[var(--ground-3)] rounded-2xl p-5 shadow-sm shadow-black/[0.02] dark:shadow-none relative z-10 ${course.bannerUrl ? "-mt-16 sm:-mt-20" : ""}`}>
         <div className="flex items-center gap-4 min-w-0 flex-1">
           {course.thumbnail ? (
             <div className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0 ring-1 ring-black/5 dark:ring-white/10">
@@ -341,12 +341,15 @@ export default function CourseHomePage() {
               />
             </div>
           ) : (
-            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white font-semibold text-xl flex-shrink-0 shadow-sm">
+            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-[var(--brand)] flex items-center justify-center text-white font-semibold text-xl flex-shrink-0 shadow-sm">
               {course.title.charAt(0).toUpperCase()}
             </div>
           )}
           <div className="min-w-0">
-            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold tracking-tight text-gray-900 dark:text-white truncate">
+            <h1
+              className="text-xl sm:text-2xl lg:text-3xl font-bold tracking-tight text-gray-900 dark:text-[var(--ink-1)] truncate"
+              style={{ fontFamily: "var(--font-display)" }}
+            >
               {course.title}
             </h1>
             <p className="text-xs sm:text-sm text-gray-500 mt-1">
@@ -376,9 +379,9 @@ export default function CourseHomePage() {
                 {totals.doneLessons}/{totals.totalLessons}
               </span>
             </div>
-            <div className="h-1.5 bg-gray-200 dark:bg-white/5 rounded-full overflow-hidden">
+            <div className="h-1.5 bg-gray-200 dark:bg-[var(--ground-3)] rounded-full overflow-hidden">
               <div
-                className="h-full bg-gradient-to-r from-blue-500 to-blue-400 rounded-full transition-all duration-500"
+                className="h-full bg-[var(--brand)] rounded-full transition-all duration-500"
                 style={{ width: `${totals.pct}%` }}
               />
             </div>
@@ -387,7 +390,7 @@ export default function CourseHomePage() {
       </div>
 
       {!hasAccess && (
-        <div className="mb-8 bg-gray-50 dark:bg-white/5 border border-gray-200/70 dark:border-white/5 rounded-2xl p-5 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+        <div className="mb-8 bg-gray-50 dark:bg-[var(--ground-1)] border border-gray-200/70 dark:border-[var(--ground-3)] rounded-2xl p-5 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
           <div>
             <p className="text-base font-semibold tracking-tight text-gray-900 dark:text-white">
               Acesso bloqueado
@@ -401,7 +404,7 @@ export default function CourseHomePage() {
               href={course.checkoutUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium rounded-lg transition-colors duration-200 shadow-sm hover:shadow"
+              className="px-5 py-2.5 bg-[var(--brand)] hover:bg-[var(--brand-hover)] text-white text-sm font-medium rounded-[var(--r-md)] transition-colors duration-200 shadow-sm hover:shadow"
             >
               Comprar agora
             </a>
@@ -411,12 +414,15 @@ export default function CourseHomePage() {
 
       {hasAccess && continueWatching && (
         <section id="continue" className="mb-12 scroll-mt-20">
-          <h2 className="text-lg font-semibold tracking-tight text-gray-900 dark:text-white mb-4 px-1">
+          <h2
+            className="text-lg font-semibold tracking-tight text-gray-900 dark:text-[var(--ink-1)] mb-4 px-1"
+            style={{ fontFamily: "var(--font-display)" }}
+          >
             Continuar assistindo
           </h2>
           <Link
             href={`/course/${course.slug}/lesson/${continueWatching.lesson.id}`}
-            className="group relative flex flex-col sm:flex-row gap-5 p-5 bg-gradient-to-r from-gray-50 via-gray-50 to-white dark:from-white/[0.06] dark:via-white/[0.04] dark:to-white/[0.02] border border-gray-200/70 dark:border-white/5 rounded-2xl shadow-sm transition-[border-color,box-shadow] duration-300 hover:shadow-xl hover:shadow-black/10 dark:hover:shadow-black/40 hover:border-gray-300 dark:hover:border-white/10"
+            className="group relative flex flex-col sm:flex-row gap-5 p-5 bg-gray-50 dark:bg-[var(--ground-2)] border border-gray-200/70 dark:border-[var(--ground-3)] rounded-2xl shadow-sm transition-[border-color,box-shadow] duration-300 hover:shadow-xl hover:shadow-black/10 dark:hover:shadow-black/40 hover:border-gray-300 dark:hover:border-[var(--brand)]"
           >
             <div className="relative w-full sm:w-64 aspect-video rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0 ring-1 ring-black/5 dark:ring-white/5">
               {continueWatching.module.thumbnailUrl ? (
@@ -439,7 +445,7 @@ export default function CourseHomePage() {
               </div>
             </div>
             <div className="flex-1 min-w-0 flex flex-col justify-center">
-              <p className="text-xs uppercase tracking-widest text-blue-500 dark:text-blue-400 font-semibold">
+              <p className="text-xs uppercase tracking-widest text-[var(--brand)] font-semibold">
                 {continueWatching.module.title}
               </p>
               <p className="text-lg font-bold text-gray-900 dark:text-white mt-1.5 line-clamp-2">
@@ -450,7 +456,7 @@ export default function CourseHomePage() {
                   {continueWatching.lesson.description}
                 </p>
               )}
-              <span className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-blue-600 dark:text-blue-400 group-hover:gap-3 transition-[gap] duration-300">
+              <span className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-[var(--brand)] group-hover:gap-3 transition-[gap] duration-300">
                 Continuar
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
@@ -482,16 +488,19 @@ export default function CourseHomePage() {
       ))}
 
       {course.modules.length === 0 && (
-        <div className="bg-gray-50 dark:bg-white/5 border border-gray-200/70 dark:border-white/5 rounded-2xl p-8 text-center">
+        <div className="bg-gray-50 dark:bg-[var(--ground-1)] border border-gray-200/70 dark:border-[var(--ground-3)] rounded-2xl p-8 text-center">
           <p className="text-gray-500">Nenhum módulo disponível ainda.</p>
         </div>
       )}
 
       <section className="mb-12">
-        <h2 className="text-lg font-semibold tracking-tight text-gray-900 dark:text-white mb-4 px-1">
+        <h2
+          className="text-lg font-semibold tracking-tight text-gray-900 dark:text-[var(--ink-1)] mb-4 px-1"
+          style={{ fontFamily: "var(--font-display)" }}
+        >
           Sobre o curso
         </h2>
-        <p className="text-gray-700 dark:text-gray-300 whitespace-pre-line leading-relaxed">
+        <p className="text-gray-700 dark:text-[var(--ink-2)] whitespace-pre-line leading-relaxed">
           {course.description}
         </p>
       </section>
@@ -507,9 +516,9 @@ export default function CourseHomePage() {
       )}
 
       {(course.supportEmail || course.supportWhatsapp) && (
-        <section className="mt-10 rounded-xl border border-gray-200/70 dark:border-white/5 bg-gray-50 dark:bg-white/5 p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <section className="mt-10 rounded-xl border border-gray-200/70 dark:border-[var(--ground-3)] bg-gray-50 dark:bg-[var(--ground-1)] p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <span className="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400 inline-flex items-center justify-center flex-shrink-0">
+            <span className="w-10 h-10 rounded-lg bg-blue-50 text-[var(--brand)] dark:bg-[var(--brand)]/10 inline-flex items-center justify-center flex-shrink-0">
               <HeadphonesIcon className="w-5 h-5" />
             </span>
             <div>
@@ -525,9 +534,9 @@ export default function CourseHomePage() {
             {course.supportEmail && (
               <a
                 href={`mailto:${course.supportEmail}`}
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-gray-900/60 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-white/5 transition"
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-gray-200 dark:border-[var(--ground-3)] bg-white dark:bg-[var(--ground-2)] text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-white/5 transition"
               >
-                <svg className="w-4 h-4 text-blue-500 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <svg className="w-4 h-4 text-[var(--brand)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l9 6 9-6M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                 </svg>
                 Email
@@ -539,7 +548,7 @@ export default function CourseHomePage() {
                 target="_blank"
                 rel="noopener noreferrer"
                 title={formatPhoneDisplay(course.supportWhatsapp)}
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-gray-900/60 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-white/5 transition"
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-gray-200 dark:border-[var(--ground-3)] bg-white dark:bg-[var(--ground-2)] text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-white/5 transition"
               >
                 <svg className="w-4 h-4 text-emerald-500 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h2.28a1 1 0 01.95.68l1.5 4.49a1 1 0 01-.5 1.21l-1.9.95a11 11 0 005.52 5.52l.95-1.9a1 1 0 011.21-.5l4.49 1.5a1 1 0 01.68.95V19a2 2 0 01-2 2h-1C9.72 21 3 14.28 3 6V5z" />
