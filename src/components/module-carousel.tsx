@@ -61,7 +61,7 @@ export function ModuleCarousel({ title, modules }: Props) {
             {title}
           </h2>
           <div className="flex-1 h-px bg-gradient-to-r from-gray-200 via-gray-200 to-transparent dark:from-white/10 dark:via-white/10" />
-          <div className="hidden sm:flex gap-2">
+          <div className="flex gap-2">
             <button
               onClick={() => scrollBy(-1)}
               disabled={!canLeft}
@@ -88,7 +88,7 @@ export function ModuleCarousel({ title, modules }: Props) {
 
       <div
         ref={scrollerRef}
-        className="flex gap-3 sm:gap-4 overflow-x-auto snap-x snap-proximity pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 overscroll-x-contain [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+        className="flex gap-3 sm:gap-4 overflow-x-hidden pb-2 -mx-4 px-4 sm:mx-0 sm:px-0"
       >
         {modules.map((m) => (
           <ModuleCard key={m.id} mod={m} />
