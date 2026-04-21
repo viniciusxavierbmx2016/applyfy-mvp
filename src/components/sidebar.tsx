@@ -207,7 +207,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
   function linkCls(active: boolean) {
     return cn(
       "group relative flex items-center rounded-[10px] text-[14px] font-medium transition-all duration-200",
-      collapsed ? "lg:justify-center lg:w-10 lg:h-10 lg:min-w-0 lg:min-h-0 lg:p-0 lg:gap-0 lg:overflow-hidden gap-3 py-2.5 px-3" : "gap-3 py-2.5 px-3",
+      collapsed ? "lg:justify-center lg:w-10 lg:h-10 lg:p-0 lg:gap-0 gap-3 py-2.5 px-3" : "gap-3 py-2.5 px-3",
       active
         ? "bg-gray-100 text-gray-900 dark:bg-white/[0.08] dark:text-white"
         : "text-gray-500 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-white/[0.05] dark:hover:text-white"
@@ -361,7 +361,8 @@ export function Sidebar({ open, onClose }: SidebarProps) {
             >
               <span className={iconWrapCls(false)}>
                 <svg className={iconCls} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                 </svg>
               </span>
               <span className={cn("truncate", collapsed && "lg:hidden")}>
