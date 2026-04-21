@@ -88,7 +88,7 @@ export default function AdminSettingsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -116,13 +116,13 @@ export default function AdminSettingsPage() {
         </div>
       )}
 
-      <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-6 space-y-6">
+      <div className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.06] rounded-xl p-6 space-y-6">
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
             Logo da Plataforma
           </label>
           <div className="flex items-center gap-4">
-            <div className="w-20 h-20 rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-700 flex items-center justify-center overflow-hidden bg-gray-50 dark:bg-gray-800">
+            <div className="w-20 h-20 rounded-xl border-2 border-dashed border-gray-300 dark:border-white/[0.08] flex items-center justify-center overflow-hidden bg-gray-50 dark:bg-white/[0.04]">
               {settings?.logoUrl ? (
                 <img src={settings.logoUrl} alt="Logo" className="w-full h-full object-contain" />
               ) : (
@@ -162,14 +162,14 @@ export default function AdminSettingsPage() {
           </p>
         </div>
 
-        <hr className="border-gray-200 dark:border-gray-800" />
+        <hr className="border-gray-200 dark:border-white/[0.06]" />
 
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
             Favicon
           </label>
           <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-700 flex items-center justify-center overflow-hidden bg-gray-50 dark:bg-gray-800">
+            <div className="w-16 h-16 rounded-lg border-2 border-dashed border-gray-300 dark:border-white/[0.08] flex items-center justify-center overflow-hidden bg-gray-50 dark:bg-white/[0.04]">
               {settings?.faviconUrl ? (
                 <img src={settings.faviconUrl} alt="Favicon" className="w-full h-full object-contain" />
               ) : (

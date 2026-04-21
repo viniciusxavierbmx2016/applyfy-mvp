@@ -133,7 +133,7 @@ export default function ProducerRegisterPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#0a0a1a] px-4 py-8">
+    <div className="min-h-screen flex items-center justify-center bg-[#060612] px-4 py-8" style={{ background: "radial-gradient(ellipse at 50% 0%, rgba(99,102,241,0.15) 0%, transparent 60%), #060612" }}>
       <div className="w-full max-w-lg">
         <div className="text-center mb-8">
           <div className="flex justify-center mb-2">
@@ -154,8 +154,8 @@ export default function ProducerRegisterPage() {
               <div className="flex flex-col items-center">
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-colors ${
                   i <= step
-                    ? "bg-indigo-600 text-white"
-                    : "bg-gray-800 text-gray-500"
+                    ? "bg-indigo-600 text-white shadow-lg shadow-indigo-500/20"
+                    : "bg-white/[0.04] text-gray-500 border border-white/[0.08]"
                 }`}>
                   {i < step ? (
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -170,13 +170,13 @@ export default function ProducerRegisterPage() {
                 </span>
               </div>
               {i < STEPS.length - 1 && (
-                <div className={`w-12 h-0.5 mx-1 mb-4 ${i < step ? "bg-indigo-600" : "bg-gray-800"}`} />
+                <div className={`w-12 h-0.5 mx-1 mb-4 ${i < step ? "bg-indigo-600" : "bg-white/[0.08]"}`} />
               )}
             </div>
           ))}
         </div>
 
-        <div className="bg-gray-900 rounded-2xl p-8 border border-gray-800">
+        <div className="bg-white/[0.03] rounded-2xl p-8 border border-white/[0.06] backdrop-blur-xl">
           {error && (
             <div className="mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
               {error}
@@ -202,11 +202,11 @@ export default function ProducerRegisterPage() {
                   type="checkbox"
                   checked={agreed}
                   onChange={(e) => setAgreed(e.target.checked)}
-                  className="mt-0.5 rounded border-gray-700 bg-gray-800 text-indigo-600 focus:ring-indigo-500"
+                  className="mt-0.5 rounded border-white/[0.08] bg-white/[0.04] text-indigo-600 focus:ring-indigo-500"
                 />
                 Concordo com os Termos de Uso e Política de Privacidade
               </label>
-              <button onClick={next} className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition">
+              <button onClick={next} className="w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-medium rounded-xl shadow-lg shadow-indigo-500/20 transition">
                 Próximo
               </button>
             </div>
@@ -255,7 +255,7 @@ export default function ProducerRegisterPage() {
                 </div>
               </div>
               <div className="flex gap-3">
-                <button onClick={back} className="flex-1 py-3 border border-gray-700 text-gray-300 hover:bg-gray-800 font-medium rounded-lg transition">
+                <button onClick={back} className="flex-1 py-3 border border-white/[0.08] text-gray-300 hover:bg-white/[0.04] font-medium rounded-xl transition">
                   Voltar
                 </button>
                 <button
@@ -300,7 +300,7 @@ function Input({
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         autoComplete={autoComplete}
-        className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+        className="w-full px-4 py-3 bg-white/[0.04] border border-white/[0.08] rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/20 transition"
       />
     </div>
   );
@@ -313,8 +313,8 @@ function SelectCard({ label, selected, onClick }: { label: string; selected: boo
       onClick={onClick}
       className={`px-4 py-3 rounded-xl text-sm font-medium text-left transition border ${
         selected
-          ? "border-indigo-500 bg-indigo-500/10 text-indigo-400"
-          : "border-gray-700 bg-gray-800 text-gray-300 hover:border-gray-600"
+          ? "border-indigo-500/50 bg-indigo-500/10 text-indigo-400 shadow-lg shadow-indigo-500/10"
+          : "border-white/[0.06] bg-white/[0.03] text-gray-300 hover:border-white/[0.12]"
       }`}
     >
       {label}
@@ -325,10 +325,10 @@ function SelectCard({ label, selected, onClick }: { label: string; selected: boo
 function StepButtons({ onBack, onNext }: { onBack: () => void; onNext: () => void }) {
   return (
     <div className="flex gap-3 pt-2">
-      <button onClick={onBack} className="flex-1 py-3 border border-gray-700 text-gray-300 hover:bg-gray-800 font-medium rounded-lg transition">
+      <button onClick={onBack} className="flex-1 py-3 border border-white/[0.08] text-gray-300 hover:bg-white/[0.04] font-medium rounded-xl transition">
         Voltar
       </button>
-      <button onClick={onNext} className="flex-1 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition">
+      <button onClick={onNext} className="flex-1 py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-medium rounded-xl shadow-lg shadow-indigo-500/20 transition">
         Próximo
       </button>
     </div>

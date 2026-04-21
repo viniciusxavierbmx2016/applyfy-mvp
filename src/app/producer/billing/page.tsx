@@ -187,7 +187,7 @@ function BillingContent() {
       )}
 
       {showSuccess && (
-        <div className="bg-white dark:bg-gray-900 border border-green-200 dark:border-green-500/20 rounded-2xl p-8 text-center space-y-4">
+        <div className="bg-white dark:bg-white/[0.03] border border-green-200 dark:border-green-500/20 rounded-2xl p-8 text-center space-y-4">
           <div className="mx-auto w-16 h-16 rounded-full bg-green-500/10 flex items-center justify-center">
             <svg className="w-8 h-8 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
@@ -283,7 +283,7 @@ function BillingContent() {
               <button
                 onClick={handleCheckout}
                 disabled={checkingOut}
-                className="block w-full text-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl transition text-sm disabled:opacity-50"
+                className="block w-full text-center px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-medium rounded-xl transition text-sm disabled:opacity-50"
               >
                 {checkoutLabel}
               </button>
@@ -351,7 +351,7 @@ function BillingContent() {
                 <button
                   onClick={handleCheckout}
                   disabled={checkingOut}
-                  className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition disabled:opacity-50"
+                  className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-500 rounded-lg transition disabled:opacity-50"
                 >
                   {checkingOut ? "Gerando checkout..." : "Reativar assinatura"}
                 </button>
@@ -392,7 +392,7 @@ function BillingContent() {
                     <th className="px-6 py-3 font-medium">Status</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+                <tbody className="divide-y divide-gray-100 dark:divide-white/[0.04]">
                   {sub.invoices.map((inv) => {
                     const s = INVOICE_STATUS[inv.status] || { label: inv.status, cls: "" };
                     return (
@@ -506,10 +506,10 @@ function UsageBar({ label, used, max }: { label: string; used: number; max: numb
           {used} de {max}
         </span>
       </div>
-      <div className="h-2 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+      <div className="h-2 bg-gray-100 dark:bg-white/[0.06] rounded-full overflow-hidden">
         <div
           className={`h-full rounded-full transition-all duration-500 ${
-            warn ? "bg-amber-500" : "bg-blue-500"
+            warn ? "bg-amber-500" : "bg-indigo-500"
           }`}
           style={{ width: `${pct}%` }}
         />

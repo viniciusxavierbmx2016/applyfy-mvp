@@ -85,7 +85,7 @@ export default function AdminCoursesPage() {
         {hasManageLessons && (
           <Link
             href="/producer/courses/new"
-            className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition"
+            className="inline-flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-lg transition"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -98,18 +98,18 @@ export default function AdminCoursesPage() {
       {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden">
-              <div className="aspect-video bg-gray-200 dark:bg-gray-800 animate-pulse" />
+            <div key={i} className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.06] rounded-xl overflow-hidden">
+              <div className="aspect-video bg-gray-200 dark:bg-white/[0.04] animate-pulse" />
               <div className="p-4 space-y-3">
-                <div className="h-4 w-3/4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
-                <div className="h-3 w-full bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
-                <div className="h-3 w-1/2 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+                <div className="h-4 w-3/4 bg-gray-200 dark:bg-white/[0.06] rounded animate-pulse" />
+                <div className="h-3 w-full bg-gray-200 dark:bg-white/[0.06] rounded animate-pulse" />
+                <div className="h-3 w-1/2 bg-gray-200 dark:bg-white/[0.06] rounded animate-pulse" />
               </div>
             </div>
           ))}
         </div>
       ) : courses.length === 0 ? (
-        <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-12 text-center">
+        <div className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.06] rounded-xl p-12 text-center">
           <div className="w-14 h-14 mx-auto rounded-full bg-indigo-500/10 flex items-center justify-center mb-4">
             <svg className="w-7 h-7 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
@@ -129,9 +129,9 @@ export default function AdminCoursesPage() {
           {courses.map((course) => (
             <div
               key={course.id}
-              className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden hover:border-gray-400 dark:hover:border-gray-700 transition"
+              className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.06] rounded-xl overflow-hidden hover:border-gray-400 dark:hover:border-white/[0.1] transition"
             >
-              <div className="relative aspect-video bg-gray-100 dark:bg-gray-800">
+              <div className="relative aspect-video bg-gray-100 dark:bg-white/[0.04]">
                 {course.thumbnail ? (
                   <Image
                     src={course.thumbnail}

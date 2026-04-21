@@ -45,7 +45,7 @@ export default function ProducerLoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-white dark:bg-gray-950 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-white dark:bg-[#060612] px-4" style={{ background: "radial-gradient(ellipse at 50% 0%, rgba(99,102,241,0.15) 0%, transparent 60%), #060612" }}>
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <div className="flex justify-center mb-4">
@@ -56,19 +56,19 @@ export default function ProducerLoginPage() {
               }
             />
           </div>
-          <p className="text-sm font-medium text-blue-600 dark:text-blue-400">
+          <p className="text-sm font-medium text-indigo-600 dark:text-indigo-400">
             Área do produtor e colaborador
           </p>
         </div>
 
-        <div className="bg-white dark:bg-gray-900 rounded-2xl p-8 shadow-xl border border-gray-200 dark:border-gray-800">
+        <div className="bg-white dark:bg-white/[0.03] rounded-2xl p-8 shadow-xl border border-gray-200 dark:border-white/[0.06] backdrop-blur-xl">
           {error && (
             <div className="mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-500 text-sm">
               <p>{error}</p>
               {errorRole === "ADMIN" && (
                 <Link
                   href="/admin/login"
-                  className="inline-block mt-2 text-blue-400 hover:text-blue-300 font-medium"
+                  className="inline-block mt-2 text-indigo-400 hover:text-indigo-300 font-medium"
                 >
                   Ir para login do admin →
                 </Link>
@@ -87,7 +87,7 @@ export default function ProducerLoginPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 autoComplete="email"
-                className="w-full px-4 py-3 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-3 bg-gray-100 dark:bg-white/[0.04] border border-gray-300 dark:border-white/[0.08] rounded-xl text-gray-900 dark:text-white focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/20 transition"
                 placeholder="seu@email.com"
               />
             </div>
@@ -101,14 +101,14 @@ export default function ProducerLoginPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 autoComplete="current-password"
-                className="w-full px-4 py-3 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-3 bg-gray-100 dark:bg-white/[0.04] border border-gray-300 dark:border-white/[0.08] rounded-xl text-gray-900 dark:text-white focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/20 transition"
                 placeholder="••••••••"
               />
             </div>
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-medium rounded-lg transition"
+              className="w-full py-3 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-medium rounded-xl shadow-lg shadow-indigo-500/20 transition"
             >
               {loading ? "Entrando..." : "Entrar"}
             </button>
@@ -117,13 +117,13 @@ export default function ProducerLoginPage() {
           <div className="mt-6 flex items-center justify-between text-sm">
             <Link
               href="/forgot-password"
-              className="text-blue-600 dark:text-blue-400 hover:underline"
+              className="text-indigo-600 dark:text-indigo-400 hover:underline"
             >
               Esqueci minha senha
             </Link>
             <Link
               href="/producer/register"
-              className="text-blue-600 dark:text-blue-400 hover:underline"
+              className="text-indigo-600 dark:text-indigo-400 hover:underline"
             >
               Criar conta
             </Link>

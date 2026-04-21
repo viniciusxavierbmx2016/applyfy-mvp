@@ -15,7 +15,7 @@ export default function AdminSettingsPage() {
       </p>
 
       <div className="space-y-6">
-        <section className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-6">
+        <section className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.06] rounded-xl p-6">
           <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">
             Como vincular os produtos
           </h3>

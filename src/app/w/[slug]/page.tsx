@@ -129,7 +129,7 @@ export default function WorkspaceVitrinePage() {
 
       {userLoading || loading ? (
         <div className="flex items-center justify-center py-16">
-          <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+          <div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
         </div>
       ) : (
         <>
@@ -138,7 +138,7 @@ export default function WorkspaceVitrinePage() {
               Meus cursos
             </h3>
             {active.length === 0 ? (
-              <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-8 text-center">
+              <div className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.06] rounded-xl p-8 text-center">
                 <p className="text-gray-500">
                   Você ainda não está matriculado em nenhum curso ativo
                 </p>

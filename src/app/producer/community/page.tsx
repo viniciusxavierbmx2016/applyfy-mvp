@@ -99,7 +99,7 @@ export default function AdminCommunityPage() {
         <select
           value={courseFilter}
           onChange={(e) => setCourseFilter(e.target.value)}
-          className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:border-blue-500"
+          className="bg-white dark:bg-white/[0.04] border border-gray-200 dark:border-white/[0.08] rounded-xl px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/20 transition"
         >
           <option value="">Todos os cursos</option>
           {courses.map((c) => (
@@ -113,23 +113,23 @@ export default function AdminCommunityPage() {
       {loading ? (
         <div className="space-y-3">
           {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4">
+            <div key={i} className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.06] rounded-xl p-4">
               <div className="flex items-start gap-3 mb-3">
-                <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 animate-pulse shrink-0" />
+                <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-white/[0.06] animate-pulse shrink-0" />
                 <div className="flex-1 space-y-2">
-                  <div className="h-3 w-32 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
-                  <div className="h-3 w-48 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+                  <div className="h-3 w-32 bg-gray-200 dark:bg-white/[0.06] rounded animate-pulse" />
+                  <div className="h-3 w-48 bg-gray-200 dark:bg-white/[0.06] rounded animate-pulse" />
                 </div>
               </div>
               <div className="space-y-2">
-                <div className="h-3 w-full bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
-                <div className="h-3 w-2/3 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+                <div className="h-3 w-full bg-gray-200 dark:bg-white/[0.06] rounded animate-pulse" />
+                <div className="h-3 w-2/3 bg-gray-200 dark:bg-white/[0.06] rounded animate-pulse" />
               </div>
             </div>
           ))}
         </div>
       ) : posts.length === 0 ? (
-        <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-10 text-center">
+        <div className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.06] rounded-xl p-10 text-center">
           <div className="w-14 h-14 mx-auto rounded-full bg-indigo-500/10 flex items-center justify-center mb-4">
             <svg className="w-7 h-7 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" />
@@ -144,7 +144,7 @@ export default function AdminCommunityPage() {
             return (
               <div
                 key={post.id}
-                className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4"
+                className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.06] rounded-xl p-4"
               >
                 <div className="flex items-start gap-3 mb-2">
                   <Avatar
@@ -224,7 +224,7 @@ export default function AdminCommunityPage() {
                   <span>💬 {post._count.comments}</span>
                   <Link
                     href={`/course/${post.course.slug}/community`}
-                    className="text-blue-400 hover:text-blue-300 ml-auto"
+                    className="text-indigo-400 hover:text-indigo-300 ml-auto"
                   >
                     Responder →
                   </Link>

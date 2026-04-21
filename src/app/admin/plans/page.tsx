@@ -164,7 +164,7 @@ export default function AdminPlansPage() {
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Planos</h1>
         <button
           onClick={openCreate}
-          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition"
+          className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-lg transition"
         >
           Criar plano
         </button>
@@ -190,7 +190,7 @@ export default function AdminPlansPage() {
           {plans.map((p) => (
             <div
               key={p.id}
-              className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-5 space-y-3"
+              className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.06] rounded-xl p-5 space-y-3"
             >
               <div className="flex items-start justify-between">
                 <div>
@@ -217,16 +217,16 @@ export default function AdminPlansPage() {
 
               <div className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
                 <p>{p.maxWorkspaces} workspaces • {p.maxCoursesPerWorkspace} cursos</p>
-                <p className="text-blue-600 dark:text-blue-400 font-medium">
+                <p className="text-indigo-600 dark:text-indigo-400 font-medium">
                   {p._count.subscriptions} produtor{p._count.subscriptions !== 1 ? "es" : ""}
                 </p>
               </div>
 
-              <div className="flex gap-2 pt-2 border-t border-gray-100 dark:border-gray-800">
+              <div className="flex gap-2 pt-2 border-t border-gray-100 dark:border-white/[0.06]">
                 <button
                   onClick={() => openEdit(p)}
                   disabled={busy === p.id}
-                  className="flex-1 px-3 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition"
+                  className="flex-1 px-3 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-white/[0.04] hover:bg-gray-200 dark:hover:bg-white/[0.06] rounded-xl transition"
                 >
                   Editar
                 </button>
@@ -253,7 +253,7 @@ export default function AdminPlansPage() {
       {/* Modal criar/editar */}
       {modal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4">
-          <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 w-full max-w-md border border-gray-200 dark:border-gray-800 shadow-xl space-y-4">
+          <div className="bg-white dark:bg-white/[0.03] rounded-2xl p-6 w-full max-w-md border border-gray-200 dark:border-white/[0.06] shadow-xl space-y-4 backdrop-blur-xl">
             <h2 className="text-lg font-bold text-gray-900 dark:text-white">
               {modal === "create" ? "Criar plano" : "Editar plano"}
             </h2>
@@ -278,7 +278,7 @@ export default function AdminPlansPage() {
                       ...(modal === "create" ? { slug: slugify(name) } : {}),
                     }));
                   }}
-                  className="w-full px-3 py-2 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 bg-gray-100 dark:bg-white/[0.04] border border-gray-300 dark:border-white/[0.08] rounded-xl text-gray-900 dark:text-white text-sm focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/20 transition"
                   placeholder="Ex: Pro"
                 />
               </div>
@@ -304,7 +304,7 @@ export default function AdminPlansPage() {
                     step="0.01"
                     value={form.price}
                     onChange={(e) => setForm((f) => ({ ...f, price: e.target.value }))}
-                    className="w-full px-3 py-2 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 bg-gray-100 dark:bg-white/[0.04] border border-gray-300 dark:border-white/[0.08] rounded-xl text-gray-900 dark:text-white text-sm focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/20 transition"
                     placeholder="97.00"
                   />
                 </div>
@@ -313,7 +313,7 @@ export default function AdminPlansPage() {
                   <select
                     value={form.interval}
                     onChange={(e) => setForm((f) => ({ ...f, interval: e.target.value }))}
-                    className="w-full px-3 py-2 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 bg-gray-100 dark:bg-white/[0.04] border border-gray-300 dark:border-white/[0.08] rounded-xl text-gray-900 dark:text-white text-sm focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/20 transition"
                   >
                     <option value="monthly">Mensal</option>
                     <option value="yearly">Anual</option>
@@ -328,7 +328,7 @@ export default function AdminPlansPage() {
                     type="number"
                     value={form.maxWorkspaces}
                     onChange={(e) => setForm((f) => ({ ...f, maxWorkspaces: e.target.value }))}
-                    className="w-full px-3 py-2 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 bg-gray-100 dark:bg-white/[0.04] border border-gray-300 dark:border-white/[0.08] rounded-xl text-gray-900 dark:text-white text-sm focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/20 transition"
                   />
                 </div>
                 <div>
@@ -337,7 +337,7 @@ export default function AdminPlansPage() {
                     type="number"
                     value={form.maxCoursesPerWorkspace}
                     onChange={(e) => setForm((f) => ({ ...f, maxCoursesPerWorkspace: e.target.value }))}
-                    className="w-full px-3 py-2 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 bg-gray-100 dark:bg-white/[0.04] border border-gray-300 dark:border-white/[0.08] rounded-xl text-gray-900 dark:text-white text-sm focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/20 transition"
                   />
                 </div>
               </div>
@@ -356,14 +356,14 @@ export default function AdminPlansPage() {
             <div className="flex gap-3 pt-2">
               <button
                 onClick={() => setModal(null)}
-                className="flex-1 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition"
+                className="flex-1 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-white/[0.04] hover:bg-gray-200 dark:hover:bg-white/[0.06] rounded-xl transition"
               >
                 Cancelar
               </button>
               <button
                 onClick={handleSave}
                 disabled={saving || !form.name || !form.price}
-                className="flex-1 px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded-lg transition"
+                className="flex-1 px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 rounded-lg transition"
               >
                 {saving ? "Salvando..." : "Salvar"}
               </button>
