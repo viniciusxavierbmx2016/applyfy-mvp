@@ -253,7 +253,7 @@ export default function AdminPlansPage() {
       {/* Modal criar/editar */}
       {modal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4">
-          <div className="bg-white dark:bg-white/[0.03] rounded-2xl p-6 w-full max-w-md border border-gray-200 dark:border-white/[0.06] shadow-xl space-y-4 backdrop-blur-xl">
+          <div className="bg-white dark:bg-white/[0.03] rounded-2xl p-6 w-full max-w-md border border-gray-200 dark:border-white/[0.06] shadow-xl space-y-4">
             <h2 className="text-lg font-bold text-gray-900 dark:text-white">
               {modal === "create" ? "Criar plano" : "Editar plano"}
             </h2>

@@ -195,7 +195,7 @@ function RequestModal({ onClose }: { onClose: () => void }) {
       onClick={onClose}
     >
       <div
-        className="w-full sm:max-w-md bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.06] rounded-t-2xl sm:rounded-2xl shadow-2xl p-5 sm:p-6 max-h-[90vh] overflow-y-auto backdrop-blur-xl"
+        className="w-full sm:max-w-md bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.06] rounded-t-2xl sm:rounded-2xl shadow-2xl p-5 sm:p-6 max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         {success ? (

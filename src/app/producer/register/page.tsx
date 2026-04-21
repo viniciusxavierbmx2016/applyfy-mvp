@@ -176,7 +176,7 @@ export default function ProducerRegisterPage() {
           ))}
         </div>
 
-        <div className="bg-white/[0.03] rounded-2xl p-8 border border-white/[0.06] backdrop-blur-xl">
+        <div className="bg-white/[0.03] rounded-2xl p-8 border border-white/[0.06]">
           {error && (
             <div className="mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
               {error}
