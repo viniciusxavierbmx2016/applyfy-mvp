@@ -250,7 +250,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
           className={cn(
             "relative transition-all duration-300",
             collapsed
-              ? "lg:flex lg:flex-col lg:items-center lg:gap-2 lg:pt-5 lg:px-2 flex h-16 items-center justify-between px-5"
+              ? "lg:flex lg:flex-col lg:items-center lg:gap-3 lg:py-4 lg:px-2 flex h-16 items-center justify-between px-5"
               : "flex items-center py-5 px-5 justify-between gap-1.5"
           )}
         >
@@ -322,7 +322,8 @@ export function Sidebar({ open, onClose }: SidebarProps) {
             aria-label={collapsed ? "Expandir menu" : "Recolher menu"}
             title={collapsed ? "Expandir menu" : "Recolher menu"}
             className={cn(
-              "group relative hidden lg:flex items-center justify-center w-7 h-7 rounded-md flex-shrink-0",
+              "group relative hidden lg:flex items-center justify-center rounded-md flex-shrink-0",
+              collapsed ? "w-10 h-10 rounded-[10px]" : "w-7 h-7",
               "text-gray-400 hover:text-gray-900 dark:text-gray-500 dark:hover:text-white",
               "hover:bg-gray-100 dark:hover:bg-white/5 transition-colors duration-200"
             )}
@@ -346,8 +347,8 @@ export function Sidebar({ open, onClose }: SidebarProps) {
         {/* Nav */}
         <nav
           className={cn(
-            "flex-1 flex flex-col gap-0.5 pt-2 pb-4 overflow-y-auto px-3",
-            collapsed && "lg:px-2 lg:items-center"
+            "flex-1 flex flex-col gap-0.5 pb-4 overflow-y-auto px-3",
+            collapsed ? "lg:px-2 lg:items-center lg:pt-1" : "pt-2"
           )}
         >
           {showVitrine && activeWorkspace && (
