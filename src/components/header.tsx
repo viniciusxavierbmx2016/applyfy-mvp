@@ -44,7 +44,7 @@ export function Header({ onMenuToggle }: HeaderProps) {
   }
 
   return (
-    <header className="sticky top-0 z-30 h-16 bg-white/80 dark:bg-[rgba(10,10,26,0.8)] backdrop-blur-xl border-b border-gray-200 dark:border-white/[0.04]">
+    <header className="sticky top-0 z-30 h-16 bg-white dark:bg-[#0a0a1a] border-b border-gray-200 dark:border-white/[0.04]">
       <div className="flex items-center justify-between h-full px-4 lg:px-6">
         {/* Mobile menu button */}
         <button

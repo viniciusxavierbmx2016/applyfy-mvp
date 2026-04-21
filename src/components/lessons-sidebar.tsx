@@ -145,7 +145,7 @@ export function LessonsSidebar({
   };
 
   return (
-    <aside className="bg-white/60 dark:bg-gray-900/40 backdrop-blur-xl border border-gray-200/70 dark:border-white/5 rounded-2xl overflow-hidden flex flex-col shadow-sm">
+    <aside className="bg-white dark:bg-gray-900 border border-gray-200/70 dark:border-white/5 rounded-2xl overflow-hidden flex flex-col shadow-sm">
       <div className="px-4 py-3.5 border-b border-gray-200/70 dark:border-white/5">
         <Link
           href={`/course/${courseSlug}`}
