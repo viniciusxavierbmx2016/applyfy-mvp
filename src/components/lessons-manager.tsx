@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { LessonMaterials } from "@/components/lesson-materials";
 import {
   DndContext,
   closestCenter,
@@ -190,6 +191,7 @@ function SortableLesson({
           onSubmit={(data) => onUpdate(lesson.id, data)}
           onCancel={onCancelEdit}
         />
+        <LessonMaterials lessonId={lesson.id} />
       </div>
     );
   }

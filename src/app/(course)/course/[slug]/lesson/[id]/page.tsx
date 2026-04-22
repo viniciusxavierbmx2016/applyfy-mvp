@@ -24,6 +24,15 @@ import { useUserStore } from "@/stores/user-store";
 import type { ParsedVideo } from "@/lib/video";
 import { formatPhoneDisplay, formatWhatsappLink } from "@/lib/utils";
 
+interface MaterialData {
+  id: string;
+  name: string;
+  fileName: string;
+  fileSize: number;
+  fileType: string;
+  fileUrl: string;
+}
+
 interface ViewData {
   lesson: {
     id: string;
@@ -64,6 +73,7 @@ export default function LessonPage({
   const [activeTab, setActiveTab] = useState<
     "description" | "comments" | "support"
   >("description");
+  const [materials, setMaterials] = useState<MaterialData[]>([]);
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Load lesson
@@ -99,6 +109,14 @@ export default function LessonPage({
       cancelled = true;
     };
   }, [params.id, params.slug, router]);
+
+  useEffect(() => {
+    if (!data) return;
+    fetch(`/api/lessons/${params.id}/materials`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (d?.materials) setMaterials(d.materials); })
+      .catch(() => {});
+  }, [data, params.id]);
 
   const showToast = (msg: string) => {
     setToast(msg);
@@ -402,6 +420,40 @@ export default function LessonPage({
               </>
             );
           })()}
+
+          {materials.length > 0 && (
+            <div className="mt-8">
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
+                <svg className="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                Downloads
+              </h3>
+              <div className="space-y-2">
+                {materials.map((mat) => {
+                  const icon = getMaterialIcon(mat.fileType);
+                  return (
+                    <a
+                      key={mat.id}
+                      href={mat.fileUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-3 p-3 bg-white dark:bg-gray-900/60 border border-gray-200 dark:border-white/5 rounded-xl hover:bg-gray-50 dark:hover:bg-white/5 transition-colors group"
+                    >
+                      <span className={`inline-flex items-center justify-center w-9 h-9 rounded-lg text-[10px] font-bold ${icon.color}`}>
+                        {icon.label}
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{mat.name}</p>
+                        <p className="text-xs text-gray-500">{mat.fileName} · {formatFileSize(mat.fileSize)}</p>
+                      </div>
+                      <span className="text-xs text-blue-500 group-hover:text-blue-400 font-medium shrink-0">Baixar</span>
+                    </a>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -466,4 +518,26 @@ export default function LessonPage({
       )}
     </div>
   );
+}
+
+function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`;
+}
+
+function getMaterialIcon(type: string): { color: string; label: string } {
+  if (type === "application/pdf") return { color: "text-red-500 bg-red-50 dark:bg-red-500/10", label: "PDF" };
+  if (type.includes("spreadsheet") || type.includes("excel") || type === "text/csv")
+    return { color: "text-emerald-500 bg-emerald-50 dark:bg-emerald-500/10", label: "XLS" };
+  if (type.includes("word") || type === "application/msword")
+    return { color: "text-blue-500 bg-blue-50 dark:bg-blue-500/10", label: "DOC" };
+  if (type.includes("presentation") || type.includes("powerpoint"))
+    return { color: "text-orange-500 bg-orange-50 dark:bg-orange-500/10", label: "PPT" };
+  if (type.startsWith("image/")) return { color: "text-purple-500 bg-purple-50 dark:bg-purple-500/10", label: "IMG" };
+  if (type.startsWith("audio/")) return { color: "text-pink-500 bg-pink-50 dark:bg-pink-500/10", label: "MP3" };
+  if (type.startsWith("video/")) return { color: "text-indigo-500 bg-indigo-50 dark:bg-indigo-500/10", label: "MP4" };
+  if (type.includes("zip") || type.includes("rar")) return { color: "text-yellow-600 bg-yellow-50 dark:bg-yellow-500/10", label: "ZIP" };
+  return { color: "text-gray-500 bg-gray-50 dark:bg-gray-500/10", label: "FILE" };
 }

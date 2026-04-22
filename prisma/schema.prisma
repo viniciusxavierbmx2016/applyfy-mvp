@@ -224,6 +224,7 @@ model Lesson {
 
   progress    LessonProgress[]
   comments    LessonComment[]
+  materials   LessonMaterial[]
 
   @@index([moduleId, order])
 }
@@ -446,6 +447,23 @@ model ProducerTransaction {
   @@index([workspaceId])
   @@index([status])
   @@index([createdAt])
+}
+
+model LessonMaterial {
+  id        String   @id @default(uuid())
+  lessonId  String
+  name      String
+  fileName  String
+  fileUrl   String
+  fileSize  Int
+  fileType  String
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@index([lessonId])
 }
 
 model IntegrationRequest {
