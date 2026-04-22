@@ -516,7 +516,7 @@ function SortableModule({
 
   const [editing, setEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(module.title);
-  const [expanded, setExpanded] = useState(true);
+  const [expanded, setExpanded] = useState(false);
   const [daysInput, setDaysInput] = useState(String(module.daysToRelease ?? 0));
 
   const style = {
