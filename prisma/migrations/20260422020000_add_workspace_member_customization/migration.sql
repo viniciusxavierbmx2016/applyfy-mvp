@@ -1,0 +1,10 @@
+ALTER TABLE "Workspace" ADD COLUMN "memberBgColor" TEXT;
+ALTER TABLE "Workspace" ADD COLUMN "memberSidebarColor" TEXT;
+ALTER TABLE "Workspace" ADD COLUMN "memberHeaderColor" TEXT;
+ALTER TABLE "Workspace" ADD COLUMN "memberCardColor" TEXT;
+ALTER TABLE "Workspace" ADD COLUMN "memberPrimaryColor" TEXT;
+ALTER TABLE "Workspace" ADD COLUMN "memberTextColor" TEXT;
+ALTER TABLE "Workspace" ADD COLUMN "memberAccentColor" TEXT;
+ALTER TABLE "Workspace" ADD COLUMN "memberBannerUrl" TEXT;
+ALTER TABLE "Workspace" ADD COLUMN "memberWelcomeText" TEXT;
+ALTER TABLE "Workspace" ADD COLUMN "memberLayoutStyle" TEXT DEFAULT 'grid';

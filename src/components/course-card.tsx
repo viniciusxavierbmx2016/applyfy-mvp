@@ -19,6 +19,7 @@ interface CourseCardProps {
   expiresAt?: string | Date | null;
   className?: string;
   manageHref?: string;
+  horizontal?: boolean;
 }
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
@@ -41,6 +42,7 @@ export function CourseCard({
   expiresAt,
   className,
   manageHref,
+  horizontal = false,
 }: CourseCardProps) {
   const showRating =
     typeof ratingAverage === "number" &&
@@ -56,12 +58,16 @@ export function CourseCard({
   const wrapperClassName = cn(
     "group block bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden hover:border-gray-400 dark:hover:border-gray-700 hover:shadow-xl hover:-translate-y-0.5 transition-[border-color,box-shadow,transform] duration-200",
     expired && "opacity-75 grayscale-[0.4]",
+    horizontal && "flex",
     className
   );
   const inner = (
     <>
       {/* Thumbnail 16:9 */}
-      <div className="relative aspect-video bg-gray-100 dark:bg-gray-800 overflow-hidden">
+      <div className={cn(
+        "relative bg-gray-100 dark:bg-gray-800 overflow-hidden",
+        horizontal ? "w-40 sm:w-52 shrink-0" : "aspect-video"
+      )}>
         {thumbnail ? (
           <Image
             src={thumbnail}

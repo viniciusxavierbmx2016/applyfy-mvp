@@ -12,6 +12,11 @@ interface WorkspaceInfo {
   name: string;
   logoUrl: string | null;
   loginBgColor: string | null;
+  memberBannerUrl?: string | null;
+  memberWelcomeText?: string | null;
+  memberLayoutStyle?: string | null;
+  memberCardColor?: string | null;
+  memberPrimaryColor?: string | null;
 }
 
 interface EnrolledCourse {
@@ -118,13 +123,26 @@ export default function WorkspaceVitrinePage() {
     );
   }
 
+  const layout = ws?.memberLayoutStyle || "grid";
+
   return (
     <div className="px-4 sm:px-6 lg:px-8 py-6 lg:py-8 max-w-6xl mx-auto">
+      {ws?.memberBannerUrl && (
+        <div className="mb-6 -mx-4 sm:-mx-6 lg:-mx-8 -mt-6 lg:-mt-8">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={ws.memberBannerUrl}
+            alt=""
+            className="w-full h-32 sm:h-48 lg:h-56 object-cover"
+          />
+        </div>
+      )}
+
       <h2 className="text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white mb-2">
         Olá, {user?.name?.split(" ")[0] || "aluno"} 👋
       </h2>
       <p className="text-gray-600 dark:text-gray-400 mb-8">
-        Bem-vindo à área de membros de {displayName}
+        {ws?.memberWelcomeText || `Bem-vindo à área de membros de ${displayName}`}
       </p>
 
       {userLoading || loading ? (
@@ -144,7 +162,7 @@ export default function WorkspaceVitrinePage() {
                 </p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className={layout === "list" ? "space-y-3" : "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"}>
                 {active.map((course) => (
                   <CourseCard
                     key={course.id}
@@ -156,6 +174,7 @@ export default function WorkspaceVitrinePage() {
                     ratingAverage={course.ratingAverage}
                     ratingCount={course.ratingCount}
                     expiresAt={course.expiresAt}
+                    horizontal={layout === "list"}
                     manageHref={
                       course.canManage
                         ? `/producer/courses/${course.id}/edit`
@@ -175,7 +194,7 @@ export default function WorkspaceVitrinePage() {
               <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
                 Renove para continuar assistindo a estes cursos.
               </p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className={layout === "list" ? "space-y-3" : "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"}>
                 {expired.map((course) => (
                   <CourseCard
                     key={course.id}
@@ -186,6 +205,7 @@ export default function WorkspaceVitrinePage() {
                     ratingAverage={course.ratingAverage}
                     ratingCount={course.ratingCount}
                     checkoutUrl={course.checkoutUrl}
+                    horizontal={layout === "list"}
                     expired
                   />
                 ))}
@@ -198,7 +218,7 @@ export default function WorkspaceVitrinePage() {
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
                 Outros cursos
               </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className={layout === "list" ? "space-y-3" : "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"}>
                 {store.map((course) => (
                   <CourseCard
                     key={course.id}
@@ -210,6 +230,7 @@ export default function WorkspaceVitrinePage() {
                     ratingAverage={course.ratingAverage}
                     ratingCount={course.ratingCount}
                     locked={!course.canManage}
+                    horizontal={layout === "list"}
                     manageHref={
                       course.canManage
                         ? `/producer/courses/${course.id}/edit`

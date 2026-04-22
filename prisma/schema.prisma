@@ -66,6 +66,16 @@ model Workspace {
   forceTheme     String?
   customDomain   String?  @unique
   masterPassword String?
+  memberBgColor       String?
+  memberSidebarColor  String?
+  memberHeaderColor   String?
+  memberCardColor     String?
+  memberPrimaryColor  String?
+  memberTextColor     String?
+  memberAccentColor   String?
+  memberBannerUrl     String?
+  memberWelcomeText   String?
+  memberLayoutStyle   String?  @default("grid")
   ownerId        String
   isActive       Boolean  @default(true)
   createdAt      DateTime @default(now())
