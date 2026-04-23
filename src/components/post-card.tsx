@@ -1,10 +1,25 @@
 "use client";
 
 import { useState } from "react";
+import dynamic from "next/dynamic";
 import { Avatar } from "@/components/ui/avatar";
 import { formatRelativeTime } from "@/lib/utils";
 import { sanitizeHtml } from "@/lib/sanitize-html";
 import { useConfirm } from "@/hooks/use-confirm";
+
+const TiptapEditor = dynamic(
+  () => import("@/components/tiptap-editor").then((m) => m.TiptapEditor),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="min-h-[80px] rounded-lg border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/40 animate-pulse" />
+    ),
+  }
+);
+
+function htmlIsEmpty(html: string) {
+  return !html.replace(/<[^>]*>/g, "").trim();
+}
 
 export interface PostAuthor {
   id: string;
@@ -88,7 +103,7 @@ export function PostCard({
 
   async function submitComment(e: React.FormEvent) {
     e.preventDefault();
-    if (!newComment.trim() || posting) return;
+    if (htmlIsEmpty(newComment) || posting) return;
     setPosting(true);
     try {
       const res = await fetch(`/api/posts/${post.id}/comments`, {
@@ -329,9 +344,10 @@ export function PostCard({
                             </button>
                           )}
                         </div>
-                        <p className="text-sm text-gray-800 dark:text-gray-200 whitespace-pre-wrap break-words mt-0.5">
-                          {c.content}
-                        </p>
+                        <div
+                          className="post-content text-sm text-gray-800 dark:text-gray-200 break-words mt-0.5"
+                          dangerouslySetInnerHTML={{ __html: sanitizeHtml(c.content) }}
+                        />
                       </div>
                     </div>
                     );
@@ -341,21 +357,22 @@ export function PostCard({
                 <p className="text-xs text-gray-500">Nenhum comentário ainda.</p>
               )}
 
-              <form onSubmit={submitComment} className="flex gap-2">
-                <input
-                  type="text"
+              <form onSubmit={submitComment} className="space-y-2">
+                <TiptapEditor
                   value={newComment}
-                  onChange={(e) => setNewComment(e.target.value)}
+                  onChange={setNewComment}
                   placeholder="Escreva um comentário..."
-                  className="flex-1 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:border-blue-500"
+                  minHeight="80px"
                 />
-                <button
-                  type="submit"
-                  disabled={!newComment.trim() || posting}
-                  className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg disabled:opacity-50"
-                >
-                  Enviar
-                </button>
+                <div className="flex justify-end">
+                  <button
+                    type="submit"
+                    disabled={htmlIsEmpty(newComment) || posting}
+                    className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg disabled:opacity-50"
+                  >
+                    {posting ? "Enviando..." : "Enviar"}
+                  </button>
+                </div>
               </form>
             </>
           )}

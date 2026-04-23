@@ -218,7 +218,7 @@ export default function AdminCommunityPage() {
                   </div>
                 </div>
                 <div
-                  className="post-content text-sm text-gray-800 dark:text-gray-200 break-words"
+                  className="post-content prose-lesson text-sm text-gray-800 dark:text-gray-200 break-words"
                   dangerouslySetInnerHTML={{ __html: sanitizeHtml(post.content) }}
                 />
                 <div className="flex items-center gap-4 mt-3 text-xs text-gray-500">

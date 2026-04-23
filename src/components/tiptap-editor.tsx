@@ -9,9 +9,10 @@ interface Props {
   value: string;
   onChange: (html: string) => void;
   placeholder?: string;
+  minHeight?: string;
 }
 
-export function TiptapEditor({ value, onChange, placeholder }: Props) {
+export function TiptapEditor({ value, onChange, placeholder, minHeight = "96px" }: Props) {
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
@@ -36,7 +37,8 @@ export function TiptapEditor({ value, onChange, placeholder }: Props) {
     editorProps: {
       attributes: {
         class:
-          "tiptap prose prose-invert prose-sm max-w-none min-h-[96px] px-3 py-2 focus:outline-none text-sm text-gray-900 dark:text-white",
+          "tiptap prose prose-invert prose-sm max-w-none px-3 py-2 focus:outline-none text-sm text-gray-900 dark:text-white",
+        style: `min-height: ${minHeight}`,
       },
     },
     onUpdate({ editor }) {
