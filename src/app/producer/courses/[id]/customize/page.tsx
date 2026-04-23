@@ -67,11 +67,12 @@ export default function CourseCustomizePage() {
   const [savedLayout, setSavedLayout] = useState("netflix");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [toast, setToast] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ msg: string; error?: boolean } | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
-  function showToast(msg: string) {
-    setToast(msg);
-    setTimeout(() => setToast(null), 2600);
+  function showToast(msg: string, error = false) {
+    setToast({ msg, error });
+    setTimeout(() => setToast(null), error ? 4000 : 2600);
   }
 
   useEffect(() => {
@@ -87,12 +88,17 @@ export default function CourseCustomizePage() {
           setCourseSlug(courseData.course.slug);
         }
         const customRes = await fetch(`/api/producer/courses/${courseId}/customize`);
+        console.log("[customize] GET status:", customRes.status);
         if (!alive) return;
         if (customRes.ok) {
           const d = await customRes.json();
           const merged = { ...EMPTY, ...d.customization };
           setCustom(merged);
           setSavedLayout(merged.memberLayoutStyle || "netflix");
+        } else {
+          const errBody = await customRes.json().catch(() => ({}));
+          console.error("[customize] GET error:", customRes.status, errBody);
+          setLoadError(errBody.error || `Erro ${customRes.status} ao carregar personalização`);
         }
       } finally {
         if (alive) setLoading(false);
@@ -121,6 +127,7 @@ export default function CourseCustomizePage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(sanitizeForSave()),
       });
+      console.log("[customize] PUT status:", res.status);
       if (res.ok) {
         const d = await res.json();
         const merged = { ...EMPTY, ...d.customization };
@@ -129,10 +136,12 @@ export default function CourseCustomizePage() {
         showToast("Personalização salva");
       } else {
         const d = await res.json().catch(() => ({}));
-        showToast(d.error || "Erro ao salvar");
+        console.error("[customize] PUT error:", res.status, d);
+        showToast(d.error || "Erro ao salvar", true);
       }
-    } catch {
-      showToast("Erro de rede");
+    } catch (err) {
+      console.error("[customize] PUT network error:", err);
+      showToast("Erro de rede", true);
     } finally {
       setSaving(false);
     }
@@ -210,6 +219,18 @@ export default function CourseCustomizePage() {
           {Array.from({ length: 3 }).map((_, i) => (
             <div key={i} className="h-32 bg-gray-100 dark:bg-gray-900 rounded-xl animate-pulse" />
           ))}
+        </div>
+      ) : loadError ? (
+        <div className="bg-red-50 dark:bg-red-500/5 border border-red-200 dark:border-red-500/20 rounded-xl p-6 text-center">
+          <p className="text-red-700 dark:text-red-400 font-medium mb-1">Erro ao carregar personalização</p>
+          <p className="text-sm text-red-600 dark:text-red-300">{loadError}</p>
+          <button
+            type="button"
+            onClick={() => window.location.reload()}
+            className="mt-3 px-4 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
+          >
+            Tentar novamente
+          </button>
         </div>
       ) : (
         <div className="space-y-6">
@@ -340,8 +361,12 @@ export default function CourseCustomizePage() {
       )}
 
       {toast && (
-        <div className="fixed bottom-6 right-6 z-50 bg-gray-900 dark:bg-white text-white dark:text-gray-900 px-4 py-3 rounded-lg shadow-2xl text-sm font-medium animate-pulse">
-          {toast}
+        <div className={`fixed bottom-6 right-6 z-50 px-4 py-3 rounded-lg shadow-2xl text-sm font-medium ${
+          toast.error
+            ? "bg-red-600 text-white"
+            : "bg-gray-900 dark:bg-white text-white dark:text-gray-900"
+        }`}>
+          {toast.msg}
         </div>
       )}
     </div>
