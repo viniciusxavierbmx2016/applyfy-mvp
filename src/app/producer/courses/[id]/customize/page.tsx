@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
 import Link from "next/link";
 import { CourseEditTabs } from "@/components/course-edit-tabs";
 
@@ -50,25 +51,20 @@ const LAYOUTS = [
     description: "Carrossel horizontal",
   },
   {
-    value: "grid",
-    label: "Grade",
-    description: "Cards em grid responsivo",
-  },
-  {
     value: "list",
     label: "Lista",
     description: "Lista vertical detalhada",
   },
 ] as const;
 
-export default function CourseCustomizePage({
-  params,
-}: {
-  params: { id: string };
-}) {
+export default function CourseCustomizePage() {
+  const params = useParams<{ id: string }>();
+  const courseId = params.id;
+
   const [courseTitle, setCourseTitle] = useState("");
   const [courseSlug, setCourseSlug] = useState("");
   const [custom, setCustom] = useState<Customization>(EMPTY);
+  const [savedLayout, setSavedLayout] = useState("netflix");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
@@ -79,22 +75,24 @@ export default function CourseCustomizePage({
   }
 
   useEffect(() => {
+    if (!courseId) return;
     let alive = true;
     async function load() {
       try {
-        const [courseRes, customRes] = await Promise.all([
-          fetch(`/api/courses/${params.id}`),
-          fetch(`/api/producer/courses/${params.id}/customize`),
-        ]);
+        const courseRes = await fetch(`/api/courses/${courseId}`);
         if (!alive) return;
         if (courseRes.ok) {
           const courseData = await courseRes.json();
           setCourseTitle(courseData.course.title);
           setCourseSlug(courseData.course.slug);
         }
+        const customRes = await fetch(`/api/producer/courses/${courseId}/customize`);
+        if (!alive) return;
         if (customRes.ok) {
           const d = await customRes.json();
-          setCustom({ ...EMPTY, ...d.customization });
+          const merged = { ...EMPTY, ...d.customization };
+          setCustom(merged);
+          setSavedLayout(merged.memberLayoutStyle || "netflix");
         }
       } finally {
         if (alive) setLoading(false);
@@ -102,36 +100,32 @@ export default function CourseCustomizePage({
     }
     load();
     return () => { alive = false; };
-  }, [params.id]);
+  }, [courseId]);
 
-  function buildPayload() {
+  function sanitizeForSave(): Record<string, unknown> {
     const payload: Record<string, unknown> = {};
-    for (const key of Object.keys(custom) as (keyof Customization)[]) {
-      const val = custom[key];
-      if (COLOR_FIELDS.some((f) => f.key === key)) {
-        if (val && typeof val === "string" && HEX_RE.test(val)) {
-          payload[key] = val;
-        } else {
-          payload[key] = null;
-        }
-      } else {
-        payload[key] = val;
-      }
+    for (const field of COLOR_FIELDS) {
+      const val = custom[field.key];
+      payload[field.key] = typeof val === "string" && HEX_RE.test(val) ? val : null;
     }
+    payload.memberLayoutStyle = custom.memberLayoutStyle || "netflix";
+    payload.memberWelcomeText = custom.memberWelcomeText || null;
     return payload;
   }
 
   async function handleSave() {
     setSaving(true);
     try {
-      const res = await fetch(`/api/producer/courses/${params.id}/customize`, {
+      const res = await fetch(`/api/producer/courses/${courseId}/customize`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(buildPayload()),
+        body: JSON.stringify(sanitizeForSave()),
       });
       if (res.ok) {
         const d = await res.json();
-        setCustom({ ...EMPTY, ...d.customization });
+        const merged = { ...EMPTY, ...d.customization };
+        setCustom(merged);
+        setSavedLayout(merged.memberLayoutStyle || "netflix");
         showToast("Personalização salva");
       } else {
         const d = await res.json().catch(() => ({}));
@@ -148,10 +142,12 @@ export default function CourseCustomizePage({
     if (!confirm("Restaurar todas as configurações para o padrão?")) return;
     setSaving(true);
     try {
-      const res = await fetch(`/api/producer/courses/${params.id}/customize`, { method: "DELETE" });
+      const res = await fetch(`/api/producer/courses/${courseId}/customize`, { method: "DELETE" });
       if (res.ok) {
         const d = await res.json();
-        setCustom({ ...EMPTY, ...d.customization });
+        const merged = { ...EMPTY, ...d.customization };
+        setCustom(merged);
+        setSavedLayout(merged.memberLayoutStyle || "netflix");
         showToast("Personalização restaurada");
       }
     } catch {
@@ -207,7 +203,7 @@ export default function CourseCustomizePage({
         </div>
       </div>
 
-      <CourseEditTabs courseId={params.id} active="customize" />
+      <CourseEditTabs courseId={courseId} active="customize" />
 
       {loading ? (
         <div className="space-y-4">
@@ -225,10 +221,10 @@ export default function CourseCustomizePage({
             <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
               Como seus cursos aparecem para os alunos
             </p>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {LAYOUTS.map((layout) => {
                 const selected = currentLayout === layout.value;
-                const isDefault = layout.value === "netflix";
+                const isSaved = savedLayout === layout.value;
                 return (
                   <button
                     key={layout.value}
@@ -240,7 +236,7 @@ export default function CourseCustomizePage({
                         : "border-[#1a1e2e] hover:border-gray-400 dark:hover:border-gray-600"
                     }`}
                   >
-                    {selected && isDefault && (
+                    {isSaved && (
                       <span className="absolute top-2 right-2 px-1.5 py-0.5 text-[10px] font-semibold bg-indigo-500 text-white rounded">
                         Atual
                       </span>
@@ -259,12 +255,6 @@ export default function CourseCustomizePage({
                           <svg className="w-3 h-3 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                           </svg>
-                        </div>
-                      ) : layout.value === "grid" ? (
-                        <div className="grid grid-cols-3 gap-1.5 w-full">
-                          {[1,2,3].map(i => (
-                            <div key={i} className="h-10 rounded bg-gray-200 dark:bg-gray-700" />
-                          ))}
                         </div>
                       ) : (
                         <div className="space-y-1.5 w-full">
@@ -350,7 +340,7 @@ export default function CourseCustomizePage({
       )}
 
       {toast && (
-        <div className="fixed bottom-6 right-6 z-50 bg-gray-900 dark:bg-white text-white dark:text-gray-900 px-4 py-3 rounded-lg shadow-2xl text-sm font-medium">
+        <div className="fixed bottom-6 right-6 z-50 bg-gray-900 dark:bg-white text-white dark:text-gray-900 px-4 py-3 rounded-lg shadow-2xl text-sm font-medium animate-pulse">
           {toast}
         </div>
       )}
@@ -375,7 +365,7 @@ function ColorPicker({
       <p className="text-[11px] text-gray-500 dark:text-gray-500">{description}</p>
       <div className="flex items-center gap-2">
         <label
-          className="w-10 h-10 rounded-lg border border-gray-300 dark:border-white/[0.1] shrink-0 overflow-hidden relative cursor-pointer"
+          className="w-10 h-10 rounded-lg border border-gray-300 dark:border-white/[0.1] shrink-0 overflow-hidden relative cursor-pointer block"
           style={{ backgroundColor: HEX_RE.test(value) ? value : "#6366f1" }}
         >
           <input
