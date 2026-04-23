@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { useUserStore } from "@/stores/user-store";
+import { stripHtml } from "@/lib/utils";
 
 interface Lesson {
   id: string;
@@ -231,7 +232,7 @@ export default function ModuleDetailPage() {
                   </p>
                   {lesson.description && (
                     <p className="text-xs text-gray-500 mt-0.5 line-clamp-1">
-                      {lesson.description}
+                      {stripHtml(lesson.description)}
                     </p>
                   )}
                 </div>

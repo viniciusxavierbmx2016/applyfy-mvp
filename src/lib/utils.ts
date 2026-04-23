@@ -102,3 +102,8 @@ export function formatPhoneDisplay(number: string | null | undefined): string {
   }
   return local || digits;
 }
+
+export function stripHtml(html: string): string {
+  if (!html) return "";
+  return html.replace(/<[^>]*>/g, "").trim();
+}

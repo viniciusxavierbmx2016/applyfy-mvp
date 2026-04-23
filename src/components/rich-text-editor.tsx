@@ -133,7 +133,7 @@ function LinkModal({ editor, onClose }: { editor: Editor; onClose: () => void })
             style: `background-color: ${buttonColor}; --btn-color: ${buttonColor}`,
           },
         }],
-      }).run();
+      }).insertContent(" ").unsetMark("link").run();
     } else {
       const { from, to } = editor.state.selection;
       const hasSelection = from !== to;
@@ -147,7 +147,7 @@ function LinkModal({ editor, onClose }: { editor: Editor; onClose: () => void })
             type: "link",
             attrs: { href, target: "_blank", rel: "noopener noreferrer" },
           }],
-        }).run();
+        }).insertContent(" ").unsetMark("link").run();
       }
     }
     onClose();

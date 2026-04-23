@@ -13,7 +13,7 @@ import {
 import { CoursePreview } from "@/components/course-preview";
 import { ModuleListView, type ListModule } from "@/components/module-list-view";
 import { HeadphonesIcon } from "@/components/support-popover";
-import { formatPhoneDisplay, formatWhatsappLink } from "@/lib/utils";
+import { formatPhoneDisplay, formatWhatsappLink, stripHtml } from "@/lib/utils";
 
 interface LessonItem {
   id: string;
@@ -501,7 +501,7 @@ export default function CourseHomePage() {
               </p>
               {continueWatching.lesson.description && (
                 <p className="text-sm text-gray-500 dark:text-gray-400 mt-2 line-clamp-2">
-                  {continueWatching.lesson.description}
+                  {stripHtml(continueWatching.lesson.description)}
                 </p>
               )}
               <span className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-blue-600 dark:text-blue-400 group-hover:gap-3 transition-[gap] duration-300">
@@ -629,3 +629,4 @@ export default function CourseHomePage() {
     </div>
   );
 }
+

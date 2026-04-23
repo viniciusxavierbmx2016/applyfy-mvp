@@ -3,6 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { ProgressBar } from "./progress-bar";
+import { stripHtml } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 
 interface CourseCardProps {
@@ -142,7 +143,7 @@ export function CourseCard({
       <div className="p-4">
         <h3 className="font-semibold text-gray-900 dark:text-white line-clamp-1 mb-1">{title}</h3>
         <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 mb-2 min-h-[2.5rem]">
-          {description}
+          {stripHtml(description)}
         </p>
         {showRating && (
           <div className="flex items-center gap-1 text-xs text-amber-400 font-medium mb-2">
