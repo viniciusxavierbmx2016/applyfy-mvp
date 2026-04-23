@@ -57,7 +57,7 @@ function buildOrderedList(
   const unsectioned = modules
     .filter((m) => !m.sectionId)
     .sort((a, b) => a.order - b.order);
-  const out: ListItem[] = unsectioned.map((m) => ({ kind: "module", data: m }));
+  const out: ListItem[] = [];
   for (const s of sorted) {
     out.push({ kind: "section", data: s });
     const mods = modules
@@ -65,6 +65,7 @@ function buildOrderedList(
       .sort((a, b) => a.order - b.order);
     for (const m of mods) out.push({ kind: "module", data: m });
   }
+  for (const m of unsectioned) out.push({ kind: "module", data: m });
   return out;
 }
 
