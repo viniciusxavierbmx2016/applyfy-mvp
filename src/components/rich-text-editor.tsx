@@ -8,13 +8,20 @@ import TextAlign from "@tiptap/extension-text-align";
 import Color from "@tiptap/extension-color";
 import { TextStyle } from "@tiptap/extension-text-style";
 import Image from "@tiptap/extension-image";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 interface Props {
   value: string;
   onChange: (html: string) => void;
   placeholder?: string;
   minHeight?: string;
+}
+
+interface LinkEditData {
+  href: string;
+  text: string;
+  isButton: boolean;
+  color: string;
 }
 
 export default function RichTextEditor({
@@ -25,6 +32,7 @@ export default function RichTextEditor({
 }: Props) {
   const [linkModal, setLinkModal] = useState(false);
   const [imageModal, setImageModal] = useState(false);
+  const [editingLink, setEditingLink] = useState<LinkEditData | null>(null);
 
   const editor = useEditor({
     extensions: [
@@ -64,18 +72,37 @@ export default function RichTextEditor({
     }
   }, [value, editor]);
 
+  const handleEditorClick = useCallback((e: React.MouseEvent) => {
+    if (!editor) return;
+    const target = e.target as HTMLElement;
+    const anchor = target.closest("a");
+    if (anchor) {
+      e.preventDefault();
+      e.stopPropagation();
+      const href = anchor.getAttribute("href") || "";
+      const text = anchor.textContent || "";
+      const isButton = anchor.classList.contains("editor-button");
+      let color = "#6366f1";
+      if (isButton && anchor.style.backgroundColor) {
+        color = rgbToHex(anchor.style.backgroundColor);
+      }
+      setEditingLink({ href, text, isButton, color });
+      setLinkModal(true);
+    }
+  }, [editor]);
+
   if (!editor) return null;
 
   return (
     <div className="rounded-xl border border-gray-300 dark:border-[#1a1e2e] overflow-hidden focus-within:border-indigo-500/50 transition-colors">
       <Toolbar
         editor={editor}
-        onLinkClick={() => setLinkModal(true)}
+        onLinkClick={() => { setEditingLink(null); setLinkModal(true); }}
         onImageClick={() => setImageModal(true)}
       />
       <div
         className="bg-white dark:bg-[#0f1320] px-4 py-3 text-sm text-gray-900 dark:text-white"
-        onClick={() => editor.chain().focus().run()}
+        onClick={handleEditorClick}
       >
         {editor.isEmpty && (
           <p className="absolute text-gray-400 dark:text-gray-500 pointer-events-none select-none">
@@ -88,7 +115,8 @@ export default function RichTextEditor({
       {linkModal && (
         <LinkModal
           editor={editor}
-          onClose={() => setLinkModal(false)}
+          editData={editingLink}
+          onClose={() => { setLinkModal(false); setEditingLink(null); }}
         />
       )}
       {imageModal && (
@@ -101,23 +129,44 @@ export default function RichTextEditor({
   );
 }
 
-function LinkModal({ editor, onClose }: { editor: Editor; onClose: () => void }) {
-  const [url, setUrl] = useState("");
-  const [text, setText] = useState("");
-  const [style, setStyle] = useState<"link" | "button">("link");
-  const [buttonColor, setButtonColor] = useState("#6366f1");
+function rgbToHex(rgb: string): string {
+  if (rgb.startsWith("#")) return rgb;
+  const match = rgb.match(/\d+/g);
+  if (!match || match.length < 3) return "#6366f1";
+  const [r, g, b] = match.map(Number);
+  return "#" + [r, g, b].map((v) => v.toString(16).padStart(2, "0")).join("");
+}
 
-  function normalizeUrl(raw: string): string {
-    const trimmed = raw.trim();
-    if (!trimmed) return trimmed;
-    if (/^(https?:\/\/|mailto:|tel:)/i.test(trimmed)) return trimmed;
-    return "https://" + trimmed;
-  }
+function normalizeUrl(raw: string): string {
+  const trimmed = raw.trim();
+  if (!trimmed) return trimmed;
+  if (/^(https?:\/\/|mailto:|tel:)/i.test(trimmed)) return trimmed;
+  return "https://" + trimmed;
+}
 
-  function handleInsert() {
+function LinkModal({
+  editor,
+  editData,
+  onClose,
+}: {
+  editor: Editor;
+  editData: LinkEditData | null;
+  onClose: () => void;
+}) {
+  const isEditing = !!editData;
+  const [url, setUrl] = useState(editData?.href || "");
+  const [text, setText] = useState(editData?.text || "");
+  const [style, setStyle] = useState<"link" | "button">(editData?.isButton ? "button" : "link");
+  const [buttonColor, setButtonColor] = useState(editData?.color || "#6366f1");
+
+  function handleSave() {
     if (!url.trim()) return;
     const href = normalizeUrl(url);
     const displayText = text.trim() || url.trim();
+
+    if (isEditing) {
+      editor.chain().focus().extendMarkRange("link").deleteSelection().run();
+    }
 
     if (style === "button") {
       editor.chain().focus().insertContent({
@@ -135,21 +184,20 @@ function LinkModal({ editor, onClose }: { editor: Editor; onClose: () => void })
         }],
       }).insertContent(" ").unsetMark("link").run();
     } else {
-      const { from, to } = editor.state.selection;
-      const hasSelection = from !== to;
-      if (hasSelection) {
-        editor.chain().focus().setLink({ href, target: "_blank", rel: "noopener noreferrer" }).run();
-      } else {
-        editor.chain().focus().insertContent({
-          type: "text",
-          text: displayText,
-          marks: [{
-            type: "link",
-            attrs: { href, target: "_blank", rel: "noopener noreferrer" },
-          }],
-        }).insertContent(" ").unsetMark("link").run();
-      }
+      editor.chain().focus().insertContent({
+        type: "text",
+        text: displayText,
+        marks: [{
+          type: "link",
+          attrs: { href, target: "_blank", rel: "noopener noreferrer" },
+        }],
+      }).insertContent(" ").unsetMark("link").run();
     }
+    onClose();
+  }
+
+  function handleRemove() {
+    editor.chain().focus().extendMarkRange("link").unsetLink().run();
     onClose();
   }
 
@@ -162,7 +210,9 @@ function LinkModal({ editor, onClose }: { editor: Editor; onClose: () => void })
         className="relative bg-white dark:bg-[#141416] border border-gray-200 dark:border-[#28282e] rounded-2xl p-6 max-w-md w-full mx-4 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-5">Inserir link</h3>
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-5">
+          {isEditing ? "Editar link" : "Inserir link"}
+        </h3>
 
         <div className="space-y-4">
           <div>
@@ -174,7 +224,7 @@ function LinkModal({ editor, onClose }: { editor: Editor; onClose: () => void })
               onChange={(e) => setUrl(e.target.value)}
               placeholder="exemplo.com.br (https:// automático)"
               className="w-full px-4 py-3 bg-gray-50 dark:bg-[#0f1320] border border-gray-300 dark:border-[#1a1e2e] rounded-xl text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-indigo-500/50"
-              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleInsert(); } }}
+              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleSave(); } }}
             />
           </div>
 
@@ -186,7 +236,7 @@ function LinkModal({ editor, onClose }: { editor: Editor; onClose: () => void })
               onChange={(e) => setText(e.target.value)}
               placeholder="Clique aqui (opcional)"
               className="w-full px-4 py-3 bg-gray-50 dark:bg-[#0f1320] border border-gray-300 dark:border-[#1a1e2e] rounded-xl text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-indigo-500/50"
-              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleInsert(); } }}
+              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleSave(); } }}
             />
           </div>
 
@@ -277,20 +327,30 @@ function LinkModal({ editor, onClose }: { editor: Editor; onClose: () => void })
         </div>
 
         <div className="flex gap-3 mt-6">
+          {isEditing && (
+            <button
+              type="button"
+              onClick={handleRemove}
+              className="px-4 py-2.5 text-red-500 hover:text-red-400 hover:bg-red-500/10 text-sm font-medium rounded-xl transition-colors"
+            >
+              Remover
+            </button>
+          )}
+          <div className="flex-1" />
           <button
             type="button"
             onClick={onClose}
-            className="flex-1 px-4 py-2.5 bg-gray-100 dark:bg-[#1d1d21] hover:bg-gray-200 dark:hover:bg-[#28282e] text-gray-700 dark:text-gray-300 text-sm font-medium rounded-xl border border-gray-200 dark:border-[#28282e] transition-colors"
+            className="px-4 py-2.5 bg-gray-100 dark:bg-[#1d1d21] hover:bg-gray-200 dark:hover:bg-[#28282e] text-gray-700 dark:text-gray-300 text-sm font-medium rounded-xl border border-gray-200 dark:border-[#28282e] transition-colors"
           >
             Cancelar
           </button>
           <button
             type="button"
-            onClick={handleInsert}
+            onClick={handleSave}
             disabled={!url.trim()}
-            className="flex-1 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-xl disabled:opacity-40 transition-colors"
+            className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-xl disabled:opacity-40 transition-colors"
           >
-            Inserir
+            {isEditing ? "Salvar" : "Inserir"}
           </button>
         </div>
       </div>
