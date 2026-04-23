@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { LessonMaterials } from "@/components/lesson-materials";
+import { QuizManager } from "@/components/quiz-manager";
 import { useConfirm } from "@/hooks/use-confirm";
 import {
   DndContext,
@@ -195,6 +196,9 @@ function SortableLesson({
           onCancel={onCancelEdit}
         />
         <LessonMaterials lessonId={lesson.id} />
+        <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-800">
+          <QuizManager lessonId={lesson.id} />
+        </div>
       </div>
     );
   }

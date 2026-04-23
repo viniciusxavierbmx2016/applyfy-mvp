@@ -42,6 +42,7 @@ model User {
   workspace        Workspace?       @relation("WorkspaceMembers", fields: [workspaceId], references: [id], onDelete: SetNull)
   collaborators    Collaborator[]
   subscriptions    Subscription[]
+  quizAttempts     QuizAttempt[]
 
   @@index([workspaceId])
 }
@@ -234,6 +235,7 @@ model Lesson {
   progress    LessonProgress[]
   comments    LessonComment[]
   materials   LessonMaterial[]
+  quiz        Quiz?
 
   @@index([moduleId, order])
 }
@@ -588,4 +590,60 @@ model PlatformSettings {
   logoUrl    String?
   faviconUrl String?
   updatedAt  DateTime @updatedAt
+}
+
+model Quiz {
+  id           String   @id @default(uuid())
+  lessonId     String   @unique
+  title        String?
+  passingScore Int      @default(70)
+  showAnswers  Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  lesson    Lesson         @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  questions QuizQuestion[]
+  attempts  QuizAttempt[]
+}
+
+model QuizQuestion {
+  id        String   @id @default(uuid())
+  quizId    String
+  text      String
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  quiz    Quiz         @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  options QuizOption[]
+
+  @@index([quizId])
+}
+
+model QuizOption {
+  id         String  @id @default(uuid())
+  questionId String
+  text       String
+  isCorrect  Boolean @default(false)
+  sortOrder  Int     @default(0)
+
+  question QuizQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@index([questionId])
+}
+
+model QuizAttempt {
+  id        String   @id @default(uuid())
+  quizId    String
+  userId    String
+  score     Float
+  passed    Boolean
+  answers   String
+  createdAt DateTime @default(now())
+
+  quiz Quiz @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([quizId])
+  @@index([userId])
+  @@index([quizId, userId])
 }

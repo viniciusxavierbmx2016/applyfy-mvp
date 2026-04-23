@@ -16,6 +16,7 @@ const VideoPlayer = dynamic(
 );
 import { AutoplayCountdown } from "@/components/autoplay-countdown";
 import { LessonComments } from "@/components/lesson-comments";
+import { LessonQuiz } from "@/components/lesson-quiz";
 import {
   LessonsSidebar,
   type SidebarModule,
@@ -454,6 +455,8 @@ export default function LessonPage({
               </div>
             </div>
           )}
+
+          <LessonQuiz lessonId={data.lesson.id} />
         </div>
       </div>
 
