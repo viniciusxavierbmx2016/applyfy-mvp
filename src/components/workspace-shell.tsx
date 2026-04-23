@@ -13,13 +13,6 @@ interface WorkspaceInfo {
   slug: string;
   name: string;
   logoUrl: string | null;
-  memberBgColor?: string | null;
-  memberSidebarColor?: string | null;
-  memberHeaderColor?: string | null;
-  memberCardColor?: string | null;
-  memberPrimaryColor?: string | null;
-  memberTextColor?: string | null;
-  memberAccentColor?: string | null;
 }
 
 const COLLAPSED_KEY = "student_sidebar_collapsed";
@@ -47,15 +40,6 @@ export function WorkspaceShell({
       .then((d) => {
         if (!d) return;
         setWs(d.workspace);
-        const root = document.documentElement;
-        const w = d.workspace;
-        if (w.memberBgColor) root.style.setProperty("--member-bg", w.memberBgColor);
-        if (w.memberSidebarColor) root.style.setProperty("--member-sidebar", w.memberSidebarColor);
-        if (w.memberHeaderColor) root.style.setProperty("--member-header", w.memberHeaderColor);
-        if (w.memberCardColor) root.style.setProperty("--member-card", w.memberCardColor);
-        if (w.memberPrimaryColor) root.style.setProperty("--member-primary", w.memberPrimaryColor);
-        if (w.memberTextColor) root.style.setProperty("--member-text", w.memberTextColor);
-        if (w.memberAccentColor) root.style.setProperty("--member-accent", w.memberAccentColor);
       });
   }, [slug]);
 
@@ -155,9 +139,9 @@ export function WorkspaceShell({
   }
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: ws?.memberBgColor || undefined, color: ws?.memberTextColor || undefined }} >
+    <div className="min-h-screen">
       {/* Header */}
-      <header className="sticky top-0 z-30 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-white/5" style={{ backgroundColor: ws?.memberHeaderColor || undefined }}>
+      <header className="sticky top-0 z-30 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-white/5">
         <div className="px-4 sm:px-6 h-14 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
             <button
@@ -236,12 +220,11 @@ export function WorkspaceShell({
           />
         )}
         <aside
-          style={{ backgroundColor: ws?.memberSidebarColor || undefined }}
           className={cn(
             "fixed lg:sticky top-14 lg:top-14 left-0 z-40 flex flex-col",
             "h-[calc(100vh-3.5rem)]",
             "border-r border-gray-200 dark:border-white/5",
-            ws?.memberSidebarColor ? "" : "bg-white dark:bg-gray-900",
+            "bg-white dark:bg-gray-900",
             "transform transition-[width,transform] duration-300 ease-in-out",
             "lg:translate-x-0",
             "w-64",

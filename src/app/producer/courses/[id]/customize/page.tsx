@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { CourseEditTabs } from "@/components/course-edit-tabs";
 
@@ -14,7 +14,6 @@ interface Customization {
   memberPrimaryColor: string | null;
   memberTextColor: string | null;
   memberAccentColor: string | null;
-  memberBannerUrl: string | null;
   memberWelcomeText: string | null;
   memberLayoutStyle: string | null;
 }
@@ -27,7 +26,6 @@ const EMPTY: Customization = {
   memberPrimaryColor: null,
   memberTextColor: null,
   memberAccentColor: null,
-  memberBannerUrl: null,
   memberWelcomeText: null,
   memberLayoutStyle: "grid",
 };
@@ -65,13 +63,10 @@ export default function CourseCustomizePage({
 }) {
   const [courseTitle, setCourseTitle] = useState("");
   const [courseSlug, setCourseSlug] = useState("");
-  const [workspaceId, setWorkspaceId] = useState<string | null>(null);
   const [custom, setCustom] = useState<Customization>(EMPTY);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [uploading, setUploading] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
-  const bannerInputRef = useRef<HTMLInputElement>(null);
 
   function showToast(msg: string) {
     setToast(msg);
@@ -82,21 +77,19 @@ export default function CourseCustomizePage({
     let alive = true;
     async function load() {
       try {
-        const courseRes = await fetch(`/api/courses/${params.id}`);
-        if (!courseRes.ok) return;
-        const courseData = await courseRes.json();
+        const [courseRes, customRes] = await Promise.all([
+          fetch(`/api/courses/${params.id}`),
+          fetch(`/api/producer/courses/${params.id}/customize`),
+        ]);
         if (!alive) return;
-        setCourseTitle(courseData.course.title);
-        setCourseSlug(courseData.course.slug);
-        const wsId = courseData.course.workspaceId;
-        setWorkspaceId(wsId);
-
-        if (wsId) {
-          const customRes = await fetch(`/api/workspaces/${wsId}/customize`);
-          if (customRes.ok && alive) {
-            const d = await customRes.json();
-            setCustom({ ...EMPTY, ...d.customization });
-          }
+        if (courseRes.ok) {
+          const courseData = await courseRes.json();
+          setCourseTitle(courseData.course.title);
+          setCourseSlug(courseData.course.slug);
+        }
+        if (customRes.ok) {
+          const d = await customRes.json();
+          setCustom({ ...EMPTY, ...d.customization });
         }
       } finally {
         if (alive) setLoading(false);
@@ -107,10 +100,9 @@ export default function CourseCustomizePage({
   }, [params.id]);
 
   async function handleSave() {
-    if (!workspaceId) return;
     setSaving(true);
     try {
-      const res = await fetch(`/api/workspaces/${workspaceId}/customize`, {
+      const res = await fetch(`/api/producer/courses/${params.id}/customize`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(custom),
@@ -131,10 +123,10 @@ export default function CourseCustomizePage({
   }
 
   async function handleReset() {
-    if (!workspaceId || !confirm("Restaurar todas as configurações para o padrão?")) return;
+    if (!confirm("Restaurar todas as configurações para o padrão?")) return;
     setSaving(true);
     try {
-      const res = await fetch(`/api/workspaces/${workspaceId}/customize`, { method: "DELETE" });
+      const res = await fetch(`/api/producer/courses/${params.id}/customize`, { method: "DELETE" });
       if (res.ok) {
         const d = await res.json();
         setCustom({ ...EMPTY, ...d.customization });
@@ -144,31 +136,6 @@ export default function CourseCustomizePage({
       showToast("Erro de rede");
     } finally {
       setSaving(false);
-    }
-  }
-
-  async function handleBannerUpload(file: File) {
-    if (!workspaceId) return;
-    setUploading(true);
-    const formData = new FormData();
-    formData.append("file", file);
-    try {
-      const res = await fetch(`/api/workspaces/${workspaceId}/customize`, {
-        method: "POST",
-        body: formData,
-      });
-      if (res.ok) {
-        const d = await res.json();
-        setCustom((prev) => ({ ...prev, memberBannerUrl: d.bannerUrl }));
-        showToast("Banner atualizado");
-      } else {
-        const d = await res.json().catch(() => ({}));
-        showToast(d.error || "Erro no upload");
-      }
-    } catch {
-      showToast("Erro de rede");
-    } finally {
-      setUploading(false);
     }
   }
 
@@ -224,18 +191,8 @@ export default function CourseCustomizePage({
             <div key={i} className="h-32 bg-gray-100 dark:bg-gray-900 rounded-xl animate-pulse" />
           ))}
         </div>
-      ) : !workspaceId ? (
-        <div className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.06] rounded-xl p-8 text-center">
-          <p className="text-gray-500">Este curso não está vinculado a um workspace.</p>
-        </div>
       ) : (
         <div className="space-y-6">
-          <div className="bg-yellow-50 dark:bg-yellow-500/5 border border-yellow-200 dark:border-yellow-500/20 rounded-xl px-4 py-3">
-            <p className="text-sm text-yellow-800 dark:text-yellow-300">
-              Estas configurações se aplicam a todo o workspace — todos os cursos compartilham o mesmo visual na área de membros.
-            </p>
-          </div>
-
           {/* Layout */}
           <section className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.06] rounded-xl p-6">
             <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-1">
@@ -303,74 +260,6 @@ export default function CourseCustomizePage({
                 />
               ))}
             </div>
-          </section>
-
-          {/* Banner */}
-          <section className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.06] rounded-xl p-6">
-            <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-1">
-              Banner de boas-vindas
-            </h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-              Imagem exibida no topo da área de membros (1920x400px, PNG ou JPG)
-            </p>
-            {custom.memberBannerUrl ? (
-              <div className="space-y-3">
-                <div className="rounded-xl overflow-hidden border border-gray-200 dark:border-white/[0.06]">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={custom.memberBannerUrl}
-                    alt="Banner"
-                    className="w-full h-32 sm:h-48 object-cover"
-                  />
-                </div>
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => bannerInputRef.current?.click()}
-                    className="px-3 py-2 text-sm border border-gray-300 dark:border-white/[0.08] rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/[0.06] transition"
-                  >
-                    Trocar imagem
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => updateField("memberBannerUrl", null)}
-                    className="px-3 py-2 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition"
-                  >
-                    Remover
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div
-                onClick={() => bannerInputRef.current?.click()}
-                className="flex flex-col items-center justify-center gap-2 py-8 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-xl cursor-pointer hover:border-gray-400 dark:hover:border-gray-600 transition"
-              >
-                {uploading ? (
-                  <div className="flex items-center gap-2 text-sm text-gray-500">
-                    <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-                    Enviando...
-                  </div>
-                ) : (
-                  <>
-                    <svg className="w-8 h-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">Clique para enviar uma imagem de banner</p>
-                  </>
-                )}
-              </div>
-            )}
-            <input
-              ref={bannerInputRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) handleBannerUpload(file);
-                e.target.value = "";
-              }}
-            />
           </section>
 
           {/* Welcome text */}

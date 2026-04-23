@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireStaff } from "@/lib/auth";
-import { canAccessWorkspace } from "@/lib/workspace";
-import { createAdminClient } from "@/lib/supabase-admin";
+import { canEditCourse, requireStaff } from "@/lib/auth";
 
 const HEX_RE = /^#[0-9a-fA-F]{6}$/;
 const COLOR_FIELDS = [
@@ -23,14 +21,11 @@ const SELECT_FIELDS = {
   memberPrimaryColor: true,
   memberTextColor: true,
   memberAccentColor: true,
-  memberBannerUrl: true,
   memberWelcomeText: true,
   memberLayoutStyle: true,
 } as const;
 
 const ALLOWED_LAYOUTS = new Set(["netflix", "grid", "list"]);
-const BANNER_BUCKET = "thumbnails";
-const MAX_BANNER_SIZE = 5 * 1024 * 1024;
 
 function errStatus(msg: string) {
   if (msg === "Não autorizado") return 401;
@@ -44,19 +39,19 @@ export async function GET(
 ) {
   try {
     const staff = await requireStaff();
-    if (!(await canAccessWorkspace(staff, params.id))) {
+    if (!(await canEditCourse(staff, params.id))) {
       return NextResponse.json({ error: "Sem permissão" }, { status: 403 });
     }
 
-    const ws = await prisma.workspace.findUnique({
+    const course = await prisma.course.findUnique({
       where: { id: params.id },
       select: SELECT_FIELDS,
     });
-    if (!ws) {
-      return NextResponse.json({ error: "Workspace não encontrado" }, { status: 404 });
+    if (!course) {
+      return NextResponse.json({ error: "Curso não encontrado" }, { status: 404 });
     }
 
-    return NextResponse.json({ customization: ws });
+    return NextResponse.json({ customization: course });
   } catch (error) {
     const msg = error instanceof Error ? error.message : "";
     return NextResponse.json({ error: msg || "Erro" }, { status: errStatus(msg) });
@@ -69,7 +64,7 @@ export async function PUT(
 ) {
   try {
     const staff = await requireStaff();
-    if (!(await canAccessWorkspace(staff, params.id))) {
+    if (!(await canEditCourse(staff, params.id))) {
       return NextResponse.json({ error: "Sem permissão" }, { status: 403 });
     }
 
@@ -101,72 +96,13 @@ export async function PUT(
         : null;
     }
 
-    if (body.memberBannerUrl !== undefined) {
-      data.memberBannerUrl = body.memberBannerUrl || null;
-    }
-
-    const ws = await prisma.workspace.update({
+    const course = await prisma.course.update({
       where: { id: params.id },
       data,
       select: SELECT_FIELDS,
     });
 
-    return NextResponse.json({ customization: ws });
-  } catch (error) {
-    const msg = error instanceof Error ? error.message : "";
-    return NextResponse.json({ error: msg || "Erro" }, { status: errStatus(msg) });
-  }
-}
-
-export async function POST(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
-  try {
-    const staff = await requireStaff();
-    if (!(await canAccessWorkspace(staff, params.id))) {
-      return NextResponse.json({ error: "Sem permissão" }, { status: 403 });
-    }
-
-    const formData = await request.formData();
-    const file = formData.get("file") as File | null;
-
-    if (!file) {
-      return NextResponse.json({ error: "Arquivo obrigatório" }, { status: 400 });
-    }
-    if (file.size > MAX_BANNER_SIZE) {
-      return NextResponse.json({ error: "Máximo 5MB" }, { status: 400 });
-    }
-    if (!file.type.startsWith("image/")) {
-      return NextResponse.json({ error: "Apenas imagens" }, { status: 400 });
-    }
-
-    const ext = file.name.split(".").pop() || "png";
-    const storagePath = `workspaces/${params.id}/banner.${ext}`;
-
-    const supabase = createAdminClient();
-    const arrayBuffer = await file.arrayBuffer();
-    const { error: uploadError } = await supabase.storage
-      .from(BANNER_BUCKET)
-      .upload(storagePath, arrayBuffer, {
-        contentType: file.type,
-        upsert: true,
-      });
-
-    if (uploadError) {
-      return NextResponse.json({ error: "Erro no upload" }, { status: 500 });
-    }
-
-    const { data: publicUrl } = supabase.storage
-      .from(BANNER_BUCKET)
-      .getPublicUrl(storagePath);
-
-    await prisma.workspace.update({
-      where: { id: params.id },
-      data: { memberBannerUrl: publicUrl.publicUrl },
-    });
-
-    return NextResponse.json({ bannerUrl: publicUrl.publicUrl });
+    return NextResponse.json({ customization: course });
   } catch (error) {
     const msg = error instanceof Error ? error.message : "";
     return NextResponse.json({ error: msg || "Erro" }, { status: errStatus(msg) });
@@ -179,22 +115,21 @@ export async function DELETE(
 ) {
   try {
     const staff = await requireStaff();
-    if (!(await canAccessWorkspace(staff, params.id))) {
+    if (!(await canEditCourse(staff, params.id))) {
       return NextResponse.json({ error: "Sem permissão" }, { status: 403 });
     }
 
     const data: Record<string, null> = {};
     for (const key of COLOR_FIELDS) data[key] = null;
-    data.memberBannerUrl = null;
     data.memberWelcomeText = null;
 
-    const ws = await prisma.workspace.update({
+    const course = await prisma.course.update({
       where: { id: params.id },
       data: { ...data, memberLayoutStyle: "grid" },
       select: SELECT_FIELDS,
     });
 
-    return NextResponse.json({ customization: ws });
+    return NextResponse.json({ customization: course });
   } catch (error) {
     const msg = error instanceof Error ? error.message : "";
     return NextResponse.json({ error: msg || "Erro" }, { status: errStatus(msg) });

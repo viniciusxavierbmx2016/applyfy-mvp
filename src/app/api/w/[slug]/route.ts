@@ -28,13 +28,6 @@ export async function GET(
         loginSideColor: true,
         loginLinkColor: true,
         isActive: true,
-        memberBgColor: true,
-        memberSidebarColor: true,
-        memberHeaderColor: true,
-        memberCardColor: true,
-        memberPrimaryColor: true,
-        memberTextColor: true,
-        memberAccentColor: true,
       },
     });
     if (!workspace || !workspace.isActive) {

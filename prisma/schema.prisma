@@ -66,16 +66,6 @@ model Workspace {
   forceTheme     String?
   customDomain   String?  @unique
   masterPassword String?
-  memberBgColor       String?
-  memberSidebarColor  String?
-  memberHeaderColor   String?
-  memberCardColor     String?
-  memberPrimaryColor  String?
-  memberTextColor     String?
-  memberAccentColor   String?
-  memberBannerUrl     String?
-  memberWelcomeText   String?
-  memberLayoutStyle   String?  @default("grid")
   ownerId        String
   isActive       Boolean  @default(true)
   createdAt      DateTime @default(now())
@@ -147,6 +137,15 @@ model Course {
   supportEmail       String?
   supportWhatsapp    String?
   showLessonSupport  Boolean   @default(true)
+  memberBgColor       String?
+  memberSidebarColor  String?
+  memberHeaderColor   String?
+  memberCardColor     String?
+  memberPrimaryColor  String?
+  memberTextColor     String?
+  memberAccentColor   String?
+  memberWelcomeText   String?
+  memberLayoutStyle   String?  @default("grid")
   order              Int       @default(0)
   ownerId            String?
   workspaceId        String
