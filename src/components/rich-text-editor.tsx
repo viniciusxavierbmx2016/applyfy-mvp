@@ -8,7 +8,7 @@ import TextAlign from "@tiptap/extension-text-align";
 import Color from "@tiptap/extension-color";
 import { TextStyle } from "@tiptap/extension-text-style";
 import Image from "@tiptap/extension-image";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 interface Props {
   value: string;
@@ -23,12 +23,15 @@ export default function RichTextEditor({
   placeholder = "Digite aqui...",
   minHeight = "200px",
 }: Props) {
+  const [linkModal, setLinkModal] = useState(false);
+  const [imageModal, setImageModal] = useState(false);
+
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
         heading: { levels: [1, 2] },
       }),
-      Link.configure({ openOnClick: false }),
+      Link.configure({ openOnClick: false, HTMLAttributes: { class: null } }),
       Underline,
       TextAlign.configure({ types: ["heading", "paragraph"] }),
       Color,
@@ -57,7 +60,11 @@ export default function RichTextEditor({
 
   return (
     <div className="rounded-xl border border-gray-300 dark:border-[#1a1e2e] overflow-hidden focus-within:border-indigo-500/50 transition-colors">
-      <Toolbar editor={editor} />
+      <Toolbar
+        editor={editor}
+        onLinkClick={() => setLinkModal(true)}
+        onImageClick={() => setImageModal(true)}
+      />
       <div
         className="bg-white dark:bg-[#0f1320] px-4 py-3 text-sm text-gray-900 dark:text-white"
         onClick={() => editor.chain().focus().run()}
@@ -69,25 +76,233 @@ export default function RichTextEditor({
         )}
         <EditorContent editor={editor} />
       </div>
+
+      {linkModal && (
+        <LinkModal
+          editor={editor}
+          onClose={() => setLinkModal(false)}
+        />
+      )}
+      {imageModal && (
+        <ImageModal
+          editor={editor}
+          onClose={() => setImageModal(false)}
+        />
+      )}
     </div>
   );
 }
 
-function Toolbar({ editor }: { editor: Editor }) {
-  function addLink() {
-    const url = window.prompt("URL do link:");
-    if (url) {
-      editor.chain().focus().setLink({ href: url }).run();
+function LinkModal({ editor, onClose }: { editor: Editor; onClose: () => void }) {
+  const [url, setUrl] = useState("");
+  const [text, setText] = useState("");
+  const [style, setStyle] = useState<"link" | "button">("link");
+
+  function handleInsert() {
+    if (!url.trim()) return;
+    const displayText = text.trim() || url.trim();
+    const href = url.trim();
+
+    if (style === "button") {
+      editor
+        .chain()
+        .focus()
+        .insertContent(
+          `<a href="${href}" class="editor-button">${displayText}</a>`
+        )
+        .run();
+    } else {
+      const { from, to } = editor.state.selection;
+      const hasSelection = from !== to;
+      if (hasSelection) {
+        editor.chain().focus().setLink({ href }).run();
+      } else {
+        editor
+          .chain()
+          .focus()
+          .insertContent(`<a href="${href}">${displayText}</a>`)
+          .run();
+      }
     }
+    onClose();
   }
 
-  function addImage() {
-    const url = window.prompt("URL da imagem:");
-    if (url) {
-      editor.chain().focus().setImage({ src: url }).run();
-    }
+  return (
+    <div className="fixed inset-0 z-50 flex items-start justify-center pt-[20vh]" onClick={onClose}>
+      <div className="absolute inset-0 bg-black/60" />
+      <div
+        className="relative bg-white dark:bg-[#141416] border border-gray-200 dark:border-[#28282e] rounded-2xl p-6 max-w-md w-full mx-4 shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-5">Inserir link</h3>
+
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">URL</label>
+            <input
+              autoFocus
+              type="url"
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              placeholder="https://..."
+              className="w-full px-4 py-3 bg-gray-50 dark:bg-[#0f1320] border border-gray-300 dark:border-[#1a1e2e] rounded-xl text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-indigo-500/50"
+              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleInsert(); } }}
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Texto para exibir</label>
+            <input
+              type="text"
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              placeholder="Clique aqui (opcional)"
+              className="w-full px-4 py-3 bg-gray-50 dark:bg-[#0f1320] border border-gray-300 dark:border-[#1a1e2e] rounded-xl text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-indigo-500/50"
+              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleInsert(); } }}
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Estilo</label>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => setStyle("link")}
+                className={`flex flex-col items-center gap-2.5 p-4 rounded-xl border-2 transition-colors ${
+                  style === "link"
+                    ? "border-indigo-500 bg-indigo-500/5 dark:bg-indigo-500/10"
+                    : "border-gray-200 dark:border-[#28282e] hover:border-gray-300 dark:hover:border-[#363640]"
+                }`}
+              >
+                <svg className="w-5 h-5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                </svg>
+                <span className="text-indigo-500 text-xs underline">texto com link</span>
+                <span className="text-xs font-medium text-gray-700 dark:text-gray-300">Link</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setStyle("button")}
+                className={`flex flex-col items-center gap-2.5 p-4 rounded-xl border-2 transition-colors ${
+                  style === "button"
+                    ? "border-indigo-500 bg-indigo-500/5 dark:bg-indigo-500/10"
+                    : "border-gray-200 dark:border-[#28282e] hover:border-gray-300 dark:hover:border-[#363640]"
+                }`}
+              >
+                <svg className="w-5 h-5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5z" />
+                </svg>
+                <span className="inline-block px-3 py-1 bg-indigo-600 text-white text-[10px] font-semibold rounded-lg">Botão</span>
+                <span className="text-xs font-medium text-gray-700 dark:text-gray-300">Botão</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex gap-3 mt-6">
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex-1 px-4 py-2.5 bg-gray-100 dark:bg-[#1d1d21] hover:bg-gray-200 dark:hover:bg-[#28282e] text-gray-700 dark:text-gray-300 text-sm font-medium rounded-xl border border-gray-200 dark:border-[#28282e] transition-colors"
+          >
+            Cancelar
+          </button>
+          <button
+            type="button"
+            onClick={handleInsert}
+            disabled={!url.trim()}
+            className="flex-1 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-xl disabled:opacity-40 transition-colors"
+          >
+            Inserir
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ImageModal({ editor, onClose }: { editor: Editor; onClose: () => void }) {
+  const [url, setUrl] = useState("");
+  const [previewError, setPreviewError] = useState(false);
+
+  function handleInsert() {
+    if (!url.trim()) return;
+    editor.chain().focus().setImage({ src: url.trim() }).run();
+    onClose();
   }
 
+  const showPreview = url.trim().length > 0 && !previewError;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-start justify-center pt-[20vh]" onClick={onClose}>
+      <div className="absolute inset-0 bg-black/60" />
+      <div
+        className="relative bg-white dark:bg-[#141416] border border-gray-200 dark:border-[#28282e] rounded-2xl p-6 max-w-md w-full mx-4 shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-5">Inserir imagem</h3>
+
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">URL da imagem</label>
+            <input
+              autoFocus
+              type="url"
+              value={url}
+              onChange={(e) => { setUrl(e.target.value); setPreviewError(false); }}
+              placeholder="https://exemplo.com/imagem.jpg"
+              className="w-full px-4 py-3 bg-gray-50 dark:bg-[#0f1320] border border-gray-300 dark:border-[#1a1e2e] rounded-xl text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-indigo-500/50"
+              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleInsert(); } }}
+            />
+          </div>
+
+          {showPreview && (
+            <div className="rounded-xl overflow-hidden border border-gray-200 dark:border-[#1a1e2e] bg-gray-50 dark:bg-[#0f1320] p-2">
+              <img // eslint-disable-line @next/next/no-img-element
+                src={url.trim()}
+                alt="Preview"
+                className="w-full max-h-48 object-contain rounded-lg"
+                onError={() => setPreviewError(true)}
+              />
+            </div>
+          )}
+
+          {previewError && url.trim() && (
+            <p className="text-xs text-amber-500">Não foi possível carregar a imagem. Verifique a URL.</p>
+          )}
+        </div>
+
+        <div className="flex gap-3 mt-6">
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex-1 px-4 py-2.5 bg-gray-100 dark:bg-[#1d1d21] hover:bg-gray-200 dark:hover:bg-[#28282e] text-gray-700 dark:text-gray-300 text-sm font-medium rounded-xl border border-gray-200 dark:border-[#28282e] transition-colors"
+          >
+            Cancelar
+          </button>
+          <button
+            type="button"
+            onClick={handleInsert}
+            disabled={!url.trim()}
+            className="flex-1 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-xl disabled:opacity-40 transition-colors"
+          >
+            Inserir
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Toolbar({
+  editor,
+  onLinkClick,
+  onImageClick,
+}: {
+  editor: Editor;
+  onLinkClick: () => void;
+  onImageClick: () => void;
+}) {
   return (
     <div className="flex flex-wrap items-center gap-0.5 bg-gray-50 dark:bg-[#1d1d21] border-b border-gray-200 dark:border-[#28282e] px-2 py-1.5">
       <ToolbarBtn
@@ -196,7 +411,7 @@ function Toolbar({ editor }: { editor: Editor }) {
 
       <ToolbarBtn
         active={editor.isActive("link")}
-        onClick={addLink}
+        onClick={onLinkClick}
         title="Inserir link"
       >
         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -205,7 +420,7 @@ function Toolbar({ editor }: { editor: Editor }) {
       </ToolbarBtn>
       <ToolbarBtn
         active={false}
-        onClick={addImage}
+        onClick={onImageClick}
         title="Inserir imagem"
       >
         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

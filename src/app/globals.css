@@ -353,3 +353,22 @@ body {
   pointer-events: none;
   height: 0;
 }
+
+/* ─── Editor button style (link as button) ───────────────────── */
+.prose-lesson .editor-button,
+.prose-editor .editor-button {
+  display: inline-block;
+  padding: 10px 24px;
+  background-color: var(--member-primary, #6366f1);
+  color: #ffffff !important;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  text-decoration: none !important;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+.prose-lesson .editor-button:hover,
+.prose-editor .editor-button:hover {
+  opacity: 0.9;
+}
