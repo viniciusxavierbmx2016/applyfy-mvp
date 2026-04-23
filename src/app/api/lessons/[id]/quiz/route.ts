@@ -108,6 +108,8 @@ export async function POST(
       },
     });
 
+    prisma.user.update({ where: { id: user.id }, data: { lastAccessAt: new Date() } }).catch(() => {});
+
     if (passed && quiz.lesson) {
       const course = quiz.lesson.module.course;
       processAutomations({

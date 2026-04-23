@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { generateCertificateCode } from "@/lib/certificate-pdf";
 
 export interface AutomationTrigger {
   type: string;
@@ -108,7 +109,7 @@ export async function executeAction(
       if (!courseId) return { status: "FAILED", details: "courseId ausente" };
       const existing = await prisma.certificate.findFirst({ where: { userId, courseId } });
       if (existing) return { status: "SKIPPED", details: "Certificado já existe" };
-      const code = crypto.randomUUID().replace(/-/g, "").slice(0, 12).toUpperCase();
+      const code = generateCertificateCode(userId, courseId);
       await prisma.certificate.create({ data: { userId, courseId, code } });
       return { status: "SUCCESS", details: "Certificado gerado" };
     }

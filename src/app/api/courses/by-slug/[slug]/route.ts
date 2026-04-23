@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser, isEnrollmentActive } from "@/lib/auth";
+import { getAutomationLocks } from "@/lib/automation-locks";
 
 export async function GET(
   _request: Request,
@@ -81,7 +82,7 @@ export async function GET(
       .filter((o) => o.lessonId)
       .map((o) => o.lessonId as string);
 
-    const [agg, myReview] = await Promise.all([
+    const [agg, myReview, automationLocks] = await Promise.all([
       prisma.review.aggregate({
         where: { courseId: course.id },
         _avg: { rating: true },
@@ -90,7 +91,10 @@ export async function GET(
       prisma.review.findUnique({
         where: { userId_courseId: { userId: user.id, courseId: course.id } },
       }),
+      isStaffViewer ? {} : getAutomationLocks(course.id, user.id),
     ]);
+
+    prisma.user.update({ where: { id: user.id }, data: { lastAccessAt: new Date() } }).catch(() => {});
 
     const lessonIdsInCourse = course.modules.flatMap((m) =>
       m.lessons.map((l) => l.id)
@@ -134,6 +138,7 @@ export async function GET(
         myReview,
         viewerWorkspace,
         overrides: { modules: releasedModules, lessons: releasedLessons },
+        automationLocks,
         lastAccessedLesson,
       },
       {

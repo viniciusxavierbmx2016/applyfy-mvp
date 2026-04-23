@@ -10,6 +10,7 @@ import {
   type ReleaseOverrides,
 } from "@/lib/auth";
 import { parseVideoUrl } from "@/lib/video";
+import { getAutomationLocks } from "@/lib/automation-locks";
 
 export async function GET(
   _request: Request,
@@ -144,6 +145,8 @@ export async function GET(
 
     const video = parseVideoUrl(lesson.videoUrl);
 
+    const autoLocks = isStaffViewer ? {} : await getAutomationLocks(course.id, user.id);
+
     // Derive viewer workspace from the lesson's course, not User.workspaceId,
     // so multi-workspace students see the correct "Voltar à vitrine" target.
     const viewerWorkspace = {
@@ -177,13 +180,16 @@ export async function GET(
             m.daysToRelease,
             overrides
           );
+          const autoLock = autoLocks[m.id];
+          const lockedByAutomation = !isStaffViewer && !!autoLock;
           return {
             id: m.id,
             title: m.title,
             thumbnailUrl: m.thumbnailUrl,
-            locked: isStaffViewer ? false : !modRelease.released,
-            releaseDate: modRelease.released ? null : modRelease.releaseDate.toISOString(),
-            daysRemaining: modRelease.daysRemaining,
+            locked: lockedByAutomation || (isStaffViewer ? false : !modRelease.released),
+            lockReason: lockedByAutomation ? autoLock.reason : null,
+            releaseDate: lockedByAutomation ? null : (modRelease.released ? null : modRelease.releaseDate.toISOString()),
+            daysRemaining: lockedByAutomation ? 0 : modRelease.daysRemaining,
             lessons: m.lessons.map((l) => {
               const lr = computeLessonReleaseWithOverride(
                 enrollmentCreatedAt,

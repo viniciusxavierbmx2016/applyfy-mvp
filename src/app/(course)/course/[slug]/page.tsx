@@ -95,13 +95,16 @@ function toCarouselModule(
   enrollmentCreatedAt: Date | null,
   hasAccess: boolean,
   overrides: { modules: Set<string>; lessons: Set<string> },
-  bypassRelease: boolean
+  bypassRelease: boolean,
+  automationLocks: Record<string, { reason: string }>
 ): CarouselModule {
   const stats = moduleStats(m);
-  const rel = releaseInfo(enrollmentCreatedAt, m.daysToRelease ?? 0);
+  const autoLock = automationLocks[m.id];
   const overridden = overrides.modules.has(m.id) || bypassRelease;
+  const lockedByAutomation = !overridden && !!autoLock;
+  const rel = releaseInfo(enrollmentCreatedAt, m.daysToRelease ?? 0);
   const dateLocked = m.releaseAt ? new Date(m.releaseAt) > new Date() : false;
-  const locked = hasAccess && !overridden && (!rel.released || dateLocked);
+  const locked = lockedByAutomation || (hasAccess && !overridden && (!rel.released || dateLocked));
   const empty = stats.total === 0;
   const resumeLessonId =
     m.firstIncompleteLesson ?? m.lessons.slice().sort((a, b) => a.order - b.order)[0]?.id ?? null;
@@ -117,7 +120,7 @@ function toCarouselModule(
     locked,
     empty,
     hideTitle: m.hideTitle,
-    releaseAt: displayReleaseAt,
+    releaseAt: lockedByAutomation ? undefined : displayReleaseAt,
     href:
       clickable && resumeLessonId
         ? `/course/${course.slug}/lesson/${resumeLessonId}`
@@ -132,13 +135,16 @@ function toListModule(
   enrollmentCreatedAt: Date | null,
   hasAccess: boolean,
   overrides: { modules: Set<string>; lessons: Set<string> },
-  bypassRelease: boolean
+  bypassRelease: boolean,
+  automationLocks: Record<string, { reason: string }>
 ): ListModule {
   const stats = moduleStats(m);
-  const rel = releaseInfo(enrollmentCreatedAt, m.daysToRelease ?? 0);
+  const autoLock = automationLocks[m.id];
   const overridden = overrides.modules.has(m.id) || bypassRelease;
+  const lockedByAutomation = !overridden && !!autoLock;
+  const rel = releaseInfo(enrollmentCreatedAt, m.daysToRelease ?? 0);
   const dateLocked = m.releaseAt ? new Date(m.releaseAt) > new Date() : false;
-  const locked = hasAccess && !overridden && (!rel.released || dateLocked);
+  const locked = lockedByAutomation || (hasAccess && !overridden && (!rel.released || dateLocked));
   const resumeLessonId =
     m.firstIncompleteLesson ?? m.lessons.slice().sort((a, b) => a.order - b.order)[0]?.id ?? null;
   return {
@@ -150,7 +156,8 @@ function toListModule(
     progressPct: stats.pct,
     locked,
     hideTitle: m.hideTitle,
-    releaseAt: dateLocked && m.releaseAt ? new Date(m.releaseAt).toLocaleDateString("pt-BR") : undefined,
+    releaseAt: lockedByAutomation ? undefined : (dateLocked && m.releaseAt ? new Date(m.releaseAt).toLocaleDateString("pt-BR") : undefined),
+    lockReason: lockedByAutomation ? autoLock.reason : undefined,
     resumeHref: resumeLessonId
       ? `/course/${course.slug}/lesson/${resumeLessonId}`
       : `/course/${course.slug}`,
@@ -211,6 +218,7 @@ export default function CourseHomePage() {
     modules: Set<string>;
     lessons: Set<string>;
   }>({ modules: new Set(), lessons: new Set() });
+  const [automationLocks, setAutomationLocks] = useState<Record<string, { reason: string }>>({});
   const [lastAccessedLesson, setLastAccessedLesson] = useState<string | null>(
     null
   );
@@ -234,6 +242,7 @@ export default function CourseHomePage() {
             lessons: new Set<string>(data.overrides?.lessons ?? []),
           });
           setLastAccessedLesson(data.lastAccessedLesson ?? null);
+          setAutomationLocks(data.automationLocks ?? {});
         } else if (res.status === 404) {
           router.push(backHref);
         }
@@ -267,13 +276,13 @@ export default function CourseHomePage() {
           lesson: l,
           module: m,
           released:
-            bypassRelease ||
+            (bypassRelease ||
             overrides.lessons.has(l.id) ||
             overrides.modules.has(m.id) ||
             releaseInfo(
               enrollmentCreatedAt,
               Math.max(m.daysToRelease ?? 0, l.daysToRelease ?? 0)
-            ).released,
+            ).released) && !automationLocks[m.id],
         }))
       )
       .filter((x) => x.released);
@@ -283,7 +292,7 @@ export default function CourseHomePage() {
       if (fromAccess) return fromAccess;
     }
     return all.find((x) => !x.lesson.progress?.some((p) => p.completed)) ?? all[0];
-  }, [course, enrollmentCreatedAt, overrides, lastAccessedLesson, bypassRelease]);
+  }, [course, enrollmentCreatedAt, overrides, lastAccessedLesson, bypassRelease, automationLocks]);
 
   if (loading) {
     return (
@@ -534,7 +543,8 @@ export default function CourseHomePage() {
                 enrollmentCreatedAt,
                 hasAccess,
                 overrides,
-                serverStaffViewer || isStaffViewer
+                serverStaffViewer || isStaffViewer,
+                automationLocks
               )
             ),
           }))}
@@ -554,7 +564,8 @@ export default function CourseHomePage() {
                 enrollmentCreatedAt,
                 hasAccess,
                 overrides,
-                serverStaffViewer || isStaffViewer
+                serverStaffViewer || isStaffViewer,
+                automationLocks
               )
             )}
           />

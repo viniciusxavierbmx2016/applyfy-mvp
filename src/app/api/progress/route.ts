@@ -91,6 +91,8 @@ export async function POST(request: Request) {
     });
     const wasCompleted = existing?.completed ?? false;
 
+    prisma.user.update({ where: { id: user.id }, data: { lastAccessAt: new Date() } }).catch(() => {});
+
     // Upsert progress
     await prisma.lessonProgress.upsert({
       where: {

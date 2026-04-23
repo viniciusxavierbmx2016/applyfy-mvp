@@ -8,6 +8,7 @@ import {
 } from "@/lib/webhook-helpers";
 import { sendEmail } from "@/lib/email";
 import { studentAccessGranted } from "@/lib/email-templates";
+import { processAutomations } from "@/lib/automation-engine";
 
 // Workspace-scoped Applyfy webhook.
 // The workspace is identified by the `[slug]` segment (the workspace slug).
@@ -204,6 +205,13 @@ export async function POST(
         }
 
         await activateEnrollment(user.id, course.id);
+
+        processAutomations({
+          type: "STUDENT_ENROLLED",
+          workspaceId,
+          courseId: course.id,
+          userId: user.id,
+        }).catch(() => {});
 
         const txExternalId = body?.transaction?.id?.trim() || null;
         if (txExternalId) {

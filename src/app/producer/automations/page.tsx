@@ -26,6 +26,7 @@ interface LessonOption {
 interface ModuleOption {
   id: string;
   title: string;
+  daysToRelease: number;
   lessons: LessonOption[];
 }
 
@@ -69,20 +70,19 @@ const TRIGGER_META: Record<string, { short: string; icon: string; desc: string; 
 const ACTION_META: Record<string, { short: string; icon: string; desc: string }> = {
   UNLOCK_MODULE: { short: "Liberar módulo", desc: "Desbloqueia um módulo para o aluno", icon: "M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z" },
   SEND_EMAIL: { short: "Enviar email", desc: "Envia um email ao aluno", icon: "M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" },
-  GRANT_CERTIFICATE: { short: "Gerar certificado", desc: "Gera certificado de conclusão", icon: "M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" },
   ENROLL_COURSE: { short: "Matricular curso", desc: "Matricula em outro curso", icon: "M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" },
 };
 
 const VALID_ACTIONS_FOR_TRIGGER: Record<string, string[]> = {
-  MODULE_COMPLETED: ["UNLOCK_MODULE", "SEND_EMAIL", "GRANT_CERTIFICATE", "ENROLL_COURSE"],
-  COURSE_COMPLETED: ["SEND_EMAIL", "GRANT_CERTIFICATE", "ENROLL_COURSE"],
+  MODULE_COMPLETED: ["UNLOCK_MODULE", "SEND_EMAIL", "ENROLL_COURSE"],
+  COURSE_COMPLETED: ["SEND_EMAIL", "ENROLL_COURSE"],
   LESSON_COMPLETED: ["SEND_EMAIL", "UNLOCK_MODULE", "ENROLL_COURSE"],
-  QUIZ_PASSED: ["SEND_EMAIL", "UNLOCK_MODULE", "GRANT_CERTIFICATE", "ENROLL_COURSE"],
-  STUDENT_ENROLLED: ["SEND_EMAIL", "ENROLL_COURSE"],
+  QUIZ_PASSED: ["SEND_EMAIL", "UNLOCK_MODULE", "ENROLL_COURSE"],
+  STUDENT_ENROLLED: ["ENROLL_COURSE"],
   STUDENT_INACTIVE: ["SEND_EMAIL"],
   STUDENT_NEVER_ACCESSED: ["SEND_EMAIL"],
   PROGRESS_BELOW: ["SEND_EMAIL"],
-  PROGRESS_ABOVE: ["SEND_EMAIL", "GRANT_CERTIFICATE"],
+  PROGRESS_ABOVE: ["SEND_EMAIL"],
   MODULE_NOT_STARTED: ["SEND_EMAIL"],
 };
 
@@ -95,13 +95,11 @@ function getValidActions(triggerType: string): string[] {
 const TEMPLATES: TemplateData[] = [
   { emoji: "🔔", name: "Reengajar alunos inativos", description: "Email para alunos inativos há 7 dias", triggerType: "STUDENT_INACTIVE", triggerConfig: { inactiveDays: 7 }, actionType: "SEND_EMAIL", actionConfig: { subject: "Sentimos sua falta!", body: "Olá! Notamos que você não acessa há alguns dias.\n\nVolte e continue de onde parou!" }, needsCourse: false },
   { emoji: "👋", name: "Ativar quem nunca entrou", description: "Email para quem nunca acessou", triggerType: "STUDENT_NEVER_ACCESSED", triggerConfig: { afterDays: 3 }, actionType: "SEND_EMAIL", actionConfig: { subject: "Seu acesso está esperando!", body: "Olá! Você foi matriculado mas ainda não acessou.\n\nComece agora!" }, needsCourse: false },
-  { emoji: "🎓", name: "Certificado ao concluir", description: "Gera certificado ao completar o curso", triggerType: "COURSE_COMPLETED", triggerConfig: {}, actionType: "GRANT_CERTIFICATE", actionConfig: {}, needsCourse: true },
   { emoji: "🔓", name: "Liberar módulo após conclusão", description: "Desbloqueia próximo módulo ao concluir", triggerType: "MODULE_COMPLETED", triggerConfig: {}, actionType: "UNLOCK_MODULE", actionConfig: {}, needsCourse: true },
   { emoji: "📧", name: "Email de parabéns no quiz", description: "Parabéns quando passa no quiz", triggerType: "QUIZ_PASSED", triggerConfig: {}, actionType: "SEND_EMAIL", actionConfig: { subject: "Parabéns! Você passou no quiz!", body: "Excelente resultado! Continue avançando." }, needsCourse: true },
   { emoji: "📊", name: "Alertar baixo progresso", description: "Email para quem está abaixo de 25%", triggerType: "PROGRESS_BELOW", triggerConfig: { progressPercent: 25, afterDays: 14 }, actionType: "SEND_EMAIL", actionConfig: { subject: "Precisa de ajuda?", body: "Vimos que você está no início. Estamos aqui para ajudar!" }, needsCourse: true },
   { emoji: "🎉", name: "Parabenizar 50% de progresso", description: "Comemora ao atingir metade do curso", triggerType: "PROGRESS_ABOVE", triggerConfig: { progressPercent: 50 }, actionType: "SEND_EMAIL", actionConfig: { subject: "Você já está na metade!", body: "Parabéns! Continue assim!" }, needsCourse: true },
   { emoji: "📚", name: "Matricular em curso bônus", description: "Matricula em outro curso ao concluir", triggerType: "COURSE_COMPLETED", triggerConfig: {}, actionType: "ENROLL_COURSE", actionConfig: {}, needsCourse: true },
-  { emoji: "👤", name: "Email de boas-vindas", description: "Boas-vindas ao se matricular", triggerType: "STUDENT_ENROLLED", triggerConfig: {}, actionType: "SEND_EMAIL", actionConfig: { subject: "Bem-vindo!", body: "Seja bem-vindo ao curso!\n\nBons estudos!" }, needsCourse: true },
 ];
 
 function getTriggerDetail(auto: AutomationItem, courses: CourseOption[]): string | null {
@@ -811,15 +809,23 @@ function SidePanel({
                 {actionType && (
                   <div>
                     <p className={stepCls}>Detalhes</p>
-                    {actionType === "UNLOCK_MODULE" && selectedCourse && (
-                      <div><label className={labelCls}>Módulo para liberar</label>
-                        <select value={actionConfig.moduleId || ""} onChange={(e) => setActionConfig({ ...actionConfig, moduleId: e.target.value })} className={selectCls}>
-                          <option value="">Selecione...</option>
-                          {selectedCourse.modules.filter((m) => m.id !== triggerConfig.moduleId).map((m) => <option key={m.id} value={m.id}>{m.title}</option>)}
-                        </select>
-                        {triggerType === "MODULE_COMPLETED" && <p className="text-[10px] text-gray-500 mt-1">Módulos do trigger são excluídos</p>}
-                      </div>
-                    )}
+                    {actionType === "UNLOCK_MODULE" && selectedCourse && (() => {
+                      const targetMod = actionConfig.moduleId ? selectedCourse.modules.find((m) => m.id === actionConfig.moduleId) : null;
+                      return (
+                        <div><label className={labelCls}>Módulo para liberar</label>
+                          <select value={actionConfig.moduleId || ""} onChange={(e) => setActionConfig({ ...actionConfig, moduleId: e.target.value })} className={selectCls}>
+                            <option value="">Selecione...</option>
+                            {selectedCourse.modules.filter((m) => m.id !== triggerConfig.moduleId).map((m) => <option key={m.id} value={m.id}>{m.title}</option>)}
+                          </select>
+                          {triggerType === "MODULE_COMPLETED" && <p className="text-[10px] text-gray-500 mt-1">Módulos do trigger são excluídos</p>}
+                          {targetMod && targetMod.daysToRelease > 0 && (
+                            <div className="bg-amber-900/20 border border-amber-700/30 rounded-xl p-3 text-xs text-amber-300 mt-3">
+                              Este módulo tem liberação por tempo configurada ({targetMod.daysToRelease} dias). A automação vai sobrescrever essa configuração — o módulo ficará bloqueado até o gatilho ser acionado.
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
                     {actionType === "UNLOCK_MODULE" && !selectedCourse && (
                       <p className="text-xs text-gray-500">Selecione um curso no painel do gatilho</p>
                     )}
@@ -840,9 +846,6 @@ function SidePanel({
                           {courses.filter((c) => c.id !== courseId).map((c) => <option key={c.id} value={c.id}>{c.title}</option>)}
                         </select>
                       </div>
-                    )}
-                    {actionType === "GRANT_CERTIFICATE" && (
-                      <p className="text-xs text-gray-500">O certificado será gerado automaticamente com um código único</p>
                     )}
                   </div>
                 )}
@@ -953,10 +956,9 @@ function MobileFlowEditor({
                     </button>
                   ); })}
                 </div>
-                {actionType === "UNLOCK_MODULE" && selectedCourse && <div><label className={labelCls}>Módulo para liberar</label><select value={actionConfig.moduleId || ""} onChange={(e) => setActionConfig({ ...actionConfig, moduleId: e.target.value })} className={selectCls}><option value="">Selecione...</option>{selectedCourse.modules.filter((m) => m.id !== triggerConfig.moduleId).map((m) => <option key={m.id} value={m.id}>{m.title}</option>)}</select></div>}
+                {actionType === "UNLOCK_MODULE" && selectedCourse && (() => { const tgt = actionConfig.moduleId ? selectedCourse.modules.find((m) => m.id === actionConfig.moduleId) : null; return <div><label className={labelCls}>Módulo para liberar</label><select value={actionConfig.moduleId || ""} onChange={(e) => setActionConfig({ ...actionConfig, moduleId: e.target.value })} className={selectCls}><option value="">Selecione...</option>{selectedCourse.modules.filter((m) => m.id !== triggerConfig.moduleId).map((m) => <option key={m.id} value={m.id}>{m.title}</option>)}</select>{tgt && tgt.daysToRelease > 0 && <div className="bg-amber-900/20 border border-amber-700/30 rounded-xl p-3 text-xs text-amber-300 mt-3">Este módulo tem liberação por tempo ({tgt.daysToRelease} dias). A automação vai sobrescrever — ficará bloqueado até o gatilho.</div>}</div>; })()}
                 {actionType === "SEND_EMAIL" && <div className="space-y-3"><div><label className={labelCls}>Assunto</label><input type="text" value={actionConfig.subject || ""} onChange={(e) => setActionConfig({ ...actionConfig, subject: e.target.value })} placeholder="Parabéns!" className={selectCls} /></div><div><label className={labelCls}>Corpo</label><textarea value={actionConfig.body || ""} onChange={(e) => setActionConfig({ ...actionConfig, body: e.target.value })} placeholder="Olá!" rows={4} className={`${selectCls} resize-y`} /></div></div>}
                 {actionType === "ENROLL_COURSE" && <div><label className={labelCls}>Curso destino</label><select value={actionConfig.courseId || ""} onChange={(e) => setActionConfig({ ...actionConfig, courseId: e.target.value })} className={selectCls}><option value="">Selecione...</option>{courses.filter((c) => c.id !== courseId).map((c) => <option key={c.id} value={c.id}>{c.title}</option>)}</select></div>}
-                {actionType === "GRANT_CERTIFICATE" && <p className="text-xs text-gray-500">Certificado gerado automaticamente</p>}
               </>
             )}
           </div>

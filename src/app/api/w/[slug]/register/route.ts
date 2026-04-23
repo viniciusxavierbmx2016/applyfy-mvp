@@ -47,6 +47,7 @@ export async function POST(
           email,
           name,
           workspaceId: workspace.id,
+          lastAccessAt: new Date(),
         },
       });
 

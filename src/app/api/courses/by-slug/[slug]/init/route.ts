@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser, isEnrollmentActive } from "@/lib/auth";
+import { getAutomationLocks } from "@/lib/automation-locks";
 
 const MENU_DEFAULTS = [
   { label: "Home", icon: "home", url: "/course/:slug", isDefault: true },
@@ -148,6 +149,10 @@ export async function GET(
       .filter((o) => o.lessonId)
       .map((o) => o.lessonId as string);
 
+    const automationLocks = isStaffViewer ? {} : await getAutomationLocks(course.id, user.id);
+
+    prisma.user.update({ where: { id: user.id }, data: { lastAccessAt: new Date() } }).catch(() => {});
+
     const lessonIdsInCourse = course.modules.flatMap((m) =>
       m.lessons.map((l) => l.id)
     );
@@ -196,6 +201,7 @@ export async function GET(
         myReview,
         viewerWorkspace,
         overrides: { modules: releasedModules, lessons: releasedLessons },
+        automationLocks,
         lastAccessedLesson,
         menu: filteredMenu,
       },

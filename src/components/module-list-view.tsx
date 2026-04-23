@@ -21,6 +21,7 @@ export interface ListModule {
   locked: boolean;
   hideTitle?: boolean;
   releaseAt?: string;
+  lockReason?: string;
   lessons: ListLesson[];
   resumeHref: string;
 }
@@ -103,7 +104,9 @@ export function ModuleListView({ groups, courseSlug }: Props) {
                         )}
                       </div>
                       <p className="text-sm text-gray-500 mt-0.5">
-                        {mod.locked && mod.releaseAt ? (
+                        {mod.locked && mod.lockReason ? (
+                          <>{mod.lockReason}</>
+                        ) : mod.locked && mod.releaseAt ? (
                           <>Disponível a partir de {mod.releaseAt}</>
                         ) : (
                           <>

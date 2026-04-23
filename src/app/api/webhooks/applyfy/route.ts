@@ -6,6 +6,7 @@ import {
   ensureUserByEmail,
   getSetting,
 } from "@/lib/webhook-helpers";
+import { processAutomations } from "@/lib/automation-engine";
 
 // Applyfy webhook events.
 // Docs: https://app.applyfy.com.br/api/v1
@@ -185,6 +186,14 @@ export async function POST(request: Request) {
         }
 
         await activateEnrollment(user.id, course.id);
+
+        processAutomations({
+          type: "STUDENT_ENROLLED",
+          workspaceId: course.workspaceId,
+          courseId: course.id,
+          userId: user.id,
+        }).catch(() => {});
+
         await logWebhook({
           event,
           email,

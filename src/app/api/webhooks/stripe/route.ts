@@ -6,6 +6,7 @@ import {
   ensureUserByEmail,
   getSetting,
 } from "@/lib/webhook-helpers";
+import { processAutomations } from "@/lib/automation-engine";
 
 const TOLERANCE_SECONDS = 5 * 60;
 
@@ -116,6 +117,13 @@ export async function POST(request: Request) {
 
     const user = await ensureUserByEmail(email, name);
     await activateEnrollment(user.id, course.id);
+
+    processAutomations({
+      type: "STUDENT_ENROLLED",
+      workspaceId: course.workspaceId,
+      courseId: course.id,
+      userId: user.id,
+    }).catch(() => {});
 
     return NextResponse.json({ ok: true, granted: true });
   } catch (error) {

@@ -5,6 +5,7 @@ import type { Role } from "@prisma/client";
 import { createNotification } from "@/lib/notifications";
 import { sendEmail } from "@/lib/email";
 import { studentAccessGranted } from "@/lib/email-templates";
+import { processAutomations } from "@/lib/automation-engine";
 
 async function assertCanManageCourse(
   staff: { id: string; role: Role },
@@ -45,7 +46,7 @@ export async function POST(
         course: {
           select: {
             id: true, title: true, slug: true,
-            workspace: { select: { name: true, slug: true } },
+            workspace: { select: { id: true, name: true, slug: true } },
           },
         },
         user: { select: { name: true, email: true } },
@@ -69,6 +70,13 @@ export async function POST(
         loginUrl
       );
       sendEmail({ to: { email: enrollment.user.email, name: enrollment.user.name || undefined }, ...template }).catch(() => {});
+
+      processAutomations({
+        type: "STUDENT_ENROLLED",
+        workspaceId: enrollment.course.workspace.id,
+        courseId,
+        userId: params.id,
+      }).catch(() => {});
     }
 
     return NextResponse.json({ enrollment });
