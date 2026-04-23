@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Avatar } from "@/components/ui/avatar";
 import { formatRelativeTime } from "@/lib/utils";
 import { sanitizeHtml } from "@/lib/sanitize-html";
+import { useConfirm } from "@/hooks/use-confirm";
 
 interface AdminPost {
   id: string;
@@ -41,6 +42,7 @@ export default function AdminCommunityPage() {
   const [courses, setCourses] = useState<CourseOption[]>([]);
   const [courseFilter, setCourseFilter] = useState<string>("");
   const [loading, setLoading] = useState(true);
+  const { confirm, ConfirmDialog } = useConfirm();
 
   async function load(courseId: string) {
     setLoading(true);
@@ -83,7 +85,7 @@ export default function AdminCommunityPage() {
   }
 
   async function deletePost(id: string) {
-    if (!confirm("Excluir este post?")) return;
+    if (!(await confirm({ title: "Excluir post", message: "Excluir este post?", variant: "danger", confirmText: "Excluir" }))) return;
     const res = await fetch(`/api/posts/${id}`, { method: "DELETE" });
     if (res.ok) {
       setPosts((prev) => prev.filter((p) => p.id !== id));
@@ -234,6 +236,7 @@ export default function AdminCommunityPage() {
           })}
         </div>
       )}
+      <ConfirmDialog />
     </div>
   );
 }

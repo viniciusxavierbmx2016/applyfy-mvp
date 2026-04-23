@@ -21,6 +21,7 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { LessonsManager, type LessonData } from "./lessons-manager";
 import { ThumbnailUpload } from "./thumbnail-upload";
+import { useConfirm } from "@/hooks/use-confirm";
 
 export interface ModuleData {
   id: string;
@@ -80,6 +81,7 @@ export function ModulesManager({
   const [newModuleTitle, setNewModuleTitle] = useState("");
   const [creatingSection, setCreatingSection] = useState(false);
   const [newSectionTitle, setNewSectionTitle] = useState("");
+  const { confirm, ConfirmDialog } = useConfirm();
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -207,7 +209,7 @@ export function ModulesManager({
   }
 
   async function handleDeleteModule(id: string) {
-    if (!confirm("Excluir este módulo e todas as aulas dentro dele?")) return;
+    if (!(await confirm({ title: "Excluir módulo", message: "Excluir este módulo e todas as aulas dentro dele?", variant: "danger", confirmText: "Excluir" }))) return;
     const res = await fetch(`/api/modules/${id}`, { method: "DELETE" });
     if (res.ok) {
       setModules((prev) => prev.filter((m) => m.id !== id));
@@ -228,7 +230,7 @@ export function ModulesManager({
   }
 
   async function handleDeleteSection(id: string) {
-    if (!confirm("Excluir esta divisão? Os módulos ficarão sem seção.")) return;
+    if (!(await confirm({ title: "Excluir divisão", message: "Excluir esta divisão? Os módulos ficarão sem seção.", variant: "danger", confirmText: "Excluir" }))) return;
     const res = await fetch(`/api/sections/${id}`, { method: "DELETE" });
     if (res.ok) {
       setSections((prev) => prev.filter((s) => s.id !== id));
@@ -387,6 +389,7 @@ export function ModulesManager({
           </SortableContext>
         </DndContext>
       )}
+      <ConfirmDialog />
     </div>
   );
 }

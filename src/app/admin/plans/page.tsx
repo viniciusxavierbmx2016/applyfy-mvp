@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useConfirm } from "@/hooks/use-confirm";
 
 interface Plan {
   id: string;
@@ -58,6 +59,7 @@ export default function AdminPlansPage() {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
+  const { confirm, ConfirmDialog } = useConfirm();
 
   function showToast(msg: string) {
     setToast(msg);
@@ -147,7 +149,7 @@ export default function AdminPlansPage() {
   }
 
   async function deletePlan(p: Plan) {
-    if (!confirm(`Excluir o plano "${p.name}"? Esta ação não pode ser desfeita.`)) return;
+    if (!(await confirm({ title: "Excluir plano", message: `Excluir o plano "${p.name}"? Esta ação não pode ser desfeita.`, variant: "danger", confirmText: "Excluir" }))) return;
     setBusy(p.id);
     const res = await fetch(`/api/admin/plans/${p.id}`, { method: "DELETE" });
     if (!res.ok) {
@@ -377,6 +379,7 @@ export default function AdminPlansPage() {
           {toast}
         </div>
       )}
+      <ConfirmDialog />
     </div>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useConfirm } from "@/hooks/use-confirm";
 
 interface Material {
   id: string;
@@ -42,6 +43,7 @@ export function LessonMaterials({ lessonId }: { lessonId: string }) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { confirm, ConfirmDialog } = useConfirm();
 
   const fetchMaterials = useCallback(async () => {
     try {
@@ -84,7 +86,7 @@ export function LessonMaterials({ lessonId }: { lessonId: string }) {
   }
 
   async function handleDelete(id: string) {
-    if (!confirm("Excluir este material?")) return;
+    if (!(await confirm({ title: "Excluir material", message: "Excluir este material?", variant: "danger", confirmText: "Excluir" }))) return;
     const res = await fetch(`/api/producer/lessons/${lessonId}/materials/${id}`, {
       method: "DELETE",
     });
@@ -262,6 +264,7 @@ export function LessonMaterials({ lessonId }: { lessonId: string }) {
           }}
         />
       </div>
+      <ConfirmDialog />
     </div>
   );
 }

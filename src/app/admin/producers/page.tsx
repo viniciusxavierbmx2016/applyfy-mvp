@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
+import { useConfirm } from "@/hooks/use-confirm";
 
 interface Producer {
   id: string;
@@ -29,6 +30,7 @@ export default function AdminProducersPage() {
   const [query, setQuery] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
+  const { confirm, ConfirmDialog } = useConfirm();
 
   function showToast(msg: string) {
     setToast(msg);
@@ -56,7 +58,7 @@ export default function AdminProducersPage() {
     const action = p.status === "ACTIVE" ? "suspend" : "activate";
     if (
       action === "suspend" &&
-      !confirm(`Suspender ${p.name}? Isso desativa todos os workspaces dele.`)
+      !(await confirm({ title: "Suspender produtor", message: `Suspender ${p.name}? Isso desativa todos os workspaces dele.`, variant: "danger", confirmText: "Suspender" }))
     ) {
       return;
     }
@@ -244,6 +246,7 @@ export default function AdminProducersPage() {
           {toast}
         </div>
       )}
+      <ConfirmDialog />
     </div>
   );
 }

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
+import { useConfirm } from "@/hooks/use-confirm";
 
 interface Producer {
   id: string;
@@ -58,6 +59,7 @@ export default function ProducerDetailPage({
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+  const { confirm, ConfirmDialog } = useConfirm();
 
   function showToast(msg: string) {
     setToast(msg);
@@ -74,9 +76,12 @@ export default function ProducerDetailPage({
   async function handleSuspend() {
     if (!data) return;
     if (
-      !confirm(
-        "Suspender este produtor? Todos os workspaces dele serão desativados."
-      )
+      !(await confirm({
+        title: "Suspender produtor",
+        message: "Suspender este produtor? Todos os workspaces dele serão desativados.",
+        variant: "danger",
+        confirmText: "Suspender",
+      }))
     )
       return;
     setBusy(true);
@@ -284,6 +289,7 @@ export default function ProducerDetailPage({
           {toast}
         </div>
       )}
+      <ConfirmDialog />
     </div>
   );
 }

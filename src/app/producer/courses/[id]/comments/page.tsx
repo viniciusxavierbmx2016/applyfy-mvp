@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Avatar } from "@/components/ui/avatar";
 import { CourseEditTabs } from "@/components/course-edit-tabs";
 import { formatRelativeTime } from "@/lib/utils";
+import { useConfirm } from "@/hooks/use-confirm";
 
 interface LessonOption {
   id: string;
@@ -69,6 +70,7 @@ export default function CourseCommentsPage({
   const [replyText, setReplyText] = useState("");
   const [sending, setSending] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+  const { confirm, ConfirmDialog } = useConfirm();
 
   function showToast(msg: string) {
     setToast(msg);
@@ -127,7 +129,7 @@ export default function CourseCommentsPage({
   }
 
   async function handleDelete(commentId: string, lessonId: string, isReply: boolean, parentId?: string) {
-    if (!confirm("Excluir este comentário?")) return;
+    if (!(await confirm({ title: "Excluir comentário", message: "Excluir este comentário?", variant: "danger", confirmText: "Excluir" }))) return;
     try {
       const res = await fetch(
         `/api/lessons/${lessonId}/comments?commentId=${commentId}`,
@@ -344,6 +346,7 @@ export default function CourseCommentsPage({
           {toast}
         </div>
       )}
+      <ConfirmDialog />
     </div>
   );
 }

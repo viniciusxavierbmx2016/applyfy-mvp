@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { CourseEditTabs } from "@/components/course-edit-tabs";
+import { useConfirm } from "@/hooks/use-confirm";
 
 interface Student {
   enrollmentId: string;
@@ -96,6 +97,13 @@ export default function CourseStudentsPage({
   const [courseSlug, setCourseSlug] = useState("");
   const [accessResult, setAccessResult] = useState<AccessResult | null>(null);
   const [editTarget, setEditTarget] = useState<Student | null>(null);
+  const [toast, setToast] = useState<string | null>(null);
+  const { confirm, ConfirmDialog } = useConfirm();
+
+  function showToast(msg: string) {
+    setToast(msg);
+    setTimeout(() => setToast(null), 3000);
+  }
 
   useEffect(() => {
     const t = setTimeout(() => setDebouncedQ(q), 300);
@@ -126,7 +134,7 @@ export default function CourseStudentsPage({
   }, [load]);
 
   async function handleRemove(enrollmentId: string) {
-    if (!confirm("Remover acesso deste aluno ao curso?")) return;
+    if (!(await confirm({ title: "Remover acesso", message: "Remover acesso deste aluno ao curso?", variant: "danger", confirmText: "Remover" }))) return;
     const url = `/api/courses/${params.id}/students/${enrollmentId}`;
     try {
       const res = await fetch(url, { method: "DELETE" });
@@ -135,11 +143,11 @@ export default function CourseStudentsPage({
       } else {
         const data = await res.json().catch(() => ({}));
         console.error("[handleRemove] failed:", url, res.status, data);
-        alert("Erro ao remover acesso: " + (data.error || `Status ${res.status}`));
+        showToast("Erro ao remover acesso: " + (data.error || `Status ${res.status}`));
       }
     } catch (err) {
       console.error("[handleRemove] network error:", err);
-      alert("Erro de rede ao remover acesso");
+      showToast("Erro de rede ao remover acesso");
     }
   }
 
@@ -161,8 +169,8 @@ export default function CourseStudentsPage({
       `/api/courses/${params.id}/students/${enrollmentId}/resend`,
       { method: "POST" }
     );
-    if (res.ok) alert("Link reenviado por email");
-    else alert("Erro ao reenviar");
+    if (res.ok) showToast("Link reenviado por email");
+    else showToast("Erro ao reenviar");
   }
 
   return (
@@ -518,6 +526,12 @@ export default function CourseStudentsPage({
           }}
         />
       )}
+      <ConfirmDialog />
+      {toast && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-4 py-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-sm font-medium rounded-lg shadow-lg">
+          {toast}
+        </div>
+      )}
     </div>
   );
 }
@@ -560,6 +574,7 @@ function EditAccessModal({
     new Set()
   );
   const [releaseBusy, setReleaseBusy] = useState(false);
+  const { confirm: confirmReset, ConfirmDialog: ConfirmDialogReset } = useConfirm();
 
   useEffect(() => {
     fetch(`/api/courses/${courseId}`)
@@ -665,7 +680,7 @@ function EditAccessModal({
   }
 
   async function handleResetOverrides() {
-    if (!confirm("Restaurar a liberação padrão para este aluno?")) return;
+    if (!(await confirmReset({ title: "Restaurar liberação", message: "Restaurar a liberação padrão para este aluno?", variant: "warning", confirmText: "Restaurar" }))) return;
     setReleaseBusy(true);
     setError("");
     try {
@@ -1009,6 +1024,7 @@ function EditAccessModal({
           </div>
         )}
       </div>
+      <ConfirmDialogReset />
     </div>
   );
 }

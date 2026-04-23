@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useState, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useConfirm } from "@/hooks/use-confirm";
 
 interface Plan {
   id: string;
@@ -85,6 +86,7 @@ function BillingContent() {
   const [toast, setToast] = useState<{ message: string; color: string } | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
   const [pollingTimeout, setPollingTimeout] = useState(false);
+  const { confirm, ConfirmDialog } = useConfirm();
 
   const showToast = useCallback((message: string, color: string = "green") => {
     setToast({ message, color });
@@ -146,7 +148,7 @@ function BillingContent() {
   }
 
   async function handleCancel() {
-    if (!confirm("Tem certeza que deseja cancelar sua assinatura? Você manterá acesso até o fim do período pago.")) return;
+    if (!(await confirm({ title: "Cancelar assinatura", message: "Tem certeza que deseja cancelar sua assinatura? Você manterá acesso até o fim do período pago.", variant: "warning", confirmText: "Cancelar assinatura" }))) return;
     setCancelling(true);
     try {
       const res = await fetch("/api/producer/billing/cancel", { method: "POST" });
@@ -417,6 +419,7 @@ function BillingContent() {
           </div>
         </>
       )}
+      <ConfirmDialog />
     </div>
   );
 }

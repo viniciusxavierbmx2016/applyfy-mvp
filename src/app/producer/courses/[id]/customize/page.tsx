@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { CourseEditTabs } from "@/components/course-edit-tabs";
+import { useConfirm } from "@/hooks/use-confirm";
 
 const HEX_RE = /^#[0-9a-fA-F]{6}$/;
 
@@ -69,6 +70,7 @@ export default function CourseCustomizePage() {
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<{ msg: string; error?: boolean } | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const { confirm, ConfirmDialog } = useConfirm();
 
   function showToast(msg: string, error = false) {
     setToast({ msg, error });
@@ -148,7 +150,7 @@ export default function CourseCustomizePage() {
   }
 
   async function handleReset() {
-    if (!confirm("Restaurar todas as configurações para o padrão?")) return;
+    if (!(await confirm({ title: "Restaurar padrão", message: "Restaurar todas as configurações para o padrão?", variant: "warning", confirmText: "Restaurar" }))) return;
     setSaving(true);
     try {
       const res = await fetch(`/api/producer/courses/${courseId}/customize`, { method: "DELETE" });
@@ -407,6 +409,7 @@ export default function CourseCustomizePage() {
           {toast.msg}
         </div>
       )}
+      <ConfirmDialog />
     </div>
   );
 }

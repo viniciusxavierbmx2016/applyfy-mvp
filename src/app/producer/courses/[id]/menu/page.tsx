@@ -21,6 +21,7 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { MENU_ICON_KEYS, MenuIcon } from "@/components/menu-icons";
 import { CourseEditTabs } from "@/components/course-edit-tabs";
+import { useConfirm } from "@/hooks/use-confirm";
 
 interface MenuItem {
   id: string;
@@ -41,6 +42,7 @@ export default function CourseMenuPage({ params }: { params: { id: string } }) {
   const [newUrl, setNewUrl] = useState("");
   const [courseTitle, setCourseTitle] = useState("");
   const [courseSlug, setCourseSlug] = useState("");
+  const { confirm, ConfirmDialog } = useConfirm();
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -90,7 +92,7 @@ export default function CourseMenuPage({ params }: { params: { id: string } }) {
   }
 
   async function handleDelete(id: string) {
-    if (!confirm("Excluir este item?")) return;
+    if (!(await confirm({ title: "Excluir item", message: "Excluir este item?", variant: "danger", confirmText: "Excluir" }))) return;
     const res = await fetch(`/api/courses/${params.id}/menu/${id}`, {
       method: "DELETE",
     });
@@ -241,6 +243,7 @@ export default function CourseMenuPage({ params }: { params: { id: string } }) {
           )}
         </>
       )}
+      <ConfirmDialog />
     </div>
   );
 }

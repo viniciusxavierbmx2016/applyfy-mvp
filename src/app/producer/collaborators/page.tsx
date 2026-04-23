@@ -6,6 +6,7 @@ import {
   PERMISSION_LABELS,
   type CollaboratorPermission,
 } from "@/lib/collaborator";
+import { useConfirm } from "@/hooks/use-confirm";
 
 interface CourseOption {
   id: string;
@@ -51,6 +52,7 @@ export default function AdminCollaboratorsPage() {
   const [editing, setEditing] = useState<CollaboratorItem | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const [inviteLink, setInviteLink] = useState<string | null>(null);
+  const { confirm, ConfirmDialog } = useConfirm();
 
   function showToast(msg: string) {
     setToast(msg);
@@ -73,7 +75,7 @@ export default function AdminCollaboratorsPage() {
   }, []);
 
   async function handleRevoke(id: string) {
-    if (!confirm("Revogar acesso deste colaborador?")) return;
+    if (!(await confirm({ title: "Revogar acesso", message: "Revogar acesso deste colaborador?", variant: "danger", confirmText: "Revogar" }))) return;
     const r = await fetch(`/api/producer/collaborators/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -86,7 +88,7 @@ export default function AdminCollaboratorsPage() {
   }
 
   async function handleDelete(id: string) {
-    if (!confirm("Remover este colaborador permanentemente?")) return;
+    if (!(await confirm({ title: "Remover colaborador", message: "Remover este colaborador permanentemente?", variant: "danger", confirmText: "Remover" }))) return;
     const r = await fetch(`/api/producer/collaborators/${id}`, {
       method: "DELETE",
     });
@@ -292,6 +294,7 @@ export default function AdminCollaboratorsPage() {
           {toast}
         </div>
       )}
+      <ConfirmDialog />
     </div>
   );
 }

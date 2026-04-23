@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useConfirm } from "@/hooks/use-confirm";
 
 interface SubUser {
   id: string;
@@ -101,6 +102,7 @@ export default function AdminSubscriptionsPage() {
   } | null>(null);
   const [actionInput, setActionInput] = useState("");
   const [actionSaving, setActionSaving] = useState(false);
+  const { confirm, ConfirmDialog } = useConfirm();
 
   const limit = 20;
 
@@ -154,7 +156,7 @@ export default function AdminSubscriptionsPage() {
     if (def.needsInput === "plan" && !actionInput) return;
 
     if (!def.needsInput) {
-      if (!confirm(`Confirma "${def.label}" para ${sub.user.name}?`)) return;
+      if (!(await confirm({ title: def.label, message: `Confirma "${def.label}" para ${sub.user.name}?`, variant: "info", confirmText: "Confirmar" }))) return;
     }
 
     setActionSaving(true);
@@ -192,7 +194,7 @@ export default function AdminSubscriptionsPage() {
       openAction(sub, def);
       return;
     }
-    if (!confirm(`Confirma "${def.label}" para ${sub.user.name}?`)) return;
+    if (!(await confirm({ title: def.label, message: `Confirma "${def.label}" para ${sub.user.name}?`, variant: "info", confirmText: "Confirmar" }))) return;
     setBusy(sub.id);
     try {
       const res = await fetch(`/api/admin/subscriptions/${sub.id}`, {
@@ -455,6 +457,7 @@ export default function AdminSubscriptionsPage() {
         </div>
       )}
 
+      <ConfirmDialog />
       {/* Toast */}
       {toast && (
         <div

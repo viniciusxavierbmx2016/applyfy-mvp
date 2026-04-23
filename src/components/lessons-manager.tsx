@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { LessonMaterials } from "@/components/lesson-materials";
+import { useConfirm } from "@/hooks/use-confirm";
 import {
   DndContext,
   closestCenter,
@@ -44,6 +45,7 @@ export function LessonsManager({
   const [lessons, setLessons] = useState<LessonData[]>(initialLessons);
   const [creating, setCreating] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const { confirm, ConfirmDialog } = useConfirm();
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -97,7 +99,7 @@ export function LessonsManager({
   }
 
   async function handleDelete(id: string) {
-    if (!confirm("Excluir esta aula?")) return;
+    if (!(await confirm({ title: "Excluir aula", message: "Excluir esta aula?", variant: "danger", confirmText: "Excluir" }))) return;
     const res = await fetch(`/api/lessons/${id}`, { method: "DELETE" });
     if (res.ok) {
       syncState(lessons.filter((l) => l.id !== id));
@@ -133,6 +135,7 @@ export function LessonsManager({
         </DndContext>
       )}
 
+      <ConfirmDialog />
       {creating ? (
         <LessonForm
           onSubmit={handleCreate}

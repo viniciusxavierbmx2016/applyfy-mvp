@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useTheme } from "next-themes";
 import { useProducerTheme } from "@/components/producer-theme-provider";
+import { useConfirm } from "@/hooks/use-confirm";
 
 interface ThemeConfig {
   mode: string;
@@ -51,6 +52,7 @@ export default function ProducerSettingsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+  const { confirm, ConfirmDialog } = useConfirm();
 
   function showToast(msg: string) {
     setToast(msg);
@@ -112,7 +114,7 @@ export default function ProducerSettingsPage() {
   }
 
   async function handleReset() {
-    if (!confirm("Restaurar todas as cores para o padrão?")) return;
+    if (!(await confirm({ title: "Restaurar padrão", message: "Restaurar todas as cores para o padrão?", variant: "warning", confirmText: "Restaurar" }))) return;
     setSaving(true);
     try {
       const res = await fetch("/api/producer/theme", { method: "DELETE" });
@@ -327,6 +329,7 @@ export default function ProducerSettingsPage() {
           {toast}
         </div>
       )}
+      <ConfirmDialog />
     </div>
   );
 }

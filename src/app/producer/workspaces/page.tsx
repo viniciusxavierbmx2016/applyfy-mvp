@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import { useConfirm } from "@/hooks/use-confirm";
 
 interface WorkspaceRow {
   id: string;
@@ -19,6 +20,7 @@ export default function AdminWorkspacesPage() {
   const [workspaces, setWorkspaces] = useState<WorkspaceRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState<string | null>(null);
+  const { confirm, ConfirmDialog } = useConfirm();
 
   useEffect(() => {
     fetch("/api/workspaces")
@@ -51,7 +53,7 @@ export default function AdminWorkspacesPage() {
   async function toggleActive(ws: WorkspaceRow) {
     if (
       ws.isActive &&
-      !confirm(`Desativar o workspace "${ws.name}"? Alunos não conseguirão mais acessar.`)
+      !(await confirm({ title: "Desativar workspace", message: `Desativar o workspace "${ws.name}"? Alunos não conseguirão mais acessar.`, variant: "danger", confirmText: "Desativar" }))
     )
       return;
     const res = await fetch(`/api/workspaces/${ws.id}`, {
@@ -241,6 +243,7 @@ export default function AdminWorkspacesPage() {
           {toast}
         </div>
       )}
+      <ConfirmDialog />
     </div>
   );
 }

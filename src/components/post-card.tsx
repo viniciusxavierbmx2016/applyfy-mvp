@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Avatar } from "@/components/ui/avatar";
 import { formatRelativeTime } from "@/lib/utils";
 import { sanitizeHtml } from "@/lib/sanitize-html";
+import { useConfirm } from "@/hooks/use-confirm";
 
 export interface PostAuthor {
   id: string;
@@ -60,6 +61,7 @@ export function PostCard({
   onDeleteComment,
 }: Props) {
   const isModerator = isAdmin || isProducer;
+  const { confirm, ConfirmDialog } = useConfirm();
   const [showComments, setShowComments] = useState(false);
   const [comments, setComments] = useState<CommentItem[] | null>(null);
   const [loadingComments, setLoadingComments] = useState(false);
@@ -184,8 +186,9 @@ export function PostCard({
         {canDelete && (
           <button
             type="button"
-            onClick={() => {
-              if (confirm("Excluir este post?")) onDelete(post.id);
+            onClick={async () => {
+              const ok = await confirm({ title: "Excluir post", message: "Excluir este post?", variant: "danger", confirmText: "Excluir" });
+              if (ok) onDelete(post.id);
             }}
             title="Excluir"
             className="p-1.5 text-gray-600 dark:text-gray-400 hover:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded flex-shrink-0"
@@ -300,7 +303,7 @@ export function PostCard({
                             <button
                               type="button"
                               onClick={async () => {
-                                if (!confirm("Excluir este comentário?")) return;
+                                if (!(await confirm({ title: "Excluir comentário", message: "Excluir este comentário?", variant: "danger", confirmText: "Excluir" }))) return;
                                 const res = await fetch(
                                   `/api/posts/${post.id}/comments/${c.id}`,
                                   { method: "DELETE" }
@@ -358,6 +361,7 @@ export function PostCard({
           )}
         </div>
       )}
+      <ConfirmDialog />
     </div>
   );
 }

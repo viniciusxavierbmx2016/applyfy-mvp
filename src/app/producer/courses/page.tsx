@@ -6,6 +6,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { useUserStore } from "@/stores/user-store";
+import { useConfirm } from "@/hooks/use-confirm";
 
 interface AdminCourse {
   id: string;
@@ -23,6 +24,7 @@ export default function AdminCoursesPage() {
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
+  const { confirm, ConfirmDialog } = useConfirm();
 
   function showToast(msg: string) {
     setToast(msg);
@@ -59,7 +61,7 @@ export default function AdminCoursesPage() {
   }
 
   async function handleDelete(id: string) {
-    if (!confirm("Tem certeza que deseja excluir este curso? Essa ação é irreversível.")) return;
+    if (!(await confirm({ title: "Excluir curso", message: "Tem certeza que deseja excluir este curso? Essa ação é irreversível.", variant: "danger", confirmText: "Excluir" }))) return;
     setDeletingId(id);
     try {
       const res = await fetch(`/api/courses/${id}`, { method: "DELETE" });
@@ -204,6 +206,7 @@ export default function AdminCoursesPage() {
           {toast}
         </div>
       )}
+      <ConfirmDialog />
     </div>
   );
 }

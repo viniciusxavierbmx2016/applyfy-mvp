@@ -6,6 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { ImportStudentsModal } from "@/components/import-students-modal";
+import { useConfirm } from "@/hooks/use-confirm";
 
 type EnrollmentStatus = "ACTIVE" | "EXPIRED" | "CANCELLED";
 
@@ -51,6 +52,7 @@ export default function AdminUsersPage() {
   );
   const [toast, setToast] = useState<string | null>(null);
   const [importOpen, setImportOpen] = useState(false);
+  const { confirm, ConfirmDialog } = useConfirm();
 
   useEffect(() => {
     const t = setTimeout(() => setDebounced(query), 300);
@@ -169,7 +171,7 @@ export default function AdminUsersPage() {
   }
 
   async function removeEnrollment(userId: string, courseId: string) {
-    if (!confirm("Remover acesso a este curso?")) return;
+    if (!(await confirm({ title: "Remover acesso", message: "Remover acesso a este curso?", variant: "danger", confirmText: "Remover" }))) return;
     try {
       const res = await fetch(
         `/api/producer/students/${userId}/enrollments?courseId=${courseId}`,
@@ -507,6 +509,7 @@ export default function AdminUsersPage() {
           {toast}
         </div>
       )}
+      <ConfirmDialog />
     </div>
   );
 }
