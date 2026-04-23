@@ -24,6 +24,7 @@ model User {
   referralSource  String?
   document        String?
   themeConfig   String?   @default("{}")
+  lastAccessAt  DateTime?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 

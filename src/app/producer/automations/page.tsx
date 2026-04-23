@@ -30,12 +30,28 @@ interface CanvasNode {
   y: number;
 }
 
-const TRIGGER_META: Record<string, { label: string; short: string; icon: string; desc: string }> = {
+interface TemplateData {
+  name: string;
+  emoji: string;
+  description: string;
+  triggerType: string;
+  triggerConfig: Record<string, unknown>;
+  actionType: string;
+  actionConfig: Record<string, unknown>;
+  needsCourseConfig?: boolean;
+}
+
+const TRIGGER_META: Record<string, { label: string; short: string; icon: string; desc: string; behavioral?: boolean }> = {
   LESSON_COMPLETED: { label: "Aluno completar uma aula", short: "Completar aula", desc: "Quando um aluno finalizar uma aula", icon: "M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664zM21 12a9 9 0 11-18 0 9 9 0 0118 0z" },
   MODULE_COMPLETED: { label: "Aluno completar um módulo", short: "Completar módulo", desc: "Quando todas as aulas do módulo forem concluídas", icon: "M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" },
   COURSE_COMPLETED: { label: "Aluno completar o curso", short: "Completar curso", desc: "Quando o aluno finalizar todas as aulas do curso", icon: "M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" },
   QUIZ_PASSED: { label: "Aluno passar no quiz", short: "Passar no quiz", desc: "Quando o aluno atingir a nota mínima", icon: "M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" },
   STUDENT_ENROLLED: { label: "Aluno se matricular", short: "Se matricular", desc: "Quando um aluno for matriculado no curso", icon: "M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" },
+  STUDENT_INACTIVE: { label: "Aluno inativo há X dias", short: "Aluno inativo", desc: "Quando o aluno não acessa há um período", icon: "M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z", behavioral: true },
+  STUDENT_NEVER_ACCESSED: { label: "Aluno nunca acessou", short: "Nunca acessou", desc: "Matriculado mas sem nenhum acesso", icon: "M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21", behavioral: true },
+  PROGRESS_BELOW: { label: "Progresso abaixo de X%", short: "Baixo progresso", desc: "Quando o aluno está abaixo de uma % do curso", icon: "M13 17h8m0 0V9m0 8l-8-8-4 4-6-6", behavioral: true },
+  PROGRESS_ABOVE: { label: "Progresso acima de X%", short: "Alto progresso", desc: "Quando o aluno atinge uma % do curso", icon: "M13 7h8m0 0v8m0-8l-8 8-4-4-6 6", behavioral: true },
+  MODULE_NOT_STARTED: { label: "Módulo não iniciado", short: "Módulo parado", desc: "Aluno não começou um módulo após X dias", icon: "M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636", behavioral: true },
 };
 
 const ACTION_META: Record<string, { label: string; short: string; icon: string; desc: string }> = {
@@ -46,9 +62,77 @@ const ACTION_META: Record<string, { label: string; short: string; icon: string; 
   ADD_TAG: { label: "Adicionar tag", short: "Adicionar tag", desc: "Adiciona uma tag ao perfil do aluno", icon: "M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" },
 };
 
+const TEMPLATES: TemplateData[] = [
+  {
+    emoji: "🔔", name: "Reengajar alunos inativos",
+    description: "Envia email para alunos que não acessam há 7 dias",
+    triggerType: "STUDENT_INACTIVE", triggerConfig: { inactiveDays: 7 },
+    actionType: "SEND_EMAIL", actionConfig: { subject: "Sentimos sua falta!", body: "Olá! Notamos que você não acessa há alguns dias.\n\nVolte e continue de onde parou — seu progresso está salvo!" },
+  },
+  {
+    emoji: "👋", name: "Ativar quem nunca entrou",
+    description: "Email para alunos matriculados que nunca acessaram",
+    triggerType: "STUDENT_NEVER_ACCESSED", triggerConfig: { afterDays: 3 },
+    actionType: "SEND_EMAIL", actionConfig: { subject: "Seu acesso está esperando!", body: "Olá! Você foi matriculado mas ainda não acessou.\n\nComece agora e aproveite todo o conteúdo disponível!" },
+  },
+  {
+    emoji: "🎓", name: "Certificado ao concluir",
+    description: "Gera certificado quando o aluno completa o curso",
+    triggerType: "COURSE_COMPLETED", triggerConfig: {},
+    actionType: "GRANT_CERTIFICATE", actionConfig: {},
+    needsCourseConfig: true,
+  },
+  {
+    emoji: "🔓", name: "Liberar módulo após conclusão",
+    description: "Desbloqueia o próximo módulo ao concluir o anterior",
+    triggerType: "MODULE_COMPLETED", triggerConfig: {},
+    actionType: "UNLOCK_MODULE", actionConfig: {},
+    needsCourseConfig: true,
+  },
+  {
+    emoji: "📧", name: "Email de parabéns no quiz",
+    description: "Envia parabéns quando o aluno passa no quiz",
+    triggerType: "QUIZ_PASSED", triggerConfig: {},
+    actionType: "SEND_EMAIL", actionConfig: { subject: "Parabéns! Você passou no quiz!", body: "Excelente resultado! Continue assim e avance no seu aprendizado." },
+  },
+  {
+    emoji: "📊", name: "Alertar aluno com baixo progresso",
+    description: "Email para alunos com menos de 25% após 14 dias",
+    triggerType: "PROGRESS_BELOW", triggerConfig: { progressPercent: 25, afterDays: 14 },
+    actionType: "SEND_EMAIL", actionConfig: { subject: "Precisa de ajuda?", body: "Vimos que você está no início do curso.\n\nSe tiver dúvidas ou dificuldades, estamos aqui para ajudar!" },
+    needsCourseConfig: true,
+  },
+  {
+    emoji: "🎉", name: "Parabenizar progresso de 50%",
+    description: "Comemora quando o aluno atinge metade do curso",
+    triggerType: "PROGRESS_ABOVE", triggerConfig: { progressPercent: 50 },
+    actionType: "SEND_EMAIL", actionConfig: { subject: "Você já está na metade!", body: "Parabéns! Você completou 50% do curso.\n\nContinue assim, falta pouco para a conclusão!" },
+    needsCourseConfig: true,
+  },
+  {
+    emoji: "📚", name: "Matricular em curso bônus ao concluir",
+    description: "Matrícula automática em outro curso após conclusão",
+    triggerType: "COURSE_COMPLETED", triggerConfig: {},
+    actionType: "ENROLL_COURSE", actionConfig: {},
+    needsCourseConfig: true,
+  },
+  {
+    emoji: "👤", name: "Email de boas-vindas ao matricular",
+    description: "Envia boas-vindas quando o aluno é matriculado",
+    triggerType: "STUDENT_ENROLLED", triggerConfig: {},
+    actionType: "SEND_EMAIL", actionConfig: { subject: "Bem-vindo!", body: "Olá! Seja bem-vindo ao curso.\n\nAqui está tudo que você precisa saber para começar. Bons estudos!" },
+  },
+];
+
 function getTriggerDetail(auto: AutomationItem, courses: CourseOption[]): string | null {
   try {
     const cfg = JSON.parse(auto.triggerConfig);
+    if (cfg.inactiveDays) return `${cfg.inactiveDays} dias`;
+    if (cfg.afterDays && auto.triggerType === "STUDENT_NEVER_ACCESSED") return `após ${cfg.afterDays} dias`;
+    if (cfg.progressPercent != null) {
+      const extra = cfg.afterDays ? ` após ${cfg.afterDays}d` : "";
+      return `${cfg.progressPercent}%${extra}`;
+    }
     const course = courses.find((c) => c.id === auto.courseId);
     if (cfg.moduleId && course) {
       const mod = course.modules.find((m) => m.id === cfg.moduleId);
@@ -99,6 +183,8 @@ export default function AutomationsPage() {
   const [loading, setLoading] = useState(true);
   const [editorAuto, setEditorAuto] = useState<AutomationItem | null>(null);
   const [editorNew, setEditorNew] = useState(false);
+  const [editorTemplate, setEditorTemplate] = useState<TemplateData | null>(null);
+  const [showNewModal, setShowNewModal] = useState(false);
   const [menuOpen, setMenuOpen] = useState<string | null>(null);
   const { confirm, ConfirmDialog } = useConfirm();
 
@@ -156,12 +242,13 @@ export default function AutomationsPage() {
     if (res.ok) load();
   }
 
-  if (editorAuto || editorNew) {
+  if (editorAuto || editorNew || editorTemplate) {
     return (
       <FlowEditor
         editing={editorAuto}
+        template={editorTemplate}
         courses={courses}
-        onBack={() => { setEditorAuto(null); setEditorNew(false); load(); }}
+        onBack={() => { setEditorAuto(null); setEditorNew(false); setEditorTemplate(null); load(); }}
       />
     );
   }
@@ -173,7 +260,7 @@ export default function AutomationsPage() {
           <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">Automações</h1>
           <p className="text-sm text-gray-500 mt-1">Crie fluxos visuais que executam ações automaticamente</p>
         </div>
-        <button type="button" onClick={() => setEditorNew(true)} className="inline-flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-xl transition">
+        <button type="button" onClick={() => setShowNewModal(true)} className="inline-flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-xl transition">
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
           Nova automação
         </button>
@@ -198,7 +285,7 @@ export default function AutomationsPage() {
           </div>
           <p className="text-gray-900 dark:text-white font-semibold text-lg mb-2">Automatize tarefas repetitivas</p>
           <p className="text-gray-500 text-sm mb-6 max-w-md mx-auto">Crie fluxos visuais que executam ações automaticamente quando seus alunos avançam</p>
-          <button type="button" onClick={() => setEditorNew(true)} className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-xl transition">
+          <button type="button" onClick={() => setShowNewModal(true)} className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-xl transition">
             + Criar primeira automação
           </button>
         </div>
@@ -258,7 +345,10 @@ export default function AutomationsPage() {
                     </div>
                     <div className="w-4 h-px bg-[#3b3b44]" />
                     <div className="flex-1 min-w-0 bg-[#141416] border border-[#28282e] rounded-lg px-2 py-1.5">
-                      <div className="text-[8px] uppercase tracking-wider text-blue-400 font-semibold">Quando</div>
+                      <div className="flex items-center gap-1">
+                        <span className="text-[8px] uppercase tracking-wider text-blue-400 font-semibold">Quando</span>
+                        {trigger?.behavioral && <span className="text-[7px] px-1 py-px rounded bg-amber-500/20 text-amber-400 font-medium">Cron</span>}
+                      </div>
                       <div className="text-[10px] text-gray-300 truncate">{trigger?.short || auto.triggerType}</div>
                       {triggerDetail && <div className="text-[8px] text-gray-500 truncate">{triggerDetail}</div>}
                     </div>
@@ -282,7 +372,101 @@ export default function AutomationsPage() {
           })}
         </div>
       )}
+
+      {showNewModal && (
+        <NewAutomationModal
+          onClose={() => setShowNewModal(false)}
+          onScratch={() => { setShowNewModal(false); setEditorNew(true); }}
+          onTemplate={(t) => { setShowNewModal(false); setEditorTemplate(t); }}
+        />
+      )}
       <ConfirmDialog />
+    </div>
+  );
+}
+
+function NewAutomationModal({ onClose, onScratch, onTemplate }: {
+  onClose: () => void;
+  onScratch: () => void;
+  onTemplate: (t: TemplateData) => void;
+}) {
+  const [showTemplates, setShowTemplates] = useState(false);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-start justify-center pt-[5vh] sm:pt-[8vh] overflow-y-auto" onClick={onClose}>
+      <div className="absolute inset-0 bg-black/60" />
+      <div className="relative bg-white dark:bg-[#141416] border border-gray-200 dark:border-[#28282e] rounded-2xl p-6 max-w-2xl w-full mx-4 shadow-2xl mb-10" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Nova automação</h3>
+          <button type="button" onClick={onClose} className="p-1 text-gray-500 hover:text-white transition rounded-lg hover:bg-white/[0.06]">
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+          </button>
+        </div>
+
+        {!showTemplates ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <button
+              type="button"
+              onClick={onScratch}
+              className="flex flex-col items-center gap-3 p-6 rounded-xl border-2 border-gray-200 dark:border-[#28282e] hover:border-indigo-500/50 hover:bg-indigo-500/5 transition text-center group"
+            >
+              <div className="w-12 h-12 rounded-xl bg-indigo-500/10 flex items-center justify-center group-hover:bg-indigo-500/20 transition">
+                <svg className="w-6 h-6 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-gray-900 dark:text-white">Criar do zero</p>
+                <p className="text-xs text-gray-500 mt-1">Monte seu fluxo personalizado</p>
+              </div>
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowTemplates(true)}
+              className="flex flex-col items-center gap-3 p-6 rounded-xl border-2 border-gray-200 dark:border-[#28282e] hover:border-indigo-500/50 hover:bg-indigo-500/5 transition text-center group"
+            >
+              <div className="w-12 h-12 rounded-xl bg-amber-500/10 flex items-center justify-center group-hover:bg-amber-500/20 transition">
+                <svg className="w-6 h-6 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-gray-900 dark:text-white">Usar template</p>
+                <p className="text-xs text-gray-500 mt-1">Comece com um modelo pronto</p>
+              </div>
+            </button>
+          </div>
+        ) : (
+          <div>
+            <button type="button" onClick={() => setShowTemplates(false)} className="flex items-center gap-1 text-sm text-gray-400 hover:text-white transition mb-4">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
+              Voltar
+            </button>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {TEMPLATES.map((t, i) => {
+                const trigger = TRIGGER_META[t.triggerType];
+                return (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => onTemplate(t)}
+                    className="flex flex-col items-start gap-2 p-4 rounded-xl border border-gray-200 dark:border-[#28282e] hover:border-indigo-500/50 hover:bg-indigo-500/5 transition text-left"
+                  >
+                    <span className="text-2xl">{t.emoji}</span>
+                    <p className="text-sm font-semibold text-gray-900 dark:text-white leading-tight">{t.name}</p>
+                    <p className="text-xs text-gray-500 leading-relaxed">{t.description}</p>
+                    <span className={`text-[10px] uppercase tracking-wider font-medium px-2 py-0.5 rounded-full ${
+                      trigger?.behavioral ? "bg-amber-500/10 text-amber-400" : "bg-blue-500/10 text-blue-400"
+                    }`}>
+                      {trigger?.short || t.triggerType}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -322,30 +506,35 @@ function CardMenu({ onEdit, onDuplicate, onDelete, onClose }: {
   );
 }
 
-function FlowEditor({ editing, courses, onBack }: {
+function FlowEditor({ editing, template, courses, onBack }: {
   editing: AutomationItem | null;
+  template: TemplateData | null;
   courses: CourseOption[];
   onBack: () => void;
 }) {
   const isEditing = !!editing;
-  const [name, setName] = useState(editing?.name || "");
+  const [name, setName] = useState(editing?.name || template?.name || "");
   const [active, setActive] = useState(editing?.active ?? true);
   const [courseId, setCourseId] = useState(editing?.courseId || "");
-  const [triggerType, setTriggerType] = useState(editing?.triggerType || "");
+  const [triggerType, setTriggerType] = useState(editing?.triggerType || template?.triggerType || "");
   const [triggerConfig, setTriggerConfig] = useState<Record<string, string>>(() => {
     if (editing) { try { return JSON.parse(editing.triggerConfig); } catch { return {}; } }
+    if (template) return template.triggerConfig as Record<string, string>;
     return {};
   });
-  const [actionType, setActionType] = useState(editing?.actionType || "");
+  const [actionType, setActionType] = useState(editing?.actionType || template?.actionType || "");
   const [actionConfig, setActionConfig] = useState<Record<string, string>>(() => {
     if (editing) { try { return JSON.parse(editing.actionConfig); } catch { return {}; } }
+    if (template) return template.actionConfig as Record<string, string>;
     return {};
   });
 
   const [nodes, setNodes] = useState<CanvasNode[]>(defaultNodes);
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
-  const [editingNode, setEditingNode] = useState<"trigger" | "action" | null>(null);
+  const [editingNode, setEditingNode] = useState<"trigger" | "action" | null>(
+    template?.needsCourseConfig ? "trigger" : null
+  );
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
@@ -492,7 +681,6 @@ function FlowEditor({ editing, courses, onBack }: {
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-[#0a0a0b]">
-      {/* Editor header */}
       <div className="flex items-center justify-between px-4 py-3 bg-[#111113] border-b border-[#28282e]">
         <div className="flex items-center gap-4">
           <button type="button" onClick={onBack} className="flex items-center gap-2 text-sm text-gray-400 hover:text-white transition">
@@ -539,7 +727,6 @@ function FlowEditor({ editing, courses, onBack }: {
         </div>
       </div>
 
-      {/* Canvas */}
       <div className="flex-1 relative overflow-hidden">
         <div
           ref={canvasRef}
@@ -555,9 +742,7 @@ function FlowEditor({ editing, courses, onBack }: {
           onMouseLeave={handleMouseUp}
           onWheel={handleWheel}
         >
-          {/* Transform layer */}
           <div style={{ transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`, transformOrigin: "0 0" }}>
-            {/* SVG connections */}
             <svg className="absolute inset-0 pointer-events-none" style={{ width: 2000, height: 2000, overflow: "visible" }}>
               <defs>
                 <marker id="arrowhead" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
@@ -568,7 +753,6 @@ function FlowEditor({ editing, courses, onBack }: {
               <path d={bezierPath(conn2.x1, conn2.y1, conn2.x2, conn2.y2)} stroke="#3b3b44" strokeWidth="2" fill="none" markerEnd="url(#arrowhead)" strokeDasharray="6 3" className="animate-dash" />
             </svg>
 
-            {/* Start node */}
             <div
               data-node-id="start"
               className="absolute flex flex-col items-center gap-2"
@@ -580,7 +764,6 @@ function FlowEditor({ editing, courses, onBack }: {
               <span className="text-[10px] text-gray-500 font-medium">Início</span>
             </div>
 
-            {/* Trigger node */}
             <div
               data-node-id="trigger"
               className={`absolute cursor-move select-none ${editingNode === "trigger" ? "ring-2 ring-blue-500 ring-offset-2 ring-offset-[#0a0a0b]" : ""}`}
@@ -594,6 +777,9 @@ function FlowEditor({ editing, courses, onBack }: {
                     <path strokeLinecap="round" strokeLinejoin="round" d={triggerType ? TRIGGER_META[triggerType]?.icon || "M13 10V3L4 14h7v7l9-11h-7z" : "M13 10V3L4 14h7v7l9-11h-7z"} />
                   </svg>
                   <span className="text-[10px] uppercase tracking-widest font-semibold text-blue-400">Quando</span>
+                  {triggerType && TRIGGER_META[triggerType]?.behavioral && (
+                    <span className="text-[8px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400 font-medium ml-auto">Cron</span>
+                  )}
                 </div>
                 <div className="px-3 py-3">
                   {triggerType ? (
@@ -606,11 +792,9 @@ function FlowEditor({ editing, courses, onBack }: {
                   )}
                 </div>
               </div>
-              {/* Port out */}
               <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 w-3 h-3 rounded-full bg-[#28282e] border-2 border-[#3b3b44]" />
             </div>
 
-            {/* Action node */}
             <div
               data-node-id="action"
               className={`absolute cursor-move select-none ${editingNode === "action" ? "ring-2 ring-emerald-500 ring-offset-2 ring-offset-[#0a0a0b]" : ""}`}
@@ -618,7 +802,6 @@ function FlowEditor({ editing, courses, onBack }: {
               onMouseDown={(e) => handleNodeMouseDown(e, "action")}
               onClick={(e) => { e.stopPropagation(); if (!dragging.current) setEditingNode("action"); }}
             >
-              {/* Port in */}
               <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1/2 w-3 h-3 rounded-full bg-[#28282e] border-2 border-[#3b3b44]" />
               <div className="bg-[#141416] border border-[#28282e] rounded-xl overflow-hidden shadow-lg hover:border-emerald-500/40 transition">
                 <div className="px-3 py-2 bg-emerald-600/10 flex items-center gap-2">
@@ -642,7 +825,6 @@ function FlowEditor({ editing, courses, onBack }: {
           </div>
         </div>
 
-        {/* Zoom controls */}
         <div className="absolute bottom-4 right-4 flex items-center gap-1 bg-[#141416] border border-[#28282e] rounded-xl p-1 shadow-xl">
           <button type="button" onClick={() => setZoom((z) => Math.max(0.3, z - 0.1))} className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/[0.06] rounded-lg transition">
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M20 12H4" /></svg>
@@ -657,7 +839,6 @@ function FlowEditor({ editing, courses, onBack }: {
           </button>
         </div>
 
-        {/* Side panel */}
         {editingNode && (
           <SidePanel
             type={editingNode}
@@ -715,6 +896,7 @@ function SidePanel({
 
   const selectCls = "w-full px-3 py-2.5 bg-[#0f1320] border border-[#1a1e2e] rounded-lg text-sm text-white outline-none focus:border-indigo-500/50";
   const labelCls = "block text-xs font-medium text-gray-400 mb-1.5";
+  const inputCls = "w-full px-3 py-2.5 bg-[#0f1320] border border-[#1a1e2e] rounded-lg text-sm text-white outline-none focus:border-indigo-500/50";
 
   return (
     <div className="absolute top-0 right-0 h-full w-[360px] bg-[#141416] border-l border-[#28282e] shadow-2xl flex flex-col z-10 animate-slideIn">
@@ -746,11 +928,15 @@ function SidePanel({
                   <path strokeLinecap="round" strokeLinejoin="round" d={m.icon} />
                 </svg>
                 <span className="text-[11px] font-medium text-gray-300 leading-tight">{m.short}</span>
+                {"behavioral" in m && (m as { behavioral?: boolean }).behavioral && (
+                  <span className="text-[8px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400 font-medium">Cron</span>
+                )}
               </button>
             ))}
           </div>
         </div>
 
+        {/* Trigger-specific configs */}
         {isTrigger && triggerType === "LESSON_COMPLETED" && selectedCourse && (
           <div>
             <label className={labelCls}>Aula específica (opcional)</label>
@@ -769,7 +955,57 @@ function SidePanel({
             </select>
           </div>
         )}
+        {isTrigger && triggerType === "STUDENT_INACTIVE" && (
+          <div>
+            <label className={labelCls}>Dias de inatividade</label>
+            <input type="number" min={1} value={triggerConfig.inactiveDays || "7"} onChange={(e) => setTriggerConfig({ ...triggerConfig, inactiveDays: e.target.value })} className={inputCls} />
+            <p className="text-[10px] text-gray-500 mt-1">Executado automaticamente a cada 6 horas</p>
+          </div>
+        )}
+        {isTrigger && triggerType === "STUDENT_NEVER_ACCESSED" && (
+          <div>
+            <label className={labelCls}>Dias após matrícula</label>
+            <input type="number" min={1} value={triggerConfig.afterDays || "3"} onChange={(e) => setTriggerConfig({ ...triggerConfig, afterDays: e.target.value })} className={inputCls} />
+            <p className="text-[10px] text-gray-500 mt-1">Aguarda X dias antes de disparar</p>
+          </div>
+        )}
+        {isTrigger && triggerType === "PROGRESS_BELOW" && (
+          <div className="space-y-3">
+            <div>
+              <label className={labelCls}>Progresso abaixo de (%)</label>
+              <input type="number" min={1} max={99} value={triggerConfig.progressPercent || "25"} onChange={(e) => setTriggerConfig({ ...triggerConfig, progressPercent: e.target.value })} className={inputCls} />
+            </div>
+            <div>
+              <label className={labelCls}>Após quantos dias</label>
+              <input type="number" min={1} value={triggerConfig.afterDays || "14"} onChange={(e) => setTriggerConfig({ ...triggerConfig, afterDays: e.target.value })} className={inputCls} />
+            </div>
+            <p className="text-[10px] text-gray-500">Requer curso selecionado no header</p>
+          </div>
+        )}
+        {isTrigger && triggerType === "PROGRESS_ABOVE" && (
+          <div>
+            <label className={labelCls}>Progresso acima de (%)</label>
+            <input type="number" min={1} max={100} value={triggerConfig.progressPercent || "50"} onChange={(e) => setTriggerConfig({ ...triggerConfig, progressPercent: e.target.value })} className={inputCls} />
+            <p className="text-[10px] text-gray-500 mt-1">Requer curso selecionado no header</p>
+          </div>
+        )}
+        {isTrigger && triggerType === "MODULE_NOT_STARTED" && selectedCourse && (
+          <div className="space-y-3">
+            <div>
+              <label className={labelCls}>Módulo</label>
+              <select value={triggerConfig.moduleId || ""} onChange={(e) => setTriggerConfig({ ...triggerConfig, moduleId: e.target.value })} className={selectCls}>
+                <option value="">Selecione...</option>
+                {selectedCourse.modules.map((m) => <option key={m.id} value={m.id}>{m.title}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className={labelCls}>Após quantos dias</label>
+              <input type="number" min={1} value={triggerConfig.afterDays || "7"} onChange={(e) => setTriggerConfig({ ...triggerConfig, afterDays: e.target.value })} className={inputCls} />
+            </div>
+          </div>
+        )}
 
+        {/* Action-specific configs */}
         {!isTrigger && actionType === "UNLOCK_MODULE" && selectedCourse && (
           <div>
             <label className={labelCls}>Módulo para liberar</label>
@@ -783,7 +1019,7 @@ function SidePanel({
           <div className="space-y-3">
             <div>
               <label className={labelCls}>Assunto do email</label>
-              <input type="text" value={actionConfig.subject || ""} onChange={(e) => setActionConfig({ ...actionConfig, subject: e.target.value })} placeholder="Parabéns pela conclusão!" className={selectCls} />
+              <input type="text" value={actionConfig.subject || ""} onChange={(e) => setActionConfig({ ...actionConfig, subject: e.target.value })} placeholder="Parabéns pela conclusão!" className={inputCls} />
             </div>
             <div>
               <label className={labelCls}>Corpo do email</label>
@@ -836,6 +1072,7 @@ function MobileFlowEditor({
 }) {
   const selectCls = "w-full px-3 py-2.5 bg-[#0f1320] border border-[#1a1e2e] rounded-lg text-sm text-white outline-none";
   const labelCls = "block text-xs font-medium text-gray-400 mb-1.5";
+  const inputCls = "w-full px-3 py-2.5 bg-[#0f1320] border border-[#1a1e2e] rounded-lg text-sm text-white outline-none";
 
   return (
     <div className="fixed inset-0 z-50 bg-[#0a0a0b] overflow-y-auto">
@@ -885,6 +1122,7 @@ function MobileFlowEditor({
                     <path strokeLinecap="round" strokeLinejoin="round" d={m.icon} />
                   </svg>
                   <span className="text-[10px] font-medium text-gray-300">{m.short}</span>
+                  {m.behavioral && <span className="text-[7px] px-1 py-px rounded bg-amber-500/20 text-amber-400 font-medium">Cron</span>}
                 </button>
               ))}
             </div>
@@ -904,6 +1142,51 @@ function MobileFlowEditor({
                   <option value="">Qualquer módulo</option>
                   {selectedCourse.modules.map((m) => <option key={m.id} value={m.id}>{m.title}</option>)}
                 </select>
+              </div>
+            )}
+            {triggerType === "STUDENT_INACTIVE" && (
+              <div>
+                <label className={labelCls}>Dias de inatividade</label>
+                <input type="number" min={1} value={triggerConfig.inactiveDays || "7"} onChange={(e) => setTriggerConfig({ ...triggerConfig, inactiveDays: e.target.value })} className={inputCls} />
+              </div>
+            )}
+            {triggerType === "STUDENT_NEVER_ACCESSED" && (
+              <div>
+                <label className={labelCls}>Dias após matrícula</label>
+                <input type="number" min={1} value={triggerConfig.afterDays || "3"} onChange={(e) => setTriggerConfig({ ...triggerConfig, afterDays: e.target.value })} className={inputCls} />
+              </div>
+            )}
+            {triggerType === "PROGRESS_BELOW" && (
+              <div className="space-y-3">
+                <div>
+                  <label className={labelCls}>Progresso abaixo de (%)</label>
+                  <input type="number" min={1} max={99} value={triggerConfig.progressPercent || "25"} onChange={(e) => setTriggerConfig({ ...triggerConfig, progressPercent: e.target.value })} className={inputCls} />
+                </div>
+                <div>
+                  <label className={labelCls}>Após quantos dias</label>
+                  <input type="number" min={1} value={triggerConfig.afterDays || "14"} onChange={(e) => setTriggerConfig({ ...triggerConfig, afterDays: e.target.value })} className={inputCls} />
+                </div>
+              </div>
+            )}
+            {triggerType === "PROGRESS_ABOVE" && (
+              <div>
+                <label className={labelCls}>Progresso acima de (%)</label>
+                <input type="number" min={1} max={100} value={triggerConfig.progressPercent || "50"} onChange={(e) => setTriggerConfig({ ...triggerConfig, progressPercent: e.target.value })} className={inputCls} />
+              </div>
+            )}
+            {triggerType === "MODULE_NOT_STARTED" && selectedCourse && (
+              <div className="space-y-3">
+                <div>
+                  <label className={labelCls}>Módulo</label>
+                  <select value={triggerConfig.moduleId || ""} onChange={(e) => setTriggerConfig({ ...triggerConfig, moduleId: e.target.value })} className={selectCls}>
+                    <option value="">Selecione...</option>
+                    {selectedCourse.modules.map((m) => <option key={m.id} value={m.id}>{m.title}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className={labelCls}>Após quantos dias</label>
+                  <input type="number" min={1} value={triggerConfig.afterDays || "7"} onChange={(e) => setTriggerConfig({ ...triggerConfig, afterDays: e.target.value })} className={inputCls} />
+                </div>
               </div>
             )}
           </div>

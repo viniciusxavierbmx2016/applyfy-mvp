@@ -8,6 +8,18 @@ export interface AutomationTrigger {
   data?: Record<string, unknown>;
 }
 
+const BEHAVIORAL_TRIGGERS = [
+  "STUDENT_INACTIVE",
+  "STUDENT_NEVER_ACCESSED",
+  "PROGRESS_BELOW",
+  "PROGRESS_ABOVE",
+  "MODULE_NOT_STARTED",
+];
+
+export function isBehavioralTrigger(type: string): boolean {
+  return BEHAVIORAL_TRIGGERS.includes(type);
+}
+
 function matchesTrigger(
   trigger: AutomationTrigger,
   config: Record<string, unknown>
@@ -28,7 +40,7 @@ function matchesTrigger(
   }
 }
 
-async function executeAction(
+export async function executeAction(
   automation: { id: string; actionType: string; actionConfig: string },
   userId: string,
   courseId?: string

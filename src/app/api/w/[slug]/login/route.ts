@@ -126,14 +126,20 @@ export async function POST(
     }
     const ip = request.headers.get("x-forwarded-for") || "unknown";
     const device = request.headers.get("user-agent") || "unknown";
-    await prisma.session.create({
-      data: {
-        userId: user.id,
-        ip,
-        device,
-        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-      },
-    });
+    await Promise.all([
+      prisma.session.create({
+        data: {
+          userId: user.id,
+          ip,
+          device,
+          expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+        },
+      }),
+      prisma.user.update({
+        where: { id: user.id },
+        data: { lastAccessAt: new Date() },
+      }),
+    ]);
 
     return NextResponse.json({
       message: "Login realizado com sucesso",
