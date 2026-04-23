@@ -219,3 +219,65 @@ body {
 .producer-layout .dark\:bg-\[\#0a0a1a\] { background-color: var(--producer-bg, #0a0a1a) !important; }
 .producer-layout .dark\:bg-\[\#0f1320\] { background-color: var(--producer-card, #0f1320) !important; }
 .producer-layout .dark\:bg-\[\#1a1e2e\] { background-color: var(--producer-secondary, #1a1e2e) !important; }
+
+/* ─── Course member area customization ──────────────────────── */
+
+/* Cards & surfaces */
+.course-customized .bg-white { background-color: var(--member-card, #ffffff) !important; }
+.course-customized .dark\:bg-gray-900 { background-color: var(--member-card, rgb(17 24 39)) !important; }
+.course-customized .dark\:bg-gray-900\/60 { background-color: var(--member-card, rgb(17 24 39 / 0.6)) !important; }
+.course-customized .dark\:bg-gray-950 { background-color: var(--member-bg, rgb(3 7 18)) !important; }
+.course-customized .bg-gray-50 { background-color: var(--member-card, rgb(249 250 251)) !important; }
+.course-customized .dark\:bg-white\/5 { background-color: var(--member-card, rgb(255 255 255 / 0.05)) !important; }
+.course-customized .dark\:bg-white\/\[0\.06\] { background-color: var(--member-card, rgb(255 255 255 / 0.06)) !important; }
+.course-customized .dark\:bg-white\/\[0\.04\] { background-color: var(--member-card, rgb(255 255 255 / 0.04)) !important; }
+.course-customized .dark\:bg-white\/\[0\.02\] { background-color: var(--member-card, rgb(255 255 255 / 0.02)) !important; }
+.course-customized .bg-white\/80 { background-color: var(--member-card, rgb(255 255 255 / 0.8)) !important; }
+
+/* Primary color — buttons, links, progress bars, accents */
+.course-customized .bg-blue-600 { background-color: var(--member-primary, #2563eb) !important; }
+.course-customized .bg-blue-500 { background-color: var(--member-primary, #3b82f6) !important; }
+.course-customized .hover\:bg-blue-500:hover { background-color: var(--member-primary, #3b82f6) !important; filter: brightness(1.1); }
+.course-customized .hover\:bg-blue-700:hover { background-color: var(--member-primary, #1d4ed8) !important; filter: brightness(0.9); }
+.course-customized .bg-emerald-500 { background-color: var(--member-primary, #10b981) !important; }
+.course-customized .hover\:from-emerald-400:hover { --tw-gradient-from: var(--member-primary, #34d399) !important; }
+.course-customized .from-emerald-500 { --tw-gradient-from: var(--member-primary, #10b981) !important; }
+.course-customized .to-emerald-600 { --tw-gradient-to: var(--member-primary, #059669) !important; }
+.course-customized .hover\:to-emerald-500:hover { --tw-gradient-to: var(--member-primary, #10b981) !important; }
+.course-customized .shadow-emerald-500\/25 { --tw-shadow-color: var(--member-primary, #10b981) !important; }
+.course-customized .hover\:shadow-emerald-500\/30:hover { --tw-shadow-color: var(--member-primary, #10b981) !important; }
+.course-customized .text-blue-500 { color: var(--member-primary, #3b82f6) !important; }
+.course-customized .text-blue-400 { color: var(--member-primary, #60a5fa) !important; }
+.course-customized .text-blue-600 { color: var(--member-primary, #2563eb) !important; }
+.course-customized .dark\:text-blue-400 { color: var(--member-primary, #60a5fa) !important; }
+.course-customized .dark\:text-blue-500 { color: var(--member-primary, #3b82f6) !important; }
+.course-customized .hover\:text-blue-400:hover { color: var(--member-primary, #60a5fa) !important; filter: brightness(1.1); }
+.course-customized .hover\:text-blue-300:hover { color: var(--member-primary, #93c5fd) !important; filter: brightness(1.15); }
+.course-customized .bg-blue-500\/10 { background-color: color-mix(in srgb, var(--member-primary, #3b82f6) 10%, transparent) !important; }
+.course-customized .dark\:bg-blue-500\/15 { background-color: color-mix(in srgb, var(--member-primary, #3b82f6) 15%, transparent) !important; }
+.course-customized .bg-blue-600\/30 { background-color: color-mix(in srgb, var(--member-primary, #2563eb) 30%, transparent) !important; }
+.course-customized .border-blue-500 { border-color: var(--member-primary, #3b82f6) !important; }
+.course-customized .bg-blue-500 { background-color: var(--member-primary, #3b82f6) !important; }
+.course-customized .shadow-blue-500\/50 { --tw-shadow-color: color-mix(in srgb, var(--member-primary, #3b82f6) 50%, transparent) !important; }
+
+/* Progress bars */
+.course-customized .from-blue-500 { --tw-gradient-from: var(--member-primary, #3b82f6) !important; }
+.course-customized .to-blue-400 { --tw-gradient-to: var(--member-primary, #60a5fa) !important; }
+
+/* Text colors */
+.course-customized .text-gray-900 { color: var(--member-text, #111827) !important; }
+.course-customized .dark\:text-white { color: var(--member-text, #ffffff) !important; }
+.course-customized .text-gray-700 { color: var(--member-text, #374151) !important; opacity: 0.85; }
+.course-customized .dark\:text-gray-300 { color: var(--member-text, #d1d5db) !important; opacity: 0.85; }
+.course-customized .dark\:text-gray-200 { color: var(--member-text, #e5e7eb) !important; opacity: 0.9; }
+.course-customized .text-gray-600 { color: var(--member-text, #4b5563) !important; opacity: 0.7; }
+.course-customized .dark\:text-gray-400 { color: var(--member-text, #9ca3af) !important; opacity: 0.7; }
+.course-customized .text-gray-500 { color: var(--member-text, #6b7280) !important; opacity: 0.6; }
+.course-customized .dark\:text-gray-500 { color: var(--member-text, #6b7280) !important; opacity: 0.55; }
+
+/* Borders */
+.course-customized .border-gray-200 { border-color: var(--member-card, #e5e7eb) !important; filter: brightness(1.2); }
+.course-customized .border-gray-200\/70 { border-color: var(--member-card, rgb(229 231 235 / 0.7)) !important; filter: brightness(1.2); }
+.course-customized .dark\:border-white\/5 { border-color: var(--member-card, rgb(255 255 255 / 0.05)) !important; filter: brightness(1.3); }
+.course-customized .dark\:border-white\/10 { border-color: var(--member-card, rgb(255 255 255 / 0.1)) !important; filter: brightness(1.3); }
+.course-customized .dark\:border-gray-800 { border-color: var(--member-card, #1f2937) !important; filter: brightness(1.3); }

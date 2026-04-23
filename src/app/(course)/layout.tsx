@@ -117,9 +117,18 @@ export default function CourseGroupLayout({
   const bgStyle = course.memberBgColor ? { backgroundColor: course.memberBgColor } : undefined;
   const headerStyle = course.memberHeaderColor ? { backgroundColor: course.memberHeaderColor } : undefined;
   const textStyle = course.memberTextColor ? { color: course.memberTextColor } : undefined;
+  const hasCustomization = !!(
+    course.memberBgColor ||
+    course.memberSidebarColor ||
+    course.memberHeaderColor ||
+    course.memberCardColor ||
+    course.memberPrimaryColor ||
+    course.memberTextColor ||
+    course.memberAccentColor
+  );
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-950 flex" style={{ ...bgStyle, ...textStyle }}>
+    <div className={`min-h-screen bg-white dark:bg-gray-950 flex ${hasCustomization ? "course-customized" : ""}`} style={{ ...bgStyle, ...textStyle }}>
       <CourseSidebar
         course={course}
         mobileOpen={mobileOpen}
