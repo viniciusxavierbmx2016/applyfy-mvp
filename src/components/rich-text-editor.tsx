@@ -31,7 +31,15 @@ export default function RichTextEditor({
       StarterKit.configure({
         heading: { levels: [1, 2] },
       }),
-      Link.configure({ openOnClick: false, HTMLAttributes: { class: null } }),
+      Link.extend({
+        addAttributes() {
+          return {
+            ...this.parent?.(),
+            class: { default: null, parseHTML: (el) => el.getAttribute("class"), renderHTML: (attrs) => attrs.class ? { class: attrs.class } : {} },
+            style: { default: null, parseHTML: (el) => el.getAttribute("style"), renderHTML: (attrs) => attrs.style ? { style: attrs.style } : {} },
+          };
+        },
+      }).configure({ openOnClick: false }),
       Underline,
       TextAlign.configure({ types: ["heading", "paragraph"] }),
       Color,
@@ -99,30 +107,47 @@ function LinkModal({ editor, onClose }: { editor: Editor; onClose: () => void })
   const [style, setStyle] = useState<"link" | "button">("link");
   const [buttonColor, setButtonColor] = useState("#6366f1");
 
+  function normalizeUrl(raw: string): string {
+    const trimmed = raw.trim();
+    if (!trimmed) return trimmed;
+    if (/^(https?:\/\/|mailto:|tel:)/i.test(trimmed)) return trimmed;
+    return "https://" + trimmed;
+  }
+
   function handleInsert() {
     if (!url.trim()) return;
+    const href = normalizeUrl(url);
     const displayText = text.trim() || url.trim();
-    const href = url.trim();
 
     if (style === "button") {
-      editor
-        .chain()
-        .focus()
-        .insertContent(
-          `<a href="${href}" class="editor-button" target="_blank" rel="noopener noreferrer" style="background-color: ${buttonColor}; --btn-color: ${buttonColor}">${displayText}</a>`
-        )
-        .run();
+      editor.chain().focus().insertContent({
+        type: "text",
+        text: displayText,
+        marks: [{
+          type: "link",
+          attrs: {
+            href,
+            target: "_blank",
+            rel: "noopener noreferrer",
+            class: "editor-button",
+            style: `background-color: ${buttonColor}; --btn-color: ${buttonColor}`,
+          },
+        }],
+      }).run();
     } else {
       const { from, to } = editor.state.selection;
       const hasSelection = from !== to;
       if (hasSelection) {
-        editor.chain().focus().setLink({ href }).run();
+        editor.chain().focus().setLink({ href, target: "_blank", rel: "noopener noreferrer" }).run();
       } else {
-        editor
-          .chain()
-          .focus()
-          .insertContent(`<a href="${href}">${displayText}</a>`)
-          .run();
+        editor.chain().focus().insertContent({
+          type: "text",
+          text: displayText,
+          marks: [{
+            type: "link",
+            attrs: { href, target: "_blank", rel: "noopener noreferrer" },
+          }],
+        }).run();
       }
     }
     onClose();
@@ -147,7 +172,7 @@ function LinkModal({ editor, onClose }: { editor: Editor; onClose: () => void })
               type="url"
               value={url}
               onChange={(e) => setUrl(e.target.value)}
-              placeholder="https://..."
+              placeholder="exemplo.com.br (https:// automático)"
               className="w-full px-4 py-3 bg-gray-50 dark:bg-[#0f1320] border border-gray-300 dark:border-[#1a1e2e] rounded-xl text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-indigo-500/50"
               onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleInsert(); } }}
             />
