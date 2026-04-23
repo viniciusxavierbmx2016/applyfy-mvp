@@ -109,7 +109,7 @@ function LinkModal({ editor, onClose }: { editor: Editor; onClose: () => void })
         .chain()
         .focus()
         .insertContent(
-          `<a href="${href}" class="editor-button" style="background-color: ${buttonColor}">${displayText}</a>`
+          `<a href="${href}" class="editor-button" target="_blank" rel="noopener noreferrer" style="background-color: ${buttonColor}; --btn-color: ${buttonColor}">${displayText}</a>`
         )
         .run();
     } else {
@@ -240,7 +240,7 @@ function LinkModal({ editor, onClose }: { editor: Editor; onClose: () => void })
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Preview</label>
                 <div className="flex items-center justify-center p-6 rounded-xl bg-gray-100 dark:bg-[#0a0c14] border border-gray-200 dark:border-[#1a1e2e]">
                   <span
-                    className="inline-block px-7 py-3 text-white font-semibold text-sm rounded-[14px] shadow-[0_4px_14px_rgba(0,0,0,0.25)] cursor-default select-none"
+                    className="inline-block px-5 py-2 text-white font-semibold text-[0.8125rem] rounded-[10px] shadow-[0_2px_8px_rgba(0,0,0,0.2)] cursor-default select-none"
                     style={{ backgroundColor: buttonColor, letterSpacing: "0.01em" }}
                   >
                     {previewText}
