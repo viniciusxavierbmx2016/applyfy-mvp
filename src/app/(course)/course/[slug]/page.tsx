@@ -62,6 +62,8 @@ interface CourseDetail {
   supportWhatsapp?: string | null;
   ratingAverage: number;
   ratingCount: number;
+  memberWelcomeText?: string | null;
+  memberLayoutStyle?: string | null;
   modules: ModuleItem[];
   sections: SectionItem[];
 }
@@ -407,6 +409,12 @@ export default function CourseHomePage() {
             </a>
           )}
         </div>
+      )}
+
+      {course.memberWelcomeText && (
+        <p className="mb-6 text-gray-600 dark:text-gray-400 text-sm">
+          {course.memberWelcomeText}
+        </p>
       )}
 
       {hasAccess && continueWatching && (

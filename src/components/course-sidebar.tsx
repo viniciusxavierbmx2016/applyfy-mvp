@@ -97,7 +97,7 @@ export function CourseSidebar({
       <aside
         className={cn(
           "fixed top-0 left-0 z-50 h-screen w-60 flex flex-col",
-          "bg-gray-50 dark:bg-gray-950",
+          "bg-[var(--member-sidebar,rgb(249_250_251))] dark:bg-[var(--member-sidebar,rgb(3_7_18))]",
           "border-r border-gray-200 dark:border-white/5",
           "transform transition-[width,transform] duration-300 ease-in-out",
           "lg:translate-x-0 lg:sticky lg:top-0 lg:z-auto",

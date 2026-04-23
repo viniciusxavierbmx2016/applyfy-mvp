@@ -11,6 +11,13 @@ interface CourseSummary {
   workspaceName?: string | null;
   workspaceLogo?: string | null;
   workspaceSlug?: string | null;
+  memberBgColor?: string | null;
+  memberSidebarColor?: string | null;
+  memberHeaderColor?: string | null;
+  memberCardColor?: string | null;
+  memberPrimaryColor?: string | null;
+  memberTextColor?: string | null;
+  memberAccentColor?: string | null;
 }
 
 const COLLAPSED_KEY = "course-sidebar-collapsed";
@@ -48,11 +55,39 @@ export default function CourseGroupLayout({
           workspaceName: vw?.name ?? d.course.workspace?.name ?? null,
           workspaceLogo: vw?.logoUrl ?? d.course.workspace?.logoUrl ?? null,
           workspaceSlug: vw?.slug ?? d.course.workspace?.slug ?? null,
+          memberBgColor: d.course.memberBgColor ?? null,
+          memberSidebarColor: d.course.memberSidebarColor ?? null,
+          memberHeaderColor: d.course.memberHeaderColor ?? null,
+          memberCardColor: d.course.memberCardColor ?? null,
+          memberPrimaryColor: d.course.memberPrimaryColor ?? null,
+          memberTextColor: d.course.memberTextColor ?? null,
+          memberAccentColor: d.course.memberAccentColor ?? null,
         });
         setHasAccess(!!d.hasAccess);
       })
       .catch(() => {});
   }, [slug]);
+
+  useEffect(() => {
+    if (!course) return;
+    const root = document.documentElement;
+    const vars: [string, string | null][] = [
+      ["--member-bg", course.memberBgColor ?? null],
+      ["--member-sidebar", course.memberSidebarColor ?? null],
+      ["--member-header", course.memberHeaderColor ?? null],
+      ["--member-card", course.memberCardColor ?? null],
+      ["--member-primary", course.memberPrimaryColor ?? null],
+      ["--member-text", course.memberTextColor ?? null],
+      ["--member-accent", course.memberAccentColor ?? null],
+    ];
+    for (const [key, val] of vars) {
+      if (val) root.style.setProperty(key, val);
+      else root.style.removeProperty(key);
+    }
+    return () => {
+      for (const [key] of vars) root.style.removeProperty(key);
+    };
+  }, [course]);
 
   function toggleCollapsed() {
     setCollapsed((c) => {
@@ -79,8 +114,12 @@ export default function CourseGroupLayout({
     );
   }
 
+  const bgStyle = course.memberBgColor ? { backgroundColor: course.memberBgColor } : undefined;
+  const headerStyle = course.memberHeaderColor ? { backgroundColor: course.memberHeaderColor } : undefined;
+  const textStyle = course.memberTextColor ? { color: course.memberTextColor } : undefined;
+
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-950 flex">
+    <div className="min-h-screen bg-white dark:bg-gray-950 flex" style={{ ...bgStyle, ...textStyle }}>
       <CourseSidebar
         course={course}
         mobileOpen={mobileOpen}
@@ -89,7 +128,7 @@ export default function CourseGroupLayout({
         onToggleCollapsed={toggleCollapsed}
       />
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="lg:hidden sticky top-0 z-30 h-14 px-4 flex items-center gap-3 bg-white dark:bg-gray-950 border-b border-gray-200 dark:border-gray-800">
+        <header className="lg:hidden sticky top-0 z-30 h-14 px-4 flex items-center gap-3 bg-white dark:bg-gray-950 border-b border-gray-200 dark:border-gray-800" style={headerStyle}>
           <button
             onClick={() => setMobileOpen(true)}
             className="p-2 -ml-2 text-gray-700 dark:text-gray-300"
