@@ -189,16 +189,23 @@ function SortableLesson({
 
   if (isEditing) {
     return (
-      <div ref={setNodeRef} style={style} className="bg-white dark:bg-gray-900 border border-blue-500/30 rounded-lg p-3">
+      <div ref={setNodeRef} style={style}>
         <LessonForm
           initial={lesson}
           onSubmit={(data) => onUpdate(lesson.id, data)}
           onCancel={onCancelEdit}
-        />
-        <LessonMaterials lessonId={lesson.id} />
-        <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-800">
-          <QuizManager lessonId={lesson.id} />
-        </div>
+        >
+          <div className="border-t border-gray-200 dark:border-[#1a1e2e] my-6" />
+          <div>
+            <h5 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Materiais complementares</h5>
+            <LessonMaterials lessonId={lesson.id} />
+          </div>
+          <div className="border-t border-gray-200 dark:border-[#1a1e2e] my-6" />
+          <div>
+            <h5 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Quiz</h5>
+            <QuizManager lessonId={lesson.id} />
+          </div>
+        </LessonForm>
       </div>
     );
   }
@@ -260,6 +267,7 @@ function LessonForm({
   initial,
   onSubmit,
   onCancel,
+  children,
 }: {
   initial?: Partial<LessonData>;
   onSubmit: (data: {
@@ -270,6 +278,7 @@ function LessonForm({
     daysToRelease: number;
   }) => void;
   onCancel: () => void;
+  children?: React.ReactNode;
 }) {
   const [title, setTitle] = useState(initial?.title || "");
   const [description, setDescription] = useState(initial?.description || "");
@@ -294,7 +303,7 @@ function LessonForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-3 bg-white dark:bg-gray-900 border border-blue-500/30 rounded-lg p-3">
+    <form onSubmit={handleSubmit} className="space-y-3 bg-white dark:bg-gray-900 border border-blue-500/30 rounded-lg p-4">
       <input
         autoFocus
         type="text"
@@ -342,6 +351,10 @@ function LessonForm({
           0 = liberado imediatamente. Ex: 7 = libera 7 dias após a matrícula do aluno.
         </p>
       </div>
+
+      {children}
+
+      <div className="border-t border-gray-200 dark:border-[#1a1e2e] my-6" />
       <div className="flex gap-2">
         <button
           type="submit"
