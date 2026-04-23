@@ -1,9 +1,15 @@
 "use client";
 
 import { useState } from "react";
+import dynamic from "next/dynamic";
 import { LessonMaterials } from "@/components/lesson-materials";
 import { QuizManager } from "@/components/quiz-manager";
 import { useConfirm } from "@/hooks/use-confirm";
+
+const RichTextEditor = dynamic(() => import("@/components/rich-text-editor"), {
+  ssr: false,
+  loading: () => <div className="h-[200px] bg-gray-100 dark:bg-gray-800 rounded-xl animate-pulse" />,
+});
 import {
   DndContext,
   closestCenter,
@@ -321,12 +327,11 @@ function LessonForm({
         required
         className="w-full px-3 py-2 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
       />
-      <textarea
+      <RichTextEditor
         value={description}
-        onChange={(e) => setDescription(e.target.value)}
-        placeholder="Descrição (opcional)"
-        rows={2}
-        className="w-full px-3 py-2 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y"
+        onChange={setDescription}
+        placeholder="Descrição da aula (opcional)"
+        minHeight="120px"
       />
       <input
         type="number"

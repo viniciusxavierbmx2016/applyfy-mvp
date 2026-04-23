@@ -375,9 +375,10 @@ export default function LessonPage({
                 <div className="mt-5">
                   {shownTab === "description" && (
                     data.lesson.description ? (
-                      <p className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed whitespace-pre-wrap">
-                        {data.lesson.description}
-                      </p>
+                      <div
+                        className="prose-lesson text-sm leading-relaxed"
+                        dangerouslySetInnerHTML={{ __html: data.lesson.description }}
+                      />
                     ) : (
                       <p className="text-gray-500 text-sm">Sem descrição para esta aula.</p>
                     )
