@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireStaff } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase-admin";
 import { createNotification } from "@/lib/notifications";
+import { processAutomations } from "@/lib/automation-engine";
 import { resolveStaffWorkspace } from "@/lib/workspace";
 import { sendEmail } from "@/lib/email";
 import { studentAccessGranted } from "@/lib/email-templates";
@@ -285,6 +286,12 @@ export async function POST(request: Request) {
               type: "ENROLLMENT",
               message: `Você foi matriculado no curso ${course.title}`,
               link: `/course/${course.slug}`,
+            }).catch(() => {});
+            processAutomations({
+              type: "STUDENT_ENROLLED",
+              workspaceId,
+              courseId,
+              userId: user.id,
             }).catch(() => {});
           } else if (existing.status === "CANCELLED") {
             await prisma.enrollment.update({

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
+import { processAutomations } from "@/lib/automation-engine";
 
 export const dynamic = "force-dynamic";
 
@@ -66,6 +67,9 @@ export async function POST(
         questions: {
           include: { options: true },
         },
+        lesson: {
+          select: { module: { select: { course: { select: { id: true, workspaceId: true } } } } },
+        },
       },
     });
 
@@ -103,6 +107,17 @@ export async function POST(
         answers: JSON.stringify(results),
       },
     });
+
+    if (passed && quiz.lesson) {
+      const course = quiz.lesson.module.course;
+      processAutomations({
+        type: "QUIZ_PASSED",
+        workspaceId: course.workspaceId,
+        courseId: course.id,
+        userId: user.id,
+        data: { quizId: quiz.id, score },
+      }).catch(() => {});
+    }
 
     return NextResponse.json({ score, passed, total: quiz.questions.length, correct: correctCount, results });
   } catch (error) {

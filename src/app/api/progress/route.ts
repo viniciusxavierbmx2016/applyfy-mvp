@@ -8,6 +8,7 @@ import {
 } from "@/lib/auth";
 import { GAMIFICATION, getLevelForPoints } from "@/lib/utils";
 import { createNotification } from "@/lib/notifications";
+import { processAutomations } from "@/lib/automation-engine";
 
 export async function POST(request: Request) {
   try {
@@ -167,7 +168,18 @@ export async function POST(request: Request) {
       }
     }
 
-    // Penalize on unmark? PRD says award on transition → true; don't subtract on unmark.
+    // Fire-and-forget automation triggers
+    if (completed && !wasCompleted) {
+      const triggerBase = { workspaceId: course.workspaceId, courseId: course.id, userId: user.id };
+      processAutomations({ type: "LESSON_COMPLETED", ...triggerBase, data: { lessonId } }).catch(() => {});
+      if (moduleCompleted) {
+        processAutomations({ type: "MODULE_COMPLETED", ...triggerBase, data: { moduleId: lesson.moduleId } }).catch(() => {});
+      }
+      if (courseCompleted) {
+        processAutomations({ type: "COURSE_COMPLETED", ...triggerBase, data: { courseId: course.id } }).catch(() => {});
+      }
+    }
+
     let updatedUser = user;
     let leveledUp = false;
 

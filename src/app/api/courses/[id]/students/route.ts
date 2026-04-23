@@ -7,6 +7,7 @@ import {
 } from "@/lib/webhook-helpers";
 import { createAdminClient } from "@/lib/supabase-admin";
 import { createNotification } from "@/lib/notifications";
+import { processAutomations } from "@/lib/automation-engine";
 import { sendEmail } from "@/lib/email";
 import { studentAccessGranted } from "@/lib/email-templates";
 
@@ -234,6 +235,12 @@ export async function POST(
         message: `Você foi matriculado no curso ${course.title}`,
         link: `/course/${course.slug}`,
       });
+      processAutomations({
+        type: "STUDENT_ENROLLED",
+        workspaceId: course.workspace.id,
+        courseId: course.id,
+        userId: user.id,
+      }).catch(() => {});
     }
 
     const baseUrl = new URL(request.url).origin;

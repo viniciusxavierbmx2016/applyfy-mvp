@@ -92,6 +92,11 @@ const iconSubscriptions = (
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
   </svg>
 );
+const iconAutomations = (
+  <svg className={iconCls} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+  </svg>
+);
 
 const studentLinks: NavLink[] = [
   { href: "/", label: "Vitrine", icon: iconHome },
@@ -105,6 +110,7 @@ const producerLinks: NavLink[] = [
   { href: "/producer/users", label: "Meus Alunos", icon: iconUsers },
   { href: "/producer/community", label: "Comunidade", icon: iconCommunity },
   { href: "/producer/analytics", label: "Relatórios", icon: iconAnalytics },
+  { href: "/producer/automations", label: "Automações", icon: iconAutomations },
   { href: "/producer/collaborators", label: "Colaboradores", icon: iconUsers },
   { href: "/producer/integrations", label: "Integrações", icon: iconIntegrations },
   { href: "/producer/settings", label: "Configurações", icon: iconSettings },

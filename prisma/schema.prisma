@@ -78,6 +78,7 @@ model Workspace {
   webhookLogs WebhookLog[]
   collaborators Collaborator[]
   transactions ProducerTransaction[]
+  automations  Automation[]
 
   @@index([ownerId])
 }
@@ -647,4 +648,43 @@ model QuizAttempt {
   @@index([quizId])
   @@index([userId])
   @@index([quizId, userId])
+}
+
+model Automation {
+  id             String    @id @default(uuid())
+  workspaceId    String
+  courseId        String?
+  name           String
+  active         Boolean   @default(true)
+
+  triggerType    String
+  triggerConfig  String    @default("{}")
+
+  actionType     String
+  actionConfig   String    @default("{}")
+
+  executionCount Int       @default(0)
+  lastExecutedAt DateTime?
+
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId])
+  @@index([triggerType])
+  @@index([active])
+}
+
+model AutomationLog {
+  id           String   @id @default(uuid())
+  automationId String
+  userId       String
+  status       String
+  details      String?
+  createdAt    DateTime @default(now())
+
+  @@index([automationId])
+  @@index([userId])
+  @@index([createdAt])
 }
