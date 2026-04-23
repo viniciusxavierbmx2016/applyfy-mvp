@@ -97,6 +97,7 @@ function LinkModal({ editor, onClose }: { editor: Editor; onClose: () => void })
   const [url, setUrl] = useState("");
   const [text, setText] = useState("");
   const [style, setStyle] = useState<"link" | "button">("link");
+  const [buttonColor, setButtonColor] = useState("#6366f1");
 
   function handleInsert() {
     if (!url.trim()) return;
@@ -108,7 +109,7 @@ function LinkModal({ editor, onClose }: { editor: Editor; onClose: () => void })
         .chain()
         .focus()
         .insertContent(
-          `<a href="${href}" class="editor-button">${displayText}</a>`
+          `<a href="${href}" class="editor-button" style="background-color: ${buttonColor}">${displayText}</a>`
         )
         .run();
     } else {
@@ -126,6 +127,8 @@ function LinkModal({ editor, onClose }: { editor: Editor; onClose: () => void })
     }
     onClose();
   }
+
+  const previewText = text.trim() || "Clique aqui";
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center pt-[20vh]" onClick={onClose}>
@@ -197,6 +200,55 @@ function LinkModal({ editor, onClose }: { editor: Editor; onClose: () => void })
               </button>
             </div>
           </div>
+
+          {style === "button" && (
+            <>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Cor do botão</label>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="color"
+                    value={buttonColor}
+                    onChange={(e) => setButtonColor(e.target.value)}
+                    className="w-10 h-10 rounded-lg border border-gray-300 dark:border-[#1a1e2e] cursor-pointer bg-transparent p-0.5"
+                  />
+                  <input
+                    type="text"
+                    value={buttonColor}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      if (/^#[0-9a-fA-F]{0,6}$/.test(v)) setButtonColor(v);
+                    }}
+                    maxLength={7}
+                    className="w-28 px-4 py-2.5 bg-gray-50 dark:bg-[#0f1320] border border-gray-300 dark:border-[#1a1e2e] rounded-xl text-sm text-gray-900 dark:text-white font-mono focus:outline-none focus:border-indigo-500/50"
+                  />
+                  <div className="flex gap-1.5">
+                    {["#6366f1", "#10b981", "#f59e0b", "#ef4444", "#3b82f6", "#8b5cf6"].map((c) => (
+                      <button
+                        key={c}
+                        type="button"
+                        onClick={() => setButtonColor(c)}
+                        className={`w-6 h-6 rounded-full transition-transform ${buttonColor === c ? "ring-2 ring-white ring-offset-2 ring-offset-[#141416] scale-110" : "hover:scale-110"}`}
+                        style={{ backgroundColor: c }}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Preview</label>
+                <div className="flex items-center justify-center p-6 rounded-xl bg-gray-100 dark:bg-[#0a0c14] border border-gray-200 dark:border-[#1a1e2e]">
+                  <span
+                    className="inline-block px-7 py-3 text-white font-semibold text-sm rounded-[14px] shadow-[0_4px_14px_rgba(0,0,0,0.25)] cursor-default select-none"
+                    style={{ backgroundColor: buttonColor, letterSpacing: "0.01em" }}
+                  >
+                    {previewText}
+                  </span>
+                </div>
+              </div>
+            </>
+          )}
         </div>
 
         <div className="flex gap-3 mt-6">

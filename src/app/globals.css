@@ -358,17 +358,26 @@ body {
 .prose-lesson .editor-button,
 .prose-editor .editor-button {
   display: inline-block;
-  padding: 10px 24px;
+  padding: 12px 28px;
   background-color: var(--member-primary, #6366f1);
   color: #ffffff !important;
-  border-radius: 12px;
+  border-radius: 14px;
   font-weight: 600;
-  font-size: 0.875rem;
+  font-size: 0.9rem;
   text-decoration: none !important;
   cursor: pointer;
-  transition: opacity 0.2s;
+  letter-spacing: 0.01em;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
 }
 .prose-lesson .editor-button:hover,
 .prose-editor .editor-button:hover {
-  opacity: 0.9;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+  opacity: 0.95;
+}
+.prose-lesson .editor-button:active,
+.prose-editor .editor-button:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
