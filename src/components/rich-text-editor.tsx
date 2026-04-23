@@ -446,6 +446,7 @@ function Toolbar({
         active={editor.isActive("heading", { level: 1 })}
         onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
         title="Título 1"
+        useMouseDown
       >
         H1
       </ToolbarBtn>
@@ -453,6 +454,7 @@ function Toolbar({
         active={editor.isActive("heading", { level: 2 })}
         onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
         title="Título 2"
+        useMouseDown
       >
         H2
       </ToolbarBtn>
@@ -463,6 +465,7 @@ function Toolbar({
         active={editor.isActive("bold")}
         onClick={() => editor.chain().focus().toggleBold().run()}
         title="Negrito"
+        useMouseDown
       >
         <span className="font-bold">B</span>
       </ToolbarBtn>
@@ -470,6 +473,7 @@ function Toolbar({
         active={editor.isActive("italic")}
         onClick={() => editor.chain().focus().toggleItalic().run()}
         title="Itálico"
+        useMouseDown
       >
         <span className="italic">I</span>
       </ToolbarBtn>
@@ -477,6 +481,7 @@ function Toolbar({
         active={editor.isActive("underline")}
         onClick={() => editor.chain().focus().toggleUnderline().run()}
         title="Sublinhado"
+        useMouseDown
       >
         <span className="underline">U</span>
       </ToolbarBtn>
@@ -484,6 +489,7 @@ function Toolbar({
         active={editor.isActive("strike")}
         onClick={() => editor.chain().focus().toggleStrike().run()}
         title="Tachado"
+        useMouseDown
       >
         <span className="line-through">S</span>
       </ToolbarBtn>
@@ -494,6 +500,7 @@ function Toolbar({
         active={editor.isActive("bulletList")}
         onClick={() => editor.chain().focus().toggleBulletList().run()}
         title="Lista com marcadores"
+        useMouseDown
       >
         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
@@ -503,6 +510,7 @@ function Toolbar({
         active={editor.isActive("orderedList")}
         onClick={() => editor.chain().focus().toggleOrderedList().run()}
         title="Lista numerada"
+        useMouseDown
       >
         <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
           <text x="2" y="8" fontSize="7" fontWeight="bold">1</text>
@@ -520,6 +528,7 @@ function Toolbar({
         active={editor.isActive({ textAlign: "left" })}
         onClick={() => editor.chain().focus().setTextAlign("left").run()}
         title="Alinhar esquerda"
+        useMouseDown
       >
         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" d="M3 6h18M3 12h12M3 18h18" />
@@ -529,6 +538,7 @@ function Toolbar({
         active={editor.isActive({ textAlign: "center" })}
         onClick={() => editor.chain().focus().setTextAlign("center").run()}
         title="Centralizar"
+        useMouseDown
       >
         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" d="M3 6h18M6 12h12M3 18h18" />
@@ -538,6 +548,7 @@ function Toolbar({
         active={editor.isActive({ textAlign: "right" })}
         onClick={() => editor.chain().focus().setTextAlign("right").run()}
         title="Alinhar direita"
+        useMouseDown
       >
         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" d="M3 6h18M9 12h12M3 18h18" />
@@ -568,6 +579,7 @@ function Toolbar({
         active={editor.isActive("codeBlock")}
         onClick={() => editor.chain().focus().toggleCodeBlock().run()}
         title="Bloco de código"
+        useMouseDown
       >
         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
@@ -577,6 +589,7 @@ function Toolbar({
         active={editor.isActive("blockquote")}
         onClick={() => editor.chain().focus().toggleBlockquote().run()}
         title="Citação"
+        useMouseDown
       >
         <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
           <path d="M6 17h3l2-4V7H5v6h3l-2 4zm8 0h3l2-4V7h-6v6h3l-2 4z" />
@@ -589,6 +602,7 @@ function Toolbar({
         active={false}
         onClick={() => editor.chain().focus().clearNodes().unsetAllMarks().run()}
         title="Limpar formatação"
+        useMouseDown
       >
         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -603,16 +617,26 @@ function ToolbarBtn({
   onClick,
   title,
   children,
+  useMouseDown = false,
 }: {
   active: boolean;
   onClick: () => void;
   title: string;
   children: React.ReactNode;
+  useMouseDown?: boolean;
 }) {
   return (
     <button
       type="button"
-      onClick={onClick}
+      onClick={useMouseDown ? undefined : onClick}
+      onMouseDown={
+        useMouseDown
+          ? (e) => {
+              e.preventDefault();
+              onClick();
+            }
+          : undefined
+      }
       title={title}
       className={`p-1.5 rounded text-xs transition-colors ${
         active

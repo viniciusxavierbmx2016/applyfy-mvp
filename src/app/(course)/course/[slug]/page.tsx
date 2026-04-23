@@ -571,10 +571,9 @@ export default function CourseHomePage() {
         <h2 className="text-lg font-semibold tracking-tight text-gray-900 dark:text-white mb-4 px-1">
           Sobre o curso
         </h2>
-        <div
-          className="prose-lesson text-gray-700 dark:text-gray-300 leading-relaxed"
-          dangerouslySetInnerHTML={{ __html: course.description }}
-        />
+        <p className="text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">
+          {course.description}
+        </p>
       </section>
 
       {course.reviewsEnabled !== false && (
