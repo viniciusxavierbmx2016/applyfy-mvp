@@ -28,6 +28,7 @@ export interface ModuleData {
   title: string;
   order: number;
   daysToRelease: number;
+  releaseAt: string | null;
   thumbnailUrl: string | null;
   hideTitle: boolean;
   sectionId: string | null;
@@ -150,6 +151,7 @@ export function ModulesManager({
         {
           ...data.module,
           daysToRelease: data.module.daysToRelease ?? 0,
+          releaseAt: data.module.releaseAt ?? null,
           thumbnailUrl: data.module.thumbnailUrl ?? null,
           hideTitle: data.module.hideTitle ?? false,
           sectionId: data.module.sectionId ?? null,
@@ -181,6 +183,7 @@ export function ModulesManager({
     data: {
       title?: string;
       daysToRelease?: number;
+      releaseAt?: string | null;
       thumbnailUrl?: string | null;
       hideTitle?: boolean;
     }
@@ -502,6 +505,7 @@ function SortableModule({
     data: {
       title?: string;
       daysToRelease?: number;
+      releaseAt?: string | null;
       thumbnailUrl?: string | null;
       hideTitle?: boolean;
     }
@@ -522,6 +526,9 @@ function SortableModule({
   const [editTitle, setEditTitle] = useState(module.title);
   const [expanded, setExpanded] = useState(false);
   const [daysInput, setDaysInput] = useState(String(module.daysToRelease ?? 0));
+  const [releaseAtInput, setReleaseAtInput] = useState(
+    module.releaseAt ? module.releaseAt.split("T")[0] : ""
+  );
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -540,6 +547,11 @@ function SortableModule({
     const n = Math.max(0, Math.floor(Number(daysInput) || 0));
     if (n !== module.daysToRelease) onUpdate(module.id, { daysToRelease: n });
     setDaysInput(String(n));
+  }
+
+  function saveReleaseAt(val: string) {
+    setReleaseAtInput(val);
+    onUpdate(module.id, { releaseAt: val || null });
   }
 
   return (
@@ -658,21 +670,37 @@ function SortableModule({
             </span>
           </label>
 
-          <div>
-            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Liberar após (dias)
-            </label>
-            <input
-              type="number"
-              min={0}
-              value={daysInput}
-              onChange={(e) => setDaysInput(e.target.value)}
-              onBlur={saveDays}
-              className="w-32 px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              0 = liberado imediatamente. Ex: 7 = libera 7 dias após a matrícula do aluno.
-            </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Liberar após (dias)
+              </label>
+              <input
+                type="number"
+                min={0}
+                value={daysInput}
+                onChange={(e) => setDaysInput(e.target.value)}
+                onBlur={saveDays}
+                className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                0 = imediato. Ex: 7 = libera 7 dias após a matrícula.
+              </p>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Liberação a partir de
+              </label>
+              <input
+                type="date"
+                value={releaseAtInput}
+                onChange={(e) => saveReleaseAt(e.target.value)}
+                className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                Disponível somente a partir desta data. Vazio = sem restrição.
+              </p>
+            </div>
           </div>
           <LessonsManager
             moduleId={module.id}

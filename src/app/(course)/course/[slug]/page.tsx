@@ -31,6 +31,7 @@ interface ModuleItem {
   title: string;
   order: number;
   daysToRelease: number;
+  releaseAt: string | null;
   thumbnailUrl: string | null;
   hideTitle?: boolean;
   sectionId: string | null;
@@ -99,11 +100,13 @@ function toCarouselModule(
   const stats = moduleStats(m);
   const rel = releaseInfo(enrollmentCreatedAt, m.daysToRelease ?? 0);
   const overridden = overrides.modules.has(m.id) || bypassRelease;
-  const locked = hasAccess && !overridden && !rel.released;
+  const dateLocked = m.releaseAt ? new Date(m.releaseAt) > new Date() : false;
+  const locked = hasAccess && !overridden && (!rel.released || dateLocked);
   const empty = stats.total === 0;
   const resumeLessonId =
     m.firstIncompleteLesson ?? m.lessons.slice().sort((a, b) => a.order - b.order)[0]?.id ?? null;
   const clickable = hasAccess && !locked && !empty && !!resumeLessonId;
+  const displayReleaseAt = dateLocked && m.releaseAt ? new Date(m.releaseAt) : rel.releaseAt;
   return {
     id: m.id,
     title: m.title,
@@ -114,7 +117,7 @@ function toCarouselModule(
     locked,
     empty,
     hideTitle: m.hideTitle,
-    releaseAt: rel.releaseAt,
+    releaseAt: displayReleaseAt,
     href:
       clickable && resumeLessonId
         ? `/course/${course.slug}/lesson/${resumeLessonId}`
@@ -134,7 +137,8 @@ function toListModule(
   const stats = moduleStats(m);
   const rel = releaseInfo(enrollmentCreatedAt, m.daysToRelease ?? 0);
   const overridden = overrides.modules.has(m.id) || bypassRelease;
-  const locked = hasAccess && !overridden && !rel.released;
+  const dateLocked = m.releaseAt ? new Date(m.releaseAt) > new Date() : false;
+  const locked = hasAccess && !overridden && (!rel.released || dateLocked);
   const resumeLessonId =
     m.firstIncompleteLesson ?? m.lessons.slice().sort((a, b) => a.order - b.order)[0]?.id ?? null;
   return {
@@ -146,6 +150,7 @@ function toListModule(
     progressPct: stats.pct,
     locked,
     hideTitle: m.hideTitle,
+    releaseAt: dateLocked && m.releaseAt ? new Date(m.releaseAt).toLocaleDateString("pt-BR") : undefined,
     resumeHref: resumeLessonId
       ? `/course/${course.slug}/lesson/${resumeLessonId}`
       : `/course/${course.slug}`,

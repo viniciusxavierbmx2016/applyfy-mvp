@@ -20,6 +20,7 @@ export interface ListModule {
   progressPct: number;
   locked: boolean;
   hideTitle?: boolean;
+  releaseAt?: string;
   lessons: ListLesson[];
   resumeHref: string;
 }
@@ -102,9 +103,15 @@ export function ModuleListView({ groups, courseSlug }: Props) {
                         )}
                       </div>
                       <p className="text-sm text-gray-500 mt-0.5">
-                        {mod.lessonsTotal} aula{mod.lessonsTotal !== 1 && "s"}
-                        {mod.lessonsDone > 0 && (
-                          <> · {mod.lessonsDone} concluída{mod.lessonsDone !== 1 && "s"}</>
+                        {mod.locked && mod.releaseAt ? (
+                          <>Disponível a partir de {mod.releaseAt}</>
+                        ) : (
+                          <>
+                            {mod.lessonsTotal} aula{mod.lessonsTotal !== 1 && "s"}
+                            {mod.lessonsDone > 0 && (
+                              <> · {mod.lessonsDone} concluída{mod.lessonsDone !== 1 && "s"}</>
+                            )}
+                          </>
                         )}
                       </p>
                       {!mod.locked && mod.lessonsTotal > 0 && (

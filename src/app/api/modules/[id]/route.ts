@@ -11,7 +11,7 @@ export async function PUT(
     if (!(await canEditModule(staff, params.id))) {
       return NextResponse.json({ error: "Sem permissão" }, { status: 403 });
     }
-    const { title, daysToRelease, thumbnailUrl, sectionId, hideTitle } =
+    const { title, daysToRelease, thumbnailUrl, sectionId, hideTitle, releaseAt } =
       await request.json();
 
     const updated = await prisma.module.update({
@@ -24,6 +24,9 @@ export async function PUT(
         ...(thumbnailUrl !== undefined && { thumbnailUrl }),
         ...(sectionId !== undefined && { sectionId: sectionId || null }),
         ...(typeof hideTitle === "boolean" && { hideTitle }),
+        ...(releaseAt !== undefined && {
+          releaseAt: releaseAt ? new Date(releaseAt) : null,
+        }),
       },
     });
 
