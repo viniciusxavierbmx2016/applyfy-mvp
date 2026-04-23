@@ -27,7 +27,7 @@ const EMPTY: Customization = {
   memberTextColor: null,
   memberAccentColor: null,
   memberWelcomeText: null,
-  memberLayoutStyle: "grid",
+  memberLayoutStyle: "netflix",
 };
 
 const COLOR_FIELDS: Array<{
@@ -44,6 +44,11 @@ const COLOR_FIELDS: Array<{
 ];
 
 const LAYOUTS = [
+  {
+    value: "netflix",
+    label: "Netflix",
+    description: "Carrossel horizontal",
+  },
   {
     value: "grid",
     label: "Grade",
@@ -99,13 +104,30 @@ export default function CourseCustomizePage({
     return () => { alive = false; };
   }, [params.id]);
 
+  function buildPayload() {
+    const payload: Record<string, unknown> = {};
+    for (const key of Object.keys(custom) as (keyof Customization)[]) {
+      const val = custom[key];
+      if (COLOR_FIELDS.some((f) => f.key === key)) {
+        if (val && typeof val === "string" && HEX_RE.test(val)) {
+          payload[key] = val;
+        } else {
+          payload[key] = null;
+        }
+      } else {
+        payload[key] = val;
+      }
+    }
+    return payload;
+  }
+
   async function handleSave() {
     setSaving(true);
     try {
       const res = await fetch(`/api/producer/courses/${params.id}/customize`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(custom),
+        body: JSON.stringify(buildPayload()),
       });
       if (res.ok) {
         const d = await res.json();
@@ -142,6 +164,8 @@ export default function CourseCustomizePage({
   function updateField(key: keyof Customization, value: string | null) {
     setCustom((prev) => ({ ...prev, [key]: value }));
   }
+
+  const currentLayout = custom.memberLayoutStyle || "netflix";
 
   return (
     <div className="max-w-6xl mx-auto">
@@ -201,29 +225,49 @@ export default function CourseCustomizePage({
             <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
               Como seus cursos aparecem para os alunos
             </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               {LAYOUTS.map((layout) => {
-                const selected = (custom.memberLayoutStyle || "grid") === layout.value;
+                const selected = currentLayout === layout.value;
+                const isDefault = layout.value === "netflix";
                 return (
                   <button
                     key={layout.value}
                     type="button"
                     onClick={() => updateField("memberLayoutStyle", layout.value)}
-                    className={`text-left p-4 rounded-xl border-2 transition-colors ${
+                    className={`relative text-left p-4 rounded-xl border-2 transition-colors ${
                       selected
                         ? "border-indigo-500 bg-indigo-50 dark:bg-indigo-500/10"
-                        : "border-gray-200 dark:border-white/[0.06] hover:border-gray-300 dark:hover:border-white/[0.1]"
+                        : "border-[#1a1e2e] hover:border-gray-400 dark:hover:border-gray-600"
                     }`}
                   >
-                    <div className="mb-3">
-                      {layout.value === "grid" ? (
-                        <div className="flex gap-1.5">
+                    {selected && isDefault && (
+                      <span className="absolute top-2 right-2 px-1.5 py-0.5 text-[10px] font-semibold bg-indigo-500 text-white rounded">
+                        Atual
+                      </span>
+                    )}
+                    <div className="mb-3 h-12 flex items-center">
+                      {layout.value === "netflix" ? (
+                        <div className="flex items-center gap-1 w-full">
+                          <svg className="w-3 h-3 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                          </svg>
+                          <div className="flex gap-1.5 flex-1 overflow-hidden">
+                            {[1,2,3,4].map(i => (
+                              <div key={i} className="w-14 h-9 rounded bg-gray-200 dark:bg-gray-700 shrink-0" />
+                            ))}
+                          </div>
+                          <svg className="w-3 h-3 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                          </svg>
+                        </div>
+                      ) : layout.value === "grid" ? (
+                        <div className="grid grid-cols-3 gap-1.5 w-full">
                           {[1,2,3].map(i => (
-                            <div key={i} className="flex-1 h-10 rounded bg-gray-200 dark:bg-gray-700" />
+                            <div key={i} className="h-10 rounded bg-gray-200 dark:bg-gray-700" />
                           ))}
                         </div>
                       ) : (
-                        <div className="space-y-1.5">
+                        <div className="space-y-1.5 w-full">
                           {[1,2,3].map(i => (
                             <div key={i} className="flex gap-2 items-center">
                               <div className="w-12 h-6 rounded bg-gray-200 dark:bg-gray-700 shrink-0" />
@@ -286,6 +330,7 @@ export default function CourseCustomizePage({
           {/* Actions */}
           <div className="flex items-center gap-3">
             <button
+              type="button"
               onClick={handleSave}
               disabled={saving}
               className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-xl transition disabled:opacity-50"
@@ -293,6 +338,7 @@ export default function CourseCustomizePage({
               {saving ? "Salvando..." : "Salvar personalização"}
             </button>
             <button
+              type="button"
               onClick={handleReset}
               disabled={saving}
               className="px-5 py-2.5 bg-gray-100 dark:bg-white/[0.06] hover:bg-gray-200 dark:hover:bg-white/[0.1] text-gray-700 dark:text-gray-300 text-sm font-medium rounded-xl transition disabled:opacity-50"
@@ -328,8 +374,8 @@ function ColorPicker({
       <p className="text-xs font-medium text-gray-700 dark:text-gray-300">{label}</p>
       <p className="text-[11px] text-gray-500 dark:text-gray-500">{description}</p>
       <div className="flex items-center gap-2">
-        <div
-          className="w-10 h-10 rounded-lg border border-gray-300 dark:border-white/[0.1] shrink-0 overflow-hidden relative"
+        <label
+          className="w-10 h-10 rounded-lg border border-gray-300 dark:border-white/[0.1] shrink-0 overflow-hidden relative cursor-pointer"
           style={{ backgroundColor: HEX_RE.test(value) ? value : "#6366f1" }}
         >
           <input
@@ -338,7 +384,7 @@ function ColorPicker({
             onChange={(e) => onChange(e.target.value)}
             className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
           />
-        </div>
+        </label>
         <input
           type="text"
           value={value}

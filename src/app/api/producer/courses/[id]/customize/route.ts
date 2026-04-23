@@ -125,7 +125,7 @@ export async function DELETE(
 
     const course = await prisma.course.update({
       where: { id: params.id },
-      data: { ...data, memberLayoutStyle: "grid" },
+      data: { ...data, memberLayoutStyle: "netflix" },
       select: SELECT_FIELDS,
     });
 

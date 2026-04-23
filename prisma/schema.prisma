@@ -145,7 +145,7 @@ model Course {
   memberTextColor     String?
   memberAccentColor   String?
   memberWelcomeText   String?
-  memberLayoutStyle   String?  @default("grid")
+  memberLayoutStyle   String?  @default("netflix")
   order              Int       @default(0)
   ownerId            String?
   workspaceId        String

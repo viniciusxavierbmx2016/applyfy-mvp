@@ -7,7 +7,7 @@ ALTER TABLE "Course" ADD COLUMN "memberPrimaryColor" TEXT;
 ALTER TABLE "Course" ADD COLUMN "memberTextColor" TEXT;
 ALTER TABLE "Course" ADD COLUMN "memberAccentColor" TEXT;
 ALTER TABLE "Course" ADD COLUMN "memberWelcomeText" TEXT;
-ALTER TABLE "Course" ADD COLUMN "memberLayoutStyle" TEXT DEFAULT 'grid';
+ALTER TABLE "Course" ADD COLUMN "memberLayoutStyle" TEXT DEFAULT 'netflix';
 
 -- Remove member customization fields from Workspace
 ALTER TABLE "Workspace" DROP COLUMN IF EXISTS "memberBgColor";
