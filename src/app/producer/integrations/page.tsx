@@ -65,6 +65,7 @@ export default function ProducerIntegrationsPage() {
             connected={!!applyfy?.connected}
             logoUrl={applyfy?.logoUrl || DEFAULT_APPLYFY_LOGO}
           />
+          <StripeCard />
           <RequestIntegrationCard onOpen={() => setModalOpen(true)} />
         </div>
       )}
@@ -111,6 +112,48 @@ function ApplyfyCard({
         className="group/cta mt-auto pt-1 inline-flex items-center text-xs text-indigo-600 dark:text-indigo-400 font-medium hover:text-indigo-700 dark:hover:text-indigo-300 w-fit"
       >
         {connected ? "Gerenciar" : "Configurar"}
+        <svg
+          className="w-3.5 h-3.5 ml-1 transition-transform group-hover/cta:translate-x-0.5"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+        </svg>
+      </Link>
+    </div>
+  );
+}
+
+function StripeCard() {
+  return (
+    <div className="group relative flex flex-col gap-3 p-5 rounded-xl bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.06] hover:border-gray-300 dark:hover:border-white/[0.1] hover:shadow-lg transition-[border-color,box-shadow] duration-200">
+      <div className="flex items-start justify-between gap-3">
+        <div className="w-12 h-12 rounded-xl bg-[#635BFF] flex items-center justify-center flex-shrink-0">
+          <svg className="w-6 h-6 text-white" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M13.976 9.15c-2.172-.806-3.356-1.426-3.356-2.409 0-.831.683-1.305 1.901-1.305 2.227 0 4.515.858 6.09 1.631l.89-5.494C18.252.975 15.697 0 12.165 0 9.667 0 7.589.654 6.104 1.872 4.56 3.147 3.757 4.918 3.757 7.038c0 4.072 2.484 5.857 6.334 7.29 2.484.913 3.365 1.577 3.365 2.559 0 .906-.806 1.439-2.136 1.439-1.817 0-4.746-.945-6.59-2.198l-.89 5.555c1.817 1.013 4.515 1.731 7.476 1.731 2.62 0 4.791-.654 6.334-1.928 1.636-1.365 2.463-3.327 2.463-5.66 0-4.125-2.52-5.869-6.137-7.255z" />
+          </svg>
+        </div>
+        <span className="text-[11px] font-medium px-2.5 py-1 rounded-full border bg-gray-500/10 text-gray-600 dark:text-gray-400 border-gray-400/30">
+          Manual
+        </span>
+      </div>
+      <Link
+        href="/producer/integrations/stripe"
+        className="group/title block focus:outline-none"
+      >
+        <h2 className="text-base font-semibold text-gray-900 dark:text-white group-hover/title:text-indigo-600 dark:group-hover/title:text-indigo-400 transition-colors">
+          Stripe
+        </h2>
+        <p className="text-sm text-gray-600 dark:text-gray-400 mt-0.5">
+          Pagamentos via cartão de crédito e boleto.
+        </p>
+      </Link>
+      <Link
+        href="/producer/integrations/stripe"
+        className="group/cta mt-auto pt-1 inline-flex items-center text-xs text-indigo-600 dark:text-indigo-400 font-medium hover:text-indigo-700 dark:hover:text-indigo-300 w-fit"
+      >
+        Ver instruções
         <svg
           className="w-3.5 h-3.5 ml-1 transition-transform group-hover/cta:translate-x-0.5"
           fill="none"
