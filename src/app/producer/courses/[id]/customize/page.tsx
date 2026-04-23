@@ -262,29 +262,67 @@ export default function CourseCustomizePage() {
                         Atual
                       </span>
                     )}
-                    <div className="mb-3 h-12 flex items-center">
+                    <div className="mb-3 rounded-lg bg-[#141416] p-3 h-40 flex flex-col justify-center overflow-hidden">
                       {layout.value === "netflix" ? (
-                        <div className="flex items-center gap-1 w-full">
-                          <svg className="w-3 h-3 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                          </svg>
-                          <div className="flex gap-1.5 flex-1 overflow-hidden">
-                            {[1,2,3,4].map(i => (
-                              <div key={i} className="w-14 h-9 rounded bg-gray-200 dark:bg-gray-700 shrink-0" />
-                            ))}
+                        <div className="space-y-3">
+                          <div>
+                            <div className="h-1.5 w-10 rounded-full bg-gray-600 mb-2" />
+                            <div className="flex items-center gap-1">
+                              <svg className="w-2.5 h-2.5 text-gray-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+                              <div className="flex gap-1.5 flex-1 overflow-hidden">
+                                {[1,2,3,4,5].map(i => (
+                                  <div key={i} className="w-10 h-16 rounded-md bg-gradient-to-b from-gray-600 to-gray-700 shrink-0" />
+                                ))}
+                              </div>
+                              <svg className="w-2.5 h-2.5 text-gray-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                            </div>
                           </div>
-                          <svg className="w-3 h-3 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                          </svg>
+                          <div className="opacity-50">
+                            <div className="h-1.5 w-8 rounded-full bg-gray-600 mb-1.5" />
+                            <div className="flex gap-1.5 overflow-hidden">
+                              {[1,2,3,4,5].map(i => (
+                                <div key={i} className="w-8 h-12 rounded-sm bg-gradient-to-b from-gray-700 to-gray-800 shrink-0" />
+                              ))}
+                            </div>
+                          </div>
                         </div>
                       ) : (
-                        <div className="space-y-1.5 w-full">
-                          {[1,2,3].map(i => (
-                            <div key={i} className="flex gap-2 items-center">
-                              <div className="w-12 h-6 rounded bg-gray-200 dark:bg-gray-700 shrink-0" />
-                              <div className="flex-1 h-3 rounded bg-gray-200 dark:bg-gray-700" />
+                        <div className="space-y-1.5">
+                          <div className="flex items-center gap-2 py-1.5 px-2 rounded-md bg-white/[0.03]">
+                            <div className="w-7 h-10 rounded-sm bg-gradient-to-b from-gray-600 to-gray-700 shrink-0" />
+                            <div className="flex-1 min-w-0 space-y-1">
+                              <div className="h-1.5 w-16 rounded-full bg-gray-500" />
+                              <div className="h-1 w-10 rounded-full bg-gray-700" />
+                              <div className="h-0.5 w-full rounded-full bg-gray-800"><div className="h-full w-3/4 rounded-full bg-gray-500" /></div>
                             </div>
-                          ))}
+                            <svg className="w-2.5 h-2.5 text-gray-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                          </div>
+                          <div className="rounded-md bg-white/[0.03]">
+                            <div className="flex items-center gap-2 py-1.5 px-2">
+                              <div className="w-7 h-10 rounded-sm bg-gradient-to-b from-gray-600 to-gray-700 shrink-0" />
+                              <div className="flex-1 min-w-0 space-y-1">
+                                <div className="h-1.5 w-20 rounded-full bg-gray-500" />
+                                <div className="h-1 w-12 rounded-full bg-gray-700" />
+                              </div>
+                              <svg className="w-2.5 h-2.5 text-gray-600 shrink-0 rotate-90" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                            </div>
+                            <div className="ml-9 pb-1.5 space-y-1">
+                              {[1,2,3].map(i => (
+                                <div key={i} className="flex items-center gap-1.5 py-0.5 px-2">
+                                  <div className={`w-2 h-2 rounded-full shrink-0 ${i === 1 ? "bg-emerald-500" : "border border-gray-600"}`} />
+                                  <div className="h-1 rounded-full bg-gray-700" style={{width: `${50 + i * 10}px`}} />
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 py-1.5 px-2 rounded-md bg-white/[0.03] opacity-60">
+                            <div className="w-7 h-10 rounded-sm bg-gradient-to-b from-gray-700 to-gray-800 shrink-0" />
+                            <div className="flex-1 min-w-0 space-y-1">
+                              <div className="h-1.5 w-14 rounded-full bg-gray-600" />
+                              <div className="h-1 w-8 rounded-full bg-gray-700" />
+                            </div>
+                            <svg className="w-2.5 h-2.5 text-gray-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                          </div>
                         </div>
                       )}
                     </div>
