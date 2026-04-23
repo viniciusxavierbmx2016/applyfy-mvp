@@ -7,8 +7,8 @@ import { formatRelativeTime } from "@/lib/utils";
 import { sanitizeHtml } from "@/lib/sanitize-html";
 import { useConfirm } from "@/hooks/use-confirm";
 
-const TiptapEditor = dynamic(
-  () => import("@/components/tiptap-editor").then((m) => m.TiptapEditor),
+const RichTextEditor = dynamic(
+  () => import("@/components/rich-text-editor"),
   {
     ssr: false,
     loading: () => (
@@ -358,11 +358,11 @@ export function PostCard({
               )}
 
               <form onSubmit={submitComment} className="space-y-2">
-                <TiptapEditor
+                <RichTextEditor
                   value={newComment}
                   onChange={setNewComment}
                   placeholder="Escreva um comentário..."
-                  minHeight="80px"
+                  minHeight="100px"
                 />
                 <div className="flex justify-end">
                   <button

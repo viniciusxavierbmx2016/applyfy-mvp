@@ -7,8 +7,8 @@ import dynamic from "next/dynamic";
 import { PostCard, type PostItem } from "@/components/post-card";
 import { useUserStore } from "@/stores/user-store";
 
-const TiptapEditor = dynamic(
-  () => import("@/components/tiptap-editor").then((m) => m.TiptapEditor),
+const RichTextEditor = dynamic(
+  () => import("@/components/rich-text-editor"),
   {
     ssr: false,
     loading: () => (
@@ -216,10 +216,11 @@ export default function CommunityPage() {
         onSubmit={submitPost}
         className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4 mb-6"
       >
-        <TiptapEditor
+        <RichTextEditor
           value={content}
           onChange={setContent}
           placeholder="Compartilhe algo com a turma..."
+          minHeight="120px"
         />
         <div className="flex flex-wrap items-center justify-between gap-3 mt-3">
           <div className="flex flex-wrap gap-1.5">
