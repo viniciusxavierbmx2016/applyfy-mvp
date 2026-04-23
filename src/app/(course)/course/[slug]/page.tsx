@@ -11,6 +11,7 @@ import {
   type CarouselModule,
 } from "@/components/module-carousel";
 import { CoursePreview } from "@/components/course-preview";
+import { ModuleListView, type ListModule } from "@/components/module-list-view";
 import { HeadphonesIcon } from "@/components/support-popover";
 import { formatPhoneDisplay, formatWhatsappLink } from "@/lib/utils";
 
@@ -119,6 +120,51 @@ function toCarouselModule(
         ? `/course/${course.slug}/lesson/${resumeLessonId}`
         : `/course/${course.slug}`,
     clickable,
+  };
+}
+
+function toListModule(
+  m: ModuleItem,
+  course: CourseDetail,
+  enrollmentCreatedAt: Date | null,
+  hasAccess: boolean,
+  overrides: { modules: Set<string>; lessons: Set<string> },
+  bypassRelease: boolean
+): ListModule {
+  const stats = moduleStats(m);
+  const rel = releaseInfo(enrollmentCreatedAt, m.daysToRelease ?? 0);
+  const overridden = overrides.modules.has(m.id) || bypassRelease;
+  const locked = hasAccess && !overridden && !rel.released;
+  const resumeLessonId =
+    m.firstIncompleteLesson ?? m.lessons.slice().sort((a, b) => a.order - b.order)[0]?.id ?? null;
+  return {
+    id: m.id,
+    title: m.title,
+    thumbnailUrl: m.thumbnailUrl,
+    lessonsTotal: stats.total,
+    lessonsDone: stats.done,
+    progressPct: stats.pct,
+    locked,
+    hideTitle: m.hideTitle,
+    resumeHref: resumeLessonId
+      ? `/course/${course.slug}/lesson/${resumeLessonId}`
+      : `/course/${course.slug}`,
+    lessons: m.lessons
+      .slice()
+      .sort((a, b) => a.order - b.order)
+      .map((l) => {
+        const lRel = releaseInfo(
+          enrollmentCreatedAt,
+          Math.max(m.daysToRelease ?? 0, l.daysToRelease ?? 0)
+        );
+        const lOverridden = overrides.lessons.has(l.id) || overridden || bypassRelease;
+        return {
+          id: l.id,
+          title: l.title,
+          completed: l.progress?.some((p) => p.completed) ?? false,
+          locked: hasAccess && !lOverridden && !lRel.released,
+        };
+      }),
   };
 }
 
@@ -469,25 +515,46 @@ export default function CourseHomePage() {
         </section>
       )}
 
-      {groups.map((group, idx) => (
-        <ModuleCarousel
-          key={group.section?.id || `group-${idx}`}
-          title={
-            group.section?.title ??
-            (groups.length > 1 ? "Módulos" : undefined)
-          }
-          modules={group.modules.map((m) =>
-            toCarouselModule(
-              m,
-              course,
-              enrollmentCreatedAt,
-              hasAccess,
-              overrides,
-              serverStaffViewer || isStaffViewer
-            )
-          )}
+      {course.memberLayoutStyle === "list" ? (
+        <ModuleListView
+          courseSlug={course.slug}
+          groups={groups.map((group) => ({
+            title:
+              group.section?.title ??
+              (groups.length > 1 ? "Módulos" : undefined),
+            modules: group.modules.map((m) =>
+              toListModule(
+                m,
+                course,
+                enrollmentCreatedAt,
+                hasAccess,
+                overrides,
+                serverStaffViewer || isStaffViewer
+              )
+            ),
+          }))}
         />
-      ))}
+      ) : (
+        groups.map((group, idx) => (
+          <ModuleCarousel
+            key={group.section?.id || `group-${idx}`}
+            title={
+              group.section?.title ??
+              (groups.length > 1 ? "Módulos" : undefined)
+            }
+            modules={group.modules.map((m) =>
+              toCarouselModule(
+                m,
+                course,
+                enrollmentCreatedAt,
+                hasAccess,
+                overrides,
+                serverStaffViewer || isStaffViewer
+              )
+            )}
+          />
+        ))
+      )}
 
       {course.modules.length === 0 && (
         <div className="bg-gray-50 dark:bg-white/5 border border-gray-200/70 dark:border-white/5 rounded-2xl p-8 text-center">
