@@ -23,7 +23,7 @@ export function SubscriptionGate({ children }: { children: React.ReactNode }) {
   const fetched = useRef(false);
 
   const skip =
-    pathname === "/producer/billing" ||
+    pathname === "/producer/settings/billing" ||
     pathname === "/producer/login" ||
     pathname === "/producer/register";
 
@@ -40,7 +40,7 @@ export function SubscriptionGate({ children }: { children: React.ReactNode }) {
     if (fetched.current) return;
     fetched.current = true;
 
-    fetch("/api/producer/billing")
+    fetch("/api/producer/settings/billing")
       .then((r) => (r.ok ? r.json() : null))
       .then((data: BillingStatus | null) => {
         if (data) {
@@ -57,7 +57,7 @@ export function SubscriptionGate({ children }: { children: React.ReactNode }) {
       const sub = data.subscription;
 
       if (!sub) {
-        router.replace("/producer/billing?reason=subscription_required");
+        router.replace("/producer/settings/billing?reason=subscription_required");
         return;
       }
 
@@ -73,11 +73,11 @@ export function SubscriptionGate({ children }: { children: React.ReactNode }) {
             return;
           }
         }
-        router.replace("/producer/billing?reason=subscription_required");
+        router.replace("/producer/settings/billing?reason=subscription_required");
         return;
       }
 
-      router.replace("/producer/billing?reason=subscription_required");
+      router.replace("/producer/settings/billing?reason=subscription_required");
     }
   }, [skip, isLoading, user, router, pathname]);
 

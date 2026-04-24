@@ -221,7 +221,7 @@ export function subscriptionExpiring(name: string, daysLeft: number) {
     ${heading(`Sua assinatura vence em ${daysLeft} dia${daysLeft > 1 ? "s" : ""}`)}
     ${paragraph(`Olá, ${firstName}. Sua assinatura do Members Club está próxima do vencimento.`)}
     ${paragraph("Regularize seu pagamento para continuar com acesso completo e evitar a suspensão da sua área de membros.")}
-    ${ctaButton("Renovar agora", `${APP_URL}/producer/billing`, "#f59e0b")}
+    ${ctaButton("Renovar agora", `${APP_URL}/producer/settings/billing`, "#f59e0b")}
   `);
   return {
     subject: `Sua assinatura vence em ${daysLeft} dias`,
@@ -236,7 +236,7 @@ export function subscriptionSuspended(name: string) {
     ${paragraph(`Olá, ${firstName}. Sua conta no Members Club foi suspensa por falta de pagamento.`)}
     ${paragraph("<strong style='color:#ef4444;'>Seus alunos não conseguem acessar os cursos enquanto a conta estiver suspensa.</strong>")}
     ${paragraph("Regularize seu pagamento para reativar imediatamente o acesso.")}
-    ${ctaButton("Regularizar agora", `${APP_URL}/producer/billing`, "#ef4444")}
+    ${ctaButton("Regularizar agora", `${APP_URL}/producer/settings/billing`, "#ef4444")}
   `);
   return {
     subject: "Sua conta foi suspensa - Members Club",
