@@ -5,7 +5,10 @@ import { useEffect } from "react";
 export function PWARegister() {
   useEffect(() => {
     if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("/sw.js").catch(() => {});
+      navigator.serviceWorker
+        .register("/sw.js", { scope: "/" })
+        .then((reg) => reg.update())
+        .catch(() => {});
     }
   }, []);
   return null;

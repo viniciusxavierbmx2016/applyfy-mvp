@@ -1,8 +1,10 @@
 {
+  "id": "/",
   "name": "Members Club",
   "short_name": "Members Club",
   "description": "Sua área de membros",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#0a0a1a",
   "theme_color": "#0a0a1a",
