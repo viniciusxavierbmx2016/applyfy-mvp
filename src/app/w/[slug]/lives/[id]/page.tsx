@@ -75,6 +75,7 @@ export default function LiveRoomPage() {
   const [loading, setLoading] = useState(true);
   const [forbidden, setForbidden] = useState(false);
   const [roomClosed, setRoomClosed] = useState(false);
+  const [moderatorToast, setModeratorToast] = useState(false);
   const [chatInput, setChatInput] = useState("");
   const [sending, setSending] = useState(false);
   const [countdown, setCountdown] = useState<ReturnType<typeof getCountdownParts>>(null);
@@ -127,7 +128,13 @@ export default function LiveRoomPage() {
         if (!res.ok) return;
         const data = await res.json();
         if (data.live) {
-          setLive((prev) => prev ? { ...prev, chatEnabled: data.live.chatEnabled, status: data.live.status } : prev);
+          setLive((prev) => {
+            if (!prev) return prev;
+            if (!prev.isModerator && data.live.isModerator) {
+              setModeratorToast(true);
+            }
+            return { ...prev, chatEnabled: data.live.chatEnabled, status: data.live.status, isModerator: data.live.isModerator };
+          });
         }
       } catch { /* ignore */ }
     }, 5000);
@@ -141,6 +148,12 @@ export default function LiveRoomPage() {
     const interval = setInterval(update, 1000);
     return () => clearInterval(interval);
   }, [live?.scheduledAt, live?.status]);
+
+  useEffect(() => {
+    if (!moderatorToast) return;
+    const t = setTimeout(() => setModeratorToast(false), 4000);
+    return () => clearTimeout(t);
+  }, [moderatorToast]);
 
   useEffect(() => {
     if (shouldAutoScroll.current) {
@@ -496,6 +509,11 @@ export default function LiveRoomPage() {
 
   return (
     <div className="px-4 sm:px-6 lg:px-8 py-4 lg:py-6 max-w-7xl mx-auto">
+      {moderatorToast && (
+        <div className="fixed top-4 right-4 z-[60] bg-purple-600 text-white px-4 py-2 rounded-lg shadow-lg text-sm font-medium">
+          Você foi promovido a moderador!
+        </div>
+      )}
       {/* Back + header */}
       <div className="flex items-center gap-3 mb-4">
         <button

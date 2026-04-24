@@ -60,6 +60,12 @@ export default function ProducerLiveRoomPage() {
   const [sending, setSending] = useState(false);
   const [toast, setToast] = useState("");
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const [endConfirm, setEndConfirm] = useState(false);
+  const [showLessonModal, setShowLessonModal] = useState(false);
+  const [courses, setCourses] = useState<{ id: string; title: string }[]>([]);
+  const [modules, setModules] = useState<{ id: string; title: string }[]>([]);
+  const [lessonForm, setLessonForm] = useState({ courseId: "", moduleId: "", title: "", description: "", videoUrl: "" });
+  const [savingLesson, setSavingLesson] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const shouldAutoScroll = useRef(true);
@@ -214,6 +220,83 @@ export default function ProducerLiveRoomPage() {
     }
   }
 
+  async function handleEndLive() {
+    setEndConfirm(false);
+    const res = await fetch(`/api/producer/lives/${liveId}/status`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status: "ENDED" }),
+    });
+    if (res.ok) {
+      setLive((l) => l ? { ...l, status: "ENDED" } : l);
+      // Fetch courses and open lesson modal
+      try {
+        const cRes = await fetch("/api/courses?filter=all");
+        if (cRes.ok) {
+          const cData = await cRes.json();
+          setCourses((cData.courses || []).map((c: { id: string; title: string }) => ({ id: c.id, title: c.title })));
+        }
+      } catch { /* ignore */ }
+      setLessonForm({ courseId: "", moduleId: "", title: live?.title || "", description: live?.description || "", videoUrl: "" });
+      setModules([]);
+      setShowLessonModal(true);
+    } else {
+      const data = await res.json().catch(() => ({}));
+      setToast(data.error || "Erro ao encerrar");
+    }
+  }
+
+  async function handleLessonCourseChange(courseId: string) {
+    setLessonForm((f) => ({ ...f, courseId, moduleId: "" }));
+    setModules([]);
+    if (!courseId) return;
+    try {
+      const res = await fetch(`/api/courses/${courseId}`);
+      if (res.ok) {
+        const data = await res.json();
+        setModules((data.course?.modules || []).map((m: { id: string; title: string }) => ({ id: m.id, title: m.title })));
+      }
+    } catch { /* ignore */ }
+  }
+
+  async function handleSaveAsLesson() {
+    if (!lessonForm.courseId || !lessonForm.moduleId || !lessonForm.title.trim()) return;
+    setSavingLesson(true);
+    try {
+      const res = await fetch(`/api/modules/${lessonForm.moduleId}/lessons`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: lessonForm.title.trim(),
+          description: lessonForm.description?.trim() || null,
+          videoUrl: lessonForm.videoUrl.trim() || null,
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setToast(data.error || "Erro ao criar aula");
+        return;
+      }
+      const data = await res.json();
+      const lessonId = data.lesson?.id;
+      if (lessonId) {
+        await fetch(`/api/producer/lives/${liveId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ savedAsLessonId: lessonId }),
+        });
+      }
+      setShowLessonModal(false);
+      setToast("Aula criada com sucesso!");
+      router.push("/producer/lives");
+    } finally {
+      setSavingLesson(false);
+    }
+  }
+
+  const inputCls = "w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm";
+  const labelCls = "block text-sm text-gray-400 mb-1";
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
@@ -303,17 +386,30 @@ export default function ProducerLiveRoomPage() {
             {PLATFORM_LABELS[live.platform]} {live.course ? `• ${live.course.title}` : ""}
           </p>
         </div>
-        <a
-          href={live.externalUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center gap-1 bg-purple-600 hover:bg-purple-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition"
-        >
-          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-          </svg>
-          Abrir link
-        </a>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          {isLive && (
+            <button
+              onClick={() => setEndConfirm(true)}
+              className="flex items-center gap-1 bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition"
+            >
+              <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
+                <rect x="6" y="6" width="12" height="12" rx="1" />
+              </svg>
+              Encerrar
+            </button>
+          )}
+          <a
+            href={live.externalUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1 bg-purple-600 hover:bg-purple-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition"
+          >
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+            </svg>
+            Abrir link
+          </a>
+        </div>
       </div>
 
       {/* Main layout */}
@@ -494,6 +590,122 @@ export default function ProducerLiveRoomPage() {
           </div>
         </div>
       </div>
+
+      {/* End confirm modal */}
+      {endConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/60" onClick={() => setEndConfirm(false)} />
+          <div className="relative bg-[#1a1a2e] border border-white/10 rounded-xl w-full max-w-sm p-6">
+            <h3 className="text-lg font-bold text-white mb-2">Encerrar live?</h3>
+            <p className="text-gray-400 text-sm mb-4">
+              &quot;{live.title}&quot; será encerrada. O chat será desabilitado.
+            </p>
+            <div className="flex justify-end gap-3">
+              <button onClick={() => setEndConfirm(false)} className="px-4 py-2 text-sm text-gray-400 hover:text-white transition">
+                Cancelar
+              </button>
+              <button
+                onClick={handleEndLive}
+                className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition"
+              >
+                Encerrar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Save as lesson modal */}
+      {showLessonModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/60" />
+          <div className="relative bg-[#1a1a2e] border border-white/10 rounded-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            <div className="p-6 space-y-4">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-green-400 text-lg">✅</span>
+                <h2 className="text-lg font-bold text-white">Live encerrada!</h2>
+              </div>
+              <p className="text-gray-400 text-sm">Deseja salvar esta live como aula?</p>
+
+              <div>
+                <label className={labelCls}>Curso *</label>
+                <select
+                  className={inputCls}
+                  value={lessonForm.courseId}
+                  onChange={(e) => handleLessonCourseChange(e.target.value)}
+                >
+                  <option value="">Selecione um curso</option>
+                  {courses.map((c) => (
+                    <option key={c.id} value={c.id}>{c.title}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className={labelCls}>Módulo *</label>
+                <select
+                  className={inputCls}
+                  value={lessonForm.moduleId}
+                  onChange={(e) => setLessonForm((f) => ({ ...f, moduleId: e.target.value }))}
+                  disabled={!lessonForm.courseId || modules.length === 0}
+                >
+                  <option value="">
+                    {!lessonForm.courseId ? "Selecione um curso primeiro" : modules.length === 0 ? "Nenhum módulo" : "Selecione um módulo"}
+                  </option>
+                  {modules.map((m) => (
+                    <option key={m.id} value={m.id}>{m.title}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className={labelCls}>Título da aula *</label>
+                <input
+                  className={inputCls}
+                  value={lessonForm.title}
+                  onChange={(e) => setLessonForm((f) => ({ ...f, title: e.target.value }))}
+                />
+              </div>
+
+              <div>
+                <label className={labelCls}>Descrição</label>
+                <textarea
+                  className={`${inputCls} resize-none`}
+                  rows={3}
+                  value={lessonForm.description}
+                  onChange={(e) => setLessonForm((f) => ({ ...f, description: e.target.value }))}
+                />
+              </div>
+
+              <div>
+                <label className={labelCls}>URL da gravação</label>
+                <input
+                  className={inputCls}
+                  value={lessonForm.videoUrl}
+                  onChange={(e) => setLessonForm((f) => ({ ...f, videoUrl: e.target.value }))}
+                  placeholder="Cole o link do YouTube, Vimeo..."
+                />
+              </div>
+
+              <div className="flex justify-end gap-3 pt-2">
+                <button
+                  onClick={() => { setShowLessonModal(false); router.push("/producer/lives"); }}
+                  className="px-4 py-2 text-sm text-gray-400 hover:text-white transition"
+                >
+                  Salvar depois
+                </button>
+                <button
+                  onClick={handleSaveAsLesson}
+                  disabled={savingLesson || !lessonForm.courseId || !lessonForm.moduleId || !lessonForm.title.trim()}
+                  className="bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white px-4 py-2 rounded-lg text-sm font-medium transition"
+                >
+                  {savingLesson ? "Criando..." : "Salvar como aula"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
