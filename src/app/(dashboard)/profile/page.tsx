@@ -7,6 +7,7 @@ import { useUserStore } from "@/stores/user-store";
 import { AvatarUploader } from "@/components/avatar-uploader";
 import { ChangePasswordForm } from "@/components/change-password-form";
 import { ProgressBar } from "@/components/progress-bar";
+import { PushToggle } from "@/components/push-toggle";
 import { getLevelForPoints, getNextLevel } from "@/lib/utils";
 
 interface ProfileCourse {
@@ -156,6 +157,12 @@ export default function ProfilePage() {
           </div>
         );
       })()}
+
+      {/* Push notifications */}
+      <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-6 mb-6">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Notificações</h3>
+        <PushToggle />
+      </div>
 
       {/* Courses progress */}
       <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-6">

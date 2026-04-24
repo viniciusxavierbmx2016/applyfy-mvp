@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireStaff } from "@/lib/auth";
 import { resolveStaffWorkspace } from "@/lib/workspace";
 import { NotificationType } from "@prisma/client";
+import { sendPushToUsers } from "@/lib/push-send";
 
 const VALID_TRANSITIONS: Record<string, string[]> = {
   SCHEDULED: ["LIVE"],
@@ -66,6 +67,8 @@ export async function PATCH(
         type: "LIVE_STARTED",
         liveNotificationType: "STARTED",
         message: `Live começou! ${existing.title} está ao vivo agora`,
+        pushTitle: "🔴 Live começou!",
+        pushBody: `${existing.title} está ao vivo agora!`,
       });
     }
 
@@ -83,7 +86,13 @@ async function notifyStudents(
   courseId: string | null,
   liveId: string,
   slug: string,
-  opts: { type: NotificationType; liveNotificationType: string; message: string }
+  opts: {
+    type: NotificationType;
+    liveNotificationType: string;
+    message: string;
+    pushTitle?: string;
+    pushBody?: string;
+  }
 ) {
   try {
     const studentIds = courseId
@@ -123,6 +132,15 @@ async function notifyStudents(
         })),
       }),
     ]);
+
+    if (opts.pushTitle) {
+      sendPushToUsers(studentIds, {
+        title: opts.pushTitle,
+        body: opts.pushBody || opts.message,
+        url: link,
+        tag: `live-${opts.liveNotificationType.toLowerCase()}-${liveId}`,
+      });
+    }
   } catch (err) {
     console.error("notifyStudents error:", err);
   }

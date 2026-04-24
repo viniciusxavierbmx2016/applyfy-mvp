@@ -9,6 +9,7 @@ import { useUserStore } from "@/stores/user-store";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { InstallPrompt } from "@/components/install-prompt";
 import { NotificationsBell } from "@/components/notifications-bell";
+import { PushOptIn } from "@/components/push-opt-in";
 
 interface WorkspaceInfo {
   id: string;
@@ -379,7 +380,10 @@ export function WorkspaceShell({
           </nav>
         </aside>
 
-        <main className="flex-1 min-w-0">{children}</main>
+        <main className="flex-1 min-w-0">
+          <PushOptIn />
+          {children}
+        </main>
       </div>
       <InstallPrompt />
     </div>

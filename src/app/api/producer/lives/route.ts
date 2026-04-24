@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireStaff } from "@/lib/auth";
 import { resolveStaffWorkspace } from "@/lib/workspace";
 import { NotificationType } from "@prisma/client";
+import { sendPushToUsers } from "@/lib/push-send";
 
 const VALID_PLATFORMS = ["GOOGLE_MEET", "ZOOM", "YOUTUBE_LIVE", "CUSTOM"];
 const MAX_LIVES = 50;
@@ -116,6 +117,8 @@ export async function POST(request: Request) {
       type: "LIVE_SCHEDULED",
       liveNotificationType: "SCHEDULED",
       message: `Nova live agendada! ${title.trim()} — ${scheduledDate}`,
+      pushTitle: "📅 Nova live agendada!",
+      pushBody: `${title.trim()} — ${scheduledDate}`,
     });
 
     return NextResponse.json({ live }, { status: 201 });
@@ -132,7 +135,13 @@ async function notifyStudents(
   courseId: string | null,
   liveId: string,
   slug: string,
-  opts: { type: NotificationType; liveNotificationType: string; message: string }
+  opts: {
+    type: NotificationType;
+    liveNotificationType: string;
+    message: string;
+    pushTitle?: string;
+    pushBody?: string;
+  }
 ) {
   try {
     const studentIds = courseId
@@ -172,6 +181,15 @@ async function notifyStudents(
         })),
       }),
     ]);
+
+    if (opts.pushTitle) {
+      sendPushToUsers(studentIds, {
+        title: opts.pushTitle,
+        body: opts.pushBody || opts.message,
+        url: link,
+        tag: `live-${opts.liveNotificationType.toLowerCase()}-${liveId}`,
+      });
+    }
   } catch (err) {
     console.error("notifyStudents error:", err);
   }
