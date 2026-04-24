@@ -22,21 +22,33 @@ export async function DELETE(
 
     const live = await prisma.live.findUnique({
       where: { id: params.id },
-      select: { workspaceId: true },
+      include: { workspace: { select: { ownerId: true } } },
     });
     if (!live) {
       return NextResponse.json({ error: "Live não encontrada" }, { status: 404 });
     }
 
-    const isProducer =
-      (user.role === "ADMIN" || user.role === "PRODUCER") &&
-      user.workspaceId === live.workspaceId;
+    const isOwner = live.workspace.ownerId === user.id;
+    const isAdmin = user.role === "ADMIN";
 
-    const isMod = await prisma.liveModerator.findUnique({
-      where: { liveId_userId: { liveId: params.id, userId: user.id } },
-    });
+    let isCollaborator = false;
+    if (!isOwner && !isAdmin) {
+      const collab = await prisma.collaborator.findFirst({
+        where: { userId: user.id, workspaceId: live.workspaceId, status: "ACCEPTED" },
+        select: { id: true },
+      });
+      isCollaborator = !!collab;
+    }
 
-    if (!isProducer && !isMod) {
+    let isMod = false;
+    if (!isOwner && !isAdmin && !isCollaborator) {
+      const mod = await prisma.liveModerator.findUnique({
+        where: { liveId_userId: { liveId: params.id, userId: user.id } },
+      });
+      isMod = !!mod;
+    }
+
+    if (!isOwner && !isAdmin && !isCollaborator && !isMod) {
       return NextResponse.json({ error: "Sem permissão" }, { status: 403 });
     }
 

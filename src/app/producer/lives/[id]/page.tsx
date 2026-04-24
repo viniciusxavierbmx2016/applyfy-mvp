@@ -149,42 +149,48 @@ export default function ProducerLiveRoomPage() {
 
   async function toggleRoom() {
     if (!live) return;
+    const prev = live.roomOpen;
+    setLive((l) => l ? { ...l, roomOpen: !prev } : l);
+    setToast(prev ? "Sala fechada" : "Sala aberta");
     const res = await fetch(`/api/producer/lives/${liveId}/moderate`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ roomOpen: !live.roomOpen }),
+      body: JSON.stringify({ roomOpen: !prev }),
     });
-    if (res.ok) {
-      setLive((l) => l ? { ...l, roomOpen: !l.roomOpen } : l);
-      setToast(live.roomOpen ? "Sala fechada" : "Sala aberta");
-    }
+    if (!res.ok) setLive((l) => l ? { ...l, roomOpen: prev } : l);
   }
 
   async function toggleChat() {
     if (!live) return;
+    const prev = live.chatEnabled;
+    setLive((l) => l ? { ...l, chatEnabled: !prev } : l);
+    setToast(prev ? "Chat desativado" : "Chat ativado");
     const res = await fetch(`/api/producer/lives/${liveId}/moderate`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ chatEnabled: !live.chatEnabled }),
+      body: JSON.stringify({ chatEnabled: !prev }),
     });
-    if (res.ok) {
-      setLive((l) => l ? { ...l, chatEnabled: !l.chatEnabled } : l);
-      setToast(live.chatEnabled ? "Chat desativado" : "Chat ativado");
-    }
+    if (!res.ok) setLive((l) => l ? { ...l, chatEnabled: prev } : l);
   }
 
   async function handleDeleteMessage(messageId: string) {
+    const removed = messages.find((m) => m.id === messageId);
+    setMessages((prev) => prev.filter((m) => m.id !== messageId));
+    setDeleteConfirm(null);
+    setToast("Mensagem deletada");
     const res = await fetch(`/api/lives/${liveId}/messages/${messageId}`, {
       method: "DELETE",
     });
-    if (res.ok) {
-      setMessages((prev) => prev.filter((m) => m.id !== messageId));
-      setToast("Mensagem deletada");
+    if (!res.ok && removed) {
+      setMessages((prev) => [...prev, removed].sort((a, b) =>
+        new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+      ));
+      setToast("Erro ao deletar mensagem");
     }
-    setDeleteConfirm(null);
   }
 
   async function addModerator(userId: string) {
+    setToast("Moderador adicionado");
     const res = await fetch(`/api/producer/lives/${liveId}/moderators`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -192,11 +198,12 @@ export default function ProducerLiveRoomPage() {
     });
     if (res.ok) {
       fetchModerators();
-      setToast("Moderador adicionado");
     }
   }
 
   async function removeModerator(userId: string) {
+    setModerators((prev) => prev.filter((m) => m.userId !== userId));
+    setToast("Moderador removido");
     const res = await fetch(`/api/producer/lives/${liveId}/moderators`, {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
@@ -204,7 +211,6 @@ export default function ProducerLiveRoomPage() {
     });
     if (res.ok) {
       fetchModerators();
-      setToast("Moderador removido");
     }
   }
 

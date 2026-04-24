@@ -120,9 +120,19 @@ export default function LiveRoomPage() {
 
   useEffect(() => {
     if (live?.status !== "LIVE") return;
-    const interval = setInterval(fetchMessages, 3000);
-    return () => clearInterval(interval);
-  }, [live?.status, fetchMessages]);
+    const msgInterval = setInterval(fetchMessages, 2000);
+    const liveInterval = setInterval(async () => {
+      try {
+        const res = await fetch(`/api/lives/${liveId}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data.live) {
+          setLive((prev) => prev ? { ...prev, chatEnabled: data.live.chatEnabled, status: data.live.status } : prev);
+        }
+      } catch { /* ignore */ }
+    }, 5000);
+    return () => { clearInterval(msgInterval); clearInterval(liveInterval); };
+  }, [live?.status, fetchMessages, liveId]);
 
   useEffect(() => {
     if (!live || live.status !== "SCHEDULED") return;
@@ -168,11 +178,15 @@ export default function LiveRoomPage() {
   }
 
   async function handleDeleteMessage(messageId: string) {
+    const removed = messages.find((m) => m.id === messageId);
+    setMessages((prev) => prev.filter((m) => m.id !== messageId));
     const res = await fetch(`/api/lives/${liveId}/messages/${messageId}`, {
       method: "DELETE",
     });
-    if (res.ok) {
-      setMessages((prev) => prev.filter((m) => m.id !== messageId));
+    if (!res.ok && removed) {
+      setMessages((prev) => [...prev, removed].sort((a, b) =>
+        new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+      ));
     }
   }
 
