@@ -2,6 +2,8 @@ import { prisma } from "@/lib/prisma";
 import { generateCertificateCode } from "@/lib/certificate-pdf";
 import { sendEmail } from "@/lib/email";
 import { automationEmail } from "@/lib/email-templates";
+import { sendPushToUser } from "@/lib/push-send";
+import { autoTagStudent } from "@/lib/automation-constants";
 
 export interface AutomationTrigger {
   type: string;
@@ -44,12 +46,40 @@ function matchesTrigger(
   }
 }
 
+async function resolveVariables(
+  text: string,
+  userId: string,
+  courseId?: string,
+  triggerConfig?: string
+): Promise<string> {
+  let result = text;
+  if (result.includes("{nome}")) {
+    const user = await prisma.user.findUnique({ where: { id: userId }, select: { name: true } });
+    result = result.replace(/\{nome\}/g, user?.name || "Aluno");
+  }
+  if (result.includes("{curso}") && courseId) {
+    const course = await prisma.course.findUnique({ where: { id: courseId }, select: { title: true } });
+    result = result.replace(/\{curso\}/g, course?.title || "");
+  }
+  if (result.includes("{modulo}") && triggerConfig) {
+    try {
+      const cfg = JSON.parse(triggerConfig);
+      if (cfg.moduleId) {
+        const mod = await prisma.module.findUnique({ where: { id: cfg.moduleId }, select: { title: true } });
+        result = result.replace(/\{modulo\}/g, mod?.title || "");
+      }
+    } catch { /* ignore */ }
+  }
+  return result;
+}
+
 export async function executeAction(
-  automation: { id: string; actionType: string; actionConfig: string; workspaceId?: string },
+  automation: { id: string; actionType: string; actionConfig: string; workspaceId?: string; triggerConfig?: string; courseId?: string | null },
   userId: string,
   courseId?: string
 ): Promise<{ status: string; details?: string }> {
   const config = JSON.parse(automation.actionConfig) as Record<string, unknown>;
+  const effectiveCourseId = courseId || automation.courseId || undefined;
 
   switch (automation.actionType) {
     case "UNLOCK_MODULE": {
@@ -70,8 +100,10 @@ export async function executeAction(
     }
 
     case "SEND_EMAIL": {
-      const subject = (config.subject as string) || "Notificação";
-      const body = (config.body as string) || "";
+      const rawSubject = (config.subject as string) || "Notificação";
+      const rawBody = (config.body as string) || "";
+      const subject = await resolveVariables(rawSubject, userId, effectiveCourseId, automation.triggerConfig);
+      const body = await resolveVariables(rawBody, userId, effectiveCourseId, automation.triggerConfig);
       const user = await prisma.user.findUnique({ where: { id: userId }, select: { email: true, name: true } });
       if (!user) return { status: "FAILED", details: "Usuário não encontrado" };
       try {
@@ -91,6 +123,29 @@ export async function executeAction(
         return { status: "SUCCESS", details: `Email enviado para ${user.email}` };
       } catch (err) {
         return { status: "FAILED", details: err instanceof Error ? err.message : "Erro ao enviar email" };
+      }
+    }
+
+    case "SEND_PUSH": {
+      const pushTitle = await resolveVariables(
+        (config.pushTitle as string) || "Notificação",
+        userId, effectiveCourseId, automation.triggerConfig
+      );
+      const pushBody = await resolveVariables(
+        (config.pushBody as string) || "",
+        userId, effectiveCourseId, automation.triggerConfig
+      );
+      const pushUrl = (config.pushUrl as string) || "/";
+      try {
+        await sendPushToUser(userId, {
+          title: pushTitle,
+          body: pushBody,
+          url: pushUrl,
+          tag: `automation-${automation.id}`,
+        });
+        return { status: "SUCCESS", details: `Push enviado` };
+      } catch (err) {
+        return { status: "FAILED", details: err instanceof Error ? err.message : "Erro ao enviar push" };
       }
     }
 
@@ -121,7 +176,7 @@ export async function executeAction(
     case "ADD_TAG": {
       const tagName = config.tagName as string;
       if (!tagName) return { status: "FAILED", details: "tagName ausente" };
-      const workspaceId = config.workspaceId as string;
+      const workspaceId = (config.workspaceId as string) || automation.workspaceId;
       if (!workspaceId) return { status: "FAILED", details: "workspaceId ausente" };
       const tagColor = (config.tagColor as string) || "#6366f1";
       const tag = await prisma.tag.upsert({
@@ -139,49 +194,6 @@ export async function executeAction(
 
     default:
       return { status: "FAILED", details: `Ação desconhecida: ${automation.actionType}` };
-  }
-}
-
-const TAG_COLORS: Record<string, string> = {
-  LESSON_COMPLETED: "#10b981",
-  MODULE_COMPLETED: "#3b82f6",
-  COURSE_COMPLETED: "#8b5cf6",
-  QUIZ_PASSED: "#f59e0b",
-  STUDENT_ENROLLED: "#06b6d4",
-  STUDENT_INACTIVE: "#ef4444",
-  STUDENT_NEVER_ACCESSED: "#f97316",
-  PROGRESS_BELOW: "#ec4899",
-  PROGRESS_ABOVE: "#14b8a6",
-  MODULE_NOT_STARTED: "#a855f7",
-  HAS_TAG: "#7c3aed",
-};
-
-function generateAutoTagName(triggerType: string, actionType: string, automationName: string): string {
-  return `auto:${automationName}`;
-}
-
-async function autoTagStudent(
-  workspaceId: string,
-  userId: string,
-  triggerType: string,
-  actionType: string,
-  automationName: string
-): Promise<void> {
-  try {
-    const tagName = generateAutoTagName(triggerType, actionType, automationName);
-    const color = TAG_COLORS[triggerType] || "#6366f1";
-    const tag = await prisma.tag.upsert({
-      where: { workspaceId_name: { workspaceId, name: tagName } },
-      create: { workspaceId, name: tagName, color, autoSource: "automation" },
-      update: {},
-    });
-    await prisma.userTag.upsert({
-      where: { userId_tagId: { userId, tagId: tag.id } },
-      create: { userId, tagId: tag.id },
-      update: {},
-    });
-  } catch {
-    // non-critical
   }
 }
 
@@ -219,7 +231,7 @@ export async function processAutomations(trigger: AutomationTrigger): Promise<vo
               lastExecutedAt: new Date(),
             },
           });
-          autoTagStudent(trigger.workspaceId, trigger.userId, trigger.type, auto.actionType, auto.name).catch(() => {});
+          autoTagStudent(trigger.workspaceId, trigger.userId, trigger.type, auto.name).catch(() => {});
         }
       } catch (err) {
         console.error(`Automation ${auto.id} error:`, err);

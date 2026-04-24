@@ -8,23 +8,23 @@ const VALID_TRIGGERS = [
   "STUDENT_ENROLLED", "STUDENT_INACTIVE", "STUDENT_NEVER_ACCESSED",
   "PROGRESS_BELOW", "PROGRESS_ABOVE", "MODULE_NOT_STARTED", "HAS_TAG",
 ];
-const VALID_ACTIONS = ["UNLOCK_MODULE", "SEND_EMAIL", "ENROLL_COURSE", "ADD_TAG"];
+const VALID_ACTIONS = ["UNLOCK_MODULE", "SEND_EMAIL", "ENROLL_COURSE", "ADD_TAG", "SEND_PUSH"];
 const MAX_AUTOMATIONS = 20;
 
 const GLOBAL_TRIGGERS = ["STUDENT_INACTIVE", "STUDENT_NEVER_ACCESSED", "HAS_TAG"];
 
 const VALID_PAIRS: Record<string, string[]> = {
-  MODULE_COMPLETED: ["UNLOCK_MODULE", "SEND_EMAIL", "ENROLL_COURSE"],
-  COURSE_COMPLETED: ["SEND_EMAIL", "ENROLL_COURSE"],
-  LESSON_COMPLETED: ["SEND_EMAIL", "UNLOCK_MODULE", "ENROLL_COURSE"],
-  QUIZ_PASSED: ["SEND_EMAIL", "UNLOCK_MODULE", "ENROLL_COURSE"],
-  STUDENT_ENROLLED: ["ENROLL_COURSE"],
-  STUDENT_INACTIVE: ["SEND_EMAIL"],
-  STUDENT_NEVER_ACCESSED: ["SEND_EMAIL"],
-  PROGRESS_BELOW: ["SEND_EMAIL"],
-  PROGRESS_ABOVE: ["SEND_EMAIL"],
-  MODULE_NOT_STARTED: ["SEND_EMAIL"],
-  HAS_TAG: ["SEND_EMAIL", "ENROLL_COURSE", "UNLOCK_MODULE"],
+  MODULE_COMPLETED: ["UNLOCK_MODULE", "SEND_EMAIL", "ENROLL_COURSE", "SEND_PUSH", "ADD_TAG"],
+  COURSE_COMPLETED: ["SEND_EMAIL", "ENROLL_COURSE", "SEND_PUSH", "ADD_TAG"],
+  LESSON_COMPLETED: ["SEND_EMAIL", "UNLOCK_MODULE", "ENROLL_COURSE", "SEND_PUSH", "ADD_TAG"],
+  QUIZ_PASSED: ["SEND_EMAIL", "UNLOCK_MODULE", "ENROLL_COURSE", "SEND_PUSH", "ADD_TAG"],
+  STUDENT_ENROLLED: ["ENROLL_COURSE", "SEND_PUSH", "ADD_TAG"],
+  STUDENT_INACTIVE: ["SEND_EMAIL", "SEND_PUSH", "ADD_TAG"],
+  STUDENT_NEVER_ACCESSED: ["SEND_EMAIL", "SEND_PUSH", "ADD_TAG"],
+  PROGRESS_BELOW: ["SEND_EMAIL", "SEND_PUSH", "ADD_TAG"],
+  PROGRESS_ABOVE: ["SEND_EMAIL", "SEND_PUSH", "ADD_TAG"],
+  MODULE_NOT_STARTED: ["SEND_EMAIL", "SEND_PUSH", "ADD_TAG"],
+  HAS_TAG: ["SEND_EMAIL", "ENROLL_COURSE", "UNLOCK_MODULE", "SEND_PUSH", "ADD_TAG"],
 };
 
 async function getWorkspaceId(staff: Parameters<typeof resolveStaffWorkspace>[0]) {
@@ -145,6 +145,13 @@ function validateAutomation(
   }
   if (actionType === "ENROLL_COURSE") {
     if (!actionConfig.courseId) return "Selecione o curso destino";
+  }
+  if (actionType === "SEND_PUSH") {
+    if (!actionConfig.pushTitle || !(actionConfig.pushTitle as string).trim()) return "Informe o título da notificação";
+    if (!actionConfig.pushBody || !(actionConfig.pushBody as string).trim()) return "Informe a mensagem da notificação";
+  }
+  if (actionType === "ADD_TAG") {
+    if (!actionConfig.tagName || !(actionConfig.tagName as string).trim()) return "Informe o nome da tag";
   }
 
   return null;

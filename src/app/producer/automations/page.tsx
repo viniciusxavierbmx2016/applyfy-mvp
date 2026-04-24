@@ -80,20 +80,22 @@ const ACTION_META: Record<string, { short: string; icon: string; desc: string }>
   UNLOCK_MODULE: { short: "Liberar módulo", desc: "Desbloqueia um módulo para o aluno", icon: "M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z" },
   SEND_EMAIL: { short: "Enviar email", desc: "Envia um email ao aluno", icon: "M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" },
   ENROLL_COURSE: { short: "Matricular curso", desc: "Matricula em outro curso", icon: "M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" },
+  SEND_PUSH: { short: "Enviar push", desc: "Envia notificação push ao aluno", icon: "M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" },
+  ADD_TAG: { short: "Adicionar tag", desc: "Atribui uma tag ao aluno", icon: "M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" },
 };
 
 const VALID_ACTIONS_FOR_TRIGGER: Record<string, string[]> = {
-  MODULE_COMPLETED: ["UNLOCK_MODULE", "SEND_EMAIL", "ENROLL_COURSE"],
-  COURSE_COMPLETED: ["SEND_EMAIL", "ENROLL_COURSE"],
-  LESSON_COMPLETED: ["SEND_EMAIL", "UNLOCK_MODULE", "ENROLL_COURSE"],
-  QUIZ_PASSED: ["SEND_EMAIL", "UNLOCK_MODULE", "ENROLL_COURSE"],
-  STUDENT_ENROLLED: ["ENROLL_COURSE"],
-  STUDENT_INACTIVE: ["SEND_EMAIL"],
-  STUDENT_NEVER_ACCESSED: ["SEND_EMAIL"],
-  PROGRESS_BELOW: ["SEND_EMAIL"],
-  PROGRESS_ABOVE: ["SEND_EMAIL"],
-  MODULE_NOT_STARTED: ["SEND_EMAIL"],
-  HAS_TAG: ["SEND_EMAIL", "ENROLL_COURSE", "UNLOCK_MODULE"],
+  MODULE_COMPLETED: ["UNLOCK_MODULE", "SEND_EMAIL", "ENROLL_COURSE", "SEND_PUSH", "ADD_TAG"],
+  COURSE_COMPLETED: ["SEND_EMAIL", "ENROLL_COURSE", "SEND_PUSH", "ADD_TAG"],
+  LESSON_COMPLETED: ["SEND_EMAIL", "UNLOCK_MODULE", "ENROLL_COURSE", "SEND_PUSH", "ADD_TAG"],
+  QUIZ_PASSED: ["SEND_EMAIL", "UNLOCK_MODULE", "ENROLL_COURSE", "SEND_PUSH", "ADD_TAG"],
+  STUDENT_ENROLLED: ["ENROLL_COURSE", "SEND_PUSH", "ADD_TAG"],
+  STUDENT_INACTIVE: ["SEND_EMAIL", "SEND_PUSH", "ADD_TAG"],
+  STUDENT_NEVER_ACCESSED: ["SEND_EMAIL", "SEND_PUSH", "ADD_TAG"],
+  PROGRESS_BELOW: ["SEND_EMAIL", "SEND_PUSH", "ADD_TAG"],
+  PROGRESS_ABOVE: ["SEND_EMAIL", "SEND_PUSH", "ADD_TAG"],
+  MODULE_NOT_STARTED: ["SEND_EMAIL", "SEND_PUSH", "ADD_TAG"],
+  HAS_TAG: ["SEND_EMAIL", "ENROLL_COURSE", "UNLOCK_MODULE", "SEND_PUSH", "ADD_TAG"],
 };
 
 const GLOBAL_TRIGGERS = ["STUDENT_INACTIVE", "STUDENT_NEVER_ACCESSED", "HAS_TAG"];
@@ -111,6 +113,8 @@ const TEMPLATES: TemplateData[] = [
   { emoji: "🎉", name: "Parabenizar 50% de progresso", description: "Comemora ao atingir metade do curso", triggerType: "PROGRESS_ABOVE", triggerConfig: { progressPercent: 50 }, actionType: "SEND_EMAIL", actionConfig: { subject: "Você já está na metade!", body: "Parabéns! Continue assim!" }, needsCourse: true },
   { emoji: "📚", name: "Matricular em curso bônus", description: "Matricula em outro curso ao concluir", triggerType: "COURSE_COMPLETED", triggerConfig: {}, actionType: "ENROLL_COURSE", actionConfig: {}, needsCourse: true },
   { emoji: "🏷️", name: "Ação em massa por tag", description: "Envie email para todos os alunos com uma tag", triggerType: "HAS_TAG", triggerConfig: {}, actionType: "SEND_EMAIL", actionConfig: { subject: "Mensagem importante", body: "Olá! Temos uma novidade para você." }, needsCourse: false },
+  { emoji: "🔔", name: "Push de conteúdo novo", description: "Notificação push ao se matricular", triggerType: "STUDENT_ENROLLED", triggerConfig: {}, actionType: "SEND_PUSH", actionConfig: { pushTitle: "Novidade no {curso}!", pushBody: "Olá {nome}, tem conteúdo novo te esperando!", pushUrl: "/" }, needsCourse: true },
+  { emoji: "📲", name: "Reengajar via push", description: "Push para alunos inativos há 7 dias", triggerType: "STUDENT_INACTIVE", triggerConfig: { inactiveDays: 7 }, actionType: "SEND_PUSH", actionConfig: { pushTitle: "Sentimos sua falta, {nome}!", pushBody: "Faz dias que você não aparece. Volte e continue de onde parou!", pushUrl: "/" }, needsCourse: false },
 ];
 
 function getTriggerDetail(auto: AutomationItem, courses: CourseOption[], tags?: TagOption[]): string | null {
@@ -150,6 +154,8 @@ function getActionDetail(auto: AutomationItem, courses: CourseOption[]): string 
       return mod?.title || null;
     }
     if (cfg.subject) return `"${cfg.subject}"`;
+    if (cfg.pushTitle) return `"${cfg.pushTitle}"`;
+    if (cfg.tagName) return `"${cfg.tagName}"`;
     if (cfg.courseId) {
       const c = courses.find((cr) => cr.id === cfg.courseId);
       return c?.title || null;
@@ -194,6 +200,11 @@ function validateFrontend(
     if (!actionConfig.body?.trim()) return "Informe o corpo do email";
   }
   if (actionType === "ENROLL_COURSE" && !actionConfig.courseId) return "Selecione o curso destino";
+  if (actionType === "SEND_PUSH") {
+    if (!actionConfig.pushTitle?.trim()) return "Informe o título da notificação";
+    if (!actionConfig.pushBody?.trim()) return "Informe a mensagem da notificação";
+  }
+  if (actionType === "ADD_TAG" && !actionConfig.tagName?.trim()) return "Informe o nome da tag";
 
   return null;
 }
@@ -921,6 +932,34 @@ function SidePanel({
                         <div><label className={labelCls}>Corpo do email</label>
                           <textarea value={actionConfig.body || ""} onChange={(e) => setActionConfig({ ...actionConfig, body: e.target.value })} placeholder="Olá!" rows={6} className={`${selectCls} resize-y`} />
                         </div>
+                        <p className="text-[10px] text-gray-500">{`Variáveis: {nome} {curso} {modulo}`}</p>
+                      </div>
+                    )}
+                    {actionType === "SEND_PUSH" && (
+                      <div className="space-y-3">
+                        <div><label className={labelCls}>Título da notificação</label>
+                          <input type="text" maxLength={60} value={actionConfig.pushTitle || ""} onChange={(e) => setActionConfig({ ...actionConfig, pushTitle: e.target.value })} placeholder="Novidade!" className={inputCls} />
+                          <p className="text-[10px] text-gray-500 mt-1">{(actionConfig.pushTitle || "").length}/60</p>
+                        </div>
+                        <div><label className={labelCls}>Mensagem</label>
+                          <textarea maxLength={200} value={actionConfig.pushBody || ""} onChange={(e) => setActionConfig({ ...actionConfig, pushBody: e.target.value })} placeholder="Olá!" rows={3} className={`${selectCls} resize-y`} />
+                          <p className="text-[10px] text-gray-500 mt-1">{(actionConfig.pushBody || "").length}/200</p>
+                        </div>
+                        <div><label className={labelCls}>Link ao clicar (opcional)</label>
+                          <input type="text" value={actionConfig.pushUrl || ""} onChange={(e) => setActionConfig({ ...actionConfig, pushUrl: e.target.value })} placeholder="/" className={inputCls} />
+                        </div>
+                        <p className="text-[10px] text-gray-500">{`Variáveis: {nome} {curso} {modulo}`}</p>
+                        <div className="bg-[#0a0a0b] border border-[#28282e] rounded-xl p-3">
+                          <p className="text-[9px] uppercase tracking-wider text-gray-500 mb-2">Preview</p>
+                          <div className="bg-[#1a1a1e] rounded-lg p-3 space-y-0.5">
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-xs">🔔</span>
+                              <span className="text-[10px] text-gray-400 font-medium">Members Club</span>
+                            </div>
+                            <p className="text-sm text-white font-medium truncate">{actionConfig.pushTitle || "Título"}</p>
+                            <p className="text-xs text-gray-400 line-clamp-2">{actionConfig.pushBody || "Mensagem..."}</p>
+                          </div>
+                        </div>
                       </div>
                     )}
                     {actionType === "ENROLL_COURSE" && (
@@ -929,6 +968,30 @@ function SidePanel({
                           <option value="">Selecione...</option>
                           {courses.filter((c) => c.id !== courseId).map((c) => <option key={c.id} value={c.id}>{c.title}</option>)}
                         </select>
+                      </div>
+                    )}
+                    {actionType === "ADD_TAG" && (
+                      <div className="space-y-3">
+                        <div><label className={labelCls}>Nome da tag</label>
+                          <input type="text" value={actionConfig.tagName || ""} onChange={(e) => setActionConfig({ ...actionConfig, tagName: e.target.value })} placeholder="Ex: VIP, Engajado..." className={inputCls} />
+                        </div>
+                        <div>
+                          <label className={labelCls}>Cor</label>
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            {["#6366f1", "#3b82f6", "#06b6d4", "#10b981", "#f59e0b", "#ef4444", "#ec4899", "#8b5cf6", "#f97316", "#14b8a6"].map((c) => (
+                              <button key={c} type="button" onClick={() => setActionConfig({ ...actionConfig, tagColor: c })} className="w-6 h-6 rounded-full border-2 transition" style={{ backgroundColor: c, borderColor: (actionConfig.tagColor || "#6366f1") === c ? "white" : "transparent", boxShadow: (actionConfig.tagColor || "#6366f1") === c ? `0 0 0 2px ${c}` : "none" }} />
+                            ))}
+                          </div>
+                        </div>
+                        {tags.length > 0 && (
+                          <div>
+                            <label className={labelCls}>Ou selecione uma existente</label>
+                            <select value="" onChange={(e) => { const t = tags.find((tg) => tg.id === e.target.value); if (t) setActionConfig({ ...actionConfig, tagName: t.name, tagColor: t.color }); }} className={selectCls}>
+                              <option value="">Usar tag existente...</option>
+                              {tags.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
+                            </select>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
@@ -1043,8 +1106,10 @@ function MobileFlowEditor({
                   ); })}
                 </div>
                 {actionType === "UNLOCK_MODULE" && selectedCourse && (() => { const tgt = actionConfig.moduleId ? selectedCourse.modules.find((m) => m.id === actionConfig.moduleId) : null; return <div><label className={labelCls}>Módulo para liberar</label><select value={actionConfig.moduleId || ""} onChange={(e) => setActionConfig({ ...actionConfig, moduleId: e.target.value })} className={selectCls}><option value="">Selecione...</option>{selectedCourse.modules.filter((m) => m.id !== triggerConfig.moduleId).map((m) => <option key={m.id} value={m.id}>{m.title}</option>)}</select>{tgt && tgt.daysToRelease > 0 && <div className="bg-amber-900/20 border border-amber-700/30 rounded-xl p-3 text-xs text-amber-300 mt-3">Este módulo tem liberação por tempo ({tgt.daysToRelease} dias). A automação vai sobrescrever — ficará bloqueado até o gatilho.</div>}</div>; })()}
-                {actionType === "SEND_EMAIL" && <div className="space-y-3"><div><label className={labelCls}>Assunto</label><input type="text" value={actionConfig.subject || ""} onChange={(e) => setActionConfig({ ...actionConfig, subject: e.target.value })} placeholder="Parabéns!" className={selectCls} /></div><div><label className={labelCls}>Corpo</label><textarea value={actionConfig.body || ""} onChange={(e) => setActionConfig({ ...actionConfig, body: e.target.value })} placeholder="Olá!" rows={4} className={`${selectCls} resize-y`} /></div></div>}
+                {actionType === "SEND_EMAIL" && <div className="space-y-3"><div><label className={labelCls}>Assunto</label><input type="text" value={actionConfig.subject || ""} onChange={(e) => setActionConfig({ ...actionConfig, subject: e.target.value })} placeholder="Parabéns!" className={selectCls} /></div><div><label className={labelCls}>Corpo</label><textarea value={actionConfig.body || ""} onChange={(e) => setActionConfig({ ...actionConfig, body: e.target.value })} placeholder="Olá!" rows={4} className={`${selectCls} resize-y`} /></div><p className="text-[10px] text-gray-500">{`Variáveis: {nome} {curso} {modulo}`}</p></div>}
+                {actionType === "SEND_PUSH" && <div className="space-y-3"><div><label className={labelCls}>Título</label><input type="text" maxLength={60} value={actionConfig.pushTitle || ""} onChange={(e) => setActionConfig({ ...actionConfig, pushTitle: e.target.value })} placeholder="Novidade!" className={selectCls} /><p className="text-[10px] text-gray-500 mt-1">{(actionConfig.pushTitle || "").length}/60</p></div><div><label className={labelCls}>Mensagem</label><textarea maxLength={200} value={actionConfig.pushBody || ""} onChange={(e) => setActionConfig({ ...actionConfig, pushBody: e.target.value })} placeholder="Olá!" rows={3} className={`${selectCls} resize-y`} /><p className="text-[10px] text-gray-500 mt-1">{(actionConfig.pushBody || "").length}/200</p></div><div><label className={labelCls}>Link (opcional)</label><input type="text" value={actionConfig.pushUrl || ""} onChange={(e) => setActionConfig({ ...actionConfig, pushUrl: e.target.value })} placeholder="/" className={selectCls} /></div><p className="text-[10px] text-gray-500">{`Variáveis: {nome} {curso} {modulo}`}</p><div className="bg-[#1a1a1e] rounded-lg p-3 space-y-0.5"><div className="flex items-center gap-1.5"><span className="text-xs">🔔</span><span className="text-[10px] text-gray-400 font-medium">Members Club</span></div><p className="text-sm text-white font-medium truncate">{actionConfig.pushTitle || "Título"}</p><p className="text-xs text-gray-400 line-clamp-2">{actionConfig.pushBody || "Mensagem..."}</p></div></div>}
                 {actionType === "ENROLL_COURSE" && <div><label className={labelCls}>Curso destino</label><select value={actionConfig.courseId || ""} onChange={(e) => setActionConfig({ ...actionConfig, courseId: e.target.value })} className={selectCls}><option value="">Selecione...</option>{courses.filter((c) => c.id !== courseId).map((c) => <option key={c.id} value={c.id}>{c.title}</option>)}</select></div>}
+                {actionType === "ADD_TAG" && <div className="space-y-3"><div><label className={labelCls}>Nome da tag</label><input type="text" value={actionConfig.tagName || ""} onChange={(e) => setActionConfig({ ...actionConfig, tagName: e.target.value })} placeholder="Ex: VIP" className={selectCls} /></div><div><label className={labelCls}>Cor</label><div className="flex items-center gap-1.5 flex-wrap">{["#6366f1","#3b82f6","#06b6d4","#10b981","#f59e0b","#ef4444","#ec4899","#8b5cf6","#f97316","#14b8a6"].map((c) => <button key={c} type="button" onClick={() => setActionConfig({ ...actionConfig, tagColor: c })} className="w-6 h-6 rounded-full border-2 transition" style={{ backgroundColor: c, borderColor: (actionConfig.tagColor || "#6366f1") === c ? "white" : "transparent" }} />)}</div></div>{tags.length > 0 && <div><label className={labelCls}>Ou existente</label><select value="" onChange={(e) => { const t = tags.find((tg) => tg.id === e.target.value); if (t) setActionConfig({ ...actionConfig, tagName: t.name, tagColor: t.color }); }} className={selectCls}><option value="">Usar tag existente...</option>{tags.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}</select></div>}</div>}
               </>
             )}
           </div>

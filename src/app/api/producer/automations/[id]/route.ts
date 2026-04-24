@@ -98,7 +98,6 @@ export async function DELETE(
       return NextResponse.json({ error: "Não encontrada" }, { status: 404 });
     }
 
-    await prisma.automationLog.deleteMany({ where: { automationId: params.id } });
     await prisma.automation.delete({ where: { id: params.id } });
 
     return NextResponse.json({ success: true });

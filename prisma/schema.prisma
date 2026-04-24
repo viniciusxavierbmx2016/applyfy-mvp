@@ -683,6 +683,7 @@ model Automation {
   updatedAt      DateTime  @updatedAt
 
   workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  logs      AutomationLog[]
 
   @@index([workspaceId])
   @@index([triggerType])
@@ -696,6 +697,8 @@ model AutomationLog {
   status       String
   details      String?
   createdAt    DateTime @default(now())
+
+  automation Automation @relation(fields: [automationId], references: [id], onDelete: Cascade)
 
   @@index([automationId])
   @@index([userId])
