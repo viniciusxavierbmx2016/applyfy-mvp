@@ -219,7 +219,13 @@ export default function AutomationsPage() {
   const [editorTemplate, setEditorTemplate] = useState<TemplateData | null>(null);
   const [showNewModal, setShowNewModal] = useState(false);
   const [menuOpen, setMenuOpen] = useState<string | null>(null);
+  const [toast, setToast] = useState<string | null>(null);
   const { confirm, ConfirmDialog } = useConfirm();
+
+  function showToast(msg: string) {
+    setToast(msg);
+    setTimeout(() => setToast(null), 3000);
+  }
 
   async function load() {
     setLoading(true);
@@ -263,7 +269,7 @@ export default function AutomationsPage() {
     const res = await fetch(`/api/producer/automations/${auto.id}/execute`, { method: "POST" });
     if (res.ok) {
       const data = await res.json();
-      alert(`Executado: ${data.executed} | Ignorado: ${data.skipped}`);
+      showToast(`Executado: ${data.executed} | Ignorado: ${data.skipped}`);
       load();
     }
   }
@@ -382,6 +388,11 @@ export default function AutomationsPage() {
 
       {showNewModal && <NewAutomationModal onClose={() => setShowNewModal(false)} onScratch={() => { setShowNewModal(false); setEditorNew(true); }} onTemplate={(t) => { setShowNewModal(false); setEditorTemplate(t); }} />}
       <ConfirmDialog />
+      {toast && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-5 py-3 bg-blue-600 text-white rounded-lg shadow-xl text-sm font-medium">
+          {toast}
+        </div>
+      )}
     </div>
   );
 }

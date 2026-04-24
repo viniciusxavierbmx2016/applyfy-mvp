@@ -1,8 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useConfirm } from "@/hooks/use-confirm";
+
+interface TagStudent {
+  id: string;
+  name: string | null;
+  email: string;
+}
 
 interface Tag {
   id: string;
@@ -26,12 +32,40 @@ export default function TagsPage() {
   const [editId, setEditId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
   const [editColor, setEditColor] = useState("");
+  const [expandedTag, setExpandedTag] = useState<string | null>(null);
+  const [tagStudents, setTagStudents] = useState<TagStudent[]>([]);
+  const [loadingStudents, setLoadingStudents] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const { confirm, ConfirmDialog } = useConfirm();
 
   function showToast(msg: string) {
     setToast(msg);
     setTimeout(() => setToast(null), 2500);
+  }
+
+  async function toggleExpand(tagId: string) {
+    if (expandedTag === tagId) {
+      setExpandedTag(null);
+      setTagStudents([]);
+      return;
+    }
+    setExpandedTag(tagId);
+    setLoadingStudents(true);
+    const res = await fetch(`/api/producer/tags/${tagId}`);
+    if (res.ok) {
+      const data = await res.json();
+      setTagStudents(data.students || []);
+    }
+    setLoadingStudents(false);
+  }
+
+  async function handleRemoveStudent(tagId: string, studentId: string) {
+    const res = await fetch(`/api/producer/students/${studentId}/tags?tagId=${tagId}`, { method: "DELETE" });
+    if (res.ok) {
+      setTagStudents((prev) => prev.filter((s) => s.id !== studentId));
+      setTags((prev) => prev.map((t) => t.id === tagId ? { ...t, studentCount: t.studentCount - 1 } : t));
+      showToast("Aluno removido da tag");
+    }
   }
 
   async function load() {
@@ -145,7 +179,8 @@ export default function TagsPage() {
             </thead>
             <tbody>
               {tags.map((t) => (
-                <tr key={t.id} className="border-b border-gray-100 dark:border-gray-800 last:border-0">
+                <Fragment key={t.id}>
+                <tr className="border-b border-gray-100 dark:border-gray-800 last:border-0 group/row">
                   <td className="px-4 py-3">
                     {editId === t.id ? (
                       <div className="flex items-center gap-2">
@@ -186,8 +221,15 @@ export default function TagsPage() {
                       </span>
                     )}
                   </td>
-                  <td className="px-4 py-3 text-gray-600 dark:text-gray-400">
-                    {t.studentCount}
+                  <td className="px-4 py-3">
+                    <button
+                      type="button"
+                      onClick={() => toggleExpand(t.id)}
+                      className="inline-flex items-center gap-1 text-gray-600 dark:text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 transition"
+                    >
+                      <svg className={`w-3 h-3 transition-transform ${expandedTag === t.id ? "rotate-90" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+                      {t.studentCount}
+                    </button>
                   </td>
                   <td className="px-4 py-3 text-gray-500 text-xs">
                     {t.autoSource === "automation" ? "Automação" : "Manual"}
@@ -228,6 +270,39 @@ export default function TagsPage() {
                     </div>
                   </td>
                 </tr>
+                {expandedTag === t.id && (
+                  <tr>
+                    <td colSpan={4} className="px-4 py-3 bg-gray-50 dark:bg-gray-800/50">
+                      {loadingStudents ? (
+                        <div className="flex items-center gap-2 py-2">
+                          <div className="w-4 h-4 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+                          <span className="text-xs text-gray-500">Carregando...</span>
+                        </div>
+                      ) : tagStudents.length === 0 ? (
+                        <p className="text-xs text-gray-500 py-2">Nenhum aluno com esta tag.</p>
+                      ) : (
+                        <div className="space-y-1 max-h-60 overflow-y-auto">
+                          {tagStudents.map((s) => (
+                            <div key={s.id} className="flex items-center justify-between py-1.5 px-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700/50">
+                              <div className="min-w-0">
+                                <p className="text-sm text-gray-900 dark:text-white truncate">{s.name || "Sem nome"}</p>
+                                <p className="text-xs text-gray-500 truncate">{s.email}</p>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveStudent(t.id, s.id)}
+                                className="text-xs text-red-500 hover:text-red-400 px-2 py-1 rounded transition flex-shrink-0"
+                              >
+                                Remover
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </td>
+                  </tr>
+                )}
+                </Fragment>
               ))}
             </tbody>
           </table>

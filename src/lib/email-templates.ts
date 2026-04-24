@@ -243,3 +243,17 @@ export function subscriptionSuspended(name: string) {
     htmlContent: html,
   };
 }
+
+export function automationEmail(name: string, subjectText: string, body: string) {
+  const firstName = name.split(" ")[0] || "Aluno";
+  const bodyHtml = body.replace(/\n/g, "<br>");
+  const html = baseTemplate(`
+    ${heading(subjectText)}
+    ${paragraph(`Olá, ${firstName}!`)}
+    ${paragraph(bodyHtml)}
+  `);
+  return {
+    subject: subjectText,
+    htmlContent: html,
+  };
+}

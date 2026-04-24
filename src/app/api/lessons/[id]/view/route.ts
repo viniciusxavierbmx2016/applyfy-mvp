@@ -199,13 +199,14 @@ export async function GET(
                 l.daysToRelease,
                 overrides
               );
+              const lessonLocked = isStaffViewer ? false : (lockedByAutomation || !lr.released);
               return {
                 id: l.id,
                 title: l.title,
                 completed: l.progress.some((p) => p.completed),
-                locked: isStaffViewer ? false : !lr.released,
-                releaseDate: lr.released ? null : lr.releaseDate.toISOString(),
-                daysRemaining: lr.daysRemaining,
+                locked: lessonLocked,
+                releaseDate: lessonLocked && !lockedByAutomation && !lr.released ? lr.releaseDate.toISOString() : null,
+                daysRemaining: lockedByAutomation ? 0 : lr.daysRemaining,
               };
             }),
           };

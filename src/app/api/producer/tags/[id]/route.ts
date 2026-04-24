@@ -20,9 +20,16 @@ export async function GET(
 ) {
   try {
     const { tag } = await getOwnedTag(params.id);
-    const count = await prisma.userTag.count({ where: { tagId: tag.id } });
+    const userTags = await prisma.userTag.findMany({
+      where: { tagId: tag.id },
+      select: {
+        user: { select: { id: true, name: true, email: true } },
+      },
+      take: 200,
+    });
     return NextResponse.json({
-      tag: { ...tag, studentCount: count },
+      tag: { ...tag, studentCount: userTags.length },
+      students: userTags.map((ut) => ut.user),
     });
   } catch (error) {
     const msg = error instanceof Error ? error.message : "Erro";

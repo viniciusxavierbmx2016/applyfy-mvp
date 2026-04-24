@@ -1,5 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { generateCertificateCode } from "@/lib/certificate-pdf";
+import { sendEmail } from "@/lib/email";
+import { automationEmail } from "@/lib/email-templates";
 
 export interface AutomationTrigger {
   type: string;
@@ -73,18 +75,15 @@ export async function executeAction(
       const user = await prisma.user.findUnique({ where: { id: userId }, select: { email: true, name: true } });
       if (!user) return { status: "FAILED", details: "Usuário não encontrado" };
       try {
-        const apiKey = process.env.BREVO_API_KEY;
-        if (!apiKey) return { status: "SKIPPED", details: "BREVO_API_KEY não configurada" };
-        await fetch("https://api.brevo.com/v3/smtp/email", {
-          method: "POST",
-          headers: { "api-key": apiKey, "Content-Type": "application/json" },
-          body: JSON.stringify({
-            sender: { name: "Members Club", email: "noreply@membersclub.com.br" },
-            to: [{ email: user.email, name: user.name }],
-            subject,
-            htmlContent: body.replace(/\n/g, "<br>"),
-          }),
+        const template = automationEmail(user.name || "", subject, body);
+        const result = await sendEmail({
+          to: { email: user.email, name: user.name || undefined },
+          subject: template.subject,
+          htmlContent: template.htmlContent,
         });
+        if (!result.success) {
+          return { status: "SKIPPED", details: typeof result.error === "string" ? result.error : "Falha ao enviar email" };
+        }
         return { status: "SUCCESS", details: `Email enviado para ${user.email}` };
       } catch (err) {
         return { status: "FAILED", details: err instanceof Error ? err.message : "Erro ao enviar email" };
