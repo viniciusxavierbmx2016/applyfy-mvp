@@ -5,6 +5,12 @@ import Link from "next/link";
 import { CourseEditTabs } from "@/components/course-edit-tabs";
 import { useConfirm } from "@/hooks/use-confirm";
 
+interface TagInfo {
+  id: string;
+  name: string;
+  color: string;
+}
+
 interface Student {
   enrollmentId: string;
   userId: string;
@@ -19,6 +25,7 @@ interface Student {
   lessonsCompleted: number;
   totalLessons: number;
   lastViewedAt: string | null;
+  tags?: TagInfo[];
 }
 
 interface PageData {
@@ -307,6 +314,23 @@ export default function CourseStudentsPage({
                             <p className="text-xs text-gray-500 truncate">
                               {s.email}
                             </p>
+                            {s.tags && s.tags.length > 0 && (
+                              <div className="flex flex-wrap gap-1 mt-1">
+                                {s.tags.map((t) => (
+                                  <span
+                                    key={t.id}
+                                    className="text-[9px] font-medium px-1.5 py-0.5 rounded-full border"
+                                    style={{
+                                      backgroundColor: `${t.color}15`,
+                                      color: t.color,
+                                      borderColor: `${t.color}40`,
+                                    }}
+                                  >
+                                    {t.name}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
                           </div>
                         </div>
                       </td>

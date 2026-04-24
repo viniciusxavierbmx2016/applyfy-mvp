@@ -87,6 +87,10 @@ export async function GET(
               name: true,
               email: true,
               avatarUrl: true,
+              userTags: {
+                include: { tag: { select: { id: true, name: true, color: true } } },
+                orderBy: { createdAt: "desc" },
+              },
             },
           },
         },
@@ -149,6 +153,7 @@ export async function GET(
         lessonsCompleted: completed,
         totalLessons,
         lastViewedAt: lastViewedMap.get(e.userId) || null,
+        tags: e.user.userTags.map((ut) => ut.tag),
       };
     });
 

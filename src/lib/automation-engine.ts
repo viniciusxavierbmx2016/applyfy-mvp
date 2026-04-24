@@ -115,11 +115,68 @@ export async function executeAction(
     }
 
     case "ADD_TAG": {
-      return { status: "SKIPPED", details: "Sistema de tags não implementado" };
+      const tagName = config.tagName as string;
+      if (!tagName) return { status: "FAILED", details: "tagName ausente" };
+      const workspaceId = config.workspaceId as string;
+      if (!workspaceId) return { status: "FAILED", details: "workspaceId ausente" };
+      const tagColor = (config.tagColor as string) || "#6366f1";
+      const tag = await prisma.tag.upsert({
+        where: { workspaceId_name: { workspaceId, name: tagName } },
+        create: { workspaceId, name: tagName, color: tagColor, autoSource: "automation" },
+        update: {},
+      });
+      const existingLink = await prisma.userTag.findUnique({
+        where: { userId_tagId: { userId, tagId: tag.id } },
+      });
+      if (existingLink) return { status: "SKIPPED", details: "Tag já atribuída" };
+      await prisma.userTag.create({ data: { userId, tagId: tag.id } });
+      return { status: "SUCCESS", details: `Tag "${tagName}" atribuída` };
     }
 
     default:
       return { status: "FAILED", details: `Ação desconhecida: ${automation.actionType}` };
+  }
+}
+
+const TAG_COLORS: Record<string, string> = {
+  LESSON_COMPLETED: "#10b981",
+  MODULE_COMPLETED: "#3b82f6",
+  COURSE_COMPLETED: "#8b5cf6",
+  QUIZ_PASSED: "#f59e0b",
+  STUDENT_ENROLLED: "#06b6d4",
+  STUDENT_INACTIVE: "#ef4444",
+  STUDENT_NEVER_ACCESSED: "#f97316",
+  PROGRESS_BELOW: "#ec4899",
+  PROGRESS_ABOVE: "#14b8a6",
+  MODULE_NOT_STARTED: "#a855f7",
+};
+
+function generateAutoTagName(triggerType: string, actionType: string, automationName: string): string {
+  return `auto:${automationName}`;
+}
+
+async function autoTagStudent(
+  workspaceId: string,
+  userId: string,
+  triggerType: string,
+  actionType: string,
+  automationName: string
+): Promise<void> {
+  try {
+    const tagName = generateAutoTagName(triggerType, actionType, automationName);
+    const color = TAG_COLORS[triggerType] || "#6366f1";
+    const tag = await prisma.tag.upsert({
+      where: { workspaceId_name: { workspaceId, name: tagName } },
+      create: { workspaceId, name: tagName, color, autoSource: "automation" },
+      update: {},
+    });
+    await prisma.userTag.upsert({
+      where: { userId_tagId: { userId, tagId: tag.id } },
+      create: { userId, tagId: tag.id },
+      update: {},
+    });
+  } catch {
+    // non-critical
   }
 }
 
@@ -157,6 +214,7 @@ export async function processAutomations(trigger: AutomationTrigger): Promise<vo
               lastExecutedAt: new Date(),
             },
           });
+          autoTagStudent(trigger.workspaceId, trigger.userId, trigger.type, auto.actionType, auto.name).catch(() => {});
         }
       } catch (err) {
         console.error(`Automation ${auto.id} error:`, err);

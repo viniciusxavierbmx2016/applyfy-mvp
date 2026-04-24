@@ -17,6 +17,8 @@ export async function GET(request: Request) {
     const q = searchParams.get("q")?.trim() ?? "";
     const courseIdFilter = searchParams.get("courseId")?.trim() || null;
 
+    const tagFilter = searchParams.get("tagId")?.trim() || null;
+
     const searchClause = q
       ? {
           OR: [
@@ -24,6 +26,10 @@ export async function GET(request: Request) {
             { email: { contains: q, mode: "insensitive" as const } },
           ],
         }
+      : {};
+
+    const tagClause = tagFilter
+      ? { userTags: { some: { tagId: tagFilter } } }
       : {};
 
     const { workspace, scoped } = await resolveStaffWorkspace(staff);
@@ -66,6 +72,7 @@ export async function GET(request: Request) {
     const where = courseFilterActive
       ? {
           ...searchClause,
+          ...tagClause,
           enrollments: {
             some: {
               courseId: { in: effectiveCourseIds || [] },
@@ -77,6 +84,7 @@ export async function GET(request: Request) {
         ? staff.role === "COLLABORATOR"
           ? {
               ...searchClause,
+              ...tagClause,
               enrollments: {
                 some: {
                   courseId: { in: scopedCourseIds || [] },
@@ -86,6 +94,7 @@ export async function GET(request: Request) {
           : {
               AND: [
                 searchClause,
+                tagClause,
                 {
                   OR: [
                     { workspaceId },
@@ -100,7 +109,7 @@ export async function GET(request: Request) {
                 },
               ],
             }
-        : searchClause;
+        : { ...searchClause, ...tagClause };
 
     const users = await prisma.user.findMany({
       where,
@@ -128,9 +137,27 @@ export async function GET(request: Request) {
             course: { select: { id: true, title: true, slug: true } },
           },
         },
+        userTags: {
+          include: { tag: { select: { id: true, name: true, color: true } } },
+          orderBy: { createdAt: "desc" },
+        },
       },
       take: 200,
     });
+
+    const mappedUsers = users.map((u) => ({
+      ...u,
+      tags: u.userTags.map((ut) => ut.tag),
+      userTags: undefined,
+    }));
+
+    const allTags = workspaceId
+      ? await prisma.tag.findMany({
+          where: { workspaceId },
+          orderBy: { name: "asc" },
+          select: { id: true, name: true, color: true },
+        })
+      : [];
 
     const courses = await prisma.course.findMany({
       where: scopedCourseIds
@@ -143,8 +170,9 @@ export async function GET(request: Request) {
     });
 
     return NextResponse.json({
-      users,
+      users: mappedUsers,
       courses,
+      tags: allTags,
       viewerRole: staff.role,
       workspaceId,
     });

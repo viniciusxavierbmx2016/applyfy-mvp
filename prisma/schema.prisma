@@ -44,6 +44,7 @@ model User {
   collaborators    Collaborator[]
   subscriptions    Subscription[]
   quizAttempts     QuizAttempt[]
+  userTags         UserTag[]
 
   @@index([workspaceId])
 }
@@ -80,6 +81,7 @@ model Workspace {
   collaborators Collaborator[]
   transactions ProducerTransaction[]
   automations  Automation[]
+  tags         Tag[]
 
   @@index([ownerId])
 }
@@ -688,4 +690,33 @@ model AutomationLog {
   @@index([automationId])
   @@index([userId])
   @@index([createdAt])
+}
+
+model Tag {
+  id          String   @id @default(uuid())
+  workspaceId String
+  name        String
+  color       String   @default("#6366f1")
+  autoSource  String?
+  createdAt   DateTime @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  userTags  UserTag[]
+
+  @@unique([workspaceId, name])
+  @@index([workspaceId])
+}
+
+model UserTag {
+  id        String   @id @default(uuid())
+  userId    String
+  tagId     String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tag  Tag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, tagId])
+  @@index([tagId])
+  @@index([userId])
 }

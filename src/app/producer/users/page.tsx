@@ -19,6 +19,12 @@ interface AdminUserEnrollment {
 
 type Role = "STUDENT" | "PRODUCER" | "ADMIN";
 
+interface TagInfo {
+  id: string;
+  name: string;
+  color: string;
+}
+
 interface AdminUser {
   id: string;
   name: string;
@@ -29,6 +35,7 @@ interface AdminUser {
   level: number;
   createdAt: string;
   enrollments: AdminUserEnrollment[];
+  tags?: TagInfo[];
 }
 
 interface CourseOption {
@@ -40,10 +47,12 @@ interface CourseOption {
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [courses, setCourses] = useState<CourseOption[]>([]);
+  const [allTags, setAllTags] = useState<TagInfo[]>([]);
   const [viewerRole, setViewerRole] = useState<Role | null>(null);
   const [query, setQuery] = useState("");
   const [debounced, setDebounced] = useState("");
   const [courseFilter, setCourseFilter] = useState<string>("");
+  const [tagFilter, setTagFilter] = useState<string>("");
   const [exporting, setExporting] = useState(false);
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState<string | null>(null);
@@ -65,16 +74,18 @@ export default function AdminUsersPage() {
     const params = new URLSearchParams();
     if (debounced) params.set("q", debounced);
     if (courseFilter) params.set("courseId", courseFilter);
+    if (tagFilter) params.set("tagId", tagFilter);
     const qs = params.toString();
     const url = qs
       ? `/api/producer/students?${qs}`
       : "/api/producer/students";
     fetch(url)
-      .then((r) => (r.ok ? r.json() : { users: [], courses: [] }))
+      .then((r) => (r.ok ? r.json() : { users: [], courses: [], tags: [] }))
       .then((d) => {
         if (!cancelled) {
           setUsers(d.users || []);
           setCourses(d.courses || []);
+          setAllTags(d.tags || []);
           setViewerRole(d.viewerRole || null);
         }
       })
@@ -84,7 +95,7 @@ export default function AdminUsersPage() {
     return () => {
       cancelled = true;
     };
-  }, [debounced, courseFilter]);
+  }, [debounced, courseFilter, tagFilter]);
 
   function showToast(msg: string) {
     setToast(msg);
@@ -217,7 +228,7 @@ export default function AdminUsersPage() {
 
       <div className="flex flex-col sm:flex-row sm:items-end gap-2">
         {courses.length > 0 && (
-          <div className="flex-1 sm:max-w-sm">
+          <div className="flex-1 sm:max-w-xs">
             <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">
               Curso
             </label>
@@ -230,6 +241,25 @@ export default function AdminUsersPage() {
               {courses.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.title}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+        {allTags.length > 0 && (
+          <div className="flex-1 sm:max-w-xs">
+            <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">
+              Tag
+            </label>
+            <select
+              value={tagFilter}
+              onChange={(e) => setTagFilter(e.target.value)}
+              className="w-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg px-3 py-2.5 text-sm text-gray-900 dark:text-white focus:outline-none focus:border-blue-500"
+            >
+              <option value="">Todas as tags</option>
+              {allTags.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.name}
                 </option>
               ))}
             </select>
@@ -392,6 +422,19 @@ export default function AdminUsersPage() {
                         ? "Produtor"
                         : "Aluno"}
                     </span>
+                    {u.tags && u.tags.length > 0 && u.tags.map((t) => (
+                      <span
+                        key={t.id}
+                        className="text-[10px] font-medium px-1.5 py-0.5 rounded-full border"
+                        style={{
+                          backgroundColor: `${t.color}15`,
+                          color: t.color,
+                          borderColor: `${t.color}40`,
+                        }}
+                      >
+                        {t.name}
+                      </span>
+                    ))}
                     <Button
                       variant="secondary"
                       size="sm"
@@ -490,6 +533,75 @@ export default function AdminUsersPage() {
                         Liberar
                       </Button>
                     </div>
+
+                    {allTags.length > 0 && (
+                      <>
+                        <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2 mt-4">
+                          Tags
+                        </p>
+                        <div className="flex flex-wrap gap-1.5 mb-2">
+                          {(u.tags || []).map((t) => (
+                            <span
+                              key={t.id}
+                              className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full border"
+                              style={{
+                                backgroundColor: `${t.color}15`,
+                                color: t.color,
+                                borderColor: `${t.color}40`,
+                              }}
+                            >
+                              {t.name}
+                              <button
+                                type="button"
+                                onClick={async () => {
+                                  await fetch(`/api/producer/students/${u.id}/tags?tagId=${t.id}`, { method: "DELETE" });
+                                  setUsers((prev) => prev.map((x) => x.id === u.id ? { ...x, tags: (x.tags || []).filter((tt) => tt.id !== t.id) } : x));
+                                }}
+                                className="hover:opacity-70"
+                              >
+                                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                              </button>
+                            </span>
+                          ))}
+                        </div>
+                        <div className="flex flex-col sm:flex-row gap-2">
+                          <select
+                            id={`tag-select-${u.id}`}
+                            className="flex-1 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:border-blue-500"
+                            defaultValue=""
+                          >
+                            <option value="">Escolha uma tag...</option>
+                            {allTags.filter((t) => !(u.tags || []).some((ut) => ut.id === t.id)).map((t) => (
+                              <option key={t.id} value={t.id}>{t.name}</option>
+                            ))}
+                          </select>
+                          <Button
+                            variant="secondary"
+                            size="md"
+                            onClick={async () => {
+                              const sel = document.getElementById(`tag-select-${u.id}`) as HTMLSelectElement;
+                              const tagId = sel?.value;
+                              if (!tagId) return;
+                              const res = await fetch(`/api/producer/students/${u.id}/tags`, {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({ tagId }),
+                              });
+                              if (res.ok) {
+                                const addedTag = allTags.find((t) => t.id === tagId);
+                                if (addedTag) {
+                                  setUsers((prev) => prev.map((x) => x.id === u.id ? { ...x, tags: [...(x.tags || []), addedTag] } : x));
+                                }
+                                sel.value = "";
+                                showToast("Tag adicionada");
+                              }
+                            }}
+                          >
+                            Adicionar
+                          </Button>
+                        </div>
+                      </>
+                    )}
                   </div>
                 )}
               </div>
