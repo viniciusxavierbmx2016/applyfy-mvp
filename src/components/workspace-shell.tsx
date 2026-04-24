@@ -54,6 +54,16 @@ export function WorkspaceShell({
   }, [slug]);
 
   useEffect(() => {
+    if (!ws?.name) return;
+    const meta = document.querySelector('meta[name="apple-mobile-web-app-title"]');
+    if (meta) {
+      const prev = meta.getAttribute("content");
+      meta.setAttribute("content", ws.name);
+      return () => { meta.setAttribute("content", prev || "Members Club"); };
+    }
+  }, [ws?.name]);
+
+  useEffect(() => {
     if (!ws?.logoUrl) return;
     const icons = document.querySelectorAll('link[rel="apple-touch-icon"]');
     const originals = Array.from(icons).map((el) => ({

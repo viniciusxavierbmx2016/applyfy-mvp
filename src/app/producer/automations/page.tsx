@@ -608,7 +608,7 @@ function FlowEditor({ editing, template, courses, tags, onBack }: { editing: Aut
   const actionMeta = actionType ? ACTION_META[actionType] : null;
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-[#0a0a0b]">
+    <div className="fixed inset-0 z-[60] flex flex-col bg-[#0a0a0b]">
       <div className="flex items-center justify-between px-4 py-3 bg-[#111113] border-b border-[#28282e]">
         <div className="flex items-center gap-4">
           <button type="button" onClick={onBack} className="flex items-center gap-2 text-sm text-gray-400 hover:text-white transition">
@@ -970,7 +970,7 @@ function MobileFlowEditor({
   const validActions = getValidActions(triggerType);
 
   return (
-    <div className="fixed inset-0 z-50 bg-[#0a0a0b] overflow-y-auto">
+    <div className="fixed inset-0 z-[60] bg-[#0a0a0b] overflow-y-auto">
       <div className="sticky top-0 z-10 bg-[#111113] border-b border-[#28282e] px-4 py-3 flex items-center justify-between">
         <button type="button" onClick={onBack} className="text-sm text-gray-400 hover:text-white transition flex items-center gap-1">
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>Voltar
