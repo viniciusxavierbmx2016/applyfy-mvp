@@ -4,7 +4,7 @@ import { requireStaff } from "@/lib/auth";
 import { resolveStaffWorkspace } from "@/lib/workspace";
 import { NotificationType } from "@prisma/client";
 
-const VALID_PLATFORMS = ["JITSI", "GOOGLE_MEET", "ZOOM", "YOUTUBE_LIVE", "CUSTOM"];
+const VALID_PLATFORMS = ["GOOGLE_MEET", "ZOOM", "YOUTUBE_LIVE", "CUSTOM"];
 const MAX_LIVES = 50;
 
 async function getWorkspaceId(staff: Parameters<typeof resolveStaffWorkspace>[0]) {
@@ -59,7 +59,7 @@ export async function POST(request: Request) {
     if (!platform || !VALID_PLATFORMS.includes(platform)) {
       return NextResponse.json({ error: "Plataforma inválida" }, { status: 400 });
     }
-    if (platform !== "JITSI" && !externalUrl?.trim()) {
+    if (!externalUrl?.trim()) {
       return NextResponse.json({ error: "Link da live é obrigatório" }, { status: 400 });
     }
     if (!scheduledAt) {
@@ -88,21 +88,13 @@ export async function POST(request: Request) {
       select: { slug: true },
     });
 
-    let liveExternalUrl = externalUrl?.trim() || "";
-    let liveEmbedUrl = embedUrl?.trim() || null;
-    if (platform === "JITSI") {
-      const roomName = `mc-${(ws?.slug || "live").replace(/[^a-z0-9-]/gi, "")}-${Date.now()}`.toLowerCase();
-      liveExternalUrl = roomName;
-      liveEmbedUrl = `https://meet.jit.si/${roomName}`;
-    }
-
     const live = await prisma.live.create({
       data: {
         title: title.trim(),
         description: description?.trim() || null,
         platform,
-        externalUrl: liveExternalUrl,
-        embedUrl: liveEmbedUrl,
+        externalUrl: externalUrl.trim(),
+        embedUrl: embedUrl?.trim() || null,
         scheduledAt: new Date(scheduledAt),
         courseId: courseId || null,
         thumbnailUrl: thumbnailUrl || null,

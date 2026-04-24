@@ -1,9 +1,6 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { createPortal } from "react-dom";
-import { useUserStore } from "@/stores/user-store";
-import { JitsiRoom } from "@/components/jitsi-room";
 
 interface LiveItem {
   id: string;
@@ -39,7 +36,6 @@ interface ModuleOption {
 type StatusFilter = "ALL" | "SCHEDULED" | "LIVE" | "ENDED";
 
 const PLATFORMS = [
-  { value: "JITSI", label: "Live integrada (nativa)" },
   { value: "YOUTUBE_LIVE", label: "YouTube Live" },
   { value: "GOOGLE_MEET", label: "Google Meet" },
   { value: "ZOOM", label: "Zoom" },
@@ -118,8 +114,6 @@ export default function ProducerLivesPage() {
     videoUrl: "",
   });
   const [savingLesson, setSavingLesson] = useState(false);
-  const [jitsiLive, setJitsiLive] = useState<LiveItem | null>(null);
-  const { user } = useUserStore();
 
   const fetchLives = useCallback(async () => {
     try {
@@ -214,7 +208,7 @@ export default function ProducerLivesPage() {
   }
 
   async function handleSave() {
-    if (!form.title.trim() || (form.platform !== "JITSI" && !form.externalUrl.trim()) || !form.scheduledAt) return;
+    if (!form.title.trim() || !form.externalUrl.trim() || !form.scheduledAt) return;
     setSaving(true);
     try {
       const payload: Record<string, unknown> = {
@@ -522,17 +516,6 @@ export default function ProducerLivesPage() {
                       Iniciar
                     </button>
                   )}
-                  {live.status === "LIVE" && live.platform === "JITSI" && (
-                    <button
-                      onClick={() => setJitsiLive(live)}
-                      className="flex items-center gap-1 bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition"
-                    >
-                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                      </svg>
-                      Entrar na live
-                    </button>
-                  )}
                   {live.status === "LIVE" && (
                     <button
                       onClick={() => setConfirmAction({ type: "end", live })}
@@ -644,25 +627,15 @@ export default function ProducerLivesPage() {
                 </div>
               </div>
 
-              {form.platform !== "JITSI" && (
-                <div>
-                  <label className={labelCls}>Link da Live *</label>
-                  <input
-                    className={inputCls}
-                    value={form.externalUrl}
-                    onChange={(e) => handleUrlChange(e.target.value)}
-                    placeholder="https://youtube.com/live/..."
-                  />
-                </div>
-              )}
-
-              {form.platform === "JITSI" && (
-                <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-3">
-                  <p className="text-green-400 text-xs font-medium">
-                    A sala será criada automaticamente. O producer entra como moderador com controle total.
-                  </p>
-                </div>
-              )}
+              <div>
+                <label className={labelCls}>Link da Live *</label>
+                <input
+                  className={inputCls}
+                  value={form.externalUrl}
+                  onChange={(e) => handleUrlChange(e.target.value)}
+                  placeholder="https://youtube.com/live/..."
+                />
+              </div>
 
               {form.platform === "YOUTUBE_LIVE" && form.embedUrl && (
                 <div>
@@ -768,7 +741,7 @@ export default function ProducerLivesPage() {
                 </button>
                 <button
                   onClick={handleSave}
-                  disabled={saving || !form.title.trim() || (form.platform !== "JITSI" && !form.externalUrl.trim()) || !form.scheduledAt || (form.visibility === "COURSE_ONLY" && !form.courseId)}
+                  disabled={saving || !form.title.trim() || !form.externalUrl.trim() || !form.scheduledAt || (form.visibility === "COURSE_ONLY" && !form.courseId)}
                   className="bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white px-4 py-2 rounded-lg text-sm font-medium transition"
                 >
                   {saving ? "Salvando..." : editingLive ? "Salvar" : "Criar Live"}
@@ -937,43 +910,6 @@ export default function ProducerLivesPage() {
           </div>
         </div>
       )}
-
-      {/* Jitsi Moderator Modal */}
-      {jitsiLive &&
-        createPortal(
-          <div className="fixed inset-0 z-[60] bg-black flex flex-col">
-            <div className="flex items-center justify-between px-4 py-2 bg-gray-900 border-b border-white/10">
-              <div className="flex items-center gap-3">
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-red-500/20 text-red-400">
-                  <span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse" />
-                  Ao Vivo
-                </span>
-                <h3 className="text-white font-medium text-sm truncate">
-                  {jitsiLive.title}
-                </h3>
-                <span className="text-xs text-green-400">Moderador</span>
-              </div>
-              <button
-                onClick={() => setJitsiLive(null)}
-                className="text-gray-400 hover:text-white transition p-1"
-              >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-            <div className="flex-1">
-              <JitsiRoom
-                roomName={jitsiLive.externalUrl}
-                userName={user?.name || "Moderador"}
-                userEmail={user?.email || ""}
-                isModerator={true}
-                onClose={() => setJitsiLive(null)}
-              />
-            </div>
-          </div>,
-          document.body
-        )}
     </div>
   );
 }
