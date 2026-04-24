@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireStaff } from "@/lib/auth";
 import { resolveStaffWorkspace } from "@/lib/workspace";
+import { NotificationType } from "@prisma/client";
 
 const VALID_TRANSITIONS: Record<string, string[]> = {
   SCHEDULED: ["LIVE"],
@@ -56,11 +57,73 @@ export async function PATCH(
       data,
     });
 
+    if (status === "LIVE") {
+      const workspace = await prisma.workspace.findUnique({
+        where: { id: workspaceId },
+        select: { slug: true },
+      });
+      notifyStudents(workspaceId, existing.courseId, live.id, workspace?.slug || "", {
+        type: "LIVE_STARTED",
+        liveNotificationType: "STARTED",
+        message: `Live começou! ${existing.title} está ao vivo agora`,
+      });
+    }
+
     return NextResponse.json({ live });
   } catch (error) {
     console.error("PATCH /api/producer/lives/[id]/status error:", error);
     const msg = error instanceof Error ? error.message : "";
     const status = msg === "Não autorizado" ? 401 : msg === "Sem permissão" ? 403 : 500;
     return NextResponse.json({ error: msg || "Erro" }, { status });
+  }
+}
+
+async function notifyStudents(
+  workspaceId: string,
+  courseId: string | null,
+  liveId: string,
+  slug: string,
+  opts: { type: NotificationType; liveNotificationType: string; message: string }
+) {
+  try {
+    const studentIds = courseId
+      ? await prisma.enrollment
+          .findMany({
+            where: { courseId, status: "ACTIVE" },
+            select: { userId: true },
+            distinct: ["userId"],
+          })
+          .then((rows) => rows.map((r) => r.userId))
+      : await prisma.enrollment
+          .findMany({
+            where: { course: { workspaceId }, status: "ACTIVE" },
+            select: { userId: true },
+            distinct: ["userId"],
+          })
+          .then((rows) => rows.map((r) => r.userId));
+
+    if (studentIds.length === 0) return;
+
+    const link = `/w/${slug}/lives/${liveId}`;
+
+    await prisma.$transaction([
+      prisma.liveNotification.createMany({
+        data: studentIds.map((userId) => ({
+          liveId,
+          userId,
+          type: opts.liveNotificationType,
+        })),
+      }),
+      prisma.notification.createMany({
+        data: studentIds.map((userId) => ({
+          userId,
+          type: opts.type,
+          message: opts.message,
+          link,
+        })),
+      }),
+    ]);
+  } catch (err) {
+    console.error("notifyStudents error:", err);
   }
 }

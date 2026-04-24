@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireStaff } from "@/lib/auth";
 import { resolveStaffWorkspace } from "@/lib/workspace";
+import { NotificationType } from "@prisma/client";
 
 const VALID_PLATFORMS = ["GOOGLE_MEET", "ZOOM", "YOUTUBE_LIVE", "CUSTOM"];
 const MAX_LIVES = 50;
@@ -78,18 +79,37 @@ export async function POST(request: Request) {
       }
     }
 
-    const live = await prisma.live.create({
-      data: {
-        title: title.trim(),
-        description: description?.trim() || null,
-        platform,
-        externalUrl: externalUrl.trim(),
-        embedUrl: embedUrl?.trim() || null,
-        scheduledAt: new Date(scheduledAt),
-        courseId: courseId || null,
-        thumbnailUrl: thumbnailUrl || null,
-        workspaceId,
-      },
+    const [live, workspace] = await Promise.all([
+      prisma.live.create({
+        data: {
+          title: title.trim(),
+          description: description?.trim() || null,
+          platform,
+          externalUrl: externalUrl.trim(),
+          embedUrl: embedUrl?.trim() || null,
+          scheduledAt: new Date(scheduledAt),
+          courseId: courseId || null,
+          thumbnailUrl: thumbnailUrl || null,
+          workspaceId,
+        },
+      }),
+      prisma.workspace.findUnique({
+        where: { id: workspaceId },
+        select: { slug: true },
+      }),
+    ]);
+
+    const scheduledDate = new Date(scheduledAt).toLocaleDateString("pt-BR", {
+      day: "2-digit",
+      month: "short",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+
+    notifyStudents(workspaceId, courseId || null, live.id, workspace?.slug || "", {
+      type: "LIVE_SCHEDULED",
+      liveNotificationType: "SCHEDULED",
+      message: `Nova live agendada! ${title.trim()} — ${scheduledDate}`,
     });
 
     return NextResponse.json({ live }, { status: 201 });
@@ -98,5 +118,55 @@ export async function POST(request: Request) {
     const msg = error instanceof Error ? error.message : "";
     const status = msg === "Não autorizado" ? 401 : msg === "Sem permissão" ? 403 : 500;
     return NextResponse.json({ error: msg || "Erro" }, { status });
+  }
+}
+
+async function notifyStudents(
+  workspaceId: string,
+  courseId: string | null,
+  liveId: string,
+  slug: string,
+  opts: { type: NotificationType; liveNotificationType: string; message: string }
+) {
+  try {
+    const studentIds = courseId
+      ? await prisma.enrollment
+          .findMany({
+            where: { courseId, status: "ACTIVE" },
+            select: { userId: true },
+            distinct: ["userId"],
+          })
+          .then((rows) => rows.map((r) => r.userId))
+      : await prisma.enrollment
+          .findMany({
+            where: { course: { workspaceId }, status: "ACTIVE" },
+            select: { userId: true },
+            distinct: ["userId"],
+          })
+          .then((rows) => rows.map((r) => r.userId));
+
+    if (studentIds.length === 0) return;
+
+    const link = `/w/${slug}/lives/${liveId}`;
+
+    await prisma.$transaction([
+      prisma.liveNotification.createMany({
+        data: studentIds.map((userId) => ({
+          liveId,
+          userId,
+          type: opts.liveNotificationType,
+        })),
+      }),
+      prisma.notification.createMany({
+        data: studentIds.map((userId) => ({
+          userId,
+          type: opts.type,
+          message: opts.message,
+          link,
+        })),
+      }),
+    ]);
+  } catch (err) {
+    console.error("notifyStudents error:", err);
   }
 }

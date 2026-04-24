@@ -1,0 +1,3 @@
+-- AlterEnum
+ALTER TYPE "NotificationType" ADD VALUE 'LIVE_SCHEDULED';
+ALTER TYPE "NotificationType" ADD VALUE 'LIVE_STARTED';

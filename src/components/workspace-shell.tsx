@@ -34,6 +34,7 @@ export function WorkspaceShell({
   const [ws, setWs] = useState<WorkspaceInfo | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
+  const [liveCount, setLiveCount] = useState(0);
 
   useEffect(() => {
     fetch(`/api/w/${slug}`)
@@ -84,6 +85,24 @@ export function WorkspaceShell({
       if (saved === "1") setCollapsed(true);
     } catch {}
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    function fetchLiveCount() {
+      fetch(`/api/w/${slug}/lives`)
+        .then((r) => (r.ok ? r.json() : { lives: [] }))
+        .then((d) => {
+          if (!cancelled) {
+            const count = (d.lives || []).filter((l: { status: string }) => l.status === "LIVE").length;
+            setLiveCount(count);
+          }
+        })
+        .catch(() => {});
+    }
+    fetchLiveCount();
+    const interval = setInterval(fetchLiveCount, 30000);
+    return () => { cancelled = true; clearInterval(interval); };
+  }, [slug]);
 
   function toggleCollapsed() {
     setCollapsed((v) => {
@@ -157,9 +176,9 @@ export function WorkspaceShell({
   );
 
   const items = [
-    { href: vitrineHref, label: "Vitrine", icon: iconHome, active: !!isVitrine },
-    { href: livesHref, label: "Lives", icon: iconLives, active: isLives },
-    { href: profileHref, label: "Meu Perfil", icon: iconProfile, active: isProfile },
+    { href: vitrineHref, label: "Vitrine", icon: iconHome, active: !!isVitrine, badge: 0 },
+    { href: livesHref, label: "Lives", icon: iconLives, active: isLives, badge: liveCount },
+    { href: profileHref, label: "Meu Perfil", icon: iconProfile, active: isProfile, badge: 0 },
   ];
 
   function linkCls(active: boolean) {
@@ -344,10 +363,22 @@ export function WorkspaceShell({
                 title={item.label}
                 className={linkCls(item.active)}
               >
-                <span className={iconWrapCls(item.active)}>{item.icon}</span>
+                <span className={cn("relative", iconWrapCls(item.active))}>
+                  {item.icon}
+                  {item.badge > 0 && collapsed && (
+                    <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-red-500 rounded-full text-[9px] font-bold text-white flex items-center justify-center animate-pulse">
+                      {item.badge}
+                    </span>
+                  )}
+                </span>
                 <span className={cn("truncate", collapsed && "lg:hidden")}>
                   {item.label}
                 </span>
+                {item.badge > 0 && !collapsed && (
+                  <span className="ml-auto w-5 h-5 bg-red-500 rounded-full text-[10px] font-bold text-white flex items-center justify-center animate-pulse flex-shrink-0">
+                    {item.badge}
+                  </span>
+                )}
                 {collapsed && <span className={tooltipCls}>{item.label}</span>}
               </Link>
             ))}

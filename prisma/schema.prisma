@@ -393,6 +393,8 @@ enum NotificationType {
   REPLY
   ENROLLMENT
   LEVEL_UP
+  LIVE_SCHEDULED
+  LIVE_STARTED
 }
 
 model Certificate {
