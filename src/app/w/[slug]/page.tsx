@@ -216,26 +216,26 @@ export default function WorkspaceVitrinePage() {
   return (
     <div className="animate-fade-in-up">
       {ws?.bannerUrl ? (
-        <div className="px-4 sm:px-6 lg:px-8 pt-4 lg:pt-6 max-w-6xl mx-auto">
-          <div
-            className="relative w-full overflow-hidden rounded-2xl bg-gray-100 dark:bg-gray-900"
-            style={{ aspectRatio: "24/5" }}
-          >
-            <Image
-              src={ws.bannerUrl}
-              alt={displayName}
-              fill
-              sizes="100vw"
-              className="object-cover"
-              style={bannerPos ? { objectPosition: `${bannerPos.x}% ${bannerPos.y}%` } : undefined}
-              priority
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-            <div className="absolute bottom-0 left-0 p-6 lg:p-8">
-              <h2 className="text-2xl lg:text-3xl font-bold text-white mb-1">
+        <div
+          className="relative w-full overflow-hidden bg-gray-100 dark:bg-gray-900"
+          style={{ aspectRatio: "24/5" }}
+        >
+          <Image
+            src={ws.bannerUrl}
+            alt={displayName}
+            fill
+            sizes="100vw"
+            className="object-cover"
+            style={bannerPos ? { objectPosition: `${bannerPos.x}% ${bannerPos.y}%` } : undefined}
+            priority
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-white via-white/20 to-transparent dark:from-gray-950 dark:via-gray-950/40 dark:to-transparent" />
+          <div className="absolute bottom-0 left-0 w-full px-4 sm:px-6 lg:px-8 pb-6 lg:pb-8">
+            <div className="max-w-6xl mx-auto">
+              <h2 className="text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white mb-1">
                 {greeting}, {firstName}
               </h2>
-              <p className="text-gray-300 text-sm">
+              <p className="text-gray-600 dark:text-gray-400 text-sm">
                 {`Bem-vindo à área de membros de ${displayName}`}
               </p>
             </div>
