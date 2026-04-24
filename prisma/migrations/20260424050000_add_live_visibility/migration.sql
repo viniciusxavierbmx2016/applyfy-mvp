@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Live" ADD COLUMN "visibility" TEXT NOT NULL DEFAULT 'PUBLIC';

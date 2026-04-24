@@ -50,7 +50,8 @@ export async function POST(request: Request) {
     const workspaceId = await getWorkspaceId(staff);
 
     const body = await request.json();
-    const { title, description, platform, externalUrl, embedUrl, scheduledAt, courseId, thumbnailUrl } = body;
+    const { title, description, platform, externalUrl, embedUrl, scheduledAt, courseId, thumbnailUrl, visibility } = body;
+    const liveVisibility = visibility === "COURSE_ONLY" ? "COURSE_ONLY" : "PUBLIC";
 
     if (!title?.trim()) {
       return NextResponse.json({ error: "Título é obrigatório" }, { status: 400 });
@@ -63,6 +64,9 @@ export async function POST(request: Request) {
     }
     if (!scheduledAt) {
       return NextResponse.json({ error: "Data agendada é obrigatória" }, { status: 400 });
+    }
+    if (liveVisibility === "COURSE_ONLY" && !courseId) {
+      return NextResponse.json({ error: "Curso é obrigatório para lives restritas" }, { status: 400 });
     }
 
     const count = await prisma.live.count({ where: { workspaceId } });
@@ -90,6 +94,7 @@ export async function POST(request: Request) {
           scheduledAt: new Date(scheduledAt),
           courseId: courseId || null,
           thumbnailUrl: thumbnailUrl || null,
+          visibility: liveVisibility,
           workspaceId,
         },
       }),

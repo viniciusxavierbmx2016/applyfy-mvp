@@ -70,6 +70,7 @@ export default function LiveRoomPage() {
   const [live, setLive] = useState<LiveData | null>(null);
   const [messages, setMessages] = useState<LiveMessage[]>([]);
   const [loading, setLoading] = useState(true);
+  const [forbidden, setForbidden] = useState(false);
   const [chatInput, setChatInput] = useState("");
   const [sending, setSending] = useState(false);
   const [countdown, setCountdown] = useState<ReturnType<typeof getCountdownParts>>(null);
@@ -80,6 +81,10 @@ export default function LiveRoomPage() {
   const fetchLive = useCallback(async () => {
     try {
       const res = await fetch(`/api/lives/${liveId}`);
+      if (res.status === 403) {
+        setForbidden(true);
+        return;
+      }
       if (!res.ok) return;
       const data = await res.json();
       setLive(data.live);
@@ -157,6 +162,24 @@ export default function LiveRoomPage() {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (forbidden) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
+        <svg className="w-16 h-16 text-gray-300 dark:text-gray-600 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+        </svg>
+        <p className="text-gray-700 dark:text-gray-300 font-medium mb-1">Você não tem acesso a esta live</p>
+        <p className="text-gray-500 dark:text-gray-400 text-sm mb-4">Esta live é exclusiva para alunos matriculados no curso.</p>
+        <button
+          onClick={() => router.push(`/w/${slug}`)}
+          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition"
+        >
+          Ver cursos
+        </button>
       </div>
     );
   }

@@ -29,7 +29,7 @@ export async function GET(
       }
     }
 
-    const lives = await prisma.live.findMany({
+    const allLives = await prisma.live.findMany({
       where: {
         workspaceId: workspace.id,
         status: { in: ["SCHEDULED", "LIVE", "ENDED"] },
@@ -42,6 +42,29 @@ export async function GET(
         course: { select: { id: true, title: true } },
       },
     });
+
+    let lives = allLives;
+
+    if (user.role === "STUDENT") {
+      const courseOnlyLives = allLives.filter((l) => l.visibility === "COURSE_ONLY" && l.courseId);
+      if (courseOnlyLives.length > 0) {
+        const courseIds = Array.from(new Set(courseOnlyLives.map((l) => l.courseId!)));
+        const enrollments = await prisma.enrollment.findMany({
+          where: {
+            userId: user.id,
+            courseId: { in: courseIds },
+            status: "ACTIVE",
+          },
+          select: { courseId: true },
+        });
+        const enrolledCourseIds = new Set(enrollments.map((e) => e.courseId));
+
+        lives = allLives.filter((l) => {
+          if (l.visibility !== "COURSE_ONLY") return true;
+          return l.courseId ? enrolledCourseIds.has(l.courseId) : false;
+        });
+      }
+    }
 
     return NextResponse.json({ lives });
   } catch (error) {

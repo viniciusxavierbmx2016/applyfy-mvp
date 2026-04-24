@@ -17,6 +17,7 @@ interface LiveItem {
   thumbnailUrl: string | null;
   courseId: string | null;
   savedAsLessonId: string | null;
+  visibility: string;
   course: { id: string; title: string } | null;
   _count: { messages: number };
   createdAt: string;
@@ -99,6 +100,7 @@ export default function ProducerLivesPage() {
     courseId: "",
     thumbnailUrl: "",
     recordingUrl: "",
+    visibility: "PUBLIC",
   });
 
   // Save as lesson modal
@@ -169,6 +171,7 @@ export default function ProducerLivesPage() {
       courseId: "",
       thumbnailUrl: "",
       recordingUrl: "",
+      visibility: "PUBLIC",
     });
     setShowModal(true);
   }
@@ -185,6 +188,7 @@ export default function ProducerLivesPage() {
       courseId: live.courseId || "",
       thumbnailUrl: live.thumbnailUrl || "",
       recordingUrl: live.recordingUrl || "",
+      visibility: live.visibility || "PUBLIC",
     });
     setShowModal(true);
   }
@@ -216,6 +220,7 @@ export default function ProducerLivesPage() {
         scheduledAt: form.scheduledAt,
         courseId: form.courseId || null,
         thumbnailUrl: form.thumbnailUrl || null,
+        visibility: form.visibility,
       };
 
       if (editingLive) {
@@ -656,13 +661,49 @@ export default function ProducerLivesPage() {
               )}
 
               <div>
-                <label className={labelCls}>Curso vinculado</label>
+                <label className={labelCls}>Visibilidade</label>
+                <div className="space-y-2">
+                  <label className="flex items-start gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="visibility"
+                      value="PUBLIC"
+                      checked={form.visibility === "PUBLIC"}
+                      onChange={() => setForm((f) => ({ ...f, visibility: "PUBLIC" }))}
+                      className="mt-0.5 accent-purple-500"
+                    />
+                    <div>
+                      <span className="text-sm text-white">Pública</span>
+                      <p className="text-xs text-gray-500">Todos os alunos do workspace</p>
+                    </div>
+                  </label>
+                  <label className="flex items-start gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="visibility"
+                      value="COURSE_ONLY"
+                      checked={form.visibility === "COURSE_ONLY"}
+                      onChange={() => setForm((f) => ({ ...f, visibility: "COURSE_ONLY" }))}
+                      className="mt-0.5 accent-purple-500"
+                    />
+                    <div>
+                      <span className="text-sm text-white">Restrita ao curso</span>
+                      <p className="text-xs text-gray-500">Apenas alunos matriculados no curso</p>
+                    </div>
+                  </label>
+                </div>
+              </div>
+
+              <div>
+                <label className={labelCls}>
+                  Curso vinculado {form.visibility === "COURSE_ONLY" ? "*" : ""}
+                </label>
                 <select
                   className={inputCls}
                   value={form.courseId}
                   onChange={(e) => setForm((f) => ({ ...f, courseId: e.target.value }))}
                 >
-                  <option value="">Nenhum</option>
+                  <option value="">{form.visibility === "COURSE_ONLY" ? "Selecione um curso" : "Nenhum"}</option>
                   {courses.map((c) => (
                     <option key={c.id} value={c.id}>{c.title}</option>
                   ))}
@@ -700,7 +741,7 @@ export default function ProducerLivesPage() {
                 </button>
                 <button
                   onClick={handleSave}
-                  disabled={saving || !form.title.trim() || !form.externalUrl.trim() || !form.scheduledAt}
+                  disabled={saving || !form.title.trim() || !form.externalUrl.trim() || !form.scheduledAt || (form.visibility === "COURSE_ONLY" && !form.courseId)}
                   className="bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white px-4 py-2 rounded-lg text-sm font-medium transition"
                 >
                   {saving ? "Salvando..." : editingLive ? "Salvar" : "Criar Live"}

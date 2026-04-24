@@ -743,6 +743,7 @@ model Live {
   recordingUrl     String?
   thumbnailUrl     String?
   savedAsLessonId  String?
+  visibility       String    @default("PUBLIC")
   courseId          String?
   workspaceId      String
   createdAt     DateTime  @default(now())

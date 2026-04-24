@@ -61,7 +61,7 @@ export async function PUT(
     }
 
     const body = await request.json();
-    const { title, description, platform, externalUrl, embedUrl, scheduledAt, courseId, thumbnailUrl, recordingUrl, savedAsLessonId } = body;
+    const { title, description, platform, externalUrl, embedUrl, scheduledAt, courseId, thumbnailUrl, recordingUrl, savedAsLessonId, visibility } = body;
 
     const live = await prisma.live.update({
       where: { id: params.id },
@@ -76,6 +76,7 @@ export async function PUT(
         ...(thumbnailUrl !== undefined && { thumbnailUrl: thumbnailUrl || null }),
         ...(recordingUrl !== undefined && { recordingUrl: recordingUrl || null }),
         ...(savedAsLessonId !== undefined && { savedAsLessonId }),
+        ...(visibility !== undefined && { visibility: visibility === "COURSE_ONLY" ? "COURSE_ONLY" : "PUBLIC" }),
       },
     });
 

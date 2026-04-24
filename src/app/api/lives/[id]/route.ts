@@ -37,6 +37,16 @@ export async function GET(
       if (!allowed) {
         return NextResponse.json({ error: "Sem acesso" }, { status: 403 });
       }
+
+      if (live.visibility === "COURSE_ONLY" && live.courseId) {
+        const enrollment = await prisma.enrollment.findFirst({
+          where: { userId: user.id, courseId: live.courseId, status: "ACTIVE" },
+          select: { id: true },
+        });
+        if (!enrollment) {
+          return NextResponse.json({ error: "Você não tem acesso a esta live" }, { status: 403 });
+        }
+      }
     }
 
     return NextResponse.json({ live });
