@@ -54,6 +54,21 @@ export function WorkspaceShell({
   }, [slug]);
 
   useEffect(() => {
+    if (!ws?.logoUrl) return;
+    const icons = document.querySelectorAll('link[rel="apple-touch-icon"]');
+    const originals = Array.from(icons).map((el) => ({
+      el,
+      href: el.getAttribute("href"),
+    }));
+    icons.forEach((el) => el.setAttribute("href", ws.logoUrl!));
+    return () => {
+      originals.forEach(({ el, href }) => {
+        if (href) el.setAttribute("href", href);
+      });
+    };
+  }, [ws?.logoUrl]);
+
+  useEffect(() => {
     try {
       const saved = localStorage.getItem(COLLAPSED_KEY);
       if (saved === "1") setCollapsed(true);
