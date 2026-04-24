@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { useConfirm } from "@/hooks/use-confirm";
 
 interface AutomationItem {
@@ -284,7 +285,10 @@ export default function AutomationsPage() {
   }
 
   if (editorAuto || editorNew || editorTemplate) {
-    return <FlowEditor editing={editorAuto} template={editorTemplate} courses={courses} tags={tags} onBack={() => { setEditorAuto(null); setEditorNew(false); setEditorTemplate(null); load(); }} />;
+    return createPortal(
+      <FlowEditor editing={editorAuto} template={editorTemplate} courses={courses} tags={tags} onBack={() => { setEditorAuto(null); setEditorNew(false); setEditorTemplate(null); load(); }} />,
+      document.body
+    );
   }
 
   return (
