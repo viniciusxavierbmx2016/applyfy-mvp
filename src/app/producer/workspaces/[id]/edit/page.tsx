@@ -52,7 +52,7 @@ function hexToRgba(hex: string, alpha: number): string {
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
-type TabKey = "info" | "login" | "appearance" | "settings";
+type TabKey = "info" | "login" | "appearance";
 
 interface ImagePosition { x: number; y: number }
 
@@ -371,8 +371,7 @@ export default function EditWorkspacePage() {
           {([
             { key: "info", label: "Informações" },
             { key: "login", label: "Personalizar Login" },
-            { key: "appearance", label: "Aparência" },
-            { key: "settings", label: "Configurações" },
+            { key: "appearance", label: "Personalizar Vitrine" },
           ] as const).map((t) => (
             <button
               key={t.key}
@@ -501,6 +500,30 @@ export default function EditWorkspacePage() {
                 <p className="text-[11px] text-gray-500 mt-1.5">
                   Senha universal para acesso rápido ao workspace. Útil para testes.
                 </p>
+              </div>
+            </div>
+
+            <div className="space-y-5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-5 sm:p-6">
+              <div>
+                <div className="flex items-center gap-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Domínio personalizado
+                  </label>
+                  <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300">
+                    Em breve
+                  </span>
+                </div>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                  Configure um domínio próprio para seu workspace (em breve)
+                </p>
+                <input
+                  type="text"
+                  value={customDomain}
+                  onChange={(e) => setCustomDomain(e.target.value)}
+                  placeholder="cursos.meusite.com"
+                  disabled
+                  className="mt-2 w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-500 dark:text-gray-400 font-mono cursor-not-allowed"
+                />
               </div>
             </div>
           </>
@@ -922,6 +945,26 @@ export default function EditWorkspacePage() {
               </p>
             </section>
 
+            <section className="bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-white/5 rounded-xl p-5">
+              <h3 className="text-base font-semibold text-gray-900 dark:text-white">
+                Tema para alunos
+              </h3>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                Force um tema específico para todos os alunos deste workspace
+              </p>
+              <select
+                value={forceTheme}
+                onChange={(e) =>
+                  setForceTheme(e.target.value as "" | "light" | "dark")
+                }
+                className="mt-4 w-full px-3 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">Padrão do sistema (aluno escolhe)</option>
+                <option value="light">Sempre claro</option>
+                <option value="dark">Sempre escuro</option>
+              </select>
+            </section>
+
             {error && (
               <p className="text-sm text-red-500" role="alert">{error}</p>
             )}
@@ -944,59 +987,13 @@ export default function EditWorkspacePage() {
           </div>
         )}
 
-        {tab === "settings" && (
-          <div className="space-y-5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-5 sm:p-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Tema para alunos
-              </label>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                Force um tema específico para todos os alunos deste workspace
-              </p>
-              <select
-                value={forceTheme}
-                onChange={(e) =>
-                  setForceTheme(e.target.value as "" | "light" | "dark")
-                }
-                className="mt-2 w-full px-3 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">Padrão do sistema (aluno escolhe)</option>
-                <option value="light">Sempre claro</option>
-                <option value="dark">Sempre escuro</option>
-              </select>
-            </div>
-
-            <div>
-              <div className="flex items-center gap-2">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Domínio personalizado
-                </label>
-                <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300">
-                  Em breve
-                </span>
-              </div>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                Configure um domínio próprio para seu workspace (em breve)
-              </p>
-              <input
-                type="text"
-                value={customDomain}
-                onChange={(e) => setCustomDomain(e.target.value)}
-                placeholder="cursos.meusite.com"
-                disabled
-                className="mt-2 w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-500 dark:text-gray-400 font-mono cursor-not-allowed"
-              />
-            </div>
-          </div>
-        )}
-
-        {tab !== "login" && tab !== "appearance" && error && (
+        {tab === "info" && error && (
           <p className="text-sm text-red-500" role="alert">
             {error}
           </p>
         )}
 
-        {tab !== "login" && tab !== "appearance" && (
+        {tab === "info" && (
           <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
             <Link
               href="/producer/workspaces"
