@@ -30,7 +30,6 @@ function formatReleaseDate(iso?: string | null): string {
   return d.toLocaleDateString("pt-BR", {
     day: "2-digit",
     month: "2-digit",
-    year: "numeric",
   });
 }
 
@@ -60,7 +59,7 @@ function LessonLink({
     return (
       <div
         className="relative flex items-start gap-3 pl-4 pr-3 py-2 rounded-[10px] text-sm text-gray-500 cursor-not-allowed"
-        title={`Disponível em ${formatReleaseDate(lesson.releaseDate)}`}
+        title={lesson.releaseDate ? `Libera em ${formatReleaseDate(lesson.releaseDate)}` : "Aula bloqueada"}
       >
         <div className="pt-[3px] flex-shrink-0">
           <svg
@@ -80,7 +79,7 @@ function LessonLink({
         <div className="flex-1 min-w-0">
           <p className="line-clamp-2 leading-snug">{lesson.title}</p>
           <p className="text-[10px] mt-0.5 text-gray-500">
-            Disponível em {formatReleaseDate(lesson.releaseDate)}
+            {lesson.releaseDate ? `Libera em ${formatReleaseDate(lesson.releaseDate)}` : "Aula bloqueada"}
           </p>
         </div>
       </div>
@@ -168,10 +167,10 @@ export function LessonsSidebar({
           const prog = moduleProgress(mod);
           const lockText = mod.lockReason
             ? mod.lockReason
-            : mod.daysRemaining
-              ? `Libera em ${mod.daysRemaining} dia${mod.daysRemaining === 1 ? "" : "s"}`
-              : mod.releaseDate
-                ? `Disponível em ${formatReleaseDate(mod.releaseDate)}`
+            : mod.releaseDate
+              ? `Libera em ${formatReleaseDate(mod.releaseDate)}`
+              : mod.daysRemaining
+                ? `Libera em ${mod.daysRemaining} dia${mod.daysRemaining === 1 ? "" : "s"}`
                 : "Módulo bloqueado";
           return (
             <div key={mod.id}>

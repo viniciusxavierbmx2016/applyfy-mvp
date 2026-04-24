@@ -156,7 +156,13 @@ function toListModule(
     progressPct: stats.pct,
     locked,
     hideTitle: m.hideTitle,
-    releaseAt: lockedByAutomation ? undefined : (dateLocked && m.releaseAt ? new Date(m.releaseAt).toLocaleDateString("pt-BR") : undefined),
+    releaseAt: lockedByAutomation
+      ? undefined
+      : dateLocked && m.releaseAt
+        ? new Date(m.releaseAt).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })
+        : locked && !rel.released
+          ? rel.releaseAt.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })
+          : undefined,
     lockReason: lockedByAutomation ? autoLock.reason : undefined,
     resumeHref: resumeLessonId
       ? `/course/${course.slug}/lesson/${resumeLessonId}`

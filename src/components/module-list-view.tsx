@@ -107,7 +107,7 @@ export function ModuleListView({ groups, courseSlug }: Props) {
                         {mod.locked && mod.lockReason ? (
                           <>{mod.lockReason}</>
                         ) : mod.locked && mod.releaseAt ? (
-                          <>Disponível a partir de {mod.releaseAt}</>
+                          <>Libera em {mod.releaseAt}</>
                         ) : (
                           <>
                             {mod.lessonsTotal} aula{mod.lessonsTotal !== 1 && "s"}

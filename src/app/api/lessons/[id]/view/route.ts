@@ -118,9 +118,8 @@ export async function GET(
       }
 
       if (lesson.module.releaseAt && new Date(lesson.module.releaseAt) > new Date()) {
-        const rd = new Date(lesson.module.releaseAt);
         return NextResponse.json(
-          { error: `Este módulo será liberado em ${rd.toLocaleDateString("pt-BR")}` },
+          { error: "Este módulo ainda não está disponível" },
           { status: 403 }
         );
       }
@@ -209,11 +208,8 @@ export async function GET(
           if (lockedByAutomation) {
             lockReason = autoLock.reason;
           } else if (lockedByDate) {
-            const rd = new Date(m.releaseAt!);
-            const days = Math.ceil((rd.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
-            lockReason = `Disponível a partir de ${rd.toLocaleDateString("pt-BR")}`;
-            releaseDate = rd.toISOString();
-            daysRemaining = days;
+            releaseDate = new Date(m.releaseAt!).toISOString();
+            daysRemaining = Math.ceil((new Date(m.releaseAt!).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
           } else if (lockedByDrip) {
             releaseDate = modRelease.releaseDate.toISOString();
             daysRemaining = modRelease.daysRemaining;
