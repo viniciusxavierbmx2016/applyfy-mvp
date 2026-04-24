@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import Image from "next/image";
 import { CourseCard } from "@/components/course-card";
 import { calculateCourseProgress } from "@/lib/utils";
 import { useUserStore } from "@/stores/user-store";
@@ -12,6 +13,9 @@ interface WorkspaceInfo {
   name: string;
   logoUrl: string | null;
   loginBgColor: string | null;
+  accentColor: string | null;
+  bannerUrl: string | null;
+  bannerPosition: string | null;
 }
 
 interface EnrolledCourse {
@@ -99,9 +103,21 @@ export default function WorkspaceVitrinePage() {
     load();
   }, [user, userLoading, slug, router]);
 
+  useEffect(() => {
+    if (!ws?.accentColor) return;
+    const root = document.documentElement;
+    root.style.setProperty("--workspace-accent", ws.accentColor);
+    return () => { root.style.removeProperty("--workspace-accent"); };
+  }, [ws?.accentColor]);
+
   const displayName = ws?.name || "Workspace";
   const active = enrolled.filter((c) => !c.isExpired);
   const expired = enrolled.filter((c) => c.isExpired);
+
+  function parseBannerPos(): { x: number; y: number } | null {
+    if (!ws?.bannerPosition) return null;
+    try { const p = JSON.parse(ws.bannerPosition); return { x: p.x ?? 50, y: p.y ?? 50 }; } catch { return null; }
+  }
 
   if (suspended) {
     return (
@@ -123,8 +139,29 @@ export default function WorkspaceVitrinePage() {
     );
   }
 
+  const bannerPos = parseBannerPos();
+
   return (
-    <div className="px-4 sm:px-6 lg:px-8 py-6 lg:py-8 max-w-6xl mx-auto">
+    <div>
+      {ws?.bannerUrl && (
+        <div
+          className="relative w-full overflow-hidden bg-gray-100 dark:bg-gray-900"
+          style={{ aspectRatio: "1920/400" }}
+        >
+          <Image
+            src={ws.bannerUrl}
+            alt={displayName}
+            fill
+            sizes="100vw"
+            className="object-cover"
+            style={bannerPos ? { objectPosition: `${bannerPos.x}% ${bannerPos.y}%` } : undefined}
+            priority
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-white via-white/0 to-transparent dark:from-gray-950 dark:via-gray-950/0 dark:to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-r from-white/30 via-transparent to-white/30 dark:from-gray-950/40 dark:via-transparent dark:to-gray-950/40" />
+        </div>
+      )}
+      <div className={`px-4 sm:px-6 lg:px-8 py-6 lg:py-8 max-w-6xl mx-auto ${ws?.bannerUrl ? "-mt-10" : ""}`}>
       <h2 className="text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white mb-2">
         Olá, {user?.name?.split(" ")[0] || "aluno"}
       </h2>
@@ -230,6 +267,7 @@ export default function WorkspaceVitrinePage() {
           )}
         </>
       )}
+      </div>
     </div>
   );
 }

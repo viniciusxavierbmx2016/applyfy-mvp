@@ -12,7 +12,6 @@ const COLOR_FIELDS = [
   "memberCardColor",
   "memberPrimaryColor",
   "memberTextColor",
-  "memberAccentColor",
 ] as const;
 
 const SELECT_FIELDS = {
@@ -22,7 +21,6 @@ const SELECT_FIELDS = {
   memberCardColor: true,
   memberPrimaryColor: true,
   memberTextColor: true,
-  memberAccentColor: true,
   memberWelcomeText: true,
   memberLayoutStyle: true,
 } as const;

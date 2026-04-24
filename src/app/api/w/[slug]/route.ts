@@ -27,6 +27,9 @@ export async function GET(
         loginBoxOpacity: true,
         loginSideColor: true,
         loginLinkColor: true,
+        accentColor: true,
+        bannerUrl: true,
+        bannerPosition: true,
         isActive: true,
       },
     });

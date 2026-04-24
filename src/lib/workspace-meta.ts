@@ -9,6 +9,7 @@ export const getWorkspaceMeta = cache(async (slug: string) =>
       name: true,
       faviconUrl: true,
       forceTheme: true,
+      accentColor: true,
     },
   })
 );

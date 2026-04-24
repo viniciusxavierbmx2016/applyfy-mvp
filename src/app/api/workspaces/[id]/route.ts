@@ -43,6 +43,7 @@ export async function PATCH(
       "loginBoxColor",
       "loginSideColor",
       "loginLinkColor",
+      "accentColor",
     ] as const) {
       if (body?.[key] === null) {
         data[key] = null;
@@ -78,6 +79,8 @@ export async function PATCH(
       "loginSubtitle",
       "faviconUrl",
       "customDomain",
+      "bannerUrl",
+      "bannerPosition",
     ] as const) {
       if (body?.[key] === null) {
         data[key] = null;

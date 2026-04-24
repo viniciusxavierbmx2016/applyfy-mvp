@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { BannerUpload } from "@/components/banner-upload";
 
 type LoginLayout = "central" | "lateral-left" | "lateral-right";
 
@@ -25,6 +26,9 @@ interface Workspace {
   loginSideColor: string | null;
   loginLinkColor: string | null;
   masterPassword: string | null;
+  accentColor: string | null;
+  bannerUrl: string | null;
+  bannerPosition: string | null;
   faviconUrl: string | null;
   forceTheme: string | null;
   customDomain: string | null;
@@ -48,7 +52,14 @@ function hexToRgba(hex: string, alpha: number): string {
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
-type TabKey = "info" | "login" | "settings";
+type TabKey = "info" | "login" | "appearance" | "settings";
+
+interface ImagePosition { x: number; y: number }
+
+function parsePosition(json: string | null | undefined): ImagePosition {
+  if (!json) return { x: 50, y: 50 };
+  try { const p = JSON.parse(json); return { x: p.x ?? 50, y: p.y ?? 50 }; } catch { return { x: 50, y: 50 }; }
+}
 
 export default function EditWorkspacePage() {
   const params = useParams<{ id: string }>();
@@ -86,6 +97,12 @@ export default function EditWorkspacePage() {
   const [uploadingFavicon, setUploadingFavicon] = useState(false);
   const [forceTheme, setForceTheme] = useState<"" | "light" | "dark">("");
   const [customDomain, setCustomDomain] = useState("");
+  // Appearance tab fields
+  const [accentColor, setAccentColor] = useState("");
+  const [wsBannerUrl, setWsBannerUrl] = useState<string | null>(null);
+  const [wsBannerPos, setWsBannerPos] = useState<ImagePosition>({ x: 50, y: 50 });
+  const [wsBannerMode, setWsBannerMode] = useState<"view" | "reposition">("view");
+
   const faviconFileRef = useRef<HTMLInputElement>(null);
 
   const [saving, setSaving] = useState(false);
@@ -133,6 +150,9 @@ export default function EditWorkspacePage() {
           );
           setLoginSideColor(found.loginSideColor || DEFAULT_SIDE);
           setLoginLinkColor(found.loginLinkColor || DEFAULT_LINK);
+          setAccentColor(found.accentColor || "");
+          setWsBannerUrl(found.bannerUrl || null);
+          setWsBannerPos(parsePosition(found.bannerPosition));
           setFaviconUrl(found.faviconUrl || null);
           setForceTheme(
             found.forceTheme === "light" || found.forceTheme === "dark"
@@ -240,6 +260,9 @@ export default function EditWorkspacePage() {
       const payload: Record<string, unknown> = {
         name: name.trim(),
         masterPassword: masterPassword.trim() || null,
+        accentColor: accentColor && HEX_RE.test(accentColor) ? accentColor : null,
+        bannerUrl: wsBannerUrl || null,
+        bannerPosition: JSON.stringify(wsBannerPos),
         faviconUrl: faviconUrl || null,
         forceTheme: forceTheme || null,
         customDomain: customDomain.trim() || null,
@@ -348,6 +371,7 @@ export default function EditWorkspacePage() {
           {([
             { key: "info", label: "Informações" },
             { key: "login", label: "Personalizar Login" },
+            { key: "appearance", label: "Aparência" },
             { key: "settings", label: "Configurações" },
           ] as const).map((t) => (
             <button
@@ -770,25 +794,91 @@ export default function EditWorkspacePage() {
           </div>
         )}
 
-        {tab === "settings" && (
-          <div className="space-y-5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-5 sm:p-6">
+        {tab === "appearance" && (
+          <div className="space-y-5">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Favicon
-              </label>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                Ícone que aparece na aba do navegador para seus alunos.
-                Recomendado: 32x32px, formato .ico ou .png
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                Aparência
+              </h2>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+                Personalize a experiência visual dos seus alunos
               </p>
-              <div className="mt-3 flex items-center gap-4">
+            </div>
+
+            {/* Accent color */}
+            <section className="bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-white/5 rounded-xl p-5">
+              <h3 className="text-base font-semibold text-gray-900 dark:text-white">
+                Cor primária
+              </h3>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                Usada em botões, links e destaques na vitrine e área do aluno
+              </p>
+              <div className="mt-4 flex items-center gap-3">
+                <input
+                  type="color"
+                  value={HEX_RE.test(accentColor) ? accentColor : "#3b82f6"}
+                  onChange={(e) => setAccentColor(e.target.value)}
+                  className="w-10 h-10 rounded-lg border border-gray-300 dark:border-gray-700 bg-transparent cursor-pointer flex-shrink-0"
+                />
+                <input
+                  type="text"
+                  value={accentColor}
+                  onChange={(e) => setAccentColor(e.target.value)}
+                  placeholder="#3b82f6 (padrão)"
+                  className="flex-1 min-w-0 px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm font-mono text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                <div
+                  className="w-10 h-10 rounded-lg border border-gray-200 dark:border-gray-700 flex-shrink-0"
+                  style={{ backgroundColor: HEX_RE.test(accentColor) ? accentColor : "#3b82f6" }}
+                />
+                {accentColor && (
+                  <button
+                    type="button"
+                    onClick={() => setAccentColor("")}
+                    className="px-3 py-2 text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition"
+                  >
+                    Restaurar padrão
+                  </button>
+                )}
+              </div>
+            </section>
+
+            {/* Banner */}
+            <section className="bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-white/5 rounded-xl p-5">
+              <h3 className="text-base font-semibold text-gray-900 dark:text-white">
+                Banner da vitrine
+              </h3>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 mb-4">
+                Imagem exibida no topo da vitrine para seus alunos
+              </p>
+              <BannerUpload
+                value={wsBannerUrl}
+                onChange={(url) => {
+                  setWsBannerUrl(url);
+                  if (url) { setWsBannerPos({ x: 50, y: 50 }); setWsBannerMode("reposition"); }
+                  else { setWsBannerPos({ x: 50, y: 50 }); setWsBannerMode("view"); }
+                }}
+                uploadPath={`workspace-banners/${id}`}
+                position={wsBannerPos}
+                onPositionChange={setWsBannerPos}
+                mode={wsBannerMode}
+                onModeChange={setWsBannerMode}
+              />
+            </section>
+
+            {/* Favicon */}
+            <section className="bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-white/5 rounded-xl p-5">
+              <h3 className="text-base font-semibold text-gray-900 dark:text-white">
+                Favicon
+              </h3>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                Ícone que aparece na aba do navegador
+              </p>
+              <div className="mt-4 flex items-center gap-4">
                 <div className="w-12 h-12 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center overflow-hidden border border-gray-200 dark:border-gray-700">
                   {faviconUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={faviconUrl}
-                      alt="favicon"
-                      className="w-8 h-8 object-contain"
-                    />
+                    <img src={faviconUrl} alt="favicon" className="w-8 h-8 object-contain" />
                   ) : (
                     <span className="text-xs text-gray-400">32×32</span>
                   )}
@@ -824,8 +914,35 @@ export default function EditWorkspacePage() {
                   />
                 </div>
               </div>
-            </div>
+              <p className="text-[11px] text-gray-500 mt-2">
+                Recomendado: 32×32px. PNG, ICO ou SVG.
+              </p>
+            </section>
 
+            {error && (
+              <p className="text-sm text-red-500" role="alert">{error}</p>
+            )}
+
+            <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
+              <Link
+                href="/producer/workspaces"
+                className="px-4 py-2.5 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-lg text-center"
+              >
+                Cancelar
+              </Link>
+              <button
+                type="submit"
+                disabled={saving || !name.trim()}
+                className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-sm font-medium rounded-lg"
+              >
+                {saving ? "Salvando..." : "Salvar alterações"}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {tab === "settings" && (
+          <div className="space-y-5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-5 sm:p-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                 Tema para alunos
@@ -870,13 +987,13 @@ export default function EditWorkspacePage() {
           </div>
         )}
 
-        {tab !== "login" && error && (
+        {tab !== "login" && tab !== "appearance" && error && (
           <p className="text-sm text-red-500" role="alert">
             {error}
           </p>
         )}
 
-        {tab !== "login" && (
+        {tab !== "login" && tab !== "appearance" && (
           <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
             <Link
               href="/producer/workspaces"

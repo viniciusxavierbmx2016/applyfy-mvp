@@ -16,6 +16,7 @@ interface WorkspaceInfo {
   slug: string;
   name: string;
   logoUrl: string | null;
+  accentColor: string | null;
 }
 
 const COLLAPSED_KEY = "student_sidebar_collapsed";
@@ -183,14 +184,21 @@ export function WorkspaceShell({
     { href: profileHref, label: "Meu Perfil", icon: iconProfile, active: isProfile, badge: 0 },
   ];
 
+  const accent = ws?.accentColor || null;
+
   function linkCls(active: boolean) {
     return cn(
       "group relative flex items-center gap-3 rounded-lg text-sm font-medium transition-colors duration-200",
       collapsed ? "lg:justify-center lg:p-2.5 py-2.5 px-3" : "py-2.5 px-3",
       active
-        ? "bg-blue-500/10 text-blue-600 dark:text-blue-400"
+        ? accent ? "" : "bg-blue-500/10 text-blue-600 dark:text-blue-400"
         : "text-gray-600 dark:text-gray-400 hover:bg-gray-50 hover:text-gray-900 dark:hover:bg-white/5 dark:hover:text-white"
     );
+  }
+
+  function linkStyle(active: boolean): React.CSSProperties | undefined {
+    if (!active || !accent) return undefined;
+    return { color: accent, backgroundColor: `${accent}15` };
   }
 
   function iconWrapCls(active: boolean) {
@@ -198,9 +206,14 @@ export function WorkspaceShell({
       "flex-shrink-0 transition-colors duration-200",
       collapsed && "lg:mx-auto",
       active
-        ? "text-blue-600 dark:text-blue-400"
+        ? accent ? "" : "text-blue-600 dark:text-blue-400"
         : "text-gray-400 dark:text-gray-500 group-hover:text-gray-900 dark:group-hover:text-white"
     );
+  }
+
+  function iconStyle(active: boolean): React.CSSProperties | undefined {
+    if (!active || !accent) return undefined;
+    return { color: accent };
   }
 
   return (
@@ -357,8 +370,9 @@ export function WorkspaceShell({
                 onClick={() => setMenuOpen(false)}
                 title={item.label}
                 className={linkCls(item.active)}
+                style={linkStyle(item.active)}
               >
-                <span className={cn("relative", iconWrapCls(item.active))}>
+                <span className={cn("relative", iconWrapCls(item.active))} style={iconStyle(item.active)}>
                   {item.icon}
                   {item.badge > 0 && collapsed && (
                     <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-red-500 rounded-full text-[9px] font-bold text-white flex items-center justify-center animate-pulse">

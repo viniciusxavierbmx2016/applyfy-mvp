@@ -17,7 +17,6 @@ interface CourseSummary {
   memberCardColor?: string | null;
   memberPrimaryColor?: string | null;
   memberTextColor?: string | null;
-  memberAccentColor?: string | null;
 }
 
 const COLLAPSED_KEY = "course-sidebar-collapsed";
@@ -61,7 +60,6 @@ export default function CourseGroupLayout({
           memberCardColor: d.course.memberCardColor ?? null,
           memberPrimaryColor: d.course.memberPrimaryColor ?? null,
           memberTextColor: d.course.memberTextColor ?? null,
-          memberAccentColor: d.course.memberAccentColor ?? null,
         });
         setHasAccess(!!d.hasAccess);
       })
@@ -78,7 +76,6 @@ export default function CourseGroupLayout({
       ["--member-card", course.memberCardColor ?? null],
       ["--member-primary", course.memberPrimaryColor ?? null],
       ["--member-text", course.memberTextColor ?? null],
-      ["--member-accent", course.memberAccentColor ?? null],
     ];
     for (const [key, val] of vars) {
       if (val) root.style.setProperty(key, val);
@@ -123,8 +120,7 @@ export default function CourseGroupLayout({
     course.memberHeaderColor ||
     course.memberCardColor ||
     course.memberPrimaryColor ||
-    course.memberTextColor ||
-    course.memberAccentColor
+    course.memberTextColor
   );
 
   return (

@@ -15,7 +15,6 @@ interface Customization {
   memberCardColor: string | null;
   memberPrimaryColor: string | null;
   memberTextColor: string | null;
-  memberAccentColor: string | null;
   memberWelcomeText: string | null;
   memberLayoutStyle: string | null;
 }
@@ -27,7 +26,6 @@ const EMPTY: Customization = {
   memberCardColor: null,
   memberPrimaryColor: null,
   memberTextColor: null,
-  memberAccentColor: null,
   memberWelcomeText: null,
   memberLayoutStyle: "netflix",
 };
