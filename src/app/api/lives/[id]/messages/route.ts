@@ -57,13 +57,16 @@ export async function POST(
 
     const live = await prisma.live.findUnique({
       where: { id: params.id },
-      select: { id: true, status: true },
+      select: { id: true, status: true, chatEnabled: true },
     });
     if (!live) {
       return NextResponse.json({ error: "Live não encontrada" }, { status: 404 });
     }
     if (live.status !== "LIVE") {
       return NextResponse.json({ error: "O chat está disponível apenas durante a live" }, { status: 400 });
+    }
+    if (!live.chatEnabled) {
+      return NextResponse.json({ error: "Chat desativado pelo moderador" }, { status: 403 });
     }
 
     const body = await request.json();

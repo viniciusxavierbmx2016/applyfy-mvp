@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
 
 interface LiveItem {
   id: string;
@@ -83,6 +84,7 @@ function toLocalDatetimeValue(iso: string): string {
 }
 
 export default function ProducerLivesPage() {
+  const router = useRouter();
   const [lives, setLives] = useState<LiveItem[]>([]);
   const [courses, setCourses] = useState<CourseOption[]>([]);
   const [loading, setLoading] = useState(true);
@@ -545,15 +547,26 @@ export default function ProducerLivesPage() {
                     </button>
                   )}
                   {live.status === "LIVE" && (
-                    <button
-                      onClick={() => setConfirmAction({ type: "end", live })}
-                      className="flex items-center gap-1 bg-gray-600 hover:bg-gray-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition"
-                    >
-                      <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
-                        <rect x="6" y="6" width="12" height="12" rx="1" />
-                      </svg>
-                      Encerrar
-                    </button>
+                    <>
+                      <button
+                        onClick={() => router.push(`/producer/lives/${live.id}`)}
+                        className="flex items-center gap-1 bg-purple-600 hover:bg-purple-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition"
+                      >
+                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                        </svg>
+                        Entrar
+                      </button>
+                      <button
+                        onClick={() => setConfirmAction({ type: "end", live })}
+                        className="flex items-center gap-1 bg-gray-600 hover:bg-gray-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition"
+                      >
+                        <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
+                          <rect x="6" y="6" width="12" height="12" rx="1" />
+                        </svg>
+                        Encerrar
+                      </button>
+                    </>
                   )}
                   {live.status === "ENDED" && !live.savedAsLessonId && (
                     <button

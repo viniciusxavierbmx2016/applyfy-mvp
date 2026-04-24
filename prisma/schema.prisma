@@ -48,6 +48,7 @@ model User {
   liveMessages     LiveMessage[]
   liveNotifications LiveNotification[]
   pushSubscriptions PushSubscription[]
+  liveModerations   LiveModerator[]
 
   @@index([workspaceId])
 }
@@ -745,6 +746,8 @@ model Live {
   thumbnailUrl     String?
   savedAsLessonId  String?
   visibility       String    @default("PUBLIC")
+  roomOpen         Boolean   @default(true)
+  chatEnabled      Boolean   @default(true)
   courseId          String?
   workspaceId      String
   createdAt     DateTime  @default(now())
@@ -754,6 +757,7 @@ model Live {
   workspace     Workspace @relation(fields: [workspaceId], references: [id])
   messages      LiveMessage[]
   notifications LiveNotification[]
+  moderators    LiveModerator[]
 
   @@index([workspaceId])
   @@index([courseId])
@@ -803,4 +807,16 @@ model PushSubscription {
 
   @@unique([userId, endpoint])
   @@index([userId])
+}
+
+model LiveModerator {
+  id        String   @id @default(cuid())
+  liveId    String
+  live      Live     @relation(fields: [liveId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@unique([liveId, userId])
+  @@index([liveId])
 }

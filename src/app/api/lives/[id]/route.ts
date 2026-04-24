@@ -47,9 +47,24 @@ export async function GET(
           return NextResponse.json({ error: "Você não tem acesso a esta live" }, { status: 403 });
         }
       }
+
+      if (!live.roomOpen) {
+        return NextResponse.json({ error: "Sala fechada" }, { status: 403 });
+      }
     }
 
-    return NextResponse.json({ live });
+    const isMod = await prisma.liveModerator.findUnique({
+      where: { liveId_userId: { liveId: live.id, userId: user.id } },
+    });
+
+    return NextResponse.json({
+      live: {
+        ...live,
+        roomOpen: live.roomOpen,
+        chatEnabled: live.chatEnabled,
+        isModerator: !!isMod || user.role === "ADMIN" || user.role === "PRODUCER",
+      },
+    });
   } catch (error) {
     console.error("GET /api/lives/[id] error:", error);
     return NextResponse.json({ error: "Erro" }, { status: 500 });

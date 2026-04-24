@@ -23,6 +23,9 @@ interface LiveData {
   endedAt: string | null;
   recordingUrl: string | null;
   thumbnailUrl: string | null;
+  roomOpen: boolean;
+  chatEnabled: boolean;
+  isModerator: boolean;
   course: { id: string; title: string } | null;
   messages: LiveMessage[];
   workspace: { id: string; slug: string; name: string };
@@ -71,6 +74,7 @@ export default function LiveRoomPage() {
   const [messages, setMessages] = useState<LiveMessage[]>([]);
   const [loading, setLoading] = useState(true);
   const [forbidden, setForbidden] = useState(false);
+  const [roomClosed, setRoomClosed] = useState(false);
   const [chatInput, setChatInput] = useState("");
   const [sending, setSending] = useState(false);
   const [countdown, setCountdown] = useState<ReturnType<typeof getCountdownParts>>(null);
@@ -82,7 +86,12 @@ export default function LiveRoomPage() {
     try {
       const res = await fetch(`/api/lives/${liveId}`);
       if (res.status === 403) {
-        setForbidden(true);
+        const data = await res.json().catch(() => ({}));
+        if (data.error === "Sala fechada") {
+          setRoomClosed(true);
+        } else {
+          setForbidden(true);
+        }
         return;
       }
       if (!res.ok) return;
@@ -158,6 +167,15 @@ export default function LiveRoomPage() {
     }
   }
 
+  async function handleDeleteMessage(messageId: string) {
+    const res = await fetch(`/api/lives/${liveId}/messages/${messageId}`, {
+      method: "DELETE",
+    });
+    if (res.ok) {
+      setMessages((prev) => prev.filter((m) => m.id !== messageId));
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
@@ -184,6 +202,24 @@ export default function LiveRoomPage() {
     );
   }
 
+  if (roomClosed) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
+        <svg className="w-16 h-16 text-gray-300 dark:text-gray-600 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+        </svg>
+        <p className="text-gray-700 dark:text-gray-300 font-medium mb-1">Sala fechada</p>
+        <p className="text-gray-500 dark:text-gray-400 text-sm mb-4">O moderador fechou a sala. Tente novamente mais tarde.</p>
+        <button
+          onClick={() => router.push(`/w/${slug}/lives`)}
+          className="text-blue-500 hover:underline text-sm"
+        >
+          Voltar para lives
+        </button>
+      </div>
+    );
+  }
+
   if (!live) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
@@ -202,7 +238,7 @@ export default function LiveRoomPage() {
   const isScheduled = live.status === "SCHEDULED";
   const isEnded = live.status === "ENDED";
   const isYouTube = live.platform === "YOUTUBE_LIVE" && live.embedUrl;
-  const chatReadonly = !isLive;
+  const chatReadonly = !isLive || !live.chatEnabled;
 
   function renderPlayer() {
     if (!live) return null;
@@ -368,7 +404,7 @@ export default function LiveRoomPage() {
             </div>
           )}
           {messages.map((msg) => (
-            <div key={msg.id} className="flex gap-2">
+            <div key={msg.id} className="group flex gap-2">
               <div className="w-7 h-7 rounded-full bg-blue-500/20 flex items-center justify-center flex-shrink-0 overflow-hidden">
                 {msg.user.avatarUrl ? (
                   <img src={msg.user.avatarUrl} alt="" className="w-full h-full object-cover" />
@@ -378,7 +414,7 @@ export default function LiveRoomPage() {
                   </span>
                 )}
               </div>
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1">
                 <div className="flex items-baseline gap-2">
                   <span className="text-xs font-medium text-gray-700 dark:text-gray-300 truncate">
                     {msg.user.name}
@@ -391,6 +427,17 @@ export default function LiveRoomPage() {
                   {msg.content}
                 </p>
               </div>
+              {live?.isModerator && (
+                <button
+                  onClick={() => handleDeleteMessage(msg.id)}
+                  className="opacity-0 group-hover:opacity-100 p-1 text-gray-400 hover:text-red-400 transition flex-shrink-0"
+                  title="Deletar mensagem"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                </button>
+              )}
             </div>
           ))}
           <div ref={chatEndRef} />
@@ -399,9 +446,11 @@ export default function LiveRoomPage() {
         {chatReadonly ? (
           <div className="px-4 py-3 border-t border-gray-200 dark:border-white/10">
             <p className="text-xs text-gray-400 text-center">
-              {isScheduled
-                ? "Chat disponível durante a live"
-                : "Chat encerrado"}
+              {isLive && !live?.chatEnabled
+                ? "Chat desativado pelo moderador"
+                : isScheduled
+                  ? "Chat disponível durante a live"
+                  : "Chat encerrado"}
             </p>
           </div>
         ) : (
