@@ -16,12 +16,18 @@ interface LiveItem {
   recordingUrl: string | null;
   thumbnailUrl: string | null;
   courseId: string | null;
+  savedAsLessonId: string | null;
   course: { id: string; title: string } | null;
   _count: { messages: number };
   createdAt: string;
 }
 
 interface CourseOption {
+  id: string;
+  title: string;
+}
+
+interface ModuleOption {
   id: string;
   title: string;
 }
@@ -77,6 +83,7 @@ export default function ProducerLivesPage() {
   const [showModal, setShowModal] = useState(false);
   const [editingLive, setEditingLive] = useState<LiveItem | null>(null);
   const [saving, setSaving] = useState(false);
+  const [toast, setToast] = useState("");
   const [confirmAction, setConfirmAction] = useState<{
     type: "start" | "end" | "delete";
     live: LiveItem;
@@ -91,7 +98,20 @@ export default function ProducerLivesPage() {
     scheduledAt: "",
     courseId: "",
     thumbnailUrl: "",
+    recordingUrl: "",
   });
+
+  // Save as lesson modal
+  const [lessonModal, setLessonModal] = useState<LiveItem | null>(null);
+  const [modules, setModules] = useState<ModuleOption[]>([]);
+  const [lessonForm, setLessonForm] = useState({
+    courseId: "",
+    moduleId: "",
+    title: "",
+    description: "",
+    videoUrl: "",
+  });
+  const [savingLesson, setSavingLesson] = useState(false);
 
   const fetchLives = useCallback(async () => {
     try {
@@ -109,10 +129,15 @@ export default function ProducerLivesPage() {
 
   const fetchCourses = useCallback(async () => {
     try {
-      const res = await fetch("/api/producer/courses");
+      const res = await fetch("/api/courses?filter=all");
       if (res.ok) {
         const data = await res.json();
-        setCourses(data.courses?.map((c: CourseOption) => ({ id: c.id, title: c.title })) || []);
+        setCourses(
+          (data.courses || []).map((c: CourseOption) => ({
+            id: c.id,
+            title: c.title,
+          }))
+        );
       }
     } catch {
       // ignore
@@ -123,6 +148,12 @@ export default function ProducerLivesPage() {
     fetchLives();
     fetchCourses();
   }, [fetchLives, fetchCourses]);
+
+  useEffect(() => {
+    if (!toast) return;
+    const t = setTimeout(() => setToast(""), 3000);
+    return () => clearTimeout(t);
+  }, [toast]);
 
   const filtered = filter === "ALL" ? lives : lives.filter((l) => l.status === filter);
 
@@ -137,6 +168,7 @@ export default function ProducerLivesPage() {
       scheduledAt: "",
       courseId: "",
       thumbnailUrl: "",
+      recordingUrl: "",
     });
     setShowModal(true);
   }
@@ -152,6 +184,7 @@ export default function ProducerLivesPage() {
       scheduledAt: live.scheduledAt ? new Date(live.scheduledAt).toISOString().slice(0, 16) : "",
       courseId: live.courseId || "",
       thumbnailUrl: live.thumbnailUrl || "",
+      recordingUrl: live.recordingUrl || "",
     });
     setShowModal(true);
   }
@@ -174,7 +207,7 @@ export default function ProducerLivesPage() {
     if (!form.title.trim() || !form.externalUrl.trim() || !form.scheduledAt) return;
     setSaving(true);
     try {
-      const payload = {
+      const payload: Record<string, unknown> = {
         title: form.title,
         description: form.description || null,
         platform: form.platform,
@@ -184,6 +217,10 @@ export default function ProducerLivesPage() {
         courseId: form.courseId || null,
         thumbnailUrl: form.thumbnailUrl || null,
       };
+
+      if (editingLive) {
+        payload.recordingUrl = form.recordingUrl || null;
+      }
 
       const url = editingLive
         ? `/api/producer/lives/${editingLive.id}`
@@ -246,6 +283,76 @@ export default function ProducerLivesPage() {
     navigator.clipboard.writeText(url);
   }
 
+  async function openLessonModal(live: LiveItem) {
+    setLessonModal(live);
+    setModules([]);
+    setLessonForm({
+      courseId: "",
+      moduleId: "",
+      title: live.title,
+      description: live.description || "",
+      videoUrl: live.recordingUrl || "",
+    });
+  }
+
+  async function handleLessonCourseChange(courseId: string) {
+    setLessonForm((f) => ({ ...f, courseId, moduleId: "" }));
+    setModules([]);
+    if (!courseId) return;
+    try {
+      const res = await fetch(`/api/courses/${courseId}`);
+      if (res.ok) {
+        const data = await res.json();
+        setModules(
+          (data.course?.modules || []).map((m: ModuleOption) => ({
+            id: m.id,
+            title: m.title,
+          }))
+        );
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  async function handleSaveAsLesson() {
+    if (!lessonForm.courseId || !lessonForm.moduleId || !lessonForm.title.trim() || !lessonForm.videoUrl.trim()) return;
+    if (!lessonModal) return;
+    setSavingLesson(true);
+    try {
+      const res = await fetch(`/api/modules/${lessonForm.moduleId}/lessons`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: lessonForm.title.trim(),
+          description: lessonForm.description?.trim() || null,
+          videoUrl: lessonForm.videoUrl.trim(),
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        alert(data.error || "Erro ao criar aula");
+        return;
+      }
+      const data = await res.json();
+      const lessonId = data.lesson?.id;
+
+      if (lessonId) {
+        await fetch(`/api/producer/lives/${lessonModal.id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ savedAsLessonId: lessonId }),
+        });
+      }
+
+      setLessonModal(null);
+      setToast("Aula criada com sucesso!");
+      fetchLives();
+    } finally {
+      setSavingLesson(false);
+    }
+  }
+
   const liveCount = lives.filter((l) => l.status === "LIVE").length;
   const scheduledCount = lives.filter((l) => l.status === "SCHEDULED").length;
 
@@ -255,6 +362,13 @@ export default function ProducerLivesPage() {
 
   return (
     <div className="space-y-6">
+      {/* Toast */}
+      {toast && (
+        <div className="fixed top-4 right-4 z-[60] bg-green-600 text-white px-4 py-2 rounded-lg shadow-lg text-sm font-medium animate-slide-up">
+          {toast}
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -358,6 +472,11 @@ export default function ProducerLivesPage() {
                     <span className="text-xs text-gray-500">
                       {PLATFORMS.find((p) => p.value === live.platform)?.label}
                     </span>
+                    {live.savedAsLessonId && (
+                      <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-green-500/20 text-green-400">
+                        Salva como aula
+                      </span>
+                    )}
                   </div>
 
                   <h3 className="text-white font-medium truncate">{live.title}</h3>
@@ -401,6 +520,17 @@ export default function ProducerLivesPage() {
                         <rect x="6" y="6" width="12" height="12" rx="1" />
                       </svg>
                       Encerrar
+                    </button>
+                  )}
+                  {live.status === "ENDED" && !live.savedAsLessonId && (
+                    <button
+                      onClick={() => openLessonModal(live)}
+                      className="flex items-center gap-1 bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition"
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                      </svg>
+                      Salvar como aula
                     </button>
                   )}
                   <button
@@ -549,6 +679,18 @@ export default function ProducerLivesPage() {
                 />
               </div>
 
+              {editingLive?.status === "ENDED" && (
+                <div>
+                  <label className={labelCls}>URL da Gravação</label>
+                  <input
+                    className={inputCls}
+                    value={form.recordingUrl}
+                    onChange={(e) => setForm((f) => ({ ...f, recordingUrl: e.target.value }))}
+                    placeholder="Cole o link do YouTube, Vimeo, Google Drive..."
+                  />
+                </div>
+              )}
+
               <div className="flex justify-end gap-3 pt-2">
                 <button
                   onClick={() => setShowModal(false)}
@@ -620,6 +762,109 @@ export default function ProducerLivesPage() {
                     ? "Encerrar"
                     : "Excluir"}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Save as Lesson Modal */}
+      {lessonModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/60" onClick={() => setLessonModal(null)} />
+          <div className="relative bg-[#1a1a2e] border border-white/10 rounded-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            <div className="p-6 space-y-4">
+              <h2 className="text-lg font-bold text-white">Salvar como aula</h2>
+              <p className="text-gray-400 text-sm">
+                Crie uma aula a partir da live &quot;{lessonModal.title}&quot;
+              </p>
+
+              <div>
+                <label className={labelCls}>Curso *</label>
+                <select
+                  className={inputCls}
+                  value={lessonForm.courseId}
+                  onChange={(e) => handleLessonCourseChange(e.target.value)}
+                >
+                  <option value="">Selecione um curso</option>
+                  {courses.map((c) => (
+                    <option key={c.id} value={c.id}>{c.title}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className={labelCls}>Módulo *</label>
+                <select
+                  className={inputCls}
+                  value={lessonForm.moduleId}
+                  onChange={(e) => setLessonForm((f) => ({ ...f, moduleId: e.target.value }))}
+                  disabled={!lessonForm.courseId || modules.length === 0}
+                >
+                  <option value="">
+                    {!lessonForm.courseId
+                      ? "Selecione um curso primeiro"
+                      : modules.length === 0
+                        ? "Nenhum módulo encontrado"
+                        : "Selecione um módulo"}
+                  </option>
+                  {modules.map((m) => (
+                    <option key={m.id} value={m.id}>{m.title}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className={labelCls}>Título da aula *</label>
+                <input
+                  className={inputCls}
+                  value={lessonForm.title}
+                  onChange={(e) => setLessonForm((f) => ({ ...f, title: e.target.value }))}
+                  placeholder="Título da aula"
+                />
+              </div>
+
+              <div>
+                <label className={labelCls}>Descrição</label>
+                <textarea
+                  className={`${inputCls} resize-none`}
+                  rows={3}
+                  value={lessonForm.description}
+                  onChange={(e) => setLessonForm((f) => ({ ...f, description: e.target.value }))}
+                  placeholder="Descrição da aula"
+                />
+              </div>
+
+              <div>
+                <label className={labelCls}>URL do vídeo *</label>
+                <input
+                  className={inputCls}
+                  value={lessonForm.videoUrl}
+                  onChange={(e) => setLessonForm((f) => ({ ...f, videoUrl: e.target.value }))}
+                  placeholder="Cole o link do YouTube, Vimeo, Google Drive..."
+                />
+              </div>
+
+              <div className="flex justify-end gap-3 pt-2">
+                <button
+                  onClick={() => setLessonModal(null)}
+                  className="px-4 py-2 text-sm text-gray-400 hover:text-white transition"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleSaveAsLesson}
+                  disabled={
+                    savingLesson ||
+                    !lessonForm.courseId ||
+                    !lessonForm.moduleId ||
+                    !lessonForm.title.trim() ||
+                    !lessonForm.videoUrl.trim()
+                  }
+                  className="bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white px-4 py-2 rounded-lg text-sm font-medium transition"
+                >
+                  {savingLesson ? "Criando..." : "Criar aula"}
+                </button>
+              </div>
             </div>
           </div>
         </div>

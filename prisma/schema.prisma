@@ -740,10 +740,11 @@ model Live {
   scheduledAt   DateTime
   startedAt     DateTime?
   endedAt       DateTime?
-  recordingUrl  String?
-  thumbnailUrl  String?
-  courseId       String?
-  workspaceId   String
+  recordingUrl     String?
+  thumbnailUrl     String?
+  savedAsLessonId  String?
+  courseId          String?
+  workspaceId      String
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
