@@ -116,6 +116,14 @@ export async function GET(
           { status: 403 }
         );
       }
+
+      if (lesson.module.releaseAt && new Date(lesson.module.releaseAt) > new Date()) {
+        const rd = new Date(lesson.module.releaseAt);
+        return NextResponse.json(
+          { error: `Este módulo será liberado em ${rd.toLocaleDateString("pt-BR")}` },
+          { status: 403 }
+        );
+      }
     }
 
     // Build flat ordered list of lessons across the course for prev/next
@@ -190,14 +198,35 @@ export async function GET(
           );
           const autoLock = autoLocks[m.id];
           const lockedByAutomation = !isStaffViewer && !!autoLock;
+          const lockedByDate = !isStaffViewer && !!m.releaseAt && new Date(m.releaseAt) > new Date();
+          const lockedByDrip = !isStaffViewer && !modRelease.released;
+          const moduleLocked = lockedByAutomation || lockedByDate || lockedByDrip;
+
+          let lockReason: string | null = null;
+          let releaseDate: string | null = null;
+          let daysRemaining = 0;
+
+          if (lockedByAutomation) {
+            lockReason = autoLock.reason;
+          } else if (lockedByDate) {
+            const rd = new Date(m.releaseAt!);
+            const days = Math.ceil((rd.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+            lockReason = `Disponível a partir de ${rd.toLocaleDateString("pt-BR")}`;
+            releaseDate = rd.toISOString();
+            daysRemaining = days;
+          } else if (lockedByDrip) {
+            releaseDate = modRelease.releaseDate.toISOString();
+            daysRemaining = modRelease.daysRemaining;
+          }
+
           return {
             id: m.id,
             title: m.title,
             thumbnailUrl: m.thumbnailUrl,
-            locked: lockedByAutomation || (isStaffViewer ? false : !modRelease.released),
-            lockReason: lockedByAutomation ? autoLock.reason : null,
-            releaseDate: lockedByAutomation ? null : (modRelease.released ? null : modRelease.releaseDate.toISOString()),
-            daysRemaining: lockedByAutomation ? 0 : modRelease.daysRemaining,
+            locked: moduleLocked,
+            lockReason,
+            releaseDate,
+            daysRemaining,
             lessons: m.lessons.map((l) => {
               const lr = computeLessonReleaseWithOverride(
                 enrollmentCreatedAt,
@@ -207,14 +236,14 @@ export async function GET(
                 l.daysToRelease,
                 overrides
               );
-              const lessonLocked = isStaffViewer ? false : (lockedByAutomation || !lr.released);
+              const lessonLocked = isStaffViewer ? false : (moduleLocked || !lr.released);
               return {
                 id: l.id,
                 title: l.title,
                 completed: l.progress.some((p) => p.completed),
                 locked: lessonLocked,
-                releaseDate: lessonLocked && !lockedByAutomation && !lr.released ? lr.releaseDate.toISOString() : null,
-                daysRemaining: lockedByAutomation ? 0 : lr.daysRemaining,
+                releaseDate: lessonLocked && !moduleLocked && !lr.released ? lr.releaseDate.toISOString() : null,
+                daysRemaining: moduleLocked ? 0 : lr.daysRemaining,
               };
             }),
           };
