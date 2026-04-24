@@ -2,11 +2,6 @@
 
 import { useEffect, useState, useCallback } from "react";
 
-function arrayBufferToBase64(buf: ArrayBuffer): string {
-  const bytes = Array.from(new Uint8Array(buf));
-  return btoa(String.fromCharCode.apply(null, bytes));
-}
-
 function urlBase64ToUint8Array(base64String: string): Uint8Array {
   const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
   const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
@@ -56,16 +51,15 @@ export function usePushNotifications() {
         ) as BufferSource,
       });
 
-      const p256dh = sub.getKey("p256dh");
-      const auth = sub.getKey("auth");
+      const json = sub.toJSON();
 
       await fetch("/api/push/subscribe", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          endpoint: sub.endpoint,
-          p256dh: p256dh ? arrayBufferToBase64(p256dh) : "",
-          auth: auth ? arrayBufferToBase64(auth) : "",
+          endpoint: json.endpoint,
+          p256dh: json.keys?.p256dh || "",
+          auth: json.keys?.auth || "",
         }),
       });
 

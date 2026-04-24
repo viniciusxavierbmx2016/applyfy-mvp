@@ -32,7 +32,12 @@ export async function sendPushToUser(userId: string, payload: PushPayload) {
             endpoint: sub.endpoint,
             keys: { p256dh: sub.p256dh, auth: sub.auth },
           },
-          JSON.stringify(payload)
+          JSON.stringify(payload),
+          {
+            TTL: 3600,
+            urgency: "high",
+            topic: payload.tag || "default",
+          }
         )
         .catch(async (err) => {
           if (err.statusCode === 410 || err.statusCode === 404) {
