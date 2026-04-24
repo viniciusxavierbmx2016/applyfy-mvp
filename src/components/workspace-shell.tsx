@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { useUserStore } from "@/stores/user-store";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { InstallPrompt } from "@/components/install-prompt";
+import { NotificationsBell } from "@/components/notifications-bell";
 
 interface WorkspaceInfo {
   id: string;
@@ -238,14 +239,7 @@ export function WorkspaceShell({
 
           <div className="flex items-center gap-2">
             <ThemeToggle />
-            <button
-              className="p-2 text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white rounded-lg"
-              aria-label="Notificações"
-            >
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.4-1.4A2 2 0 0118 14.2V11a6 6 0 10-12 0v3.2c0 .53-.21 1.04-.59 1.41L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-              </svg>
-            </button>
+            <NotificationsBell />
             <Link
               href={profileHref}
               className="hidden sm:flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white max-w-[180px]"
