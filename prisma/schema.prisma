@@ -160,6 +160,8 @@ model Course {
   memberTextColor     String?
   memberWelcomeText   String?
   memberLayoutStyle   String?  @default("netflix")
+  featured           Boolean   @default(false)
+  category           String?
   order              Int       @default(0)
   ownerId            String?
   workspaceId        String

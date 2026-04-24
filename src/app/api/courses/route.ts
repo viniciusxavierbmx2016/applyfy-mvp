@@ -245,6 +245,8 @@ export async function POST(request: Request) {
       externalProductId,
       isPublished,
       showInStore,
+      featured,
+      category,
       workspaceId: explicitWorkspaceId,
     } = body;
 
@@ -308,10 +310,19 @@ export async function POST(request: Request) {
         isPublished: Boolean(isPublished),
         showInStore: showInStore !== false,
         order: (lastCourse?.order ?? -1) + 1,
+        featured: Boolean(featured),
+        category: typeof category === "string" && category.trim() ? category.trim() : null,
         ownerId: staff.id,
         workspaceId: targetWorkspaceId,
       },
     });
+
+    if (course.featured) {
+      await prisma.course.updateMany({
+        where: { workspaceId: targetWorkspaceId, id: { not: course.id }, featured: true },
+        data: { featured: false },
+      });
+    }
 
     return NextResponse.json({ course }, { status: 201 });
   } catch (error) {

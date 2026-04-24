@@ -89,6 +89,8 @@ export async function PUT(
       supportEmail,
       supportWhatsapp,
       showLessonSupport,
+      featured,
+      category,
     } = body;
 
     if (supportEmail !== undefined && supportEmail !== null && supportEmail !== "") {
@@ -173,8 +175,19 @@ export async function PUT(
         ...(showLessonSupport !== undefined && {
           showLessonSupport: Boolean(showLessonSupport),
         }),
+        ...(category !== undefined && {
+          category: typeof category === "string" && category.trim() ? category.trim() : null,
+        }),
+        ...(featured !== undefined && { featured: Boolean(featured) }),
       },
     });
+
+    if (featured && course.featured) {
+      await prisma.course.updateMany({
+        where: { workspaceId: course.workspaceId, id: { not: course.id }, featured: true },
+        data: { featured: false },
+      });
+    }
 
     return NextResponse.json({ course });
   } catch (error) {

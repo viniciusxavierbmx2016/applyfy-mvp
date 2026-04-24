@@ -117,6 +117,8 @@ export async function GET(
           memberTextColor: true,
           memberWelcomeText: true,
           memberLayoutStyle: true,
+          featured: true,
+          category: true,
           modules: {
             select: {
               id: true,
@@ -162,6 +164,8 @@ export async function GET(
           memberTextColor: true,
           memberWelcomeText: true,
           memberLayoutStyle: true,
+          featured: true,
+          category: true,
         },
       }),
     ]);
@@ -235,6 +239,13 @@ export async function GET(
         },
         enrolled: enrolledCourses.map(withExpired),
         store: storeCourses.map(withRating),
+        categories: Array.from(
+          new Set(
+            [...enrolledCourses, ...storeCourses]
+              .map((c) => (c as { category?: string | null }).category)
+              .filter((c): c is string => !!c)
+          )
+        ).sort(),
         notifications: { unread: unreadCount },
       },
       {
