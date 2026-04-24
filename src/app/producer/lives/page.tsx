@@ -76,6 +76,12 @@ function extractYouTubeEmbedUrl(url: string): string | null {
   return null;
 }
 
+function toLocalDatetimeValue(iso: string): string {
+  const d = new Date(iso);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
 export default function ProducerLivesPage() {
   const [lives, setLives] = useState<LiveItem[]>([]);
   const [courses, setCourses] = useState<CourseOption[]>([]);
@@ -114,6 +120,7 @@ export default function ProducerLivesPage() {
     videoUrl: "",
   });
   const [savingLesson, setSavingLesson] = useState(false);
+  const [uploadingThumb, setUploadingThumb] = useState(false);
 
   const fetchLives = useCallback(async () => {
     try {
@@ -184,13 +191,34 @@ export default function ProducerLivesPage() {
       platform: live.platform,
       externalUrl: live.externalUrl,
       embedUrl: live.embedUrl || "",
-      scheduledAt: live.scheduledAt ? new Date(live.scheduledAt).toISOString().slice(0, 16) : "",
+      scheduledAt: live.scheduledAt ? toLocalDatetimeValue(live.scheduledAt) : "",
       courseId: live.courseId || "",
       thumbnailUrl: live.thumbnailUrl || "",
       recordingUrl: live.recordingUrl || "",
       visibility: live.visibility || "PUBLIC",
     });
     setShowModal(true);
+  }
+
+  async function handleThumbnailUpload(file: File) {
+    setUploadingThumb(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("path", `lives/${Date.now()}`);
+      const res = await fetch("/api/upload", { method: "POST", body: formData });
+      if (res.ok) {
+        const data = await res.json();
+        setForm((f) => ({ ...f, thumbnailUrl: data.url }));
+      } else {
+        const data = await res.json();
+        alert(data.error || "Erro ao enviar imagem");
+      }
+    } catch {
+      alert("Erro ao enviar imagem");
+    } finally {
+      setUploadingThumb(false);
+    }
   }
 
   function handleUrlChange(url: string) {
@@ -217,7 +245,7 @@ export default function ProducerLivesPage() {
         platform: form.platform,
         externalUrl: form.externalUrl,
         embedUrl: form.embedUrl || null,
-        scheduledAt: form.scheduledAt,
+        scheduledAt: new Date(form.scheduledAt).toISOString(),
         courseId: form.courseId || null,
         thumbnailUrl: form.thumbnailUrl || null,
         visibility: form.visibility,
@@ -711,13 +739,56 @@ export default function ProducerLivesPage() {
               </div>
 
               <div>
-                <label className={labelCls}>URL da Thumbnail</label>
-                <input
-                  className={inputCls}
-                  value={form.thumbnailUrl}
-                  onChange={(e) => setForm((f) => ({ ...f, thumbnailUrl: e.target.value }))}
-                  placeholder="https://..."
-                />
+                <label className={labelCls}>Thumbnail</label>
+                {form.thumbnailUrl ? (
+                  <div className="flex items-center gap-3">
+                    <img src={form.thumbnailUrl} alt="" className="w-24 h-14 object-cover rounded-lg border border-white/10" />
+                    <button
+                      type="button"
+                      onClick={() => setForm((f) => ({ ...f, thumbnailUrl: "" }))}
+                      className="text-xs text-red-400 hover:text-red-300 transition"
+                    >
+                      Remover
+                    </button>
+                    <label className="text-xs text-purple-400 hover:text-purple-300 transition cursor-pointer">
+                      Trocar
+                      <input
+                        type="file"
+                        accept="image/png,image/jpeg,image/webp"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) handleThumbnailUpload(file);
+                          e.target.value = "";
+                        }}
+                      />
+                    </label>
+                  </div>
+                ) : (
+                  <label className={`${inputCls} flex items-center justify-center gap-2 cursor-pointer border-dashed`}>
+                    {uploadingThumb ? (
+                      <span className="text-gray-400 text-sm">Enviando...</span>
+                    ) : (
+                      <>
+                        <svg className="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        <span className="text-gray-500 text-sm">Clique para enviar imagem</span>
+                      </>
+                    )}
+                    <input
+                      type="file"
+                      accept="image/png,image/jpeg,image/webp"
+                      className="hidden"
+                      disabled={uploadingThumb}
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleThumbnailUpload(file);
+                        e.target.value = "";
+                      }}
+                    />
+                  </label>
+                )}
               </div>
 
               {editingLive?.status === "ENDED" && (
