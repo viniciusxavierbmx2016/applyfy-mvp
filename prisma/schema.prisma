@@ -47,6 +47,7 @@ model User {
   userTags         UserTag[]
   liveMessages     LiveMessage[]
   liveNotifications LiveNotification[]
+  pushSubscriptions PushSubscription[]
 
   @@index([workspaceId])
 }
@@ -787,4 +788,19 @@ model LiveNotification {
 
   @@index([liveId])
   @@index([userId, read])
+}
+
+model PushSubscription {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  endpoint  String   @db.Text
+  p256dh    String
+  auth      String
+  device    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, endpoint])
+  @@index([userId])
 }
