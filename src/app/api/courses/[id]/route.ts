@@ -71,7 +71,9 @@ export async function PUT(
       slug,
       description,
       thumbnail,
+      thumbnailPosition,
       bannerUrl,
+      bannerPosition,
       checkoutUrl,
       price,
       priceCurrency,
@@ -118,7 +120,9 @@ export async function PUT(
         ...(slug !== undefined && { slug }),
         ...(description !== undefined && { description }),
         ...(thumbnail !== undefined && { thumbnail }),
+        ...(thumbnailPosition !== undefined && { thumbnailPosition }),
         ...(bannerUrl !== undefined && { bannerUrl }),
+        ...(bannerPosition !== undefined && { bannerPosition }),
         ...(checkoutUrl !== undefined && { checkoutUrl }),
         ...(price !== undefined && {
           price:

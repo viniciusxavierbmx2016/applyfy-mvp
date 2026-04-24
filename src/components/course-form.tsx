@@ -4,7 +4,13 @@ import { useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { ThumbnailUpload } from "./thumbnail-upload";
 import { BannerUpload } from "./banner-upload";
+import { ImagePositioner, type ImagePosition } from "./image-positioner";
 import { slugify } from "@/lib/utils";
+
+function parsePosition(json: string | null | undefined): ImagePosition {
+  if (!json) return { x: 50, y: 50 };
+  try { const p = JSON.parse(json); return { x: p.x ?? 50, y: p.y ?? 50 }; } catch { return { x: 50, y: 50 }; }
+}
 
 interface CourseFormData {
   id?: string;
@@ -12,7 +18,9 @@ interface CourseFormData {
   slug: string;
   description: string;
   thumbnail: string | null;
+  thumbnailPosition: string | null;
   bannerUrl: string | null;
+  bannerPosition: string | null;
   checkoutUrl: string;
   price: string;
   priceCurrency: string;
@@ -39,8 +47,14 @@ export function CourseForm({ initial, mode }: CourseFormProps) {
   const [thumbnail, setThumbnail] = useState<string | null>(
     initial?.thumbnail || null
   );
+  const [thumbPos, setThumbPos] = useState<ImagePosition>(
+    parsePosition(initial?.thumbnailPosition)
+  );
   const [bannerUrl, setBannerUrl] = useState<string | null>(
     initial?.bannerUrl || null
+  );
+  const [bannerPos, setBannerPos] = useState<ImagePosition>(
+    parsePosition(initial?.bannerPosition)
   );
   const [checkoutUrl, setCheckoutUrl] = useState(initial?.checkoutUrl || "");
   const [price, setPrice] = useState(initial?.price ?? "");
@@ -77,7 +91,9 @@ export function CourseForm({ initial, mode }: CourseFormProps) {
       slug,
       description,
       thumbnail,
+      thumbnailPosition: JSON.stringify(thumbPos),
       bannerUrl,
+      bannerPosition: JSON.stringify(bannerPos),
       checkoutUrl: checkoutUrl || null,
       price: price === "" ? null : Number(price),
       priceCurrency: priceCurrency || "BRL",
@@ -175,17 +191,43 @@ export function CourseForm({ initial, mode }: CourseFormProps) {
           />
         </div>
 
-        <ThumbnailUpload
-          value={thumbnail}
-          onChange={setThumbnail}
-          uploadPath={initial?.id ? `thumbnails/${initial.id}` : undefined}
-        />
+        <div>
+          <ThumbnailUpload
+            value={thumbnail}
+            onChange={(url) => { setThumbnail(url); if (!url) setThumbPos({ x: 50, y: 50 }); }}
+            uploadPath={initial?.id ? `thumbnails/${initial.id}` : undefined}
+          />
+          {thumbnail && (
+            <div className="mt-2">
+              <ImagePositioner
+                src={thumbnail}
+                aspectRatio="16/9"
+                currentPosition={thumbPos}
+                onPositionChange={setThumbPos}
+                onSave={setThumbPos}
+              />
+            </div>
+          )}
+        </div>
 
-        <BannerUpload
-          value={bannerUrl}
-          onChange={setBannerUrl}
-          uploadPath={initial?.id ? `banners/${initial.id}` : undefined}
-        />
+        <div>
+          <BannerUpload
+            value={bannerUrl}
+            onChange={(url) => { setBannerUrl(url); if (!url) setBannerPos({ x: 50, y: 50 }); }}
+            uploadPath={initial?.id ? `banners/${initial.id}` : undefined}
+          />
+          {bannerUrl && (
+            <div className="mt-2">
+              <ImagePositioner
+                src={bannerUrl}
+                aspectRatio="1125/350"
+                currentPosition={bannerPos}
+                onPositionChange={setBannerPos}
+                onSave={setBannerPos}
+              />
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-6 space-y-4">

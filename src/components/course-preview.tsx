@@ -32,7 +32,9 @@ export interface PreviewCourse {
   slug: string;
   description: string;
   thumbnail: string | null;
+  thumbnailPosition?: string | null;
   bannerUrl: string | null;
+  bannerPosition?: string | null;
   checkoutUrl: string | null;
   price: number | null;
   priceCurrency: string | null;
@@ -152,6 +154,7 @@ export function CoursePreview({
               sizes="(max-width: 1400px) 100vw, 1400px"
               className="object-cover"
               priority
+              style={course.bannerPosition ? (() => { try { const p = JSON.parse(course.bannerPosition); return { objectPosition: `${p.x}% ${p.y}%` }; } catch { return undefined; } })() : undefined}
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
           </div>
@@ -171,6 +174,7 @@ export function CoursePreview({
                   fill
                   sizes="80px"
                   className="object-cover"
+                  style={course.thumbnailPosition ? (() => { try { const p = JSON.parse(course.thumbnailPosition); return { objectPosition: `${p.x}% ${p.y}%` }; } catch { return undefined; } })() : undefined}
                 />
               </div>
             )}
@@ -323,6 +327,7 @@ export function CoursePreview({
                   fill
                   sizes="360px"
                   className="object-cover"
+                  style={course.thumbnailPosition ? (() => { try { const p = JSON.parse(course.thumbnailPosition); return { objectPosition: `${p.x}% ${p.y}%` }; } catch { return undefined; } })() : undefined}
                 />
               </div>
             )}

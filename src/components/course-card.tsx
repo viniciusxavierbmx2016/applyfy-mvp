@@ -11,6 +11,7 @@ interface CourseCardProps {
   title: string;
   description: string;
   thumbnail?: string | null;
+  thumbnailPosition?: string | null;
   locked?: boolean;
   expired?: boolean;
   progress?: number;
@@ -34,6 +35,7 @@ export function CourseCard({
   title,
   description,
   thumbnail,
+  thumbnailPosition,
   locked = false,
   expired = false,
   progress,
@@ -79,6 +81,7 @@ export function CourseCard({
               "object-cover transition-transform duration-300 group-hover:scale-105",
               locked && "opacity-60"
             )}
+            style={thumbnailPosition ? (() => { try { const p = JSON.parse(thumbnailPosition); return { objectPosition: `${p.x}% ${p.y}%` }; } catch { return undefined; } })() : undefined}
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center">

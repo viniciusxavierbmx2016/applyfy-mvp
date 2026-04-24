@@ -20,6 +20,7 @@ interface EnrolledCourse {
   slug: string;
   description: string;
   thumbnail: string | null;
+  thumbnailPosition?: string | null;
   checkoutUrl: string | null;
   ratingAverage?: number;
   ratingCount?: number;
@@ -43,6 +44,7 @@ interface StoreCourse {
   slug: string;
   description: string;
   thumbnail: string | null;
+  thumbnailPosition?: string | null;
   checkoutUrl: string | null;
   ratingAverage?: number;
   ratingCount?: number;
@@ -155,6 +157,7 @@ export default function WorkspaceVitrinePage() {
                     title={course.title}
                     description={course.description}
                     thumbnail={course.thumbnail}
+                    thumbnailPosition={course.thumbnailPosition}
                     progress={calculateCourseProgress(course)}
                     ratingAverage={course.ratingAverage}
                     ratingCount={course.ratingCount}
@@ -186,6 +189,7 @@ export default function WorkspaceVitrinePage() {
                     title={course.title}
                     description={course.description}
                     thumbnail={course.thumbnail}
+                    thumbnailPosition={course.thumbnailPosition}
                     ratingAverage={course.ratingAverage}
                     ratingCount={course.ratingCount}
                     checkoutUrl={course.checkoutUrl}
@@ -209,6 +213,7 @@ export default function WorkspaceVitrinePage() {
                     title={course.title}
                     description={course.description}
                     thumbnail={course.thumbnail}
+                    thumbnailPosition={course.thumbnailPosition}
                     checkoutUrl={course.checkoutUrl}
                     ratingAverage={course.ratingAverage}
                     ratingCount={course.ratingCount}

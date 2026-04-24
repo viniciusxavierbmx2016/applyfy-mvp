@@ -51,7 +51,9 @@ interface CourseDetail {
   slug: string;
   description: string;
   thumbnail: string | null;
+  thumbnailPosition: string | null;
   bannerUrl: string | null;
+  bannerPosition: string | null;
   checkoutUrl: string | null;
   price: number | null;
   priceCurrency: string | null;
@@ -388,6 +390,7 @@ export default function CourseHomePage() {
             fill
             sizes="100vw"
             className="object-cover"
+            style={course.bannerPosition ? (() => { try { const p = JSON.parse(course.bannerPosition); return { objectPosition: `${p.x}% ${p.y}%` }; } catch { return undefined; } })() : undefined}
             priority
           />
           <div className="absolute inset-0 bg-gradient-to-t from-white via-white/0 to-transparent dark:from-gray-950 dark:via-gray-950/0 dark:to-transparent" />
@@ -406,6 +409,7 @@ export default function CourseHomePage() {
                 fill
                 sizes="64px"
                 className="object-cover"
+                style={course.thumbnailPosition ? (() => { try { const p = JSON.parse(course.thumbnailPosition); return { objectPosition: `${p.x}% ${p.y}%` }; } catch { return undefined; } })() : undefined}
               />
             </div>
           ) : (

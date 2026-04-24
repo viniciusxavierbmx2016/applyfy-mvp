@@ -126,7 +126,9 @@ model Course {
   slug               String    @unique
   description        String
   thumbnail          String?
+  thumbnailPosition  String?  @default("{\"x\":50,\"y\":50}")
   bannerUrl          String?
+  bannerPosition     String?  @default("{\"x\":50,\"y\":50}")
   checkoutUrl        String?
   price              Float?
   priceCurrency      String    @default("BRL")

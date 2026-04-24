@@ -25,7 +25,9 @@ interface CourseData {
   slug: string;
   description: string;
   thumbnail: string | null;
+  thumbnailPosition: string | null;
   bannerUrl: string | null;
+  bannerPosition: string | null;
   checkoutUrl: string | null;
   price: number | null;
   priceCurrency: string | null;
@@ -173,7 +175,9 @@ export default function EditCoursePage({
             slug: course.slug,
             description: course.description,
             thumbnail: course.thumbnail,
+            thumbnailPosition: course.thumbnailPosition,
             bannerUrl: course.bannerUrl,
+            bannerPosition: course.bannerPosition,
             checkoutUrl: course.checkoutUrl || "",
             price: course.price != null ? String(course.price) : "",
             priceCurrency: course.priceCurrency || "BRL",
