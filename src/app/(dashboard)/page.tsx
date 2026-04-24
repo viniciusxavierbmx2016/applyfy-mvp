@@ -63,7 +63,13 @@ export default function HomePage() {
       if (workspace?.slug) {
         router.replace(`/w/${workspace.slug}`);
       } else {
-        router.replace("/login?error=sem-workspace");
+        fetch("/api/student/workspace")
+          .then((r) => r.ok ? r.json() : null)
+          .then((d) => {
+            if (d?.slug) router.replace(`/w/${d.slug}`);
+            else router.replace("/login?error=sem-workspace");
+          })
+          .catch(() => router.replace("/login?error=sem-workspace"));
       }
     }
   }, [user, workspace, userLoading, router]);

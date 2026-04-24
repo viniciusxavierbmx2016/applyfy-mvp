@@ -90,7 +90,13 @@ function DashboardContent() {
       return;
     }
     if (user.role === "STUDENT") {
-      router.replace("/");
+      fetch("/api/student/workspace")
+        .then((r) => r.ok ? r.json() : null)
+        .then((d) => {
+          if (d?.slug) router.replace(`/w/${d.slug}`);
+          else router.replace("/login");
+        })
+        .catch(() => router.replace("/login"));
       return;
     }
 

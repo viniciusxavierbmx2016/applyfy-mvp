@@ -45,6 +45,15 @@ export function WorkspaceShell({
   }, [slug]);
 
   useEffect(() => {
+    const link = document.querySelector('link[rel="manifest"]');
+    if (link) link.setAttribute("href", `/api/manifest/${slug}`);
+    return () => {
+      const link = document.querySelector('link[rel="manifest"]');
+      if (link) link.setAttribute("href", "/manifest.json");
+    };
+  }, [slug]);
+
+  useEffect(() => {
     try {
       const saved = localStorage.getItem(COLLAPSED_KEY);
       if (saved === "1") setCollapsed(true);
