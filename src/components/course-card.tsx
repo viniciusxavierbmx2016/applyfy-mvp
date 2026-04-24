@@ -22,6 +22,7 @@ interface CourseCardProps {
   className?: string;
   manageHref?: string;
   horizontal?: boolean;
+  featured?: boolean;
 }
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
@@ -46,6 +47,7 @@ export function CourseCard({
   className,
   manageHref,
   horizontal = false,
+  featured = false,
 }: CourseCardProps) {
   const showRating =
     typeof ratingAverage === "number" &&
@@ -59,10 +61,12 @@ export function CourseCard({
         : null;
   const daysLeft = expiresAtDate ? daysUntil(expiresAtDate) : null;
   const wrapperClassName = cn(
-    "group block bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden isolate transition-all duration-300 ease-out will-change-transform",
-    expired || locked
-      ? "lg:hover:scale-[1.01] hover:border-gray-300 dark:hover:border-gray-700"
-      : "lg:hover:scale-[1.03] lg:hover:shadow-2xl lg:hover:shadow-black/25 lg:hover:z-10 hover:border-gray-400 dark:hover:border-gray-600",
+    "group block bg-white dark:bg-gray-900 border rounded-xl overflow-hidden isolate transition-all duration-300 ease-out will-change-transform",
+    featured
+      ? "border-amber-500/40 dark:border-amber-500/30 lg:hover:scale-[1.03] lg:hover:shadow-2xl lg:hover:shadow-amber-500/10 lg:hover:z-10 hover:border-amber-500/60 dark:hover:border-amber-500/50"
+      : expired || locked
+        ? "border-gray-200 dark:border-gray-800 lg:hover:scale-[1.01] hover:border-gray-300 dark:hover:border-gray-700"
+        : "border-gray-200 dark:border-gray-800 lg:hover:scale-[1.03] lg:hover:shadow-2xl lg:hover:shadow-black/25 lg:hover:z-10 hover:border-gray-400 dark:hover:border-gray-600",
     expired && "opacity-75 grayscale-[0.4]",
     horizontal && "flex",
     className
@@ -96,6 +100,18 @@ export function CourseCard({
             >
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
             </svg>
+          </div>
+        )}
+
+        {/* Featured badge */}
+        {featured && (
+          <div className="absolute top-2 left-2 z-10">
+            <span className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 backdrop-blur-sm">
+              <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 17.27l6.18 3.73-1.64-7.03L22 9.24l-7.19-.62L12 2 9.19 8.62 2 9.24l5.46 4.73L5.82 21z" />
+              </svg>
+              Destaque
+            </span>
           </div>
         )}
 

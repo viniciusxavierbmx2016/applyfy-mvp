@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
-import Link from "next/link";
 import { CourseCard } from "@/components/course-card";
 import { calculateCourseProgress } from "@/lib/utils";
 import { useUserStore } from "@/stores/user-store";
@@ -174,8 +173,9 @@ export default function WorkspaceVitrinePage() {
   const bannerPos = parseBannerPos();
 
   const allCourses = [...enrolled, ...store];
-  const featuredCourse = allCourses.find((c) => c.featured);
-  const isEnrolled = (id: string) => enrolled.some((c) => c.id === id);
+
+  const sortFeatured = <T extends { featured: boolean }>(courses: T[]): T[] =>
+    [...courses].sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0));
 
   const filterCourses = <T extends { title: string; description: string; category: string | null }>(
     courses: T[]
@@ -196,9 +196,9 @@ export default function WorkspaceVitrinePage() {
     return result;
   };
 
-  const active = filterCourses(enrolled.filter((c) => !c.isExpired));
+  const active = sortFeatured(filterCourses(enrolled.filter((c) => !c.isExpired)));
   const expired = filterCourses(enrolled.filter((c) => c.isExpired));
-  const filteredStore = filterCourses(store);
+  const filteredStore = sortFeatured(filterCourses(store));
   const hasFilters = !!search || !!activeCategory;
   const noResults = active.length === 0 && expired.length === 0 && filteredStore.length === 0 && hasFilters;
 
@@ -210,33 +210,48 @@ export default function WorkspaceVitrinePage() {
       ? "grid grid-cols-1 sm:grid-cols-2 gap-4"
       : "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4";
 
+  const greeting = getGreeting();
+  const firstName = user?.name?.split(" ")[0] || "aluno";
+
   return (
     <div className="animate-fade-in-up">
-      {ws?.bannerUrl && (
-        <div
-          className="relative w-full overflow-hidden bg-gray-100 dark:bg-gray-900"
-          style={{ aspectRatio: "24/5" }}
-        >
-          <Image
-            src={ws.bannerUrl}
-            alt={displayName}
-            fill
-            sizes="100vw"
-            className="object-cover"
-            style={bannerPos ? { objectPosition: `${bannerPos.x}% ${bannerPos.y}%` } : undefined}
-            priority
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-white via-white/0 to-transparent dark:from-gray-950 dark:via-gray-950/0 dark:to-transparent" />
-          <div className="absolute inset-0 bg-gradient-to-r from-white/30 via-transparent to-white/30 dark:from-gray-950/40 dark:via-transparent dark:to-gray-950/40" />
+      {ws?.bannerUrl ? (
+        <div className="px-4 sm:px-6 lg:px-8 pt-4 lg:pt-6 max-w-6xl mx-auto">
+          <div
+            className="relative w-full overflow-hidden rounded-2xl bg-gray-100 dark:bg-gray-900"
+            style={{ aspectRatio: "24/5" }}
+          >
+            <Image
+              src={ws.bannerUrl}
+              alt={displayName}
+              fill
+              sizes="100vw"
+              className="object-cover"
+              style={bannerPos ? { objectPosition: `${bannerPos.x}% ${bannerPos.y}%` } : undefined}
+              priority
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+            <div className="absolute bottom-0 left-0 p-6 lg:p-8">
+              <h2 className="text-2xl lg:text-3xl font-bold text-white mb-1">
+                {greeting}, {firstName}
+              </h2>
+              <p className="text-gray-300 text-sm">
+                {`Bem-vindo à área de membros de ${displayName}`}
+              </p>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="px-4 sm:px-6 lg:px-8 pt-6 lg:pt-8 max-w-6xl mx-auto">
+          <h2 className="text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white mb-1">
+            {greeting}, {firstName}
+          </h2>
+          <p className="text-gray-600 dark:text-gray-400">
+            {`Bem-vindo à área de membros de ${displayName}`}
+          </p>
         </div>
       )}
-      <div className={`px-4 sm:px-6 lg:px-8 py-6 lg:py-8 max-w-6xl mx-auto ${ws?.bannerUrl ? "-mt-10" : ""}`}>
-        <h2 className="text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white mb-1">
-          {getGreeting()}, {user?.name?.split(" ")[0] || "aluno"}
-        </h2>
-        <p className="text-gray-600 dark:text-gray-400 mb-6">
-          {`Bem-vindo à área de membros de ${displayName}`}
-        </p>
+      <div className="px-4 sm:px-6 lg:px-8 py-6 lg:py-8 max-w-6xl mx-auto">
 
         {userLoading || loading ? (
           <div className="flex items-center justify-center py-16">
@@ -244,57 +259,6 @@ export default function WorkspaceVitrinePage() {
           </div>
         ) : (
           <>
-            {/* Featured hero */}
-            {featuredCourse && !hasFilters && (
-              <section className="mb-10">
-                <Link
-                  href={
-                    isEnrolled(featuredCourse.id)
-                      ? `/course/${featuredCourse.slug}`
-                      : featuredCourse.checkoutUrl || `/course/${featuredCourse.slug}`
-                  }
-                  className="group block relative rounded-2xl overflow-hidden"
-                >
-                  <div className="relative min-h-[280px] lg:min-h-[320px]">
-                    {featuredCourse.thumbnail ? (
-                      <Image
-                        src={featuredCourse.thumbnail}
-                        alt={featuredCourse.title}
-                        fill
-                        sizes="100vw"
-                        className="object-cover transition-transform duration-500 lg:group-hover:scale-105"
-                      />
-                    ) : (
-                      <div className="absolute inset-0 bg-gradient-to-br from-indigo-600 to-purple-700" />
-                    )}
-                    <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-transparent" />
-                    <div className="relative flex flex-col justify-end p-6 sm:p-8 min-h-[280px] lg:min-h-[320px]">
-                      <span className="inline-flex items-center gap-1 text-xs font-medium px-3 py-1 rounded-full bg-amber-500/20 text-amber-400 w-fit mb-3">
-                        <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
-                          <path d="M12 17.27l6.18 3.73-1.64-7.03L22 9.24l-7.19-.62L12 2 9.19 8.62 2 9.24l5.46 4.73L5.82 21z" />
-                        </svg>
-                        Destaque
-                      </span>
-                      <h3 className="text-2xl lg:text-3xl font-bold text-white mb-2">
-                        {featuredCourse.title}
-                      </h3>
-                      <p className="text-gray-300 line-clamp-2 max-w-xl text-sm sm:text-base">
-                        {featuredCourse.description}
-                      </p>
-                      <div className="mt-4">
-                        <span className="inline-flex items-center gap-2 px-5 py-2.5 bg-white/10 hover:bg-white/20 backdrop-blur text-white text-sm font-medium rounded-lg transition">
-                          {isEnrolled(featuredCourse.id) ? "Acessar curso" : "Ver detalhes"}
-                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                          </svg>
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </Link>
-              </section>
-            )}
-
             {/* Search + category filters */}
             {(allCourses.length > 3 || categories.length > 0) && (
               <div className="space-y-3 mb-8">
@@ -380,6 +344,7 @@ export default function WorkspaceVitrinePage() {
                             ratingAverage={course.ratingAverage}
                             ratingCount={course.ratingCount}
                             expiresAt={course.expiresAt}
+                            featured={course.featured}
                             manageHref={
                               course.canManage
                                 ? `/producer/courses/${course.id}/edit`
@@ -408,6 +373,7 @@ export default function WorkspaceVitrinePage() {
                           ratingAverage={course.ratingAverage}
                           ratingCount={course.ratingCount}
                           expiresAt={course.expiresAt}
+                          featured={course.featured}
                           manageHref={
                             course.canManage
                               ? `/producer/courses/${course.id}/edit`
@@ -482,6 +448,7 @@ export default function WorkspaceVitrinePage() {
                           checkoutUrl={course.checkoutUrl}
                           ratingAverage={course.ratingAverage}
                           ratingCount={course.ratingCount}
+                          featured={course.featured}
                           locked={!course.canManage}
                           manageHref={
                             course.canManage
