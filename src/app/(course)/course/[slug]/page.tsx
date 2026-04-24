@@ -561,24 +561,25 @@ export default function CourseHomePage() {
         />
       ) : (
         groups.map((group, idx) => (
-          <ModuleCarousel
-            key={group.section?.id || `group-${idx}`}
-            title={
-              group.section?.title ??
-              (groups.length > 1 ? "Módulos" : undefined)
-            }
-            modules={group.modules.map((m) =>
-              toCarouselModule(
-                m,
-                course,
-                enrollmentCreatedAt,
-                hasAccess,
-                overrides,
-                serverStaffViewer || isStaffViewer,
-                automationLocks
-              )
-            )}
-          />
+          <div key={group.section?.id || `group-${idx}`} className="carousel-hover-safe">
+            <ModuleCarousel
+              title={
+                group.section?.title ??
+                (groups.length > 1 ? "Módulos" : undefined)
+              }
+              modules={group.modules.map((m) =>
+                toCarouselModule(
+                  m,
+                  course,
+                  enrollmentCreatedAt,
+                  hasAccess,
+                  overrides,
+                  serverStaffViewer || isStaffViewer,
+                  automationLocks
+                )
+              )}
+            />
+          </div>
         ))
       )}
 
