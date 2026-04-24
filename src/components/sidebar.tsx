@@ -97,6 +97,11 @@ const iconAutomations = (
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
   </svg>
 );
+const iconLives = (
+  <svg className={iconCls} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+  </svg>
+);
 
 const studentLinks: NavLink[] = [
   { href: "/", label: "Vitrine", icon: iconHome },
@@ -111,6 +116,7 @@ const producerLinks: NavLink[] = [
   { href: "/producer/community", label: "Comunidade", icon: iconCommunity },
   { href: "/producer/analytics", label: "Relatórios", icon: iconAnalytics },
   { href: "/producer/automations", label: "Automações", icon: iconAutomations },
+  { href: "/producer/lives", label: "Lives", icon: iconLives },
   { href: "/producer/collaborators", label: "Colaboradores", icon: iconUsers },
   { href: "/producer/integrations", label: "Integrações", icon: iconIntegrations },
   { href: "/producer/settings", label: "Configurações", icon: iconSettings },
