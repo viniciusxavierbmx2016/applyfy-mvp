@@ -119,7 +119,7 @@ const producerLinks: NavLink[] = [
   { href: "/producer/lives", label: "Lives", icon: iconLives },
   { href: "/producer/collaborators", label: "Colaboradores", icon: iconUsers },
   { href: "/producer/integrations", label: "Integrações", icon: iconIntegrations },
-  { href: "/producer/settings", label: "Configurações", icon: iconSettings },
+  { href: "/producer/settings", label: "Personalizar Painel", icon: iconSettings },
   { href: "/producer/billing", label: "Assinatura", icon: iconSubscriptions },
 ];
 
