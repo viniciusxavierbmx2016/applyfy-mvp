@@ -7,6 +7,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useUserStore } from "@/stores/user-store";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { InstallPrompt } from "@/components/install-prompt";
 
 interface WorkspaceInfo {
   id: string;
@@ -312,6 +313,7 @@ export function WorkspaceShell({
 
         <main className="flex-1 min-w-0">{children}</main>
       </div>
+      <InstallPrompt />
     </div>
   );
 }

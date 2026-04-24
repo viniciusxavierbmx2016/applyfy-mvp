@@ -3,6 +3,7 @@ import localFont from "next/font/local";
 import { AuthProvider } from "@/components/auth-provider";
 import { ThemeProvider } from "@/components/theme-provider";
 import { DynamicFavicon } from "@/components/dynamic-favicon";
+import { PWARegister } from "@/components/pwa-register";
 import "./globals.css";
 
 const geistSans = localFont({
@@ -65,6 +66,13 @@ export default function RootLayout({
     <html lang="pt-BR" suppressHydrationWarning>
       <head>
         <DynamicFavicon />
+        <link rel="manifest" href="/manifest.json" />
+        <meta name="theme-color" content="#0a0a1a" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="apple-mobile-web-app-title" content="Members Club" />
+        <meta name="mobile-web-app-capable" content="yes" />
+        <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-white text-gray-900 dark:bg-gray-950 dark:text-white`}
@@ -72,6 +80,7 @@ export default function RootLayout({
         <ThemeProvider>
           <AuthProvider>{children}</AuthProvider>
         </ThemeProvider>
+        <PWARegister />
       </body>
     </html>
   );
