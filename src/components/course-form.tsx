@@ -4,8 +4,9 @@ import { useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { ThumbnailUpload } from "./thumbnail-upload";
 import { BannerUpload } from "./banner-upload";
-import { ImagePositioner, type ImagePosition } from "./image-positioner";
 import { slugify } from "@/lib/utils";
+
+interface ImagePosition { x: number; y: number; }
 
 function parsePosition(json: string | null | undefined): ImagePosition {
   if (!json) return { x: 50, y: 50 };
@@ -70,6 +71,8 @@ export function CourseForm({ initial, mode }: CourseFormProps) {
   const [supportWhatsapp, setSupportWhatsapp] = useState(
     initial?.supportWhatsapp || ""
   );
+  const [thumbMode, setThumbMode] = useState<"view" | "reposition">("view");
+  const [bannerMode, setBannerMode] = useState<"view" | "reposition">("view");
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -194,39 +197,33 @@ export function CourseForm({ initial, mode }: CourseFormProps) {
         <div>
           <ThumbnailUpload
             value={thumbnail}
-            onChange={(url) => { setThumbnail(url); if (!url) setThumbPos({ x: 50, y: 50 }); }}
+            onChange={(url) => {
+              setThumbnail(url);
+              if (url) { setThumbPos({ x: 50, y: 50 }); setThumbMode("reposition"); }
+              else { setThumbPos({ x: 50, y: 50 }); setThumbMode("view"); }
+            }}
             uploadPath={initial?.id ? `thumbnails/${initial.id}` : undefined}
+            position={thumbPos}
+            onPositionChange={setThumbPos}
+            mode={thumbMode}
+            onModeChange={setThumbMode}
           />
-          {thumbnail && (
-            <div className="mt-2">
-              <ImagePositioner
-                src={thumbnail}
-                aspectRatio="16/9"
-                currentPosition={thumbPos}
-                onPositionChange={setThumbPos}
-                onSave={setThumbPos}
-              />
-            </div>
-          )}
         </div>
 
         <div>
           <BannerUpload
             value={bannerUrl}
-            onChange={(url) => { setBannerUrl(url); if (!url) setBannerPos({ x: 50, y: 50 }); }}
+            onChange={(url) => {
+              setBannerUrl(url);
+              if (url) { setBannerPos({ x: 50, y: 50 }); setBannerMode("reposition"); }
+              else { setBannerPos({ x: 50, y: 50 }); setBannerMode("view"); }
+            }}
             uploadPath={initial?.id ? `banners/${initial.id}` : undefined}
+            position={bannerPos}
+            onPositionChange={setBannerPos}
+            mode={bannerMode}
+            onModeChange={setBannerMode}
           />
-          {bannerUrl && (
-            <div className="mt-2">
-              <ImagePositioner
-                src={bannerUrl}
-                aspectRatio="1125/350"
-                currentPosition={bannerPos}
-                onPositionChange={setBannerPos}
-                onSave={setBannerPos}
-              />
-            </div>
-          )}
         </div>
       </div>
 
