@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { ThumbnailUpload } from "./thumbnail-upload";
 import { BannerUpload } from "./banner-upload";
@@ -28,6 +28,8 @@ interface CourseFormData {
   externalProductId: string;
   isPublished: boolean;
   showInStore: boolean;
+  featured: boolean;
+  category: string;
   supportEmail: string;
   supportWhatsapp: string;
 }
@@ -67,6 +69,9 @@ export function CourseForm({ initial, mode }: CourseFormProps) {
   );
   const [isPublished, setIsPublished] = useState(initial?.isPublished ?? false);
   const [showInStore, setShowInStore] = useState(initial?.showInStore ?? true);
+  const [featured, setFeatured] = useState(initial?.featured ?? false);
+  const [category, setCategory] = useState(initial?.category || "");
+  const [categories, setCategories] = useState<string[]>([]);
   const [supportEmail, setSupportEmail] = useState(initial?.supportEmail || "");
   const [supportWhatsapp, setSupportWhatsapp] = useState(
     initial?.supportWhatsapp || ""
@@ -75,6 +80,13 @@ export function CourseForm({ initial, mode }: CourseFormProps) {
   const [bannerMode, setBannerMode] = useState<"view" | "reposition">("view");
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/producer/courses/categories")
+      .then((r) => (r.ok ? r.json() : { categories: [] }))
+      .then((d) => setCategories(d.categories || []))
+      .catch(() => {});
+  }, []);
 
   function handleTitleChange(e: React.ChangeEvent<HTMLInputElement>) {
     const newTitle = e.target.value;
@@ -103,6 +115,8 @@ export function CourseForm({ initial, mode }: CourseFormProps) {
       externalProductId: externalProductId.trim() || null,
       isPublished,
       showInStore,
+      featured,
+      category: category.trim() || null,
       supportEmail: supportEmail.trim() || null,
       supportWhatsapp: supportWhatsapp.trim() || null,
     };
@@ -324,6 +338,47 @@ export function CourseForm({ initial, mode }: CourseFormProps) {
             <p className="text-sm font-medium text-gray-900 dark:text-white">Mostrar na loja</p>
             <p className="text-xs text-gray-500">
               Aparece na seção &ldquo;Outros cursos&rdquo; para alunos sem acesso
+            </p>
+          </div>
+        </label>
+      </div>
+
+      <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-6 space-y-4">
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Vitrine</h2>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Categoria
+          </label>
+          <input
+            type="text"
+            list="course-categories"
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            className="w-full px-4 py-2.5 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Ex: Marketing, Vendas, Tecnologia"
+          />
+          <datalist id="course-categories">
+            {categories.map((c) => (
+              <option key={c} value={c} />
+            ))}
+          </datalist>
+          <p className="text-xs text-gray-500 mt-1">
+            Agrupa cursos na vitrine do aluno. Digite ou selecione uma existente.
+          </p>
+        </div>
+
+        <label className="flex items-start gap-3 cursor-pointer p-3 rounded-lg hover:bg-gray-800/50 transition">
+          <input
+            type="checkbox"
+            checked={featured}
+            onChange={(e) => setFeatured(e.target.checked)}
+            className="mt-0.5 h-4 w-4 accent-amber-500"
+          />
+          <div>
+            <p className="text-sm font-medium text-gray-900 dark:text-white">Curso destaque</p>
+            <p className="text-xs text-gray-500">
+              Exibe este curso em destaque no topo da vitrine. Apenas 1 curso pode ser destaque por vez.
             </p>
           </div>
         </label>

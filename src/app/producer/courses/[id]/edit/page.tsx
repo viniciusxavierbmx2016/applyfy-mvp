@@ -36,6 +36,8 @@ interface CourseData {
   showInStore: boolean;
   supportEmail: string | null;
   supportWhatsapp: string | null;
+  featured: boolean;
+  category: string | null;
   modules: ModuleData[];
   sections: SectionData[];
 }
@@ -186,6 +188,8 @@ export default function EditCoursePage({
             showInStore: course.showInStore,
             supportEmail: course.supportEmail || "",
             supportWhatsapp: course.supportWhatsapp || "",
+            featured: course.featured,
+            category: course.category || "",
           }}
         />
       ) : (
