@@ -16,6 +16,9 @@ interface BannerUploadProps {
   onPositionChange?: (pos: ImagePosition) => void;
   mode?: "view" | "reposition";
   onModeChange?: (mode: "view" | "reposition") => void;
+  aspectRatio?: string;
+  label?: string;
+  hint?: string;
 }
 
 export function BannerUpload({
@@ -26,6 +29,9 @@ export function BannerUpload({
   onPositionChange,
   mode = "view",
   onModeChange,
+  aspectRatio = "1125/350",
+  label = "Banner do curso",
+  hint = "Tamanho ideal: 1125x350px. PNG, JPG ou WebP, máx. 5MB.",
 }: BannerUploadProps) {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
@@ -114,14 +120,14 @@ export function BannerUpload({
   return (
     <div>
       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-        Banner do curso
+        {label}
       </label>
 
       {value ? (
         <div
           ref={containerRef}
           className={`relative group w-full bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden border ${mode === "reposition" ? "border-indigo-500 border-2 border-dashed" : "border-gray-300 dark:border-gray-700"}`}
-          style={{ aspectRatio: "1125/350", cursor: mode === "reposition" ? "grab" : undefined }}
+          style={{ aspectRatio, cursor: mode === "reposition" ? "grab" : undefined }}
           onMouseDown={mode === "reposition" ? (e) => { e.preventDefault(); handleDragStart(e.clientX, e.clientY); } : undefined}
           onTouchStart={mode === "reposition" ? (e) => { const t = e.touches[0]; handleDragStart(t.clientX, t.clientY); } : undefined}
         >
@@ -189,7 +195,7 @@ export function BannerUpload({
       ) : (
         <label
           className="relative block w-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-750 border-2 border-dashed border-gray-300 dark:border-gray-700 hover:border-gray-500 dark:hover:border-gray-600 rounded-lg cursor-pointer transition"
-          style={{ aspectRatio: "1125/350" }}
+          style={{ aspectRatio }}
         >
           <input
             type="file"
@@ -217,7 +223,7 @@ export function BannerUpload({
       )}
 
       <p className="text-xs text-gray-500 mt-2">
-        Tamanho ideal: 1125x350px. PNG, JPG ou WebP, máx. 5MB.
+        {hint}
       </p>
       {error && <p className="mt-2 text-sm text-red-400">{error}</p>}
     </div>

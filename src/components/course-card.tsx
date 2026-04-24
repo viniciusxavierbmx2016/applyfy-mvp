@@ -59,7 +59,10 @@ export function CourseCard({
         : null;
   const daysLeft = expiresAtDate ? daysUntil(expiresAtDate) : null;
   const wrapperClassName = cn(
-    "group block bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden hover:border-gray-400 dark:hover:border-gray-700 hover:shadow-xl hover:-translate-y-0.5 transition-[border-color,box-shadow,transform] duration-200",
+    "group block bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden transition-all duration-300 ease-out",
+    expired || locked
+      ? "lg:hover:scale-[1.01] hover:border-gray-300 dark:hover:border-gray-700"
+      : "lg:hover:scale-[1.03] lg:hover:shadow-2xl lg:hover:shadow-black/25 lg:hover:z-10 hover:border-gray-400 dark:hover:border-gray-600",
     expired && "opacity-75 grayscale-[0.4]",
     horizontal && "flex",
     className
@@ -78,7 +81,7 @@ export function CourseCard({
             fill
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
             className={cn(
-              "object-cover transition-transform duration-300 group-hover:scale-105",
+              "object-cover transition-transform duration-500 lg:group-hover:scale-110",
               locked && "opacity-60"
             )}
             style={thumbnailPosition ? (() => { try { const p = JSON.parse(thumbnailPosition); return { objectPosition: `${p.x}% ${p.y}%` }; } catch { return undefined; } })() : undefined}

@@ -863,6 +863,9 @@ export default function EditWorkspacePage() {
                 onPositionChange={setWsBannerPos}
                 mode={wsBannerMode}
                 onModeChange={setWsBannerMode}
+                aspectRatio="24/5"
+                label="Banner da vitrine"
+                hint="Tamanho ideal: 1920x400px. PNG, JPG ou WebP, máx. 5MB."
               />
             </section>
 

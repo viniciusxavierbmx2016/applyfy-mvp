@@ -96,7 +96,7 @@ export default function WorkspaceLivesPage() {
             <Link
               key={live.id}
               href={`/w/${slug}/lives/${live.id}`}
-              className="block bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.06] rounded-xl p-4 hover:bg-gray-50 dark:hover:bg-white/[0.05] transition"
+              className="block bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.06] rounded-xl p-4 hover:bg-gray-50 dark:hover:bg-white/[0.05] transition-all duration-300 lg:hover:scale-[1.02] lg:hover:shadow-xl lg:hover:shadow-black/20 lg:hover:border-gray-300 dark:lg:hover:border-white/20"
             >
               <div className="flex items-start gap-4">
                 {live.thumbnailUrl && (

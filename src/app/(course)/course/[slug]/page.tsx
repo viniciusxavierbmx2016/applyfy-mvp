@@ -381,8 +381,8 @@ export default function CourseHomePage() {
       {/* Banner */}
       {course.bannerUrl && (
         <div
-          className="relative w-full mb-0 -mx-4 sm:-mx-6 lg:-mx-10 overflow-hidden bg-gray-100 dark:bg-gray-900 min-h-[240px] sm:min-h-[320px] lg:min-h-[380px]"
-          style={{ aspectRatio: "1125/400" }}
+          className="relative w-full mb-0 -mx-4 sm:-mx-6 lg:-mx-10 overflow-hidden bg-gray-100 dark:bg-gray-900"
+          style={{ aspectRatio: "45/16" }}
         >
           <Image
             src={course.bannerUrl}

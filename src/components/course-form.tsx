@@ -223,6 +223,8 @@ export function CourseForm({ initial, mode }: CourseFormProps) {
             onPositionChange={setBannerPos}
             mode={bannerMode}
             onModeChange={setBannerMode}
+            aspectRatio="45/16"
+            hint="Tamanho ideal: 1125x400px. PNG, JPG ou WebP, máx. 5MB."
           />
         </div>
       </div>

@@ -146,7 +146,7 @@ export default function WorkspaceVitrinePage() {
       {ws?.bannerUrl && (
         <div
           className="relative w-full overflow-hidden bg-gray-100 dark:bg-gray-900"
-          style={{ aspectRatio: "1920/400" }}
+          style={{ aspectRatio: "24/5" }}
         >
           <Image
             src={ws.bannerUrl}
