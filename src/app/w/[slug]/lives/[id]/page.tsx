@@ -2,6 +2,8 @@
 
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { useUserStore } from "@/stores/user-store";
+import { JitsiRoom } from "@/components/jitsi-room";
 
 interface LiveMessage {
   id: string;
@@ -29,6 +31,7 @@ interface LiveData {
 }
 
 const PLATFORM_LABELS: Record<string, string> = {
+  JITSI: "Live integrada",
   YOUTUBE_LIVE: "YouTube Live",
   ZOOM: "Zoom",
   GOOGLE_MEET: "Google Meet",
@@ -66,6 +69,7 @@ export default function LiveRoomPage() {
   const router = useRouter();
   const slug = params.slug;
   const liveId = params.id;
+  const { user } = useUserStore();
 
   const [live, setLive] = useState<LiveData | null>(null);
   const [messages, setMessages] = useState<LiveMessage[]>([]);
@@ -202,6 +206,7 @@ export default function LiveRoomPage() {
   const isScheduled = live.status === "SCHEDULED";
   const isEnded = live.status === "ENDED";
   const isYouTube = live.platform === "YOUTUBE_LIVE" && live.embedUrl;
+  const isJitsi = live.platform === "JITSI";
   const chatReadonly = !isLive;
 
   function renderPlayer() {
@@ -259,6 +264,19 @@ export default function LiveRoomPage() {
             className="w-full h-full"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen
+          />
+        </div>
+      );
+    }
+
+    if (isLive && isJitsi) {
+      return (
+        <div className="w-full aspect-video">
+          <JitsiRoom
+            roomName={live.externalUrl}
+            userName={user?.name || "Aluno"}
+            userEmail={user?.email || ""}
+            isModerator={false}
           />
         </div>
       );

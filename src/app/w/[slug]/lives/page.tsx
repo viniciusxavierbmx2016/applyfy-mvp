@@ -19,6 +19,7 @@ interface LiveItem {
 }
 
 const PLATFORM_LABELS: Record<string, string> = {
+  JITSI: "Live integrada",
   YOUTUBE_LIVE: "YouTube Live",
   ZOOM: "Zoom",
   GOOGLE_MEET: "Google Meet",
