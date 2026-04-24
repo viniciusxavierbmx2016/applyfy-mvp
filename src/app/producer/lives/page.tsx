@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import { SkeletonLiveCard } from "@/components/ui/skeleton";
 
 interface LiveItem {
   id: string;
@@ -453,8 +454,8 @@ export default function ProducerLivesPage() {
 
       {/* Content */}
       {loading ? (
-        <div className="flex justify-center py-20">
-          <div className="w-8 h-8 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {Array.from({ length: 6 }).map((_, i) => <SkeletonLiveCard key={i} />)}
         </div>
       ) : filtered.length === 0 ? (
         <div className="text-center py-20">

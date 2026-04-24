@@ -6,6 +6,7 @@ import Image from "next/image";
 import { CourseCard } from "@/components/course-card";
 import { calculateCourseProgress } from "@/lib/utils";
 import { useUserStore } from "@/stores/user-store";
+import { SkeletonFilters, SkeletonCourseCard } from "@/components/ui/skeleton";
 
 interface WorkspaceInfo {
   id: string;
@@ -254,8 +255,18 @@ export default function WorkspaceVitrinePage() {
       <div className="px-4 sm:px-6 lg:px-8 py-6 lg:py-8 max-w-6xl mx-auto">
 
         {userLoading || loading ? (
-          <div className="flex items-center justify-center py-16">
-            <div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+          <div className="space-y-6">
+            <div className="space-y-1">
+              <div className="h-8 w-48 rounded bg-gray-200 dark:bg-gray-800/60 animate-pulse" />
+              <div className="h-4 w-64 rounded bg-gray-200 dark:bg-gray-800/40 animate-pulse" />
+            </div>
+            <SkeletonFilters />
+            <div>
+              <div className="h-6 w-32 rounded bg-gray-200 dark:bg-gray-800/60 animate-pulse mb-4" />
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {Array.from({ length: 6 }).map((_, i) => <SkeletonCourseCard key={i} />)}
+              </div>
+            </div>
           </div>
         ) : (
           <>

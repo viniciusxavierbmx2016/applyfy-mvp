@@ -13,6 +13,7 @@ import {
 import { CoursePreview } from "@/components/course-preview";
 import { ModuleListView, type ListModule } from "@/components/module-list-view";
 import { HeadphonesIcon } from "@/components/support-popover";
+import { SkeletonModuleCarousel } from "@/components/ui/skeleton";
 import { formatPhoneDisplay, formatWhatsappLink, stripHtml } from "@/lib/utils";
 
 interface LessonItem {
@@ -304,8 +305,15 @@ export default function CourseHomePage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+      <div className="animate-fade-in-up space-y-8 p-4 lg:p-8">
+        <div className="w-full rounded-xl bg-gray-200 dark:bg-gray-800/40 animate-pulse" style={{ aspectRatio: "45/16" }} />
+        <div className="space-y-2">
+          <div className="h-8 w-2/3 rounded bg-gray-200 dark:bg-gray-800/60 animate-pulse" />
+          <div className="h-4 w-1/3 rounded bg-gray-200 dark:bg-gray-800/40 animate-pulse" />
+          <div className="h-2 w-full rounded-full bg-gray-200 dark:bg-gray-800/40 animate-pulse mt-2" />
+        </div>
+        <SkeletonModuleCarousel />
+        <SkeletonModuleCarousel />
       </div>
     );
   }

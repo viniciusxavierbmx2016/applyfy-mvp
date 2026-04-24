@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
+import { SkeletonLiveCard } from "@/components/ui/skeleton";
 
 interface LiveItem {
   id: string;
@@ -80,8 +81,8 @@ export default function WorkspaceLivesPage() {
       </p>
 
       {loading ? (
-        <div className="flex justify-center py-16">
-          <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {Array.from({ length: 3 }).map((_, i) => <SkeletonLiveCard key={i} />)}
         </div>
       ) : sorted.length === 0 ? (
         <div className="text-center py-16">

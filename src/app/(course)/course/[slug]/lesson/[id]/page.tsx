@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import dynamic from "next/dynamic";
+import { SkeletonPlayer, SkeletonLessonsSidebar } from "@/components/ui/skeleton";
 
 const VideoPlayer = dynamic(
   () => import("@/components/video-player").then((m) => m.VideoPlayer),
@@ -205,8 +206,11 @@ export default function LessonPage({
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+      <div className="animate-fade-in-up grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6 p-4 lg:p-8">
+        <SkeletonPlayer />
+        <div className="hidden lg:block">
+          <SkeletonLessonsSidebar />
+        </div>
       </div>
     );
   }
