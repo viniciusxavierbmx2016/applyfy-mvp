@@ -45,6 +45,8 @@ model User {
   subscriptions    Subscription[]
   quizAttempts     QuizAttempt[]
   userTags         UserTag[]
+  liveMessages     LiveMessage[]
+  liveNotifications LiveNotification[]
 
   @@index([workspaceId])
 }
@@ -82,6 +84,7 @@ model Workspace {
   transactions ProducerTransaction[]
   automations  Automation[]
   tags         Tag[]
+  lives        Live[]
 
   @@index([ownerId])
 }
@@ -168,6 +171,7 @@ model Course {
   certificates  Certificate[]
   reviews       Review[]
   menuItems     MenuItem[]
+  lives         Live[]
 
   @@index([ownerId])
   @@index([workspaceId])
@@ -721,4 +725,62 @@ model UserTag {
   @@unique([userId, tagId])
   @@index([tagId])
   @@index([userId])
+}
+
+model Live {
+  id            String    @id @default(cuid())
+  title         String
+  description   String?   @db.Text
+  platform      String
+  externalUrl   String
+  embedUrl      String?
+  status        String    @default("SCHEDULED")
+  scheduledAt   DateTime
+  startedAt     DateTime?
+  endedAt       DateTime?
+  recordingUrl  String?
+  thumbnailUrl  String?
+  courseId       String?
+  workspaceId   String
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  course        Course?   @relation(fields: [courseId], references: [id])
+  workspace     Workspace @relation(fields: [workspaceId], references: [id])
+  messages      LiveMessage[]
+  notifications LiveNotification[]
+
+  @@index([workspaceId])
+  @@index([courseId])
+  @@index([status])
+  @@index([scheduledAt])
+}
+
+model LiveMessage {
+  id        String   @id @default(cuid())
+  content   String   @db.Text
+  liveId    String
+  userId    String
+  createdAt DateTime @default(now())
+
+  live Live @relation(fields: [liveId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([liveId, createdAt])
+  @@index([userId])
+}
+
+model LiveNotification {
+  id     String   @id @default(cuid())
+  liveId String
+  userId String
+  type   String
+  sentAt DateTime @default(now())
+  read   Boolean  @default(false)
+
+  live Live @relation(fields: [liveId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([liveId])
+  @@index([userId, read])
 }
