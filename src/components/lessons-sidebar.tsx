@@ -240,18 +240,20 @@ export function LessonsSidebar({
                   )}
                 </div>
               </button>
-              {isOpen && (
-                <div className="ml-3 mt-0.5 space-y-0.5 border-l border-gray-200/70 dark:border-white/5 pl-1">
-                  {mod.lessons.map((lesson) => (
-                    <LessonLink
-                      key={lesson.id}
-                      courseSlug={courseSlug}
-                      lesson={lesson}
-                      isCurrent={lesson.id === currentLessonId}
-                    />
-                  ))}
+              <div className={`grid transition-[grid-template-rows] duration-300 ease-in-out ${isOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}>
+                <div className="overflow-hidden">
+                  <div className="ml-3 mt-0.5 space-y-0.5 border-l border-gray-200/70 dark:border-white/5 pl-1">
+                    {mod.lessons.map((lesson) => (
+                      <LessonLink
+                        key={lesson.id}
+                        courseSlug={courseSlug}
+                        lesson={lesson}
+                        isCurrent={lesson.id === currentLessonId}
+                      />
+                    ))}
+                  </div>
                 </div>
-              )}
+              </div>
             </div>
           );
         })}

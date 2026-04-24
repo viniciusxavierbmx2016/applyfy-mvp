@@ -225,7 +225,7 @@ export function CourseSidebar({
             >
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
-            <span className={cn(collapsed && "lg:hidden")}>{backLabel}</span>
+            <span className={cn("transition-opacity duration-200", collapsed ? "lg:opacity-0 lg:w-0 lg:overflow-hidden" : "lg:opacity-100")}>{backLabel}</span>
             {collapsed && <span className={tooltipCls}>{backLabel}</span>}
           </Link>
         </div>
@@ -271,7 +271,7 @@ export function CourseSidebar({
                   : "text-gray-400 dark:text-gray-500 group-hover:text-gray-900 dark:group-hover:text-white"
               );
               const labelEl = (
-                <span className={cn("truncate", collapsed && "lg:hidden")}>
+                <span className={cn("truncate transition-opacity duration-200", collapsed ? "lg:opacity-0 lg:w-0 lg:overflow-hidden" : "lg:opacity-100")}>
                   {item.label}
                 </span>
               );

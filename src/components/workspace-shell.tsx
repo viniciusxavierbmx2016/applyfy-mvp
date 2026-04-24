@@ -380,14 +380,12 @@ export function WorkspaceShell({
                     </span>
                   )}
                 </span>
-                <span className={cn("truncate", collapsed && "lg:hidden")}>
+                <span className={cn("truncate transition-opacity duration-200", collapsed ? "lg:opacity-0 lg:w-0 lg:overflow-hidden" : "lg:opacity-100")}>
                   {item.label}
                 </span>
-                {item.badge > 0 && !collapsed && (
-                  <span className="ml-auto w-5 h-5 bg-red-500 rounded-full text-[10px] font-bold text-white flex items-center justify-center animate-pulse flex-shrink-0">
-                    {item.badge}
-                  </span>
-                )}
+                <span className={cn("ml-auto w-5 h-5 bg-red-500 rounded-full text-[10px] font-bold text-white flex items-center justify-center animate-pulse flex-shrink-0 transition-opacity duration-200", item.badge > 0 && !collapsed ? "opacity-100" : "opacity-0 w-0 overflow-hidden")}>
+                  {item.badge}
+                </span>
                 {collapsed && <span className={tooltipCls}>{item.label}</span>}
               </Link>
             ))}

@@ -360,7 +360,7 @@ export default function CourseHomePage() {
   const groups = groupBySection(course.modules, course.sections || []);
 
   return (
-    <div className="px-4 sm:px-6 lg:px-10 py-4 lg:py-6 max-w-[1400px] mx-auto w-full">
+    <div className="px-4 sm:px-6 lg:px-10 py-4 lg:py-6 max-w-[1400px] mx-auto w-full animate-fade-in-up">
       {isStaffViewer && (
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3 px-4 py-2.5 rounded-lg border border-amber-200 dark:border-amber-900/40 bg-amber-50 dark:bg-amber-950/30 text-sm">
           <span className="text-amber-800 dark:text-amber-200 flex items-center gap-2">

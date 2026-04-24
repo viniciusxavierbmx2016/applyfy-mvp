@@ -142,7 +142,7 @@ export default function WorkspaceVitrinePage() {
   const bannerPos = parseBannerPos();
 
   return (
-    <div>
+    <div className="animate-fade-in-up">
       {ws?.bannerUrl && (
         <div
           className="relative w-full overflow-hidden bg-gray-100 dark:bg-gray-900"

@@ -137,45 +137,47 @@ export function ModuleListView({ groups, courseSlug }: Props) {
                       </svg>
                     )}
                   </button>
-                  {isOpen && (
-                    <div className="ml-20 mt-1 space-y-0.5 pb-2">
-                      {mod.lessons.map((lesson) => {
-                        if (lesson.locked) {
-                          return (
-                            <div
-                              key={lesson.id}
-                              className="flex items-center gap-3 py-2.5 px-3 rounded-lg text-sm text-gray-500 cursor-not-allowed"
-                            >
-                              <svg className="w-4 h-4 text-gray-400 dark:text-gray-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                              </svg>
-                              <span className="truncate">{lesson.title}</span>
-                            </div>
-                          );
-                        }
-                        return (
-                          <Link
-                            key={lesson.id}
-                            href={`/course/${courseSlug}/lesson/${lesson.id}`}
-                            className="flex items-center gap-3 py-2.5 px-3 rounded-lg text-sm hover:bg-gray-100 dark:hover:bg-white/5 transition-all duration-150 lg:hover:translate-x-1"
-                          >
-                            {lesson.completed ? (
-                              <div className="w-4 h-4 rounded-full bg-emerald-500 flex items-center justify-center flex-shrink-0">
-                                <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3.5}>
-                                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  <div className={`grid transition-[grid-template-rows] duration-300 ease-in-out ${isOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}>
+                    <div className="overflow-hidden">
+                      <div className="ml-20 mt-1 space-y-0.5 pb-2">
+                        {mod.lessons.map((lesson) => {
+                          if (lesson.locked) {
+                            return (
+                              <div
+                                key={lesson.id}
+                                className="flex items-center gap-3 py-2.5 px-3 rounded-lg text-sm text-gray-500 cursor-not-allowed"
+                              >
+                                <svg className="w-4 h-4 text-gray-400 dark:text-gray-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                                 </svg>
+                                <span className="truncate">{lesson.title}</span>
                               </div>
-                            ) : (
-                              <div className="w-4 h-4 rounded-full border border-gray-300 dark:border-gray-600 flex-shrink-0" />
-                            )}
-                            <span className={`truncate ${lesson.completed ? "text-gray-500" : "text-gray-700 dark:text-gray-300"}`}>
-                              {lesson.title}
-                            </span>
-                          </Link>
-                        );
-                      })}
+                            );
+                          }
+                          return (
+                            <Link
+                              key={lesson.id}
+                              href={`/course/${courseSlug}/lesson/${lesson.id}`}
+                              className="flex items-center gap-3 py-2.5 px-3 rounded-lg text-sm hover:bg-gray-100 dark:hover:bg-white/5 transition-all duration-150 lg:hover:translate-x-1"
+                            >
+                              {lesson.completed ? (
+                                <div className="w-4 h-4 rounded-full bg-emerald-500 flex items-center justify-center flex-shrink-0">
+                                  <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3.5}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                  </svg>
+                                </div>
+                              ) : (
+                                <div className="w-4 h-4 rounded-full border border-gray-300 dark:border-gray-600 flex-shrink-0" />
+                              )}
+                              <span className={`truncate ${lesson.completed ? "text-gray-500" : "text-gray-700 dark:text-gray-300"}`}>
+                                {lesson.title}
+                              </span>
+                            </Link>
+                          );
+                        })}
+                      </div>
                     </div>
-                  )}
+                  </div>
                 </div>
               );
             })}
