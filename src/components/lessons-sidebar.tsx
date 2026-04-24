@@ -19,6 +19,7 @@ export interface SidebarModule {
   thumbnailUrl?: string | null;
   lessons: SidebarLesson[];
   locked?: boolean;
+  lockReason?: string | null;
   releaseDate?: string | null;
   daysRemaining?: number;
 }
@@ -163,30 +164,54 @@ export function LessonsSidebar({
 
       <div className="flex-1 overflow-y-auto max-h-[70vh] lg:max-h-[calc(100vh-9rem)] p-2 space-y-1 scroll-smooth">
         {modules.map((mod) => {
-          const isOpen = openModules.has(mod.id);
+          const isOpen = !mod.locked && openModules.has(mod.id);
           const prog = moduleProgress(mod);
+          const lockText = mod.lockReason
+            ? mod.lockReason
+            : mod.daysRemaining
+              ? `Libera em ${mod.daysRemaining} dia${mod.daysRemaining === 1 ? "" : "s"}`
+              : mod.releaseDate
+                ? `Disponível em ${formatReleaseDate(mod.releaseDate)}`
+                : "Módulo bloqueado";
           return (
             <div key={mod.id}>
               <button
                 type="button"
-                onClick={() => toggle(mod.id)}
-                className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-[10px] hover:bg-gray-100 dark:hover:bg-white/5 text-left transition-colors duration-200"
+                onClick={() => !mod.locked && toggle(mod.id)}
+                className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-[10px] text-left transition-colors duration-200 ${
+                  mod.locked
+                    ? "opacity-60 cursor-not-allowed"
+                    : "hover:bg-gray-100 dark:hover:bg-white/5"
+                }`}
+                title={mod.locked ? lockText : undefined}
               >
-                <svg
-                  className={`w-3 h-3 text-gray-400 dark:text-gray-500 transition-transform duration-200 flex-shrink-0 ${
-                    isOpen ? "rotate-90" : ""
-                  }`}
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2.5}
-                    d="M9 5l7 7-7 7"
-                  />
-                </svg>
+                {mod.locked ? (
+                  <svg
+                    className="w-3 h-3 text-gray-400 dark:text-gray-600 flex-shrink-0"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  </svg>
+                ) : (
+                  <svg
+                    className={`w-3 h-3 text-gray-400 dark:text-gray-500 transition-transform duration-200 flex-shrink-0 ${
+                      isOpen ? "rotate-90" : ""
+                    }`}
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2.5}
+                      d="M9 5l7 7-7 7"
+                    />
+                  </svg>
+                )}
                 {mod.thumbnailUrl && (
                   <div className="relative w-8 h-8 rounded-md overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0 ring-1 ring-black/5 dark:ring-white/10">
                     <Image src={mod.thumbnailUrl} alt={mod.title} fill sizes="32px" className="object-cover" />
@@ -194,22 +219,17 @@ export function LessonsSidebar({
                 )}
                 <div className="flex-1 min-w-0">
                   <p
-                    className={`text-[13px] font-semibold tracking-tight line-clamp-1 flex items-center gap-1.5 ${
+                    className={`text-[13px] font-semibold tracking-tight line-clamp-1 ${
                       mod.locked
                         ? "text-gray-400 dark:text-gray-500"
                         : "text-gray-900 dark:text-white"
                     }`}
                   >
-                    {mod.locked && (
-                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                      </svg>
-                    )}
                     {mod.title}
                   </p>
                   {mod.locked ? (
                     <p className="text-[10px] text-gray-500 mt-1">
-                      Libera em {mod.daysRemaining} dia{mod.daysRemaining === 1 ? "" : "s"}
+                      {lockText}
                     </p>
                   ) : (
                     <div className="mt-1.5 h-[3px] bg-gray-200/70 dark:bg-white/5 rounded-full overflow-hidden">

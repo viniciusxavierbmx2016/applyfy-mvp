@@ -70,6 +70,7 @@ export async function GET(
     // Check enrollment (admins + producer owners bypass)
     let enrollmentCreatedAt: Date | null = null;
     let overrides: ReleaseOverrides = EMPTY_OVERRIDES;
+    let autoLocks: Record<string, { reason: string }> = {};
     if (!isStaffViewer) {
       const enrollment = await prisma.enrollment.findUnique({
         where: { userId_courseId: { userId: user.id, courseId: course.id } },
@@ -103,6 +104,15 @@ export async function GET(
             releaseDate: release.releaseDate.toISOString(),
             daysRemaining: release.daysRemaining,
           },
+          { status: 403 }
+        );
+      }
+
+      autoLocks = await getAutomationLocks(course.id, user.id);
+      const moduleLock = autoLocks[lesson.moduleId];
+      if (moduleLock) {
+        return NextResponse.json(
+          { error: moduleLock.reason || "Este módulo está bloqueado" },
           { status: 403 }
         );
       }
@@ -144,8 +154,6 @@ export async function GET(
     ]);
 
     const video = parseVideoUrl(lesson.videoUrl);
-
-    const autoLocks = isStaffViewer ? {} : await getAutomationLocks(course.id, user.id);
 
     // Derive viewer workspace from the lesson's course, not User.workspaceId,
     // so multi-workspace students see the correct "Voltar à vitrine" target.

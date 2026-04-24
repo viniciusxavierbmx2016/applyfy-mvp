@@ -45,7 +45,7 @@ function matchesTrigger(
 }
 
 export async function executeAction(
-  automation: { id: string; actionType: string; actionConfig: string },
+  automation: { id: string; actionType: string; actionConfig: string; workspaceId?: string },
   userId: string,
   courseId?: string
 ): Promise<{ status: string; details?: string }> {
@@ -75,11 +75,15 @@ export async function executeAction(
       const user = await prisma.user.findUnique({ where: { id: userId }, select: { email: true, name: true } });
       if (!user) return { status: "FAILED", details: "Usuário não encontrado" };
       try {
+        const workspace = automation.workspaceId
+          ? await prisma.workspace.findUnique({ where: { id: automation.workspaceId }, select: { name: true } })
+          : null;
         const template = automationEmail(user.name || "", subject, body);
         const result = await sendEmail({
           to: { email: user.email, name: user.name || undefined },
           subject: template.subject,
           htmlContent: template.htmlContent,
+          senderName: workspace?.name || undefined,
         });
         if (!result.success) {
           return { status: "SKIPPED", details: typeof result.error === "string" ? result.error : "Falha ao enviar email" };

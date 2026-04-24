@@ -10,6 +10,7 @@ interface SendEmailParams {
   subject: string;
   htmlContent: string;
   textContent?: string;
+  senderName?: string;
 }
 
 export async function sendEmail({
@@ -17,6 +18,7 @@ export async function sendEmail({
   subject,
   htmlContent,
   textContent,
+  senderName,
 }: SendEmailParams) {
   if (!process.env.BREVO_API_KEY) {
     console.warn("[email] BREVO_API_KEY not set, skipping email to", to.email);
@@ -27,7 +29,7 @@ export async function sendEmail({
     const client = new BrevoClient({ apiKey: process.env.BREVO_API_KEY });
 
     const result = await client.transactionalEmails.sendTransacEmail({
-      sender: DEFAULT_SENDER,
+      sender: { name: senderName || DEFAULT_SENDER.name, email: DEFAULT_SENDER.email },
       to: [{ email: to.email, name: to.name || to.email }],
       subject,
       htmlContent,
