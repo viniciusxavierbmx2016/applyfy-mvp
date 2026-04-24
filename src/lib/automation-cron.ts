@@ -7,6 +7,7 @@ const TAG_COLORS: Record<string, string> = {
   PROGRESS_BELOW: "#ec4899",
   PROGRESS_ABOVE: "#14b8a6",
   MODULE_NOT_STARTED: "#a855f7",
+  HAS_TAG: "#7c3aed",
 };
 
 async function autoTagStudent(
@@ -39,6 +40,7 @@ const BEHAVIORAL_TYPES = [
   "PROGRESS_BELOW",
   "PROGRESS_ABOVE",
   "MODULE_NOT_STARTED",
+  "HAS_TAG",
 ];
 
 async function findInactiveStudents(workspaceId: string, days: number) {
@@ -204,6 +206,17 @@ export async function checkBehavioralAutomations(workspaceId: string): Promise<n
           matchingStudents = await findModuleNotStartedStudents(
             workspaceId, auto.courseId, config.moduleId as string, (config.afterDays as number) || 7
           );
+          break;
+        case "HAS_TAG":
+          if (config.tagId) {
+            matchingStudents = await prisma.user.findMany({
+              where: {
+                userTags: { some: { tagId: config.tagId as string } },
+                enrollments: { some: { course: { workspaceId }, status: "ACTIVE" } },
+              },
+              select: { id: true },
+            });
+          }
           break;
       }
 

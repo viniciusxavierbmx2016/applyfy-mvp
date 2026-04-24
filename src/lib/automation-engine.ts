@@ -15,6 +15,7 @@ const BEHAVIORAL_TRIGGERS = [
   "PROGRESS_BELOW",
   "PROGRESS_ABOVE",
   "MODULE_NOT_STARTED",
+  "HAS_TAG",
 ];
 
 export function isBehavioralTrigger(type: string): boolean {
@@ -149,6 +150,7 @@ const TAG_COLORS: Record<string, string> = {
   PROGRESS_BELOW: "#ec4899",
   PROGRESS_ABOVE: "#14b8a6",
   MODULE_NOT_STARTED: "#a855f7",
+  HAS_TAG: "#7c3aed",
 };
 
 function generateAutoTagName(triggerType: string, actionType: string, automationName: string): string {

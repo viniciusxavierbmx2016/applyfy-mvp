@@ -36,6 +36,13 @@ interface CourseOption {
   modules: ModuleOption[];
 }
 
+interface TagOption {
+  id: string;
+  name: string;
+  color: string;
+  studentCount: number;
+}
+
 interface CanvasNode {
   id: string;
   type: "start" | "trigger" | "action";
@@ -65,6 +72,7 @@ const TRIGGER_META: Record<string, { short: string; icon: string; desc: string; 
   PROGRESS_BELOW: { short: "Baixo progresso", desc: "Aluno com progresso abaixo de X%", icon: "M13 17h8m0 0V9m0 8l-8-8-4 4-6-6", behavioral: true },
   PROGRESS_ABOVE: { short: "Alto progresso", desc: "Aluno atingiu X% de progresso", icon: "M13 7h8m0 0v8m0-8l-8 8-4-4-6 6", behavioral: true },
   MODULE_NOT_STARTED: { short: "Módulo parado", desc: "Aluno não começou módulo após X dias", icon: "M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636", behavioral: true },
+  HAS_TAG: { short: "Alunos com tag", desc: "Execute ação para alunos com uma tag específica", icon: "M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z", behavioral: true },
 };
 
 const ACTION_META: Record<string, { short: string; icon: string; desc: string }> = {
@@ -84,9 +92,10 @@ const VALID_ACTIONS_FOR_TRIGGER: Record<string, string[]> = {
   PROGRESS_BELOW: ["SEND_EMAIL"],
   PROGRESS_ABOVE: ["SEND_EMAIL"],
   MODULE_NOT_STARTED: ["SEND_EMAIL"],
+  HAS_TAG: ["SEND_EMAIL", "ENROLL_COURSE", "UNLOCK_MODULE"],
 };
 
-const GLOBAL_TRIGGERS = ["STUDENT_INACTIVE", "STUDENT_NEVER_ACCESSED"];
+const GLOBAL_TRIGGERS = ["STUDENT_INACTIVE", "STUDENT_NEVER_ACCESSED", "HAS_TAG"];
 
 function getValidActions(triggerType: string): string[] {
   return VALID_ACTIONS_FOR_TRIGGER[triggerType] || [];
@@ -100,11 +109,16 @@ const TEMPLATES: TemplateData[] = [
   { emoji: "📊", name: "Alertar baixo progresso", description: "Email para quem está abaixo de 25%", triggerType: "PROGRESS_BELOW", triggerConfig: { progressPercent: 25, afterDays: 14 }, actionType: "SEND_EMAIL", actionConfig: { subject: "Precisa de ajuda?", body: "Vimos que você está no início. Estamos aqui para ajudar!" }, needsCourse: true },
   { emoji: "🎉", name: "Parabenizar 50% de progresso", description: "Comemora ao atingir metade do curso", triggerType: "PROGRESS_ABOVE", triggerConfig: { progressPercent: 50 }, actionType: "SEND_EMAIL", actionConfig: { subject: "Você já está na metade!", body: "Parabéns! Continue assim!" }, needsCourse: true },
   { emoji: "📚", name: "Matricular em curso bônus", description: "Matricula em outro curso ao concluir", triggerType: "COURSE_COMPLETED", triggerConfig: {}, actionType: "ENROLL_COURSE", actionConfig: {}, needsCourse: true },
+  { emoji: "🏷️", name: "Ação em massa por tag", description: "Envie email para todos os alunos com uma tag", triggerType: "HAS_TAG", triggerConfig: {}, actionType: "SEND_EMAIL", actionConfig: { subject: "Mensagem importante", body: "Olá! Temos uma novidade para você." }, needsCourse: false },
 ];
 
-function getTriggerDetail(auto: AutomationItem, courses: CourseOption[]): string | null {
+function getTriggerDetail(auto: AutomationItem, courses: CourseOption[], tags?: TagOption[]): string | null {
   try {
     const cfg = JSON.parse(auto.triggerConfig);
+    if (auto.triggerType === "HAS_TAG" && cfg.tagId && tags) {
+      const tag = tags.find((t) => t.id === cfg.tagId);
+      return tag ? `${tag.name} (${tag.studentCount})` : null;
+    }
     if (cfg.inactiveDays) return `${cfg.inactiveDays} dias`;
     if (cfg.afterDays && auto.triggerType === "STUDENT_NEVER_ACCESSED") return `após ${cfg.afterDays}d`;
     if (cfg.progressPercent != null) {
@@ -166,6 +180,9 @@ function validateFrontend(
     if (!triggerConfig.moduleId) return "Selecione o módulo no trigger";
     if (!triggerConfig.afterDays || Number(triggerConfig.afterDays) < 1) return "Informe dias mínimos";
   }
+  if (triggerType === "HAS_TAG") {
+    if (!triggerConfig.tagId) return "Selecione uma tag";
+  }
 
   if (actionType === "UNLOCK_MODULE") {
     if (!actionConfig.moduleId) return "Selecione o módulo para liberar";
@@ -195,6 +212,7 @@ function defaultNodes(): CanvasNode[] {
 export default function AutomationsPage() {
   const [automations, setAutomations] = useState<AutomationItem[]>([]);
   const [courses, setCourses] = useState<CourseOption[]>([]);
+  const [tags, setTags] = useState<TagOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [editorAuto, setEditorAuto] = useState<AutomationItem | null>(null);
   const [editorNew, setEditorNew] = useState(false);
@@ -211,6 +229,7 @@ export default function AutomationsPage() {
         const data = await res.json();
         setAutomations(data.automations);
         setCourses(data.courses || []);
+        setTags(data.tags || []);
       }
     } finally { setLoading(false); }
   }
@@ -233,6 +252,22 @@ export default function AutomationsPage() {
     if (res.ok) setAutomations((prev) => prev.filter((a) => a.id !== id));
   }
 
+  async function handleExecuteNow(auto: AutomationItem) {
+    try {
+      const cfg = JSON.parse(auto.triggerConfig);
+      const tag = tags.find((t) => t.id === cfg.tagId);
+      const tagName = tag?.name || "selecionada";
+      const count = tag?.studentCount || 0;
+      if (!(await confirm({ title: "Executar agora", message: `Executar para ${count} aluno${count !== 1 ? "s" : ""} com tag "${tagName}"?`, confirmText: "Executar" }))) return;
+    } catch { return; }
+    const res = await fetch(`/api/producer/automations/${auto.id}/execute`, { method: "POST" });
+    if (res.ok) {
+      const data = await res.json();
+      alert(`Executado: ${data.executed} | Ignorado: ${data.skipped}`);
+      load();
+    }
+  }
+
   async function duplicateAutomation(auto: AutomationItem) {
     setMenuOpen(null);
     const res = await fetch("/api/producer/automations", {
@@ -243,7 +278,7 @@ export default function AutomationsPage() {
   }
 
   if (editorAuto || editorNew || editorTemplate) {
-    return <FlowEditor editing={editorAuto} template={editorTemplate} courses={courses} onBack={() => { setEditorAuto(null); setEditorNew(false); setEditorTemplate(null); load(); }} />;
+    return <FlowEditor editing={editorAuto} template={editorTemplate} courses={courses} tags={tags} onBack={() => { setEditorAuto(null); setEditorNew(false); setEditorTemplate(null); load(); }} />;
   }
 
   return (
@@ -282,7 +317,7 @@ export default function AutomationsPage() {
           {automations.map((auto) => {
             const trigger = TRIGGER_META[auto.triggerType];
             const action = ACTION_META[auto.actionType];
-            const td = getTriggerDetail(auto, courses);
+            const td = getTriggerDetail(auto, courses, tags);
             const ad = getActionDetail(auto, courses);
             const courseName = courses.find((c) => c.id === auto.courseId)?.title;
             return (
@@ -323,9 +358,21 @@ export default function AutomationsPage() {
                     </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-3 text-xs text-gray-500">
-                  <span>{auto.executionCount} {auto.executionCount === 1 ? "execução" : "execuções"}</span>
-                  {auto.lastExecutedAt && <span>· {new Date(auto.lastExecutedAt).toLocaleDateString("pt-BR")}</span>}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3 text-xs text-gray-500">
+                    <span>{auto.executionCount} {auto.executionCount === 1 ? "execução" : "execuções"}</span>
+                    {auto.lastExecutedAt && <span>· {new Date(auto.lastExecutedAt).toLocaleDateString("pt-BR")}</span>}
+                  </div>
+                  {auto.triggerType === "HAS_TAG" && auto.active && (
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); handleExecuteNow(auto); }}
+                      className="flex items-center gap-1 text-[10px] font-medium px-2 py-1 rounded-lg bg-purple-500/10 text-purple-400 hover:bg-purple-500/20 border border-purple-500/20 transition"
+                    >
+                      <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
+                      Executar agora
+                    </button>
+                  )}
                 </div>
               </div>
             );
@@ -410,7 +457,7 @@ function CardMenu({ onEdit, onDuplicate, onDelete, onClose }: { onEdit: () => vo
   );
 }
 
-function FlowEditor({ editing, template, courses, onBack }: { editing: AutomationItem | null; template: TemplateData | null; courses: CourseOption[]; onBack: () => void }) {
+function FlowEditor({ editing, template, courses, tags, onBack }: { editing: AutomationItem | null; template: TemplateData | null; courses: CourseOption[]; tags: TagOption[]; onBack: () => void }) {
   const isEditing = !!editing;
   const [name, setName] = useState(editing?.name || template?.name || "");
   const [active, setActive] = useState(editing?.active ?? true);
@@ -540,7 +587,7 @@ function FlowEditor({ editing, template, courses, onBack }: { editing: Automatio
 
   const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
   if (isMobile) {
-    return <MobileFlowEditor name={name} setName={setName} active={active} setActive={setActive} courseId={courseId} setCourseId={setCourseId} courses={courses} triggerType={triggerType} setTriggerType={setTriggerType} triggerConfig={triggerConfig} setTriggerConfig={setTriggerConfig} actionType={actionType} setActionType={setActionType} actionConfig={actionConfig} setActionConfig={setActionConfig} saving={saving} error={error} onSave={handleSave} onBack={onBack} selectedCourse={selectedCourse || null} />;
+    return <MobileFlowEditor name={name} setName={setName} active={active} setActive={setActive} courseId={courseId} setCourseId={setCourseId} courses={courses} tags={tags} triggerType={triggerType} setTriggerType={setTriggerType} triggerConfig={triggerConfig} setTriggerConfig={setTriggerConfig} actionType={actionType} setActionType={setActionType} actionConfig={actionConfig} setActionConfig={setActionConfig} saving={saving} error={error} onSave={handleSave} onBack={onBack} selectedCourse={selectedCourse || null} />;
   }
 
   const conn1 = { x1: startNode.x + START_R, y1: startNode.y + START_R, x2: triggerNode.x, y2: triggerNode.y + NODE_H / 2 };
@@ -584,10 +631,11 @@ function FlowEditor({ editing, template, courses, onBack }: { editing: Automatio
 
             <div data-node-id="trigger" className={`absolute cursor-move select-none ${editingNode === "trigger" ? "ring-2 ring-blue-500 ring-offset-2 ring-offset-[#0a0a0b]" : ""}`} style={{ transform: `translate(${triggerNode.x}px, ${triggerNode.y}px)`, width: NODE_W }} onMouseDown={(e) => handleNodeMouseDown(e, "trigger")} onClick={(e) => { e.stopPropagation(); if (!dragging.current) setEditingNode("trigger"); }}>
               <div className="bg-[#141416] border border-[#28282e] rounded-xl overflow-hidden shadow-lg hover:border-blue-500/40 transition">
-                <div className="px-3 py-2 bg-blue-600/10 flex items-center gap-2">
-                  <svg className="w-3.5 h-3.5 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d={triggerMeta?.icon || "M13 10V3L4 14h7v7l9-11h-7z"} /></svg>
-                  <span className="text-[10px] uppercase tracking-widest font-semibold text-blue-400">Quando</span>
-                  {triggerMeta?.behavioral && <span className="text-[8px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400 font-medium ml-auto">Cron</span>}
+                <div className={`px-3 py-2 flex items-center gap-2 ${triggerType === "HAS_TAG" ? "bg-purple-600/10" : "bg-blue-600/10"}`}>
+                  <svg className={`w-3.5 h-3.5 ${triggerType === "HAS_TAG" ? "text-purple-400" : "text-blue-400"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d={triggerMeta?.icon || "M13 10V3L4 14h7v7l9-11h-7z"} /></svg>
+                  <span className={`text-[10px] uppercase tracking-widest font-semibold ${triggerType === "HAS_TAG" ? "text-purple-400" : "text-blue-400"}`}>Quando</span>
+                  {triggerMeta?.behavioral && triggerType !== "HAS_TAG" && <span className="text-[8px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400 font-medium ml-auto">Cron</span>}
+                  {triggerType === "HAS_TAG" && <span className="text-[8px] px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-400 font-medium ml-auto">Tag</span>}
                 </div>
                 <div className="px-3 py-3">
                   {triggerType ? <><p className="text-sm font-medium text-gray-200">{triggerMeta?.short}</p><p className="text-xs text-gray-500 mt-0.5">{triggerMeta?.desc}</p></> : <p className="text-sm text-gray-500 italic">Clique para configurar</p>}
@@ -620,7 +668,7 @@ function FlowEditor({ editing, template, courses, onBack }: { editing: Automatio
         </div>
 
         {editingNode && (
-          <SidePanel type={editingNode} courses={courses} courseId={courseId} setCourseId={(v) => { setCourseId(v); setTriggerConfig({}); setActionConfig({}); }} selectedCourse={selectedCourse || null} triggerType={triggerType} setTriggerType={(v) => { setTriggerType(v); setTriggerConfig({}); }} triggerConfig={triggerConfig} setTriggerConfig={setTriggerConfig} actionType={actionType} setActionType={(v) => { setActionType(v); setActionConfig({}); }} actionConfig={actionConfig} setActionConfig={setActionConfig} onClose={() => setEditingNode(null)} />
+          <SidePanel type={editingNode} courses={courses} tags={tags} courseId={courseId} setCourseId={(v) => { setCourseId(v); setTriggerConfig({}); setActionConfig({}); }} selectedCourse={selectedCourse || null} triggerType={triggerType} setTriggerType={(v) => { setTriggerType(v); setTriggerConfig({}); }} triggerConfig={triggerConfig} setTriggerConfig={setTriggerConfig} actionType={actionType} setActionType={(v) => { setActionType(v); setActionConfig({}); }} actionConfig={actionConfig} setActionConfig={setActionConfig} onClose={() => setEditingNode(null)} />
         )}
       </div>
 
@@ -633,12 +681,13 @@ function FlowEditor({ editing, template, courses, onBack }: { editing: Automatio
 }
 
 function SidePanel({
-  type, courses, courseId, setCourseId, selectedCourse,
+  type, courses, tags, courseId, setCourseId, selectedCourse,
   triggerType, setTriggerType, triggerConfig, setTriggerConfig,
   actionType, setActionType, actionConfig, setActionConfig, onClose,
 }: {
   type: "trigger" | "action";
   courses: CourseOption[];
+  tags: TagOption[];
   courseId: string;
   setCourseId: (v: string) => void;
   selectedCourse: CourseOption | null;
@@ -756,6 +805,27 @@ function SidePanel({
                     </div>
                   </div>
                 )}
+                {triggerType === "HAS_TAG" && (
+                  <div>
+                    <label className={labelCls}>Tag</label>
+                    <select value={triggerConfig.tagId || ""} onChange={(e) => setTriggerConfig({ ...triggerConfig, tagId: e.target.value })} className={selectCls}>
+                      <option value="">Selecione uma tag...</option>
+                      {tags.map((t) => <option key={t.id} value={t.id}>{t.name} ({t.studentCount} alunos)</option>)}
+                    </select>
+                    {tags.length === 0 && <p className="text-[10px] text-amber-400 mt-1">Nenhuma tag encontrada. Crie tags na aba &quot;Tags&quot;.</p>}
+                    {triggerConfig.tagId && (() => {
+                      const tag = tags.find((t) => t.id === triggerConfig.tagId);
+                      return tag ? (
+                        <div className="mt-2 flex items-center gap-2 px-3 py-2 rounded-lg bg-purple-900/20 border border-purple-500/20">
+                          <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: tag.color }} />
+                          <span className="text-sm text-purple-300 font-medium">{tag.name}</span>
+                          <span className="text-xs text-purple-400 ml-auto">{tag.studentCount} alunos</span>
+                        </div>
+                      ) : null;
+                    })()}
+                    <p className="text-[10px] text-gray-500 mt-2">Executada via cron (6h) ou botão &quot;Executar agora&quot;</p>
+                  </div>
+                )}
                 {(triggerType === "COURSE_COMPLETED" || triggerType === "STUDENT_ENROLLED" || triggerType === "QUIZ_PASSED") && !selectedCourse && !GLOBAL_TRIGGERS.includes(triggerType) && (
                   <p className="text-xs text-gray-500">Selecione um curso acima</p>
                 )}
@@ -863,7 +933,7 @@ function SidePanel({
 }
 
 function MobileFlowEditor({
-  name, setName, active, setActive, courseId, setCourseId, courses,
+  name, setName, active, setActive, courseId, setCourseId, courses, tags,
   triggerType, setTriggerType, triggerConfig, setTriggerConfig,
   actionType, setActionType, actionConfig, setActionConfig,
   saving, error, onSave, onBack, selectedCourse,
@@ -872,6 +942,7 @@ function MobileFlowEditor({
   active: boolean; setActive: (v: boolean) => void;
   courseId: string; setCourseId: (v: string) => void;
   courses: CourseOption[];
+  tags: TagOption[];
   triggerType: string; setTriggerType: (v: string) => void;
   triggerConfig: Record<string, string>; setTriggerConfig: (v: Record<string, string>) => void;
   actionType: string; setActionType: (v: string) => void;
@@ -936,6 +1007,7 @@ function MobileFlowEditor({
             {triggerType === "PROGRESS_BELOW" && <div className="space-y-3"><div><label className={labelCls}>Abaixo de (%)</label><input type="number" min={1} max={99} value={triggerConfig.progressPercent || "25"} onChange={(e) => setTriggerConfig({ ...triggerConfig, progressPercent: e.target.value })} className={inputCls} /></div><div><label className={labelCls}>Após dias</label><input type="number" min={1} value={triggerConfig.afterDays || "14"} onChange={(e) => setTriggerConfig({ ...triggerConfig, afterDays: e.target.value })} className={inputCls} /></div></div>}
             {triggerType === "PROGRESS_ABOVE" && <div><label className={labelCls}>Acima de (%)</label><input type="number" min={1} max={100} value={triggerConfig.progressPercent || "50"} onChange={(e) => setTriggerConfig({ ...triggerConfig, progressPercent: e.target.value })} className={inputCls} /></div>}
             {triggerType === "MODULE_NOT_STARTED" && selectedCourse && <div className="space-y-3"><div><label className={labelCls}>Módulo</label><select value={triggerConfig.moduleId || ""} onChange={(e) => setTriggerConfig({ ...triggerConfig, moduleId: e.target.value })} className={selectCls}><option value="">Selecione...</option>{selectedCourse.modules.map((m) => <option key={m.id} value={m.id}>{m.title}</option>)}</select></div><div><label className={labelCls}>Após dias</label><input type="number" min={1} value={triggerConfig.afterDays || "7"} onChange={(e) => setTriggerConfig({ ...triggerConfig, afterDays: e.target.value })} className={inputCls} /></div></div>}
+            {triggerType === "HAS_TAG" && <div><label className={labelCls}>Tag</label><select value={triggerConfig.tagId || ""} onChange={(e) => setTriggerConfig({ ...triggerConfig, tagId: e.target.value })} className={selectCls}><option value="">Selecione uma tag...</option>{tags.map((t) => <option key={t.id} value={t.id}>{t.name} ({t.studentCount} alunos)</option>)}</select></div>}
           </div>
         </div>
 

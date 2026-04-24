@@ -6,12 +6,12 @@ import { resolveStaffWorkspace } from "@/lib/workspace";
 const VALID_TRIGGERS = [
   "LESSON_COMPLETED", "MODULE_COMPLETED", "COURSE_COMPLETED", "QUIZ_PASSED",
   "STUDENT_ENROLLED", "STUDENT_INACTIVE", "STUDENT_NEVER_ACCESSED",
-  "PROGRESS_BELOW", "PROGRESS_ABOVE", "MODULE_NOT_STARTED",
+  "PROGRESS_BELOW", "PROGRESS_ABOVE", "MODULE_NOT_STARTED", "HAS_TAG",
 ];
 const VALID_ACTIONS = ["UNLOCK_MODULE", "SEND_EMAIL", "ENROLL_COURSE", "ADD_TAG"];
 const MAX_AUTOMATIONS = 20;
 
-const GLOBAL_TRIGGERS = ["STUDENT_INACTIVE", "STUDENT_NEVER_ACCESSED"];
+const GLOBAL_TRIGGERS = ["STUDENT_INACTIVE", "STUDENT_NEVER_ACCESSED", "HAS_TAG"];
 
 const VALID_PAIRS: Record<string, string[]> = {
   MODULE_COMPLETED: ["UNLOCK_MODULE", "SEND_EMAIL", "ENROLL_COURSE"],
@@ -24,6 +24,7 @@ const VALID_PAIRS: Record<string, string[]> = {
   PROGRESS_BELOW: ["SEND_EMAIL"],
   PROGRESS_ABOVE: ["SEND_EMAIL"],
   MODULE_NOT_STARTED: ["SEND_EMAIL"],
+  HAS_TAG: ["SEND_EMAIL", "ENROLL_COURSE", "UNLOCK_MODULE"],
 };
 
 async function getWorkspaceId(staff: Parameters<typeof resolveStaffWorkspace>[0]) {
@@ -37,7 +38,7 @@ export async function GET() {
     const staff = await requireStaff();
     const workspaceId = await getWorkspaceId(staff);
 
-    const [automations, courses] = await Promise.all([
+    const [automations, courses, tags] = await Promise.all([
       prisma.automation.findMany({
         where: { workspaceId },
         orderBy: { createdAt: "desc" },
@@ -66,9 +67,18 @@ export async function GET() {
           },
         },
       }),
+      prisma.tag.findMany({
+        where: { workspaceId },
+        orderBy: { name: "asc" },
+        select: { id: true, name: true, color: true, _count: { select: { userTags: true } } },
+      }),
     ]);
 
-    return NextResponse.json({ automations, courses });
+    return NextResponse.json({
+      automations,
+      courses,
+      tags: tags.map((t) => ({ id: t.id, name: t.name, color: t.color, studentCount: t._count.userTags })),
+    });
   } catch (error) {
     console.error("GET automations error:", error);
     const msg = error instanceof Error ? error.message : "";
@@ -118,6 +128,9 @@ function validateAutomation(
     if (!triggerConfig.moduleId) return "Selecione o módulo";
     const days = Number(triggerConfig.afterDays);
     if (!days || days < 1) return "Informe dias mínimos";
+  }
+  if (triggerType === "HAS_TAG") {
+    if (!triggerConfig.tagId) return "Selecione uma tag";
   }
 
   if (actionType === "UNLOCK_MODULE") {
