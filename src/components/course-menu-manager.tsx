@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import {
   DndContext,
   closestCenter,
@@ -20,7 +19,6 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { MENU_ICON_KEYS, MenuIcon } from "@/components/menu-icons";
-import { CourseEditTabs } from "@/components/course-edit-tabs";
 import { useConfirm } from "@/hooks/use-confirm";
 
 interface MenuItem {
@@ -33,15 +31,13 @@ interface MenuItem {
   enabled: boolean;
 }
 
-export default function CourseMenuPage({ params }: { params: { id: string } }) {
+export function CourseMenuManager({ courseId }: { courseId: string }) {
   const [items, setItems] = useState<MenuItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
   const [newLabel, setNewLabel] = useState("");
   const [newIcon, setNewIcon] = useState("link");
   const [newUrl, setNewUrl] = useState("");
-  const [courseTitle, setCourseTitle] = useState("");
-  const [courseSlug, setCourseSlug] = useState("");
   const { confirm, ConfirmDialog } = useConfirm();
 
   const sensors = useSensors(
@@ -51,16 +47,12 @@ export default function CourseMenuPage({ params }: { params: { id: string } }) {
 
   useEffect(() => {
     load();
-    fetch(`/api/courses/${params.id}`)
-      .then((r) => (r.ok ? r.json() : null))
-      .then((d) => { if (d?.course) { setCourseTitle(d.course.title); setCourseSlug(d.course.slug); } })
-      .catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function load() {
     setLoading(true);
-    const res = await fetch(`/api/courses/${params.id}/menu`);
+    const res = await fetch(`/api/courses/${courseId}/menu`);
     if (res.ok) {
       const data = await res.json();
       setItems(data.items);
@@ -75,7 +67,7 @@ export default function CourseMenuPage({ params }: { params: { id: string } }) {
     const newIndex = items.findIndex((i) => i.id === over.id);
     const reordered = arrayMove(items, oldIndex, newIndex);
     setItems(reordered);
-    await fetch(`/api/courses/${params.id}/menu/reorder`, {
+    await fetch(`/api/courses/${courseId}/menu/reorder`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ itemIds: reordered.map((i) => i.id) }),
@@ -84,7 +76,7 @@ export default function CourseMenuPage({ params }: { params: { id: string } }) {
 
   async function handleUpdate(id: string, patch: Partial<MenuItem>) {
     setItems((prev) => prev.map((i) => (i.id === id ? { ...i, ...patch } : i)));
-    await fetch(`/api/courses/${params.id}/menu/${id}`, {
+    await fetch(`/api/courses/${courseId}/menu/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(patch),
@@ -93,7 +85,7 @@ export default function CourseMenuPage({ params }: { params: { id: string } }) {
 
   async function handleDelete(id: string) {
     if (!(await confirm({ title: "Excluir item", message: "Excluir este item?", variant: "danger", confirmText: "Excluir" }))) return;
-    const res = await fetch(`/api/courses/${params.id}/menu/${id}`, {
+    const res = await fetch(`/api/courses/${courseId}/menu/${id}`, {
       method: "DELETE",
     });
     if (res.ok) {
@@ -103,7 +95,7 @@ export default function CourseMenuPage({ params }: { params: { id: string } }) {
 
   async function handleCreate() {
     if (!newLabel.trim() || !newUrl.trim()) return;
-    const res = await fetch(`/api/courses/${params.id}/menu`, {
+    const res = await fetch(`/api/courses/${courseId}/menu`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -122,129 +114,89 @@ export default function CourseMenuPage({ params }: { params: { id: string } }) {
     }
   }
 
-  return (
-    <div className="max-w-6xl mx-auto">
-      <div className="mb-6">
-        <Link
-          href="/producer/courses"
-          className="inline-flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white mb-2"
-        >
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
-          Voltar
-        </Link>
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white truncate">
-              {courseTitle || "Curso"}
-            </h1>
-            {courseSlug && (
-              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                /{courseSlug}
-              </p>
-            )}
-          </div>
-          {courseSlug && (
-            <a
-              href={`/course/${courseSlug}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-3 py-2 bg-transparent dark:bg-[#1a1e2e] border border-gray-300 dark:border-[#1f2335] hover:bg-gray-100 dark:hover:bg-[#1f2335] text-gray-700 dark:text-gray-300 text-sm font-medium rounded-xl transition flex-shrink-0"
-            >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-              </svg>
-              Pré-visualizar
-            </a>
-          )}
-        </div>
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-24">
+        <div className="w-6 h-6 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
       </div>
+    );
+  }
 
-      <CourseEditTabs courseId={params.id} active="customize" />
+  return (
+    <>
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragEnd={handleDragEnd}
+      >
+        <SortableContext
+          items={items.map((i) => i.id)}
+          strategy={verticalListSortingStrategy}
+        >
+          <ul className="space-y-2">
+            {items.map((item) => (
+              <SortableRow
+                key={item.id}
+                item={item}
+                onUpdate={handleUpdate}
+                onDelete={handleDelete}
+              />
+            ))}
+          </ul>
+        </SortableContext>
+      </DndContext>
 
-      {loading ? (
-        <div className="flex items-center justify-center h-32">
-          <div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+      {creating ? (
+        <div className="mt-4 bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.06] rounded-xl p-4 space-y-3">
+          <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
+            Novo item
+          </h4>
+          <div className="grid grid-cols-1 sm:grid-cols-[auto_1fr] gap-3">
+            <IconSelect value={newIcon} onChange={setNewIcon} />
+            <input
+              type="text"
+              value={newLabel}
+              onChange={(e) => setNewLabel(e.target.value)}
+              placeholder="Nome (ex: Instagram)"
+              className="px-3 py-2 bg-gray-50 dark:bg-white/[0.04] border border-gray-300 dark:border-white/[0.08] rounded-xl text-sm text-gray-900 dark:text-white focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/20"
+            />
+          </div>
+          <input
+            type="url"
+            value={newUrl}
+            onChange={(e) => setNewUrl(e.target.value)}
+            placeholder="URL (ex: https://instagram.com/seucanal)"
+            className="w-full px-3 py-2 bg-gray-50 dark:bg-white/[0.04] border border-gray-300 dark:border-white/[0.08] rounded-xl text-sm text-gray-900 dark:text-white focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/20"
+          />
+          <div className="flex gap-2">
+            <button
+              onClick={handleCreate}
+              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-lg transition"
+            >
+              Adicionar
+            </button>
+            <button
+              onClick={() => {
+                setCreating(false);
+                setNewLabel("");
+                setNewUrl("");
+              }}
+              className="px-4 py-2 bg-gray-100 dark:bg-white/[0.06] hover:bg-gray-200 dark:hover:bg-white/[0.1] text-gray-800 dark:text-gray-200 text-sm font-medium rounded-lg transition"
+            >
+              Cancelar
+            </button>
+          </div>
         </div>
       ) : (
-        <>
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragEnd={handleDragEnd}
-          >
-            <SortableContext
-              items={items.map((i) => i.id)}
-              strategy={verticalListSortingStrategy}
-            >
-              <ul className="space-y-2">
-                {items.map((item) => (
-                  <SortableRow
-                    key={item.id}
-                    item={item}
-                    onUpdate={handleUpdate}
-                    onDelete={handleDelete}
-                  />
-                ))}
-              </ul>
-            </SortableContext>
-          </DndContext>
-
-          {creating ? (
-            <div className="mt-4 bg-white dark:bg-[#0a0e19] border border-gray-200 dark:border-[#1a1e2e] rounded-xl p-4 space-y-3">
-              <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
-                Novo item
-              </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-[auto_1fr] gap-3">
-                <IconSelect value={newIcon} onChange={setNewIcon} />
-                <input
-                  type="text"
-                  value={newLabel}
-                  onChange={(e) => setNewLabel(e.target.value)}
-                  placeholder="Nome (ex: Instagram)"
-                  className="px-3 py-2 bg-gray-50 dark:bg-[#0f1320] border border-gray-300 dark:border-[#1a1e2e] rounded-xl text-sm text-gray-900 dark:text-white focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/20"
-                />
-              </div>
-              <input
-                type="url"
-                value={newUrl}
-                onChange={(e) => setNewUrl(e.target.value)}
-                placeholder="URL (ex: https://instagram.com/seucanal)"
-                className="w-full px-3 py-2 bg-gray-50 dark:bg-[#0f1320] border border-gray-300 dark:border-[#1a1e2e] rounded-xl text-sm text-gray-900 dark:text-white focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/20"
-              />
-              <div className="flex gap-2">
-                <button
-                  onClick={handleCreate}
-                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-lg transition"
-                >
-                  Adicionar
-                </button>
-                <button
-                  onClick={() => {
-                    setCreating(false);
-                    setNewLabel("");
-                    setNewUrl("");
-                  }}
-                  className="px-4 py-2 bg-gray-100 dark:bg-[#1a1e2e] hover:bg-gray-200 dark:hover:bg-[#1f2335] text-gray-800 dark:text-gray-200 text-sm font-medium rounded-lg transition"
-                >
-                  Cancelar
-                </button>
-              </div>
-            </div>
-          ) : (
-            <button
-              onClick={() => setCreating(true)}
-              className="mt-4 w-full px-4 py-3 bg-gray-100 dark:bg-[#1a1e2e] hover:bg-gray-200 dark:hover:bg-[#1f2335] text-gray-700 dark:text-gray-300 text-sm font-medium rounded-xl border border-dashed border-gray-300 dark:border-[#1a1e2e] transition"
-            >
-              + Adicionar item
-            </button>
-          )}
-        </>
+        <button
+          onClick={() => setCreating(true)}
+          className="mt-4 w-full px-4 py-3 bg-gray-100 dark:bg-white/[0.06] hover:bg-gray-200 dark:hover:bg-white/[0.1] text-gray-700 dark:text-gray-300 text-sm font-medium rounded-xl border border-dashed border-gray-300 dark:border-white/[0.08] transition"
+        >
+          + Adicionar item
+        </button>
       )}
       <ConfirmDialog />
-    </div>
+    </>
   );
 }
 
@@ -301,7 +253,7 @@ function SortableRow({
     <li
       ref={setNodeRef}
       style={style}
-      className="bg-white dark:bg-[#0a0e19] border border-gray-200 dark:border-[#1a1e2e] rounded-xl p-3 flex items-center gap-3"
+      className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.06] rounded-xl p-3 flex items-center gap-3"
     >
       <button
         {...attributes}
@@ -323,7 +275,7 @@ function SortableRow({
         type="text"
         value={item.label}
         onChange={(e) => onUpdate(item.id, { label: e.target.value })}
-        className="flex-1 min-w-0 px-3 py-2 bg-gray-50 dark:bg-[#0f1320] border border-gray-300 dark:border-[#1a1e2e] rounded-xl text-sm text-gray-900 dark:text-white focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/20"
+        className="flex-1 min-w-0 px-3 py-2 bg-gray-50 dark:bg-white/[0.04] border border-gray-300 dark:border-white/[0.08] rounded-xl text-sm text-gray-900 dark:text-white focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/20"
       />
 
       <input

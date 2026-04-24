@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { CourseEditTabs } from "@/components/course-edit-tabs";
+import { CourseMenuManager } from "@/components/course-menu-manager";
 import { useConfirm } from "@/hooks/use-confirm";
 
 const HEX_RE = /^#[0-9a-fA-F]{6}$/;
@@ -56,6 +57,36 @@ const LAYOUTS = [
   },
 ] as const;
 
+interface CourseFlags {
+  communityEnabled: boolean;
+  lessonCommentsEnabled: boolean;
+  reviewsEnabled: boolean;
+  certificateEnabled: boolean;
+  gamificationEnabled: boolean;
+  showStudentCount: boolean;
+  showLessonSupport: boolean;
+}
+
+type FlagKey = keyof CourseFlags;
+
+interface SettingItem {
+  key: FlagKey;
+  title: string;
+  description: string;
+  disabledHint: string;
+  icon: React.ReactNode;
+}
+
+const FEATURE_ITEMS: SettingItem[] = [
+  { key: "communityEnabled", title: "Comunidade do curso", description: "Permite que alunos criem posts, comentem e interajam entre si dentro do curso.", disabledHint: "Desativado — alunos não verão a aba de comunidade.", icon: <ChatIcon /> },
+  { key: "lessonCommentsEnabled", title: "Comentários nas aulas", description: "Permite que alunos comentem em cada aula individualmente.", disabledHint: "Desativado — o painel de comentários das aulas ficará oculto.", icon: <MessageIcon /> },
+  { key: "reviewsEnabled", title: "Avaliações e reviews", description: "Permite que alunos avaliem o curso com estrelas e comentários.", disabledHint: "Desativado — alunos não poderão avaliar o curso.", icon: <StarIcon /> },
+  { key: "certificateEnabled", title: "Certificado de conclusão", description: "Gera certificado em PDF quando o aluno conclui 100% do curso.", disabledHint: "Desativado — nenhum certificado será emitido.", icon: <DiplomaIcon /> },
+  { key: "gamificationEnabled", title: "Pontos e níveis", description: "Alunos ganham pontos ao concluir aulas e interagir. Exibe nível no perfil.", disabledHint: "Desativado — pontos e níveis ficam ocultos para os alunos.", icon: <TrophyIcon /> },
+  { key: "showStudentCount", title: "Exibir quantidade de alunos", description: "Mostra o número de alunos matriculados na página do curso (prova social).", disabledHint: "Desativado — a contagem de alunos não é exibida publicamente.", icon: <UsersIcon /> },
+  { key: "showLessonSupport", title: "Suporte nas aulas", description: "Exibe a aba de suporte com email e WhatsApp abaixo de cada aula.", disabledHint: "Desativado — a aba de suporte não aparecerá nas aulas.", icon: <HeadphonesIcon /> },
+];
+
 export default function CourseCustomizePage() {
   const params = useParams<{ id: string }>();
   const courseId = params.id;
@@ -68,6 +99,8 @@ export default function CourseCustomizePage() {
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<{ msg: string; error?: boolean } | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [flags, setFlags] = useState<CourseFlags | null>(null);
+  const [savingFlag, setSavingFlag] = useState<FlagKey | null>(null);
   const { confirm, ConfirmDialog } = useConfirm();
 
   function showToast(msg: string, error = false) {
@@ -84,8 +117,18 @@ export default function CourseCustomizePage() {
         if (!alive) return;
         if (courseRes.ok) {
           const courseData = await courseRes.json();
-          setCourseTitle(courseData.course.title);
-          setCourseSlug(courseData.course.slug);
+          const c = courseData.course;
+          setCourseTitle(c.title);
+          setCourseSlug(c.slug);
+          setFlags({
+            communityEnabled: Boolean(c.communityEnabled),
+            lessonCommentsEnabled: Boolean(c.lessonCommentsEnabled),
+            reviewsEnabled: Boolean(c.reviewsEnabled),
+            certificateEnabled: Boolean(c.certificateEnabled),
+            gamificationEnabled: Boolean(c.gamificationEnabled),
+            showStudentCount: Boolean(c.showStudentCount),
+            showLessonSupport: c.showLessonSupport !== false,
+          });
         }
         const customRes = await fetch(`/api/producer/courses/${courseId}/customize`);
         console.log("[customize] GET status:", customRes.status);
@@ -168,6 +211,28 @@ export default function CourseCustomizePage() {
 
   function updateField(key: keyof Customization, value: string | null) {
     setCustom((prev) => ({ ...prev, [key]: value }));
+  }
+
+  async function toggleFlag(key: FlagKey) {
+    if (!flags || savingFlag) return;
+    const prev = flags[key];
+    const next = !prev;
+    setFlags({ ...flags, [key]: next });
+    setSavingFlag(key);
+    try {
+      const res = await fetch(`/api/courses/${courseId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ [key]: next }),
+      });
+      if (!res.ok) throw new Error("fail");
+      showToast("Configuração atualizada");
+    } catch {
+      setFlags((f) => (f ? { ...f, [key]: prev } : f));
+      showToast("Erro ao salvar", true);
+    } finally {
+      setSavingFlag(null);
+    }
   }
 
   const currentLayout = custom.memberLayoutStyle || "netflix";
@@ -376,6 +441,78 @@ export default function CourseCustomizePage() {
             </p>
           </section>
 
+          {/* Features / Toggles */}
+          <section className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.06] rounded-xl p-6">
+            <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-1">
+              Funcionalidades
+            </h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+              Ative ou desative recursos do curso
+            </p>
+            {flags ? (
+              <div className="space-y-3">
+                {FEATURE_ITEMS.map((item) => {
+                  const enabled = flags[item.key];
+                  const isSaving = savingFlag === item.key;
+                  return (
+                    <article
+                      key={item.key}
+                      className={`flex items-start gap-4 rounded-xl border border-gray-200 dark:border-white/[0.06] bg-gray-50 dark:bg-white/[0.02] p-4 transition ${
+                        enabled ? "" : "opacity-70"
+                      }`}
+                    >
+                      <span
+                        className={`shrink-0 w-10 h-10 rounded-lg inline-flex items-center justify-center ${
+                          enabled
+                            ? "bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400"
+                            : "bg-gray-100 text-gray-400 dark:bg-white/[0.06] dark:text-gray-500"
+                        }`}
+                      >
+                        {item.icon}
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
+                          {item.title}
+                        </h4>
+                        <p className="mt-1 text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+                          {item.description}
+                        </p>
+                        {!enabled && (
+                          <p className="mt-2 text-xs text-gray-500">
+                            {item.disabledHint}
+                          </p>
+                        )}
+                      </div>
+                      <FeatureToggle
+                        checked={enabled}
+                        onChange={() => toggleFlag(item.key)}
+                        disabled={isSaving}
+                        label={item.title}
+                      />
+                    </article>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="h-20 rounded-xl bg-gray-100 dark:bg-white/[0.04] animate-pulse" />
+                ))}
+              </div>
+            )}
+          </section>
+
+          {/* Menu lateral */}
+          <section className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.06] rounded-xl p-6">
+            <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-1">
+              Menu lateral do curso
+            </h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+              Personalize os itens que aparecem na sidebar do aluno
+            </p>
+            <CourseMenuManager courseId={courseId} />
+          </section>
+
           {/* Actions */}
           <div className="flex items-center gap-3">
             <button
@@ -460,5 +597,104 @@ function ColorPicker({
         />
       </div>
     </div>
+  );
+}
+
+function FeatureToggle({
+  checked,
+  onChange,
+  disabled,
+  label,
+}: {
+  checked: boolean;
+  onChange: () => void;
+  disabled?: boolean;
+  label: string;
+}) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      aria-label={label}
+      disabled={disabled}
+      onClick={onChange}
+      className={`relative shrink-0 inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 focus:ring-offset-white dark:focus:ring-offset-gray-900 ${
+        checked ? "bg-indigo-600" : "bg-gray-300 dark:bg-white/[0.1]"
+      } ${disabled ? "opacity-60 cursor-not-allowed" : "cursor-pointer"}`}
+    >
+      <span
+        className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${
+          checked ? "translate-x-5" : "translate-x-0.5"
+        }`}
+      />
+    </button>
+  );
+}
+
+function ChatIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+    </svg>
+  );
+}
+
+function MessageIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+      <path d="M4 4h16c1.1 0 2 .9 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6c0-1.1.9-2 2-2z" />
+      <polyline points="22,6 12,13 2,6" />
+    </svg>
+  );
+}
+
+function StarIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
+      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+    </svg>
+  );
+}
+
+function DiplomaIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+      <circle cx="12" cy="8" r="6" />
+      <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88" />
+    </svg>
+  );
+}
+
+function TrophyIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+      <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" />
+      <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" />
+      <path d="M4 22h16" />
+      <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22" />
+      <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22" />
+      <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z" />
+    </svg>
+  );
+}
+
+function HeadphonesIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+      <path d="M3 18v-6a9 9 0 0 1 18 0v6" />
+      <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z" />
+    </svg>
+  );
+}
+
+function UsersIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+      <circle cx="9" cy="7" r="4" />
+      <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+    </svg>
   );
 }

@@ -187,7 +187,7 @@ export default function CourseSettingsPage({
         </div>
       </div>
 
-      <CourseEditTabs courseId={params.id} active="settings" />
+      <CourseEditTabs courseId={params.id} active="customize" />
 
       {loading || !flags ? (
         <div className="space-y-3">
