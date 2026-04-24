@@ -354,15 +354,6 @@ body {
   height: 0;
 }
 
-/* ─── Carousel hover: allow cards to scale beyond container ─── */
-.carousel-hover-safe .overflow-hidden {
-  overflow-x: hidden;
-  overflow-y: visible;
-}
-.carousel-hover-safe > section {
-  padding-block: 12px;
-  margin-block: -12px;
-}
 
 /* ─── Editor button style (link as button) ───────────────────── */
 .prose-lesson .editor-button,

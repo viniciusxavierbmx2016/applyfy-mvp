@@ -127,6 +127,11 @@ export function ModuleCarousel({ title, modules }: Props) {
             ? "overflow-hidden"
             : "overflow-x-auto pb-2 -mx-4 px-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
         }
+        style={
+          isMd
+            ? { paddingBlock: "16px", marginBlock: "-16px" }
+            : undefined
+        }
       >
         <div
           ref={trackRef}
@@ -238,7 +243,7 @@ function ModuleCard({ mod }: { mod: CarouselModule }) {
     </div>
   );
 
-  const className = `group shrink-0 snap-start basis-[75%] sm:basis-[45%] md:basis-[35%] lg:basis-[28%] xl:basis-[22%] transition-[transform,box-shadow] duration-300 ease-out ${
+  const className = `group shrink-0 snap-start basis-[75%] sm:basis-[45%] md:basis-[35%] lg:basis-[28%] xl:basis-[22%] rounded-xl overflow-hidden isolate will-change-transform transition-[transform,box-shadow] duration-300 ease-out ${
     mod.clickable ? "hover:scale-[1.05] hover:shadow-2xl hover:shadow-black/30 hover:z-10" : "cursor-not-allowed"
   }`;
 
