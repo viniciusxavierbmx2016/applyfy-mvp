@@ -219,7 +219,7 @@ export default function AdminIntegrationsPage() {
       ) : (
         <div className="space-y-6">
           {/* Webhook Applyfy */}
-          <section className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.06] rounded-xl p-5 sm:p-6">
+          <section className="bg-white dark:bg-white/5 border border-gray-200 dark:border-white/5 rounded-xl p-5 sm:p-6">
             <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
               <div>
                 <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
@@ -244,7 +244,7 @@ export default function AdminIntegrationsPage() {
               URL do webhook
             </label>
             <div className="flex flex-col sm:flex-row gap-2 mb-5">
-              <code className="flex-1 px-3 py-2.5 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-xs sm:text-sm text-gray-800 dark:text-gray-200 break-all">
+              <code className="flex-1 px-3 py-2.5 bg-gray-100 dark:bg-gray-900/50 border border-gray-200 dark:border-white/10 rounded-lg text-xs sm:text-sm text-gray-800 dark:text-gray-200 break-all">
                 {webhookUrl}
               </code>
               <button
@@ -274,7 +274,7 @@ export default function AdminIntegrationsPage() {
                     ? "Digite um novo valor para substituir"
                     : "Cole o token gerado pelo Applyfy"
                 }
-                className="flex-1 px-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="flex-1 px-4 py-2.5 bg-white dark:bg-gray-900/50 border border-gray-200 dark:border-white/10 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-blue-500/50"
               />
               <button
                 type="button"
@@ -289,7 +289,7 @@ export default function AdminIntegrationsPage() {
                   type="button"
                   onClick={() => saveToken("")}
                   disabled={savingToken}
-                  className="px-4 py-2.5 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-lg"
+                  className="px-4 py-2.5 bg-gray-100 dark:bg-gray-900/50 hover:bg-gray-200 dark:hover:bg-white/10 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-lg"
                 >
                   Remover
                 </button>
@@ -302,7 +302,7 @@ export default function AdminIntegrationsPage() {
           </section>
 
           {/* Mapeamento de Produtos */}
-          <section className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.06] rounded-xl p-5 sm:p-6">
+          <section className="bg-white dark:bg-white/5 border border-gray-200 dark:border-white/5 rounded-xl p-5 sm:p-6">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">
               Mapeamento de Produtos
             </h2>
@@ -324,7 +324,7 @@ export default function AdminIntegrationsPage() {
                   return (
                     <div
                       key={c.id}
-                      className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 p-3 rounded-lg border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-950/40"
+                      className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-gray-950/40"
                     >
                       <div className="min-w-0 sm:w-56 flex-shrink-0">
                         <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
@@ -349,7 +349,7 @@ export default function AdminIntegrationsPage() {
                           }))
                         }
                         placeholder="ex: KSA912"
-                        className="flex-1 px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="flex-1 px-3 py-2 bg-white dark:bg-gray-900/50 border border-gray-200 dark:border-white/10 rounded-lg text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-blue-500/50"
                       />
                       <button
                         type="button"
@@ -369,7 +369,7 @@ export default function AdminIntegrationsPage() {
           </section>
 
           {/* Histórico de Webhooks */}
-          <section className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.06] rounded-xl p-5 sm:p-6">
+          <section className="bg-white dark:bg-white/5 border border-gray-200 dark:border-white/5 rounded-xl p-5 sm:p-6">
             <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
               <div>
                 <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
@@ -401,7 +401,7 @@ export default function AdminIntegrationsPage() {
                   className={`text-xs px-3 py-1.5 rounded-full border transition ${
                     eventFilter === ev
                       ? "bg-blue-600 border-blue-500 text-white"
-                      : "bg-gray-100 dark:bg-gray-800 border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:border-gray-400 dark:hover:border-gray-600"
+                      : "bg-gray-100 dark:bg-gray-900/50 border-gray-300 dark:border-white/10 text-gray-700 dark:text-gray-300 hover:border-gray-400 dark:hover:border-gray-600"
                   }`}
                 >
                   {ev === "ALL" ? "Todos" : ev}
@@ -426,7 +426,7 @@ export default function AdminIntegrationsPage() {
                   {logs.map((l) => (
                     <div
                       key={l.id}
-                      className="border border-gray-200 dark:border-gray-800 rounded-lg p-3 bg-gray-50 dark:bg-gray-950/40"
+                      className="border border-gray-200 dark:border-white/10 rounded-lg p-3 bg-gray-50 dark:bg-gray-950/40"
                     >
                       <div className="flex items-center justify-between gap-2 mb-1">
                         <span className="text-xs font-mono text-gray-800 dark:text-gray-200 truncate">
@@ -456,7 +456,7 @@ export default function AdminIntegrationsPage() {
                 <div className="hidden sm:block overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
-                      <tr className="text-left text-[11px] uppercase tracking-widest text-gray-500 border-b border-gray-200 dark:border-white/[0.06]">
+                      <tr className="text-left text-[11px] uppercase tracking-widest text-gray-500 border-b border-gray-200 dark:border-white/5">
                         <th className="py-3 pr-3 px-4 font-medium">Evento</th>
                         <th className="py-3 px-3 font-medium">Email</th>
                         <th className="py-3 px-3 font-medium">externalId</th>
@@ -470,7 +470,7 @@ export default function AdminIntegrationsPage() {
                       {logs.map((l) => (
                         <tr
                           key={l.id}
-                          className="border-b border-gray-100 dark:border-white/[0.04] last:border-0 hover:bg-gray-50 dark:hover:bg-white/[0.02] transition-colors duration-150"
+                          className="border-b border-gray-100 dark:border-white/5 last:border-0 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors duration-150"
                         >
                           <td className="py-2 pr-3 font-mono text-xs text-gray-800 dark:text-gray-200 whitespace-nowrap">
                             {l.event}
@@ -505,7 +505,7 @@ export default function AdminIntegrationsPage() {
           </section>
 
           {/* Como configurar */}
-          <section className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.06] rounded-xl p-5 sm:p-6">
+          <section className="bg-white dark:bg-white/5 border border-gray-200 dark:border-white/5 rounded-xl p-5 sm:p-6">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
               Como configurar
             </h2>
@@ -517,15 +517,15 @@ export default function AdminIntegrationsPage() {
               </li>
               <li>
                 Cole a URL, selecione os produtos e os eventos{" "}
-                <code className="text-xs bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded">
+                <code className="text-xs bg-gray-100 dark:bg-gray-900/50 px-1.5 py-0.5 rounded">
                   TRANSACTION_PAID
                 </code>
                 ,{" "}
-                <code className="text-xs bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded">
+                <code className="text-xs bg-gray-100 dark:bg-gray-900/50 px-1.5 py-0.5 rounded">
                   TRANSACTION_REFUNDED
                 </code>
                 ,{" "}
-                <code className="text-xs bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded">
+                <code className="text-xs bg-gray-100 dark:bg-gray-900/50 px-1.5 py-0.5 rounded">
                   TRANSACTION_CHARGED_BACK
                 </code>
                 .

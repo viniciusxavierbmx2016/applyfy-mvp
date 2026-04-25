@@ -32,13 +32,13 @@ export default function StripeIntegrationPage() {
       </div>
 
       <div className="space-y-6">
-        <section className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.06] rounded-xl p-6">
+        <section className="bg-white dark:bg-white/5 border border-gray-200 dark:border-white/5 rounded-xl p-6">
           <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-4">
             Como vincular os produtos
           </h3>
           <ol className="space-y-4 text-sm text-gray-700 dark:text-gray-300">
             <li className="flex gap-3">
-              <span className="flex-shrink-0 w-6 h-6 rounded-full bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 text-xs font-bold flex items-center justify-center">
+              <span className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 text-xs font-bold flex items-center justify-center">
                 1
               </span>
               <div>
@@ -50,29 +50,29 @@ export default function StripeIntegrationPage() {
               </div>
             </li>
             <li className="flex gap-3">
-              <span className="flex-shrink-0 w-6 h-6 rounded-full bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 text-xs font-bold flex items-center justify-center">
+              <span className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 text-xs font-bold flex items-center justify-center">
                 2
               </span>
               <div>
                 <p className="font-medium text-gray-900 dark:text-white">Adicione metadata no checkout</p>
                 <p className="text-gray-600 dark:text-gray-400 mt-1">
-                  No Stripe, inclua <code className="px-1.5 py-0.5 bg-gray-100 dark:bg-white/[0.06] rounded text-xs font-mono">courseId</code> em{" "}
+                  No Stripe, inclua <code className="px-1.5 py-0.5 bg-gray-100 dark:bg-white/5 rounded text-xs font-mono">courseId</code> em{" "}
                   <em>metadata</em> do Checkout Session (ou use{" "}
-                  <code className="px-1.5 py-0.5 bg-gray-100 dark:bg-white/[0.06] rounded text-xs font-mono">externalProductId</code>)
+                  <code className="px-1.5 py-0.5 bg-gray-100 dark:bg-white/5 rounded text-xs font-mono">externalProductId</code>)
                   para roteamento automático.
                 </p>
               </div>
             </li>
             <li className="flex gap-3">
-              <span className="flex-shrink-0 w-6 h-6 rounded-full bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 text-xs font-bold flex items-center justify-center">
+              <span className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 text-xs font-bold flex items-center justify-center">
                 3
               </span>
               <div>
                 <p className="font-medium text-gray-900 dark:text-white">Configure o webhook</p>
                 <p className="text-gray-600 dark:text-gray-400 mt-1">
                   No painel do Stripe, adicione um webhook apontando para a URL da sua plataforma
-                  com os eventos <code className="px-1.5 py-0.5 bg-gray-100 dark:bg-white/[0.06] rounded text-xs font-mono">checkout.session.completed</code> e{" "}
-                  <code className="px-1.5 py-0.5 bg-gray-100 dark:bg-white/[0.06] rounded text-xs font-mono">charge.refunded</code>.
+                  com os eventos <code className="px-1.5 py-0.5 bg-gray-100 dark:bg-white/5 rounded text-xs font-mono">checkout.session.completed</code> e{" "}
+                  <code className="px-1.5 py-0.5 bg-gray-100 dark:bg-white/5 rounded text-xs font-mono">charge.refunded</code>.
                 </p>
               </div>
             </li>
