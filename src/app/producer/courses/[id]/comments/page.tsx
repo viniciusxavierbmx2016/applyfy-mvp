@@ -1,9 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { Avatar } from "@/components/ui/avatar";
-import { CourseEditTabs } from "@/components/course-edit-tabs";
 import { formatRelativeTime } from "@/lib/utils";
 import { useConfirm } from "@/hooks/use-confirm";
 
@@ -64,8 +62,6 @@ export default function CourseCommentsPage({
   const [lessons, setLessons] = useState<LessonOption[]>([]);
   const [lessonFilter, setLessonFilter] = useState("");
   const [loading, setLoading] = useState(true);
-  const [courseTitle, setCourseTitle] = useState("");
-  const [courseSlug, setCourseSlug] = useState("");
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [replyText, setReplyText] = useState("");
   const [sending, setSending] = useState(false);
@@ -76,13 +72,6 @@ export default function CourseCommentsPage({
     setToast(msg);
     setTimeout(() => setToast(null), 2500);
   }
-
-  useEffect(() => {
-    fetch(`/api/courses/${params.id}`)
-      .then((r) => (r.ok ? r.json() : null))
-      .then((d) => { if (d?.course) { setCourseTitle(d.course.title); setCourseSlug(d.course.slug); } })
-      .catch(() => {});
-  }, [params.id]);
 
   useEffect(() => {
     setLoading(true);
@@ -157,47 +146,7 @@ export default function CourseCommentsPage({
   }
 
   return (
-    <div className="max-w-6xl mx-auto">
-      <div className="mb-6">
-        <Link
-          href="/producer/courses"
-          className="inline-flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white mb-2"
-        >
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
-          Voltar
-        </Link>
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white truncate">
-              {courseTitle || "Curso"}
-            </h1>
-            {courseSlug && (
-              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                /{courseSlug}
-              </p>
-            )}
-          </div>
-          {courseSlug && (
-            <a
-              href={`/course/${courseSlug}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-3 py-2 bg-transparent dark:bg-[#1a1e2e] border border-gray-300 dark:border-[#1f2335] hover:bg-gray-100 dark:hover:bg-[#1f2335] text-gray-700 dark:text-gray-300 text-sm font-medium rounded-xl transition flex-shrink-0"
-            >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-              </svg>
-              Pré-visualizar
-            </a>
-          )}
-        </div>
-      </div>
-
-      <CourseEditTabs courseId={params.id} active="comments" />
-
+    <>
       <div className="mb-4">
         <select
           value={lessonFilter}
@@ -347,6 +296,6 @@ export default function CourseCommentsPage({
         </div>
       )}
       <ConfirmDialog />
-    </div>
+    </>
   );
 }

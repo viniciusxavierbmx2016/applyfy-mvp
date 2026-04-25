@@ -2,8 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import Link from "next/link";
-import { CourseEditTabs } from "@/components/course-edit-tabs";
 import { CourseMenuManager } from "@/components/course-menu-manager";
 import { useConfirm } from "@/hooks/use-confirm";
 
@@ -91,8 +89,6 @@ export default function CourseCustomizePage() {
   const params = useParams<{ id: string }>();
   const courseId = params.id;
 
-  const [courseTitle, setCourseTitle] = useState("");
-  const [courseSlug, setCourseSlug] = useState("");
   const [custom, setCustom] = useState<Customization>(EMPTY);
   const [savedLayout, setSavedLayout] = useState("netflix");
   const [loading, setLoading] = useState(true);
@@ -118,8 +114,6 @@ export default function CourseCustomizePage() {
         if (courseRes.ok) {
           const courseData = await courseRes.json();
           const c = courseData.course;
-          setCourseTitle(c.title);
-          setCourseSlug(c.slug);
           setFlags({
             communityEnabled: Boolean(c.communityEnabled),
             lessonCommentsEnabled: Boolean(c.lessonCommentsEnabled),
@@ -238,47 +232,7 @@ export default function CourseCustomizePage() {
   const currentLayout = custom.memberLayoutStyle || "netflix";
 
   return (
-    <div className="max-w-6xl mx-auto">
-      <div className="mb-6">
-        <Link
-          href="/producer/courses"
-          className="inline-flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white mb-2"
-        >
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
-          Voltar
-        </Link>
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white truncate">
-              {courseTitle || "Curso"}
-            </h1>
-            {courseSlug && (
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-                /{courseSlug}
-              </p>
-            )}
-          </div>
-          {courseSlug && (
-            <a
-              href={`/course/${courseSlug}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border border-gray-300 dark:border-white/[0.08] rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/[0.06] transition"
-            >
-              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-              </svg>
-              Pré-visualizar
-            </a>
-          )}
-        </div>
-      </div>
-
-      <CourseEditTabs courseId={courseId} active="customize" />
-
+    <>
       {loading ? (
         <div className="space-y-4">
           {Array.from({ length: 3 }).map((_, i) => (
@@ -545,7 +499,7 @@ export default function CourseCustomizePage() {
         </div>
       )}
       <ConfirmDialog />
-    </div>
+    </>
   );
 }
 
