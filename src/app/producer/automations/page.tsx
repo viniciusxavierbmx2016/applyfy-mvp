@@ -697,7 +697,7 @@ function FlowEditor({ editing, template, courses, tags, onBack }: { editing: Aut
               <span className="text-[10px] text-gray-500 font-medium">Início</span>
             </div>
 
-            <div data-node-id="trigger" className={`absolute cursor-move select-none ${editingNode === "trigger" ? "ring-2 ring-blue-500 ring-offset-2 ring-offset-[#0a0a0b]" : ""}`} style={{ transform: `translate(${triggerNode.x}px, ${triggerNode.y}px)`, width: NODE_W }} onMouseDown={(e) => handleNodeMouseDown(e, "trigger")} onClick={(e) => { e.stopPropagation(); if (!dragging.current) setEditingNode("trigger"); }}>
+            <div data-node-id="trigger" className={`absolute cursor-move select-none rounded-xl ${editingNode === "trigger" ? "ring-2 ring-blue-500 ring-offset-2 ring-offset-[#0a0a0b]" : ""}`} style={{ transform: `translate(${triggerNode.x}px, ${triggerNode.y}px)`, width: NODE_W }} onMouseDown={(e) => handleNodeMouseDown(e, "trigger")} onClick={(e) => { e.stopPropagation(); if (!dragging.current) setEditingNode("trigger"); }}>
               <div className="bg-[#141416] border border-[#28282e] rounded-xl overflow-hidden shadow-lg hover:border-blue-500/40 transition">
                 <div className={`px-3 py-2 flex items-center gap-2 ${triggerType === "HAS_TAG" ? "bg-purple-600/10" : "bg-blue-600/10"}`}>
                   <svg className={`w-3.5 h-3.5 ${triggerType === "HAS_TAG" ? "text-purple-400" : "text-blue-400"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d={triggerMeta?.icon || "M13 10V3L4 14h7v7l9-11h-7z"} /></svg>
@@ -712,7 +712,7 @@ function FlowEditor({ editing, template, courses, tags, onBack }: { editing: Aut
               <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 w-3 h-3 rounded-full bg-[#28282e] border-2 border-[#3b3b44]" />
             </div>
 
-            <div data-node-id="action" className={`absolute cursor-move select-none ${editingNode === "action" ? "ring-2 ring-emerald-500 ring-offset-2 ring-offset-[#0a0a0b]" : ""}`} style={{ transform: `translate(${actionNode.x}px, ${actionNode.y}px)`, width: NODE_W }} onMouseDown={(e) => handleNodeMouseDown(e, "action")} onClick={(e) => { e.stopPropagation(); if (!dragging.current) setEditingNode("action"); }}>
+            <div data-node-id="action" className={`absolute cursor-move select-none rounded-xl ${editingNode === "action" ? "ring-2 ring-emerald-500 ring-offset-2 ring-offset-[#0a0a0b]" : ""}`} style={{ transform: `translate(${actionNode.x}px, ${actionNode.y}px)`, width: NODE_W }} onMouseDown={(e) => handleNodeMouseDown(e, "action")} onClick={(e) => { e.stopPropagation(); if (!dragging.current) setEditingNode("action"); }}>
               <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1/2 w-3 h-3 rounded-full bg-[#28282e] border-2 border-[#3b3b44]" />
               <div className="bg-[#141416] border border-[#28282e] rounded-xl overflow-hidden shadow-lg hover:border-emerald-500/40 transition">
                 <div className="px-3 py-2 bg-emerald-600/10 flex items-center gap-2">
