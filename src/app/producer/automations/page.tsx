@@ -308,7 +308,7 @@ export default function AutomationsPage() {
         <div>
           <p className="text-sm text-gray-500">Crie fluxos visuais que executam ações automaticamente</p>
         </div>
-        <button type="button" onClick={() => setShowNewModal(true)} className="inline-flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-xl transition">
+        <button type="button" onClick={() => setShowNewModal(true)} className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium rounded-xl transition">
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
           Nova automação
         </button>
@@ -317,21 +317,21 @@ export default function AutomationsPage() {
       {loading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {[0, 1, 2].map((i) => (
-            <div key={i} className="bg-white dark:bg-white/[0.02] border border-gray-200 dark:border-white/[0.06] rounded-2xl p-5 animate-pulse">
-              <div className="h-4 w-32 bg-gray-200 dark:bg-white/[0.06] rounded mb-4" />
-              <div className="h-16 bg-gray-200 dark:bg-white/[0.06] rounded-xl mb-3" />
-              <div className="h-3 w-20 bg-gray-200 dark:bg-white/[0.06] rounded" />
+            <div key={i} className="bg-white dark:bg-white/5 border border-gray-200 dark:border-white/5 rounded-2xl p-5 animate-pulse">
+              <div className="h-4 w-32 bg-gray-200 dark:bg-white/5 rounded mb-4" />
+              <div className="h-16 bg-gray-200 dark:bg-white/5 rounded-xl mb-3" />
+              <div className="h-3 w-20 bg-gray-200 dark:bg-white/5 rounded" />
             </div>
           ))}
         </div>
       ) : automations.length === 0 ? (
-        <div className="bg-white dark:bg-white/[0.02] border border-gray-200 dark:border-white/[0.06] rounded-2xl p-12 text-center">
-          <div className="w-16 h-16 mx-auto rounded-2xl bg-indigo-500/10 flex items-center justify-center mb-5">
-            <svg className="w-8 h-8 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+        <div className="bg-white dark:bg-white/5 border border-gray-200 dark:border-white/5 rounded-2xl p-12 text-center">
+          <div className="w-16 h-16 mx-auto rounded-2xl bg-blue-500/10 flex items-center justify-center mb-5">
+            <svg className="w-8 h-8 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
           </div>
           <p className="text-gray-900 dark:text-white font-semibold text-lg mb-2">Automatize tarefas repetitivas</p>
           <p className="text-gray-500 text-sm mb-6 max-w-md mx-auto">Crie fluxos visuais que executam ações automaticamente</p>
-          <button type="button" onClick={() => setShowNewModal(true)} className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-xl transition">+ Criar primeira automação</button>
+          <button type="button" onClick={() => setShowNewModal(true)} className="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium rounded-xl transition">+ Criar primeira automação</button>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -342,7 +342,7 @@ export default function AutomationsPage() {
             const ad = getActionDetail(auto, courses);
             const courseName = courses.find((c) => c.id === auto.courseId)?.title;
             return (
-              <div key={auto.id} onClick={() => setEditorAuto(auto)} className="bg-white dark:bg-white/[0.02] border border-gray-200 dark:border-white/[0.06] rounded-2xl p-5 cursor-pointer transition hover:border-indigo-500/30 hover:shadow-lg hover:shadow-indigo-500/5">
+              <div key={auto.id} onClick={() => setEditorAuto(auto)} className="bg-white dark:bg-white/5 border border-gray-200 dark:border-white/5 rounded-2xl p-5 cursor-pointer transition hover:border-blue-500/30 hover:shadow-lg hover:shadow-blue-500/5">
                 <div className="flex items-center justify-between mb-3">
                   <h3 className="text-sm font-semibold text-gray-900 dark:text-white truncate pr-2">{auto.name}</h3>
                   <div className="flex items-center gap-2 flex-shrink-0">
@@ -351,14 +351,14 @@ export default function AutomationsPage() {
                       {auto.active ? "Ativo" : "Inativo"}
                     </button>
                     <div className="relative">
-                      <button type="button" onClick={(e) => { e.stopPropagation(); setMenuOpen(menuOpen === auto.id ? null : auto.id); }} className="p-1 text-gray-500 hover:text-gray-300 hover:bg-white/[0.06] rounded-lg transition">
+                      <button type="button" onClick={(e) => { e.stopPropagation(); setMenuOpen(menuOpen === auto.id ? null : auto.id); }} className="p-1 text-gray-500 hover:text-gray-300 hover:bg-white/5 rounded-lg transition">
                         <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" /></svg>
                       </button>
                       {menuOpen === auto.id && <CardMenu onEdit={() => { setMenuOpen(null); setEditorAuto(auto); }} onDuplicate={() => duplicateAutomation(auto)} onDelete={() => deleteAutomation(auto.id)} onClose={() => setMenuOpen(null)} />}
                     </div>
                   </div>
                 </div>
-                {courseName && <p className="text-[10px] text-indigo-400 mb-2 truncate">{courseName}</p>}
+                {courseName && <p className="text-[10px] text-blue-400 mb-2 truncate">{courseName}</p>}
                 <div className="bg-[#0a0a0b] rounded-xl p-3 mb-3 overflow-hidden" style={{ backgroundImage: "radial-gradient(circle, #1d1d23 1px, transparent 1px)", backgroundSize: "16px 16px" }}>
                   <div className="flex items-center gap-2">
                     <div className="w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0"><svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg></div>
@@ -417,22 +417,22 @@ function NewAutomationModal({ onClose, onScratch, onTemplate }: { onClose: () =>
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center pt-[5vh] sm:pt-[8vh] overflow-y-auto" onClick={onClose}>
       <div className="absolute inset-0 bg-black/60" />
-      <div className="relative bg-white dark:bg-[#141416] border border-gray-200 dark:border-[#28282e] rounded-2xl p-6 max-w-2xl w-full mx-4 shadow-2xl mb-10" onClick={(e) => e.stopPropagation()}>
+      <div className="relative bg-white dark:bg-gray-950 border border-gray-200 dark:border-white/10 rounded-2xl p-6 max-w-2xl w-full mx-4 shadow-2xl mb-10" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Nova automação</h3>
-          <button type="button" onClick={onClose} className="p-1 text-gray-500 hover:text-white transition rounded-lg hover:bg-white/[0.06]">
+          <button type="button" onClick={onClose} className="p-1 text-gray-500 hover:text-white transition rounded-lg hover:bg-white/5">
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
           </button>
         </div>
         {!showTemplates ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <button type="button" onClick={onScratch} className="flex flex-col items-center gap-3 p-6 rounded-xl border-2 border-gray-200 dark:border-[#28282e] hover:border-indigo-500/50 hover:bg-indigo-500/5 transition text-center group">
-              <div className="w-12 h-12 rounded-xl bg-indigo-500/10 flex items-center justify-center group-hover:bg-indigo-500/20 transition">
-                <svg className="w-6 h-6 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+            <button type="button" onClick={onScratch} className="flex flex-col items-center gap-3 p-6 rounded-xl border-2 border-gray-200 dark:border-white/10 hover:border-blue-500/50 hover:bg-blue-500/5 transition text-center group">
+              <div className="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center group-hover:bg-blue-500/20 transition">
+                <svg className="w-6 h-6 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
               </div>
               <div><p className="text-sm font-semibold text-gray-900 dark:text-white">Criar do zero</p><p className="text-xs text-gray-500 mt-1">Monte seu fluxo personalizado</p></div>
             </button>
-            <button type="button" onClick={() => setShowTemplates(true)} className="flex flex-col items-center gap-3 p-6 rounded-xl border-2 border-gray-200 dark:border-[#28282e] hover:border-indigo-500/50 hover:bg-indigo-500/5 transition text-center group">
+            <button type="button" onClick={() => setShowTemplates(true)} className="flex flex-col items-center gap-3 p-6 rounded-xl border-2 border-gray-200 dark:border-white/10 hover:border-blue-500/50 hover:bg-blue-500/5 transition text-center group">
               <div className="w-12 h-12 rounded-xl bg-amber-500/10 flex items-center justify-center group-hover:bg-amber-500/20 transition">
                 <svg className="w-6 h-6 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
               </div>
@@ -449,7 +449,7 @@ function NewAutomationModal({ onClose, onScratch, onTemplate }: { onClose: () =>
               {TEMPLATES.map((t, i) => {
                 const trigger = TRIGGER_META[t.triggerType];
                 return (
-                  <button key={i} type="button" onClick={() => onTemplate(t)} className="flex flex-col items-start gap-2 p-4 rounded-xl border border-gray-200 dark:border-[#28282e] hover:border-indigo-500/50 hover:bg-indigo-500/5 transition text-left">
+                  <button key={i} type="button" onClick={() => onTemplate(t)} className="flex flex-col items-start gap-2 p-4 rounded-xl border border-gray-200 dark:border-white/10 hover:border-blue-500/50 hover:bg-blue-500/5 transition text-left">
                     <span className="text-2xl">{t.emoji}</span>
                     <p className="text-sm font-semibold text-gray-900 dark:text-white leading-tight">{t.name}</p>
                     <p className="text-xs text-gray-500 leading-relaxed">{t.description}</p>
@@ -472,12 +472,12 @@ function CardMenu({ onEdit, onDuplicate, onDelete, onClose }: { onEdit: () => vo
     document.addEventListener("mousedown", handle);
     return () => document.removeEventListener("mousedown", handle);
   }, [onClose]);
-  const item = "w-full text-left px-3 py-2 text-sm hover:bg-white/[0.06] transition rounded-lg flex items-center gap-2";
+  const item = "w-full text-left px-3 py-2 text-sm hover:bg-white/5 transition rounded-lg flex items-center gap-2";
   return (
-    <div ref={ref} className="absolute right-0 top-7 z-20 w-40 bg-white dark:bg-[#1a1a1e] border border-gray-200 dark:border-[#2a2a30] rounded-xl shadow-xl p-1" onClick={(e) => e.stopPropagation()}>
+    <div ref={ref} className="absolute right-0 top-7 z-20 w-40 bg-white dark:bg-gray-950 border border-gray-200 dark:border-white/10 rounded-xl shadow-xl p-1" onClick={(e) => e.stopPropagation()}>
       <button type="button" onClick={onEdit} className={`${item} text-gray-700 dark:text-gray-300`}><svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>Editar</button>
       <button type="button" onClick={onDuplicate} className={`${item} text-gray-700 dark:text-gray-300`}><svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>Duplicar</button>
-      <div className="h-px bg-gray-200 dark:bg-[#2a2a30] my-1" />
+      <div className="h-px bg-gray-200 dark:bg-white/10 my-1" />
       <button type="button" onClick={onDelete} className={`${item} text-red-400`}><svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>Excluir</button>
     </div>
   );
@@ -637,7 +637,7 @@ function FlowEditor({ editing, template, courses, tags, onBack }: { editing: Aut
           <button type="button" onClick={() => setActive(!active)} className={`flex items-center gap-2 text-xs px-3 py-1.5 rounded-full font-medium transition ${active ? "bg-emerald-500/15 text-emerald-400" : "bg-gray-500/15 text-gray-400"}`}>
             <span className={`w-1.5 h-1.5 rounded-full ${active ? "bg-emerald-400" : "bg-gray-500"}`} />{active ? "Ativo" : "Inativo"}
           </button>
-          <button type="button" onClick={handleSave} disabled={saving} className="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-lg disabled:opacity-40 transition">{saving ? "Salvando..." : "Salvar"}</button>
+          <button type="button" onClick={handleSave} disabled={saving} className="px-4 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium rounded-lg disabled:opacity-40 transition">{saving ? "Salvando..." : "Salvar"}</button>
         </div>
       </div>
 
@@ -686,11 +686,11 @@ function FlowEditor({ editing, template, courses, tags, onBack }: { editing: Aut
         </div>
 
         <div className="absolute bottom-4 right-4 flex items-center gap-1 bg-[#141416] border border-[#28282e] rounded-xl p-1 shadow-xl">
-          <button type="button" onClick={() => setZoom((z) => Math.max(0.3, z - 0.1))} className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/[0.06] rounded-lg transition"><svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M20 12H4" /></svg></button>
+          <button type="button" onClick={() => setZoom((z) => Math.max(0.3, z - 0.1))} className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition"><svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M20 12H4" /></svg></button>
           <span className="text-xs text-gray-500 w-10 text-center font-mono">{Math.round(zoom * 100)}%</span>
-          <button type="button" onClick={() => setZoom((z) => Math.min(2.5, z + 0.1))} className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/[0.06] rounded-lg transition"><svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg></button>
+          <button type="button" onClick={() => setZoom((z) => Math.min(2.5, z + 0.1))} className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition"><svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg></button>
           <div className="w-px h-5 bg-[#28282e]" />
-          <button type="button" onClick={centerCanvas} className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/[0.06] rounded-lg transition" title="Centralizar"><svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" /></svg></button>
+          <button type="button" onClick={centerCanvas} className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition" title="Centralizar"><svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" /></svg></button>
         </div>
 
         {editingNode && (
@@ -724,7 +724,7 @@ function SidePanel({
   onClose: () => void;
 }) {
   const isTrigger = type === "trigger";
-  const selectCls = "w-full px-3 py-2.5 bg-[#0f1320] border border-[#1a1e2e] rounded-lg text-sm text-white outline-none focus:border-indigo-500/50";
+  const selectCls = "w-full px-3 py-2.5 bg-gray-900/50 border border-white/10 rounded-lg text-sm text-white outline-none focus:border-blue-500/50 transition-colors";
   const labelCls = "block text-xs font-medium text-gray-400 mb-1.5";
   const inputCls = selectCls;
   const stepCls = "text-[10px] uppercase tracking-widest font-semibold text-gray-500 mb-2";
@@ -735,7 +735,7 @@ function SidePanel({
     <div className="absolute top-0 right-0 h-full w-[360px] bg-[#141416] border-l border-[#28282e] shadow-2xl flex flex-col z-10 animate-slideIn">
       <div className="flex items-center justify-between px-5 py-4 border-b border-[#28282e]">
         <h3 className="text-sm font-semibold text-white">{isTrigger ? "Configurar gatilho" : "Configurar ação"}</h3>
-        <button type="button" onClick={onClose} className="p-1 text-gray-500 hover:text-white transition rounded-lg hover:bg-white/[0.06]">
+        <button type="button" onClick={onClose} className="p-1 text-gray-500 hover:text-white transition rounded-lg hover:bg-white/5">
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
         </button>
       </div>
@@ -1029,7 +1029,7 @@ function MobileFlowEditor({
   onSave: () => void; onBack: () => void;
   selectedCourse: CourseOption | null;
 }) {
-  const selectCls = "w-full px-3 py-2.5 bg-[#0f1320] border border-[#1a1e2e] rounded-lg text-sm text-white outline-none";
+  const selectCls = "w-full px-3 py-2.5 bg-gray-900/50 border border-white/10 rounded-lg text-sm text-white outline-none focus:border-blue-500/50 transition-colors";
   const labelCls = "block text-xs font-medium text-gray-400 mb-1.5";
   const inputCls = selectCls;
 
@@ -1042,7 +1042,7 @@ function MobileFlowEditor({
         <button type="button" onClick={onBack} className="text-sm text-gray-400 hover:text-white transition flex items-center gap-1">
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>Voltar
         </button>
-        <button type="button" onClick={onSave} disabled={saving} className="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-lg disabled:opacity-40 transition">{saving ? "..." : "Salvar"}</button>
+        <button type="button" onClick={onSave} disabled={saving} className="px-4 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium rounded-lg disabled:opacity-40 transition">{saving ? "..." : "Salvar"}</button>
       </div>
       <div className="p-4 space-y-5">
         {error && <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm">{error}</div>}
