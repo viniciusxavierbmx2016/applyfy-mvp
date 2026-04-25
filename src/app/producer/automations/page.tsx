@@ -2,8 +2,14 @@
 
 import { useEffect, useState, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
+import dynamic from "next/dynamic";
 import { useConfirm } from "@/hooks/use-confirm";
 import { CustomSelect } from "@/components/custom-select";
+
+const EmailEditor = dynamic(() => import("@/components/email-editor"), {
+  ssr: false,
+  loading: () => <div className="h-[200px] bg-gray-900/50 border border-white/10 rounded-lg animate-pulse" />,
+});
 
 interface AutomationItem {
   id: string;
@@ -90,7 +96,7 @@ const VALID_ACTIONS_FOR_TRIGGER: Record<string, string[]> = {
   COURSE_COMPLETED: ["SEND_EMAIL", "ENROLL_COURSE", "SEND_PUSH", "ADD_TAG"],
   LESSON_COMPLETED: ["SEND_EMAIL", "UNLOCK_MODULE", "ENROLL_COURSE", "SEND_PUSH", "ADD_TAG"],
   QUIZ_PASSED: ["SEND_EMAIL", "UNLOCK_MODULE", "ENROLL_COURSE", "SEND_PUSH", "ADD_TAG"],
-  STUDENT_ENROLLED: ["ENROLL_COURSE", "SEND_PUSH", "ADD_TAG"],
+  STUDENT_ENROLLED: ["SEND_EMAIL", "ENROLL_COURSE", "SEND_PUSH", "ADD_TAG"],
   STUDENT_INACTIVE: ["SEND_EMAIL", "SEND_PUSH", "ADD_TAG"],
   STUDENT_NEVER_ACCESSED: ["SEND_EMAIL", "SEND_PUSH", "ADD_TAG"],
   PROGRESS_BELOW: ["SEND_EMAIL", "SEND_PUSH", "ADD_TAG"],
@@ -908,8 +914,8 @@ function SidePanel({
                         <div><label className={labelCls}>Assunto do email</label>
                           <input type="text" value={actionConfig.subject || ""} onChange={(e) => setActionConfig({ ...actionConfig, subject: e.target.value })} placeholder="Parabéns!" className={inputCls} />
                         </div>
-                        <div><label className={labelCls}>Corpo do email</label>
-                          <textarea value={actionConfig.body || ""} onChange={(e) => setActionConfig({ ...actionConfig, body: e.target.value })} placeholder="Olá!" rows={6} className={`${selectCls} resize-y`} />
+                        <div><label className={labelCls}>Conteúdo do email</label>
+                          <EmailEditor content={actionConfig.body || ""} onChange={(html) => setActionConfig({ ...actionConfig, body: html })} />
                         </div>
                         <p className="text-[10px] text-gray-500">{`Variáveis: {nome} {curso} {modulo}`}</p>
                       </div>
@@ -1076,7 +1082,7 @@ function MobileFlowEditor({
                   ); })}
                 </div>
                 {actionType === "UNLOCK_MODULE" && selectedCourse && (() => { const tgt = actionConfig.moduleId ? selectedCourse.modules.find((m) => m.id === actionConfig.moduleId) : null; return <div><label className={labelCls}>Módulo para liberar</label><CustomSelect value={actionConfig.moduleId || ""} onChange={(v) => setActionConfig({ ...actionConfig, moduleId: v })} options={[{ value: "", label: "Selecione..." }, ...selectedCourse.modules.filter((m) => m.id !== triggerConfig.moduleId).map((m) => ({ value: m.id, label: m.title }))]} />{tgt && tgt.daysToRelease > 0 && <div className="bg-amber-900/20 border border-amber-700/30 rounded-xl p-3 text-xs text-amber-300 mt-3">Este módulo tem liberação por tempo ({tgt.daysToRelease} dias). A automação vai sobrescrever — ficará bloqueado até o gatilho.</div>}</div>; })()}
-                {actionType === "SEND_EMAIL" && <div className="space-y-3"><div><label className={labelCls}>Assunto</label><input type="text" value={actionConfig.subject || ""} onChange={(e) => setActionConfig({ ...actionConfig, subject: e.target.value })} placeholder="Parabéns!" className={selectCls} /></div><div><label className={labelCls}>Corpo</label><textarea value={actionConfig.body || ""} onChange={(e) => setActionConfig({ ...actionConfig, body: e.target.value })} placeholder="Olá!" rows={4} className={`${selectCls} resize-y`} /></div><p className="text-[10px] text-gray-500">{`Variáveis: {nome} {curso} {modulo}`}</p></div>}
+                {actionType === "SEND_EMAIL" && <div className="space-y-3"><div><label className={labelCls}>Assunto</label><input type="text" value={actionConfig.subject || ""} onChange={(e) => setActionConfig({ ...actionConfig, subject: e.target.value })} placeholder="Parabéns!" className={selectCls} /></div><div><label className={labelCls}>Conteúdo do email</label><EmailEditor content={actionConfig.body || ""} onChange={(html) => setActionConfig({ ...actionConfig, body: html })} /></div><p className="text-[10px] text-gray-500">{`Variáveis: {nome} {curso} {modulo}`}</p></div>}
                 {actionType === "SEND_PUSH" && <div className="space-y-3"><div><label className={labelCls}>Título</label><input type="text" maxLength={60} value={actionConfig.pushTitle || ""} onChange={(e) => setActionConfig({ ...actionConfig, pushTitle: e.target.value })} placeholder="Novidade!" className={selectCls} /><p className="text-[10px] text-gray-500 mt-1">{(actionConfig.pushTitle || "").length}/60</p></div><div><label className={labelCls}>Mensagem</label><textarea maxLength={200} value={actionConfig.pushBody || ""} onChange={(e) => setActionConfig({ ...actionConfig, pushBody: e.target.value })} placeholder="Olá!" rows={3} className={`${selectCls} resize-y`} /><p className="text-[10px] text-gray-500 mt-1">{(actionConfig.pushBody || "").length}/200</p></div><div><label className={labelCls}>Link (opcional)</label><input type="text" value={actionConfig.pushUrl || ""} onChange={(e) => setActionConfig({ ...actionConfig, pushUrl: e.target.value })} placeholder="/" className={selectCls} /></div><p className="text-[10px] text-gray-500">{`Variáveis: {nome} {curso} {modulo}`}</p><div className="bg-[#1a1a1e] rounded-lg p-3 space-y-0.5"><div className="flex items-center gap-1.5"><span className="text-xs">🔔</span><span className="text-[10px] text-gray-400 font-medium">Members Club</span></div><p className="text-sm text-white font-medium truncate">{actionConfig.pushTitle || "Título"}</p><p className="text-xs text-gray-400 line-clamp-2">{actionConfig.pushBody || "Mensagem..."}</p></div></div>}
                 {actionType === "ENROLL_COURSE" && <div><label className={labelCls}>Curso destino</label><CustomSelect value={actionConfig.courseId || ""} onChange={(v) => setActionConfig({ ...actionConfig, courseId: v })} options={[{ value: "", label: "Selecione..." }, ...courses.filter((c) => c.id !== courseId).map((c) => ({ value: c.id, label: c.title }))]} /></div>}
                 {actionType === "ADD_TAG" && <div className="space-y-3"><div><label className={labelCls}>Nome da tag</label><input type="text" value={actionConfig.tagName || ""} onChange={(e) => setActionConfig({ ...actionConfig, tagName: e.target.value })} placeholder="Ex: VIP" className={selectCls} /></div><div><label className={labelCls}>Cor</label><div className="flex items-center gap-1.5 flex-wrap">{["#3b82f6","#06b6d4","#10b981","#f59e0b","#ef4444","#ec4899","#8b5cf6","#f97316","#14b8a6","#6366f1"].map((c) => <button key={c} type="button" onClick={() => setActionConfig({ ...actionConfig, tagColor: c })} className="w-6 h-6 rounded-full border-2 transition" style={{ backgroundColor: c, borderColor: (actionConfig.tagColor || "#3b82f6") === c ? "white" : "transparent" }} />)}</div></div>{tags.length > 0 && <div><label className={labelCls}>Ou existente</label><CustomSelect value="" onChange={(v) => { const t = tags.find((tg) => tg.id === v); if (t) setActionConfig({ ...actionConfig, tagName: t.name, tagColor: t.color }); }} options={[{ value: "", label: "Usar tag existente..." }, ...tags.map((t) => ({ value: t.id, label: t.name }))]} /></div>}</div>}

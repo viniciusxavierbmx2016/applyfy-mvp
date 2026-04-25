@@ -244,13 +244,28 @@ export function subscriptionSuspended(name: string) {
   };
 }
 
+function sanitizeHtmlForEmail(html: string): string {
+  return html
+    .replace(/<p>/g, '<p style="margin:0 0 8px 0;font-size:15px;color:#d1d5db;line-height:1.6;">')
+    .replace(/<h2>/g, '<h2 style="font-size:20px;font-weight:bold;color:#ffffff;margin:0 0 8px 0;">')
+    .replace(/<h3>/g, '<h3 style="font-size:16px;font-weight:bold;color:#ffffff;margin:0 0 8px 0;">')
+    .replace(/<a /g, '<a style="color:#3b82f6;text-decoration:underline;" ')
+    .replace(/<ul>/g, '<ul style="margin:0 0 8px 0;padding-left:20px;color:#d1d5db;">')
+    .replace(/<ol>/g, '<ol style="margin:0 0 8px 0;padding-left:20px;color:#d1d5db;">')
+    .replace(/<li>/g, '<li style="margin:0 0 4px 0;font-size:15px;line-height:1.6;">');
+}
+
 export function automationEmail(name: string, subjectText: string, body: string) {
   const firstName = name.split(" ")[0] || "Aluno";
-  const bodyHtml = body.replace(/\n/g, "<br>");
+  const isHtml = /<[a-z][\s\S]*>/i.test(body);
+  const bodyHtml = isHtml ? sanitizeHtmlForEmail(body) : body.replace(/\n/g, "<br>");
+  const bodyBlock = isHtml
+    ? `<div style="font-size:15px;color:#d1d5db;line-height:1.6;">${bodyHtml}</div>`
+    : paragraph(bodyHtml);
   const html = baseTemplate(`
     ${heading(subjectText)}
     ${paragraph(`Olá, ${firstName}!`)}
-    ${paragraph(bodyHtml)}
+    ${bodyBlock}
   `);
   return {
     subject: subjectText,
