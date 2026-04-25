@@ -106,9 +106,31 @@ const VALID_ACTIONS_FOR_TRIGGER: Record<string, string[]> = {
 };
 
 const GLOBAL_TRIGGERS = ["STUDENT_INACTIVE", "STUDENT_NEVER_ACCESSED", "HAS_TAG"];
+const EVENT_TRIGGERS = ["STUDENT_ENROLLED", "LESSON_COMPLETED", "MODULE_COMPLETED", "COURSE_COMPLETED", "QUIZ_PASSED"];
 
 function getValidActions(triggerType: string): string[] {
   return VALID_ACTIONS_FOR_TRIGGER[triggerType] || [];
+}
+
+function formatDelay(minutes: number): string {
+  if (minutes >= 1440 && minutes % 1440 === 0) return `${minutes / 1440} dia(s)`;
+  if (minutes >= 60 && minutes % 60 === 0) return `${minutes / 60} hora(s)`;
+  return `${minutes} min`;
+}
+
+function parseDelayMinutes(minutes: number): { value: string; unit: string } {
+  if (!minutes || minutes <= 0) return { value: "", unit: "minutes" };
+  if (minutes >= 1440 && minutes % 1440 === 0) return { value: String(minutes / 1440), unit: "days" };
+  if (minutes >= 60 && minutes % 60 === 0) return { value: String(minutes / 60), unit: "hours" };
+  return { value: String(minutes), unit: "minutes" };
+}
+
+function toDelayMinutes(value: string, unit: string): number {
+  const n = Number(value) || 0;
+  if (n <= 0) return 0;
+  if (unit === "hours") return n * 60;
+  if (unit === "days") return n * 1440;
+  return n;
 }
 
 const TEMPLATES: TemplateData[] = [
@@ -386,6 +408,7 @@ export default function AutomationsPage() {
                       {ad && <div className="text-[8px] text-gray-500 truncate">{ad}</div>}
                     </div>
                   </div>
+                  {(() => { try { const tc = JSON.parse(auto.triggerConfig); const dm = Number(tc.delayMinutes) || 0; if (dm > 0) return <div className="mt-1.5 flex justify-center"><span className="text-[10px] text-amber-400">⏱ {formatDelay(dm)}</span></div>; } catch {} return null; })()}
                 </div>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3 text-xs text-gray-500">
@@ -508,6 +531,14 @@ function FlowEditor({ editing, template, courses, tags, onBack }: { editing: Aut
     if (template) return template.actionConfig as Record<string, string>;
     return {};
   });
+  const [delayValue, setDelayValue] = useState(() => {
+    if (editing) { try { const c = JSON.parse(editing.triggerConfig); return parseDelayMinutes(Number(c.delayMinutes) || 0).value; } catch { return ""; } }
+    return "";
+  });
+  const [delayUnit, setDelayUnit] = useState(() => {
+    if (editing) { try { const c = JSON.parse(editing.triggerConfig); return parseDelayMinutes(Number(c.delayMinutes) || 0).unit; } catch { return "minutes"; } }
+    return "minutes";
+  });
 
   const [nodes, setNodes] = useState<CanvasNode[]>(defaultNodes);
   const [zoom, setZoom] = useState(1);
@@ -606,12 +637,15 @@ function FlowEditor({ editing, template, courses, tags, onBack }: { editing: Aut
     if (err) { setError(err); return; }
     setSaving(true);
     setError("");
+    const delayMinutes = EVENT_TRIGGERS.includes(triggerType) ? toDelayMinutes(delayValue, delayUnit) : 0;
+    const restTriggerConfig = Object.fromEntries(Object.entries(triggerConfig).filter(([k]) => k !== "delayMinutes"));
+    const finalTriggerConfig = delayMinutes > 0 ? { ...restTriggerConfig, delayMinutes: String(delayMinutes) } : restTriggerConfig;
     try {
       const url = isEditing ? `/api/producer/automations/${editing.id}` : "/api/producer/automations";
       const res = await fetch(url, {
         method: isEditing ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, active, courseId: courseId || null, triggerType, triggerConfig, actionType, actionConfig }),
+        body: JSON.stringify({ name, active, courseId: courseId || null, triggerType, triggerConfig: finalTriggerConfig, actionType, actionConfig }),
       });
       const data = await res.json();
       if (!res.ok) { setError(data.error || "Erro ao salvar"); return; }
@@ -621,7 +655,7 @@ function FlowEditor({ editing, template, courses, tags, onBack }: { editing: Aut
 
   const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
   if (isMobile) {
-    return <MobileFlowEditor name={name} setName={setName} active={active} setActive={setActive} courseId={courseId} setCourseId={setCourseId} courses={courses} tags={tags} triggerType={triggerType} setTriggerType={setTriggerType} triggerConfig={triggerConfig} setTriggerConfig={setTriggerConfig} actionType={actionType} setActionType={setActionType} actionConfig={actionConfig} setActionConfig={setActionConfig} saving={saving} error={error} onSave={handleSave} onBack={onBack} selectedCourse={selectedCourse || null} />;
+    return <MobileFlowEditor name={name} setName={setName} active={active} setActive={setActive} courseId={courseId} setCourseId={setCourseId} courses={courses} tags={tags} triggerType={triggerType} setTriggerType={setTriggerType} triggerConfig={triggerConfig} setTriggerConfig={setTriggerConfig} actionType={actionType} setActionType={setActionType} actionConfig={actionConfig} setActionConfig={setActionConfig} saving={saving} error={error} onSave={handleSave} onBack={onBack} selectedCourse={selectedCourse || null} delayValue={delayValue} setDelayValue={setDelayValue} delayUnit={delayUnit} setDelayUnit={setDelayUnit} />;
   }
 
   const conn1 = { x1: startNode.x + START_R, y1: startNode.y + START_R, x2: triggerNode.x, y2: triggerNode.y + NODE_H / 2 };
@@ -702,7 +736,7 @@ function FlowEditor({ editing, template, courses, tags, onBack }: { editing: Aut
         </div>
 
         {editingNode && (
-          <SidePanel type={editingNode} courses={courses} tags={tags} courseId={courseId} setCourseId={(v) => { setCourseId(v); setTriggerConfig({}); setActionConfig({}); }} selectedCourse={selectedCourse || null} triggerType={triggerType} setTriggerType={(v) => { setTriggerType(v); setTriggerConfig({}); }} triggerConfig={triggerConfig} setTriggerConfig={setTriggerConfig} actionType={actionType} setActionType={(v) => { setActionType(v); setActionConfig({}); }} actionConfig={actionConfig} setActionConfig={setActionConfig} onClose={() => setEditingNode(null)} />
+          <SidePanel type={editingNode} courses={courses} tags={tags} courseId={courseId} setCourseId={(v) => { setCourseId(v); setTriggerConfig({}); setActionConfig({}); }} selectedCourse={selectedCourse || null} triggerType={triggerType} setTriggerType={(v) => { setTriggerType(v); setTriggerConfig({}); }} triggerConfig={triggerConfig} setTriggerConfig={setTriggerConfig} actionType={actionType} setActionType={(v) => { setActionType(v); setActionConfig({}); }} actionConfig={actionConfig} setActionConfig={setActionConfig} delayValue={delayValue} setDelayValue={setDelayValue} delayUnit={delayUnit} setDelayUnit={setDelayUnit} onClose={() => setEditingNode(null)} />
         )}
       </div>
 
@@ -717,7 +751,8 @@ function FlowEditor({ editing, template, courses, tags, onBack }: { editing: Aut
 function SidePanel({
   type, courses, tags, courseId, setCourseId, selectedCourse,
   triggerType, setTriggerType, triggerConfig, setTriggerConfig,
-  actionType, setActionType, actionConfig, setActionConfig, onClose,
+  actionType, setActionType, actionConfig, setActionConfig,
+  delayValue, setDelayValue, delayUnit, setDelayUnit, onClose,
 }: {
   type: "trigger" | "action";
   courses: CourseOption[];
@@ -729,6 +764,8 @@ function SidePanel({
   triggerConfig: Record<string, string>; setTriggerConfig: (v: Record<string, string>) => void;
   actionType: string; setActionType: (v: string) => void;
   actionConfig: Record<string, string>; setActionConfig: (v: Record<string, string>) => void;
+  delayValue: string; setDelayValue: (v: string) => void;
+  delayUnit: string; setDelayUnit: (v: string) => void;
   onClose: () => void;
 }) {
   const isTrigger = type === "trigger";
@@ -852,6 +889,20 @@ function SidePanel({
                 {triggerType === "QUIZ_PASSED" && selectedCourse && (
                   <div><label className={labelCls}>Quiz (opcional)</label>
                     <CustomSelect value={triggerConfig.quizId || ""} onChange={(v) => setTriggerConfig({ ...triggerConfig, quizId: v })} options={[{ value: "", label: "Qualquer quiz" }, ...allLessons.filter((l) => l.quiz).map((l) => ({ value: l.quiz!.id, label: `${l.moduleTitle} → ${l.title}` }))]} />
+                  </div>
+                )}
+                {EVENT_TRIGGERS.includes(triggerType) && (
+                  <div className="mt-4 pt-4 border-t border-white/5">
+                    <label className={labelCls}>Atraso na execução (opcional)</label>
+                    <div className="flex gap-2">
+                      <input type="number" min={0} value={delayValue} onChange={(e) => setDelayValue(e.target.value)} placeholder="0" className={`${inputCls} w-20`} />
+                      <CustomSelect value={delayUnit} onChange={setDelayUnit} className="flex-1" options={[{ value: "minutes", label: "Minutos" }, { value: "hours", label: "Horas" }, { value: "days", label: "Dias" }]} />
+                    </div>
+                    <p className="text-[10px] text-gray-500 mt-1.5">
+                      {delayValue && Number(delayValue) > 0
+                        ? `A ação será executada ${delayValue} ${delayUnit === "minutes" ? "minuto(s)" : delayUnit === "hours" ? "hora(s)" : "dia(s)"} após o gatilho`
+                        : "Sem atraso — executa imediatamente"}
+                    </p>
                   </div>
                 )}
               </div>
@@ -994,6 +1045,7 @@ function MobileFlowEditor({
   triggerType, setTriggerType, triggerConfig, setTriggerConfig,
   actionType, setActionType, actionConfig, setActionConfig,
   saving, error, onSave, onBack, selectedCourse,
+  delayValue, setDelayValue, delayUnit, setDelayUnit,
 }: {
   name: string; setName: (v: string) => void;
   active: boolean; setActive: (v: boolean) => void;
@@ -1007,6 +1059,8 @@ function MobileFlowEditor({
   saving: boolean; error: string;
   onSave: () => void; onBack: () => void;
   selectedCourse: CourseOption | null;
+  delayValue: string; setDelayValue: (v: string) => void;
+  delayUnit: string; setDelayUnit: (v: string) => void;
 }) {
   const selectCls = "w-full px-3 py-2.5 bg-white dark:bg-gray-900/50 border border-gray-200 dark:border-white/10 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:border-blue-500/50 transition-colors";
   const labelCls = "block text-xs font-medium text-gray-400 mb-1.5";
@@ -1062,6 +1116,7 @@ function MobileFlowEditor({
             {triggerType === "PROGRESS_ABOVE" && <div><label className={labelCls}>Acima de (%)</label><input type="number" min={1} max={100} value={triggerConfig.progressPercent || "50"} onChange={(e) => setTriggerConfig({ ...triggerConfig, progressPercent: e.target.value })} className={inputCls} /></div>}
             {triggerType === "MODULE_NOT_STARTED" && selectedCourse && <div className="space-y-3"><div><label className={labelCls}>Módulo</label><CustomSelect value={triggerConfig.moduleId || ""} onChange={(v) => setTriggerConfig({ ...triggerConfig, moduleId: v })} options={[{ value: "", label: "Selecione..." }, ...selectedCourse.modules.map((m) => ({ value: m.id, label: m.title }))]} /></div><div><label className={labelCls}>Após dias</label><input type="number" min={1} value={triggerConfig.afterDays || "7"} onChange={(e) => setTriggerConfig({ ...triggerConfig, afterDays: e.target.value })} className={inputCls} /></div></div>}
             {triggerType === "HAS_TAG" && <div><label className={labelCls}>Tag</label><CustomSelect value={triggerConfig.tagId || ""} onChange={(v) => setTriggerConfig({ ...triggerConfig, tagId: v })} options={[{ value: "", label: "Selecione uma tag..." }, ...tags.map((t) => ({ value: t.id, label: `${t.name} (${t.studentCount} alunos)` }))]} /></div>}
+            {EVENT_TRIGGERS.includes(triggerType) && <div className="mt-3 pt-3 border-t border-white/5"><label className={labelCls}>Atraso na execução (opcional)</label><div className="flex gap-2"><input type="number" min={0} value={delayValue} onChange={(e) => setDelayValue(e.target.value)} placeholder="0" className={`${inputCls} w-20`} /><CustomSelect value={delayUnit} onChange={setDelayUnit} className="flex-1" options={[{ value: "minutes", label: "Minutos" }, { value: "hours", label: "Horas" }, { value: "days", label: "Dias" }]} /></div><p className="text-[10px] text-gray-500 mt-1.5">{delayValue && Number(delayValue) > 0 ? `Executa ${delayValue} ${delayUnit === "minutes" ? "minuto(s)" : delayUnit === "hours" ? "hora(s)" : "dia(s)"} após o gatilho` : "Sem atraso"}</p></div>}
           </div>
         </div>
 
