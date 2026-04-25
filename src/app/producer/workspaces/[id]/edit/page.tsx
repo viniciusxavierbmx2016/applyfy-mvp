@@ -43,6 +43,11 @@ const DEFAULT_SIDE = "#0f172a";
 const DEFAULT_LINK = "#3b82f6";
 const HEX_RE = /^#[0-9a-fA-F]{6}$/;
 
+const inputClass =
+  "w-full px-3 py-2.5 bg-white dark:bg-gray-900/50 border border-gray-200 dark:border-white/10 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-blue-500/50 transition-colors text-sm";
+
+const labelClass = "block text-xs text-gray-500 dark:text-gray-400 mb-1.5";
+
 function hexToRgba(hex: string, alpha: number): string {
   if (!HEX_RE.test(hex)) return `rgba(30, 41, 59, ${alpha})`;
   const n = parseInt(hex.slice(1), 16);
@@ -53,6 +58,36 @@ function hexToRgba(hex: string, alpha: number): string {
 }
 
 type TabKey = "info" | "login" | "appearance";
+
+const TABS: Array<{ key: TabKey; label: string; icon: React.ReactNode }> = [
+  {
+    key: "info",
+    label: "Informações",
+    icon: (
+      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+      </svg>
+    ),
+  },
+  {
+    key: "login",
+    label: "Personalizar Login",
+    icon: (
+      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+      </svg>
+    ),
+  },
+  {
+    key: "appearance",
+    label: "Personalizar Vitrine",
+    icon: (
+      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
+      </svg>
+    ),
+  },
+];
 
 interface ImagePosition { x: number; y: number }
 
@@ -69,14 +104,12 @@ export default function EditWorkspacePage() {
   const [tab, setTab] = useState<TabKey>("info");
   const [ws, setWs] = useState<Workspace | null>(null);
 
-  // Info tab fields
   const [name, setName] = useState("");
   const [masterPassword, setMasterPassword] = useState("");
   const [showMasterPassword, setShowMasterPassword] = useState(false);
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [uploadingLogo, setUploadingLogo] = useState(false);
 
-  // Login tab fields
   const [loginLayout, setLoginLayout] = useState<LoginLayout>("central");
   const [loginBgColor, setLoginBgColor] = useState(DEFAULT_BG);
   const [loginPrimaryColor, setLoginPrimaryColor] = useState(DEFAULT_PRIMARY);
@@ -92,12 +125,10 @@ export default function EditWorkspacePage() {
   const [uploadingBg, setUploadingBg] = useState(false);
   const [uploadingLoginLogo, setUploadingLoginLogo] = useState(false);
 
-  // Settings tab fields
   const [faviconUrl, setFaviconUrl] = useState<string | null>(null);
   const [uploadingFavicon, setUploadingFavicon] = useState(false);
   const [forceTheme, setForceTheme] = useState<"" | "light" | "dark">("");
   const [customDomain, setCustomDomain] = useState("");
-  // Appearance tab fields
   const [accentColor, setAccentColor] = useState("");
   const [wsBannerUrl, setWsBannerUrl] = useState<string | null>(null);
   const [wsBannerPos, setWsBannerPos] = useState<ImagePosition>({ x: 50, y: 50 });
@@ -252,8 +283,8 @@ export default function EditWorkspacePage() {
     }
   }
 
-  async function save(e: React.FormEvent) {
-    e.preventDefault();
+  async function save(e?: React.FormEvent) {
+    if (e) e.preventDefault();
     setSaving(true);
     setError(null);
     try {
@@ -267,45 +298,43 @@ export default function EditWorkspacePage() {
         forceTheme: forceTheme || null,
         customDomain: customDomain.trim() || null,
       };
-      if (tab === "login" || true) {
-        // Always send login fields — form submits apply across tabs
-        if (loginBgColor && !HEX_RE.test(loginBgColor)) {
-          setError("Cor de fundo deve ser hex (#RRGGBB)");
-          setSaving(false);
-          return;
-        }
-        if (loginPrimaryColor && !HEX_RE.test(loginPrimaryColor)) {
-          setError("Cor primária deve ser hex (#RRGGBB)");
-          setSaving(false);
-          return;
-        }
-        if (loginBoxColor && !HEX_RE.test(loginBoxColor)) {
-          setError("Cor do box deve ser hex (#RRGGBB)");
-          setSaving(false);
-          return;
-        }
-        if (loginSideColor && !HEX_RE.test(loginSideColor)) {
-          setError("Cor lateral deve ser hex (#RRGGBB)");
-          setSaving(false);
-          return;
-        }
-        payload.loginLayout = loginLayout;
-        payload.loginBgColor = loginBgColor || null;
-        payload.loginPrimaryColor = loginPrimaryColor || null;
-        payload.loginBgImageUrl = loginBgImageUrl || null;
-        payload.loginLogoUrl = loginLogoUrl || null;
-        payload.loginTitle = loginTitle.trim() || null;
-        payload.loginSubtitle = loginSubtitle.trim() || null;
-        if (loginLinkColor && !HEX_RE.test(loginLinkColor)) {
-          setError("Cor dos links deve ser hex (#RRGGBB)");
-          setSaving(false);
-          return;
-        }
-        payload.loginBoxColor = loginBoxColor || null;
-        payload.loginBoxOpacity = loginBoxOpacity;
-        payload.loginSideColor = loginSideColor || null;
-        payload.loginLinkColor = loginLinkColor || null;
+      if (loginBgColor && !HEX_RE.test(loginBgColor)) {
+        setError("Cor de fundo deve ser hex (#RRGGBB)");
+        setSaving(false);
+        return;
       }
+      if (loginPrimaryColor && !HEX_RE.test(loginPrimaryColor)) {
+        setError("Cor primária deve ser hex (#RRGGBB)");
+        setSaving(false);
+        return;
+      }
+      if (loginBoxColor && !HEX_RE.test(loginBoxColor)) {
+        setError("Cor do box deve ser hex (#RRGGBB)");
+        setSaving(false);
+        return;
+      }
+      if (loginSideColor && !HEX_RE.test(loginSideColor)) {
+        setError("Cor lateral deve ser hex (#RRGGBB)");
+        setSaving(false);
+        return;
+      }
+      if (loginLinkColor && !HEX_RE.test(loginLinkColor)) {
+        setError("Cor dos links deve ser hex (#RRGGBB)");
+        setSaving(false);
+        return;
+      }
+      payload.loginLayout = loginLayout;
+      payload.loginBgColor = loginBgColor || null;
+      payload.loginPrimaryColor = loginPrimaryColor || null;
+      payload.loginBgImageUrl = loginBgImageUrl || null;
+      payload.loginLogoUrl = loginLogoUrl || null;
+      payload.loginTitle = loginTitle.trim() || null;
+      payload.loginSubtitle = loginSubtitle.trim() || null;
+      payload.loginBoxColor = loginBoxColor || null;
+      payload.loginBoxOpacity = loginBoxOpacity;
+      payload.loginSideColor = loginSideColor || null;
+      payload.loginLinkColor = loginLinkColor || null;
+
       const res = await fetch(`/api/workspaces/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -348,81 +377,90 @@ export default function EditWorkspacePage() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto">
-      <div className="mb-6">
+    <div className="max-w-3xl mx-auto pb-20">
+      {/* Header */}
+      <div className="mb-1">
         <Link
           href="/producer/workspaces"
-          className="inline-flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+          className="inline-flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
         >
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
           Voltar
         </Link>
-        <h1 className="mt-2 text-2xl font-bold text-gray-900 dark:text-white">
-          Editar workspace
-        </h1>
-        <p className="text-sm text-gray-500 font-mono mt-1">/w/{ws.slug}</p>
       </div>
 
+      <div className="flex items-center gap-3 mb-0.5">
+        <h1 className="text-xl font-bold text-gray-900 dark:text-white truncate">
+          Editar workspace
+        </h1>
+      </div>
+
+      <p className="text-sm text-gray-500 dark:text-gray-500 mb-4 font-mono">
+        /w/{ws.slug}
+      </p>
+
       {/* Tabs */}
-      <div className="border-b border-gray-200 dark:border-gray-800 mb-6">
-        <nav className="flex gap-6 -mb-px">
-          {([
-            { key: "info", label: "Informações" },
-            { key: "login", label: "Personalizar Login" },
-            { key: "appearance", label: "Personalizar Vitrine" },
-          ] as const).map((t) => (
+      <div className="border-b border-gray-200 dark:border-gray-800 mb-6 overflow-x-auto">
+        <nav className="flex gap-0 -mb-px min-w-max">
+          {TABS.map((t) => (
             <button
               key={t.key}
               type="button"
               onClick={() => setTab(t.key)}
               className={cn(
-                "py-3 text-sm font-medium border-b-2 transition-colors",
+                "flex items-center gap-1.5 px-4 py-2.5 text-[13px] font-medium border-b-2 transition-colors whitespace-nowrap",
                 tab === t.key
-                  ? "border-blue-600 text-blue-600 dark:text-blue-400"
+                  ? "border-blue-500 text-blue-600 dark:text-blue-400"
                   : "border-transparent text-gray-500 hover:text-gray-900 dark:hover:text-white"
               )}
             >
+              {t.icon}
               {t.label}
             </button>
           ))}
         </nav>
       </div>
 
-      <form onSubmit={save} className="space-y-6">
+      {error && (
+        <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm mb-6">
+          {error}
+        </div>
+      )}
+
+      <form onSubmit={save}>
         {tab === "info" && (
-          <>
-            <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-5 sm:p-6">
-              <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
-                Link do workspace
-              </p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
-                Compartilhe este link com seus alunos
-              </p>
+          <div>
+            {/* Link do workspace */}
+            <div className="mb-8">
+              <h2 className="text-sm font-medium text-gray-900 dark:text-white mb-0.5">Link do workspace</h2>
+              <p className="text-xs text-gray-500 mb-4">Compartilhe este link com seus alunos</p>
               <div className="flex items-stretch gap-2">
                 <input
                   type="text"
                   readOnly
                   value={workspaceUrl()}
                   onFocus={(e) => e.currentTarget.select()}
-                  className="flex-1 min-w-0 px-3 py-2 text-xs font-mono bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  className={`${inputClass} !font-mono !text-xs`}
                 />
                 <button
                   type="button"
                   onClick={copyLink}
-                  className="px-3 py-2 text-xs font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex-shrink-0"
+                  className="px-3 py-2 text-xs font-medium bg-blue-600 hover:bg-blue-500 text-white rounded-lg flex-shrink-0 transition-colors"
                 >
                   Copiar link
                 </button>
               </div>
             </div>
 
-            <div className="space-y-5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-5 sm:p-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Logo
-                </label>
+            {/* Dados */}
+            <div className="mb-8 pt-8 border-t border-gray-200 dark:border-white/5">
+              <h2 className="text-sm font-medium text-gray-900 dark:text-white mb-0.5">Dados do workspace</h2>
+              <p className="text-xs text-gray-500 mb-4">Informações básicas</p>
+
+              <div className="mb-4">
+                <label className={labelClass}>Logo</label>
                 <div className="flex items-center gap-4">
                   <div className="w-16 h-16 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center overflow-hidden">
                     {logoUrl ? (
@@ -444,7 +482,7 @@ export default function EditWorkspacePage() {
                       type="button"
                       onClick={() => logoFileRef.current?.click()}
                       disabled={uploadingLogo}
-                      className="px-3.5 py-2 text-xs font-medium bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg disabled:opacity-50"
+                      className="px-3.5 py-2 text-xs font-medium bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 text-gray-700 dark:text-gray-200 rounded-lg disabled:opacity-50 transition-colors"
                     >
                       {uploadingLogo ? "Enviando..." : "Enviar nova logo"}
                     </button>
@@ -462,24 +500,20 @@ export default function EditWorkspacePage() {
                 </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                  Nome
-                </label>
+              <div className="mb-4">
+                <label className={labelClass}>Nome</label>
                 <input
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   required
                   maxLength={80}
-                  className="w-full px-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className={inputClass}
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                  Senha master
-                </label>
+                <label className={labelClass}>Senha master</label>
                 <div className="flex items-stretch gap-2">
                   <input
                     type={showMasterPassword ? "text" : "password"}
@@ -487,12 +521,12 @@ export default function EditWorkspacePage() {
                     onChange={(e) => setMasterPassword(e.target.value)}
                     placeholder="Deixe em branco para desativar"
                     autoComplete="new-password"
-                    className="flex-1 min-w-0 px-3 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm font-mono text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className={`${inputClass} !font-mono`}
                   />
                   <button
                     type="button"
                     onClick={() => setShowMasterPassword((v) => !v)}
-                    className="px-3 py-2.5 text-xs font-medium bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg flex-shrink-0"
+                    className="px-3 py-2.5 text-xs font-medium bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 text-gray-700 dark:text-gray-200 rounded-lg flex-shrink-0 transition-colors"
                   >
                     {showMasterPassword ? "Ocultar" : "Mostrar"}
                   </button>
@@ -503,75 +537,36 @@ export default function EditWorkspacePage() {
               </div>
             </div>
 
-            <div className="space-y-5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-5 sm:p-6">
-              <div>
-                <div className="flex items-center gap-2">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Domínio personalizado
-                  </label>
-                  <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300">
-                    Em breve
-                  </span>
-                </div>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                  Configure um domínio próprio para seu workspace (em breve)
-                </p>
-                <input
-                  type="text"
-                  value={customDomain}
-                  onChange={(e) => setCustomDomain(e.target.value)}
-                  placeholder="cursos.meusite.com"
-                  disabled
-                  className="mt-2 w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-500 dark:text-gray-400 font-mono cursor-not-allowed"
-                />
+            {/* Domínio */}
+            <div className="pt-8 border-t border-gray-200 dark:border-white/5">
+              <div className="flex items-center gap-2 mb-0.5">
+                <h2 className="text-sm font-medium text-gray-900 dark:text-white">Domínio personalizado</h2>
+                <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300">
+                  Em breve
+                </span>
               </div>
+              <p className="text-xs text-gray-500 mb-4">
+                Configure um domínio próprio para seu workspace
+              </p>
+              <input
+                type="text"
+                value={customDomain}
+                onChange={(e) => setCustomDomain(e.target.value)}
+                placeholder="cursos.meusite.com"
+                disabled
+                className={`${inputClass} !bg-gray-50 dark:!bg-gray-800/50 !text-gray-500 dark:!text-gray-400 !font-mono cursor-not-allowed`}
+              />
             </div>
-          </>
+          </div>
         )}
 
         {tab === "login" && (
-          <div className="space-y-5">
-            {/* Header */}
-            <div className="flex items-start justify-between gap-4 flex-wrap">
-              <div>
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-                  Personalizar Login
-                </h2>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-                  Configure a aparência da tela de login dos seus alunos
-                </p>
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setPreviewOpen(true)}
-                  className="inline-flex items-center gap-1.5 px-3.5 py-2 text-sm font-medium border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition"
-                >
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z" />
-                    <circle cx="12" cy="12" r="3" strokeWidth={2} />
-                  </svg>
-                  Pré-visualizar
-                </button>
-                <button
-                  type="submit"
-                  disabled={saving || !name.trim()}
-                  className="px-3.5 py-2 text-sm font-medium bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-lg whitespace-nowrap transition"
-                >
-                  {saving ? "Salvando..." : "Salvar alterações"}
-                </button>
-              </div>
-            </div>
-
+          <div>
             {/* Layout */}
-            <section className="bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-white/5 rounded-xl p-5">
-              <h3 className="text-base font-semibold text-gray-900 dark:text-white">
-                Layout
-              </h3>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                Escolha como o formulário aparece na tela
-              </p>
-              <div className="mt-4 grid grid-cols-3 gap-3">
+            <div className="mb-8">
+              <h2 className="text-sm font-medium text-gray-900 dark:text-white mb-0.5">Layout</h2>
+              <p className="text-xs text-gray-500 mb-4">Escolha como o formulário aparece na tela</p>
+              <div className="grid grid-cols-3 gap-3">
                 {(
                   [
                     { key: "central", label: "Central" },
@@ -584,10 +579,10 @@ export default function EditWorkspacePage() {
                     type="button"
                     onClick={() => setLoginLayout(opt.key)}
                     className={cn(
-                      "group rounded-lg border-2 p-3 transition flex flex-col items-center gap-2",
+                      "group rounded-xl p-3 transition flex flex-col items-center gap-2",
                       loginLayout === opt.key
-                        ? "border-blue-500 bg-blue-500/5 shadow-sm"
-                        : "border-gray-200 dark:border-gray-800 hover:bg-gray-100/50 dark:hover:bg-white/5"
+                        ? "border-2 border-blue-500 bg-blue-500/5"
+                        : "border border-gray-200 dark:border-white/10 hover:border-gray-400 dark:hover:border-white/20"
                     )}
                   >
                     <div className="w-full h-[70px]">
@@ -599,17 +594,13 @@ export default function EditWorkspacePage() {
                   </button>
                 ))}
               </div>
-            </section>
+            </div>
 
             {/* Cores */}
-            <section className="bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-white/5 rounded-xl p-5">
-              <h3 className="text-base font-semibold text-gray-900 dark:text-white">
-                Cores
-              </h3>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                Personalize as cores da tela de login
-              </p>
-              <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="mb-8 pt-8 border-t border-gray-200 dark:border-white/5">
+              <h2 className="text-sm font-medium text-gray-900 dark:text-white mb-0.5">Cores</h2>
+              <p className="text-xs text-gray-500 mb-4">Personalize as cores da tela de login</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <ColorField
                   label="Cor dos botões"
                   description="Cor do botão 'Entrar'"
@@ -619,44 +610,39 @@ export default function EditWorkspacePage() {
                 />
                 <ColorField
                   label="Cor dos links"
-                  description="Cor dos textos 'Esqueci senha' e 'Criar conta'"
+                  description="'Esqueci senha' e 'Criar conta'"
                   value={loginLinkColor}
                   fallback={DEFAULT_LINK}
                   onChange={setLoginLinkColor}
                 />
                 <ColorField
                   label="Cor de fundo"
-                  description="Fundo da tela quando não há imagem"
+                  description="Fundo quando não há imagem"
                   value={loginBgColor}
                   fallback={DEFAULT_BG}
                   onChange={setLoginBgColor}
                 />
-                <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-3">
-                  <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                <div className="bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-lg p-3">
+                  <p className="text-[11px] text-gray-600 dark:text-gray-400">
                     Cor do box
                   </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                    Card em volta do formulário
-                  </p>
-                  <div className="mt-2.5 flex items-center gap-2">
-                    <input
-                      type="color"
-                      value={HEX_RE.test(loginBoxColor) ? loginBoxColor : DEFAULT_BOX}
-                      onChange={(e) => setLoginBoxColor(e.target.value)}
-                      className="w-8 h-8 rounded-lg border border-gray-300 dark:border-gray-700 bg-transparent cursor-pointer flex-shrink-0"
-                    />
-                    <input
-                      type="text"
-                      value={loginBoxColor}
-                      onChange={(e) => setLoginBoxColor(e.target.value)}
-                      placeholder={DEFAULT_BOX}
-                      className="flex-1 min-w-0 px-2.5 py-1.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-xs font-mono text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
+                  <div className="mt-2 flex items-center gap-2">
+                    <label className="w-7 h-7 rounded-md shrink-0 border border-gray-200 dark:border-white/10 relative overflow-hidden cursor-pointer" style={{ backgroundColor: HEX_RE.test(loginBoxColor) ? loginBoxColor : DEFAULT_BOX }}>
+                      <input
+                        type="color"
+                        value={HEX_RE.test(loginBoxColor) ? loginBoxColor : DEFAULT_BOX}
+                        onChange={(e) => setLoginBoxColor(e.target.value)}
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                      />
+                    </label>
+                    <span className="text-xs font-mono text-gray-400 dark:text-gray-500">
+                      {HEX_RE.test(loginBoxColor) ? loginBoxColor : "padrão"}
+                    </span>
                   </div>
                   <div className="mt-3">
                     <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs text-gray-600 dark:text-gray-400">Opacidade</span>
-                      <span className="text-xs font-mono text-gray-600 dark:text-gray-400">
+                      <span className="text-[11px] text-gray-500">Opacidade</span>
+                      <span className="text-[11px] font-mono text-gray-500">
                         {Math.round(loginBoxOpacity * 100)}%
                       </span>
                     </div>
@@ -671,7 +657,7 @@ export default function EditWorkspacePage() {
                     />
                   </div>
                   <div
-                    className="mt-2 w-full h-8 rounded"
+                    className="mt-2 w-full h-6 rounded"
                     style={{
                       backgroundColor: hexToRgba(
                         HEX_RE.test(loginBoxColor) ? loginBoxColor : DEFAULT_BOX,
@@ -687,24 +673,20 @@ export default function EditWorkspacePage() {
                 {(loginLayout === "lateral-left" || loginLayout === "lateral-right") && (
                   <ColorField
                     label="Fundo lateral"
-                    description="Cor ao lado da imagem nos layouts laterais"
+                    description="Cor ao lado da imagem"
                     value={loginSideColor}
                     fallback={DEFAULT_SIDE}
                     onChange={setLoginSideColor}
                   />
                 )}
               </div>
-            </section>
+            </div>
 
             {/* Imagens */}
-            <section className="bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-white/5 rounded-xl p-5">
-              <h3 className="text-base font-semibold text-gray-900 dark:text-white">
-                Imagens
-              </h3>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                Imagem de fundo e logo para a tela de login
-              </p>
-              <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="mb-8 pt-8 border-t border-gray-200 dark:border-white/5">
+              <h2 className="text-sm font-medium text-gray-900 dark:text-white mb-0.5">Imagens</h2>
+              <p className="text-xs text-gray-500 mb-4">Imagem de fundo e logo para a tela de login</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <ImageDropzone
                   label="Imagem de fundo"
                   dimensions="1920×1080"
@@ -747,133 +729,84 @@ export default function EditWorkspacePage() {
                   if (f) uploadLoginImage(f, "loginLogo");
                 }}
               />
-            </section>
+            </div>
 
             {/* Textos */}
-            <section className="bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-white/5 rounded-xl p-5">
-              <h3 className="text-base font-semibold text-gray-900 dark:text-white">
-                Textos
-              </h3>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                Mensagens que aparecem na tela de login
-              </p>
-              <div className="mt-4 space-y-3">
+            <div className="pt-8 border-t border-gray-200 dark:border-white/5">
+              <h2 className="text-sm font-medium text-gray-900 dark:text-white mb-0.5">Textos</h2>
+              <p className="text-xs text-gray-500 mb-4">Mensagens que aparecem na tela de login</p>
+              <div className="grid sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Título de boas-vindas
-                  </label>
+                  <label className={labelClass}>Título de boas-vindas</label>
                   <input
                     type="text"
                     value={loginTitle}
                     onChange={(e) => setLoginTitle(e.target.value)}
                     placeholder={`Bem-vindo a ${name || "..."}`}
                     maxLength={80}
-                    className="w-full px-3.5 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className={inputClass}
                   />
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="text-[11px] text-gray-500 mt-1">
                     Aparece acima do formulário
                   </p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Subtítulo
-                  </label>
+                  <label className={labelClass}>Subtítulo</label>
                   <input
                     type="text"
                     value={loginSubtitle}
                     onChange={(e) => setLoginSubtitle(e.target.value)}
                     placeholder="Acesse sua conta para continuar"
                     maxLength={120}
-                    className="w-full px-3.5 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className={inputClass}
                   />
                 </div>
-              </div>
-            </section>
-
-            {error && (
-              <p className="text-sm text-red-500" role="alert">
-                {error}
-              </p>
-            )}
-
-            {/* Footer */}
-            <div className="sticky bottom-0 -mx-4 sm:-mx-0 bg-white/95 dark:bg-gray-950/95 backdrop-blur border-t border-gray-200 dark:border-gray-800 px-4 sm:px-0 py-3 sm:py-4 sm:rounded-b-xl">
-              <div className="flex justify-end gap-2">
-                <Link
-                  href="/producer/workspaces"
-                  className="px-3.5 py-2 text-sm font-medium bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg whitespace-nowrap"
-                >
-                  Cancelar
-                </Link>
-                <button
-                  type="submit"
-                  disabled={saving || !name.trim()}
-                  className="px-3.5 py-2 text-sm font-medium bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-lg whitespace-nowrap"
-                >
-                  {saving ? "Salvando..." : "Salvar alterações"}
-                </button>
               </div>
             </div>
           </div>
         )}
 
         {tab === "appearance" && (
-          <div className="space-y-5">
-            <div>
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-                Aparência
-              </h2>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-                Personalize a experiência visual dos seus alunos
-              </p>
-            </div>
-
-            {/* Accent color */}
-            <section className="bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-white/5 rounded-xl p-5">
-              <h3 className="text-base font-semibold text-gray-900 dark:text-white">
-                Cor primária
-              </h3>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                Usada em botões, links e destaques na vitrine e área do aluno
-              </p>
-              <div className="mt-4 flex items-center gap-3">
-                <input
-                  type="color"
-                  value={HEX_RE.test(accentColor) ? accentColor : "#3b82f6"}
-                  onChange={(e) => setAccentColor(e.target.value)}
-                  className="w-10 h-10 rounded-lg border border-gray-300 dark:border-gray-700 bg-transparent cursor-pointer flex-shrink-0"
-                />
+          <div>
+            {/* Cor primária */}
+            <div className="mb-8">
+              <h2 className="text-sm font-medium text-gray-900 dark:text-white mb-0.5">Cor primária</h2>
+              <p className="text-xs text-gray-500 mb-4">Usada em botões, links e destaques na vitrine e área do aluno</p>
+              <div className="flex items-center gap-3">
+                <label
+                  className="w-7 h-7 rounded-md shrink-0 border border-gray-200 dark:border-white/10 relative overflow-hidden cursor-pointer"
+                  style={{ backgroundColor: HEX_RE.test(accentColor) ? accentColor : "#3b82f6" }}
+                >
+                  <input
+                    type="color"
+                    value={HEX_RE.test(accentColor) ? accentColor : "#3b82f6"}
+                    onChange={(e) => setAccentColor(e.target.value)}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                  />
+                </label>
                 <input
                   type="text"
                   value={accentColor}
                   onChange={(e) => setAccentColor(e.target.value)}
                   placeholder="#3b82f6 (padrão)"
-                  className="flex-1 min-w-0 px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm font-mono text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <div
-                  className="w-10 h-10 rounded-lg border border-gray-200 dark:border-gray-700 flex-shrink-0"
-                  style={{ backgroundColor: HEX_RE.test(accentColor) ? accentColor : "#3b82f6" }}
+                  className={`${inputClass} !font-mono`}
                 />
                 {accentColor && (
                   <button
                     type="button"
                     onClick={() => setAccentColor("")}
-                    className="px-3 py-2 text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition"
+                    className="px-3 py-2 text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 rounded-lg transition-colors shrink-0"
                   >
-                    Restaurar padrão
+                    Restaurar
                   </button>
                 )}
               </div>
-            </section>
+            </div>
 
             {/* Banner */}
-            <section className="bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-white/5 rounded-xl p-5">
-              <h3 className="text-base font-semibold text-gray-900 dark:text-white">
-                Banner da vitrine
-              </h3>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 mb-4">
-                Imagem exibida no topo da vitrine para seus alunos
-              </p>
+            <div className="mb-8 pt-8 border-t border-gray-200 dark:border-white/5">
+              <h2 className="text-sm font-medium text-gray-900 dark:text-white mb-0.5">Banner da vitrine</h2>
+              <p className="text-xs text-gray-500 mb-4">Imagem exibida no topo da vitrine para seus alunos</p>
               <BannerUpload
                 value={wsBannerUrl}
                 onChange={(url) => {
@@ -890,18 +823,14 @@ export default function EditWorkspacePage() {
                 label="Banner da vitrine"
                 hint="Tamanho ideal: 1920x400px. PNG, JPG ou WebP, máx. 5MB."
               />
-            </section>
+            </div>
 
             {/* Favicon */}
-            <section className="bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-white/5 rounded-xl p-5">
-              <h3 className="text-base font-semibold text-gray-900 dark:text-white">
-                Favicon
-              </h3>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                Ícone que aparece na aba do navegador
-              </p>
-              <div className="mt-4 flex items-center gap-4">
-                <div className="w-12 h-12 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center overflow-hidden border border-gray-200 dark:border-gray-700">
+            <div className="mb-8 pt-8 border-t border-gray-200 dark:border-white/5">
+              <h2 className="text-sm font-medium text-gray-900 dark:text-white mb-0.5">Favicon</h2>
+              <p className="text-xs text-gray-500 mb-4">Ícone que aparece na aba do navegador</p>
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center overflow-hidden border border-gray-200 dark:border-white/10">
                   {faviconUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={faviconUrl} alt="favicon" className="w-8 h-8 object-contain" />
@@ -914,7 +843,7 @@ export default function EditWorkspacePage() {
                     type="button"
                     onClick={() => faviconFileRef.current?.click()}
                     disabled={uploadingFavicon}
-                    className="px-3.5 py-2 text-xs font-medium bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg disabled:opacity-50"
+                    className="px-3.5 py-2 text-xs font-medium bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 text-gray-700 dark:text-gray-200 rounded-lg disabled:opacity-50 transition-colors"
                   >
                     {uploadingFavicon ? "Enviando..." : faviconUrl ? "Trocar favicon" : "Enviar favicon"}
                   </button>
@@ -943,77 +872,60 @@ export default function EditWorkspacePage() {
               <p className="text-[11px] text-gray-500 mt-2">
                 Recomendado: 32×32px. PNG, ICO ou SVG.
               </p>
-            </section>
+            </div>
 
-            <section className="bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-white/5 rounded-xl p-5">
-              <h3 className="text-base font-semibold text-gray-900 dark:text-white">
-                Tema para alunos
-              </h3>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                Force um tema específico para todos os alunos deste workspace
-              </p>
+            {/* Tema */}
+            <div className="pt-8 border-t border-gray-200 dark:border-white/5">
+              <h2 className="text-sm font-medium text-gray-900 dark:text-white mb-0.5">Tema para alunos</h2>
+              <p className="text-xs text-gray-500 mb-4">Force um tema específico para todos os alunos</p>
               <select
                 value={forceTheme}
                 onChange={(e) =>
                   setForceTheme(e.target.value as "" | "light" | "dark")
                 }
-                className="mt-4 w-full px-3 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className={inputClass}
               >
                 <option value="">Padrão do sistema (aluno escolhe)</option>
                 <option value="light">Sempre claro</option>
                 <option value="dark">Sempre escuro</option>
               </select>
-            </section>
-
-            {error && (
-              <p className="text-sm text-red-500" role="alert">{error}</p>
-            )}
-
-            <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
-              <Link
-                href="/producer/workspaces"
-                className="px-4 py-2.5 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-lg text-center"
-              >
-                Cancelar
-              </Link>
-              <button
-                type="submit"
-                disabled={saving || !name.trim()}
-                className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-sm font-medium rounded-lg"
-              >
-                {saving ? "Salvando..." : "Salvar alterações"}
-              </button>
             </div>
-          </div>
-        )}
-
-        {tab === "info" && error && (
-          <p className="text-sm text-red-500" role="alert">
-            {error}
-          </p>
-        )}
-
-        {tab === "info" && (
-          <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
-            <Link
-              href="/producer/workspaces"
-              className="px-4 py-2.5 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-lg text-center"
-            >
-              Cancelar
-            </Link>
-            <button
-              type="submit"
-              disabled={saving || !name.trim()}
-              className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-sm font-medium rounded-lg"
-            >
-              {saving ? "Salvando..." : "Salvar alterações"}
-            </button>
           </div>
         )}
       </form>
 
+      {/* Footer sticky único */}
+      <div className="fixed bottom-0 left-0 right-0 z-30 bg-white/80 dark:bg-gray-950/80 backdrop-blur-sm border-t border-gray-200 dark:border-white/10">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 py-3 flex justify-end gap-3">
+          <button
+            type="button"
+            onClick={() => router.push("/producer/workspaces")}
+            className="px-4 py-2 border border-gray-300 dark:border-white/10 hover:bg-gray-100 dark:hover:bg-white/5 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-lg transition-colors"
+          >
+            Cancelar
+          </button>
+          {tab === "login" && (
+            <button
+              type="button"
+              onClick={() => setPreviewOpen(true)}
+              className="px-4 py-2 border border-gray-300 dark:border-white/10 hover:bg-gray-100 dark:hover:bg-white/5 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-lg transition-colors"
+            >
+              Pré-visualizar
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={() => save()}
+            disabled={saving || !name.trim()}
+            className="px-6 py-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white text-sm font-medium rounded-lg transition-colors"
+          >
+            {saving ? "Salvando..." : "Salvar alterações"}
+          </button>
+        </div>
+      </div>
+
       {toast && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-5 py-3 bg-blue-600 text-white rounded-lg shadow-xl text-sm font-medium">
+        <div className="fixed bottom-16 left-1/2 -translate-x-1/2 z-50 px-4 py-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-sm font-medium rounded-lg shadow-lg">
           {toast}
         </div>
       )}
@@ -1047,18 +959,9 @@ export default function EditWorkspacePage() {
               <div className="h-full w-full rounded-xl overflow-hidden border border-white/10 flex flex-col bg-gray-950">
                 <div className="h-9 px-3 bg-gray-800 flex items-center gap-2 flex-shrink-0">
                   <div className="flex gap-1.5">
-                    <div
-                      className="w-3 h-3 rounded-full"
-                      style={{ backgroundColor: "#ff5f57" }}
-                    />
-                    <div
-                      className="w-3 h-3 rounded-full"
-                      style={{ backgroundColor: "#ffbd2e" }}
-                    />
-                    <div
-                      className="w-3 h-3 rounded-full"
-                      style={{ backgroundColor: "#28c840" }}
-                    />
+                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: "#ff5f57" }} />
+                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: "#ffbd2e" }} />
+                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: "#28c840" }} />
                   </div>
                   <div className="flex-1 mx-2 h-6 rounded-full bg-gray-700 flex items-center px-3 overflow-hidden">
                     <span className="text-xs text-gray-400 truncate">
@@ -1113,30 +1016,28 @@ function ColorField({
   fallback: string;
   onChange: (v: string) => void;
 }) {
+  const displayHex = HEX_RE.test(value) ? value : fallback;
   return (
-    <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-3">
-      <p className="text-sm font-semibold text-gray-900 dark:text-white">
-        {label}
-      </p>
-      <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-        {description}
-      </p>
-      <div className="mt-2.5 flex items-center gap-2">
+    <label className="flex items-center gap-2.5 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-lg p-3 cursor-pointer hover:border-gray-300 dark:hover:border-white/20 transition-colors">
+      <span
+        className="w-7 h-7 rounded-md shrink-0 border border-gray-200 dark:border-white/10 relative overflow-hidden"
+        style={{ backgroundColor: displayHex }}
+      >
         <input
           type="color"
-          value={HEX_RE.test(value) ? value : fallback}
+          value={displayHex}
           onChange={(e) => onChange(e.target.value)}
-          className="w-8 h-8 rounded-lg border border-gray-300 dark:border-gray-700 bg-transparent cursor-pointer flex-shrink-0"
+          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
         />
-        <input
-          type="text"
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder={fallback}
-          className="flex-1 min-w-0 px-2.5 py-1.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-xs font-mono text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
+      </span>
+      <div className="min-w-0">
+        <p className="text-[11px] text-gray-600 dark:text-gray-400 leading-tight">{label}</p>
+        <p className="text-xs font-mono text-gray-400 dark:text-gray-500">
+          {HEX_RE.test(value) ? value : "padrão"}
+        </p>
+        <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5">{description}</p>
       </div>
-    </div>
+    </label>
   );
 }
 
@@ -1163,19 +1064,19 @@ function ImageDropzone({
 }) {
   const hasImage = !!imageUrl;
   return (
-    <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg p-3">
+    <div className="bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-lg p-3">
       <div className="flex items-center justify-between mb-2">
-        <p className="text-sm font-semibold text-gray-900 dark:text-white">
+        <p className="text-[11px] text-gray-600 dark:text-gray-400">
           {label}
         </p>
-        <span className="text-[10px] font-mono px-1.5 py-0.5 bg-gray-100 dark:bg-gray-800 text-gray-500 rounded">
+        <span className="text-[10px] font-mono px-1.5 py-0.5 bg-gray-100 dark:bg-white/5 text-gray-500 rounded">
           {dimensions}
         </span>
       </div>
       {hasImage ? (
         <div className="relative group">
           <div
-            className="w-full h-[120px] rounded-lg bg-cover bg-center border border-gray-200 dark:border-gray-700"
+            className="w-full h-[120px] rounded-lg bg-cover bg-center border border-gray-200 dark:border-white/10"
             style={
               imageUrl
                 ? { backgroundImage: `url(${imageUrl})` }
@@ -1214,7 +1115,7 @@ function ImageDropzone({
           type="button"
           onClick={onPick}
           disabled={uploading}
-          className="w-full h-[120px] rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-700 hover:border-blue-400 dark:hover:border-blue-500 hover:bg-blue-500/5 transition flex flex-col items-center justify-center gap-1.5 disabled:opacity-50"
+          className="w-full h-[120px] rounded-lg border-2 border-dashed border-gray-300 dark:border-white/10 hover:border-blue-400 dark:hover:border-blue-500 hover:bg-blue-500/5 transition flex flex-col items-center justify-center gap-1.5 disabled:opacity-50"
         >
           {initial && !imageUrl ? (
             <span className="text-2xl font-bold text-gray-400">{initial}</span>
@@ -1235,7 +1136,7 @@ function ImageDropzone({
 function LayoutIllustration({ kind }: { kind: LoginLayout }) {
   if (kind === "central") {
     return (
-      <div className="w-full h-full rounded-md bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900 border border-gray-200 dark:border-gray-700 flex items-center justify-center">
+      <div className="w-full h-full rounded-md bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900 border border-gray-200 dark:border-white/10 flex items-center justify-center">
         <div className="w-10 h-12 rounded bg-white dark:bg-gray-600 border border-gray-300 dark:border-gray-500 shadow-sm flex flex-col items-center justify-center gap-0.5 p-1">
           <div className="w-full h-1 rounded bg-gray-300 dark:bg-gray-500" />
           <div className="w-full h-1 rounded bg-gray-300 dark:bg-gray-500" />
@@ -1246,7 +1147,7 @@ function LayoutIllustration({ kind }: { kind: LoginLayout }) {
   }
   if (kind === "lateral-left") {
     return (
-      <div className="w-full h-full rounded-md border border-gray-200 dark:border-gray-700 flex overflow-hidden">
+      <div className="w-full h-full rounded-md border border-gray-200 dark:border-white/10 flex overflow-hidden">
         <div className="w-1/2 bg-gray-800 dark:bg-gray-950 flex items-center justify-center">
           <div className="w-7 h-9 rounded-sm bg-white/80 flex flex-col items-center justify-center gap-0.5 p-0.5">
             <div className="w-full h-0.5 rounded bg-gray-300" />
@@ -1259,7 +1160,7 @@ function LayoutIllustration({ kind }: { kind: LoginLayout }) {
     );
   }
   return (
-    <div className="w-full h-full rounded-md border border-gray-200 dark:border-gray-700 flex overflow-hidden">
+    <div className="w-full h-full rounded-md border border-gray-200 dark:border-white/10 flex overflow-hidden">
       <div className="w-1/2 bg-gradient-to-br from-blue-400 to-purple-500" />
       <div className="w-1/2 bg-gray-800 dark:bg-gray-950 flex items-center justify-center">
         <div className="w-7 h-9 rounded-sm bg-white/80 flex flex-col items-center justify-center gap-0.5 p-0.5">
