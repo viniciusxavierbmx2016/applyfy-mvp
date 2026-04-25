@@ -32,27 +32,18 @@ const EMPTY: Customization = {
 const COLOR_FIELDS: Array<{
   key: keyof Customization;
   label: string;
-  description: string;
 }> = [
-  { key: "memberBgColor", label: "Cor de fundo", description: "Background principal" },
-  { key: "memberHeaderColor", label: "Cor do cabeçalho", description: "Background do header" },
-  { key: "memberSidebarColor", label: "Cor da barra lateral", description: "Background da sidebar" },
-  { key: "memberCardColor", label: "Cor dos cards", description: "Background dos cards" },
-  { key: "memberPrimaryColor", label: "Cor primária", description: "Botões, links, progresso" },
-  { key: "memberTextColor", label: "Cor do texto", description: "Texto principal" },
+  { key: "memberBgColor", label: "Fundo" },
+  { key: "memberHeaderColor", label: "Cabeçalho" },
+  { key: "memberSidebarColor", label: "Sidebar" },
+  { key: "memberCardColor", label: "Cards" },
+  { key: "memberPrimaryColor", label: "Primária" },
+  { key: "memberTextColor", label: "Texto" },
 ];
 
 const LAYOUTS = [
-  {
-    value: "netflix",
-    label: "Netflix",
-    description: "Carrossel horizontal",
-  },
-  {
-    value: "list",
-    label: "Lista",
-    description: "Lista vertical detalhada",
-  },
+  { value: "netflix", label: "Carrossel" },
+  { value: "list", label: "Lista" },
 ] as const;
 
 interface CourseFlags {
@@ -67,22 +58,18 @@ interface CourseFlags {
 
 type FlagKey = keyof CourseFlags;
 
-interface SettingItem {
+const FEATURE_ITEMS: Array<{
   key: FlagKey;
   title: string;
   description: string;
-  disabledHint: string;
-  icon: React.ReactNode;
-}
-
-const FEATURE_ITEMS: SettingItem[] = [
-  { key: "communityEnabled", title: "Comunidade do curso", description: "Permite que alunos criem posts, comentem e interajam entre si dentro do curso.", disabledHint: "Desativado — alunos não verão a aba de comunidade.", icon: <ChatIcon /> },
-  { key: "lessonCommentsEnabled", title: "Comentários nas aulas", description: "Permite que alunos comentem em cada aula individualmente.", disabledHint: "Desativado — o painel de comentários das aulas ficará oculto.", icon: <MessageIcon /> },
-  { key: "reviewsEnabled", title: "Avaliações e reviews", description: "Permite que alunos avaliem o curso com estrelas e comentários.", disabledHint: "Desativado — alunos não poderão avaliar o curso.", icon: <StarIcon /> },
-  { key: "certificateEnabled", title: "Certificado de conclusão", description: "Gera certificado em PDF quando o aluno conclui 100% do curso.", disabledHint: "Desativado — nenhum certificado será emitido.", icon: <DiplomaIcon /> },
-  { key: "gamificationEnabled", title: "Pontos e níveis", description: "Alunos ganham pontos ao concluir aulas e interagir. Exibe nível no perfil.", disabledHint: "Desativado — pontos e níveis ficam ocultos para os alunos.", icon: <TrophyIcon /> },
-  { key: "showStudentCount", title: "Exibir quantidade de alunos", description: "Mostra o número de alunos matriculados na página do curso (prova social).", disabledHint: "Desativado — a contagem de alunos não é exibida publicamente.", icon: <UsersIcon /> },
-  { key: "showLessonSupport", title: "Suporte nas aulas", description: "Exibe a aba de suporte com email e WhatsApp abaixo de cada aula.", disabledHint: "Desativado — a aba de suporte não aparecerá nas aulas.", icon: <HeadphonesIcon /> },
+}> = [
+  { key: "communityEnabled", title: "Comunidade do curso", description: "Alunos criam posts e interagem entre si" },
+  { key: "lessonCommentsEnabled", title: "Comentários nas aulas", description: "Alunos comentam em cada aula" },
+  { key: "reviewsEnabled", title: "Avaliações e reviews", description: "Alunos avaliam o curso com estrelas" },
+  { key: "certificateEnabled", title: "Certificado de conclusão", description: "PDF gerado ao concluir 100%" },
+  { key: "gamificationEnabled", title: "Pontos e níveis", description: "Pontos ao concluir aulas e interagir" },
+  { key: "showStudentCount", title: "Exibir quantidade de alunos", description: "Mostra matriculados na página do curso" },
+  { key: "showLessonSupport", title: "Suporte nas aulas", description: "Email e WhatsApp abaixo de cada aula" },
 ];
 
 export default function CourseCustomizePage() {
@@ -252,16 +239,13 @@ export default function CourseCustomizePage() {
           </button>
         </div>
       ) : (
-        <div className="space-y-6">
-          {/* Layout */}
-          <section className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.06] rounded-xl p-6">
-            <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-1">
-              Layout dos cursos
-            </h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-              Como seus cursos aparecem para os alunos
-            </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="pb-20">
+          {/* SEÇÃO 1 — Layout dos módulos */}
+          <div className="mb-8">
+            <h2 className="text-sm font-medium text-gray-900 dark:text-white mb-0.5">Layout dos módulos</h2>
+            <p className="text-xs text-gray-500 mb-4">Escolha como os módulos são exibidos para o aluno</p>
+
+            <div className="flex gap-3">
               {LAYOUTS.map((layout) => {
                 const selected = currentLayout === layout.value;
                 const isSaved = savedLayout === layout.value;
@@ -270,227 +254,189 @@ export default function CourseCustomizePage() {
                     key={layout.value}
                     type="button"
                     onClick={() => updateField("memberLayoutStyle", layout.value)}
-                    className={`relative text-left p-4 rounded-xl border-2 transition-colors ${
+                    className={`relative flex-1 text-left p-4 rounded-xl transition-colors ${
                       selected
-                        ? "border-indigo-500 bg-indigo-50 dark:bg-indigo-500/10"
-                        : "border-[#1a1e2e] hover:border-gray-400 dark:hover:border-gray-600"
+                        ? "border-2 border-blue-500 bg-blue-500/5"
+                        : "border border-gray-200 dark:border-white/10 hover:border-gray-400 dark:hover:border-white/20"
                     }`}
                   >
                     {isSaved && (
-                      <span className="absolute top-2 right-2 px-1.5 py-0.5 text-[10px] font-semibold bg-indigo-500 text-white rounded">
+                      <span className="absolute top-2 right-2 px-1.5 py-0.5 text-[10px] font-semibold bg-blue-600 text-white rounded">
                         Atual
                       </span>
                     )}
-                    <div className="mb-3 rounded-lg bg-[#141416] p-3 h-40 flex flex-col justify-center overflow-hidden">
+                    <div className="mb-3 rounded-lg bg-gray-100 dark:bg-[#141416] p-3 h-28 flex flex-col justify-center overflow-hidden">
                       {layout.value === "netflix" ? (
-                        <div className="space-y-3">
-                          <div>
-                            <div className="h-1.5 w-10 rounded-full bg-gray-600 mb-2" />
-                            <div className="flex items-center gap-1">
-                              <svg className="w-2.5 h-2.5 text-gray-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
-                              <div className="flex gap-1.5 flex-1 overflow-hidden">
-                                {[1,2,3,4,5].map(i => (
-                                  <div key={i} className="w-10 h-16 rounded-md bg-gradient-to-b from-gray-600 to-gray-700 shrink-0" />
-                                ))}
-                              </div>
-                              <svg className="w-2.5 h-2.5 text-gray-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
-                            </div>
-                          </div>
-                          <div className="opacity-50">
-                            <div className="h-1.5 w-8 rounded-full bg-gray-600 mb-1.5" />
-                            <div className="flex gap-1.5 overflow-hidden">
-                              {[1,2,3,4,5].map(i => (
-                                <div key={i} className="w-8 h-12 rounded-sm bg-gradient-to-b from-gray-700 to-gray-800 shrink-0" />
+                        <div className="space-y-2">
+                          <div className="h-1.5 w-10 rounded-full bg-gray-300 dark:bg-gray-600" />
+                          <div className="flex items-center gap-1">
+                            <svg className="w-2.5 h-2.5 text-gray-400 dark:text-gray-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+                            <div className="flex gap-1.5 flex-1 overflow-hidden">
+                              {[1,2,3,4].map(i => (
+                                <div key={i} className="w-10 h-14 rounded-md bg-gray-300 dark:bg-gradient-to-b dark:from-gray-600 dark:to-gray-700 shrink-0" />
                               ))}
                             </div>
+                            <svg className="w-2.5 h-2.5 text-gray-400 dark:text-gray-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
                           </div>
                         </div>
                       ) : (
                         <div className="space-y-1.5">
-                          <div className="flex items-center gap-2 py-1.5 px-2 rounded-md bg-white/[0.03]">
-                            <div className="w-7 h-10 rounded-sm bg-gradient-to-b from-gray-600 to-gray-700 shrink-0" />
-                            <div className="flex-1 min-w-0 space-y-1">
-                              <div className="h-1.5 w-16 rounded-full bg-gray-500" />
-                              <div className="h-1 w-10 rounded-full bg-gray-700" />
-                              <div className="h-0.5 w-full rounded-full bg-gray-800"><div className="h-full w-3/4 rounded-full bg-gray-500" /></div>
-                            </div>
-                            <svg className="w-2.5 h-2.5 text-gray-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
-                          </div>
-                          <div className="rounded-md bg-white/[0.03]">
-                            <div className="flex items-center gap-2 py-1.5 px-2">
-                              <div className="w-7 h-10 rounded-sm bg-gradient-to-b from-gray-600 to-gray-700 shrink-0" />
+                          {[1,2,3].map(i => (
+                            <div key={i} className="flex items-center gap-2 py-1 px-2 rounded-md bg-white/60 dark:bg-white/[0.03]">
+                              <div className="w-6 h-8 rounded-sm bg-gray-300 dark:bg-gradient-to-b dark:from-gray-600 dark:to-gray-700 shrink-0" />
                               <div className="flex-1 min-w-0 space-y-1">
-                                <div className="h-1.5 w-20 rounded-full bg-gray-500" />
-                                <div className="h-1 w-12 rounded-full bg-gray-700" />
+                                <div className="h-1.5 rounded-full bg-gray-300 dark:bg-gray-500" style={{width: `${40 + i * 12}px`}} />
+                                <div className="h-1 w-8 rounded-full bg-gray-200 dark:bg-gray-700" />
                               </div>
-                              <svg className="w-2.5 h-2.5 text-gray-600 shrink-0 rotate-90" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
                             </div>
-                            <div className="ml-9 pb-1.5 space-y-1">
-                              {[1,2,3].map(i => (
-                                <div key={i} className="flex items-center gap-1.5 py-0.5 px-2">
-                                  <div className={`w-2 h-2 rounded-full shrink-0 ${i === 1 ? "bg-emerald-500" : "border border-gray-600"}`} />
-                                  <div className="h-1 rounded-full bg-gray-700" style={{width: `${50 + i * 10}px`}} />
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2 py-1.5 px-2 rounded-md bg-white/[0.03] opacity-60">
-                            <div className="w-7 h-10 rounded-sm bg-gradient-to-b from-gray-700 to-gray-800 shrink-0" />
-                            <div className="flex-1 min-w-0 space-y-1">
-                              <div className="h-1.5 w-14 rounded-full bg-gray-600" />
-                              <div className="h-1 w-8 rounded-full bg-gray-700" />
-                            </div>
-                            <svg className="w-2.5 h-2.5 text-gray-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
-                          </div>
+                          ))}
                         </div>
                       )}
                     </div>
                     <p className="text-sm font-medium text-gray-900 dark:text-white">{layout.label}</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">{layout.description}</p>
                   </button>
                 );
               })}
             </div>
-          </section>
+          </div>
 
-          {/* Colors */}
-          <section className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.06] rounded-xl p-6">
-            <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-1">
-              Cores da área de membros
-            </h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-              Personalize as cores que seus alunos veem
-            </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {COLOR_FIELDS.map((field) => (
-                <ColorPicker
-                  key={field.key}
-                  label={field.label}
-                  description={field.description}
-                  value={(custom[field.key] as string) || ""}
-                  onChange={(v) => updateField(field.key, v || null)}
-                />
-              ))}
+          {/* SEÇÃO 2 — Cores */}
+          <div className="mb-8 pt-8 border-t border-gray-200 dark:border-white/5">
+            <h2 className="text-sm font-medium text-gray-900 dark:text-white mb-0.5">Cores da área de membros</h2>
+            <p className="text-xs text-gray-500 mb-4">Personalize as cores que os alunos veem dentro do curso</p>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              {COLOR_FIELDS.map((field) => {
+                const val = (custom[field.key] as string) || "";
+                const displayHex = HEX_RE.test(val) ? val : "#6366f1";
+                return (
+                  <label
+                    key={field.key}
+                    className="flex items-center gap-2.5 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-lg p-3 cursor-pointer hover:border-gray-300 dark:hover:border-white/20 transition-colors"
+                  >
+                    <span
+                      className="w-7 h-7 rounded-md shrink-0 border border-gray-200 dark:border-white/10 relative overflow-hidden"
+                      style={{ backgroundColor: displayHex }}
+                    >
+                      <input
+                        type="color"
+                        value={displayHex}
+                        onChange={(e) => updateField(field.key, e.target.value)}
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                      />
+                    </span>
+                    <div className="min-w-0">
+                      <p className="text-[11px] text-gray-600 dark:text-gray-400 leading-tight">{field.label}</p>
+                      <p className="text-xs font-mono text-gray-400 dark:text-gray-500">{HEX_RE.test(val) ? val : "padrão"}</p>
+                    </div>
+                  </label>
+                );
+              })}
             </div>
-          </section>
+          </div>
 
-          {/* Welcome text */}
-          <section className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.06] rounded-xl p-6">
-            <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-1">
-              Mensagem de boas-vindas
-            </h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-              Texto exibido para o aluno ao entrar na área de membros
-            </p>
+          {/* SEÇÃO 3 — Mensagem de boas-vindas */}
+          <div className="mb-8 pt-8 border-t border-gray-200 dark:border-white/5">
+            <h2 className="text-sm font-medium text-gray-900 dark:text-white mb-0.5">Mensagem de boas-vindas</h2>
+            <p className="text-xs text-gray-500 mb-4">Texto exibido para o aluno ao entrar na área de membros</p>
+
             <textarea
               value={custom.memberWelcomeText || ""}
               onChange={(e) => updateField("memberWelcomeText", e.target.value.slice(0, 500) || null)}
               placeholder="Bem-vindo à nossa comunidade!"
               rows={3}
               maxLength={500}
-              className="w-full px-3 py-2.5 bg-gray-50 dark:bg-white/[0.04] border border-gray-300 dark:border-white/[0.08] rounded-xl text-sm text-gray-900 dark:text-white focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/20 resize-y"
+              className="w-full px-3 py-2.5 bg-white dark:bg-gray-900/50 border border-gray-200 dark:border-white/10 rounded-lg text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-blue-500/50 transition-colors resize-y min-h-[80px]"
             />
-            <p className="text-xs text-gray-400 mt-1">
-              {(custom.memberWelcomeText || "").length}/500 caracteres
+            <p className="text-xs text-gray-400 mt-1 text-right">
+              {(custom.memberWelcomeText || "").length}/500
             </p>
-          </section>
+          </div>
 
-          {/* Features / Toggles */}
-          <section className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.06] rounded-xl p-6">
-            <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-1">
-              Funcionalidades
-            </h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-              Ative ou desative recursos do curso
-            </p>
+          {/* SEÇÃO 4 — Funcionalidades */}
+          <div className="mb-8 pt-8 border-t border-gray-200 dark:border-white/5">
+            <h2 className="text-sm font-medium text-gray-900 dark:text-white mb-0.5">Funcionalidades</h2>
+            <p className="text-xs text-gray-500 mb-4">Ative ou desative recursos do curso</p>
+
             {flags ? (
-              <div className="space-y-3">
-                {FEATURE_ITEMS.map((item) => {
+              <div className="bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl overflow-hidden">
+                {FEATURE_ITEMS.map((item, idx) => {
                   const enabled = flags[item.key];
                   const isSaving = savingFlag === item.key;
                   return (
-                    <article
+                    <div
                       key={item.key}
-                      className={`flex items-start gap-4 rounded-xl border border-gray-200 dark:border-white/[0.06] bg-gray-50 dark:bg-white/[0.02] p-4 transition ${
-                        enabled ? "" : "opacity-70"
+                      className={`flex items-center justify-between px-4 py-3 ${
+                        idx < FEATURE_ITEMS.length - 1 ? "border-b border-gray-200 dark:border-white/5" : ""
                       }`}
                     >
-                      <span
-                        className={`shrink-0 w-10 h-10 rounded-lg inline-flex items-center justify-center ${
-                          enabled
-                            ? "bg-indigo-50 text-indigo-600 dark:bg-indigo-500/10 dark:text-indigo-400"
-                            : "bg-gray-100 text-gray-400 dark:bg-white/[0.06] dark:text-gray-500"
-                        }`}
-                      >
-                        {item.icon}
-                      </span>
-                      <div className="flex-1 min-w-0">
-                        <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
-                          {item.title}
-                        </h4>
-                        <p className="mt-1 text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
-                          {item.description}
-                        </p>
-                        {!enabled && (
-                          <p className="mt-2 text-xs text-gray-500">
-                            {item.disabledHint}
-                          </p>
-                        )}
+                      <div className="min-w-0 mr-3">
+                        <p className="text-sm font-medium text-gray-900 dark:text-white">{item.title}</p>
+                        <p className="text-[11px] text-gray-500">{item.description}</p>
                       </div>
-                      <FeatureToggle
-                        checked={enabled}
-                        onChange={() => toggleFlag(item.key)}
+                      <button
+                        type="button"
+                        role="switch"
+                        aria-checked={enabled}
+                        aria-label={item.title}
                         disabled={isSaving}
-                        label={item.title}
-                      />
-                    </article>
+                        onClick={() => toggleFlag(item.key)}
+                        className={`relative shrink-0 inline-flex h-5 w-9 items-center rounded-full transition-colors ${
+                          enabled ? "bg-blue-600" : "bg-gray-300 dark:bg-gray-700"
+                        } ${isSaving ? "opacity-60 cursor-not-allowed" : "cursor-pointer"}`}
+                      >
+                        <span
+                          className={`inline-block h-4 w-4 rounded-full bg-white shadow transition-transform ${
+                            enabled ? "translate-x-[18px]" : "translate-x-0.5"
+                          }`}
+                        />
+                      </button>
+                    </div>
                   );
                 })}
               </div>
             ) : (
               <div className="space-y-3">
                 {Array.from({ length: 4 }).map((_, i) => (
-                  <div key={i} className="h-20 rounded-xl bg-gray-100 dark:bg-white/[0.04] animate-pulse" />
+                  <div key={i} className="h-14 rounded-xl bg-gray-100 dark:bg-white/[0.04] animate-pulse" />
                 ))}
               </div>
             )}
-          </section>
+          </div>
 
-          {/* Menu lateral */}
-          <section className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.06] rounded-xl p-6">
-            <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-1">
-              Menu lateral do curso
-            </h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-              Personalize os itens que aparecem na sidebar do aluno
-            </p>
+          {/* SEÇÃO 5 — Menu lateral */}
+          <div className="pt-8 border-t border-gray-200 dark:border-white/5">
+            <h2 className="text-sm font-medium text-gray-900 dark:text-white mb-0.5">Menu lateral do curso</h2>
+            <p className="text-xs text-gray-500 mb-4">Itens que aparecem na sidebar do aluno</p>
             <CourseMenuManager courseId={courseId} />
-          </section>
+          </div>
 
-          {/* Actions */}
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={handleSave}
-              disabled={saving}
-              className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-xl transition disabled:opacity-50"
-            >
-              {saving ? "Salvando..." : "Salvar personalização"}
-            </button>
-            <button
-              type="button"
-              onClick={handleReset}
-              disabled={saving}
-              className="px-5 py-2.5 bg-gray-100 dark:bg-white/[0.06] hover:bg-gray-200 dark:hover:bg-white/[0.1] text-gray-700 dark:text-gray-300 text-sm font-medium rounded-xl transition disabled:opacity-50"
-            >
-              Restaurar padrão
-            </button>
+          {/* Footer sticky */}
+          <div className="fixed bottom-0 left-0 right-0 z-30 bg-white/80 dark:bg-gray-950/80 backdrop-blur-sm border-t border-gray-200 dark:border-white/10">
+            <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={handleReset}
+                disabled={saving}
+                className="px-4 py-2 border border-red-300 dark:border-red-500/30 hover:bg-red-50 dark:hover:bg-red-500/10 text-red-600 dark:text-red-400 text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
+              >
+                Restaurar padrão
+              </button>
+              <button
+                type="button"
+                onClick={handleSave}
+                disabled={saving}
+                className="px-6 py-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white text-sm font-medium rounded-lg transition-colors"
+              >
+                {saving ? "Salvando..." : "Salvar personalização"}
+              </button>
+            </div>
           </div>
         </div>
       )}
 
       {toast && (
-        <div className={`fixed bottom-6 right-6 z-50 px-4 py-3 rounded-lg shadow-2xl text-sm font-medium ${
+        <div className={`fixed bottom-16 right-6 z-50 px-4 py-3 rounded-lg shadow-2xl text-sm font-medium ${
           toast.error
             ? "bg-red-600 text-white"
             : "bg-gray-900 dark:bg-white text-white dark:text-gray-900"
@@ -500,155 +446,5 @@ export default function CourseCustomizePage() {
       )}
       <ConfirmDialog />
     </>
-  );
-}
-
-function ColorPicker({
-  label,
-  description,
-  value,
-  onChange,
-}: {
-  label: string;
-  description: string;
-  value: string;
-  onChange: (v: string) => void;
-}) {
-  return (
-    <div className="space-y-1.5">
-      <p className="text-xs font-medium text-gray-700 dark:text-gray-300">{label}</p>
-      <p className="text-[11px] text-gray-500 dark:text-gray-500">{description}</p>
-      <div className="flex items-center gap-2">
-        <label
-          className="w-10 h-10 rounded-lg border border-gray-300 dark:border-white/[0.1] shrink-0 overflow-hidden relative cursor-pointer block"
-          style={{ backgroundColor: HEX_RE.test(value) ? value : "#6366f1" }}
-        >
-          <input
-            type="color"
-            value={HEX_RE.test(value) ? value : "#6366f1"}
-            onChange={(e) => onChange(e.target.value)}
-            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-          />
-        </label>
-        <input
-          type="text"
-          value={value}
-          onChange={(e) => {
-            const v = e.target.value;
-            if (v.length <= 7) onChange(v);
-          }}
-          onBlur={(e) => {
-            const v = e.target.value;
-            if (v && !HEX_RE.test(v)) {
-              const fixed = v.startsWith("#") ? v : `#${v}`;
-              if (HEX_RE.test(fixed)) onChange(fixed);
-              else onChange("");
-            }
-          }}
-          className="flex-1 min-w-0 px-3 py-2 bg-gray-50 dark:bg-white/[0.04] border border-gray-300 dark:border-white/[0.08] rounded-xl text-sm text-gray-900 dark:text-white font-mono focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/20"
-          placeholder="#6366f1"
-          maxLength={7}
-        />
-      </div>
-    </div>
-  );
-}
-
-function FeatureToggle({
-  checked,
-  onChange,
-  disabled,
-  label,
-}: {
-  checked: boolean;
-  onChange: () => void;
-  disabled?: boolean;
-  label: string;
-}) {
-  return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={checked}
-      aria-label={label}
-      disabled={disabled}
-      onClick={onChange}
-      className={`relative shrink-0 inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 focus:ring-offset-white dark:focus:ring-offset-gray-900 ${
-        checked ? "bg-indigo-600" : "bg-gray-300 dark:bg-white/[0.1]"
-      } ${disabled ? "opacity-60 cursor-not-allowed" : "cursor-pointer"}`}
-    >
-      <span
-        className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${
-          checked ? "translate-x-5" : "translate-x-0.5"
-        }`}
-      />
-    </button>
-  );
-}
-
-function ChatIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
-      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-    </svg>
-  );
-}
-
-function MessageIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
-      <path d="M4 4h16c1.1 0 2 .9 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6c0-1.1.9-2 2-2z" />
-      <polyline points="22,6 12,13 2,6" />
-    </svg>
-  );
-}
-
-function StarIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
-      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-    </svg>
-  );
-}
-
-function DiplomaIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
-      <circle cx="12" cy="8" r="6" />
-      <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88" />
-    </svg>
-  );
-}
-
-function TrophyIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
-      <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" />
-      <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" />
-      <path d="M4 22h16" />
-      <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22" />
-      <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22" />
-      <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z" />
-    </svg>
-  );
-}
-
-function HeadphonesIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
-      <path d="M3 18v-6a9 9 0 0 1 18 0v6" />
-      <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z" />
-    </svg>
-  );
-}
-
-function UsersIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
-      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-      <circle cx="9" cy="7" r="4" />
-      <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-    </svg>
   );
 }
