@@ -94,10 +94,13 @@ export default function AdminCommunityPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
-          Moderação da Comunidade
-        </h1>
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+        <div>
+          <h1 className="text-xl font-bold text-gray-900 dark:text-white">
+            Comunidade
+          </h1>
+          <p className="text-sm text-gray-500 mt-1">Postagens de todos os cursos</p>
+        </div>
         <select
           value={courseFilter}
           onChange={(e) => setCourseFilter(e.target.value)}
@@ -146,7 +149,7 @@ export default function AdminCommunityPage() {
             return (
               <div
                 key={post.id}
-                className="bg-white dark:bg-white/5 border border-gray-200 dark:border-white/5 rounded-xl p-4"
+                className="bg-white dark:bg-white/5 border border-gray-200 dark:border-white/5 rounded-xl p-5"
               >
                 <div className="flex items-start gap-3 mb-2">
                   <Avatar
@@ -218,7 +221,7 @@ export default function AdminCommunityPage() {
                   </div>
                 </div>
                 <div
-                  className="post-content prose-lesson text-sm text-gray-800 dark:text-gray-200 break-words"
+                  className="post-content prose-lesson text-sm text-gray-700 dark:text-gray-300 leading-relaxed break-words"
                   dangerouslySetInnerHTML={{ __html: sanitizeHtml(post.content) }}
                 />
                 <div className="flex items-center gap-4 mt-3 text-xs text-gray-500">
