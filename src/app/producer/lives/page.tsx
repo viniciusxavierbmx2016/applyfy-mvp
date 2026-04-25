@@ -393,7 +393,7 @@ export default function ProducerLivesPage() {
   const scheduledCount = lives.filter((l) => l.status === "SCHEDULED").length;
 
   const inputCls =
-    "w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500/50 transition-colors text-sm";
+    "w-full bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-lg px-3 py-2.5 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-blue-500/50 transition-colors text-sm";
   const labelCls = "block text-xs text-gray-400 mb-1.5";
 
   return (
@@ -406,10 +406,10 @@ export default function ProducerLivesPage() {
       )}
 
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-white">Lives</h1>
-          <p className="text-gray-400 text-sm mt-1">
+          <h1 className="text-xl font-bold text-gray-900 dark:text-white">Lives</h1>
+          <p className="text-sm text-gray-500 mt-1">
             {liveCount > 0 && (
               <span className="text-red-400 font-medium mr-3">
                 {liveCount} ao vivo agora
@@ -441,7 +441,7 @@ export default function ProducerLivesPage() {
             className={`px-3 py-1.5 rounded-lg text-sm font-medium transition ${
               filter === s
                 ? "bg-blue-600 text-white"
-                : "bg-white/5 text-gray-400 hover:bg-white/10"
+                : "bg-gray-100 dark:bg-white/5 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-white/10"
             }`}
           >
             {s === "ALL" ? "Todas" : STATUS_LABELS[s]}
@@ -458,20 +458,22 @@ export default function ProducerLivesPage() {
           {Array.from({ length: 6 }).map((_, i) => <SkeletonLiveCard key={i} />)}
         </div>
       ) : filtered.length === 0 ? (
-        <div className="text-center py-20">
-          <svg className="w-16 h-16 mx-auto text-gray-600 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-          </svg>
-          <h3 className="text-lg font-medium text-gray-400 mb-1">
+        <div className="bg-white dark:bg-white/5 border border-gray-200 dark:border-white/5 rounded-xl p-10 text-center">
+          <div className="w-14 h-14 mx-auto rounded-full bg-blue-500/10 flex items-center justify-center mb-4">
+            <svg className="w-7 h-7 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+            </svg>
+          </div>
+          <h3 className="text-gray-900 dark:text-white font-semibold text-lg mb-2">
             {filter === "ALL" ? "Nenhuma live criada" : `Nenhuma live ${STATUS_LABELS[filter]?.toLowerCase()}`}
           </h3>
-          <p className="text-gray-500 text-sm mb-4">
+          <p className="text-gray-500 text-sm">
             {filter === "ALL" ? "Crie sua primeira transmissão ao vivo" : "Altere o filtro para ver outras lives"}
           </p>
           {filter === "ALL" && (
             <button
               onClick={openCreate}
-              className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg transition text-sm"
+              className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg transition text-sm mt-4"
             >
               Criar Live
             </button>
@@ -482,7 +484,7 @@ export default function ProducerLivesPage() {
           {filtered.map((live) => (
             <div
               key={live.id}
-              className="bg-white/5 border border-white/10 rounded-xl p-4 hover:bg-white/[0.07] transition"
+              className="bg-white dark:bg-white/5 border border-gray-200 dark:border-white/5 rounded-xl p-4 hover:border-gray-300 dark:hover:border-white/10 transition"
             >
               <div className="flex items-start gap-4">
                 {/* Thumbnail */}
@@ -582,7 +584,7 @@ export default function ProducerLivesPage() {
                   )}
                   <button
                     onClick={() => copyLink(live.externalUrl)}
-                    className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition"
+                    className="p-1.5 rounded-lg bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 text-gray-400 hover:text-white transition"
                     title="Copiar link"
                   >
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -591,7 +593,7 @@ export default function ProducerLivesPage() {
                   </button>
                   <button
                     onClick={() => openEdit(live)}
-                    className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition"
+                    className="p-1.5 rounded-lg bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 text-gray-400 hover:text-white transition"
                     title="Editar"
                   >
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -600,7 +602,7 @@ export default function ProducerLivesPage() {
                   </button>
                   <button
                     onClick={() => setConfirmAction({ type: "delete", live })}
-                    className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 hover:text-red-400 transition"
+                    className="p-1.5 rounded-lg bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 text-gray-400 hover:text-red-400 transition"
                     title="Excluir"
                   >
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -618,7 +620,7 @@ export default function ProducerLivesPage() {
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/60" onClick={() => setShowModal(false)} />
-          <div className="relative bg-gray-950 border border-white/10 rounded-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+          <div className="relative bg-white dark:bg-gray-950 border border-gray-200 dark:border-white/10 rounded-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
             <div className="p-6 space-y-4">
               <h2 className="text-lg font-bold text-white">
                 {editingLive ? "Editar Live" : "Nova Live"}
@@ -841,7 +843,7 @@ export default function ProducerLivesPage() {
       {confirmAction && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/60" onClick={() => setConfirmAction(null)} />
-          <div className="relative bg-gray-950 border border-white/10 rounded-xl w-full max-w-sm p-6">
+          <div className="relative bg-white dark:bg-gray-950 border border-gray-200 dark:border-white/10 rounded-xl w-full max-w-sm p-6">
             <h3 className="text-lg font-bold text-white mb-2">
               {confirmAction.type === "start"
                 ? "Iniciar Live?"
@@ -897,7 +899,7 @@ export default function ProducerLivesPage() {
       {lessonModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/60" onClick={() => setLessonModal(null)} />
-          <div className="relative bg-gray-950 border border-white/10 rounded-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+          <div className="relative bg-white dark:bg-gray-950 border border-gray-200 dark:border-white/10 rounded-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
             <div className="p-6 space-y-4">
               <h2 className="text-lg font-bold text-white">Salvar como aula</h2>
               <p className="text-gray-400 text-sm">

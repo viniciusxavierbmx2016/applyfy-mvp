@@ -76,10 +76,10 @@ export default function SettingsLayout({
 
   return (
     <div className="max-w-5xl mx-auto">
-      <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white mb-1">
+      <h1 className="text-xl font-bold text-gray-900 dark:text-white mb-1">
         Configurações
       </h1>
-      <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
+      <p className="text-sm text-gray-500 mb-6">
         Gerencie seu painel, assinatura, colaboradores e integrações
       </p>
 

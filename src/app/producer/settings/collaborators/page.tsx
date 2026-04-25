@@ -113,7 +113,7 @@ export default function AdminCollaboratorsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
+          <h1 className="text-xl font-bold text-gray-900 dark:text-white">
             Colaboradores
           </h1>
           <p className="text-sm text-gray-500 mt-1">
@@ -133,7 +133,7 @@ export default function AdminCollaboratorsPage() {
       </div>
 
       {loading ? (
-        <div className="bg-white dark:bg-white/5 border border-gray-200/70 dark:border-white/5 rounded-2xl overflow-hidden">
+        <div className="bg-white dark:bg-white/5 border border-gray-200 dark:border-white/5 rounded-2xl overflow-hidden">
           <div className="bg-gray-50 dark:bg-white/5 px-5 py-3">
             <div className="h-3 w-24 bg-gray-200 dark:bg-white/10 rounded animate-pulse" />
           </div>
@@ -148,7 +148,7 @@ export default function AdminCollaboratorsPage() {
           ))}
         </div>
       ) : items.length === 0 ? (
-        <div className="py-16 text-center bg-gray-50 dark:bg-white/5 border border-gray-200/70 dark:border-white/5 rounded-2xl">
+        <div className="py-16 text-center bg-white dark:bg-white/5 border border-gray-200 dark:border-white/5 rounded-2xl">
           <div className="w-14 h-14 mx-auto rounded-full bg-blue-500/10 flex items-center justify-center mb-4">
             <svg className="w-7 h-7 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
@@ -370,7 +370,7 @@ function CollaboratorModal({
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-white/10 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto"
+        className="bg-white dark:bg-gray-950 border border-gray-200 dark:border-white/10 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto"
       >
         <div className="px-6 py-5 border-b border-gray-200 dark:border-white/10 flex items-center justify-between">
           <h2 className="text-lg font-semibold tracking-tight text-gray-900 dark:text-white">

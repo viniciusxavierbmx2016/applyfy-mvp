@@ -22,7 +22,7 @@ export default function StripeIntegrationPage() {
           </svg>
         </div>
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
+          <h1 className="text-xl font-bold text-gray-900 dark:text-white">
             Stripe
           </h1>
           <p className="text-sm text-gray-600 dark:text-gray-400">

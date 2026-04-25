@@ -45,10 +45,10 @@ export default function ProducerIntegrationsPage() {
     <div className="max-w-5xl mx-auto">
       <div className="mb-6 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white mb-1">
+          <h1 className="text-xl font-bold text-gray-900 dark:text-white mb-1">
             Integrações
           </h1>
-          <p className="text-sm text-gray-600 dark:text-gray-400">
+          <p className="text-sm text-gray-500">
             Conecte gateways de pagamento para liberar cursos automaticamente.
           </p>
         </div>
@@ -238,7 +238,7 @@ function RequestModal({ onClose }: { onClose: () => void }) {
       onClick={onClose}
     >
       <div
-        className="w-full sm:max-w-md bg-white dark:bg-white/5 border border-gray-200 dark:border-white/5 rounded-t-2xl sm:rounded-2xl shadow-2xl p-5 sm:p-6 max-h-[90vh] overflow-y-auto"
+        className="w-full sm:max-w-md bg-white dark:bg-gray-950 border border-gray-200 dark:border-white/10 rounded-t-2xl sm:rounded-2xl shadow-2xl p-5 sm:p-6 max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         {success ? (

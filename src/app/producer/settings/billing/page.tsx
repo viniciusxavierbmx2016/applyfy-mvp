@@ -228,8 +228,8 @@ function BillingContent() {
       )}
 
       <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Assinatura</h1>
-        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Gerencie seu plano e pagamentos</p>
+        <h1 className="text-xl font-bold text-gray-900 dark:text-white">Assinatura</h1>
+        <p className="text-sm text-gray-500 mt-1">Gerencie seu plano e pagamentos</p>
       </div>
 
       {/* Alert banners */}
@@ -394,7 +394,7 @@ function BillingContent() {
                     <th className="px-6 py-3 font-medium">Status</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100 dark:divide-white/[0.04]">
+                <tbody className="divide-y divide-gray-100 dark:divide-white/5">
                   {sub.invoices.map((inv) => {
                     const s = INVOICE_STATUS[inv.status] || { label: inv.status, cls: "" };
                     return (
