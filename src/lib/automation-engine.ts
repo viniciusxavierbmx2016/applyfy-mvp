@@ -110,7 +110,7 @@ export async function executeAction(
         const workspace = automation.workspaceId
           ? await prisma.workspace.findUnique({ where: { id: automation.workspaceId }, select: { name: true } })
           : null;
-        const template = automationEmail(user.name || "", subject, body);
+        const template = automationEmail(user.name || "", subject, body, workspace?.name || undefined);
         const result = await sendEmail({
           to: { email: user.email, name: user.name || undefined },
           subject: template.subject,

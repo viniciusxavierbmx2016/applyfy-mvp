@@ -53,6 +53,7 @@ export async function POST(
     await sendEmail({
       to: { email: enrollment.user.email, name: enrollment.user.name || undefined },
       ...template,
+      senderName: enrollment.course.workspace.name,
     });
 
     return NextResponse.json({ success: true, accessLink });

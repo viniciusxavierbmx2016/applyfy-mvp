@@ -69,7 +69,7 @@ export async function POST(
         enrollment.course.workspace.name,
         loginUrl
       );
-      sendEmail({ to: { email: enrollment.user.email, name: enrollment.user.name || undefined }, ...template }).catch(() => {});
+      sendEmail({ to: { email: enrollment.user.email, name: enrollment.user.name || undefined }, ...template, senderName: enrollment.course.workspace.name }).catch(() => {});
 
       processAutomations({
         type: "STUDENT_ENROLLED",

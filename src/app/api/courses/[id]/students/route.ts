@@ -287,7 +287,7 @@ export async function POST(
         loginUrl,
         sharedPassword || undefined
       );
-      sendEmail({ to: { email: user.email, name: name || undefined }, ...template }).catch(() => {});
+      sendEmail({ to: { email: user.email, name: name || undefined }, ...template, senderName: course.workspace.name }).catch(() => {});
     }
 
     return NextResponse.json({

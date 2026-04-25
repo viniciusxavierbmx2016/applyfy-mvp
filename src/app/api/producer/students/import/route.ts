@@ -315,7 +315,7 @@ export async function POST(request: Request) {
             loginUrl,
             isNewUser ? tempPassword || undefined : undefined
           );
-          sendEmail({ to: { email, name }, ...template }).catch(() => {});
+          sendEmail({ to: { email, name }, ...template, senderName: workspace.name }).catch(() => {});
         }
 
         csvResultRows.push([

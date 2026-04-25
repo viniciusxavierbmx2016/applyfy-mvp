@@ -54,7 +54,7 @@ export async function POST(
       const appUrl = process.env.NEXT_PUBLIC_APP_URL || "";
       const loginUrl = `${appUrl}/w/${workspace.slug}/login`;
       const template = welcomeStudent(name, workspace.name, loginUrl);
-      sendEmail({ to: { email, name }, ...template }).catch(() => {});
+      sendEmail({ to: { email, name }, ...template, senderName: workspace.name }).catch(() => {});
     }
 
     return NextResponse.json(

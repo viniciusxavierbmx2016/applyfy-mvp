@@ -1,12 +1,13 @@
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://app.mymembersclub.com.br";
 
-function baseTemplate(content: string): string {
+function baseTemplate(content: string, brandName?: string): string {
+  const brand = brandName || "Members Club";
   return `<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Members Club</title>
+  <title>${brand}</title>
 </head>
 <body style="margin:0;padding:0;background-color:#0a0a1a;font-family:Arial,Helvetica,sans-serif;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#0a0a1a;">
@@ -16,7 +17,7 @@ function baseTemplate(content: string): string {
           <!-- Logo -->
           <tr>
             <td align="center" style="padding-bottom:32px;">
-              <span style="font-size:24px;font-weight:bold;color:#ffffff;letter-spacing:-0.5px;">Members Club</span>
+              <span style="font-size:24px;font-weight:bold;color:#ffffff;letter-spacing:-0.5px;">${brand}</span>
             </td>
           </tr>
           <!-- Card -->
@@ -29,7 +30,7 @@ function baseTemplate(content: string): string {
           <tr>
             <td align="center" style="padding-top:32px;">
               <p style="margin:0;font-size:13px;color:#6b7280;">
-                Members Club &bull; mymembersclub.com.br
+                ${brand} &bull; mymembersclub.com.br
               </p>
               <p style="margin:8px 0 0;font-size:12px;color:#4b5563;">
                 Este é um email automático. Não responda a esta mensagem.
@@ -102,7 +103,7 @@ export function welcomeStudent(
     ${paragraph(`Seu acesso à área de membros <strong style="color:#ffffff;">${workspaceName}</strong> foi liberado.`)}
     ${paragraph("Acesse a plataforma para começar a estudar seus cursos.")}
     ${ctaButton("Acessar agora", loginUrl)}
-  `);
+  `, workspaceName);
   return {
     subject: `Seu acesso foi liberado - ${workspaceName}`,
     htmlContent: html,
@@ -134,7 +135,7 @@ export function studentAccessGranted(
     ${paragraph(`Olá, ${firstName}! Seu acesso ao curso <strong style="color:#ffffff;">${courseName}</strong> na área <strong style="color:#ffffff;">${workspaceName}</strong> foi liberado.`)}
     ${credentialsBlock}
     ${ctaButton("Acessar o curso", loginUrl)}
-  `);
+  `, workspaceName);
   return {
     subject: `Acesso liberado: ${courseName}`,
     htmlContent: html,
@@ -180,7 +181,7 @@ export function collaboratorInvite(
     ${paragraph("<strong style='color:#ffffff;'>Suas permissões:</strong>")}
     <ul style="margin:0 0 14px;padding-left:20px;">${permList}</ul>
     ${ctaButton("Aceitar convite", inviteUrl, "#10b981")}
-  `);
+  `, workspaceName);
   return {
     subject: `Convite para colaborar - ${workspaceName}`,
     htmlContent: html,
@@ -255,7 +256,7 @@ function sanitizeHtmlForEmail(html: string): string {
     .replace(/<li>/g, '<li style="margin:0 0 4px 0;font-size:15px;line-height:1.6;">');
 }
 
-export function automationEmail(name: string, subjectText: string, body: string) {
+export function automationEmail(name: string, subjectText: string, body: string, workspaceName?: string) {
   const firstName = name.split(" ")[0] || "Aluno";
   const isHtml = /<[a-z][\s\S]*>/i.test(body);
   const bodyHtml = isHtml ? sanitizeHtmlForEmail(body) : body.replace(/\n/g, "<br>");
@@ -266,7 +267,7 @@ export function automationEmail(name: string, subjectText: string, body: string)
     ${heading(subjectText)}
     ${paragraph(`Olá, ${firstName}!`)}
     ${bodyBlock}
-  `);
+  `, workspaceName);
   return {
     subject: subjectText,
     htmlContent: html,

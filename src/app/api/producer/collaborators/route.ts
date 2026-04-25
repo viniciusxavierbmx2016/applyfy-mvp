@@ -146,7 +146,7 @@ export async function POST(request: Request) {
       inviteLink,
       validPerms
     );
-    sendEmail({ to: { email, name: name || undefined }, ...template }).catch(() => {});
+    sendEmail({ to: { email, name: name || undefined }, ...template, senderName: ws?.name || undefined }).catch(() => {});
 
     return NextResponse.json({ collaborator, inviteLink });
   } catch (e) {

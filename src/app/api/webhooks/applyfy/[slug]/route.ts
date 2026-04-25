@@ -244,7 +244,7 @@ export async function POST(
           workspace.name,
           loginUrl
         );
-        sendEmail({ to: { email, name: name || undefined }, ...template }).catch(() => {});
+        sendEmail({ to: { email, name: name || undefined }, ...template, senderName: workspace.name }).catch(() => {});
 
         await logWebhook({
           event,
