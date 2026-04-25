@@ -60,6 +60,7 @@ export default function AdminUsersPage() {
   const [enrollCourseId, setEnrollCourseId] = useState<Record<string, string>>(
     {}
   );
+  const [selectedTagId, setSelectedTagId] = useState<Record<string, string>>({});
   const [toast, setToast] = useState<string | null>(null);
   const [importOpen, setImportOpen] = useState(false);
   const { confirm, ConfirmDialog } = useConfirm();
@@ -498,23 +499,20 @@ export default function AdminUsersPage() {
                       Liberar acesso manual
                     </p>
                     <div className="flex flex-col sm:flex-row gap-2">
-                      <select
+                      <CustomSelect
                         value={enrollCourseId[u.id] || ""}
-                        onChange={(e) =>
+                        onChange={(v) =>
                           setEnrollCourseId((prev) => ({
                             ...prev,
-                            [u.id]: e.target.value,
+                            [u.id]: v,
                           }))
                         }
-                        className="flex-1 bg-white dark:bg-gray-900/50 border border-gray-200 dark:border-white/10 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:border-blue-500/50 transition-colors"
-                      >
-                        <option value="">Escolha um curso...</option>
-                        {(availableCoursesByUser[u.id] || []).map((c) => (
-                          <option key={c.id} value={c.id}>
-                            {c.title}
-                          </option>
-                        ))}
-                      </select>
+                        className="flex-1"
+                        options={[
+                          { value: "", label: "Escolha um curso..." },
+                          ...(availableCoursesByUser[u.id] || []).map((c) => ({ value: c.id, label: c.title })),
+                        ]}
+                      />
                       <Button
                         variant="primary"
                         size="md"
@@ -556,22 +554,21 @@ export default function AdminUsersPage() {
                           ))}
                         </div>
                         <div className="flex flex-col sm:flex-row gap-2">
-                          <select
-                            id={`tag-select-${u.id}`}
-                            className="flex-1 bg-white dark:bg-gray-900/50 border border-gray-200 dark:border-white/10 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:border-blue-500/50 transition-colors"
-                            defaultValue=""
-                          >
-                            <option value="">Escolha uma tag...</option>
-                            {allTags.filter((t) => !(u.tags || []).some((ut) => ut.id === t.id)).map((t) => (
-                              <option key={t.id} value={t.id}>{t.name}</option>
-                            ))}
-                          </select>
+                          <CustomSelect
+                            value={selectedTagId[u.id] || ""}
+                            onChange={(v) => setSelectedTagId((prev) => ({ ...prev, [u.id]: v }))}
+                            className="flex-1"
+                            options={[
+                              { value: "", label: "Escolha uma tag..." },
+                              ...allTags.filter((t) => !(u.tags || []).some((ut) => ut.id === t.id)).map((t) => ({ value: t.id, label: t.name })),
+                            ]}
+                          />
                           <Button
                             variant="secondary"
                             size="md"
+                            disabled={!selectedTagId[u.id]}
                             onClick={async () => {
-                              const sel = document.getElementById(`tag-select-${u.id}`) as HTMLSelectElement;
-                              const tagId = sel?.value;
+                              const tagId = selectedTagId[u.id];
                               if (!tagId) return;
                               const res = await fetch(`/api/producer/students/${u.id}/tags`, {
                                 method: "POST",
@@ -583,7 +580,7 @@ export default function AdminUsersPage() {
                                 if (addedTag) {
                                   setUsers((prev) => prev.map((x) => x.id === u.id ? { ...x, tags: [...(x.tags || []), addedTag] } : x));
                                 }
-                                sel.value = "";
+                                setSelectedTagId((prev) => ({ ...prev, [u.id]: "" }));
                                 showToast("Tag adicionada");
                               }
                             }}

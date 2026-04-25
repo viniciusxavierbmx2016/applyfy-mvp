@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { useConfirm } from "@/hooks/use-confirm";
+import { CustomSelect } from "@/components/custom-select";
 
 interface AutomationItem {
   id: string;
@@ -747,12 +748,7 @@ function SidePanel({
             {/* STEP 1 - Curso */}
             <div>
               <p className={stepCls}>1. Curso</p>
-              <select value={courseId} onChange={(e) => setCourseId(e.target.value)} className={selectCls}>
-                <option value="">
-                  {GLOBAL_TRIGGERS.includes(triggerType) ? "Todos os cursos (opcional)" : "Selecione um curso..."}
-                </option>
-                {courses.map((c) => <option key={c.id} value={c.id}>{c.title}</option>)}
-              </select>
+              <CustomSelect value={courseId} onChange={setCourseId} options={[{ value: "", label: GLOBAL_TRIGGERS.includes(triggerType) ? "Todos os cursos (opcional)" : "Selecione um curso..." }, ...courses.map((c) => ({ value: c.id, label: c.title }))]} />
               {!courseId && !GLOBAL_TRIGGERS.includes(triggerType) && triggerType && (
                 <p className="text-[10px] text-amber-400 mt-1">Curso obrigatório para este trigger</p>
               )}
@@ -779,18 +775,12 @@ function SidePanel({
                 <p className={stepCls}>3. Detalhes</p>
                 {triggerType === "LESSON_COMPLETED" && selectedCourse && (
                   <div><label className={labelCls}>Aula específica (opcional)</label>
-                    <select value={triggerConfig.lessonId || ""} onChange={(e) => setTriggerConfig({ ...triggerConfig, lessonId: e.target.value })} className={selectCls}>
-                      <option value="">Qualquer aula</option>
-                      {allLessons.map((l) => <option key={l.id} value={l.id}>{l.moduleTitle} → {l.title}</option>)}
-                    </select>
+                    <CustomSelect value={triggerConfig.lessonId || ""} onChange={(v) => setTriggerConfig({ ...triggerConfig, lessonId: v })} options={[{ value: "", label: "Qualquer aula" }, ...allLessons.map((l) => ({ value: l.id, label: `${l.moduleTitle} → ${l.title}` }))]} />
                   </div>
                 )}
                 {triggerType === "MODULE_COMPLETED" && selectedCourse && (
                   <div><label className={labelCls}>Módulo (opcional)</label>
-                    <select value={triggerConfig.moduleId || ""} onChange={(e) => setTriggerConfig({ ...triggerConfig, moduleId: e.target.value })} className={selectCls}>
-                      <option value="">Qualquer módulo</option>
-                      {selectedCourse.modules.map((m) => <option key={m.id} value={m.id}>{m.title}</option>)}
-                    </select>
+                    <CustomSelect value={triggerConfig.moduleId || ""} onChange={(v) => setTriggerConfig({ ...triggerConfig, moduleId: v })} options={[{ value: "", label: "Qualquer módulo" }, ...selectedCourse.modules.map((m) => ({ value: m.id, label: m.title }))]} />
                   </div>
                 )}
                 {triggerType === "STUDENT_INACTIVE" && (
@@ -822,10 +812,7 @@ function SidePanel({
                 {triggerType === "MODULE_NOT_STARTED" && selectedCourse && (
                   <div className="space-y-3">
                     <div><label className={labelCls}>Módulo</label>
-                      <select value={triggerConfig.moduleId || ""} onChange={(e) => setTriggerConfig({ ...triggerConfig, moduleId: e.target.value })} className={selectCls}>
-                        <option value="">Selecione...</option>
-                        {selectedCourse.modules.map((m) => <option key={m.id} value={m.id}>{m.title}</option>)}
-                      </select>
+                      <CustomSelect value={triggerConfig.moduleId || ""} onChange={(v) => setTriggerConfig({ ...triggerConfig, moduleId: v })} options={[{ value: "", label: "Selecione..." }, ...selectedCourse.modules.map((m) => ({ value: m.id, label: m.title }))]} />
                     </div>
                     <div><label className={labelCls}>Após quantos dias</label>
                       <input type="number" min={1} value={triggerConfig.afterDays || "7"} onChange={(e) => setTriggerConfig({ ...triggerConfig, afterDays: e.target.value })} className={inputCls} />
@@ -835,10 +822,7 @@ function SidePanel({
                 {triggerType === "HAS_TAG" && (
                   <div>
                     <label className={labelCls}>Tag</label>
-                    <select value={triggerConfig.tagId || ""} onChange={(e) => setTriggerConfig({ ...triggerConfig, tagId: e.target.value })} className={selectCls}>
-                      <option value="">Selecione uma tag...</option>
-                      {tags.map((t) => <option key={t.id} value={t.id}>{t.name} ({t.studentCount} alunos)</option>)}
-                    </select>
+                    <CustomSelect value={triggerConfig.tagId || ""} onChange={(v) => setTriggerConfig({ ...triggerConfig, tagId: v })} options={[{ value: "", label: "Selecione uma tag..." }, ...tags.map((t) => ({ value: t.id, label: `${t.name} (${t.studentCount} alunos)` }))]} />
                     {tags.length === 0 && <p className="text-[10px] text-amber-400 mt-1">Nenhuma tag encontrada. Crie tags na aba &quot;Tags&quot;.</p>}
                     {triggerConfig.tagId && (() => {
                       const tag = tags.find((t) => t.id === triggerConfig.tagId);
@@ -861,10 +845,7 @@ function SidePanel({
                 )}
                 {triggerType === "QUIZ_PASSED" && selectedCourse && (
                   <div><label className={labelCls}>Quiz (opcional)</label>
-                    <select value={triggerConfig.quizId || ""} onChange={(e) => setTriggerConfig({ ...triggerConfig, quizId: e.target.value })} className={selectCls}>
-                      <option value="">Qualquer quiz</option>
-                      {allLessons.filter((l) => l.quiz).map((l) => <option key={l.quiz!.id} value={l.quiz!.id}>{l.moduleTitle} → {l.title}</option>)}
-                    </select>
+                    <CustomSelect value={triggerConfig.quizId || ""} onChange={(v) => setTriggerConfig({ ...triggerConfig, quizId: v })} options={[{ value: "", label: "Qualquer quiz" }, ...allLessons.filter((l) => l.quiz).map((l) => ({ value: l.quiz!.id, label: `${l.moduleTitle} → ${l.title}` }))]} />
                   </div>
                 )}
               </div>
@@ -909,10 +890,7 @@ function SidePanel({
                       const targetMod = actionConfig.moduleId ? selectedCourse.modules.find((m) => m.id === actionConfig.moduleId) : null;
                       return (
                         <div><label className={labelCls}>Módulo para liberar</label>
-                          <select value={actionConfig.moduleId || ""} onChange={(e) => setActionConfig({ ...actionConfig, moduleId: e.target.value })} className={selectCls}>
-                            <option value="">Selecione...</option>
-                            {selectedCourse.modules.filter((m) => m.id !== triggerConfig.moduleId).map((m) => <option key={m.id} value={m.id}>{m.title}</option>)}
-                          </select>
+                          <CustomSelect value={actionConfig.moduleId || ""} onChange={(v) => setActionConfig({ ...actionConfig, moduleId: v })} options={[{ value: "", label: "Selecione..." }, ...selectedCourse.modules.filter((m) => m.id !== triggerConfig.moduleId).map((m) => ({ value: m.id, label: m.title }))]} />
                           {triggerType === "MODULE_COMPLETED" && <p className="text-[10px] text-gray-500 mt-1">Módulos do trigger são excluídos</p>}
                           {targetMod && targetMod.daysToRelease > 0 && (
                             <div className="bg-amber-900/20 border border-amber-700/30 rounded-xl p-3 text-xs text-amber-300 mt-3">
@@ -965,10 +943,7 @@ function SidePanel({
                     )}
                     {actionType === "ENROLL_COURSE" && (
                       <div><label className={labelCls}>Curso destino</label>
-                        <select value={actionConfig.courseId || ""} onChange={(e) => setActionConfig({ ...actionConfig, courseId: e.target.value })} className={selectCls}>
-                          <option value="">Selecione...</option>
-                          {courses.filter((c) => c.id !== courseId).map((c) => <option key={c.id} value={c.id}>{c.title}</option>)}
-                        </select>
+                        <CustomSelect value={actionConfig.courseId || ""} onChange={(v) => setActionConfig({ ...actionConfig, courseId: v })} options={[{ value: "", label: "Selecione..." }, ...courses.filter((c) => c.id !== courseId).map((c) => ({ value: c.id, label: c.title }))]} />
                       </div>
                     )}
                     {actionType === "ADD_TAG" && (
@@ -987,10 +962,7 @@ function SidePanel({
                         {tags.length > 0 && (
                           <div>
                             <label className={labelCls}>Ou selecione uma existente</label>
-                            <select value="" onChange={(e) => { const t = tags.find((tg) => tg.id === e.target.value); if (t) setActionConfig({ ...actionConfig, tagName: t.name, tagColor: t.color }); }} className={selectCls}>
-                              <option value="">Usar tag existente...</option>
-                              {tags.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
-                            </select>
+                            <CustomSelect value="" onChange={(v) => { const t = tags.find((tg) => tg.id === v); if (t) setActionConfig({ ...actionConfig, tagName: t.name, tagColor: t.color }); }} options={[{ value: "", label: "Usar tag existente..." }, ...tags.map((t) => ({ value: t.id, label: t.name }))]} />
                           </div>
                         )}
                       </div>
@@ -1056,10 +1028,7 @@ function MobileFlowEditor({
 
         {/* Curso */}
         <div><label className={labelCls}>Curso</label>
-          <select value={courseId} onChange={(e) => { setCourseId(e.target.value); setTriggerConfig({}); setActionConfig({}); }} className={selectCls}>
-            <option value="">{GLOBAL_TRIGGERS.includes(triggerType) ? "Todos os cursos" : "Selecione um curso..."}</option>
-            {courses.map((c) => <option key={c.id} value={c.id}>{c.title}</option>)}
-          </select>
+          <CustomSelect value={courseId} onChange={(v) => { setCourseId(v); setTriggerConfig({}); setActionConfig({}); }} options={[{ value: "", label: GLOBAL_TRIGGERS.includes(triggerType) ? "Todos os cursos" : "Selecione um curso..." }, ...courses.map((c) => ({ value: c.id, label: c.title }))]} />
         </div>
 
         {/* Trigger */}
@@ -1076,17 +1045,17 @@ function MobileFlowEditor({
               ))}
             </div>
             {triggerType === "LESSON_COMPLETED" && selectedCourse && (
-              <div><label className={labelCls}>Aula</label><select value={triggerConfig.lessonId || ""} onChange={(e) => setTriggerConfig({ ...triggerConfig, lessonId: e.target.value })} className={selectCls}><option value="">Qualquer aula</option>{allLessons.map((l) => <option key={l.id} value={l.id}>{l.moduleTitle} → {l.title}</option>)}</select></div>
+              <div><label className={labelCls}>Aula</label><CustomSelect value={triggerConfig.lessonId || ""} onChange={(v) => setTriggerConfig({ ...triggerConfig, lessonId: v })} options={[{ value: "", label: "Qualquer aula" }, ...allLessons.map((l) => ({ value: l.id, label: `${l.moduleTitle} → ${l.title}` }))]} /></div>
             )}
             {triggerType === "MODULE_COMPLETED" && selectedCourse && (
-              <div><label className={labelCls}>Módulo</label><select value={triggerConfig.moduleId || ""} onChange={(e) => setTriggerConfig({ ...triggerConfig, moduleId: e.target.value })} className={selectCls}><option value="">Qualquer módulo</option>{selectedCourse.modules.map((m) => <option key={m.id} value={m.id}>{m.title}</option>)}</select></div>
+              <div><label className={labelCls}>Módulo</label><CustomSelect value={triggerConfig.moduleId || ""} onChange={(v) => setTriggerConfig({ ...triggerConfig, moduleId: v })} options={[{ value: "", label: "Qualquer módulo" }, ...selectedCourse.modules.map((m) => ({ value: m.id, label: m.title }))]} /></div>
             )}
             {triggerType === "STUDENT_INACTIVE" && <div><label className={labelCls}>Dias de inatividade</label><input type="number" min={1} value={triggerConfig.inactiveDays || "7"} onChange={(e) => setTriggerConfig({ ...triggerConfig, inactiveDays: e.target.value })} className={inputCls} /></div>}
             {triggerType === "STUDENT_NEVER_ACCESSED" && <div><label className={labelCls}>Dias após matrícula</label><input type="number" min={1} value={triggerConfig.afterDays || "3"} onChange={(e) => setTriggerConfig({ ...triggerConfig, afterDays: e.target.value })} className={inputCls} /></div>}
             {triggerType === "PROGRESS_BELOW" && <div className="space-y-3"><div><label className={labelCls}>Abaixo de (%)</label><input type="number" min={1} max={99} value={triggerConfig.progressPercent || "25"} onChange={(e) => setTriggerConfig({ ...triggerConfig, progressPercent: e.target.value })} className={inputCls} /></div><div><label className={labelCls}>Após dias</label><input type="number" min={1} value={triggerConfig.afterDays || "14"} onChange={(e) => setTriggerConfig({ ...triggerConfig, afterDays: e.target.value })} className={inputCls} /></div></div>}
             {triggerType === "PROGRESS_ABOVE" && <div><label className={labelCls}>Acima de (%)</label><input type="number" min={1} max={100} value={triggerConfig.progressPercent || "50"} onChange={(e) => setTriggerConfig({ ...triggerConfig, progressPercent: e.target.value })} className={inputCls} /></div>}
-            {triggerType === "MODULE_NOT_STARTED" && selectedCourse && <div className="space-y-3"><div><label className={labelCls}>Módulo</label><select value={triggerConfig.moduleId || ""} onChange={(e) => setTriggerConfig({ ...triggerConfig, moduleId: e.target.value })} className={selectCls}><option value="">Selecione...</option>{selectedCourse.modules.map((m) => <option key={m.id} value={m.id}>{m.title}</option>)}</select></div><div><label className={labelCls}>Após dias</label><input type="number" min={1} value={triggerConfig.afterDays || "7"} onChange={(e) => setTriggerConfig({ ...triggerConfig, afterDays: e.target.value })} className={inputCls} /></div></div>}
-            {triggerType === "HAS_TAG" && <div><label className={labelCls}>Tag</label><select value={triggerConfig.tagId || ""} onChange={(e) => setTriggerConfig({ ...triggerConfig, tagId: e.target.value })} className={selectCls}><option value="">Selecione uma tag...</option>{tags.map((t) => <option key={t.id} value={t.id}>{t.name} ({t.studentCount} alunos)</option>)}</select></div>}
+            {triggerType === "MODULE_NOT_STARTED" && selectedCourse && <div className="space-y-3"><div><label className={labelCls}>Módulo</label><CustomSelect value={triggerConfig.moduleId || ""} onChange={(v) => setTriggerConfig({ ...triggerConfig, moduleId: v })} options={[{ value: "", label: "Selecione..." }, ...selectedCourse.modules.map((m) => ({ value: m.id, label: m.title }))]} /></div><div><label className={labelCls}>Após dias</label><input type="number" min={1} value={triggerConfig.afterDays || "7"} onChange={(e) => setTriggerConfig({ ...triggerConfig, afterDays: e.target.value })} className={inputCls} /></div></div>}
+            {triggerType === "HAS_TAG" && <div><label className={labelCls}>Tag</label><CustomSelect value={triggerConfig.tagId || ""} onChange={(v) => setTriggerConfig({ ...triggerConfig, tagId: v })} options={[{ value: "", label: "Selecione uma tag..." }, ...tags.map((t) => ({ value: t.id, label: `${t.name} (${t.studentCount} alunos)` }))]} /></div>}
           </div>
         </div>
 
@@ -1106,11 +1075,11 @@ function MobileFlowEditor({
                     </button>
                   ); })}
                 </div>
-                {actionType === "UNLOCK_MODULE" && selectedCourse && (() => { const tgt = actionConfig.moduleId ? selectedCourse.modules.find((m) => m.id === actionConfig.moduleId) : null; return <div><label className={labelCls}>Módulo para liberar</label><select value={actionConfig.moduleId || ""} onChange={(e) => setActionConfig({ ...actionConfig, moduleId: e.target.value })} className={selectCls}><option value="">Selecione...</option>{selectedCourse.modules.filter((m) => m.id !== triggerConfig.moduleId).map((m) => <option key={m.id} value={m.id}>{m.title}</option>)}</select>{tgt && tgt.daysToRelease > 0 && <div className="bg-amber-900/20 border border-amber-700/30 rounded-xl p-3 text-xs text-amber-300 mt-3">Este módulo tem liberação por tempo ({tgt.daysToRelease} dias). A automação vai sobrescrever — ficará bloqueado até o gatilho.</div>}</div>; })()}
+                {actionType === "UNLOCK_MODULE" && selectedCourse && (() => { const tgt = actionConfig.moduleId ? selectedCourse.modules.find((m) => m.id === actionConfig.moduleId) : null; return <div><label className={labelCls}>Módulo para liberar</label><CustomSelect value={actionConfig.moduleId || ""} onChange={(v) => setActionConfig({ ...actionConfig, moduleId: v })} options={[{ value: "", label: "Selecione..." }, ...selectedCourse.modules.filter((m) => m.id !== triggerConfig.moduleId).map((m) => ({ value: m.id, label: m.title }))]} />{tgt && tgt.daysToRelease > 0 && <div className="bg-amber-900/20 border border-amber-700/30 rounded-xl p-3 text-xs text-amber-300 mt-3">Este módulo tem liberação por tempo ({tgt.daysToRelease} dias). A automação vai sobrescrever — ficará bloqueado até o gatilho.</div>}</div>; })()}
                 {actionType === "SEND_EMAIL" && <div className="space-y-3"><div><label className={labelCls}>Assunto</label><input type="text" value={actionConfig.subject || ""} onChange={(e) => setActionConfig({ ...actionConfig, subject: e.target.value })} placeholder="Parabéns!" className={selectCls} /></div><div><label className={labelCls}>Corpo</label><textarea value={actionConfig.body || ""} onChange={(e) => setActionConfig({ ...actionConfig, body: e.target.value })} placeholder="Olá!" rows={4} className={`${selectCls} resize-y`} /></div><p className="text-[10px] text-gray-500">{`Variáveis: {nome} {curso} {modulo}`}</p></div>}
                 {actionType === "SEND_PUSH" && <div className="space-y-3"><div><label className={labelCls}>Título</label><input type="text" maxLength={60} value={actionConfig.pushTitle || ""} onChange={(e) => setActionConfig({ ...actionConfig, pushTitle: e.target.value })} placeholder="Novidade!" className={selectCls} /><p className="text-[10px] text-gray-500 mt-1">{(actionConfig.pushTitle || "").length}/60</p></div><div><label className={labelCls}>Mensagem</label><textarea maxLength={200} value={actionConfig.pushBody || ""} onChange={(e) => setActionConfig({ ...actionConfig, pushBody: e.target.value })} placeholder="Olá!" rows={3} className={`${selectCls} resize-y`} /><p className="text-[10px] text-gray-500 mt-1">{(actionConfig.pushBody || "").length}/200</p></div><div><label className={labelCls}>Link (opcional)</label><input type="text" value={actionConfig.pushUrl || ""} onChange={(e) => setActionConfig({ ...actionConfig, pushUrl: e.target.value })} placeholder="/" className={selectCls} /></div><p className="text-[10px] text-gray-500">{`Variáveis: {nome} {curso} {modulo}`}</p><div className="bg-[#1a1a1e] rounded-lg p-3 space-y-0.5"><div className="flex items-center gap-1.5"><span className="text-xs">🔔</span><span className="text-[10px] text-gray-400 font-medium">Members Club</span></div><p className="text-sm text-white font-medium truncate">{actionConfig.pushTitle || "Título"}</p><p className="text-xs text-gray-400 line-clamp-2">{actionConfig.pushBody || "Mensagem..."}</p></div></div>}
-                {actionType === "ENROLL_COURSE" && <div><label className={labelCls}>Curso destino</label><select value={actionConfig.courseId || ""} onChange={(e) => setActionConfig({ ...actionConfig, courseId: e.target.value })} className={selectCls}><option value="">Selecione...</option>{courses.filter((c) => c.id !== courseId).map((c) => <option key={c.id} value={c.id}>{c.title}</option>)}</select></div>}
-                {actionType === "ADD_TAG" && <div className="space-y-3"><div><label className={labelCls}>Nome da tag</label><input type="text" value={actionConfig.tagName || ""} onChange={(e) => setActionConfig({ ...actionConfig, tagName: e.target.value })} placeholder="Ex: VIP" className={selectCls} /></div><div><label className={labelCls}>Cor</label><div className="flex items-center gap-1.5 flex-wrap">{["#3b82f6","#06b6d4","#10b981","#f59e0b","#ef4444","#ec4899","#8b5cf6","#f97316","#14b8a6","#6366f1"].map((c) => <button key={c} type="button" onClick={() => setActionConfig({ ...actionConfig, tagColor: c })} className="w-6 h-6 rounded-full border-2 transition" style={{ backgroundColor: c, borderColor: (actionConfig.tagColor || "#3b82f6") === c ? "white" : "transparent" }} />)}</div></div>{tags.length > 0 && <div><label className={labelCls}>Ou existente</label><select value="" onChange={(e) => { const t = tags.find((tg) => tg.id === e.target.value); if (t) setActionConfig({ ...actionConfig, tagName: t.name, tagColor: t.color }); }} className={selectCls}><option value="">Usar tag existente...</option>{tags.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}</select></div>}</div>}
+                {actionType === "ENROLL_COURSE" && <div><label className={labelCls}>Curso destino</label><CustomSelect value={actionConfig.courseId || ""} onChange={(v) => setActionConfig({ ...actionConfig, courseId: v })} options={[{ value: "", label: "Selecione..." }, ...courses.filter((c) => c.id !== courseId).map((c) => ({ value: c.id, label: c.title }))]} /></div>}
+                {actionType === "ADD_TAG" && <div className="space-y-3"><div><label className={labelCls}>Nome da tag</label><input type="text" value={actionConfig.tagName || ""} onChange={(e) => setActionConfig({ ...actionConfig, tagName: e.target.value })} placeholder="Ex: VIP" className={selectCls} /></div><div><label className={labelCls}>Cor</label><div className="flex items-center gap-1.5 flex-wrap">{["#3b82f6","#06b6d4","#10b981","#f59e0b","#ef4444","#ec4899","#8b5cf6","#f97316","#14b8a6","#6366f1"].map((c) => <button key={c} type="button" onClick={() => setActionConfig({ ...actionConfig, tagColor: c })} className="w-6 h-6 rounded-full border-2 transition" style={{ backgroundColor: c, borderColor: (actionConfig.tagColor || "#3b82f6") === c ? "white" : "transparent" }} />)}</div></div>{tags.length > 0 && <div><label className={labelCls}>Ou existente</label><CustomSelect value="" onChange={(v) => { const t = tags.find((tg) => tg.id === v); if (t) setActionConfig({ ...actionConfig, tagName: t.name, tagColor: t.color }); }} options={[{ value: "", label: "Usar tag existente..." }, ...tags.map((t) => ({ value: t.id, label: t.name }))]} /></div>}</div>}
               </>
             )}
           </div>
