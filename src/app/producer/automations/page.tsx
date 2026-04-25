@@ -777,7 +777,7 @@ function SidePanel({
   const allLessons = selectedCourse?.modules.flatMap((m) => m.lessons.map((l) => ({ ...l, moduleTitle: m.title }))) || [];
 
   return (
-    <div className="absolute top-0 right-0 h-full w-[400px] bg-white dark:bg-gray-950 border-l border-gray-200 dark:border-white/10 shadow-2xl flex flex-col z-10 animate-slideIn">
+    <div className="absolute top-0 left-0 h-full w-[400px] bg-white dark:bg-gray-950 border-r border-gray-200 dark:border-white/10 shadow-2xl flex flex-col z-10 animate-slideIn">
       <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200 dark:border-white/10">
         <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{isTrigger ? "Configurar gatilho" : "Configurar ação"}</h3>
         <button type="button" onClick={onClose} className="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-gray-900 dark:hover:text-white transition rounded-lg hover:bg-gray-100 dark:hover:bg-white/5">
@@ -1033,7 +1033,7 @@ function SidePanel({
       </div>
 
       <style jsx>{`
-        @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
+        @keyframes slideIn { from { transform: translateX(-100%); } to { transform: translateX(0); } }
         .animate-slideIn { animation: slideIn 0.2s ease-out; }
       `}</style>
     </div>
