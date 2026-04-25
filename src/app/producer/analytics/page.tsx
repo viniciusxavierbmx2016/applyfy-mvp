@@ -16,7 +16,7 @@ const ReportsContentTab = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="h-64 bg-gray-100 dark:bg-gray-900 rounded-xl animate-pulse" />
+      <div className="h-64 bg-gray-100 dark:bg-gray-900/50 rounded-xl animate-pulse" />
     ),
   }
 );
@@ -29,7 +29,7 @@ const ReportsStudentsTab = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="h-64 bg-gray-100 dark:bg-gray-900 rounded-xl animate-pulse" />
+      <div className="h-64 bg-gray-100 dark:bg-gray-900/50 rounded-xl animate-pulse" />
     ),
   }
 );
@@ -122,7 +122,7 @@ function AdminAnalyticsPageInner() {
           <select
             value={courseId}
             onChange={(e) => setCourseId(e.target.value)}
-            className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[180px]"
+            className="bg-white dark:bg-gray-900/50 border border-gray-200 dark:border-white/10 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:border-blue-500/50 transition-colors min-w-[180px]"
           >
             <option value="all">Todos os cursos</option>
             {courses.map((c) => (
@@ -138,7 +138,7 @@ function AdminAnalyticsPageInner() {
       </div>
 
       {/* Tabs */}
-      <div className="border-b border-gray-200 dark:border-gray-800">
+      <div className="border-b border-gray-200 dark:border-white/10">
         <nav className="flex gap-1 overflow-x-auto" aria-label="Tabs">
           {TABS.map((t) => {
             const active = tab === t.id;
