@@ -36,30 +36,39 @@ export function CustomSelect({ value, onChange, options, placeholder, icon, clas
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
-  const [pos, setPos] = useState({ top: 0, left: 0, width: 0 });
+  const [pos, setPos] = useState({ top: 0, left: 0, width: 0, openUpward: false, maxH: 250 });
 
   useEffect(() => {
     if (!open) return;
     function onDocClick(e: MouseEvent) {
       if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
     }
-    function handleClose() {
-      setOpen(false);
-    }
+    function onResize() { setOpen(false); }
     document.addEventListener("mousedown", onDocClick);
-    window.addEventListener("scroll", handleClose, true);
-    window.addEventListener("resize", handleClose);
+    window.addEventListener("resize", onResize);
     return () => {
       document.removeEventListener("mousedown", onDocClick);
-      window.removeEventListener("scroll", handleClose, true);
-      window.removeEventListener("resize", handleClose);
+      window.removeEventListener("resize", onResize);
     };
   }, [open]);
 
   function handleToggle() {
     if (!open && triggerRef.current) {
       const rect = triggerRef.current.getBoundingClientRect();
-      setPos({ top: rect.bottom + 4, left: rect.left, width: rect.width });
+      const dropdownHeight = 250;
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const spaceAbove = rect.top;
+      const openUpward = spaceBelow < dropdownHeight && spaceAbove > spaceBelow;
+      const maxH = openUpward
+        ? Math.min(250, spaceAbove - 8)
+        : Math.min(250, spaceBelow - 8);
+      setPos({
+        top: openUpward ? rect.top - 4 : rect.bottom + 4,
+        left: rect.left,
+        width: rect.width,
+        openUpward,
+        maxH: Math.max(maxH, 80),
+      });
     }
     setOpen((v) => !v);
   }
@@ -82,10 +91,10 @@ export function CustomSelect({ value, onChange, options, placeholder, icon, clas
 
       {open && (
         <div
-          style={{ position: "fixed", top: pos.top, left: pos.left, width: pos.width, zIndex: 9999 }}
+          style={{ position: "fixed", top: pos.top, left: pos.left, width: pos.width, zIndex: 9999, ...(pos.openUpward ? { transform: "translateY(-100%)" } : {}) }}
           className="rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-gray-950 shadow-xl overflow-hidden"
         >
-          <ul className="py-1 max-h-[min(60vh,320px)] overflow-y-auto">
+          <ul className="py-1 overflow-y-auto" style={{ maxHeight: pos.maxH }}>
             {options.map((o) => {
               const active = value === o.value;
               return (
