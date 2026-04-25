@@ -20,7 +20,7 @@ interface Tag {
 }
 
 const COLORS = [
-  "#6366f1", "#3b82f6", "#06b6d4", "#10b981", "#f59e0b",
+  "#3b82f6", "#06b6d4", "#10b981", "#f59e0b", "#6366f1",
   "#ef4444", "#ec4899", "#8b5cf6", "#f97316", "#14b8a6",
 ];
 
@@ -28,7 +28,7 @@ export default function TagsPage() {
   const [tags, setTags] = useState<Tag[]>([]);
   const [loading, setLoading] = useState(true);
   const [newName, setNewName] = useState("");
-  const [newColor, setNewColor] = useState("#6366f1");
+  const [newColor, setNewColor] = useState("#3b82f6");
   const [editId, setEditId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
   const [editColor, setEditColor] = useState("");
@@ -160,7 +160,7 @@ export default function TagsPage() {
 
       {loading ? (
         <div className="flex items-center justify-center py-16">
-          <div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+          <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
         </div>
       ) : tags.length === 0 ? (
         <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-10 text-center">
@@ -275,7 +275,7 @@ export default function TagsPage() {
                     <td colSpan={4} className="px-4 py-3 bg-gray-50 dark:bg-gray-800/50">
                       {loadingStudents ? (
                         <div className="flex items-center gap-2 py-2">
-                          <div className="w-4 h-4 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+                          <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
                           <span className="text-xs text-gray-500">Carregando...</span>
                         </div>
                       ) : tagStudents.length === 0 ? (

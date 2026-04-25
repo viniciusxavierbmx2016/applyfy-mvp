@@ -245,15 +245,15 @@ export function AnalyticsOverview({
             <AreaChart data={data.newEnrollmentsPerDay} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
               <defs>
                 <linearGradient id="enrollGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#6366f1" stopOpacity={0.4} />
-                  <stop offset="100%" stopColor="#6366f1" stopOpacity={0} />
+                  <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.4} />
+                  <stop offset="100%" stopColor="#3b82f6" stopOpacity={0} />
                 </linearGradient>
               </defs>
               <CartesianGrid stroke="currentColor" className="text-gray-200 dark:text-gray-800" strokeDasharray="3 3" vertical={false} />
               <XAxis dataKey="day" stroke="currentColor" className="text-gray-400" fontSize={11} tickLine={false} axisLine={false} interval="preserveStartEnd" minTickGap={28} />
               <YAxis stroke="currentColor" className="text-gray-400" fontSize={11} tickLine={false} axisLine={false} allowDecimals={false} />
-              <Tooltip content={<CustomTooltip color="#6366f1" />} />
-              <Area type="monotone" dataKey="count" name="Matrículas" stroke="#6366f1" strokeWidth={2.5} fill="url(#enrollGrad)" />
+              <Tooltip content={<CustomTooltip color="#3b82f6" />} />
+              <Area type="monotone" dataKey="count" name="Matrículas" stroke="#3b82f6" strokeWidth={2.5} fill="url(#enrollGrad)" />
             </AreaChart>
           </ResponsiveContainer>
         </ChartCard>

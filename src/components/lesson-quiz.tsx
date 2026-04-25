@@ -140,7 +140,7 @@ export function LessonQuiz({ lessonId }: Props) {
   return (
     <div className="mt-8">
       <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-        <svg className="w-4 h-4 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <svg className="w-4 h-4 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
         </svg>
         Quiz
@@ -219,7 +219,7 @@ export function LessonQuiz({ lessonId }: Props) {
                         : state === "incorrect"
                         ? "bg-red-50 dark:bg-red-500/10 text-red-700 dark:text-red-400 ring-1 ring-red-500/30"
                         : state === "selected"
-                        ? "bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 ring-1 ring-indigo-500/30"
+                        ? "bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-400 ring-1 ring-blue-500/30"
                         : "bg-gray-50 dark:bg-white/[0.03] text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/[0.06]"
                     } ${disabled ? "cursor-default" : "cursor-pointer"}`}
                   >
@@ -229,7 +229,7 @@ export function LessonQuiz({ lessonId }: Props) {
                         : state === "incorrect"
                         ? "border-red-500 bg-red-500"
                         : state === "selected"
-                        ? "border-indigo-500 bg-indigo-500"
+                        ? "border-blue-500 bg-blue-500"
                         : "border-gray-300 dark:border-gray-600"
                     }`}>
                       {(state === "selected" || state === "correct" || state === "incorrect") && (
@@ -263,7 +263,7 @@ export function LessonQuiz({ lessonId }: Props) {
             type="button"
             onClick={handleSubmit}
             disabled={submitting}
-            className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold rounded-xl disabled:opacity-50 transition-colors"
+            className="px-6 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold rounded-xl disabled:opacity-50 transition-colors"
           >
             {submitting ? "Enviando..." : "Enviar respostas"}
           </button>
@@ -271,7 +271,7 @@ export function LessonQuiz({ lessonId }: Props) {
           <button
             type="button"
             onClick={retry}
-            className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold rounded-xl transition-colors"
+            className="px-6 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold rounded-xl transition-colors"
           >
             Tentar novamente
           </button>

@@ -246,7 +246,7 @@ export default function AdminSubscriptionsPage() {
         <select
           value={statusFilter}
           onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
-          className="px-3 py-2 bg-white dark:bg-white/[0.04] border border-gray-300 dark:border-white/[0.08] rounded-xl text-sm text-gray-900 dark:text-gray-300 focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/20 transition-colors duration-200"
+          className="px-3 py-2 bg-white dark:bg-white/[0.04] border border-gray-300 dark:border-white/[0.08] rounded-xl text-sm text-gray-900 dark:text-gray-300 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 transition-colors duration-200"
         >
           <option value="">Todos os status</option>
           {Object.entries(STATUS_LABELS).map(([k, v]) => (
@@ -256,7 +256,7 @@ export default function AdminSubscriptionsPage() {
         <select
           value={planFilter}
           onChange={(e) => { setPlanFilter(e.target.value); setPage(1); }}
-          className="px-3 py-2 bg-white dark:bg-white/[0.04] border border-gray-300 dark:border-white/[0.08] rounded-xl text-sm text-gray-900 dark:text-gray-300 focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/20 transition-colors duration-200"
+          className="px-3 py-2 bg-white dark:bg-white/[0.04] border border-gray-300 dark:border-white/[0.08] rounded-xl text-sm text-gray-900 dark:text-gray-300 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 transition-colors duration-200"
         >
           <option value="">Todos os planos</option>
           {plans.map((p) => (
@@ -398,7 +398,7 @@ export default function AdminSubscriptionsPage() {
                   type="text"
                   value={actionInput}
                   onChange={(e) => setActionInput(e.target.value)}
-                  className="w-full px-4 py-3 bg-gray-50 dark:bg-white/[0.04] border border-gray-300 dark:border-white/[0.08] rounded-xl text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/20 transition-colors duration-200"
+                  className="w-full px-4 py-3 bg-gray-50 dark:bg-white/[0.04] border border-gray-300 dark:border-white/[0.08] rounded-xl text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 transition-colors duration-200"
                   placeholder="Ex: Parceiro estratégico"
                   autoFocus
                 />
@@ -413,7 +413,7 @@ export default function AdminSubscriptionsPage() {
                   min={1}
                   value={actionInput}
                   onChange={(e) => setActionInput(e.target.value)}
-                  className="w-full px-4 py-3 bg-gray-50 dark:bg-white/[0.04] border border-gray-300 dark:border-white/[0.08] rounded-xl text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/20 transition-colors duration-200"
+                  className="w-full px-4 py-3 bg-gray-50 dark:bg-white/[0.04] border border-gray-300 dark:border-white/[0.08] rounded-xl text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 transition-colors duration-200"
                   placeholder="30"
                   autoFocus
                 />
@@ -426,7 +426,7 @@ export default function AdminSubscriptionsPage() {
                 <select
                   value={actionInput}
                   onChange={(e) => setActionInput(e.target.value)}
-                  className="w-full px-4 py-3 bg-gray-50 dark:bg-white/[0.04] border border-gray-300 dark:border-white/[0.08] rounded-xl text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/20 transition-colors duration-200"
+                  className="w-full px-4 py-3 bg-gray-50 dark:bg-white/[0.04] border border-gray-300 dark:border-white/[0.08] rounded-xl text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 transition-colors duration-200"
                 >
                   <option value="">Selecione...</option>
                   {plans

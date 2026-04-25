@@ -22,7 +22,7 @@ export async function autoTagStudent(
 ): Promise<void> {
   try {
     const tagName = `auto:${automationName}`;
-    const color = TAG_COLORS[triggerType] || "#6366f1";
+    const color = TAG_COLORS[triggerType] || "#3b82f6";
     const tag = await prisma.tag.upsert({
       where: { workspaceId_name: { workspaceId, name: tagName } },
       create: { workspaceId, name: tagName, color, autoSource: "automation" },

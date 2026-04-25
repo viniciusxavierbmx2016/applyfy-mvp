@@ -25,7 +25,7 @@
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
   --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
-  --shadow-glow: 0 0 20px rgba(99, 102, 241, 0.15);
+  --shadow-glow: 0 0 20px rgba(59, 130, 246, 0.15);
 
   --card-border: 1px solid rgba(0, 0, 0, 0.08);
   --card-bg: rgba(255, 255, 255, 0.6);
@@ -220,19 +220,19 @@ body {
 }
 
 /* ─── Producer theme overrides ───────────────────────────────── */
-/* Override indigo utilities with producer primary color */
-.producer-layout .bg-indigo-600 { background-color: var(--producer-primary, #6366F1) !important; }
-.producer-layout .bg-indigo-500 { background-color: var(--producer-primary-hover, #5558E3) !important; }
-.producer-layout .hover\:bg-indigo-500:hover { background-color: var(--producer-primary-hover, #5558E3) !important; }
-.producer-layout .hover\:bg-indigo-600:hover { background-color: var(--producer-primary, #6366F1) !important; }
-.producer-layout .text-indigo-400 { color: var(--producer-primary, #6366F1) !important; }
-.producer-layout .text-indigo-500 { color: var(--producer-primary, #6366F1) !important; }
-.producer-layout .text-indigo-600 { color: var(--producer-primary, #6366F1) !important; }
-.producer-layout .border-indigo-500 { border-color: var(--producer-primary, #6366F1) !important; }
-.producer-layout .border-indigo-600 { border-color: var(--producer-primary, #6366F1) !important; }
-.producer-layout .ring-indigo-500 { --tw-ring-color: var(--producer-primary, #6366F1) !important; }
-.producer-layout .focus\:border-indigo-500\/50:focus { border-color: var(--producer-primary, #6366F1) !important; }
-.producer-layout .focus\:ring-indigo-500\/20:focus { --tw-ring-color: var(--producer-primary, #6366F1) !important; }
+/* Override blue utilities with producer primary color */
+.producer-layout .bg-blue-600 { background-color: var(--producer-primary, #3b82f6) !important; }
+.producer-layout .bg-blue-500 { background-color: var(--producer-primary-hover, #2563eb) !important; }
+.producer-layout .hover\:bg-blue-500:hover { background-color: var(--producer-primary-hover, #2563eb) !important; }
+.producer-layout .hover\:bg-blue-600:hover { background-color: var(--producer-primary, #3b82f6) !important; }
+.producer-layout .text-blue-400 { color: var(--producer-primary, #3b82f6) !important; }
+.producer-layout .text-blue-500 { color: var(--producer-primary, #3b82f6) !important; }
+.producer-layout .text-blue-600 { color: var(--producer-primary, #3b82f6) !important; }
+.producer-layout .border-blue-500 { border-color: var(--producer-primary, #3b82f6) !important; }
+.producer-layout .border-blue-600 { border-color: var(--producer-primary, #3b82f6) !important; }
+.producer-layout .ring-blue-500 { --tw-ring-color: var(--producer-primary, #3b82f6) !important; }
+.producer-layout .focus\:border-blue-500\/50:focus { border-color: var(--producer-primary, #3b82f6) !important; }
+.producer-layout .focus\:ring-blue-500\/20:focus { --tw-ring-color: var(--producer-primary, #3b82f6) !important; }
 
 /* Override hardcoded dark-mode card/bg colors with producer variables */
 .producer-layout .dark\:bg-\[\#0a0e19\] { background-color: var(--producer-card, #0a0e19) !important; }
@@ -327,7 +327,7 @@ body {
 .prose-lesson ul { list-style-type: disc; }
 .prose-lesson ol { list-style-type: decimal; }
 .prose-lesson li { margin: 0.25rem 0; }
-.prose-lesson a { color: var(--member-primary, #6366f1); text-decoration: underline; }
+.prose-lesson a { color: var(--member-primary, #3b82f6); text-decoration: underline; }
 .prose-lesson strong { font-weight: 700; }
 .prose-lesson em { font-style: italic; }
 .prose-lesson u { text-decoration: underline; }
@@ -336,7 +336,7 @@ body {
 .prose-lesson pre { background: rgba(0,0,0,0.3); padding: 1rem; border-radius: 8px; overflow-x: auto; margin: 0.75rem 0; }
 .prose-lesson pre code { background: none; padding: 0; }
 .prose-lesson img { max-width: 100%; border-radius: 8px; margin: 1rem 0; }
-.prose-lesson blockquote { border-left: 3px solid var(--member-primary, #6366f1); padding-left: 1rem; margin: 0.75rem 0; color: #9ca3af; }
+.prose-lesson blockquote { border-left: 3px solid var(--member-primary, #3b82f6); padding-left: 1rem; margin: 0.75rem 0; color: #9ca3af; }
 
 /* ─── Tiptap editor styles ───────────────────────────────────── */
 .prose-editor { min-height: 200px; }
@@ -347,7 +347,7 @@ body {
 .prose-editor ul { list-style-type: disc; }
 .prose-editor ol { list-style-type: decimal; }
 .prose-editor li { margin: 0.15rem 0; }
-.prose-editor a { color: #6366f1; text-decoration: underline; cursor: pointer; }
+.prose-editor a { color: #3b82f6; text-decoration: underline; cursor: pointer; }
 .prose-editor strong { font-weight: 700; }
 .prose-editor em { font-style: italic; }
 .prose-editor u { text-decoration: underline; }
@@ -356,7 +356,7 @@ body {
 .prose-editor pre { background: rgba(0,0,0,0.3); padding: 0.75rem 1rem; border-radius: 8px; overflow-x: auto; margin: 0.5rem 0; }
 .prose-editor pre code { background: none; padding: 0; }
 .prose-editor img { max-width: 100%; border-radius: 8px; margin: 0.5rem 0; }
-.prose-editor blockquote { border-left: 3px solid #6366f1; padding-left: 1rem; margin: 0.5rem 0; color: #9ca3af; }
+.prose-editor blockquote { border-left: 3px solid #3b82f6; padding-left: 1rem; margin: 0.5rem 0; color: #9ca3af; }
 .prose-editor p.is-editor-empty:first-child::before {
   content: attr(data-placeholder);
   float: left;
@@ -371,7 +371,7 @@ body {
 .prose-editor .editor-button {
   display: inline-block;
   padding: 8px 20px;
-  background-color: var(--member-primary, #6366f1);
+  background-color: var(--member-primary, #3b82f6);
   color: #ffffff !important;
   border-radius: 10px;
   font-weight: 600;
@@ -387,10 +387,10 @@ body {
 .prose-editor .editor-button:hover {
   transform: translateY(-1px);
   filter: brightness(1.15);
-  box-shadow: 0 0 20px var(--btn-color, rgba(99, 102, 241, 0.5)), 0 0 40px color-mix(in srgb, var(--btn-color, #6366f1) 25%, transparent), 0 4px 12px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 0 20px var(--btn-color, rgba(59, 130, 246, 0.5)), 0 0 40px color-mix(in srgb, var(--btn-color, #3b82f6) 25%, transparent), 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 .prose-lesson .editor-button:active,
 .prose-editor .editor-button:active {
   transform: translateY(0);
-  box-shadow: 0 0 10px var(--btn-color, rgba(99, 102, 241, 0.3)), 0 2px 6px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 0 10px var(--btn-color, rgba(59, 130, 246, 0.3)), 0 2px 6px rgba(0, 0, 0, 0.2);
 }

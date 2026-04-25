@@ -42,13 +42,13 @@ export function ConfirmModal({
   const iconColors = {
     danger: "bg-red-900/30 text-red-400",
     warning: "bg-amber-900/30 text-amber-400",
-    info: "bg-indigo-900/30 text-indigo-400",
+    info: "bg-blue-900/30 text-blue-400",
   };
 
   const btnColors = {
     danger: "bg-red-600 hover:bg-red-500",
     warning: "bg-amber-600 hover:bg-amber-500",
-    info: "bg-indigo-600 hover:bg-indigo-500",
+    info: "bg-blue-600 hover:bg-blue-500",
   };
 
   return (

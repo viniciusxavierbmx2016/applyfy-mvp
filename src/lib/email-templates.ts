@@ -44,7 +44,7 @@ function baseTemplate(content: string): string {
 </html>`;
 }
 
-function ctaButton(text: string, url: string, color: string = "#6366F1"): string {
+function ctaButton(text: string, url: string, color: string = "#3b82f6"): string {
   return `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:28px 0 0;">
   <tr>
     <td style="background-color:${color};border-radius:10px;">

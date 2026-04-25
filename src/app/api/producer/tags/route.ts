@@ -44,7 +44,7 @@ export async function POST(request: Request) {
 
     const body = await request.json();
     const name = (body.name as string)?.trim();
-    const color = (body.color as string)?.trim() || "#6366f1";
+    const color = (body.color as string)?.trim() || "#3b82f6";
 
     if (!name) {
       return NextResponse.json({ error: "Nome obrigatório" }, { status: 400 });

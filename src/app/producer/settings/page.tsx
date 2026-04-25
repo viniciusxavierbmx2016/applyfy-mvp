@@ -18,7 +18,7 @@ interface ThemeConfig {
 
 const DEFAULTS: ThemeConfig = {
   mode: "dark",
-  primaryColor: "#6366F1",
+  primaryColor: "#3b82f6",
   secondaryColor: "#1a1e2e",
   bgColor: "#0a0a1a",
   headerColor: "#0a0a1a",

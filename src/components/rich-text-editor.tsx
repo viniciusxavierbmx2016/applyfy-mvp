@@ -82,7 +82,7 @@ export default function RichTextEditor({
       const href = anchor.getAttribute("href") || "";
       const text = anchor.textContent || "";
       const isButton = anchor.classList.contains("editor-button");
-      let color = "#6366f1";
+      let color = "#3b82f6";
       if (isButton && anchor.style.backgroundColor) {
         color = rgbToHex(anchor.style.backgroundColor);
       }
@@ -94,7 +94,7 @@ export default function RichTextEditor({
   if (!editor) return null;
 
   return (
-    <div className="rounded-xl border border-gray-300 dark:border-[#1a1e2e] overflow-hidden focus-within:border-indigo-500/50 transition-colors">
+    <div className="rounded-xl border border-gray-300 dark:border-[#1a1e2e] overflow-hidden focus-within:border-blue-500/50 transition-colors">
       <Toolbar
         editor={editor}
         onLinkClick={() => { setEditingLink(null); setLinkModal(true); }}
@@ -132,7 +132,7 @@ export default function RichTextEditor({
 function rgbToHex(rgb: string): string {
   if (rgb.startsWith("#")) return rgb;
   const match = rgb.match(/\d+/g);
-  if (!match || match.length < 3) return "#6366f1";
+  if (!match || match.length < 3) return "#3b82f6";
   const [r, g, b] = match.map(Number);
   return "#" + [r, g, b].map((v) => v.toString(16).padStart(2, "0")).join("");
 }
@@ -157,7 +157,7 @@ function LinkModal({
   const [url, setUrl] = useState(editData?.href || "");
   const [text, setText] = useState(editData?.text || "");
   const [style, setStyle] = useState<"link" | "button">(editData?.isButton ? "button" : "link");
-  const [buttonColor, setButtonColor] = useState(editData?.color || "#6366f1");
+  const [buttonColor, setButtonColor] = useState(editData?.color || "#3b82f6");
 
   function handleSave() {
     if (!url.trim()) return;
@@ -223,7 +223,7 @@ function LinkModal({
               value={url}
               onChange={(e) => setUrl(e.target.value)}
               placeholder="exemplo.com.br (https:// automático)"
-              className="w-full px-4 py-3 bg-gray-50 dark:bg-[#0f1320] border border-gray-300 dark:border-[#1a1e2e] rounded-xl text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-indigo-500/50"
+              className="w-full px-4 py-3 bg-gray-50 dark:bg-[#0f1320] border border-gray-300 dark:border-[#1a1e2e] rounded-xl text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-blue-500/50"
               onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleSave(); } }}
             />
           </div>
@@ -235,7 +235,7 @@ function LinkModal({
               value={text}
               onChange={(e) => setText(e.target.value)}
               placeholder="Clique aqui (opcional)"
-              className="w-full px-4 py-3 bg-gray-50 dark:bg-[#0f1320] border border-gray-300 dark:border-[#1a1e2e] rounded-xl text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-indigo-500/50"
+              className="w-full px-4 py-3 bg-gray-50 dark:bg-[#0f1320] border border-gray-300 dark:border-[#1a1e2e] rounded-xl text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-blue-500/50"
               onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleSave(); } }}
             />
           </div>
@@ -248,14 +248,14 @@ function LinkModal({
                 onClick={() => setStyle("link")}
                 className={`flex flex-col items-center gap-2.5 p-4 rounded-xl border-2 transition-colors ${
                   style === "link"
-                    ? "border-indigo-500 bg-indigo-500/5 dark:bg-indigo-500/10"
+                    ? "border-blue-500 bg-blue-500/5 dark:bg-blue-500/10"
                     : "border-gray-200 dark:border-[#28282e] hover:border-gray-300 dark:hover:border-[#363640]"
                 }`}
               >
-                <svg className="w-5 h-5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <svg className="w-5 h-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
                 </svg>
-                <span className="text-indigo-500 text-xs underline">texto com link</span>
+                <span className="text-blue-500 text-xs underline">texto com link</span>
                 <span className="text-xs font-medium text-gray-700 dark:text-gray-300">Link</span>
               </button>
               <button
@@ -263,14 +263,14 @@ function LinkModal({
                 onClick={() => setStyle("button")}
                 className={`flex flex-col items-center gap-2.5 p-4 rounded-xl border-2 transition-colors ${
                   style === "button"
-                    ? "border-indigo-500 bg-indigo-500/5 dark:bg-indigo-500/10"
+                    ? "border-blue-500 bg-blue-500/5 dark:bg-blue-500/10"
                     : "border-gray-200 dark:border-[#28282e] hover:border-gray-300 dark:hover:border-[#363640]"
                 }`}
               >
-                <svg className="w-5 h-5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <svg className="w-5 h-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5z" />
                 </svg>
-                <span className="inline-block px-3 py-1 bg-indigo-600 text-white text-[10px] font-semibold rounded-lg">Botão</span>
+                <span className="inline-block px-3 py-1 bg-blue-600 text-white text-[10px] font-semibold rounded-lg">Botão</span>
                 <span className="text-xs font-medium text-gray-700 dark:text-gray-300">Botão</span>
               </button>
             </div>
@@ -295,10 +295,10 @@ function LinkModal({
                       if (/^#[0-9a-fA-F]{0,6}$/.test(v)) setButtonColor(v);
                     }}
                     maxLength={7}
-                    className="w-28 px-4 py-2.5 bg-gray-50 dark:bg-[#0f1320] border border-gray-300 dark:border-[#1a1e2e] rounded-xl text-sm text-gray-900 dark:text-white font-mono focus:outline-none focus:border-indigo-500/50"
+                    className="w-28 px-4 py-2.5 bg-gray-50 dark:bg-[#0f1320] border border-gray-300 dark:border-[#1a1e2e] rounded-xl text-sm text-gray-900 dark:text-white font-mono focus:outline-none focus:border-blue-500/50"
                   />
                   <div className="flex gap-1.5">
-                    {["#6366f1", "#10b981", "#f59e0b", "#ef4444", "#3b82f6", "#8b5cf6"].map((c) => (
+                    {["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#06b6d4"].map((c) => (
                       <button
                         key={c}
                         type="button"
@@ -348,7 +348,7 @@ function LinkModal({
             type="button"
             onClick={handleSave}
             disabled={!url.trim()}
-            className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-xl disabled:opacity-40 transition-colors"
+            className="px-6 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium rounded-xl disabled:opacity-40 transition-colors"
           >
             {isEditing ? "Salvar" : "Inserir"}
           </button>
@@ -388,7 +388,7 @@ function ImageModal({ editor, onClose }: { editor: Editor; onClose: () => void }
               value={url}
               onChange={(e) => { setUrl(e.target.value); setPreviewError(false); }}
               placeholder="https://exemplo.com/imagem.jpg"
-              className="w-full px-4 py-3 bg-gray-50 dark:bg-[#0f1320] border border-gray-300 dark:border-[#1a1e2e] rounded-xl text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-indigo-500/50"
+              className="w-full px-4 py-3 bg-gray-50 dark:bg-[#0f1320] border border-gray-300 dark:border-[#1a1e2e] rounded-xl text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-blue-500/50"
               onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleInsert(); } }}
             />
           </div>
@@ -421,7 +421,7 @@ function ImageModal({ editor, onClose }: { editor: Editor; onClose: () => void }
             type="button"
             onClick={handleInsert}
             disabled={!url.trim()}
-            className="flex-1 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-xl disabled:opacity-40 transition-colors"
+            className="flex-1 px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium rounded-xl disabled:opacity-40 transition-colors"
           >
             Inserir
           </button>

@@ -126,7 +126,7 @@ export function ThumbnailUpload({
       {value ? (
         <div
           ref={containerRef}
-          className={`relative group ${aspectClass} bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden border ${mode === "reposition" ? "border-indigo-500 border-2 border-dashed" : "border-gray-300 dark:border-gray-700"}`}
+          className={`relative group ${aspectClass} bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden border ${mode === "reposition" ? "border-blue-500 border-2 border-dashed" : "border-gray-300 dark:border-gray-700"}`}
           style={{ cursor: mode === "reposition" ? "grab" : undefined }}
           onMouseDown={mode === "reposition" ? (e) => { e.preventDefault(); handleDragStart(e.clientX, e.clientY); } : undefined}
           onTouchStart={mode === "reposition" ? (e) => { const t = e.touches[0]; handleDragStart(t.clientX, t.clientY); } : undefined}
@@ -176,7 +176,7 @@ export function ThumbnailUpload({
                 <button
                   type="button"
                   onClick={handleSave}
-                  className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs px-4 py-1.5 rounded-lg font-medium transition"
+                  className="bg-blue-600 hover:bg-blue-500 text-white text-xs px-4 py-1.5 rounded-lg font-medium transition"
                 >
                   Salvar
                 </button>

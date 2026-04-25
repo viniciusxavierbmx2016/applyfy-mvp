@@ -56,7 +56,7 @@ export default function ProducerLoginPage() {
               }
             />
           </div>
-          <p className="text-sm font-medium text-indigo-600 dark:text-indigo-400">
+          <p className="text-sm font-medium text-blue-600 dark:text-blue-400">
             Área do produtor e colaborador
           </p>
         </div>
@@ -68,7 +68,7 @@ export default function ProducerLoginPage() {
               {errorRole === "ADMIN" && (
                 <Link
                   href="/admin/login"
-                  className="inline-block mt-2 text-indigo-400 hover:text-indigo-300 font-medium"
+                  className="inline-block mt-2 text-blue-400 hover:text-blue-300 font-medium"
                 >
                   Ir para login do admin →
                 </Link>
@@ -87,7 +87,7 @@ export default function ProducerLoginPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 autoComplete="email"
-                className="w-full px-4 py-3 bg-gray-100 dark:bg-white/[0.04] border border-gray-300 dark:border-white/[0.08] rounded-xl text-gray-900 dark:text-white focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/20 transition"
+                className="w-full px-4 py-3 bg-gray-100 dark:bg-white/[0.04] border border-gray-300 dark:border-white/[0.08] rounded-xl text-gray-900 dark:text-white focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 transition"
                 placeholder="seu@email.com"
               />
             </div>
@@ -101,14 +101,14 @@ export default function ProducerLoginPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 autoComplete="current-password"
-                className="w-full px-4 py-3 bg-gray-100 dark:bg-white/[0.04] border border-gray-300 dark:border-white/[0.08] rounded-xl text-gray-900 dark:text-white focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/20 transition"
+                className="w-full px-4 py-3 bg-gray-100 dark:bg-white/[0.04] border border-gray-300 dark:border-white/[0.08] rounded-xl text-gray-900 dark:text-white focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 transition"
                 placeholder="••••••••"
               />
             </div>
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-medium rounded-xl shadow-lg shadow-indigo-500/20 transition"
+              className="w-full py-3 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-medium rounded-xl shadow-lg shadow-blue-500/20 transition"
             >
               {loading ? "Entrando..." : "Entrar"}
             </button>
@@ -117,13 +117,13 @@ export default function ProducerLoginPage() {
           <div className="mt-6 flex items-center justify-between text-sm">
             <Link
               href="/forgot-password"
-              className="text-indigo-600 dark:text-indigo-400 hover:underline"
+              className="text-blue-600 dark:text-blue-400 hover:underline"
             >
               Esqueci minha senha
             </Link>
             <Link
               href="/producer/register"
-              className="text-indigo-600 dark:text-indigo-400 hover:underline"
+              className="text-blue-600 dark:text-blue-400 hover:underline"
             >
               Criar conta
             </Link>

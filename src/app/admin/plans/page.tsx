@@ -166,7 +166,7 @@ export default function AdminPlansPage() {
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Planos</h1>
         <button
           onClick={openCreate}
-          className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-lg transition"
+          className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium rounded-lg transition"
         >
           Criar plano
         </button>
@@ -180,8 +180,8 @@ export default function AdminPlansPage() {
         </div>
       ) : plans.length === 0 ? (
         <div className="text-center py-16">
-          <div className="w-14 h-14 mx-auto rounded-full bg-indigo-500/10 flex items-center justify-center mb-4">
-            <svg className="w-7 h-7 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className="w-14 h-14 mx-auto rounded-full bg-blue-500/10 flex items-center justify-center mb-4">
+            <svg className="w-7 h-7 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
             </svg>
           </div>
@@ -219,7 +219,7 @@ export default function AdminPlansPage() {
 
               <div className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
                 <p>{p.maxWorkspaces} workspaces • {p.maxCoursesPerWorkspace} cursos</p>
-                <p className="text-indigo-600 dark:text-indigo-400 font-medium">
+                <p className="text-blue-600 dark:text-blue-400 font-medium">
                   {p._count.subscriptions} produtor{p._count.subscriptions !== 1 ? "es" : ""}
                 </p>
               </div>
@@ -280,7 +280,7 @@ export default function AdminPlansPage() {
                       ...(modal === "create" ? { slug: slugify(name) } : {}),
                     }));
                   }}
-                  className="w-full px-3 py-2 bg-gray-100 dark:bg-white/[0.04] border border-gray-300 dark:border-white/[0.08] rounded-xl text-gray-900 dark:text-white text-sm focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/20 transition"
+                  className="w-full px-3 py-2 bg-gray-100 dark:bg-white/[0.04] border border-gray-300 dark:border-white/[0.08] rounded-xl text-gray-900 dark:text-white text-sm focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 transition"
                   placeholder="Ex: Pro"
                 />
               </div>
@@ -306,7 +306,7 @@ export default function AdminPlansPage() {
                     step="0.01"
                     value={form.price}
                     onChange={(e) => setForm((f) => ({ ...f, price: e.target.value }))}
-                    className="w-full px-3 py-2 bg-gray-100 dark:bg-white/[0.04] border border-gray-300 dark:border-white/[0.08] rounded-xl text-gray-900 dark:text-white text-sm focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/20 transition"
+                    className="w-full px-3 py-2 bg-gray-100 dark:bg-white/[0.04] border border-gray-300 dark:border-white/[0.08] rounded-xl text-gray-900 dark:text-white text-sm focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 transition"
                     placeholder="97.00"
                   />
                 </div>
@@ -315,7 +315,7 @@ export default function AdminPlansPage() {
                   <select
                     value={form.interval}
                     onChange={(e) => setForm((f) => ({ ...f, interval: e.target.value }))}
-                    className="w-full px-3 py-2 bg-gray-100 dark:bg-white/[0.04] border border-gray-300 dark:border-white/[0.08] rounded-xl text-gray-900 dark:text-white text-sm focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/20 transition"
+                    className="w-full px-3 py-2 bg-gray-100 dark:bg-white/[0.04] border border-gray-300 dark:border-white/[0.08] rounded-xl text-gray-900 dark:text-white text-sm focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 transition"
                   >
                     <option value="monthly">Mensal</option>
                     <option value="yearly">Anual</option>
@@ -330,7 +330,7 @@ export default function AdminPlansPage() {
                     type="number"
                     value={form.maxWorkspaces}
                     onChange={(e) => setForm((f) => ({ ...f, maxWorkspaces: e.target.value }))}
-                    className="w-full px-3 py-2 bg-gray-100 dark:bg-white/[0.04] border border-gray-300 dark:border-white/[0.08] rounded-xl text-gray-900 dark:text-white text-sm focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/20 transition"
+                    className="w-full px-3 py-2 bg-gray-100 dark:bg-white/[0.04] border border-gray-300 dark:border-white/[0.08] rounded-xl text-gray-900 dark:text-white text-sm focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 transition"
                   />
                 </div>
                 <div>
@@ -339,7 +339,7 @@ export default function AdminPlansPage() {
                     type="number"
                     value={form.maxCoursesPerWorkspace}
                     onChange={(e) => setForm((f) => ({ ...f, maxCoursesPerWorkspace: e.target.value }))}
-                    className="w-full px-3 py-2 bg-gray-100 dark:bg-white/[0.04] border border-gray-300 dark:border-white/[0.08] rounded-xl text-gray-900 dark:text-white text-sm focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/20 transition"
+                    className="w-full px-3 py-2 bg-gray-100 dark:bg-white/[0.04] border border-gray-300 dark:border-white/[0.08] rounded-xl text-gray-900 dark:text-white text-sm focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 transition"
                   />
                 </div>
               </div>
@@ -365,7 +365,7 @@ export default function AdminPlansPage() {
               <button
                 onClick={handleSave}
                 disabled={saving || !form.name || !form.price}
-                className="flex-1 px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 rounded-lg transition"
+                className="flex-1 px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-500 disabled:opacity-50 rounded-lg transition"
               >
                 {saving ? "Salvando..." : "Salvar"}
               </button>

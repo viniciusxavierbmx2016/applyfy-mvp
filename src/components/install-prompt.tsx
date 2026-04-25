@@ -85,7 +85,7 @@ export function InstallPrompt() {
 
   return (
     <div className="fixed bottom-0 inset-x-0 z-50 p-3 sm:p-4 animate-slide-up">
-      <div className="max-w-lg mx-auto bg-indigo-600 rounded-2xl shadow-2xl shadow-indigo-900/40 px-4 py-3 flex items-center gap-3">
+      <div className="max-w-lg mx-auto bg-blue-600 rounded-2xl shadow-2xl shadow-blue-900/40 px-4 py-3 flex items-center gap-3">
         <div className="flex-shrink-0 w-9 h-9 bg-white/20 rounded-xl flex items-center justify-center">
           <svg
             className="w-5 h-5 text-white"
@@ -122,7 +122,7 @@ export function InstallPrompt() {
         {!showIOS && (
           <button
             onClick={handleInstall}
-            className="flex-shrink-0 px-4 py-1.5 bg-white text-indigo-700 text-xs font-bold rounded-lg hover:bg-indigo-50 transition"
+            className="flex-shrink-0 px-4 py-1.5 bg-white text-blue-700 text-xs font-bold rounded-lg hover:bg-blue-50 transition"
           >
             Instalar
           </button>

@@ -144,7 +144,7 @@ export default function ProducerRegisterPage() {
               }
             />
           </div>
-          <p className="text-sm font-medium text-indigo-400 mt-2">Crie sua conta de produtor</p>
+          <p className="text-sm font-medium text-blue-400 mt-2">Crie sua conta de produtor</p>
         </div>
 
         {/* Progress bar */}
@@ -154,7 +154,7 @@ export default function ProducerRegisterPage() {
               <div className="flex flex-col items-center">
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-colors ${
                   i <= step
-                    ? "bg-indigo-600 text-white shadow-lg shadow-indigo-500/20"
+                    ? "bg-blue-600 text-white shadow-lg shadow-blue-500/20"
                     : "bg-white/[0.04] text-gray-500 border border-white/[0.08]"
                 }`}>
                   {i < step ? (
@@ -165,12 +165,12 @@ export default function ProducerRegisterPage() {
                     i + 1
                   )}
                 </div>
-                <span className={`text-xs mt-1 ${i <= step ? "text-indigo-400" : "text-gray-600"}`}>
+                <span className={`text-xs mt-1 ${i <= step ? "text-blue-400" : "text-gray-600"}`}>
                   {label}
                 </span>
               </div>
               {i < STEPS.length - 1 && (
-                <div className={`w-12 h-0.5 mx-1 mb-4 ${i < step ? "bg-indigo-600" : "bg-white/[0.08]"}`} />
+                <div className={`w-12 h-0.5 mx-1 mb-4 ${i < step ? "bg-blue-600" : "bg-white/[0.08]"}`} />
               )}
             </div>
           ))}
@@ -202,11 +202,11 @@ export default function ProducerRegisterPage() {
                   type="checkbox"
                   checked={agreed}
                   onChange={(e) => setAgreed(e.target.checked)}
-                  className="mt-0.5 rounded border-white/[0.08] bg-white/[0.04] text-indigo-600 focus:ring-indigo-500"
+                  className="mt-0.5 rounded border-white/[0.08] bg-white/[0.04] text-blue-600 focus:ring-blue-500"
                 />
                 Concordo com os Termos de Uso e Política de Privacidade
               </label>
-              <button onClick={next} className="w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-medium rounded-xl shadow-lg shadow-indigo-500/20 transition">
+              <button onClick={next} className="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white font-medium rounded-xl shadow-lg shadow-blue-500/20 transition">
                 Próximo
               </button>
             </div>
@@ -261,7 +261,7 @@ export default function ProducerRegisterPage() {
                 <button
                   onClick={handleSubmit}
                   disabled={loading}
-                  className="flex-1 py-3 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-medium rounded-lg transition"
+                  className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-medium rounded-lg transition"
                 >
                   {loading ? "Criando conta..." : "Criar conta"}
                 </button>
@@ -271,7 +271,7 @@ export default function ProducerRegisterPage() {
 
           <p className="mt-6 text-center text-sm text-gray-500">
             Já tem conta?{" "}
-            <Link href="/producer/login" className="text-indigo-400 hover:underline font-medium">
+            <Link href="/producer/login" className="text-blue-400 hover:underline font-medium">
               Fazer login
             </Link>
           </p>
@@ -300,7 +300,7 @@ function Input({
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         autoComplete={autoComplete}
-        className="w-full px-4 py-3 bg-white/[0.04] border border-white/[0.08] rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/20 transition"
+        className="w-full px-4 py-3 bg-white/[0.04] border border-white/[0.08] rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 transition"
       />
     </div>
   );
@@ -313,7 +313,7 @@ function SelectCard({ label, selected, onClick }: { label: string; selected: boo
       onClick={onClick}
       className={`px-4 py-3 rounded-xl text-sm font-medium text-left transition border ${
         selected
-          ? "border-indigo-500/50 bg-indigo-500/10 text-indigo-400 shadow-lg shadow-indigo-500/10"
+          ? "border-blue-500/50 bg-blue-500/10 text-blue-400 shadow-lg shadow-blue-500/10"
           : "border-white/[0.06] bg-white/[0.03] text-gray-300 hover:border-white/[0.12]"
       }`}
     >
@@ -328,7 +328,7 @@ function StepButtons({ onBack, onNext }: { onBack: () => void; onNext: () => voi
       <button onClick={onBack} className="flex-1 py-3 border border-white/[0.08] text-gray-300 hover:bg-white/[0.04] font-medium rounded-xl transition">
         Voltar
       </button>
-      <button onClick={onNext} className="flex-1 py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-medium rounded-xl shadow-lg shadow-indigo-500/20 transition">
+      <button onClick={onNext} className="flex-1 py-3 bg-blue-600 hover:bg-blue-500 text-white font-medium rounded-xl shadow-lg shadow-blue-500/20 transition">
         Próximo
       </button>
     </div>

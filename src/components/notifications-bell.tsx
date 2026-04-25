@@ -107,7 +107,7 @@ export function NotificationsBell() {
           />
         </svg>
         {unread > 0 && (
-          <span className="absolute top-1 right-1 min-w-[18px] h-[18px] px-1 flex items-center justify-center text-[10px] font-bold text-white bg-indigo-500 rounded-full shadow-[0_0_8px_rgba(99,102,241,0.4)]">
+          <span className="absolute top-1 right-1 min-w-[18px] h-[18px] px-1 flex items-center justify-center text-[10px] font-bold text-white bg-blue-500 rounded-full shadow-[0_0_8px_rgba(99,102,241,0.4)]">
             {unread > 99 ? "99+" : unread}
           </span>
         )}

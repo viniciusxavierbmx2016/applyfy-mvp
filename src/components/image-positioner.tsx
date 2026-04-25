@@ -96,7 +96,7 @@ export function ImagePositioner({
     <div
       ref={containerRef}
       className={`relative overflow-hidden rounded-lg ${className || ""} ${
-        editing ? "border-2 border-dashed border-indigo-500" : "border border-gray-300 dark:border-gray-700"
+        editing ? "border-2 border-dashed border-blue-500" : "border border-gray-300 dark:border-gray-700"
       }`}
       style={{ aspectRatio }}
       onMouseMove={editing ? handleMouseMove : undefined}
@@ -130,7 +130,7 @@ export function ImagePositioner({
             <button
               type="button"
               onClick={saveEdit}
-              className="px-3 py-1.5 text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-500 rounded-lg transition"
+              className="px-3 py-1.5 text-xs font-medium text-white bg-blue-600 hover:bg-blue-500 rounded-lg transition"
             >
               Salvar posição
             </button>

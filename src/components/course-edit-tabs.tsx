@@ -21,7 +21,7 @@ const baseCls =
   "flex items-center gap-1.5 px-4 py-2.5 text-[13px] font-medium border-b-2 transition whitespace-nowrap";
 const inactiveCls =
   "border-transparent text-gray-500 dark:text-gray-500 hover:text-gray-900 dark:hover:text-gray-300";
-const activeCls = "border-indigo-500 text-gray-900 dark:text-white";
+const activeCls = "border-blue-500 text-gray-900 dark:text-white";
 
 type TabDef = {
   key: CourseEditTab;
@@ -107,7 +107,7 @@ export function CourseEditTabs({
               {tab.icon}
               {tab.label}
               {tab.key === "students" && typeof studentsCount === "number" && (
-                <span className="ml-0.5 text-[10px] px-1.5 py-0.5 rounded-full bg-indigo-500/15 text-indigo-400 font-semibold">
+                <span className="ml-0.5 text-[10px] px-1.5 py-0.5 rounded-full bg-blue-500/15 text-blue-400 font-semibold">
                   {studentsCount}
                 </span>
               )}

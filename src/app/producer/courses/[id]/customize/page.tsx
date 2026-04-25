@@ -308,7 +308,7 @@ export default function CourseCustomizePage() {
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               {COLOR_FIELDS.map((field) => {
                 const val = (custom[field.key] as string) || "";
-                const displayHex = HEX_RE.test(val) ? val : "#6366f1";
+                const displayHex = HEX_RE.test(val) ? val : "#3b82f6";
                 return (
                   <label
                     key={field.key}

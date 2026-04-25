@@ -110,7 +110,7 @@ export function QuizManager({ lessonId }: Props) {
           type="button"
           onClick={createQuiz}
           disabled={saving}
-          className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-lg disabled:opacity-50"
+          className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium rounded-lg disabled:opacity-50"
         >
           Adicionar quiz
         </button>
@@ -142,7 +142,7 @@ export function QuizManager({ lessonId }: Props) {
               max={100}
               value={quiz.passingScore}
               onChange={(e) => updateQuiz({ passingScore: Number(e.target.value) })}
-              className="w-16 px-2 py-1 bg-gray-50 dark:bg-white/[0.04] border border-gray-300 dark:border-white/[0.08] rounded-lg text-sm text-gray-900 dark:text-white text-center focus:outline-none focus:border-indigo-500/50"
+              className="w-16 px-2 py-1 bg-gray-50 dark:bg-white/[0.04] border border-gray-300 dark:border-white/[0.08] rounded-lg text-sm text-gray-900 dark:text-white text-center focus:outline-none focus:border-blue-500/50"
             />
             <span className="text-gray-500">%</span>
           </label>
@@ -151,7 +151,7 @@ export function QuizManager({ lessonId }: Props) {
               type="checkbox"
               checked={quiz.showAnswers}
               onChange={(e) => updateQuiz({ showAnswers: e.target.checked })}
-              className="rounded border-gray-300 dark:border-white/20 text-indigo-600"
+              className="rounded border-gray-300 dark:border-white/20 text-blue-600"
             />
             <span className="text-gray-600 dark:text-gray-400">Mostrar respostas corretas</span>
           </label>
@@ -166,7 +166,7 @@ export function QuizManager({ lessonId }: Props) {
               <button
                 type="button"
                 onClick={() => { setEditingQuestion(q); setModalOpen(true); }}
-                className="text-xs text-indigo-500 hover:text-indigo-400"
+                className="text-xs text-blue-500 hover:text-blue-400"
               >
                 Editar
               </button>
@@ -315,7 +315,7 @@ function QuestionModal({
               value={text}
               onChange={(e) => setText(e.target.value)}
               rows={2}
-              className="w-full px-3 py-2 bg-gray-50 dark:bg-white/[0.04] border border-gray-300 dark:border-white/[0.08] rounded-xl text-sm text-gray-900 dark:text-white focus:outline-none focus:border-indigo-500/50 resize-none"
+              className="w-full px-3 py-2 bg-gray-50 dark:bg-white/[0.04] border border-gray-300 dark:border-white/[0.08] rounded-xl text-sm text-gray-900 dark:text-white focus:outline-none focus:border-blue-500/50 resize-none"
               placeholder="Digite a pergunta..."
             />
           </div>
@@ -345,7 +345,7 @@ function QuestionModal({
                     type="text"
                     value={o.text}
                     onChange={(e) => updateOptionText(i, e.target.value)}
-                    className="flex-1 px-3 py-2 bg-gray-50 dark:bg-white/[0.04] border border-gray-300 dark:border-white/[0.08] rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:border-indigo-500/50"
+                    className="flex-1 px-3 py-2 bg-gray-50 dark:bg-white/[0.04] border border-gray-300 dark:border-white/[0.08] rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:border-blue-500/50"
                     placeholder={`Opção ${i + 1}`}
                   />
                   {options.length > 2 && (
@@ -366,7 +366,7 @@ function QuestionModal({
               <button
                 type="button"
                 onClick={addOption}
-                className="mt-2 text-xs text-indigo-500 hover:text-indigo-400"
+                className="mt-2 text-xs text-blue-500 hover:text-blue-400"
               >
                 + Adicionar opção
               </button>
@@ -386,7 +386,7 @@ function QuestionModal({
             <button
               type="submit"
               disabled={saving}
-              className="flex-1 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-xl disabled:opacity-50"
+              className="flex-1 px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium rounded-xl disabled:opacity-50"
             >
               {saving ? "Salvando..." : "Salvar"}
             </button>

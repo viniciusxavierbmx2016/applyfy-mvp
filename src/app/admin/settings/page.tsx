@@ -88,7 +88,7 @@ export default function AdminSettingsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -142,7 +142,7 @@ export default function AdminSettingsPage() {
               <button
                 onClick={() => logoRef.current?.click()}
                 disabled={uploadingLogo}
-                className="px-4 py-2 text-sm font-medium bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition disabled:opacity-50"
+                className="px-4 py-2 text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition disabled:opacity-50"
               >
                 {uploadingLogo ? "Enviando..." : "Enviar logo"}
               </button>
@@ -189,7 +189,7 @@ export default function AdminSettingsPage() {
               <button
                 onClick={() => faviconRef.current?.click()}
                 disabled={uploadingFavicon}
-                className="px-4 py-2 text-sm font-medium bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition disabled:opacity-50"
+                className="px-4 py-2 text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition disabled:opacity-50"
               >
                 {uploadingFavicon ? "Enviando..." : "Enviar favicon"}
               </button>

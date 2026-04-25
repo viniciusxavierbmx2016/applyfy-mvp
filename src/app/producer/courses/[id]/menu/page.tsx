@@ -166,7 +166,7 @@ export default function CourseMenuPage({ params }: { params: { id: string } }) {
 
       {loading ? (
         <div className="flex items-center justify-center h-32">
-          <div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+          <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
         </div>
       ) : (
         <>
@@ -204,7 +204,7 @@ export default function CourseMenuPage({ params }: { params: { id: string } }) {
                   value={newLabel}
                   onChange={(e) => setNewLabel(e.target.value)}
                   placeholder="Nome (ex: Instagram)"
-                  className="px-3 py-2 bg-gray-50 dark:bg-[#0f1320] border border-gray-300 dark:border-[#1a1e2e] rounded-xl text-sm text-gray-900 dark:text-white focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/20"
+                  className="px-3 py-2 bg-gray-50 dark:bg-[#0f1320] border border-gray-300 dark:border-[#1a1e2e] rounded-xl text-sm text-gray-900 dark:text-white focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20"
                 />
               </div>
               <input
@@ -212,12 +212,12 @@ export default function CourseMenuPage({ params }: { params: { id: string } }) {
                 value={newUrl}
                 onChange={(e) => setNewUrl(e.target.value)}
                 placeholder="URL (ex: https://instagram.com/seucanal)"
-                className="w-full px-3 py-2 bg-gray-50 dark:bg-[#0f1320] border border-gray-300 dark:border-[#1a1e2e] rounded-xl text-sm text-gray-900 dark:text-white focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/20"
+                className="w-full px-3 py-2 bg-gray-50 dark:bg-[#0f1320] border border-gray-300 dark:border-[#1a1e2e] rounded-xl text-sm text-gray-900 dark:text-white focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20"
               />
               <div className="flex gap-2">
                 <button
                   onClick={handleCreate}
-                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-lg transition"
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium rounded-lg transition"
                 >
                   Adicionar
                 </button>
@@ -323,7 +323,7 @@ function SortableRow({
         type="text"
         value={item.label}
         onChange={(e) => onUpdate(item.id, { label: e.target.value })}
-        className="flex-1 min-w-0 px-3 py-2 bg-gray-50 dark:bg-[#0f1320] border border-gray-300 dark:border-[#1a1e2e] rounded-xl text-sm text-gray-900 dark:text-white focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/20"
+        className="flex-1 min-w-0 px-3 py-2 bg-gray-50 dark:bg-[#0f1320] border border-gray-300 dark:border-[#1a1e2e] rounded-xl text-sm text-gray-900 dark:text-white focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20"
       />
 
       <input

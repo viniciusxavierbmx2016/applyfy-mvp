@@ -30,7 +30,7 @@ function fileIcon(type: string): { color: string; label: string } {
     return { color: "text-orange-500 bg-orange-50 dark:bg-orange-500/10", label: "PPT" };
   if (type.startsWith("image/")) return { color: "text-purple-500 bg-purple-50 dark:bg-purple-500/10", label: "IMG" };
   if (type.startsWith("audio/")) return { color: "text-pink-500 bg-pink-50 dark:bg-pink-500/10", label: "MP3" };
-  if (type.startsWith("video/")) return { color: "text-indigo-500 bg-indigo-50 dark:bg-indigo-500/10", label: "MP4" };
+  if (type.startsWith("video/")) return { color: "text-blue-500 bg-blue-50 dark:bg-blue-500/10", label: "MP4" };
   if (type.includes("zip") || type.includes("rar")) return { color: "text-yellow-600 bg-yellow-50 dark:bg-yellow-500/10", label: "ZIP" };
   return { color: "text-gray-500 bg-gray-50 dark:bg-gray-500/10", label: "FILE" };
 }

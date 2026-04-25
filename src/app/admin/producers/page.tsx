@@ -116,7 +116,7 @@ export default function AdminProducersPage() {
             if (e.key === "Enter") loadData(query);
           }}
           placeholder="Buscar por nome ou email…"
-          className="flex-1 bg-white dark:bg-white/[0.04] border border-gray-300 dark:border-white/[0.08] rounded-xl px-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/20 transition-colors duration-200"
+          className="flex-1 bg-white dark:bg-white/[0.04] border border-gray-300 dark:border-white/[0.08] rounded-xl px-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 transition-colors duration-200"
         />
         <Button size="sm" onClick={() => loadData(query)}>
           Buscar

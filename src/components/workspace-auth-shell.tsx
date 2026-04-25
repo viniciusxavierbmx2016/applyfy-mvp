@@ -22,7 +22,7 @@ export interface WorkspaceAuthInfo {
 }
 
 const DEFAULT_BG = "#0a0a1a";
-const DEFAULT_PRIMARY = "#6366f1";
+const DEFAULT_PRIMARY = "#3b82f6";
 const DEFAULT_BOX = "#1a1a2e";
 const DEFAULT_BOX_OPACITY = 0.85;
 const DEFAULT_SIDE = "#0a0a1a";

@@ -178,7 +178,7 @@ export async function executeAction(
       if (!tagName) return { status: "FAILED", details: "tagName ausente" };
       const workspaceId = (config.workspaceId as string) || automation.workspaceId;
       if (!workspaceId) return { status: "FAILED", details: "workspaceId ausente" };
-      const tagColor = (config.tagColor as string) || "#6366f1";
+      const tagColor = (config.tagColor as string) || "#3b82f6";
       const tag = await prisma.tag.upsert({
         where: { workspaceId_name: { workspaceId, name: tagName } },
         create: { workspaceId, name: tagName, color: tagColor, autoSource: "automation" },

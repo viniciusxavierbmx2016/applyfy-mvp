@@ -75,7 +75,7 @@ export default function AdminLoginPage() {
               {errorRole === "PRODUCER" && (
                 <Link
                   href="/producer/login"
-                  className="inline-block mt-2 text-indigo-400 hover:text-indigo-300 font-medium"
+                  className="inline-block mt-2 text-blue-400 hover:text-blue-300 font-medium"
                 >
                   Ir para login do produtor →
                 </Link>
@@ -98,7 +98,7 @@ export default function AdminLoginPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  className="w-full px-4 py-3 bg-gray-100 dark:bg-white/[0.04] border border-gray-300 dark:border-white/[0.08] rounded-xl text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/20 transition"
+                  className="w-full px-4 py-3 bg-gray-100 dark:bg-white/[0.04] border border-gray-300 dark:border-white/[0.08] rounded-xl text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 transition"
                   placeholder="seu@email.com"
                 />
               </div>
@@ -116,7 +116,7 @@ export default function AdminLoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  className="w-full px-4 py-3 bg-gray-100 dark:bg-white/[0.04] border border-gray-300 dark:border-white/[0.08] rounded-xl text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/20 transition"
+                  className="w-full px-4 py-3 bg-gray-100 dark:bg-white/[0.04] border border-gray-300 dark:border-white/[0.08] rounded-xl text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 transition"
                   placeholder="••••••••"
                 />
               </div>
@@ -125,7 +125,7 @@ export default function AdminLoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full mt-6 py-3 px-4 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium rounded-xl shadow-lg shadow-indigo-500/20 transition duration-200"
+              className="w-full mt-6 py-3 px-4 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium rounded-xl shadow-lg shadow-blue-500/20 transition duration-200"
             >
               {loading ? "Entrando..." : "Entrar"}
             </button>
@@ -134,7 +134,7 @@ export default function AdminLoginPage() {
           <div className="mt-6 text-center text-sm">
             <Link
               href="/forgot-password"
-              className="text-indigo-600 dark:text-indigo-400 hover:underline"
+              className="text-blue-600 dark:text-blue-400 hover:underline"
             >
               Esqueci minha senha
             </Link>
