@@ -337,7 +337,7 @@ export function AnalyticsOverview({
           </SectionCard>
         </div>
       ) : (
-        <div className="rounded-xl border border-dashed border-gray-300 dark:border-gray-800 p-6 text-center text-sm text-gray-500 dark:text-gray-400 bg-white/40 dark:bg-gray-900/40">
+        <div className="rounded-xl border border-dashed border-gray-300 dark:border-white/10 p-6 text-center text-sm text-gray-500 dark:text-gray-400 bg-white/40 dark:bg-gray-900/40">
           Selecione um curso específico no filtro acima para ver módulos com maior abandono e aulas mais assistidas.
         </div>
       )}
@@ -385,7 +385,7 @@ export function AnalyticsOverview({
               />
             </div>
           ) : (
-            <div className="rounded-2xl border border-dashed border-gray-300 dark:border-gray-800 bg-white/40 dark:bg-gray-900/40 px-6 py-12 text-center">
+            <div className="rounded-2xl border border-dashed border-gray-300 dark:border-white/10 bg-white/40 dark:bg-gray-900/40 px-6 py-12 text-center">
               <span className="text-3xl block mb-2" aria-hidden>📊</span>
               <p className="text-sm text-gray-600 dark:text-gray-400 max-w-md mx-auto">
                 Adicione mais alunos e conteúdo para gerar diagnósticos automáticos sobre seus cursos.
@@ -474,7 +474,7 @@ function KpiCard({
   const trendUp = delta != null && delta > 0;
   const trendDown = delta != null && delta < 0;
   return (
-    <div className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.06] rounded-xl p-4 sm:p-5 hover:border-gray-300 dark:hover:border-white/[0.1] transition-colors duration-200">
+    <div className="bg-white dark:bg-white/5 border border-gray-200 dark:border-white/5 rounded-xl p-4 sm:p-5 hover:border-gray-300 dark:hover:border-white/10 transition-colors duration-200">
       <div className="flex items-center justify-between">
         <span className={`inline-flex items-center justify-center w-10 h-10 rounded-lg ${a.bg} ${a.text}`}>
           {icon}
@@ -496,7 +496,7 @@ function KpiCard({
 
 function ChartCard({ title, subtitle, children }: { title: string; subtitle?: string; children: React.ReactNode }) {
   return (
-    <section className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.06] rounded-xl p-4 sm:p-6">
+    <section className="bg-white dark:bg-white/5 border border-gray-200 dark:border-white/5 rounded-xl p-4 sm:p-6">
       <div className="mb-4">
         <h2 className="text-base font-semibold text-gray-900 dark:text-white">{title}</h2>
         {subtitle && <p className="text-xs text-gray-500 mt-0.5">{subtitle}</p>}
@@ -508,7 +508,7 @@ function ChartCard({ title, subtitle, children }: { title: string; subtitle?: st
 
 function SectionCard({ title, subtitle, children }: { title: string; subtitle?: string; children: React.ReactNode }) {
   return (
-    <section className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.06] rounded-xl p-4 sm:p-6">
+    <section className="bg-white dark:bg-white/5 border border-gray-200 dark:border-white/5 rounded-xl p-4 sm:p-6">
       <div className="mb-4">
         <h2 className="text-base font-semibold text-gray-900 dark:text-white">{title}</h2>
         {subtitle && <p className="text-xs text-gray-500 mt-0.5">{subtitle}</p>}
@@ -539,7 +539,7 @@ function RankedBars({ items, colorHi, colorLo, suffix = "" }: { items: Array<{ l
               <span className="text-gray-700 dark:text-gray-300 truncate pr-3" title={it.label}>{it.label || "—"}</span>
               <span className="text-gray-500 tabular-nums whitespace-nowrap">{it.value}{suffix}</span>
             </div>
-            <div className="h-2 rounded-full bg-gray-100 dark:bg-gray-800 overflow-hidden">
+            <div className="h-2 rounded-full bg-gray-100 dark:bg-white/10 overflow-hidden">
               <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, background: color }} />
             </div>
           </li>
@@ -553,7 +553,7 @@ function CustomTooltip({ active, payload, label, color }: { active?: boolean; pa
   if (!active || !payload || !payload.length) return null;
   const p = payload[0];
   return (
-    <div className="rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-3 py-2 shadow-lg text-xs">
+    <div className="rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-gray-950 px-3 py-2 shadow-lg text-xs">
       <p className="text-gray-500 mb-0.5">{label || p.payload?.label}</p>
       <p className="font-semibold tabular-nums" style={{ color: color || "#3b82f6" }}>
         {p.name}: {p.value}
