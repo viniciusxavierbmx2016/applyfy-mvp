@@ -35,43 +35,15 @@ function CheckIcon({ className = "" }: { className?: string }) {
 export function CustomSelect({ value, onChange, options, placeholder, icon, className = "" }: CustomSelectProps) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
-  const triggerRef = useRef<HTMLButtonElement>(null);
-  const [pos, setPos] = useState({ top: 0, left: 0, width: 0, openUpward: false, maxH: 250 });
 
   useEffect(() => {
-    if (!open) return;
     function onDocClick(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+      if (!ref.current) return;
+      if (!ref.current.contains(e.target as Node)) setOpen(false);
     }
-    function onResize() { setOpen(false); }
-    document.addEventListener("mousedown", onDocClick);
-    window.addEventListener("resize", onResize);
-    return () => {
-      document.removeEventListener("mousedown", onDocClick);
-      window.removeEventListener("resize", onResize);
-    };
+    if (open) document.addEventListener("mousedown", onDocClick);
+    return () => document.removeEventListener("mousedown", onDocClick);
   }, [open]);
-
-  function handleToggle() {
-    if (!open && triggerRef.current) {
-      const rect = triggerRef.current.getBoundingClientRect();
-      const dropdownHeight = 250;
-      const spaceBelow = window.innerHeight - rect.bottom;
-      const spaceAbove = rect.top;
-      const openUpward = spaceBelow < dropdownHeight && spaceAbove > spaceBelow;
-      const maxH = openUpward
-        ? Math.min(250, spaceAbove - 8)
-        : Math.min(250, spaceBelow - 8);
-      setPos({
-        top: openUpward ? rect.top - 4 : rect.bottom + 4,
-        left: rect.left,
-        width: rect.width,
-        openUpward,
-        maxH: Math.max(maxH, 80),
-      });
-    }
-    setOpen((v) => !v);
-  }
 
   const selected = options.find((o) => o.value === value);
   const label = selected?.label || placeholder || "Selecione...";
@@ -79,9 +51,8 @@ export function CustomSelect({ value, onChange, options, placeholder, icon, clas
   return (
     <div ref={ref} className={`relative ${className}`}>
       <button
-        ref={triggerRef}
         type="button"
-        onClick={handleToggle}
+        onClick={() => setOpen((v) => !v)}
         className="inline-flex items-center gap-2 w-full bg-white dark:bg-gray-900/50 border border-gray-200 dark:border-white/10 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white hover:border-gray-300 dark:hover:border-white/20 transition"
       >
         {icon && <span className="text-gray-500 flex-shrink-0">{icon}</span>}
@@ -90,11 +61,8 @@ export function CustomSelect({ value, onChange, options, placeholder, icon, clas
       </button>
 
       {open && (
-        <div
-          style={{ position: "fixed", top: pos.top, left: pos.left, width: pos.width, zIndex: 9999, ...(pos.openUpward ? { transform: "translateY(-100%)" } : {}) }}
-          className="rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-gray-950 shadow-xl overflow-hidden"
-        >
-          <ul className="py-1 overflow-y-auto" style={{ maxHeight: pos.maxH }}>
+        <div className="absolute left-0 mt-1 w-full rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-gray-950 shadow-xl z-50 overflow-hidden">
+          <ul className="py-1 max-h-[min(60vh,320px)] overflow-y-auto">
             {options.map((o) => {
               const active = value === o.value;
               return (
