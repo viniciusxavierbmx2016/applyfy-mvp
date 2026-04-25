@@ -224,7 +224,7 @@ export function DateRangeSelector({ value, onChange }: DateRangeSelectorProps) {
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="inline-flex items-center gap-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg px-3 py-2 text-sm font-medium text-gray-900 dark:text-white hover:border-gray-300 dark:hover:border-gray-700 transition min-w-[180px]"
+        className="inline-flex items-center gap-2 bg-white dark:bg-gray-900/50 border border-gray-200 dark:border-white/10 rounded-lg px-3 py-2 text-sm font-medium text-gray-900 dark:text-white hover:border-gray-300 dark:hover:border-white/20 transition min-w-[180px]"
       >
         <FunnelIcon className="w-4 h-4 text-gray-500" />
         <span className="flex-1 text-left truncate">{value.label}</span>
@@ -232,7 +232,7 @@ export function DateRangeSelector({ value, onChange }: DateRangeSelectorProps) {
       </button>
 
       {open && (
-        <div className="absolute right-0 mt-2 w-auto min-w-[200px] max-w-[250px] rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-xl z-50 overflow-hidden">
+        <div className="absolute right-0 mt-1 w-auto min-w-[200px] max-w-[250px] rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-gray-950 shadow-xl z-30 overflow-hidden">
           <ul className="py-1 max-h-[min(70vh,480px)] overflow-y-auto">
             {OPTIONS.map((o) => {
               const active = value.option === o.id;
@@ -241,8 +241,8 @@ export function DateRangeSelector({ value, onChange }: DateRangeSelectorProps) {
                   <button
                     type="button"
                     onClick={() => pick(o.id)}
-                    className={`w-full flex items-center gap-2 px-3 py-2 text-sm text-left hover:bg-gray-50 dark:hover:bg-gray-800 transition ${
-                      active ? "text-blue-600 dark:text-blue-400 font-medium" : "text-gray-700 dark:text-gray-300"
+                    className={`w-full flex items-center gap-2 px-3 py-2 text-sm text-left transition-colors ${
+                      active ? "text-blue-600 dark:text-blue-400 font-medium bg-blue-50 dark:bg-blue-500/5" : "text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5"
                     }`}
                   >
                     <span className="w-4 inline-flex justify-center">
@@ -256,7 +256,7 @@ export function DateRangeSelector({ value, onChange }: DateRangeSelectorProps) {
           </ul>
 
           {value.option === "custom" && (
-            <div className="border-t border-gray-200 dark:border-gray-800 p-3 space-y-2">
+            <div className="border-t border-gray-200 dark:border-white/10 p-3 space-y-2">
               <div className="grid grid-cols-2 gap-2">
                 <label className="flex flex-col gap-1 text-[11px] uppercase tracking-wider text-gray-500">
                   De
@@ -264,7 +264,7 @@ export function DateRangeSelector({ value, onChange }: DateRangeSelectorProps) {
                     type="date"
                     value={customStart}
                     onChange={(e) => setCustomStart(e.target.value)}
-                    className="bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-md px-2 py-1.5 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="bg-white dark:bg-gray-900/50 border border-gray-200 dark:border-white/10 rounded-md px-2 py-1.5 text-sm text-gray-900 dark:text-white focus:outline-none focus:border-blue-500/50 transition-colors"
                   />
                 </label>
                 <label className="flex flex-col gap-1 text-[11px] uppercase tracking-wider text-gray-500">
@@ -273,7 +273,7 @@ export function DateRangeSelector({ value, onChange }: DateRangeSelectorProps) {
                     type="date"
                     value={customEnd}
                     onChange={(e) => setCustomEnd(e.target.value)}
-                    className="bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-md px-2 py-1.5 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="bg-white dark:bg-gray-900/50 border border-gray-200 dark:border-white/10 rounded-md px-2 py-1.5 text-sm text-gray-900 dark:text-white focus:outline-none focus:border-blue-500/50 transition-colors"
                   />
                 </label>
               </div>
@@ -281,7 +281,7 @@ export function DateRangeSelector({ value, onChange }: DateRangeSelectorProps) {
                 type="button"
                 onClick={applyCustom}
                 disabled={!customStart || !customEnd}
-                className="w-full py-2 rounded-md bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-sm font-medium transition"
+                className="w-full py-2 rounded-md bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white text-sm font-medium transition"
               >
                 Aplicar
               </button>

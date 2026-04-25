@@ -61,7 +61,7 @@ export function CustomSelect({ value, onChange, options, placeholder, icon, clas
       </button>
 
       {open && (
-        <div className="absolute left-0 mt-1 w-full rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-gray-950 shadow-xl z-50 overflow-hidden">
+        <div className="absolute left-0 mt-1 w-full rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-gray-950 shadow-xl z-30 overflow-hidden">
           <ul className="py-1 max-h-[min(60vh,320px)] overflow-y-auto">
             {options.map((o) => {
               const active = value === o.value;
