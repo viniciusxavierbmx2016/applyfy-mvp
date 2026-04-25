@@ -175,7 +175,7 @@ export default function CourseStudentsPage({
       <div className="flex items-center justify-between gap-3 mb-4">
         <button
           onClick={() => setModalOpen(true)}
-          className="inline-flex items-center gap-2 px-3 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-medium rounded-xl text-sm transition"
+          className="inline-flex items-center gap-2 px-3 py-2 bg-blue-600 hover:bg-blue-500 text-white font-medium rounded-lg text-sm transition"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -193,16 +193,16 @@ export default function CourseStudentsPage({
             setQ(e.target.value);
             setPage(1);
           }}
-          className="w-full sm:max-w-sm px-4 py-2.5 bg-white dark:bg-[#0f1320] border border-gray-300 dark:border-[#1a1e2e] rounded-xl text-gray-900 dark:text-white text-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/20 transition-colors duration-200"
+          className="w-full sm:max-w-sm px-3 py-2.5 bg-white dark:bg-gray-900/50 border border-gray-200 dark:border-white/10 rounded-lg text-gray-900 dark:text-white text-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-blue-500/50 transition-colors"
         />
       </div>
 
       {loading && !data ? (
         <div className="flex items-center justify-center py-16">
-          <div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+          <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
         </div>
       ) : !data || data.students.length === 0 ? (
-        <div className="bg-white dark:bg-[#0a0e19] border border-gray-200 dark:border-[#1a1e2e] rounded-xl p-12 text-center">
+        <div className="bg-white dark:bg-white/5 border border-gray-200 dark:border-white/5 rounded-xl p-12 text-center">
           <p className="text-gray-500">
             {debouncedQ
               ? "Nenhum aluno encontrado"
@@ -211,7 +211,7 @@ export default function CourseStudentsPage({
           {!debouncedQ && (
             <button
               onClick={() => setModalOpen(true)}
-              className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-medium rounded-xl text-sm transition"
+              className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-medium rounded-lg text-sm transition"
             >
               Enviar primeiro acesso
             </button>
@@ -220,10 +220,10 @@ export default function CourseStudentsPage({
       ) : (
         <>
           {/* Desktop table */}
-          <div className="hidden md:block bg-white dark:bg-[#0a0e19] border border-gray-200 dark:border-[#1a1e2e] rounded-xl overflow-hidden">
+          <div className="hidden md:block bg-white dark:bg-white/5 border border-gray-200 dark:border-white/5 rounded-xl overflow-hidden">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-gray-200 dark:border-[#1a1e2e]">
+                <tr className="border-b border-gray-200 dark:border-white/5">
                   <th className="text-left px-4 py-3 text-[11px] uppercase tracking-widest text-gray-500 font-medium">Aluno</th>
                   <th className="text-left px-4 py-3 text-[11px] uppercase tracking-widest text-gray-500 font-medium">Matrícula</th>
                   <th className="text-left px-4 py-3 text-[11px] uppercase tracking-widest text-gray-500 font-medium">Progresso</th>
@@ -237,7 +237,7 @@ export default function CourseStudentsPage({
                 {data.students.map((s) => {
                   const exp = formatExpiry(s.expiresAt);
                   return (
-                    <tr key={s.enrollmentId} className="border-b border-gray-100 dark:border-[#1a1e2e] last:border-0 hover:bg-gray-50 dark:hover:bg-[#0f1320] transition-colors duration-150">
+                    <tr key={s.enrollmentId} className="border-b border-gray-100 dark:border-white/5 last:border-0 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors duration-150">
                       <td className="px-4 py-4">
                         <div className="flex items-center gap-3">
                           <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden flex items-center justify-center flex-shrink-0">
@@ -288,7 +288,7 @@ export default function CourseStudentsPage({
                         <div className="flex items-center gap-2">
                           <div className="flex-1 min-w-[80px] h-1.5 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
                             <div
-                              className="h-full bg-indigo-500 rounded-full"
+                              className="h-full bg-blue-500 rounded-full"
                               style={{ width: `${s.progress}%` }}
                             />
                           </div>
@@ -308,7 +308,7 @@ export default function CourseStudentsPage({
                           <span className={exp.color}>{exp.text}</span>
                           <button
                             onClick={() => setEditTarget(s)}
-                            className="p-1 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 rounded"
+                            className="p-1 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 rounded"
                             aria-label="Editar tempo de acesso"
                             title="Editar tempo de acesso"
                           >
@@ -322,7 +322,7 @@ export default function CourseStudentsPage({
                         <div className="flex items-center gap-2 justify-end">
                           <button
                             onClick={() => handleResend(s.enrollmentId)}
-                            className="px-3 py-1.5 text-xs font-medium rounded-lg bg-transparent dark:bg-[#1a1e2e] hover:bg-gray-100 dark:hover:bg-[#1f2335] text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-[#1f2335] transition"
+                            className="px-3 py-1.5 text-xs font-medium rounded-lg bg-transparent dark:bg-white/5 hover:bg-gray-100 dark:hover:bg-white/10 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-white/10 transition"
                           >
                             Reenviar
                           </button>
@@ -348,7 +348,7 @@ export default function CourseStudentsPage({
               return (
                 <div
                   key={s.enrollmentId}
-                  className="bg-white dark:bg-[#0a0e19] border border-gray-200 dark:border-[#1a1e2e] rounded-xl p-4"
+                  className="bg-white dark:bg-white/5 border border-gray-200 dark:border-white/5 rounded-xl p-4"
                 >
                   <div className="flex items-center gap-3 mb-3">
                     <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden flex items-center justify-center flex-shrink-0">
@@ -399,7 +399,7 @@ export default function CourseStudentsPage({
                         <p className={exp.color}>{exp.text}</p>
                         <button
                           onClick={() => setEditTarget(s)}
-                          className="p-1 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 rounded"
+                          className="p-1 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 rounded"
                           aria-label="Editar tempo de acesso"
                         >
                           <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -412,7 +412,7 @@ export default function CourseStudentsPage({
                   <div className="flex items-center gap-2 mb-3">
                     <div className="flex-1 h-1.5 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
                       <div
-                        className="h-full bg-indigo-500 rounded-full"
+                        className="h-full bg-blue-500 rounded-full"
                         style={{ width: `${s.progress}%` }}
                       />
                     </div>
