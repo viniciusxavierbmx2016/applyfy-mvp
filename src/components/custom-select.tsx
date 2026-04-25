@@ -35,6 +35,8 @@ function CheckIcon({ className = "" }: { className?: string }) {
 export function CustomSelect({ value, onChange, options, placeholder, icon, className = "" }: CustomSelectProps) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const [pos, setPos] = useState({ top: 0, left: 0, width: 0 });
 
   useEffect(() => {
     if (!open) return;
@@ -45,14 +47,23 @@ export function CustomSelect({ value, onChange, options, placeholder, icon, clas
     return () => document.removeEventListener("mousedown", onDocClick);
   }, [open]);
 
+  function handleToggle() {
+    if (!open && triggerRef.current) {
+      const rect = triggerRef.current.getBoundingClientRect();
+      setPos({ top: rect.bottom + 4, left: rect.left, width: rect.width });
+    }
+    setOpen((v) => !v);
+  }
+
   const selected = options.find((o) => o.value === value);
   const label = selected?.label || placeholder || "Selecione...";
 
   return (
     <div ref={ref} className={`relative ${className}`}>
       <button
+        ref={triggerRef}
         type="button"
-        onClick={() => setOpen((v) => !v)}
+        onClick={handleToggle}
         className="inline-flex items-center gap-2 w-full bg-white dark:bg-gray-900/50 border border-gray-200 dark:border-white/10 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white hover:border-gray-300 dark:hover:border-white/20 transition"
       >
         {icon && <span className="text-gray-500 flex-shrink-0">{icon}</span>}
@@ -61,7 +72,10 @@ export function CustomSelect({ value, onChange, options, placeholder, icon, clas
       </button>
 
       {open && (
-        <div className="absolute left-0 right-0 mt-1.5 rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-gray-950 shadow-xl z-50 overflow-hidden">
+        <div
+          style={{ position: "fixed", top: pos.top, left: pos.left, width: pos.width, zIndex: 9999 }}
+          className="rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-gray-950 shadow-xl overflow-hidden"
+        >
           <ul className="py-1 max-h-[min(60vh,320px)] overflow-y-auto">
             {options.map((o) => {
               const active = value === o.value;
