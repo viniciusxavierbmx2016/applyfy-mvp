@@ -374,7 +374,7 @@ export default function AdminUsersPage() {
             return (
               <div
                 key={u.id}
-                className="bg-white dark:bg-white/5 border border-gray-200 dark:border-white/5 rounded-xl overflow-hidden"
+                className={`bg-white dark:bg-white/5 border border-gray-200 dark:border-white/5 rounded-xl ${isOpen ? "overflow-visible" : "overflow-hidden"}`}
               >
                 <div className="flex flex-col sm:flex-row sm:items-center gap-3 p-4">
                   <div className="flex items-center gap-3 flex-1 min-w-0">
