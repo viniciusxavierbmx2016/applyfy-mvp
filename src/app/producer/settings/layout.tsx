@@ -59,7 +59,7 @@ const tabs = [
 ];
 
 const baseCls = "flex items-center gap-2 px-4 py-2.5 text-sm font-medium whitespace-nowrap border-b-2 transition-colors";
-const activeCls = "border-indigo-500 text-gray-900 dark:text-white";
+const activeCls = "border-blue-500 text-gray-900 dark:text-white";
 const inactiveCls = "border-transparent text-gray-600 dark:text-gray-500 hover:text-gray-900 dark:hover:text-gray-300";
 
 export default function SettingsLayout({
@@ -83,7 +83,7 @@ export default function SettingsLayout({
         Gerencie seu painel, assinatura, colaboradores e integrações
       </p>
 
-      <nav className="-mx-4 sm:mx-0 mb-6 border-b border-gray-200 dark:border-white/[0.06]">
+      <nav className="-mx-4 sm:mx-0 mb-6 border-b border-gray-200 dark:border-white/5">
         <div className="flex gap-1 px-4 sm:px-0 overflow-x-auto">
           {tabs.map((tab) => (
             <Link

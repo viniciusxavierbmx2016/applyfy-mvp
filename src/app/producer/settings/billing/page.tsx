@@ -189,7 +189,7 @@ function BillingContent() {
       )}
 
       {showSuccess && (
-        <div className="bg-white dark:bg-white/[0.03] border border-green-200 dark:border-green-500/20 rounded-2xl p-8 text-center space-y-4">
+        <div className="bg-white dark:bg-white/5 border border-green-200 dark:border-green-500/20 rounded-2xl p-8 text-center space-y-4">
           <div className="mx-auto w-16 h-16 rounded-full bg-green-500/10 flex items-center justify-center">
             <svg className="w-8 h-8 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
@@ -258,7 +258,7 @@ function BillingContent() {
           {plans.map((plan) => (
             <div
               key={plan.id}
-              className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.06] rounded-2xl p-6 space-y-4"
+              className="bg-white dark:bg-white/5 border border-gray-200 dark:border-white/5 rounded-2xl p-6 space-y-4"
             >
               <div className="flex items-start justify-between">
                 <div>
@@ -285,7 +285,7 @@ function BillingContent() {
               <button
                 onClick={handleCheckout}
                 disabled={checkingOut}
-                className="block w-full text-center px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-medium rounded-xl transition text-sm disabled:opacity-50"
+                className="block w-full text-center px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white font-medium rounded-xl transition text-sm disabled:opacity-50"
               >
                 {checkoutLabel}
               </button>
@@ -296,7 +296,7 @@ function BillingContent() {
         /* Has subscription */
         <>
           {/* Plan card */}
-          <div className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.06] rounded-2xl p-6 space-y-4">
+          <div className="bg-white dark:bg-white/5 border border-gray-200 dark:border-white/5 rounded-2xl p-6 space-y-4">
             <div className="flex items-start justify-between flex-wrap gap-3">
               <div>
                 <div className="flex items-center gap-2">
@@ -330,7 +330,7 @@ function BillingContent() {
             )}
 
             {/* Actions */}
-            <div className="flex flex-wrap gap-3 pt-2 border-t border-gray-100 dark:border-white/[0.04]">
+            <div className="flex flex-wrap gap-3 pt-2 border-t border-gray-100 dark:border-white/5">
               {(sub.status === "ACTIVE" || sub.status === "PAST_DUE") && !sub.exempt && (
                 <button
                   onClick={handleCancel}
@@ -353,7 +353,7 @@ function BillingContent() {
                 <button
                   onClick={handleCheckout}
                   disabled={checkingOut}
-                  className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-500 rounded-lg transition disabled:opacity-50"
+                  className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-500 rounded-lg transition disabled:opacity-50"
                 >
                   {checkingOut ? "Gerando checkout..." : "Reativar assinatura"}
                 </button>
@@ -362,7 +362,7 @@ function BillingContent() {
           </div>
 
           {/* Usage bars */}
-          <div className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.06] rounded-2xl p-6 space-y-4">
+          <div className="bg-white dark:bg-white/5 border border-gray-200 dark:border-white/5 rounded-2xl p-6 space-y-4">
             <h3 className="text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wider">Uso atual</h3>
             <UsageBar
               label="Workspaces"
@@ -377,8 +377,8 @@ function BillingContent() {
           </div>
 
           {/* Invoices */}
-          <div className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.06] rounded-2xl overflow-hidden">
-            <div className="px-6 py-4 border-b border-gray-100 dark:border-white/[0.04]">
+          <div className="bg-white dark:bg-white/5 border border-gray-200 dark:border-white/5 rounded-2xl overflow-hidden">
+            <div className="px-6 py-4 border-b border-gray-100 dark:border-white/5">
               <h3 className="text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wider">Histórico de faturas</h3>
             </div>
             {sub.invoices.length === 0 ? (
@@ -388,7 +388,7 @@ function BillingContent() {
             ) : (
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="text-left text-[11px] uppercase tracking-widest text-gray-500 border-b border-gray-200 dark:border-white/[0.06]">
+                  <tr className="text-left text-[11px] uppercase tracking-widest text-gray-500 border-b border-gray-200 dark:border-white/5">
                     <th className="px-6 py-3 font-medium">Data</th>
                     <th className="px-6 py-3 font-medium">Valor</th>
                     <th className="px-6 py-3 font-medium">Status</th>
@@ -509,10 +509,10 @@ function UsageBar({ label, used, max }: { label: string; used: number; max: numb
           {used} de {max}
         </span>
       </div>
-      <div className="h-2 bg-gray-100 dark:bg-white/[0.06] rounded-full overflow-hidden">
+      <div className="h-2 bg-gray-100 dark:bg-white/5 rounded-full overflow-hidden">
         <div
           className={`h-full rounded-full transition-all duration-500 ${
-            warn ? "bg-amber-500" : "bg-indigo-500"
+            warn ? "bg-amber-500" : "bg-blue-500"
           }`}
           style={{ width: `${pct}%` }}
         />

@@ -133,11 +133,11 @@ export default function SettingsPage() {
 
   return (
     <>
-      <section className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.06] rounded-xl p-6">
+      <section className="bg-white dark:bg-white/5 border border-gray-200 dark:border-white/5 rounded-xl p-6">
         {loading ? (
           <div className="space-y-3">
             {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="h-12 bg-gray-100 dark:bg-gray-900 rounded-xl animate-pulse" />
+              <div key={i} className="h-12 bg-gray-100 dark:bg-gray-900/50 rounded-xl animate-pulse" />
             ))}
           </div>
         ) : (
@@ -224,7 +224,7 @@ export default function SettingsPage() {
             <div>
               <p className="text-sm font-medium text-gray-900 dark:text-white mb-3">Preview</p>
               <div
-                className="rounded-xl border border-gray-200 dark:border-white/[0.06] overflow-hidden"
+                className="rounded-xl border border-gray-200 dark:border-white/5 overflow-hidden"
                 style={{ backgroundColor: theme.bgColor }}
               >
                 <div className="flex">
@@ -271,7 +271,7 @@ export default function SettingsPage() {
               <button
                 onClick={handleReset}
                 disabled={saving}
-                className="px-5 py-2.5 bg-gray-100 dark:bg-white/[0.06] hover:bg-gray-200 dark:hover:bg-white/[0.1] text-gray-700 dark:text-gray-300 text-sm font-medium rounded-xl transition-colors disabled:opacity-50"
+                className="px-5 py-2.5 bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-xl transition-colors disabled:opacity-50"
               >
                 Restaurar padrão
               </button>
@@ -312,7 +312,7 @@ function ColorPicker({
       <p className="text-[11px] text-gray-500 dark:text-gray-500">{description}</p>
       <div className="flex items-center gap-2">
         <div
-          className="w-10 h-10 rounded-lg border border-gray-300 dark:border-white/[0.1] shrink-0 overflow-hidden relative"
+          className="w-10 h-10 rounded-lg border border-gray-300 dark:border-white/10 shrink-0 overflow-hidden relative"
           style={{ backgroundColor: value }}
         >
           <input
@@ -336,7 +336,7 @@ function ColorPicker({
               handleHexInput(e.target.value);
             }
           }}
-          className="flex-1 min-w-0 px-3 py-2 bg-gray-50 dark:bg-white/[0.04] border border-gray-300 dark:border-white/[0.08] rounded-xl text-sm text-gray-900 dark:text-white font-mono focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/20"
+          className="flex-1 min-w-0 px-3 py-2 bg-gray-50 dark:bg-gray-900/50 border border-gray-300 dark:border-white/10 rounded-lg text-sm text-gray-900 dark:text-white font-mono focus:outline-none focus:border-blue-500/50 transition-colors"
           placeholder="#000000"
           maxLength={7}
         />
