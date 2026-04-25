@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { SkeletonLiveCard } from "@/components/ui/skeleton";
 
 interface LiveItem {
@@ -758,7 +759,7 @@ export default function ProducerLivesPage() {
                 <label className={labelCls}>Thumbnail</label>
                 {form.thumbnailUrl ? (
                   <div className="flex items-center gap-3">
-                    <img src={form.thumbnailUrl} alt="" className="w-24 h-14 object-cover rounded-lg border border-white/10" />
+                    <Image src={form.thumbnailUrl} alt="" width={96} height={56} className="w-24 h-14 object-cover rounded-lg border border-white/10" />
                     <button
                       type="button"
                       onClick={() => setForm((f) => ({ ...f, thumbnailUrl: "" }))}

@@ -606,7 +606,7 @@ function ProgressBar({ value }: { value: number }) {
   return (
     <div className="flex items-center gap-2 min-w-[130px]">
       <div className="flex-1 h-1.5 rounded-full bg-gray-200 dark:bg-gray-800 overflow-hidden">
-        <div className={`h-full ${color} transition-all`} style={{ width: `${clamp}%` }} />
+        <div className={`h-full ${color} transition-[width]`} style={{ width: `${clamp}%` }} />
       </div>
       <span className="text-xs tabular-nums text-gray-600 dark:text-gray-400 w-9 text-right font-medium">{clamp}%</span>
     </div>

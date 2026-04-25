@@ -205,7 +205,7 @@ function LessonSection({
                     <p className="text-xs text-gray-400 truncate">{item.moduleTitle}</p>
                     <div className="mt-2 h-2 rounded-full bg-gray-100 dark:bg-gray-800 overflow-hidden">
                       <div
-                        className={`h-full ${t.bar} transition-all`}
+                        className={`h-full ${t.bar} transition-[width]`}
                         style={{ width: `${Math.max(2, Math.min(100, pct))}%` }}
                       />
                     </div>
@@ -261,7 +261,7 @@ function ModuleSection({
                   </p>
                   <div className="mt-2 h-2 rounded-full bg-gray-100 dark:bg-gray-800 overflow-hidden">
                     <div
-                      className={`h-full ${t.bar} transition-all`}
+                      className={`h-full ${t.bar} transition-[width]`}
                       style={{ width: `${Math.max(2, Math.min(100, m.completedPercent))}%` }}
                     />
                   </div>
@@ -316,7 +316,7 @@ function AbandonmentSection({
                   </p>
                   <div className="mt-2 h-2 rounded-full bg-gray-100 dark:bg-gray-800 overflow-hidden">
                     <div
-                      className={`h-full ${t.bar} transition-all`}
+                      className={`h-full ${t.bar} transition-[width]`}
                       style={{ width: `${(m.count / max) * 100}%` }}
                     />
                   </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef, useCallback } from "react";
+import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
 
 interface LiveMessage {
@@ -121,7 +122,7 @@ export default function LiveRoomPage() {
 
   useEffect(() => {
     if (live?.status !== "LIVE") return;
-    const msgInterval = setInterval(fetchMessages, 2000);
+    const msgInterval = setInterval(fetchMessages, 4000);
     const liveInterval = setInterval(async () => {
       try {
         const res = await fetch(`/api/lives/${liveId}`);
@@ -434,7 +435,7 @@ export default function LiveRoomPage() {
             <div key={msg.id} className="group flex gap-2">
               <div className="w-7 h-7 rounded-full bg-blue-500/20 flex items-center justify-center flex-shrink-0 overflow-hidden">
                 {msg.user.avatarUrl ? (
-                  <img src={msg.user.avatarUrl} alt="" className="w-full h-full object-cover" />
+                  <Image src={msg.user.avatarUrl} alt="" width={28} height={28} className="w-full h-full object-cover" />
                 ) : (
                   <span className="text-xs font-medium text-blue-400">
                     {msg.user.name?.charAt(0)?.toUpperCase() || "?"}

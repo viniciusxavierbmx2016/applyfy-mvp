@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
 export interface SelectOption {
   value: string;
@@ -32,7 +32,7 @@ function CheckIcon({ className = "" }: { className?: string }) {
   );
 }
 
-export function CustomSelect({ value, onChange, options, placeholder, icon, className = "" }: CustomSelectProps) {
+export const CustomSelect = React.memo(function CustomSelect({ value, onChange, options, placeholder, icon, className = "" }: CustomSelectProps) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -89,4 +89,4 @@ export function CustomSelect({ value, onChange, options, placeholder, icon, clas
       )}
     </div>
   );
-}
+});

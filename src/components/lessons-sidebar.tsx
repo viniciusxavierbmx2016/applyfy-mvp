@@ -101,7 +101,7 @@ function LessonLink({
       )}
       <div className="pt-[3px] flex-shrink-0">
         {lesson.completed ? (
-          <div className="w-4 h-4 rounded-full bg-emerald-500 flex items-center justify-center shadow-sm shadow-emerald-500/30 transition-all duration-300">
+          <div className="w-4 h-4 rounded-full bg-emerald-500 flex items-center justify-center shadow-sm shadow-emerald-500/30 transition-colors duration-300">
             <svg
               className="w-2.5 h-2.5 text-white"
               fill="none"
@@ -233,7 +233,7 @@ export function LessonsSidebar({
                   ) : (
                     <div className="mt-1.5 h-[3px] bg-gray-200/70 dark:bg-white/5 rounded-full overflow-hidden">
                       <div
-                        className="h-full bg-gradient-to-r from-blue-500 to-blue-400 transition-all duration-500"
+                        className="h-full bg-gradient-to-r from-blue-500 to-blue-400 transition-[width] duration-500"
                         style={{ width: `${prog}%` }}
                       />
                     </div>

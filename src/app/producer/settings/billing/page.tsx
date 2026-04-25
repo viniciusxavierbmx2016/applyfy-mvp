@@ -511,7 +511,7 @@ function UsageBar({ label, used, max }: { label: string; used: number; max: numb
       </div>
       <div className="h-2 bg-gray-100 dark:bg-white/5 rounded-full overflow-hidden">
         <div
-          className={`h-full rounded-full transition-all duration-500 ${
+          className={`h-full rounded-full transition-[width] duration-500 ${
             warn ? "bg-amber-500" : "bg-blue-500"
           }`}
           style={{ width: `${pct}%` }}

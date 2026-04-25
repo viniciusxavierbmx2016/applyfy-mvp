@@ -3,6 +3,9 @@ const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
   compress: true,
+  experimental: {
+    optimizePackageImports: ['lucide-react', '@tiptap/react', '@tiptap/starter-kit', 'recharts'],
+  },
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "*.supabase.co" },

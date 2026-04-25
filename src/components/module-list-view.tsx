@@ -67,7 +67,7 @@ export function ModuleListView({ groups, courseSlug }: Props) {
                     type="button"
                     onClick={() => hasLessons && !mod.locked && toggle(mod.id)}
                     disabled={mod.locked}
-                    className={`w-full flex items-center gap-4 p-4 rounded-xl border transition-all duration-200 text-left ${
+                    className={`w-full flex items-center gap-4 p-4 rounded-xl border transition-[border-color,background-color] duration-200 text-left ${
                       mod.locked
                         ? "opacity-60 cursor-not-allowed border-gray-200 dark:border-white/5 bg-gray-50 dark:bg-white/5"
                         : "border-gray-200 dark:border-white/5 bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-white/[0.06] cursor-pointer"
@@ -120,7 +120,7 @@ export function ModuleListView({ groups, courseSlug }: Props) {
                       {!mod.locked && mod.lessonsTotal > 0 && (
                         <div className="mt-2 h-1 bg-gray-200 dark:bg-white/5 rounded-full overflow-hidden">
                           <div
-                            className="h-full bg-gradient-to-r from-blue-500 to-blue-400 rounded-full transition-all duration-500"
+                            className="h-full bg-gradient-to-r from-blue-500 to-blue-400 rounded-full transition-[width] duration-500"
                             style={{ width: `${mod.progressPct}%` }}
                           />
                         </div>
@@ -158,7 +158,7 @@ export function ModuleListView({ groups, courseSlug }: Props) {
                             <Link
                               key={lesson.id}
                               href={`/course/${courseSlug}/lesson/${lesson.id}`}
-                              className="flex items-center gap-3 py-2.5 px-3 rounded-lg text-sm hover:bg-gray-100 dark:hover:bg-white/5 transition-all duration-150 lg:hover:translate-x-1"
+                              className="flex items-center gap-3 py-2.5 px-3 rounded-lg text-sm hover:bg-gray-100 dark:hover:bg-white/5 transition-[background-color,transform] duration-150 lg:hover:translate-x-1"
                             >
                               {lesson.completed ? (
                                 <div className="w-4 h-4 rounded-full bg-emerald-500 flex items-center justify-center flex-shrink-0">

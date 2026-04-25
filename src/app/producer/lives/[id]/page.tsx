@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef, useCallback } from "react";
+import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
 
 interface LiveMessage {
@@ -117,7 +118,7 @@ export default function ProducerLiveRoomPage() {
 
   useEffect(() => {
     if (live?.status !== "LIVE") return;
-    const interval = setInterval(fetchMessages, 3000);
+    const interval = setInterval(fetchMessages, 5000);
     return () => clearInterval(interval);
   }, [live?.status, fetchMessages]);
 
@@ -488,7 +489,7 @@ export default function ProducerLiveRoomPage() {
                 <div key={msg.id} className="group flex gap-2 items-start">
                   <div className="w-6 h-6 rounded-full bg-blue-500/20 flex items-center justify-center flex-shrink-0 overflow-hidden">
                     {msg.user.avatarUrl ? (
-                      <img src={msg.user.avatarUrl} alt="" className="w-full h-full object-cover" />
+                      <Image src={msg.user.avatarUrl} alt="" width={24} height={24} className="w-full h-full object-cover" />
                     ) : (
                       <span className="text-[10px] font-medium text-blue-400">
                         {msg.user.name?.charAt(0)?.toUpperCase() || "?"}
@@ -557,7 +558,7 @@ export default function ProducerLiveRoomPage() {
                   <li key={u.id} className="flex items-center gap-2">
                     <div className="w-5 h-5 rounded-full bg-white/10 flex items-center justify-center overflow-hidden flex-shrink-0">
                       {u.avatarUrl ? (
-                        <img src={u.avatarUrl} alt="" className="w-full h-full object-cover" />
+                        <Image src={u.avatarUrl} alt="" width={20} height={20} className="w-full h-full object-cover" />
                       ) : (
                         <span className="text-[9px] font-medium text-gray-400">
                           {u.name?.charAt(0)?.toUpperCase() || "?"}

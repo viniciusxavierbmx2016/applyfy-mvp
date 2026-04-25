@@ -540,7 +540,7 @@ function RankedBars({ items, colorHi, colorLo, suffix = "" }: { items: Array<{ l
               <span className="text-gray-500 tabular-nums whitespace-nowrap">{it.value}{suffix}</span>
             </div>
             <div className="h-2 rounded-full bg-gray-100 dark:bg-white/10 overflow-hidden">
-              <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, background: color }} />
+              <div className="h-full rounded-full transition-[width]" style={{ width: `${pct}%`, background: color }} />
             </div>
           </li>
         );

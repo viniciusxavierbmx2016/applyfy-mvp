@@ -834,8 +834,7 @@ export default function EditWorkspacePage() {
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center overflow-hidden border border-gray-200 dark:border-white/10">
                   {faviconUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={faviconUrl} alt="favicon" className="w-8 h-8 object-contain" />
+                    <Image src={faviconUrl} alt="favicon" width={32} height={32} className="w-8 h-8 object-contain" />
                   ) : (
                     <span className="text-xs text-gray-400">32×32</span>
                   )}

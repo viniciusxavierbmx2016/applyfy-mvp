@@ -13,7 +13,7 @@ export function ProgressBar({ value, className, showLabel }: ProgressBarProps) {
     <div className={cn("w-full", className)}>
       <div className="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-1.5 overflow-hidden">
         <div
-          className="bg-blue-500 h-full rounded-full transition-all duration-300"
+          className="bg-blue-500 h-full rounded-full transition-[width] duration-300"
           style={{ width: `${clamped}%` }}
         />
       </div>

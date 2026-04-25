@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 
 interface PlatformLogoProps {
   className?: string;
@@ -33,7 +34,7 @@ export function PlatformLogo({ className, fallback }: PlatformLogoProps) {
 
   if (!checked) return <>{fallback}</>;
   if (logoUrl) {
-    return <img src={logoUrl} alt="Logo" className={className || "h-8 w-auto object-contain"} />;
+    return <Image src={logoUrl} alt="Logo" width={120} height={32} className={className || "h-8 w-auto object-contain"} />;
   }
   return <>{fallback}</>;
 }

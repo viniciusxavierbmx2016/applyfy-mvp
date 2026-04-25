@@ -155,7 +155,7 @@ function AdminAnalyticsPageInner() {
               >
                 {t.label}
                 <span
-                  className={`absolute inset-x-2 bottom-0 h-0.5 rounded-t-full transition-all ${
+                  className={`absolute inset-x-2 bottom-0 h-0.5 rounded-t-full transition-[background-color] ${
                     active ? "bg-blue-600 dark:bg-blue-400" : "bg-transparent"
                   }`}
                 />
