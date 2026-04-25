@@ -9,6 +9,7 @@ import {
   computeRange,
   type DateRangeValue,
 } from "@/components/date-range-selector";
+import { CustomSelect } from "@/components/custom-select";
 
 const ReportsContentTab = dynamic(
   () =>
@@ -119,16 +120,15 @@ function AdminAnalyticsPageInner() {
           </p>
         </div>
         <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
-          <select
+          <CustomSelect
             value={courseId}
-            onChange={(e) => setCourseId(e.target.value)}
-            className="bg-white dark:bg-gray-900/50 border border-gray-200 dark:border-white/10 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:border-blue-500/50 transition-colors min-w-[180px]"
-          >
-            <option value="all">Todos os cursos</option>
-            {courses.map((c) => (
-              <option key={c.id} value={c.id}>{c.title}</option>
-            ))}
-          </select>
+            onChange={setCourseId}
+            className="min-w-[180px]"
+            options={[
+              { value: "all", label: "Todos os cursos" },
+              ...courses.map((c) => ({ value: c.id, label: c.title })),
+            ]}
+          />
           <DateRangeSelector value={range} onChange={setRange} />
           <Button variant="secondary" size="sm" onClick={handleExport}>
             <DownloadIcon className="w-4 h-4 mr-2" />

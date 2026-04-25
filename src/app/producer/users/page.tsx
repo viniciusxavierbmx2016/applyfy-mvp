@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { ImportStudentsModal } from "@/components/import-students-modal";
 import { useConfirm } from "@/hooks/use-confirm";
+import { CustomSelect } from "@/components/custom-select";
 
 type EnrollmentStatus = "ACTIVE" | "EXPIRED" | "CANCELLED";
 
@@ -323,32 +324,26 @@ export default function AdminUsersPage() {
           )}
         </div>
         {courses.length > 0 && (
-          <select
+          <CustomSelect
             value={courseFilter}
-            onChange={(e) => setCourseFilter(e.target.value)}
-            className="sm:w-[180px] bg-white dark:bg-gray-900/50 border border-gray-200 dark:border-white/10 rounded-lg px-3 py-2.5 text-sm text-gray-900 dark:text-white focus:outline-none focus:border-blue-500/50 transition-colors"
-          >
-            <option value="">Todos os cursos</option>
-            {courses.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.title}
-              </option>
-            ))}
-          </select>
+            onChange={setCourseFilter}
+            className="sm:w-[180px]"
+            options={[
+              { value: "", label: "Todos os cursos" },
+              ...courses.map((c) => ({ value: c.id, label: c.title })),
+            ]}
+          />
         )}
         {allTags.length > 0 && (
-          <select
+          <CustomSelect
             value={tagFilter}
-            onChange={(e) => setTagFilter(e.target.value)}
-            className="sm:w-[150px] bg-white dark:bg-gray-900/50 border border-gray-200 dark:border-white/10 rounded-lg px-3 py-2.5 text-sm text-gray-900 dark:text-white focus:outline-none focus:border-blue-500/50 transition-colors"
-          >
-            <option value="">Todas as tags</option>
-            {allTags.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.name}
-              </option>
-            ))}
-          </select>
+            onChange={setTagFilter}
+            className="sm:w-[150px]"
+            options={[
+              { value: "", label: "Todas as tags" },
+              ...allTags.map((t) => ({ value: t.id, label: t.name })),
+            ]}
+          />
         )}
       </div>
 

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Avatar } from "@/components/ui/avatar";
 import { formatRelativeTime } from "@/lib/utils";
 import { useConfirm } from "@/hooks/use-confirm";
+import { CustomSelect } from "@/components/custom-select";
 
 interface LessonOption {
   id: string;
@@ -148,18 +149,15 @@ export default function CourseCommentsPage({
   return (
     <>
       <div className="mb-4">
-        <select
+        <CustomSelect
           value={lessonFilter}
-          onChange={(e) => setLessonFilter(e.target.value)}
-          className="bg-white dark:bg-gray-900/50 border border-gray-200 dark:border-white/10 rounded-lg px-3 py-2.5 text-sm text-gray-900 dark:text-white focus:outline-none focus:border-blue-500/50 transition-colors w-full sm:w-auto sm:min-w-[280px]"
-        >
-          <option value="">Todas as aulas</option>
-          {lessons.map((l) => (
-            <option key={l.id} value={l.id}>
-              {l.module.title} → {l.title}
-            </option>
-          ))}
-        </select>
+          onChange={setLessonFilter}
+          className="w-full sm:w-auto sm:min-w-[280px]"
+          options={[
+            { value: "", label: "Todas as aulas" },
+            ...lessons.map((l) => ({ value: l.id, label: `${l.module.title} → ${l.title}` })),
+          ]}
+        />
       </div>
 
       {loading ? (

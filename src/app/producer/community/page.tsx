@@ -6,6 +6,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { formatRelativeTime } from "@/lib/utils";
 import { sanitizeHtml } from "@/lib/sanitize-html";
 import { useConfirm } from "@/hooks/use-confirm";
+import { CustomSelect } from "@/components/custom-select";
 
 interface AdminPost {
   id: string;
@@ -101,18 +102,15 @@ export default function AdminCommunityPage() {
           </h1>
           <p className="text-sm text-gray-500 mt-1">Postagens de todos os cursos</p>
         </div>
-        <select
+        <CustomSelect
           value={courseFilter}
-          onChange={(e) => setCourseFilter(e.target.value)}
-          className="bg-white dark:bg-gray-900/50 border border-gray-200 dark:border-white/10 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:border-blue-500/50 transition-colors"
-        >
-          <option value="">Todos os cursos</option>
-          {courses.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.title}
-            </option>
-          ))}
-        </select>
+          onChange={setCourseFilter}
+          className="sm:min-w-[200px]"
+          options={[
+            { value: "", label: "Todos os cursos" },
+            ...courses.map((c) => ({ value: c.id, label: c.title })),
+          ]}
+        />
       </div>
 
       {loading ? (
