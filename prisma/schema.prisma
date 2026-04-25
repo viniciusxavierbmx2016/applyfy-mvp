@@ -48,7 +48,8 @@ model User {
   liveMessages     LiveMessage[]
   liveNotifications LiveNotification[]
   pushSubscriptions PushSubscription[]
-  liveModerations   LiveModerator[]
+  liveModerations    LiveModerator[]
+  pendingExecutions  PendingExecution[]
 
   @@index([workspaceId])
 }
@@ -687,11 +688,30 @@ model Automation {
   updatedAt      DateTime  @updatedAt
 
   workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  logs      AutomationLog[]
+  logs               AutomationLog[]
+  pendingExecutions  PendingExecution[]
 
   @@index([workspaceId])
   @@index([triggerType])
   @@index([active])
+}
+
+model PendingExecution {
+  id           String    @id @default(cuid())
+  automationId String
+  userId       String
+  triggerData  String    @db.Text
+  executeAt    DateTime
+  status       String    @default("PENDING")
+  completedAt  DateTime?
+  error        String?   @db.Text
+  createdAt    DateTime  @default(now())
+
+  automation Automation @relation(fields: [automationId], references: [id], onDelete: Cascade)
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([status, executeAt])
+  @@index([automationId, userId])
 }
 
 model AutomationLog {

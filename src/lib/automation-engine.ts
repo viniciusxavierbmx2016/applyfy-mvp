@@ -212,6 +212,40 @@ export async function processAutomations(trigger: AutomationTrigger): Promise<vo
         const config = JSON.parse(auto.triggerConfig) as Record<string, unknown>;
         if (!matchesTrigger(trigger, config)) continue;
 
+        const delayMinutes = Number(config.delayMinutes) || 0;
+
+        if (delayMinutes > 0) {
+          const existing = await prisma.pendingExecution.findFirst({
+            where: { automationId: auto.id, userId: trigger.userId, status: "PENDING" },
+          });
+          if (existing) continue;
+
+          await prisma.pendingExecution.create({
+            data: {
+              automationId: auto.id,
+              userId: trigger.userId,
+              triggerData: JSON.stringify({
+                courseId: trigger.courseId,
+                workspaceId: trigger.workspaceId,
+                triggerType: trigger.type,
+                data: trigger.data,
+              }),
+              executeAt: new Date(Date.now() + delayMinutes * 60 * 1000),
+              status: "PENDING",
+            },
+          });
+
+          await prisma.automationLog.create({
+            data: {
+              automationId: auto.id,
+              userId: trigger.userId,
+              status: "SCHEDULED",
+              details: `Agendado para ${delayMinutes} minutos após o gatilho`,
+            },
+          });
+          continue;
+        }
+
         const result = await executeAction(auto, trigger.userId, trigger.courseId);
 
         await prisma.automationLog.create({
