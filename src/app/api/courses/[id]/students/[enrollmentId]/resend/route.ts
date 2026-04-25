@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { canEditCourse, requireStaff } from "@/lib/auth";
 import { sendWorkspaceAccessEmail } from "@/lib/webhook-helpers";
+import { sendEmail } from "@/lib/email";
+import { studentAccessGranted } from "@/lib/email-templates";
 
 export async function POST(
   request: Request,
@@ -16,9 +18,13 @@ export async function POST(
     const enrollment = await prisma.enrollment.findUnique({
       where: { id: params.enrollmentId },
       include: {
-        user: { select: { email: true } },
+        user: { select: { email: true, name: true } },
         course: {
-          select: { workspace: { select: { slug: true } }, id: true },
+          select: {
+            id: true,
+            title: true,
+            workspace: { select: { slug: true, name: true } },
+          },
         },
       },
     });
@@ -35,6 +41,19 @@ export async function POST(
       enrollment.course.workspace.slug,
       baseUrl
     );
+
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || baseUrl;
+    const loginUrl = `${appUrl}/w/${enrollment.course.workspace.slug}/login`;
+    const template = studentAccessGranted(
+      enrollment.user.name || enrollment.user.email,
+      enrollment.course.title,
+      enrollment.course.workspace.name,
+      loginUrl
+    );
+    await sendEmail({
+      to: { email: enrollment.user.email, name: enrollment.user.name || undefined },
+      ...template,
+    });
 
     return NextResponse.json({ success: true, accessLink });
   } catch (error) {
