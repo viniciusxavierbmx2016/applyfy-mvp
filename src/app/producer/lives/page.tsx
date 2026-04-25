@@ -393,8 +393,8 @@ export default function ProducerLivesPage() {
   const scheduledCount = lives.filter((l) => l.status === "SCHEDULED").length;
 
   const inputCls =
-    "w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm";
-  const labelCls = "block text-sm text-gray-400 mb-1";
+    "w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500/50 transition-colors text-sm";
+  const labelCls = "block text-xs text-gray-400 mb-1.5";
 
   return (
     <div className="space-y-6">
@@ -423,7 +423,7 @@ export default function ProducerLivesPage() {
         </div>
         <button
           onClick={openCreate}
-          className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition text-sm font-medium"
+          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg transition text-sm font-medium"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -440,7 +440,7 @@ export default function ProducerLivesPage() {
             onClick={() => setFilter(s)}
             className={`px-3 py-1.5 rounded-lg text-sm font-medium transition ${
               filter === s
-                ? "bg-purple-600 text-white"
+                ? "bg-blue-600 text-white"
                 : "bg-white/5 text-gray-400 hover:bg-white/10"
             }`}
           >
@@ -471,7 +471,7 @@ export default function ProducerLivesPage() {
           {filter === "ALL" && (
             <button
               onClick={openCreate}
-              className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition text-sm"
+              className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg transition text-sm"
             >
               Criar Live
             </button>
@@ -526,7 +526,7 @@ export default function ProducerLivesPage() {
                           : `Agendada para ${formatDate(live.scheduledAt)}`}
                     </span>
                     {live.course && (
-                      <span className="text-purple-400">{live.course.title}</span>
+                      <span className="text-blue-400">{live.course.title}</span>
                     )}
                     {live._count.messages > 0 && (
                       <span>{live._count.messages} mensagens</span>
@@ -551,7 +551,7 @@ export default function ProducerLivesPage() {
                     <>
                       <button
                         onClick={() => router.push(`/producer/lives/${live.id}`)}
-                        className="flex items-center gap-1 bg-purple-600 hover:bg-purple-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition"
+                        className="flex items-center gap-1 bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition"
                       >
                         <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
@@ -618,7 +618,7 @@ export default function ProducerLivesPage() {
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/60" onClick={() => setShowModal(false)} />
-          <div className="relative bg-[#1a1a2e] border border-white/10 rounded-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+          <div className="relative bg-gray-950 border border-white/10 rounded-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
             <div className="p-6 space-y-4">
               <h2 className="text-lg font-bold text-white">
                 {editingLive ? "Editar Live" : "Nova Live"}
@@ -712,7 +712,7 @@ export default function ProducerLivesPage() {
                       value="PUBLIC"
                       checked={form.visibility === "PUBLIC"}
                       onChange={() => setForm((f) => ({ ...f, visibility: "PUBLIC" }))}
-                      className="mt-0.5 accent-purple-500"
+                      className="mt-0.5 accent-blue-500"
                     />
                     <div>
                       <span className="text-sm text-white">Pública</span>
@@ -726,7 +726,7 @@ export default function ProducerLivesPage() {
                       value="COURSE_ONLY"
                       checked={form.visibility === "COURSE_ONLY"}
                       onChange={() => setForm((f) => ({ ...f, visibility: "COURSE_ONLY" }))}
-                      className="mt-0.5 accent-purple-500"
+                      className="mt-0.5 accent-blue-500"
                     />
                     <div>
                       <span className="text-sm text-white">Restrita ao curso</span>
@@ -764,7 +764,7 @@ export default function ProducerLivesPage() {
                     >
                       Remover
                     </button>
-                    <label className="text-xs text-purple-400 hover:text-purple-300 transition cursor-pointer">
+                    <label className="text-xs text-blue-400 hover:text-blue-300 transition cursor-pointer">
                       Trocar
                       <input
                         type="file"
@@ -827,7 +827,7 @@ export default function ProducerLivesPage() {
                 <button
                   onClick={handleSave}
                   disabled={saving || !form.title.trim() || !form.externalUrl.trim() || !form.scheduledAt || (form.visibility === "COURSE_ONLY" && !form.courseId)}
-                  className="bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white px-4 py-2 rounded-lg text-sm font-medium transition"
+                  className="bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white px-4 py-2 rounded-lg text-sm font-medium transition"
                 >
                   {saving ? "Salvando..." : editingLive ? "Salvar" : "Criar Live"}
                 </button>
@@ -841,7 +841,7 @@ export default function ProducerLivesPage() {
       {confirmAction && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/60" onClick={() => setConfirmAction(null)} />
-          <div className="relative bg-[#1a1a2e] border border-white/10 rounded-xl w-full max-w-sm p-6">
+          <div className="relative bg-gray-950 border border-white/10 rounded-xl w-full max-w-sm p-6">
             <h3 className="text-lg font-bold text-white mb-2">
               {confirmAction.type === "start"
                 ? "Iniciar Live?"
@@ -897,7 +897,7 @@ export default function ProducerLivesPage() {
       {lessonModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/60" onClick={() => setLessonModal(null)} />
-          <div className="relative bg-[#1a1a2e] border border-white/10 rounded-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+          <div className="relative bg-gray-950 border border-white/10 rounded-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
             <div className="p-6 space-y-4">
               <h2 className="text-lg font-bold text-white">Salvar como aula</h2>
               <p className="text-gray-400 text-sm">
