@@ -76,6 +76,12 @@ export default function LessonPage({
     "description" | "comments" | "support"
   >("description");
   const [materials, setMaterials] = useState<MaterialData[]>([]);
+  const [reactionData, setReactionData] = useState<{
+    enabled: boolean;
+    likeCount: number;
+    dislikeCount: number;
+    userReaction: "LIKE" | "DISLIKE" | null;
+  } | null>(null);
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Load lesson
@@ -120,11 +126,52 @@ export default function LessonPage({
       .catch(() => {});
   }, [data, params.id]);
 
+  useEffect(() => {
+    if (!data) return;
+    setReactionData(null);
+    fetch(`/api/lessons/${params.id}/reaction`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (d) setReactionData(d); })
+      .catch(() => {});
+  }, [data, params.id]);
+
   const showToast = (msg: string) => {
     setToast(msg);
     if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
     toastTimerRef.current = setTimeout(() => setToast(null), 3500);
   };
+
+  async function handleReaction(type: "LIKE" | "DISLIKE") {
+    if (!reactionData?.enabled || !data) return;
+    const prev = { ...reactionData };
+    const isRemoving = reactionData.userReaction === type;
+    const wasOther = reactionData.userReaction !== null && reactionData.userReaction !== type;
+    setReactionData({
+      ...reactionData,
+      userReaction: isRemoving ? null : type,
+      likeCount:
+        reactionData.likeCount +
+        (type === "LIKE" ? (isRemoving ? -1 : 1) : 0) +
+        (wasOther && reactionData.userReaction === "LIKE" ? -1 : 0),
+      dislikeCount:
+        reactionData.dislikeCount +
+        (type === "DISLIKE" ? (isRemoving ? -1 : 1) : 0) +
+        (wasOther && reactionData.userReaction === "DISLIKE" ? -1 : 0),
+    });
+    try {
+      const res = await fetch(`/api/lessons/${data.lesson.id}/reaction`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type }),
+      });
+      if (res.ok) {
+        const d = await res.json();
+        setReactionData({ ...reactionData, ...d });
+      }
+    } catch {
+      setReactionData(prev);
+    }
+  }
 
   const markCompleted = useCallback(
     async (completed: boolean) => {
@@ -287,6 +334,43 @@ export default function LessonPage({
                 {data.lesson.completed ? "Concluída" : "Marcar como concluída"}
               </span>
             </button>
+
+            {reactionData?.enabled && (
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => handleReaction("LIKE")}
+                  className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm transition-colors ${
+                    reactionData.userReaction === "LIKE"
+                      ? "bg-blue-500/15 text-blue-600 dark:text-blue-400"
+                      : "bg-gray-100 dark:bg-white/5 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-white/10 hover:text-gray-700 dark:hover:text-gray-300"
+                  }`}
+                >
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill={reactionData.userReaction === "LIKE" ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" />
+                  </svg>
+                  {reactionData.likeCount > 0 && (
+                    <span className="text-xs tabular-nums">{reactionData.likeCount}</span>
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleReaction("DISLIKE")}
+                  className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm transition-colors ${
+                    reactionData.userReaction === "DISLIKE"
+                      ? "bg-red-500/15 text-red-600 dark:text-red-400"
+                      : "bg-gray-100 dark:bg-white/5 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-white/10 hover:text-gray-700 dark:hover:text-gray-300"
+                  }`}
+                >
+                  <svg className="w-4 h-4 rotate-180" viewBox="0 0 24 24" fill={reactionData.userReaction === "DISLIKE" ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" />
+                  </svg>
+                  {reactionData.dislikeCount > 0 && (
+                    <span className="text-xs tabular-nums">{reactionData.dislikeCount}</span>
+                  )}
+                </button>
+              </div>
+            )}
 
             {data.prev && (
               <Link
