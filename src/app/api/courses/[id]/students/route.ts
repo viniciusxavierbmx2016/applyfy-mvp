@@ -290,7 +290,7 @@ export async function POST(
         loginUrl,
         sharedPassword || undefined
       );
-      sendEmail({ to: { email: user.email, name: name || undefined }, ...template, senderName: course.workspace.name }).catch(() => {});
+      sendEmail({ to: { email: user.email, name: name || undefined }, ...template, senderName: course.workspace.name }).catch((err) => console.error("[EMAIL_ERROR] studentAccessGranted to:", user.email, err?.message || err));
     }
 
     return NextResponse.json({

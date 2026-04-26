@@ -66,7 +66,7 @@ export async function POST(request: Request) {
       }
 
       const template = welcomeProducer(name);
-      sendEmail({ to: { email, name }, ...template }).catch(() => {});
+      sendEmail({ to: { email, name }, ...template }).catch((err) => console.error("[EMAIL_ERROR] welcomeProducer to:", email, err?.message || err));
     }
 
     return NextResponse.json(

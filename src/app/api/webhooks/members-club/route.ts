@@ -145,7 +145,7 @@ async function handlePaid(
       defaultPlan.name,
       fmt.format(defaultPlan.price)
     );
-    sendEmail({ to: { email: producer.email, name: producer.name || undefined }, ...template }).catch(() => {});
+    sendEmail({ to: { email: producer.email, name: producer.name || undefined }, ...template }).catch((err) => console.error("[EMAIL_ERROR] subscriptionActivated to:", producer.email, err?.message || err));
 
     log("TRANSACTION_PAID", email, txId, "created subscription");
     return;
@@ -175,7 +175,7 @@ async function handlePaid(
     if (plan) {
       const fmt = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
       const template = subscriptionActivated(producer.name || "Produtor", plan.name, fmt.format(plan.price));
-      sendEmail({ to: { email: producer.email, name: producer.name || undefined }, ...template }).catch(() => {});
+      sendEmail({ to: { email: producer.email, name: producer.name || undefined }, ...template }).catch((err) => console.error("[EMAIL_ERROR] subscriptionActivated to:", producer.email, err?.message || err));
     }
 
     log("TRANSACTION_PAID", email, txId, `reactivated from ${sub.status}`);
@@ -269,7 +269,7 @@ async function handleRefund(
     });
 
     const template = subscriptionSuspended(producer.name || "Produtor");
-    sendEmail({ to: { email: producer.email, name: producer.name || undefined }, ...template }).catch(() => {});
+    sendEmail({ to: { email: producer.email, name: producer.name || undefined }, ...template }).catch((err) => console.error("[EMAIL_ERROR] subscriptionSuspended to:", producer.email, err?.message || err));
   }
 
   if (txId) {

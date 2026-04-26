@@ -69,7 +69,7 @@ export async function POST(
         enrollment.course.workspace.name,
         loginUrl
       );
-      sendEmail({ to: { email: enrollment.user.email, name: enrollment.user.name || undefined }, ...template, senderName: enrollment.course.workspace.name }).catch(() => {});
+      sendEmail({ to: { email: enrollment.user.email, name: enrollment.user.name || undefined }, ...template, senderName: enrollment.course.workspace.name }).catch((err) => console.error("[EMAIL_ERROR] studentAccessGranted to:", enrollment.user.email, err?.message || err));
 
       processAutomations({
         type: "STUDENT_ENROLLED",

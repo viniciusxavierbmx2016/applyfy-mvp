@@ -245,7 +245,7 @@ export async function POST(
           workspace.name,
           loginUrl
         );
-        sendEmail({ to: { email, name: name || undefined }, ...template, senderName: workspace.name }).catch(() => {});
+        sendEmail({ to: { email, name: name || undefined }, ...template, senderName: workspace.name }).catch((err) => console.error("[EMAIL_ERROR] studentAccessGranted to:", email, err?.message || err));
 
         await logWebhook({
           event,

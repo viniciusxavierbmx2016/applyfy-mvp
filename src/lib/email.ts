@@ -20,6 +20,11 @@ export async function sendEmail({
   textContent,
   senderName,
 }: SendEmailParams) {
+  if (!to?.email || !to.email.includes("@")) {
+    console.error("[email] Email inválido:", to?.email);
+    return { success: false, error: "Email inválido" };
+  }
+
   if (!process.env.BREVO_API_KEY) {
     console.warn("[email] BREVO_API_KEY not set, skipping email to", to.email);
     return { success: false, error: "BREVO_API_KEY not configured" };
