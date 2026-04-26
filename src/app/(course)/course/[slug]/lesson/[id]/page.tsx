@@ -457,7 +457,7 @@ export default function LessonPage({
                   ? "description"
                   : activeTab;
               return (
-                <div className="border border-gray-200/50 dark:border-white/5 rounded-xl overflow-hidden">
+                <div className="bg-gray-50 dark:bg-white/5 border border-gray-200/50 dark:border-white/5 rounded-xl overflow-hidden">
                   <div className="flex border-b border-gray-200/50 dark:border-white/5 px-1 overflow-x-auto">
                     <button
                       type="button"
@@ -586,7 +586,7 @@ export default function LessonPage({
               );
             })()}
 
-            <div className="mt-4 border border-gray-200/50 dark:border-white/5 rounded-xl p-5">
+            <div className="mt-4 bg-gray-50 dark:bg-white/5 border border-gray-200/50 dark:border-white/5 rounded-xl p-5">
               <LessonQuiz lessonId={data.lesson.id} />
             </div>
           </div>
