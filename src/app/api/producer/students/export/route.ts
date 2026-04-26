@@ -192,6 +192,21 @@ export async function GET(request: Request) {
       }
     }
     const userIds = users.map((u) => u.id);
+
+    const reactionsByUser = userIds.length > 0
+      ? await prisma.lessonReaction.groupBy({
+          by: ["userId", "type"],
+          _count: true,
+          where: { userId: { in: userIds } },
+        })
+      : [];
+    const userLikes = new Map<string, number>();
+    const userDislikes = new Map<string, number>();
+    for (const r of reactionsByUser) {
+      if (r.type === "LIKE") userLikes.set(r.userId, r._count);
+      else userDislikes.set(r.userId, r._count);
+    }
+
     const progress =
       userIds.length > 0 && lessonIdsSet.size > 0
         ? await prisma.lessonProgress.findMany({
@@ -245,6 +260,8 @@ export async function GET(request: Request) {
       "Aulas concluídas",
       "Último acesso",
       "Status do acesso",
+      "Likes dados",
+      "Dislikes dados",
     ];
     const lines: string[] = [headers.map(csvEscape).join(",")];
 
@@ -329,6 +346,8 @@ export async function GET(request: Request) {
           csvEscape(`${completedCount} de ${totalLessons}`),
           csvEscape(lastAccessed ? formatDate(lastAccessed) : "Nunca acessou"),
           csvEscape(status),
+          csvEscape(userLikes.get(u.id) || 0),
+          csvEscape(userDislikes.get(u.id) || 0),
         ].join(",")
       );
     }

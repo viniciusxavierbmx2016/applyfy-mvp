@@ -167,6 +167,8 @@ export async function GET(request: Request) {
           lessonsLeastViewed: [],
           lessonsMostCompleted: [],
           lessonsLeastCompleted: [],
+          lessonsMostLiked: [],
+          lessonsMostDisliked: [],
           modulesLeastCompleted: [],
           modulesAbandonment: [],
         });
@@ -290,6 +292,20 @@ export async function GET(request: Request) {
         }
       }
 
+      const reactionCounts = allLessonIds.length
+        ? await prisma.lessonReaction.groupBy({
+            by: ["lessonId", "type"],
+            _count: true,
+            where: { lessonId: { in: allLessonIds } },
+          })
+        : [];
+      const likesByLesson = new Map<string, number>();
+      const dislikesByLesson = new Map<string, number>();
+      for (const r of reactionCounts) {
+        if (r.type === "LIKE") likesByLesson.set(r.lessonId, r._count);
+        else dislikesByLesson.set(r.lessonId, r._count);
+      }
+
       const lessonStats = Array.from(lessonMeta.values())
         .map((l) => {
           const enrolled = enrolledByCourse.get(l.courseId)?.size || 0;
@@ -306,6 +322,8 @@ export async function GET(request: Request) {
             completedCount,
             completedPercent:
               enrolled > 0 ? Math.round((completedCount / enrolled) * 100) : 0,
+            likeCount: likesByLesson.get(l.id) || 0,
+            dislikeCount: dislikesByLesson.get(l.id) || 0,
           };
         })
         .filter((l) => l.totalStudents > 0);
@@ -338,6 +356,15 @@ export async function GET(request: Request) {
             a.completedPercent - b.completedPercent ||
             a.completedCount - b.completedCount
         )
+        .slice(0, 5);
+
+      const lessonsMostLiked = [...lessonStats]
+        .filter((l) => l.likeCount > 0)
+        .sort((a, b) => b.likeCount - a.likeCount)
+        .slice(0, 5);
+      const lessonsMostDisliked = [...lessonStats]
+        .filter((l) => l.dislikeCount > 0)
+        .sort((a, b) => b.dislikeCount - a.dislikeCount)
         .slice(0, 5);
 
       const modulesStats = Array.from(moduleMeta.values())
@@ -403,12 +430,14 @@ export async function GET(request: Request) {
 
       if (format === "csv") {
         const header =
-          "secao,aula,modulo,alunos_total,alunos_viram,percent_viram,alunos_concluiram,percent_concluiram";
+          "secao,aula,modulo,alunos_total,alunos_viram,percent_viram,alunos_concluiram,percent_concluiram,likes,dislikes";
         const sections: Array<[string, typeof lessonsMostViewed]> = [
           ["mais_assistidas", lessonsMostViewed],
           ["menos_assistidas", lessonsLeastViewed],
           ["mais_concluidas", lessonsMostCompleted],
           ["menos_concluidas", lessonsLeastCompleted],
+          ["mais_curtidas", lessonsMostLiked],
+          ["mais_descurtidas", lessonsMostDisliked],
         ];
         const rows: string[] = [];
         for (const [name, list] of sections) {
@@ -423,6 +452,8 @@ export async function GET(request: Request) {
                 String(l.viewedPercent),
                 String(l.completedCount),
                 String(l.completedPercent),
+                String(l.likeCount),
+                String(l.dislikeCount),
               ].join(",")
             );
           }
@@ -444,6 +475,8 @@ export async function GET(request: Request) {
         lessonsLeastViewed,
         lessonsMostCompleted,
         lessonsLeastCompleted,
+        lessonsMostLiked,
+        lessonsMostDisliked,
         modulesLeastCompleted,
         modulesAbandonment,
       });

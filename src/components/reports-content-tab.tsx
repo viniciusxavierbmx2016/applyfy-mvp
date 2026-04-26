@@ -12,6 +12,8 @@ interface LessonStat {
   viewedPercent: number;
   completedCount: number;
   completedPercent: number;
+  likeCount: number;
+  dislikeCount: number;
 }
 
 interface ModuleStat {
@@ -28,6 +30,8 @@ interface ContentData {
   lessonsLeastViewed: LessonStat[];
   lessonsMostCompleted: LessonStat[];
   lessonsLeastCompleted: LessonStat[];
+  lessonsMostLiked: LessonStat[];
+  lessonsMostDisliked: LessonStat[];
   modulesLeastCompleted: ModuleStat[];
   modulesAbandonment: Array<{ moduleId: string; moduleTitle: string; count: number }>;
 }
@@ -147,6 +151,27 @@ export function ReportsContentTab({ courseId, startDate, endDate }: Props) {
         insight="Aulas iniciadas e não concluídas podem indicar conteúdo longo demais, explicação complexa ou falta de retenção."
       />
 
+      {(data.lessonsMostLiked?.length > 0 || data.lessonsMostDisliked?.length > 0) && (
+        <>
+          <ReactionSection
+            title="Aulas mais curtidas"
+            subtitle="Top 5 aulas com mais likes dos alunos"
+            items={data.lessonsMostLiked || []}
+            metric="like"
+            tone="blue"
+            insight="Aulas curtidas indicam conteúdo que conectou com o aluno. Considere criar mais conteúdos no mesmo formato e estilo."
+          />
+          <ReactionSection
+            title="Aulas com mais dislikes"
+            subtitle="Top 5 aulas que receberam mais não gostei"
+            items={data.lessonsMostDisliked || []}
+            metric="dislike"
+            tone="red"
+            insight="Dislikes podem indicar conteúdo confuso, qualidade técnica baixa ou expectativa não atendida. Revise essas aulas com prioridade."
+          />
+        </>
+      )}
+
       <ModuleSection
         title="Módulos menos concluídos"
         subtitle="% de alunos que terminaram todas as aulas do módulo"
@@ -213,6 +238,79 @@ function LessonSection({
                   <div className="text-right shrink-0">
                     <p className={`text-2xl font-bold tabular-nums ${t.text}`}>{pct}%</p>
                     <p className="text-[11px] text-gray-400">{count}/{item.totalStudents}</p>
+                    {(item.likeCount > 0 || item.dislikeCount > 0) && (
+                      <p className="mt-1 text-[11px] text-gray-400 tabular-nums">
+                        <span className="text-blue-500">{item.likeCount}</span>
+                        {" / "}
+                        <span className="text-rose-400">{item.dislikeCount}</span>
+                      </p>
+                    )}
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </div>
+      <InsightCard tone={tone} text={insight} />
+    </section>
+  );
+}
+
+function ReactionSection({
+  title,
+  subtitle,
+  items,
+  metric,
+  tone,
+  insight,
+}: {
+  title: string;
+  subtitle: string;
+  items: LessonStat[];
+  metric: "like" | "dislike";
+  tone: Tone;
+  insight: string;
+}) {
+  const t = TONE_MAP[tone];
+  const max = items.reduce((m, it) => Math.max(m, metric === "like" ? it.likeCount : it.dislikeCount), 0) || 1;
+  return (
+    <section className="space-y-4">
+      <SectionHeader title={title} subtitle={subtitle} />
+      <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 overflow-hidden">
+        {items.length === 0 ? (
+          <EmptyState />
+        ) : (
+          <ul className="divide-y divide-gray-100 dark:divide-gray-800/60">
+            {items.map((item, i) => {
+              const count = metric === "like" ? item.likeCount : item.dislikeCount;
+              const pct = (count / max) * 100;
+              return (
+                <li key={item.lessonId} className="flex items-center gap-4 px-5 py-4">
+                  <span className={`inline-flex items-center justify-center w-8 h-8 rounded-full text-sm font-semibold shrink-0 ${t.ring}`}>
+                    {i + 1}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">
+                      {item.lessonTitle}
+                    </p>
+                    <p className="text-xs text-gray-400 truncate">{item.moduleTitle}</p>
+                    <div className="mt-2 h-2 rounded-full bg-gray-100 dark:bg-gray-800 overflow-hidden">
+                      <div
+                        className={`h-full ${t.bar} transition-[width]`}
+                        style={{ width: `${Math.max(2, pct)}%` }}
+                      />
+                    </div>
+                  </div>
+                  <div className="text-right shrink-0 flex items-center gap-3">
+                    <span className="inline-flex items-center gap-1 text-blue-600 dark:text-blue-400 text-sm">
+                      <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" /></svg>
+                      <span className="font-bold tabular-nums">{item.likeCount}</span>
+                    </span>
+                    <span className="inline-flex items-center gap-1 text-rose-500 dark:text-rose-400 text-sm">
+                      <svg className="w-3.5 h-3.5 rotate-180" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" /></svg>
+                      <span className="font-bold tabular-nums">{item.dislikeCount}</span>
+                    </span>
                   </div>
                 </li>
               );
