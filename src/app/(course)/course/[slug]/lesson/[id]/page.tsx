@@ -73,6 +73,13 @@ export default function LessonPage({
   const [toast, setToast] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const toggleSidebar = () => {
+    if (typeof window !== "undefined" && window.innerWidth < 1024) {
+      setMobileSidebarOpen((v) => !v);
+    } else {
+      setSidebarOpen((v) => !v);
+    }
+  };
   const [activeTab, setActiveTab] = useState<
     "description" | "comments" | "support"
   >("description");
@@ -294,9 +301,12 @@ export default function LessonPage({
         <div className="flex items-center gap-3 min-w-0">
           <Link
             href={`/course/${data.course.slug}`}
-            className="text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white text-sm font-medium transition-colors shrink-0"
+            className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white text-sm font-medium transition-colors shrink-0"
           >
-            ← Voltar ao painel
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+            </svg>
+            <span className="hidden sm:inline">Voltar ao painel</span>
           </Link>
           <span className="hidden sm:block text-gray-300 dark:text-white/10">|</span>
           <p className="hidden sm:block text-sm text-gray-700 dark:text-gray-300 font-medium truncate">
@@ -305,13 +315,7 @@ export default function LessonPage({
         </div>
         <button
           type="button"
-          onClick={() => {
-            if (window.innerWidth < 1024) {
-              setMobileSidebarOpen(!mobileSidebarOpen);
-            } else {
-              setSidebarOpen(!sidebarOpen);
-            }
-          }}
+          onClick={toggleSidebar}
           className="p-2 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5 rounded-lg transition-colors"
           aria-label="Toggle sidebar"
         >
@@ -338,15 +342,15 @@ export default function LessonPage({
             )}
           </div>
 
-          <div className="px-4 sm:px-6 lg:px-8 py-5 max-w-[960px]">
+          <div className="px-4 py-4 sm:px-6 sm:py-5 lg:px-8 max-w-[960px]">
             {(() => {
               const currentModule = data.course.modules.find(m => m.lessons.some(l => l.id === data.lesson.id));
               const currentModuleTitle = currentModule?.title || "";
               return (
-                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-4">
+                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-4">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400 mb-1">
-                      <Link href={`/course/${data.course.slug}`} className="text-blue-500 dark:text-blue-400 hover:underline">{data.course.title}</Link>
+                      <Link href={`/course/${data.course.slug}`} className="text-blue-500 dark:text-blue-400 hover:underline shrink-0">{data.course.title}</Link>
                       {currentModuleTitle && (
                         <>
                           <span>·</span>
@@ -359,7 +363,7 @@ export default function LessonPage({
                     </h1>
                   </div>
 
-                  <div className="flex items-center gap-2 flex-shrink-0 sm:pt-3">
+                  <div className="flex items-center gap-2 flex-shrink-0 overflow-x-auto pb-1 sm:pb-0 sm:pt-3">
                     <button
                       type="button"
                       onClick={() => markCompleted(!data.lesson.completed)}
@@ -454,11 +458,11 @@ export default function LessonPage({
                   : activeTab;
               return (
                 <>
-                  <div className="flex border-b border-gray-200 dark:border-white/5 mb-4">
+                  <div className="flex border-b border-gray-200 dark:border-white/5 mb-4 overflow-x-auto">
                     <button
                       type="button"
                       onClick={() => setActiveTab("description")}
-                      className={`flex items-center gap-1.5 px-4 py-2.5 text-sm border-b-2 transition-colors ${
+                      className={`flex items-center gap-1.5 px-4 py-2.5 text-sm whitespace-nowrap border-b-2 transition-colors ${
                         shownTab === "description"
                           ? "text-gray-900 dark:text-white border-blue-500"
                           : "text-gray-500 border-transparent hover:text-gray-700 dark:hover:text-gray-300"
@@ -473,7 +477,7 @@ export default function LessonPage({
                       <button
                         type="button"
                         onClick={() => setActiveTab("comments")}
-                        className={`flex items-center gap-1.5 px-4 py-2.5 text-sm border-b-2 transition-colors ${
+                        className={`flex items-center gap-1.5 px-4 py-2.5 text-sm whitespace-nowrap border-b-2 transition-colors ${
                           shownTab === "comments"
                             ? "text-gray-900 dark:text-white border-blue-500"
                             : "text-gray-500 border-transparent hover:text-gray-700 dark:hover:text-gray-300"
@@ -489,7 +493,7 @@ export default function LessonPage({
                       <button
                         type="button"
                         onClick={() => setActiveTab("support")}
-                        className={`flex items-center gap-1.5 px-4 py-2.5 text-sm border-b-2 transition-colors ${
+                        className={`flex items-center gap-1.5 px-4 py-2.5 text-sm whitespace-nowrap border-b-2 transition-colors ${
                           shownTab === "support"
                             ? "text-gray-900 dark:text-white border-blue-500"
                             : "text-gray-500 border-transparent hover:text-gray-700 dark:hover:text-gray-300"
@@ -589,7 +593,7 @@ export default function LessonPage({
         {/* Desktop sidebar — collapsible */}
         <div
           className={`hidden lg:block border-l border-gray-200 dark:border-white/5 overflow-y-auto transition-all duration-300 ${
-            sidebarOpen ? "w-[340px]" : "w-0"
+            sidebarOpen ? "w-[340px]" : "w-0 border-l-0"
           }`}
         >
           <div className={`${sidebarOpen ? "opacity-100" : "opacity-0 pointer-events-none"} transition-opacity duration-200 w-[340px]`}>
@@ -603,38 +607,42 @@ export default function LessonPage({
         </div>
       </div>
 
+      {/* Mobile sidebar overlay */}
+      <div
+        className={`fixed inset-0 bg-black/50 z-40 lg:hidden transition-opacity duration-300 ${
+          mobileSidebarOpen ? "opacity-100" : "opacity-0 pointer-events-none"
+        }`}
+        onClick={() => setMobileSidebarOpen(false)}
+      />
+
       {/* Mobile sidebar drawer */}
-      {mobileSidebarOpen && (
-        <div
-          className="fixed inset-0 z-40 lg:hidden"
-          onClick={() => setMobileSidebarOpen(false)}
-        >
-          <div className="absolute inset-0 bg-black/70" />
-          <div
-            className="absolute right-0 top-0 bottom-0 w-full max-w-sm bg-white dark:bg-gray-950 p-3 overflow-y-auto"
-            onClick={(e) => e.stopPropagation()}
+      <div
+        className={`fixed top-0 right-0 h-full w-[320px] max-w-[85vw] bg-white dark:bg-[#0f0f12] border-l border-gray-200 dark:border-white/10 z-50 lg:hidden transform transition-transform duration-300 ${
+          mobileSidebarOpen ? "translate-x-0" : "translate-x-full"
+        }`}
+      >
+        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-white/5">
+          <span className="text-sm font-semibold text-gray-900 dark:text-white">Lista de aulas</span>
+          <button
+            type="button"
+            onClick={() => setMobileSidebarOpen(false)}
+            className="w-8 h-8 rounded-lg bg-gray-100 dark:bg-white/5 flex items-center justify-center text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+            aria-label="Fechar"
           >
-            <div className="flex justify-end mb-2">
-              <button
-                type="button"
-                onClick={() => setMobileSidebarOpen(false)}
-                className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
-                aria-label="Fechar"
-              >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-            <LessonsSidebar
-              courseSlug={data.course.slug}
-              courseTitle={data.course.title}
-              modules={data.course.modules}
-              currentLessonId={data.lesson.id}
-            />
-          </div>
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
         </div>
-      )}
+        <div className="overflow-y-auto h-[calc(100%-52px)]">
+          <LessonsSidebar
+            courseSlug={data.course.slug}
+            courseTitle={data.course.title}
+            modules={data.course.modules}
+            currentLessonId={data.lesson.id}
+          />
+        </div>
+      </div>
 
       {/* Toast */}
       {toast && (
