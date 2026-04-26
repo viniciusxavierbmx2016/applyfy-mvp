@@ -339,85 +339,107 @@ export default function LessonPage({
           </div>
 
           <div className="px-4 sm:px-6 lg:px-8 py-5 max-w-[960px]">
-            <h1 className="text-xl lg:text-2xl font-semibold tracking-tight text-gray-900 dark:text-white">
-              {data.lesson.title}
-            </h1>
+            {(() => {
+              const currentModule = data.course.modules.find(m => m.lessons.some(l => l.id === data.lesson.id));
+              const currentModuleTitle = currentModule?.title || "";
+              return (
+                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-4">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400 mb-1">
+                      <Link href={`/course/${data.course.slug}`} className="text-blue-500 dark:text-blue-400 hover:underline">{data.course.title}</Link>
+                      {currentModuleTitle && (
+                        <>
+                          <span>·</span>
+                          <span className="truncate">{currentModuleTitle}</span>
+                        </>
+                      )}
+                    </div>
+                    <h1 className="text-xl font-bold text-gray-900 dark:text-white leading-tight">
+                      {data.lesson.title}
+                    </h1>
+                  </div>
 
-            <div className="mt-5 flex flex-wrap items-center gap-3">
-              <button
-                type="button"
-                onClick={() => markCompleted(!data.lesson.completed)}
-                disabled={marking}
-                className={`px-5 py-2.5 rounded-xl text-sm font-semibold transition-[colors,box-shadow] duration-300 disabled:opacity-50 ${
-                  data.lesson.completed
-                    ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 ring-1 ring-inset ring-emerald-500/20 hover:ring-emerald-500/40 hover:bg-emerald-500/15"
-                    : "bg-gradient-to-r from-emerald-500 to-emerald-600 text-white shadow-md shadow-emerald-500/25 hover:shadow-lg hover:shadow-emerald-500/30 hover:from-emerald-400 hover:to-emerald-500"
-                }`}
-              >
-                <span className="inline-flex items-center gap-2">
-                  <svg className={`w-4 h-4 transition-transform duration-300 ${data.lesson.completed ? "scale-100" : "scale-90"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                  </svg>
-                  {data.lesson.completed ? "Concluída" : "Marcar como concluída"}
-                </span>
-              </button>
+                  <div className="flex items-center gap-2 flex-shrink-0 sm:pt-3">
+                    <button
+                      type="button"
+                      onClick={() => markCompleted(!data.lesson.completed)}
+                      disabled={marking}
+                      className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 disabled:opacity-50 ${
+                        data.lesson.completed
+                          ? "bg-emerald-500/12 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20"
+                          : "bg-gradient-to-r from-emerald-600 to-emerald-500 text-white hover:brightness-110"
+                      }`}
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                      {data.lesson.completed ? "Concluída" : "Concluir aula"}
+                    </button>
 
-              {reactionData?.enabled && (
-                <div className="flex items-center gap-1">
-                  <button
-                    type="button"
-                    onClick={() => handleReaction("LIKE")}
-                    className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm transition-colors ${
-                      reactionData.userReaction === "LIKE"
-                        ? "bg-blue-500/15 text-blue-600 dark:text-blue-400"
-                        : "bg-gray-100 dark:bg-white/5 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-white/10 hover:text-gray-700 dark:hover:text-gray-300"
-                    }`}
-                  >
-                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill={reactionData.userReaction === "LIKE" ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" />
-                    </svg>
-                    {reactionData.likeCount > 0 && (
-                      <span className="text-xs tabular-nums">{reactionData.likeCount}</span>
+                    {reactionData?.enabled && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => handleReaction("LIKE")}
+                          className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-full text-sm transition-colors ${
+                            reactionData.userReaction === "LIKE"
+                              ? "bg-blue-500/15 text-blue-600 dark:text-blue-400"
+                              : "bg-gray-100 dark:bg-white/5 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-white/10"
+                          }`}
+                        >
+                          <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill={reactionData.userReaction === "LIKE" ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" />
+                          </svg>
+                          {reactionData.likeCount > 0 && (
+                            <span className="text-xs tabular-nums">{reactionData.likeCount}</span>
+                          )}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleReaction("DISLIKE")}
+                          className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-full text-sm transition-colors ${
+                            reactionData.userReaction === "DISLIKE"
+                              ? "bg-red-500/15 text-red-600 dark:text-red-400"
+                              : "bg-gray-100 dark:bg-white/5 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-white/10"
+                          }`}
+                        >
+                          <svg className="w-3.5 h-3.5 rotate-180" viewBox="0 0 24 24" fill={reactionData.userReaction === "DISLIKE" ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" />
+                          </svg>
+                          {reactionData.dislikeCount > 0 && (
+                            <span className="text-xs tabular-nums">{reactionData.dislikeCount}</span>
+                          )}
+                        </button>
+                      </>
                     )}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleReaction("DISLIKE")}
-                    className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm transition-colors ${
-                      reactionData.userReaction === "DISLIKE"
-                        ? "bg-red-500/15 text-red-600 dark:text-red-400"
-                        : "bg-gray-100 dark:bg-white/5 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-white/10 hover:text-gray-700 dark:hover:text-gray-300"
-                    }`}
-                  >
-                    <svg className="w-4 h-4 rotate-180" viewBox="0 0 24 24" fill={reactionData.userReaction === "DISLIKE" ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" />
-                    </svg>
-                    {reactionData.dislikeCount > 0 && (
-                      <span className="text-xs tabular-nums">{reactionData.dislikeCount}</span>
+
+                    {(data.prev || data.next) && (
+                      <>
+                        <div className="w-px h-6 bg-gray-200 dark:bg-white/10 mx-1" />
+                        {data.prev && (
+                          <Link
+                            href={`/course/${data.course.slug}/lesson/${data.prev.id}`}
+                            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-full text-sm bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/10 hover:text-gray-900 dark:hover:text-white transition-colors"
+                          >
+                            ← Anterior
+                          </Link>
+                        )}
+                        {data.next && (
+                          <Link
+                            href={`/course/${data.course.slug}/lesson/${data.next.id}`}
+                            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-full text-sm bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/10 hover:text-gray-900 dark:hover:text-white transition-colors"
+                          >
+                            Próxima →
+                          </Link>
+                        )}
+                      </>
                     )}
-                  </button>
+                  </div>
                 </div>
-              )}
+              );
+            })()}
 
-              {data.prev && (
-                <Link
-                  href={`/course/${data.course.slug}/lesson/${data.prev.id}`}
-                  className="group inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5 text-sm font-medium transition-colors duration-200"
-                >
-                  <svg className="w-4 h-4 transition-transform duration-200 group-hover:-translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
-                  Anterior
-                </Link>
-              )}
-              {data.next && (
-                <Link
-                  href={`/course/${data.course.slug}/lesson/${data.next.id}`}
-                  className="group inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5 text-sm font-medium transition-colors duration-200"
-                >
-                  Próxima
-                  <svg className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
-                </Link>
-              )}
-            </div>
+            <div className="h-px bg-gray-200 dark:bg-white/5 mb-4" />
 
             {(() => {
               const commentsEnabled = data.course.lessonCommentsEnabled !== false;
