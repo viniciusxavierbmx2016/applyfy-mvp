@@ -447,7 +447,6 @@ export default function LessonPage({
               const hasSupport =
                 supportTabEnabled &&
                 !!(data.course.supportEmail || data.course.supportWhatsapp);
-              const waHref = formatWhatsappLink(data.course.supportWhatsapp);
               const shownTab =
                 (activeTab === "comments" && !commentsEnabled) ||
                 (activeTab === "support" && !hasSupport)
@@ -455,143 +454,133 @@ export default function LessonPage({
                   : activeTab;
               return (
                 <>
-                  <div className="mt-6 border-b border-gray-200 dark:border-white/5 flex gap-6">
+                  <div className="flex border-b border-gray-200 dark:border-white/5 mb-4">
                     <button
                       type="button"
                       onClick={() => setActiveTab("description")}
-                      className={`relative px-0.5 py-2.5 text-sm font-medium transition-colors duration-200 ${
+                      className={`flex items-center gap-1.5 px-4 py-2.5 text-sm border-b-2 transition-colors ${
                         shownTab === "description"
-                          ? "text-gray-900 dark:text-white"
-                          : "text-gray-500 hover:text-gray-900 dark:hover:text-white"
+                          ? "text-gray-900 dark:text-white border-blue-500"
+                          : "text-gray-500 border-transparent hover:text-gray-700 dark:hover:text-gray-300"
                       }`}
                     >
+                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
                       Descrição
-                      {shownTab === "description" && (
-                        <span className="absolute inset-x-0 -bottom-px h-[2px] bg-blue-500 rounded-full" />
-                      )}
                     </button>
                     {commentsEnabled && (
                       <button
                         type="button"
                         onClick={() => setActiveTab("comments")}
-                        className={`relative px-0.5 py-2.5 text-sm font-medium transition-colors duration-200 ${
+                        className={`flex items-center gap-1.5 px-4 py-2.5 text-sm border-b-2 transition-colors ${
                           shownTab === "comments"
-                            ? "text-gray-900 dark:text-white"
-                            : "text-gray-500 hover:text-gray-900 dark:hover:text-white"
+                            ? "text-gray-900 dark:text-white border-blue-500"
+                            : "text-gray-500 border-transparent hover:text-gray-700 dark:hover:text-gray-300"
                         }`}
                       >
+                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
+                        </svg>
                         Comentários
-                        {shownTab === "comments" && (
-                          <span className="absolute inset-x-0 -bottom-px h-[2px] bg-blue-500 rounded-full" />
-                        )}
                       </button>
                     )}
                     {hasSupport && (
                       <button
                         type="button"
                         onClick={() => setActiveTab("support")}
-                        className={`relative inline-flex items-center gap-1.5 px-0.5 py-2.5 text-sm font-medium transition-colors duration-200 ${
+                        className={`flex items-center gap-1.5 px-4 py-2.5 text-sm border-b-2 transition-colors ${
                           shownTab === "support"
-                            ? "text-gray-900 dark:text-white"
-                            : "text-gray-500 hover:text-gray-900 dark:hover:text-white"
+                            ? "text-gray-900 dark:text-white border-blue-500"
+                            : "text-gray-500 border-transparent hover:text-gray-700 dark:hover:text-gray-300"
                         }`}
                       >
-                        <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M3 18v-6a9 9 0 0 1 18 0v6" />
-                          <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z" />
+                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <circle cx="12" cy="12" r="10" />
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3M12 17h.01" />
                         </svg>
                         Suporte
-                        {shownTab === "support" && (
-                          <span className="absolute inset-x-0 -bottom-px h-[2px] bg-blue-500 rounded-full" />
-                        )}
                       </button>
                     )}
                   </div>
 
-                  <div className="mt-5">
+                  <div className="mt-1">
                     {shownTab === "description" && (
-                      data.lesson.description ? (
-                        <div
-                          className="prose-lesson text-sm leading-relaxed"
-                          dangerouslySetInnerHTML={{ __html: data.lesson.description }}
-                        />
-                      ) : (
-                        <p className="text-gray-500 text-sm">Sem descrição para esta aula.</p>
-                      )
+                      <>
+                        {data.lesson.description ? (
+                          <div
+                            className="prose-lesson text-sm leading-relaxed"
+                            dangerouslySetInnerHTML={{ __html: data.lesson.description }}
+                          />
+                        ) : (
+                          <p className="text-gray-500 text-sm">Sem descrição para esta aula.</p>
+                        )}
+                        {materials.length > 0 && (
+                          <div className="mt-5">
+                            <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-500 mb-2.5">
+                              Materiais da aula
+                            </p>
+                            <div className="flex flex-wrap gap-2">
+                              {materials.map((mat) => {
+                                const icon = getMaterialIcon(mat.fileType);
+                                return (
+                                  <a
+                                    key={mat.id}
+                                    href={mat.fileUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center gap-2 px-3.5 py-2 bg-gray-50 dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.06] rounded-lg text-xs text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/[0.06] hover:border-gray-300 dark:hover:border-white/[0.12] hover:text-gray-900 dark:hover:text-white transition-colors"
+                                  >
+                                    <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: icon.dotColor }} />
+                                    {mat.name || mat.fileName}
+                                    <span className="text-[10px] text-gray-400 dark:text-gray-600 ml-1">{formatFileSize(mat.fileSize)}</span>
+                                  </a>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
+                      </>
                     )}
                     {shownTab === "comments" && (
                       <LessonComments lessonId={data.lesson.id} />
                     )}
                     {shownTab === "support" && (
-                      <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
-                        {data.course.supportEmail && (
-                          <a
-                            href={`mailto:${data.course.supportEmail}`}
-                            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-gray-900/60 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-white/5 transition"
-                          >
-                            <span className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 inline-flex items-center justify-center">
-                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <div>
+                        <p className="text-sm text-gray-500 mb-3">Precisa de ajuda com esta aula? Entre em contato:</p>
+                        <div className="flex gap-2.5 flex-wrap">
+                          {data.course.supportEmail && (
+                            <a
+                              href={`mailto:${data.course.supportEmail}`}
+                              className="flex items-center gap-2 px-4 py-2.5 bg-gray-50 dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.06] rounded-lg text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/[0.06] hover:text-gray-900 dark:hover:text-gray-200 transition-colors"
+                            >
+                              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l9 6 9-6M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                               </svg>
-                            </span>
-                            <span className="truncate">{data.course.supportEmail}</span>
-                          </a>
-                        )}
-                        {waHref && (
-                          <a
-                            href={waHref}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-gray-900/60 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-white/5 transition"
-                          >
-                            <span className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 inline-flex items-center justify-center">
-                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h2.28a1 1 0 01.95.68l1.5 4.49a1 1 0 01-.5 1.21l-1.9.95a11 11 0 005.52 5.52l.95-1.9a1 1 0 011.21-.5l4.49 1.5a1 1 0 01.68.95V19a2 2 0 01-2 2h-1C9.72 21 3 14.28 3 6V5z" />
+                              {data.course.supportEmail}
+                            </a>
+                          )}
+                          {data.course.supportWhatsapp && (
+                            <a
+                              href={formatWhatsappLink(data.course.supportWhatsapp) || "#"}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-2 px-4 py-2.5 bg-gray-50 dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.06] rounded-lg text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/[0.06] hover:text-gray-900 dark:hover:text-gray-200 transition-colors"
+                            >
+                              <svg className="w-3.5 h-3.5 text-emerald-500" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z" />
+                                <path d="M12 0C5.373 0 0 5.373 0 12c0 2.625.846 5.059 2.284 7.034L.789 23.492a.5.5 0 00.612.638l4.712-1.244A11.944 11.944 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-2.352 0-4.55-.672-6.42-1.832l-.42-.27-3.2.845.86-3.141-.296-.47A9.935 9.935 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z" />
                               </svg>
-                            </span>
-                            <span>{formatPhoneDisplay(data.course.supportWhatsapp)}</span>
-                          </a>
-                        )}
+                              {formatPhoneDisplay(data.course.supportWhatsapp)}
+                            </a>
+                          )}
+                        </div>
                       </div>
                     )}
                   </div>
                 </>
               );
             })()}
-
-            {materials.length > 0 && (
-              <div className="mt-8">
-                <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
-                  <svg className="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
-                  Downloads
-                </h3>
-                <div className="space-y-2">
-                  {materials.map((mat) => {
-                    const icon = getMaterialIcon(mat.fileType);
-                    return (
-                      <a
-                        key={mat.id}
-                        href={mat.fileUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-3 p-3 bg-white dark:bg-gray-900/60 border border-gray-200 dark:border-white/5 rounded-xl hover:bg-gray-50 dark:hover:bg-white/5 transition-colors group"
-                      >
-                        <span className={`inline-flex items-center justify-center w-9 h-9 rounded-lg text-[10px] font-bold ${icon.color}`}>
-                          {icon.label}
-                        </span>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{mat.name}</p>
-                          <p className="text-xs text-gray-500">{mat.fileName} · {formatFileSize(mat.fileSize)}</p>
-                        </div>
-                        <span className="text-xs text-blue-500 group-hover:text-blue-400 font-medium shrink-0">Baixar</span>
-                      </a>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
 
             <LessonQuiz lessonId={data.lesson.id} />
           </div>
@@ -664,17 +653,17 @@ function formatFileSize(bytes: number): string {
   return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`;
 }
 
-function getMaterialIcon(type: string): { color: string; label: string } {
-  if (type === "application/pdf") return { color: "text-red-500 bg-red-50 dark:bg-red-500/10", label: "PDF" };
+function getMaterialIcon(type: string): { color: string; label: string; dotColor: string } {
+  if (type === "application/pdf") return { color: "text-red-500 bg-red-50 dark:bg-red-500/10", label: "PDF", dotColor: "#ef4444" };
   if (type.includes("spreadsheet") || type.includes("excel") || type === "text/csv")
-    return { color: "text-emerald-500 bg-emerald-50 dark:bg-emerald-500/10", label: "XLS" };
+    return { color: "text-emerald-500 bg-emerald-50 dark:bg-emerald-500/10", label: "XLS", dotColor: "#22c55e" };
   if (type.includes("word") || type === "application/msword")
-    return { color: "text-blue-500 bg-blue-50 dark:bg-blue-500/10", label: "DOC" };
+    return { color: "text-blue-500 bg-blue-50 dark:bg-blue-500/10", label: "DOC", dotColor: "#3b82f6" };
   if (type.includes("presentation") || type.includes("powerpoint"))
-    return { color: "text-orange-500 bg-orange-50 dark:bg-orange-500/10", label: "PPT" };
-  if (type.startsWith("image/")) return { color: "text-purple-500 bg-purple-50 dark:bg-purple-500/10", label: "IMG" };
-  if (type.startsWith("audio/")) return { color: "text-pink-500 bg-pink-50 dark:bg-pink-500/10", label: "MP3" };
-  if (type.startsWith("video/")) return { color: "text-blue-500 bg-blue-50 dark:bg-blue-500/10", label: "MP4" };
-  if (type.includes("zip") || type.includes("rar")) return { color: "text-yellow-600 bg-yellow-50 dark:bg-yellow-500/10", label: "ZIP" };
-  return { color: "text-gray-500 bg-gray-50 dark:bg-gray-500/10", label: "FILE" };
+    return { color: "text-orange-500 bg-orange-50 dark:bg-orange-500/10", label: "PPT", dotColor: "#f97316" };
+  if (type.startsWith("image/")) return { color: "text-purple-500 bg-purple-50 dark:bg-purple-500/10", label: "IMG", dotColor: "#a855f7" };
+  if (type.startsWith("audio/")) return { color: "text-pink-500 bg-pink-50 dark:bg-pink-500/10", label: "MP3", dotColor: "#eab308" };
+  if (type.startsWith("video/")) return { color: "text-blue-500 bg-blue-50 dark:bg-blue-500/10", label: "MP4", dotColor: "#ec4899" };
+  if (type.includes("zip") || type.includes("rar")) return { color: "text-yellow-600 bg-yellow-50 dark:bg-yellow-500/10", label: "ZIP", dotColor: "#6b7280" };
+  return { color: "text-gray-500 bg-gray-50 dark:bg-gray-500/10", label: "FILE", dotColor: "#6b7280" };
 }
