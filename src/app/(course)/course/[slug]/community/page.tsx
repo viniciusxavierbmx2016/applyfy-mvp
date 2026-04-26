@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import dynamic from "next/dynamic";
@@ -28,14 +28,25 @@ const POST_TYPES: Array<{ value: PostItem["type"]; label: string }> = [
   { value: "FEEDBACK", label: "Feedback" },
 ];
 
+interface CommunityGroup {
+  id: string;
+  name: string;
+  slug: string;
+  isDefault: boolean;
+  permission: string;
+  _count: { posts: number };
+}
+
 export default function CommunityPage() {
   const params = useParams<{ slug: string }>();
   const router = useRouter();
   const { user, setUser } = useUserStore();
   const [posts, setPosts] = useState<PostItem[]>([]);
-  const [course, setCourse] = useState<{ title: string; slug: string } | null>(
-    null
-  );
+  const [course, setCourse] = useState<{
+    id: string;
+    title: string;
+    slug: string;
+  } | null>(null);
   const [isStaffViewer, setIsStaffViewer] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -44,6 +55,12 @@ export default function CommunityPage() {
   const [submitting, setSubmitting] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
 
+  // Groups
+  const [groups, setGroups] = useState<CommunityGroup[]>([]);
+  const [activeGroup, setActiveGroup] = useState<string | null>(null);
+  const [groupsLoaded, setGroupsLoaded] = useState(false);
+
+  // Initial load: fetch posts + course info
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
@@ -82,6 +99,52 @@ export default function CommunityPage() {
     };
   }, [params.slug, router]);
 
+  // Fetch groups once we have a courseId
+  useEffect(() => {
+    if (!course?.id) return;
+    let cancelled = false;
+    fetch(`/api/courses/${course.id}/groups`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data && !cancelled) {
+          setGroups(data.groups);
+          const defaultGroup = data.groups.find(
+            (g: CommunityGroup) => g.isDefault
+          );
+          if (defaultGroup) setActiveGroup(defaultGroup.id);
+          setGroupsLoaded(true);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [course?.id]);
+
+  // Re-fetch posts when activeGroup changes (after initial load)
+  const loadPosts = useCallback(
+    async (groupId: string | null) => {
+      if (!course) return;
+      setLoading(true);
+      try {
+        const url = `/api/posts?courseSlug=${params.slug}${groupId ? `&groupId=${groupId}` : ""}`;
+        const res = await fetch(url);
+        if (res.ok) {
+          const data = await res.json();
+          setPosts(data.posts);
+        }
+      } finally {
+        setLoading(false);
+      }
+    },
+    [course, params.slug]
+  );
+
+  useEffect(() => {
+    if (!groupsLoaded) return;
+    loadPosts(activeGroup);
+  }, [activeGroup, groupsLoaded, loadPosts]);
+
   function showToast(msg: string) {
     setToast(msg);
     setTimeout(() => setToast(null), 3000);
@@ -99,6 +162,7 @@ export default function CommunityPage() {
           content,
           type,
           courseSlug: params.slug,
+          groupId: activeGroup || undefined,
         }),
       });
       const body = await res.json();
@@ -113,8 +177,18 @@ export default function CommunityPage() {
           level: body.user.level,
         });
       }
+      // Update group post count locally
+      if (activeGroup) {
+        setGroups((prev) =>
+          prev.map((g) =>
+            g.id === activeGroup
+              ? { ...g, _count: { posts: g._count.posts + 1 } }
+              : g
+          )
+        );
+      }
       let msg = `+${body.pointsAwarded} pontos!`;
-      if (body.leveledUp) msg += " 🎉 Subiu de nível!";
+      if (body.leveledUp) msg += " Subiu de nivel!";
       showToast(msg);
     } catch (e) {
       showToast(e instanceof Error ? e.message : "Erro");
@@ -142,7 +216,6 @@ export default function CommunityPage() {
         const next = prev.map((p) =>
           p.id === id ? { ...p, pinned: body.pinned } : p
         );
-        // re-sort: pinned first, then by date desc
         next.sort((a, b) => {
           if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
           return (
@@ -154,7 +227,7 @@ export default function CommunityPage() {
     }
   }
 
-  if (loading) {
+  if (loading && !groupsLoaded) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
@@ -178,7 +251,15 @@ export default function CommunityPage() {
 
   const isAdmin = user?.role === "ADMIN";
   const isProducer =
-    isStaffViewer && (user?.role === "PRODUCER" || user?.role === "COLLABORATOR");
+    isStaffViewer &&
+    (user?.role === "PRODUCER" || user?.role === "COLLABORATOR");
+  const isStaff = isAdmin || isProducer;
+
+  const activeGroupData = groups.find((g) => g.id === activeGroup);
+  const canPost =
+    !activeGroupData ||
+    activeGroupData.permission !== "READ_ONLY" ||
+    isStaff;
 
   return (
     <div className="max-w-3xl mx-auto">
@@ -207,54 +288,130 @@ export default function CommunityPage() {
           Comunidade
         </h1>
         {course && (
-          <p className="text-sm text-gray-600 dark:text-gray-400">{course.title}</p>
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            {course.title}
+          </p>
         )}
       </div>
 
-      {/* Create post */}
-      <form
-        onSubmit={submitPost}
-        className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4 mb-6"
-      >
-        <RichTextEditor
-          value={content}
-          onChange={setContent}
-          placeholder="Compartilhe algo com a turma..."
-          minHeight="120px"
-        />
-        <div className="flex flex-wrap items-center justify-between gap-3 mt-3">
-          <div className="flex flex-wrap gap-1.5">
-            {POST_TYPES.map((t) => (
-              <button
-                key={t.value}
-                type="button"
-                onClick={() => setType(t.value)}
-                className={`text-xs px-3 py-1.5 rounded-full border transition ${
-                  type === t.value
-                    ? "bg-blue-600 border-blue-500 text-white"
-                    : "bg-gray-100 dark:bg-gray-800 border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:border-gray-500 dark:hover:border-gray-600"
-                }`}
-              >
-                {t.label}
-              </button>
-            ))}
-          </div>
-          <button
-            type="submit"
-            disabled={htmlIsEmpty(content) || submitting}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg disabled:opacity-50"
-          >
-            {submitting ? "Publicando..." : "Publicar"}
-          </button>
+      {/* Group tabs */}
+      {groups.length > 1 && (
+        <div className="flex gap-1 overflow-x-auto pb-2 mb-4 scrollbar-hide">
+          {groups.map((group) => (
+            <button
+              key={group.id}
+              onClick={() => setActiveGroup(group.id)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm whitespace-nowrap transition-colors ${
+                activeGroup === group.id
+                  ? "bg-blue-500/15 text-blue-600 dark:text-blue-400"
+                  : "bg-gray-100 dark:bg-white/5 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-white/10"
+              }`}
+            >
+              {group.name}
+              {group._count.posts > 0 && (
+                <span className="text-[10px] opacity-60">
+                  {group._count.posts}
+                </span>
+              )}
+              {group.permission === "READ_ONLY" && (
+                <svg
+                  className="w-3 h-3 opacity-50"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                </svg>
+              )}
+            </button>
+          ))}
         </div>
-      </form>
+      )}
+
+      {/* Create post or read-only notice */}
+      {canPost ? (
+        <form
+          onSubmit={submitPost}
+          className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4 mb-6"
+        >
+          <RichTextEditor
+            value={content}
+            onChange={setContent}
+            placeholder="Compartilhe algo com a turma..."
+            minHeight="120px"
+          />
+          <div className="flex flex-wrap items-center justify-between gap-3 mt-3">
+            <div className="flex flex-wrap gap-1.5">
+              {POST_TYPES.map((t) => (
+                <button
+                  key={t.value}
+                  type="button"
+                  onClick={() => setType(t.value)}
+                  className={`text-xs px-3 py-1.5 rounded-full border transition ${
+                    type === t.value
+                      ? "bg-blue-600 border-blue-500 text-white"
+                      : "bg-gray-100 dark:bg-gray-800 border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:border-gray-500 dark:hover:border-gray-600"
+                  }`}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+            <button
+              type="submit"
+              disabled={htmlIsEmpty(content) || submitting}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg disabled:opacity-50"
+            >
+              {submitting ? "Publicando..." : "Publicar"}
+            </button>
+          </div>
+        </form>
+      ) : (
+        <div className="flex items-center justify-center gap-2 py-4 mb-6 text-sm text-gray-500 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl">
+          <svg
+            className="w-4 h-4"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+          </svg>
+          Este grupo é somente leitura
+        </div>
+      )}
 
       {/* Feed */}
-      {posts.length === 0 ? (
+      {loading ? (
+        <div className="flex items-center justify-center h-32">
+          <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+        </div>
+      ) : posts.length === 0 ? (
         <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-8 text-center">
-          <p className="text-gray-500 text-sm">
-            Nenhum post ainda. Seja o primeiro a publicar!
+          <svg
+            className="w-10 h-10 mx-auto text-gray-300 dark:text-gray-600 mb-3"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={1.5}
+              d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z"
+            />
+          </svg>
+          <p className="text-gray-400 dark:text-gray-500">
+            Nenhum post neste grupo ainda
           </p>
+          {canPost && (
+            <p className="text-gray-500 text-sm mt-1">
+              Seja o primeiro a publicar!
+            </p>
+          )}
         </div>
       ) : (
         <div className="space-y-4">

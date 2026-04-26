@@ -38,6 +38,7 @@ export interface PostItem {
   liked: boolean;
   likeCount: number;
   commentCount: number;
+  group?: { id: string; name: string; slug: string; permission: string } | null;
 }
 
 export interface CommentItem {
@@ -181,6 +182,11 @@ export function PostCard({
             >
               {typeMeta.label}
             </span>
+            {post.group && (
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-gray-100 dark:bg-white/5 text-gray-500 dark:text-gray-400">
+                {post.group.name}
+              </span>
+            )}
           </div>
           <p className="text-xs text-gray-500">
             {formatRelativeTime(new Date(post.createdAt))}
