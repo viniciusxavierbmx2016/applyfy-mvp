@@ -176,11 +176,12 @@ model Course {
   modules       Module[]
   sections      Section[]
   enrollments   Enrollment[]
-  posts         Post[]
-  certificates  Certificate[]
-  reviews       Review[]
-  menuItems     MenuItem[]
-  lives         Live[]
+  posts            Post[]
+  certificates     Certificate[]
+  reviews          Review[]
+  menuItems        MenuItem[]
+  lives            Live[]
+  communityGroups  CommunityGroup[]
 
   @@index([ownerId])
   @@index([workspaceId])
@@ -316,6 +317,30 @@ model LessonProgress {
   @@index([userId, lastAccessedAt])
 }
 
+enum GroupPermission {
+  READ_WRITE
+  READ_ONLY
+}
+
+model CommunityGroup {
+  id          String          @id @default(uuid())
+  name        String
+  description String?
+  slug        String
+  courseId     String
+  isDefault   Boolean         @default(false)
+  permission  GroupPermission @default(READ_WRITE)
+  order       Int             @default(0)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  posts  Post[]
+
+  @@unique([courseId, slug])
+  @@index([courseId, order])
+}
+
 model Post {
   id        String   @id @default(uuid())
   content   String
@@ -323,14 +348,17 @@ model Post {
   pinned    Boolean  @default(false)
   userId    String
   courseId   String
+  groupId   String?
   createdAt DateTime @default(now())
 
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course    Course           @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  group     CommunityGroup?  @relation(fields: [groupId], references: [id], onDelete: SetNull)
   comments  Comment[]
   likes     Like[]
 
   @@index([courseId, createdAt])
+  @@index([groupId, createdAt])
   @@index([userId])
 }
 
