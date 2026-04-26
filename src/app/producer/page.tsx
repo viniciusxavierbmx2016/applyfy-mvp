@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense, useEffect, useState } from "react";
+import { useCountUp } from "@/hooks/use-count-up";
 import { useRouter, useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -232,6 +233,8 @@ function SalesKpis({ startDate, endDate }: { startDate?: string; endDate?: strin
         }
         label="Receita líquida"
         value={fmt.format(stats.netRevenue)}
+        numericValue={stats.netRevenue}
+        format="currency"
         accent="emerald"
         hint={noSales ? "Nenhuma venda no período" : "no período"}
       />
@@ -243,6 +246,8 @@ function SalesKpis({ startDate, endDate }: { startDate?: string; endDate?: strin
         }
         label="Vendas"
         value={stats.transactionCount}
+        numericValue={stats.transactionCount}
+        format="integer"
         accent="blue"
         hint="transações"
       />
@@ -254,6 +259,8 @@ function SalesKpis({ startDate, endDate }: { startDate?: string; endDate?: strin
         }
         label="Ticket médio"
         value={fmt.format(stats.averageTicket)}
+        numericValue={stats.averageTicket}
+        format="currency"
         accent="purple"
         hint="por venda"
       />
@@ -265,6 +272,8 @@ function SalesKpis({ startDate, endDate }: { startDate?: string; endDate?: strin
         }
         label="Reembolsos"
         value={fmt.format(stats.totalRefunds)}
+        numericValue={stats.totalRefunds}
+        format="currency"
         accent="red"
         hint="devolvidos"
       />
@@ -283,15 +292,25 @@ function SalesCard({
   icon,
   label,
   value,
+  numericValue,
+  format,
   accent,
   hint,
 }: {
   icon: React.ReactNode;
   label: string;
   value: string | number;
+  numericValue?: number;
+  format?: "currency" | "integer";
   accent: keyof typeof SALES_ACCENT;
   hint?: string;
 }) {
+  const animated = useCountUp(numericValue ?? 0, {
+    duration: 800,
+    decimals: format === "currency" ? 2 : 0,
+    prefix: format === "currency" ? "R$\u00A0" : "",
+  });
+  const displayValue = numericValue != null ? animated : value;
   const a = SALES_ACCENT[accent];
   return (
     <div className="bg-white dark:bg-white/5 border border-gray-200 dark:border-white/5 rounded-xl p-4 sm:p-5 hover:border-gray-300 dark:hover:border-white/10 transition-colors duration-200">
@@ -299,7 +318,7 @@ function SalesCard({
         {icon}
       </span>
       <p className="mt-4 text-[11px] font-medium uppercase tracking-widest text-gray-500">{label}</p>
-      <p className={`mt-1 text-2xl sm:text-3xl font-bold ${a.text}`}>{value}</p>
+      <p className={`mt-1 text-2xl sm:text-3xl font-bold tabular-nums ${a.text}`}>{displayValue}</p>
       {hint && <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{hint}</p>}
     </div>
   );

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useCountUp } from "@/hooks/use-count-up";
 import {
   AreaChart,
   Area,
@@ -191,6 +192,8 @@ export function AnalyticsOverview({
           icon={<UsersIcon className="w-4 h-4" />}
           label="Alunos totais"
           value={data.kpis.uniqueStudents}
+          numericValue={data.kpis.uniqueStudents}
+          format="integer"
           accent="blue"
           hint={`${data.kpis.totalEnrolled} matrículas`}
         />
@@ -198,6 +201,8 @@ export function AnalyticsOverview({
           icon={<SparkleIcon className="w-4 h-4" />}
           label="Novos (período)"
           value={data.kpis.newStudents}
+          numericValue={data.kpis.newStudents}
+          format="integer"
           accent="emerald"
           delta={newDelta}
         />
@@ -205,6 +210,8 @@ export function AnalyticsOverview({
           icon={<CheckCircleIcon className="w-4 h-4" />}
           label="Conclusão média"
           value={`${data.kpis.avgCompletion}%`}
+          numericValue={data.kpis.avgCompletion}
+          format="percent"
           accent="teal"
         />
         <KpiCard
@@ -218,6 +225,8 @@ export function AnalyticsOverview({
               </span>
             ) : "—"
           }
+          numericValue={data.kpis.ratingCount > 0 ? data.kpis.avgRating : undefined}
+          format="decimal"
           accent="amber"
           hint={data.kpis.ratingCount > 0 ? `${data.kpis.ratingCount} avaliações` : "Sem avaliações"}
         />
@@ -225,6 +234,8 @@ export function AnalyticsOverview({
           icon={<ActivityIcon className="w-4 h-4" />}
           label="Ativos (7d)"
           value={data.kpis.activeStudents}
+          numericValue={data.kpis.activeStudents}
+          format="integer"
           accent="purple"
           delta={lessonsDelta}
           deltaLabel="aulas"
@@ -233,6 +244,8 @@ export function AnalyticsOverview({
           icon={<MoonIcon className="w-4 h-4" />}
           label="Inativos (30d+)"
           value={data.kpis.inactiveStudents}
+          numericValue={data.kpis.inactiveStudents}
+          format="integer"
           accent="rose"
           hint={`${data.kpis.neverAccessed} nunca acessaram`}
         />
@@ -457,6 +470,8 @@ function KpiCard({
   icon,
   label,
   value,
+  numericValue,
+  format,
   accent,
   hint,
   delta,
@@ -465,11 +480,26 @@ function KpiCard({
   icon: React.ReactNode;
   label: string;
   value: number | string | React.ReactNode;
+  numericValue?: number;
+  format?: "integer" | "percent" | "decimal";
   accent: keyof typeof ACCENT_MAP;
   hint?: string;
   delta?: number | null;
   deltaLabel?: string;
 }) {
+  const animated = useCountUp(numericValue ?? 0, {
+    duration: 800,
+    decimals: format === "decimal" ? 1 : format === "percent" ? 1 : 0,
+    suffix: format === "percent" ? "%" : "",
+  });
+  const displayValue = numericValue != null ? (
+    format === "decimal" ? (
+      <span className="inline-flex items-center gap-1.5">
+        {animated}
+        <Star className="w-5 h-5 text-amber-400" />
+      </span>
+    ) : animated
+  ) : value;
   const a = ACCENT_MAP[accent];
   const trendUp = delta != null && delta > 0;
   const trendDown = delta != null && delta < 0;
@@ -488,7 +518,7 @@ function KpiCard({
         )}
       </div>
       <p className="mt-4 text-[11px] font-medium uppercase tracking-widest text-gray-500">{label}</p>
-      <p className={`mt-1 text-2xl sm:text-3xl font-bold ${a.text}`}>{value}</p>
+      <p className={`mt-1 text-2xl sm:text-3xl font-bold tabular-nums ${a.text}`}>{displayValue}</p>
       {hint && <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{hint}</p>}
     </div>
   );
