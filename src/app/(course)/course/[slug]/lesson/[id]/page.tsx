@@ -71,6 +71,7 @@ export default function LessonPage({
   const [marking, setMarking] = useState(false);
   const [showCountdown, setShowCountdown] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<
     "description" | "comments" | "support"
@@ -253,10 +254,15 @@ export default function LessonPage({
 
   if (loading) {
     return (
-      <div className="animate-fade-in-up grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6 p-4 lg:p-8">
-        <SkeletonPlayer />
-        <div className="hidden lg:block">
-          <SkeletonLessonsSidebar />
+      <div className="flex flex-col h-screen bg-white dark:bg-[#0a0a12]">
+        <div className="h-[52px] shrink-0 border-b border-gray-200 dark:border-white/5 bg-gray-50 dark:bg-[#0f0f12]" />
+        <div className="flex flex-1 overflow-hidden">
+          <div className="flex-1 overflow-y-auto p-4 lg:p-8">
+            <SkeletonPlayer />
+          </div>
+          <div className="hidden lg:block w-[340px] border-l border-gray-200 dark:border-white/5">
+            <SkeletonLessonsSidebar />
+          </div>
         </div>
       </div>
     );
@@ -264,299 +270,326 @@ export default function LessonPage({
 
   if (error || !data) {
     return (
-      <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-8 text-center">
-        <p className="text-red-400 mb-4">{error || "Aula não encontrada"}</p>
-        <Link
-          href={`/course/${params.slug}`}
-          className="text-blue-400 hover:text-blue-300 text-sm"
-        >
-          ← Voltar ao curso
-        </Link>
+      <div className="flex flex-col h-screen bg-white dark:bg-[#0a0a12]">
+        <div className="h-[52px] shrink-0 border-b border-gray-200 dark:border-white/5 bg-gray-50 dark:bg-[#0f0f12]" />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <p className="text-red-400 mb-4">{error || "Aula não encontrada"}</p>
+            <Link
+              href={`/course/${params.slug}`}
+              className="text-blue-400 hover:text-blue-300 text-sm"
+            >
+              ← Voltar ao curso
+            </Link>
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="px-4 sm:px-6 lg:px-8 py-5 lg:py-6 max-w-[1600px] mx-auto grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6">
-      {/* Main content */}
-      <div className="min-w-0">
-        <div className="relative bg-black rounded-xl overflow-hidden shadow-2xl shadow-black/20 dark:shadow-black/50 ring-1 ring-white/5">
-          <VideoPlayer video={data.lesson.video} onEnded={handleEnded} />
-          {showCountdown && data.next && (
-            <AutoplayCountdown
-              nextLessonTitle={data.next.title}
-              onComplete={goToNext}
-              onCancel={() => setShowCountdown(false)}
-            />
-          )}
-        </div>
-
-        {/* Mobile: botão abrir lista */}
-        <div className="lg:hidden mt-4">
-          <button
-            type="button"
-            onClick={() => setMobileSidebarOpen(true)}
-            className="w-full px-4 py-2.5 bg-white dark:bg-gray-900/60 border border-gray-200 dark:border-white/5 text-gray-900 dark:text-white rounded-xl text-sm font-medium flex items-center justify-between transition-colors duration-200 hover:bg-gray-50 dark:hover:bg-white/5"
-          >
-            <span>Lista de aulas</span>
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-          </button>
-        </div>
-
-        <div className="mt-6">
+    <div className="flex flex-col h-screen bg-white dark:bg-[#0a0a12]">
+      {/* Topbar */}
+      <div className="h-[52px] shrink-0 border-b border-gray-200 dark:border-white/5 bg-gray-50 dark:bg-[#0f0f12] flex items-center justify-between px-4">
+        <div className="flex items-center gap-3 min-w-0">
           <Link
             href={`/course/${data.course.slug}`}
-            className="inline-block text-xs text-blue-500 hover:text-blue-400 font-medium tracking-wide transition-colors duration-200"
+            className="text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white text-sm font-medium transition-colors shrink-0"
           >
-            {data.course.title}
+            ← Voltar ao painel
           </Link>
-          <h1 className="text-xl lg:text-2xl font-semibold tracking-tight text-gray-900 dark:text-white mt-1">
-            {data.lesson.title}
-          </h1>
+          <span className="hidden sm:block text-gray-300 dark:text-white/10">|</span>
+          <p className="hidden sm:block text-sm text-gray-700 dark:text-gray-300 font-medium truncate">
+            {data.course.title}
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => {
+            if (window.innerWidth < 1024) {
+              setMobileSidebarOpen(!mobileSidebarOpen);
+            } else {
+              setSidebarOpen(!sidebarOpen);
+            }
+          }}
+          className="p-2 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5 rounded-lg transition-colors"
+          aria-label="Toggle sidebar"
+        >
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+      </div>
 
-          <div className="mt-5 flex flex-wrap items-center gap-3">
-            <button
-              type="button"
-              onClick={() => markCompleted(!data.lesson.completed)}
-              disabled={marking}
-              className={`px-5 py-2.5 rounded-xl text-sm font-semibold transition-[colors,box-shadow] duration-300 disabled:opacity-50 ${
-                data.lesson.completed
-                  ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 ring-1 ring-inset ring-emerald-500/20 hover:ring-emerald-500/40 hover:bg-emerald-500/15"
-                  : "bg-gradient-to-r from-emerald-500 to-emerald-600 text-white shadow-md shadow-emerald-500/25 hover:shadow-lg hover:shadow-emerald-500/30 hover:from-emerald-400 hover:to-emerald-500"
-              }`}
-            >
-              <span className="inline-flex items-center gap-2">
-                <svg className={`w-4 h-4 transition-transform duration-300 ${data.lesson.completed ? "scale-100" : "scale-90"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                </svg>
-                {data.lesson.completed ? "Concluída" : "Marcar como concluída"}
-              </span>
-            </button>
-
-            {reactionData?.enabled && (
-              <div className="flex items-center gap-1">
-                <button
-                  type="button"
-                  onClick={() => handleReaction("LIKE")}
-                  className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm transition-colors ${
-                    reactionData.userReaction === "LIKE"
-                      ? "bg-blue-500/15 text-blue-600 dark:text-blue-400"
-                      : "bg-gray-100 dark:bg-white/5 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-white/10 hover:text-gray-700 dark:hover:text-gray-300"
-                  }`}
-                >
-                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill={reactionData.userReaction === "LIKE" ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" />
-                  </svg>
-                  {reactionData.likeCount > 0 && (
-                    <span className="text-xs tabular-nums">{reactionData.likeCount}</span>
-                  )}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleReaction("DISLIKE")}
-                  className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm transition-colors ${
-                    reactionData.userReaction === "DISLIKE"
-                      ? "bg-red-500/15 text-red-600 dark:text-red-400"
-                      : "bg-gray-100 dark:bg-white/5 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-white/10 hover:text-gray-700 dark:hover:text-gray-300"
-                  }`}
-                >
-                  <svg className="w-4 h-4 rotate-180" viewBox="0 0 24 24" fill={reactionData.userReaction === "DISLIKE" ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" />
-                  </svg>
-                  {reactionData.dislikeCount > 0 && (
-                    <span className="text-xs tabular-nums">{reactionData.dislikeCount}</span>
-                  )}
-                </button>
-              </div>
-            )}
-
-            {data.prev && (
-              <Link
-                href={`/course/${data.course.slug}/lesson/${data.prev.id}`}
-                className="group inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5 text-sm font-medium transition-colors duration-200"
-              >
-                <svg className="w-4 h-4 transition-transform duration-200 group-hover:-translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
-                Anterior
-              </Link>
-            )}
-            {data.next && (
-              <Link
-                href={`/course/${data.course.slug}/lesson/${data.next.id}`}
-                className="group inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5 text-sm font-medium transition-colors duration-200"
-              >
-                Próxima
-                <svg className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
-              </Link>
+      {/* Main area */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto">
+          <div className="relative bg-black w-full flex-shrink-0" style={{ maxHeight: "65vh" }}>
+            <div className="w-full" style={{ aspectRatio: "16/9", maxHeight: "65vh" }}>
+              <VideoPlayer video={data.lesson.video} onEnded={handleEnded} />
+            </div>
+            {showCountdown && data.next && (
+              <AutoplayCountdown
+                nextLessonTitle={data.next.title}
+                onComplete={goToNext}
+                onCancel={() => setShowCountdown(false)}
+              />
             )}
           </div>
 
-          {(() => {
-            const commentsEnabled = data.course.lessonCommentsEnabled !== false;
-            const supportTabEnabled = data.course.showLessonSupport !== false;
-            const hasSupport =
-              supportTabEnabled &&
-              !!(data.course.supportEmail || data.course.supportWhatsapp);
-            const waHref = formatWhatsappLink(data.course.supportWhatsapp);
-            const shownTab =
-              (activeTab === "comments" && !commentsEnabled) ||
-              (activeTab === "support" && !hasSupport)
-                ? "description"
-                : activeTab;
-            return (
-              <>
-                {/* Tabs */}
-                <div className="mt-6 border-b border-gray-200 dark:border-white/5 flex gap-6">
+          <div className="px-4 sm:px-6 lg:px-8 py-5 max-w-[960px]">
+            <h1 className="text-xl lg:text-2xl font-semibold tracking-tight text-gray-900 dark:text-white">
+              {data.lesson.title}
+            </h1>
+
+            <div className="mt-5 flex flex-wrap items-center gap-3">
+              <button
+                type="button"
+                onClick={() => markCompleted(!data.lesson.completed)}
+                disabled={marking}
+                className={`px-5 py-2.5 rounded-xl text-sm font-semibold transition-[colors,box-shadow] duration-300 disabled:opacity-50 ${
+                  data.lesson.completed
+                    ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 ring-1 ring-inset ring-emerald-500/20 hover:ring-emerald-500/40 hover:bg-emerald-500/15"
+                    : "bg-gradient-to-r from-emerald-500 to-emerald-600 text-white shadow-md shadow-emerald-500/25 hover:shadow-lg hover:shadow-emerald-500/30 hover:from-emerald-400 hover:to-emerald-500"
+                }`}
+              >
+                <span className="inline-flex items-center gap-2">
+                  <svg className={`w-4 h-4 transition-transform duration-300 ${data.lesson.completed ? "scale-100" : "scale-90"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                  {data.lesson.completed ? "Concluída" : "Marcar como concluída"}
+                </span>
+              </button>
+
+              {reactionData?.enabled && (
+                <div className="flex items-center gap-1">
                   <button
                     type="button"
-                    onClick={() => setActiveTab("description")}
-                    className={`relative px-0.5 py-2.5 text-sm font-medium transition-colors duration-200 ${
-                      shownTab === "description"
-                        ? "text-gray-900 dark:text-white"
-                        : "text-gray-500 hover:text-gray-900 dark:hover:text-white"
+                    onClick={() => handleReaction("LIKE")}
+                    className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm transition-colors ${
+                      reactionData.userReaction === "LIKE"
+                        ? "bg-blue-500/15 text-blue-600 dark:text-blue-400"
+                        : "bg-gray-100 dark:bg-white/5 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-white/10 hover:text-gray-700 dark:hover:text-gray-300"
                     }`}
                   >
-                    Descrição
-                    {shownTab === "description" && (
-                      <span className="absolute inset-x-0 -bottom-px h-[2px] bg-blue-500 rounded-full" />
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill={reactionData.userReaction === "LIKE" ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" />
+                    </svg>
+                    {reactionData.likeCount > 0 && (
+                      <span className="text-xs tabular-nums">{reactionData.likeCount}</span>
                     )}
                   </button>
-                  {commentsEnabled && (
-                    <button
-                      type="button"
-                      onClick={() => setActiveTab("comments")}
-                      className={`relative px-0.5 py-2.5 text-sm font-medium transition-colors duration-200 ${
-                        shownTab === "comments"
-                          ? "text-gray-900 dark:text-white"
-                          : "text-gray-500 hover:text-gray-900 dark:hover:text-white"
-                      }`}
-                    >
-                      Comentários
-                      {shownTab === "comments" && (
-                        <span className="absolute inset-x-0 -bottom-px h-[2px] bg-blue-500 rounded-full" />
-                      )}
-                    </button>
-                  )}
-                  {hasSupport && (
-                    <button
-                      type="button"
-                      onClick={() => setActiveTab("support")}
-                      className={`relative inline-flex items-center gap-1.5 px-0.5 py-2.5 text-sm font-medium transition-colors duration-200 ${
-                        shownTab === "support"
-                          ? "text-gray-900 dark:text-white"
-                          : "text-gray-500 hover:text-gray-900 dark:hover:text-white"
-                      }`}
-                    >
-                      <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M3 18v-6a9 9 0 0 1 18 0v6" />
-                        <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z" />
-                      </svg>
-                      Suporte
-                      {shownTab === "support" && (
-                        <span className="absolute inset-x-0 -bottom-px h-[2px] bg-blue-500 rounded-full" />
-                      )}
-                    </button>
-                  )}
+                  <button
+                    type="button"
+                    onClick={() => handleReaction("DISLIKE")}
+                    className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm transition-colors ${
+                      reactionData.userReaction === "DISLIKE"
+                        ? "bg-red-500/15 text-red-600 dark:text-red-400"
+                        : "bg-gray-100 dark:bg-white/5 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-white/10 hover:text-gray-700 dark:hover:text-gray-300"
+                    }`}
+                  >
+                    <svg className="w-4 h-4 rotate-180" viewBox="0 0 24 24" fill={reactionData.userReaction === "DISLIKE" ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" />
+                    </svg>
+                    {reactionData.dislikeCount > 0 && (
+                      <span className="text-xs tabular-nums">{reactionData.dislikeCount}</span>
+                    )}
+                  </button>
                 </div>
+              )}
 
-                <div className="mt-5">
-                  {shownTab === "description" && (
-                    data.lesson.description ? (
-                      <div
-                        className="prose-lesson text-sm leading-relaxed"
-                        dangerouslySetInnerHTML={{ __html: data.lesson.description }}
-                      />
-                    ) : (
-                      <p className="text-gray-500 text-sm">Sem descrição para esta aula.</p>
-                    )
-                  )}
-                  {shownTab === "comments" && (
-                    <LessonComments lessonId={data.lesson.id} />
-                  )}
-                  {shownTab === "support" && (
-                    <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
-                      {data.course.supportEmail && (
-                        <a
-                          href={`mailto:${data.course.supportEmail}`}
-                          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-gray-900/60 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-white/5 transition"
-                        >
-                          <span className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 inline-flex items-center justify-center">
-                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l9 6 9-6M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                            </svg>
-                          </span>
-                          <span className="truncate">{data.course.supportEmail}</span>
-                        </a>
-                      )}
-                      {waHref && (
-                        <a
-                          href={waHref}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-gray-900/60 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-white/5 transition"
-                        >
-                          <span className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 inline-flex items-center justify-center">
-                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h2.28a1 1 0 01.95.68l1.5 4.49a1 1 0 01-.5 1.21l-1.9.95a11 11 0 005.52 5.52l.95-1.9a1 1 0 011.21-.5l4.49 1.5a1 1 0 01.68.95V19a2 2 0 01-2 2h-1C9.72 21 3 14.28 3 6V5z" />
-                            </svg>
-                          </span>
-                          <span>{formatPhoneDisplay(data.course.supportWhatsapp)}</span>
-                        </a>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </>
-            );
-          })()}
-
-          {materials.length > 0 && (
-            <div className="mt-8">
-              <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
-                <svg className="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-                Downloads
-              </h3>
-              <div className="space-y-2">
-                {materials.map((mat) => {
-                  const icon = getMaterialIcon(mat.fileType);
-                  return (
-                    <a
-                      key={mat.id}
-                      href={mat.fileUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-3 p-3 bg-white dark:bg-gray-900/60 border border-gray-200 dark:border-white/5 rounded-xl hover:bg-gray-50 dark:hover:bg-white/5 transition-colors group"
-                    >
-                      <span className={`inline-flex items-center justify-center w-9 h-9 rounded-lg text-[10px] font-bold ${icon.color}`}>
-                        {icon.label}
-                      </span>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{mat.name}</p>
-                        <p className="text-xs text-gray-500">{mat.fileName} · {formatFileSize(mat.fileSize)}</p>
-                      </div>
-                      <span className="text-xs text-blue-500 group-hover:text-blue-400 font-medium shrink-0">Baixar</span>
-                    </a>
-                  );
-                })}
-              </div>
+              {data.prev && (
+                <Link
+                  href={`/course/${data.course.slug}/lesson/${data.prev.id}`}
+                  className="group inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5 text-sm font-medium transition-colors duration-200"
+                >
+                  <svg className="w-4 h-4 transition-transform duration-200 group-hover:-translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+                  Anterior
+                </Link>
+              )}
+              {data.next && (
+                <Link
+                  href={`/course/${data.course.slug}/lesson/${data.next.id}`}
+                  className="group inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5 text-sm font-medium transition-colors duration-200"
+                >
+                  Próxima
+                  <svg className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                </Link>
+              )}
             </div>
-          )}
 
-          <LessonQuiz lessonId={data.lesson.id} />
+            {(() => {
+              const commentsEnabled = data.course.lessonCommentsEnabled !== false;
+              const supportTabEnabled = data.course.showLessonSupport !== false;
+              const hasSupport =
+                supportTabEnabled &&
+                !!(data.course.supportEmail || data.course.supportWhatsapp);
+              const waHref = formatWhatsappLink(data.course.supportWhatsapp);
+              const shownTab =
+                (activeTab === "comments" && !commentsEnabled) ||
+                (activeTab === "support" && !hasSupport)
+                  ? "description"
+                  : activeTab;
+              return (
+                <>
+                  <div className="mt-6 border-b border-gray-200 dark:border-white/5 flex gap-6">
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab("description")}
+                      className={`relative px-0.5 py-2.5 text-sm font-medium transition-colors duration-200 ${
+                        shownTab === "description"
+                          ? "text-gray-900 dark:text-white"
+                          : "text-gray-500 hover:text-gray-900 dark:hover:text-white"
+                      }`}
+                    >
+                      Descrição
+                      {shownTab === "description" && (
+                        <span className="absolute inset-x-0 -bottom-px h-[2px] bg-blue-500 rounded-full" />
+                      )}
+                    </button>
+                    {commentsEnabled && (
+                      <button
+                        type="button"
+                        onClick={() => setActiveTab("comments")}
+                        className={`relative px-0.5 py-2.5 text-sm font-medium transition-colors duration-200 ${
+                          shownTab === "comments"
+                            ? "text-gray-900 dark:text-white"
+                            : "text-gray-500 hover:text-gray-900 dark:hover:text-white"
+                        }`}
+                      >
+                        Comentários
+                        {shownTab === "comments" && (
+                          <span className="absolute inset-x-0 -bottom-px h-[2px] bg-blue-500 rounded-full" />
+                        )}
+                      </button>
+                    )}
+                    {hasSupport && (
+                      <button
+                        type="button"
+                        onClick={() => setActiveTab("support")}
+                        className={`relative inline-flex items-center gap-1.5 px-0.5 py-2.5 text-sm font-medium transition-colors duration-200 ${
+                          shownTab === "support"
+                            ? "text-gray-900 dark:text-white"
+                            : "text-gray-500 hover:text-gray-900 dark:hover:text-white"
+                        }`}
+                      >
+                        <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M3 18v-6a9 9 0 0 1 18 0v6" />
+                          <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z" />
+                        </svg>
+                        Suporte
+                        {shownTab === "support" && (
+                          <span className="absolute inset-x-0 -bottom-px h-[2px] bg-blue-500 rounded-full" />
+                        )}
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="mt-5">
+                    {shownTab === "description" && (
+                      data.lesson.description ? (
+                        <div
+                          className="prose-lesson text-sm leading-relaxed"
+                          dangerouslySetInnerHTML={{ __html: data.lesson.description }}
+                        />
+                      ) : (
+                        <p className="text-gray-500 text-sm">Sem descrição para esta aula.</p>
+                      )
+                    )}
+                    {shownTab === "comments" && (
+                      <LessonComments lessonId={data.lesson.id} />
+                    )}
+                    {shownTab === "support" && (
+                      <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
+                        {data.course.supportEmail && (
+                          <a
+                            href={`mailto:${data.course.supportEmail}`}
+                            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-gray-900/60 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-white/5 transition"
+                          >
+                            <span className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 inline-flex items-center justify-center">
+                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l9 6 9-6M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                              </svg>
+                            </span>
+                            <span className="truncate">{data.course.supportEmail}</span>
+                          </a>
+                        )}
+                        {waHref && (
+                          <a
+                            href={waHref}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-gray-900/60 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-white/5 transition"
+                          >
+                            <span className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 inline-flex items-center justify-center">
+                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h2.28a1 1 0 01.95.68l1.5 4.49a1 1 0 01-.5 1.21l-1.9.95a11 11 0 005.52 5.52l.95-1.9a1 1 0 011.21-.5l4.49 1.5a1 1 0 01.68.95V19a2 2 0 01-2 2h-1C9.72 21 3 14.28 3 6V5z" />
+                              </svg>
+                            </span>
+                            <span>{formatPhoneDisplay(data.course.supportWhatsapp)}</span>
+                          </a>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </>
+              );
+            })()}
+
+            {materials.length > 0 && (
+              <div className="mt-8">
+                <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
+                  <svg className="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  Downloads
+                </h3>
+                <div className="space-y-2">
+                  {materials.map((mat) => {
+                    const icon = getMaterialIcon(mat.fileType);
+                    return (
+                      <a
+                        key={mat.id}
+                        href={mat.fileUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-3 p-3 bg-white dark:bg-gray-900/60 border border-gray-200 dark:border-white/5 rounded-xl hover:bg-gray-50 dark:hover:bg-white/5 transition-colors group"
+                      >
+                        <span className={`inline-flex items-center justify-center w-9 h-9 rounded-lg text-[10px] font-bold ${icon.color}`}>
+                          {icon.label}
+                        </span>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{mat.name}</p>
+                          <p className="text-xs text-gray-500">{mat.fileName} · {formatFileSize(mat.fileSize)}</p>
+                        </div>
+                        <span className="text-xs text-blue-500 group-hover:text-blue-400 font-medium shrink-0">Baixar</span>
+                      </a>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            <LessonQuiz lessonId={data.lesson.id} />
+          </div>
         </div>
-      </div>
 
-      {/* Desktop sidebar */}
-      <div className="hidden lg:block">
-        <LessonsSidebar
-          courseSlug={data.course.slug}
-          courseTitle={data.course.title}
-          modules={data.course.modules}
-          currentLessonId={data.lesson.id}
-        />
+        {/* Desktop sidebar — collapsible */}
+        <div
+          className={`hidden lg:block border-l border-gray-200 dark:border-white/5 overflow-y-auto transition-all duration-300 ${
+            sidebarOpen ? "w-[340px]" : "w-0"
+          }`}
+        >
+          <div className={`${sidebarOpen ? "opacity-100" : "opacity-0 pointer-events-none"} transition-opacity duration-200 w-[340px]`}>
+            <LessonsSidebar
+              courseSlug={data.course.slug}
+              courseTitle={data.course.title}
+              modules={data.course.modules}
+              currentLessonId={data.lesson.id}
+            />
+          </div>
+        </div>
       </div>
 
       {/* Mobile sidebar drawer */}
@@ -577,18 +610,8 @@ export default function LessonPage({
                 className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
                 aria-label="Fechar"
               >
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
             </div>
