@@ -1296,6 +1296,7 @@ function SendAccessModal({
 }) {
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
   const [durationIdx, setDurationIdx] = useState(0);
   const [customDays, setCustomDays] = useState(30);
   const [loading, setLoading] = useState(false);
@@ -1313,7 +1314,7 @@ function SendAccessModal({
       const res = await fetch(`/api/courses/${courseId}/students`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, name: name || undefined, days }),
+        body: JSON.stringify({ email, name: name || undefined, days, phone: phone.trim() || undefined }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -1376,6 +1377,19 @@ function SendAccessModal({
               className="w-full px-4 py-2.5 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Nome do aluno"
             />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              WhatsApp (opcional)
+            </label>
+            <input
+              type="tel"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              className="w-full px-4 py-2.5 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="(31) 98426-6117"
+            />
+            <p className="text-[10px] text-gray-500 mt-1">Número com DDD para contato via WhatsApp</p>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">

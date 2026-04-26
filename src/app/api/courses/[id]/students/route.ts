@@ -185,10 +185,11 @@ export async function POST(
       return NextResponse.json({ error: "Sem permissão" }, { status: 403 });
     }
 
-    const { email, name, days } = (await request.json()) as {
+    const { email, name, days, phone } = (await request.json()) as {
       email?: string;
       name?: string;
       days?: number | null;
+      phone?: string;
     };
     if (!email) {
       return NextResponse.json({ error: "Email obrigatório" }, { status: 400 });
@@ -212,7 +213,7 @@ export async function POST(
       );
     }
 
-    const user = await ensureUserByEmail(email, name, course.workspace.id);
+    const user = await ensureUserByEmail(email, name, course.workspace.id, phone?.trim() || undefined);
 
     const expiresAt =
       typeof days === "number" && days > 0
