@@ -318,6 +318,29 @@ body {
 /* Inputs & form elements */
 .course-customized .focus\:border-blue-500:focus { border-color: var(--member-primary, #3b82f6) !important; }
 
+/* Lesson redesign — sidebar & topbar backgrounds */
+.course-customized .bg-\[\#0f0f12\] { background-color: var(--member-sidebar, var(--member-bg, #0f0f12)) !important; }
+.course-customized .dark\:bg-\[\#0f0f12\] { background-color: var(--member-sidebar, var(--member-bg, #0f0f12)) !important; }
+.course-customized .bg-\[\#0a0a12\] { background-color: var(--member-bg, #0a0a12) !important; }
+.course-customized .dark\:bg-\[\#0a0a12\] { background-color: var(--member-bg, #0a0a12) !important; }
+
+/* Lesson redesign — current lesson highlight */
+.course-customized .bg-blue-500\/\[0\.08\] { background-color: color-mix(in srgb, var(--member-primary, #3b82f6) 8%, transparent) !important; }
+.course-customized .dark\:bg-blue-500\/\[0\.08\] { background-color: color-mix(in srgb, var(--member-primary, #3b82f6) 8%, transparent) !important; }
+.course-customized .bg-blue-50 { background-color: color-mix(in srgb, var(--member-primary, #3b82f6) 8%, white) !important; }
+
+/* Lesson redesign — like active */
+.course-customized .bg-blue-500\/15 { background-color: color-mix(in srgb, var(--member-primary, #3b82f6) 15%, transparent) !important; }
+
+/* Lesson redesign — complete button gradient */
+.course-customized .from-emerald-600 { --tw-gradient-from: var(--member-primary, #059669) !important; }
+.course-customized .to-emerald-500 { --tw-gradient-to: var(--member-primary, #10b981) !important; }
+
+/* Lesson redesign — completed button state */
+.course-customized .bg-emerald-500\/12 { background-color: color-mix(in srgb, var(--member-primary, #10b981) 12%, transparent) !important; }
+.course-customized .border-emerald-500\/20 { border-color: color-mix(in srgb, var(--member-primary, #10b981) 20%, transparent) !important; }
+.course-customized .hover\:bg-emerald-500\/20:hover { background-color: color-mix(in srgb, var(--member-primary, #10b981) 20%, transparent) !important; }
+
 /* ─── Rich text display (prose-lesson) ───────────────────────── */
 .prose-lesson { color: var(--member-text, #d1d5db); }
 .prose-lesson h1 { font-size: 1.5rem; font-weight: 700; margin: 1rem 0 0.5rem; }
