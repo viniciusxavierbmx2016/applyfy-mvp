@@ -5,6 +5,7 @@ import { collaboratorCanActOnCourse } from "@/lib/collaborator";
 import { GAMIFICATION, getLevelForPoints } from "@/lib/utils";
 import { sanitizeHtml, stripHtml } from "@/lib/sanitize-html";
 import { PostType } from "@prisma/client";
+import { ensureDefaultGroup } from "@/lib/community-helpers";
 
 const VALID_TYPES: PostType[] = ["QUESTION", "RESULT", "FEEDBACK", "FREE"];
 
@@ -77,8 +78,16 @@ export async function GET(request: Request) {
       }
     }
 
+    await ensureDefaultGroup(course.id);
+
+    const groupId = searchParams.get("groupId");
+    const postWhere: Record<string, unknown> = { courseId: course.id };
+    if (groupId) {
+      postWhere.groupId = groupId;
+    }
+
     const posts = await prisma.post.findMany({
-      where: { courseId: course.id },
+      where: postWhere,
       orderBy: [{ pinned: "desc" }, { createdAt: "desc" }],
       select: {
         id: true,
@@ -87,6 +96,7 @@ export async function GET(request: Request) {
         pinned: true,
         createdAt: true,
         user: { select: { id: true, name: true, avatarUrl: true, role: true } },
+        group: { select: { id: true, name: true, slug: true, permission: true } },
         likes: { where: { userId: user.id }, select: { id: true } },
         _count: { select: { likes: true, comments: true } },
       },
@@ -99,6 +109,7 @@ export async function GET(request: Request) {
       pinned: p.pinned,
       createdAt: p.createdAt,
       user: p.user,
+      group: p.group,
       liked: p.likes.length > 0,
       likeCount: p._count.likes,
       commentCount: p._count.comments,
@@ -129,7 +140,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
     }
 
-    const { content, type, courseId, courseSlug } = await request.json();
+    const { content, type, courseId, courseSlug, groupId } = await request.json();
     if (!content || typeof content !== "string") {
       return NextResponse.json(
         { error: "Conteúdo obrigatório" },
@@ -203,15 +214,40 @@ export async function POST(request: Request) {
       }
     }
 
+    let finalGroupId: string | null = null;
+    if (groupId) {
+      const group = await prisma.communityGroup.findUnique({
+        where: { id: groupId },
+      });
+      if (!group || group.courseId !== course.id) {
+        return NextResponse.json(
+          { error: "Grupo não encontrado" },
+          { status: 404 }
+        );
+      }
+      if (group.permission === "READ_ONLY" && !isStaffOwner && !collabAllowed) {
+        return NextResponse.json(
+          { error: "Este grupo é somente leitura" },
+          { status: 403 }
+        );
+      }
+      finalGroupId = group.id;
+    } else {
+      const defaultGroup = await ensureDefaultGroup(course.id);
+      finalGroupId = defaultGroup.id;
+    }
+
     const post = await prisma.post.create({
       data: {
         content: sanitized,
         type: postType,
         userId: user.id,
         courseId: course.id,
+        groupId: finalGroupId,
       },
       include: {
         user: { select: { id: true, name: true, avatarUrl: true, role: true } },
+        group: { select: { id: true, name: true, slug: true, permission: true } },
         _count: { select: { likes: true, comments: true } },
       },
     });
@@ -243,6 +279,7 @@ export async function POST(request: Request) {
           pinned: post.pinned,
           createdAt: post.createdAt,
           user: post.user,
+          group: post.group,
           liked: false,
           likeCount: 0,
           commentCount: 0,

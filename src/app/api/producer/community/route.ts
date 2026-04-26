@@ -41,6 +41,8 @@ export async function GET(request: Request) {
           : collabScope
         : workspaceCourseIds;
 
+    const groupId = searchParams.get("groupId");
+
     const where: Record<string, unknown> = {};
     if (scopedCourseIds) {
       where.courseId = { in: scopedCourseIds };
@@ -51,6 +53,9 @@ export async function GET(request: Request) {
       }
       where.courseId = courseId;
     }
+    if (groupId) {
+      where.groupId = groupId;
+    }
 
     const posts = await prisma.post.findMany({
       where,
@@ -58,6 +63,7 @@ export async function GET(request: Request) {
       include: {
         user: { select: { id: true, name: true, avatarUrl: true, role: true } },
         course: { select: { id: true, title: true, slug: true } },
+        group: { select: { id: true, name: true } },
         _count: { select: { likes: true, comments: true } },
       },
     });
