@@ -329,8 +329,8 @@ export default function LessonPage({
       <div className="flex flex-1 min-h-0">
         {/* Content */}
         <div className="flex-1 overflow-y-auto">
-          <div className="relative bg-black w-full flex-shrink-0 max-h-[50vh] lg:max-h-[55vh] overflow-hidden">
-            <div className="w-full aspect-video max-h-[50vh] lg:max-h-[55vh]">
+          <div className="relative bg-black w-full">
+            <div className="aspect-video w-full">
               <VideoPlayer video={data.lesson.video} onEnded={handleEnded} />
             </div>
             {showCountdown && data.next && (
