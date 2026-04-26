@@ -443,7 +443,7 @@ export default function LessonPage({
               );
             })()}
 
-            <div className="h-px bg-gray-200 dark:bg-white/5 mb-4" />
+            <div className="h-px bg-gray-200 dark:bg-white/5 mb-5" />
 
             {(() => {
               const commentsEnabled = data.course.lessonCommentsEnabled !== false;
@@ -457,8 +457,8 @@ export default function LessonPage({
                   ? "description"
                   : activeTab;
               return (
-                <>
-                  <div className="flex border-b border-gray-200 dark:border-white/5 mb-4 overflow-x-auto">
+                <div className="border border-gray-200/50 dark:border-white/5 rounded-xl overflow-hidden">
+                  <div className="flex border-b border-gray-200/50 dark:border-white/5 px-1 overflow-x-auto">
                     <button
                       type="button"
                       onClick={() => setActiveTab("description")}
@@ -508,7 +508,7 @@ export default function LessonPage({
                     )}
                   </div>
 
-                  <div className="mt-1">
+                  <div className="p-5">
                     {shownTab === "description" && (
                       <>
                         {data.lesson.description ? (
@@ -520,7 +520,7 @@ export default function LessonPage({
                           <p className="text-gray-500 text-sm">Sem descrição para esta aula.</p>
                         )}
                         {materials.length > 0 && (
-                          <div className="mt-5">
+                          <div className="mt-5 pt-4 border-t border-gray-200/30 dark:border-white/5">
                             <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-500 mb-2.5">
                               Materiais da aula
                             </p>
@@ -582,11 +582,13 @@ export default function LessonPage({
                       </div>
                     )}
                   </div>
-                </>
+                </div>
               );
             })()}
 
-            <LessonQuiz lessonId={data.lesson.id} />
+            <div className="mt-4 border border-gray-200/50 dark:border-white/5 rounded-xl p-5">
+              <LessonQuiz lessonId={data.lesson.id} />
+            </div>
           </div>
         </div>
 
