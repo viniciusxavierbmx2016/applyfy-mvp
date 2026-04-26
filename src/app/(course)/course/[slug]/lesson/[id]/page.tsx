@@ -261,7 +261,7 @@ export default function LessonPage({
 
   if (loading) {
     return (
-      <div className="flex flex-col h-screen bg-white dark:bg-[#0a0a12]">
+      <div className="flex flex-col h-full bg-white dark:bg-[#0a0a12]">
         <div className="h-[52px] shrink-0 border-b border-gray-200 dark:border-white/5 bg-gray-50 dark:bg-[#0f0f12]" />
         <div className="flex flex-1 overflow-hidden">
           <div className="flex-1 overflow-y-auto p-4 lg:p-8">
@@ -277,7 +277,7 @@ export default function LessonPage({
 
   if (error || !data) {
     return (
-      <div className="flex flex-col h-screen bg-white dark:bg-[#0a0a12]">
+      <div className="flex flex-col h-full bg-white dark:bg-[#0a0a12]">
         <div className="h-[52px] shrink-0 border-b border-gray-200 dark:border-white/5 bg-gray-50 dark:bg-[#0f0f12]" />
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
@@ -295,7 +295,7 @@ export default function LessonPage({
   }
 
   return (
-    <div className="flex flex-col h-screen bg-white dark:bg-[#0a0a12]">
+    <div className="flex flex-col h-full bg-white dark:bg-[#0a0a12]">
       {/* Topbar */}
       <div className="h-[52px] shrink-0 border-b border-gray-200 dark:border-white/5 bg-gray-50 dark:bg-[#0f0f12] flex items-center justify-between px-4">
         <div className="flex items-center gap-3 min-w-0">

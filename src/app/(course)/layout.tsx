@@ -124,7 +124,7 @@ export default function CourseGroupLayout({
   );
 
   return (
-    <div className={`min-h-screen bg-white dark:bg-gray-950 flex ${hasCustomization ? "course-customized" : ""}`} style={{ ...bgStyle, ...textStyle }}>
+    <div className={`h-screen bg-white dark:bg-gray-950 flex ${hasCustomization ? "course-customized" : ""}`} style={{ ...bgStyle, ...textStyle }}>
       <CourseSidebar
         course={course}
         mobileOpen={mobileOpen}
@@ -147,7 +147,7 @@ export default function CourseGroupLayout({
             {course.title}
           </p>
         </header>
-        <main className="flex-1">{children}</main>
+        <main className="flex-1 min-h-0 overflow-y-auto">{children}</main>
       </div>
     </div>
   );
