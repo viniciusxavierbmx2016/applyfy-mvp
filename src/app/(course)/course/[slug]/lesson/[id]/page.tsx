@@ -263,7 +263,7 @@ export default function LessonPage({
     return (
       <div className="flex flex-col h-full bg-white dark:bg-gray-950">
         <div className="h-[52px] shrink-0 border-b border-gray-200 dark:border-white/5 bg-gray-50 dark:bg-gray-900" />
-        <div className="flex flex-1 overflow-hidden">
+        <div className="flex flex-1 min-h-0">
           <div className="flex-1 overflow-y-auto p-4 lg:p-8">
             <SkeletonPlayer />
           </div>
@@ -326,11 +326,11 @@ export default function LessonPage({
       </div>
 
       {/* Main area */}
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 min-h-0">
         {/* Content */}
         <div className="flex-1 overflow-y-auto">
-          <div className="relative bg-black w-full flex-shrink-0" style={{ maxHeight: "65vh" }}>
-            <div className="w-full" style={{ aspectRatio: "16/9", maxHeight: "65vh" }}>
+          <div className="relative bg-black w-full flex-shrink-0 max-h-[65vh]">
+            <div className="w-full aspect-video max-h-[65vh]">
               <VideoPlayer video={data.lesson.video} onEnded={handleEnded} />
             </div>
             {showCountdown && data.next && (
@@ -592,7 +592,7 @@ export default function LessonPage({
 
         {/* Desktop sidebar — collapsible */}
         <div
-          className={`hidden lg:block border-l border-gray-200 dark:border-white/5 overflow-y-auto transition-all duration-300 ${
+          className={`hidden lg:block border-l border-gray-200 dark:border-white/5 overflow-hidden transition-all duration-300 ${
             sidebarOpen ? "w-[340px]" : "w-0 border-l-0"
           }`}
         >

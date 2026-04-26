@@ -217,7 +217,7 @@ export function VideoPlayer({ video, onEnded }: Props) {
 
   if (!video.videoId) {
     return (
-      <div className="aspect-video w-full bg-white dark:bg-gray-900 rounded-xl flex items-center justify-center border border-gray-200 dark:border-gray-800">
+      <div className="aspect-video w-full bg-white dark:bg-gray-900 flex items-center justify-center border border-gray-200 dark:border-gray-800">
         <p className="text-gray-500 text-sm">Vídeo indisponível</p>
       </div>
     );
@@ -226,7 +226,7 @@ export function VideoPlayer({ video, onEnded }: Props) {
   return (
     <div
       ref={containerRef}
-      className="relative w-full bg-black rounded-xl overflow-hidden group"
+      className="relative w-full bg-black overflow-hidden group"
     >
       <div className="aspect-video w-full relative">
         {/* YouTube/Vimeo API replaces this element with the iframe */}
