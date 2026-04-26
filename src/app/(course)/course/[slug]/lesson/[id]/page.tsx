@@ -297,7 +297,7 @@ export default function LessonPage({
   return (
     <div className="flex flex-col h-full bg-white dark:bg-gray-950">
       {/* Topbar */}
-      <div className="h-[52px] shrink-0 border-b border-gray-200 dark:border-white/5 bg-gray-50 dark:bg-gray-900 flex items-center justify-between px-4">
+      <div className="h-[52px] shrink-0 border-b border-gray-200 dark:border-white/5 bg-gray-50 dark:bg-gray-900 flex items-center justify-between px-4 sticky top-0 z-10">
         <div className="flex items-center gap-3 min-w-0">
           <Link
             href={`/course/${data.course.slug}`}
@@ -329,7 +329,7 @@ export default function LessonPage({
       <div className="flex flex-1 min-h-0">
         {/* Content */}
         <div className="flex-1 overflow-y-auto">
-          <div className="relative bg-black w-full flex-shrink-0 max-h-[50vh] lg:max-h-[55vh]">
+          <div className="relative bg-black w-full flex-shrink-0 max-h-[50vh] lg:max-h-[55vh] overflow-hidden">
             <div className="w-full aspect-video max-h-[50vh] lg:max-h-[55vh]">
               <VideoPlayer video={data.lesson.video} onEnded={handleEnded} />
             </div>
