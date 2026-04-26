@@ -72,7 +72,7 @@ export function LessonsSidebar({
     totalLessons > 0 ? Math.round((totalCompleted / totalLessons) * 100) : 0;
 
   return (
-    <aside className="bg-white dark:bg-[#0f0f12] flex flex-col h-full">
+    <aside className="bg-white dark:bg-gray-900 flex flex-col h-full">
       <div className="px-4 py-3.5 border-b border-gray-200/70 dark:border-white/5 flex-shrink-0">
         <div className="text-sm font-bold text-gray-900 dark:text-white line-clamp-2">
           {courseTitle}

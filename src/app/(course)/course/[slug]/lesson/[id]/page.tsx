@@ -261,8 +261,8 @@ export default function LessonPage({
 
   if (loading) {
     return (
-      <div className="flex flex-col h-full bg-white dark:bg-[#0a0a12]">
-        <div className="h-[52px] shrink-0 border-b border-gray-200 dark:border-white/5 bg-gray-50 dark:bg-[#0f0f12]" />
+      <div className="flex flex-col h-full bg-white dark:bg-gray-950">
+        <div className="h-[52px] shrink-0 border-b border-gray-200 dark:border-white/5 bg-gray-50 dark:bg-gray-900" />
         <div className="flex flex-1 overflow-hidden">
           <div className="flex-1 overflow-y-auto p-4 lg:p-8">
             <SkeletonPlayer />
@@ -277,8 +277,8 @@ export default function LessonPage({
 
   if (error || !data) {
     return (
-      <div className="flex flex-col h-full bg-white dark:bg-[#0a0a12]">
-        <div className="h-[52px] shrink-0 border-b border-gray-200 dark:border-white/5 bg-gray-50 dark:bg-[#0f0f12]" />
+      <div className="flex flex-col h-full bg-white dark:bg-gray-950">
+        <div className="h-[52px] shrink-0 border-b border-gray-200 dark:border-white/5 bg-gray-50 dark:bg-gray-900" />
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
             <p className="text-red-400 mb-4">{error || "Aula não encontrada"}</p>
@@ -295,9 +295,9 @@ export default function LessonPage({
   }
 
   return (
-    <div className="flex flex-col h-full bg-white dark:bg-[#0a0a12]">
+    <div className="flex flex-col h-full bg-white dark:bg-gray-950">
       {/* Topbar */}
-      <div className="h-[52px] shrink-0 border-b border-gray-200 dark:border-white/5 bg-gray-50 dark:bg-[#0f0f12] flex items-center justify-between px-4">
+      <div className="h-[52px] shrink-0 border-b border-gray-200 dark:border-white/5 bg-gray-50 dark:bg-gray-900 flex items-center justify-between px-4">
         <div className="flex items-center gap-3 min-w-0">
           <Link
             href={`/course/${data.course.slug}`}
@@ -617,7 +617,7 @@ export default function LessonPage({
 
       {/* Mobile sidebar drawer */}
       <div
-        className={`fixed top-0 right-0 h-full w-[320px] max-w-[85vw] bg-white dark:bg-[#0f0f12] border-l border-gray-200 dark:border-white/10 z-50 lg:hidden transform transition-transform duration-300 ${
+        className={`fixed top-0 right-0 h-full w-[320px] max-w-[85vw] bg-white dark:bg-gray-900 border-l border-gray-200 dark:border-white/10 z-50 lg:hidden transform transition-transform duration-300 ${
           mobileSidebarOpen ? "translate-x-0" : "translate-x-full"
         }`}
       >

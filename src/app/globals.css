@@ -318,12 +318,6 @@ body {
 /* Inputs & form elements */
 .course-customized .focus\:border-blue-500:focus { border-color: var(--member-primary, #3b82f6) !important; }
 
-/* Lesson redesign — sidebar & topbar backgrounds */
-.course-customized .bg-\[\#0f0f12\] { background-color: var(--member-sidebar, var(--member-bg, #0f0f12)) !important; }
-.course-customized .dark\:bg-\[\#0f0f12\] { background-color: var(--member-sidebar, var(--member-bg, #0f0f12)) !important; }
-.course-customized .bg-\[\#0a0a12\] { background-color: var(--member-bg, #0a0a12) !important; }
-.course-customized .dark\:bg-\[\#0a0a12\] { background-color: var(--member-bg, #0a0a12) !important; }
-
 /* Lesson redesign — current lesson highlight */
 .course-customized .bg-blue-500\/\[0\.08\] { background-color: color-mix(in srgb, var(--member-primary, #3b82f6) 8%, transparent) !important; }
 .course-customized .dark\:bg-blue-500\/\[0\.08\] { background-color: color-mix(in srgb, var(--member-primary, #3b82f6) 8%, transparent) !important; }
