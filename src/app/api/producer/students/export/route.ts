@@ -144,6 +144,15 @@ export async function GET(request: Request) {
         id: true,
         name: true,
         email: true,
+        phone: true,
+        document: true,
+        points: true,
+        level: true,
+        createdAt: true,
+        userTags: {
+          select: { tag: { select: { name: true } } },
+          orderBy: { createdAt: "desc" as const },
+        },
         enrollments: {
           where: courseFilterActive
             ? { courseId: { in: effectiveCourseIds || [] } }
@@ -222,6 +231,12 @@ export async function GET(request: Request) {
     const headers = [
       "Nome",
       "Email",
+      "WhatsApp",
+      "CPF/CNPJ",
+      "Tags",
+      "Pontos",
+      "Nível",
+      "Data de cadastro",
       "Cursos ativos",
       "Cursos expirados",
       "Cursos cancelados",
@@ -294,10 +309,18 @@ export async function GET(request: Request) {
         );
       }
 
+      const tagNames = u.userTags?.map((ut) => ut.tag.name).join("; ") || "";
+
       lines.push(
         [
           csvEscape(u.name),
           csvEscape(u.email),
+          csvEscape(u.phone),
+          csvEscape(u.document),
+          csvEscape(tagNames),
+          csvEscape(u.points),
+          csvEscape(u.level),
+          csvEscape(formatDate(u.createdAt)),
           csvEscape(activeTitles),
           csvEscape(expiredTitles),
           csvEscape(cancelledTitles),

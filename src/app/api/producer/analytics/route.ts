@@ -517,6 +517,13 @@ export async function GET(request: Request) {
               email: true,
               avatarUrl: true,
               points: true,
+              phone: true,
+              document: true,
+              level: true,
+              userTags: {
+                select: { tag: { select: { name: true } } },
+                orderBy: { createdAt: "desc" as const },
+              },
             },
           },
         },
@@ -585,6 +592,10 @@ export async function GET(request: Request) {
         email: string;
         avatarUrl: string | null;
         points: number;
+        phone: string | null;
+        document: string | null;
+        level: number;
+        tags: string;
         lessonsCompleted: number;
         totalLessons: number;
         progressPercent: number;
@@ -607,6 +618,10 @@ export async function GET(request: Request) {
             email: e.user.email,
             avatarUrl: e.user.avatarUrl,
             points: e.user.points,
+            phone: e.user.phone ?? null,
+            document: e.user.document ?? null,
+            level: e.user.level ?? 1,
+            tags: e.user.userTags?.map((ut) => ut.tag.name).join("; ") || "",
             lessonsCompleted: completed,
             totalLessons: total,
             progressPercent: total > 0 ? Math.round((completed / total) * 100) : 0,
@@ -672,6 +687,10 @@ export async function GET(request: Request) {
           email: e.user.email,
           avatarUrl: e.user.avatarUrl,
           points: e.user.points,
+          phone: e.user.phone ?? null,
+          document: e.user.document ?? null,
+          level: e.user.level ?? 1,
+          tags: e.user.userTags?.map((ut) => ut.tag.name).join("; ") || "",
           lessonsCompleted: 0,
           totalLessons: total,
           progressPercent: 0,
@@ -706,6 +725,10 @@ export async function GET(request: Request) {
             name: e.user.name,
             email: e.user.email,
             avatarUrl: e.user.avatarUrl,
+            phone: e.user.phone ?? null,
+            document: e.user.document ?? null,
+            level: e.user.level ?? 1,
+            tags: e.user.userTags?.map((ut) => ut.tag.name).join("; ") || "",
             expiresAt: e.expiresAt!.toISOString(),
             lessonsCompleted: completed,
             totalLessons: total,
@@ -719,12 +742,16 @@ export async function GET(request: Request) {
         );
 
       if (format === "csv") {
+        const extra = (r: { phone?: string | null; document?: string | null; tags?: string; level?: number }) =>
+          [csvEscape(r.phone), csvEscape(r.document), csvEscape(r.tags), String(r.level ?? 1)];
+        const extraH = "whatsapp,cpf_cnpj,tags,nivel";
+
         const pickHeaders = (section: string) => {
           if (section === "expired")
-            return "nome,email,curso,expira_em,progresso_percent";
+            return `nome,email,${extraH},curso,expira_em,progresso_percent`;
           if (section === "never")
-            return "nome,email,curso,matriculado_em";
-          return "nome,email,curso,ultimo_acesso,progresso_percent,faixa_inativo";
+            return `nome,email,${extraH},curso,matriculado_em`;
+          return `nome,email,${extraH},curso,ultimo_acesso,progresso_percent,faixa_inativo`;
         };
         const pickRows = (section: string): string[] => {
           if (section === "expired") {
@@ -732,6 +759,7 @@ export async function GET(request: Request) {
               [
                 csvEscape(r.name),
                 csvEscape(r.email),
+                ...extra(r),
                 csvEscape(r.courseTitle),
                 r.expiresAt,
                 String(r.progressPercent),
@@ -743,6 +771,7 @@ export async function GET(request: Request) {
               [
                 csvEscape(r.name),
                 csvEscape(r.email),
+                ...extra(r),
                 csvEscape(r.courseTitle),
                 r.lastAccessedAt || "",
               ].join(",")
@@ -750,11 +779,12 @@ export async function GET(request: Request) {
           }
           if (section === "engaged") {
             const header =
-              "nome,email,pontos,aulas_concluidas,total_aulas,progresso_percent,ultimo_acesso";
+              `nome,email,${extraH},pontos,aulas_concluidas,total_aulas,progresso_percent,ultimo_acesso`;
             const body = topEngaged.map((r) =>
               [
                 csvEscape(r.name),
                 csvEscape(r.email),
+                ...extra(r),
                 String(r.points),
                 String(r.lessonsCompleted),
                 String(r.totalLessons),
@@ -776,6 +806,7 @@ export async function GET(request: Request) {
                 [
                   csvEscape(r.name),
                   csvEscape(r.email),
+                  ...extra(r),
                   csvEscape(r.courseTitle),
                   r.lastAccessedAt || "",
                   String(r.progressPercent),
