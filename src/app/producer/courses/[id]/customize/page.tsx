@@ -49,6 +49,7 @@ const LAYOUTS = [
 interface CourseFlags {
   communityEnabled: boolean;
   lessonCommentsEnabled: boolean;
+  lessonReactionsEnabled: boolean;
   reviewsEnabled: boolean;
   certificateEnabled: boolean;
   gamificationEnabled: boolean;
@@ -65,6 +66,7 @@ const FEATURE_ITEMS: Array<{
 }> = [
   { key: "communityEnabled", title: "Comunidade do curso", description: "Alunos criam posts e interagem entre si" },
   { key: "lessonCommentsEnabled", title: "Comentários nas aulas", description: "Alunos comentam em cada aula" },
+  { key: "lessonReactionsEnabled", title: "Reações nas aulas", description: "Alunos podem dar gostei/não gostei nas aulas" },
   { key: "reviewsEnabled", title: "Avaliações e reviews", description: "Alunos avaliam o curso com estrelas" },
   { key: "certificateEnabled", title: "Certificado de conclusão", description: "PDF gerado ao concluir 100%" },
   { key: "gamificationEnabled", title: "Pontos e níveis", description: "Pontos ao concluir aulas e interagir" },
@@ -104,6 +106,7 @@ export default function CourseCustomizePage() {
           setFlags({
             communityEnabled: Boolean(c.communityEnabled),
             lessonCommentsEnabled: Boolean(c.lessonCommentsEnabled),
+            lessonReactionsEnabled: c.lessonReactionsEnabled !== false,
             reviewsEnabled: Boolean(c.reviewsEnabled),
             certificateEnabled: Boolean(c.certificateEnabled),
             gamificationEnabled: Boolean(c.gamificationEnabled),

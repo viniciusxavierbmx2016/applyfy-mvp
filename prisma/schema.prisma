@@ -34,6 +34,7 @@ model User {
   comments         Comment[]
   lessonComments   LessonComment[]
   likes            Like[]
+  lessonReactions  LessonReaction[]
   sessions         Session[]
   notifications    Notification[]
   certificates     Certificate[]
@@ -148,6 +149,7 @@ model Course {
   communityEnabled   Boolean   @default(true)
   lessonCommentsEnabled Boolean @default(true)
   reviewsEnabled     Boolean   @default(true)
+  lessonReactionsEnabled Boolean @default(true)
   gamificationEnabled Boolean  @default(true)
   showStudentCount   Boolean   @default(false)
   supportEmail       String?
@@ -253,6 +255,7 @@ model Lesson {
   progress    LessonProgress[]
   comments    LessonComment[]
   materials   LessonMaterial[]
+  reactions   LessonReaction[]
   quiz        Quiz?
 
   @@index([moduleId, order])
@@ -431,6 +434,25 @@ model Review {
 
   @@unique([userId, courseId])
   @@index([courseId, createdAt])
+}
+
+enum ReactionType {
+  LIKE
+  DISLIKE
+}
+
+model LessonReaction {
+  id        String       @id @default(cuid())
+  userId    String
+  lessonId  String
+  type      ReactionType
+  createdAt DateTime     @default(now())
+
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lesson    Lesson       @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, lessonId])
+  @@index([lessonId, type])
 }
 
 model WebhookLog {

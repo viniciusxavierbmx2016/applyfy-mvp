@@ -7,6 +7,7 @@ import { CourseEditTabs } from "@/components/course-edit-tabs";
 interface CourseFlags {
   communityEnabled: boolean;
   lessonCommentsEnabled: boolean;
+  lessonReactionsEnabled: boolean;
   reviewsEnabled: boolean;
   certificateEnabled: boolean;
   gamificationEnabled: boolean;
@@ -39,6 +40,13 @@ const ITEMS: SettingItem[] = [
     description: "Permite que alunos comentem em cada aula individualmente.",
     disabledHint: "Desativado — o painel de comentários das aulas ficará oculto.",
     icon: <MessageIcon />,
+  },
+  {
+    key: "lessonReactionsEnabled",
+    title: "Reações nas aulas",
+    description: "Permite que alunos deem gostei/não gostei em cada aula.",
+    disabledHint: "Desativado — os botões de reação ficam ocultos nas aulas.",
+    icon: <ThumbsUpIcon />,
   },
   {
     key: "reviewsEnabled",
@@ -107,6 +115,7 @@ export default function CourseSettingsPage({
         setFlags({
           communityEnabled: Boolean(c.communityEnabled),
           lessonCommentsEnabled: Boolean(c.lessonCommentsEnabled),
+          lessonReactionsEnabled: c.lessonReactionsEnabled !== false,
           reviewsEnabled: Boolean(c.reviewsEnabled),
           certificateEnabled: Boolean(c.certificateEnabled),
           gamificationEnabled: Boolean(c.gamificationEnabled),
@@ -381,6 +390,22 @@ function HeadphonesIcon() {
     >
       <path d="M3 18v-6a9 9 0 0 1 18 0v6" />
       <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z" />
+    </svg>
+  );
+}
+
+function ThumbsUpIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="w-5 h-5"
+    >
+      <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" />
     </svg>
   );
 }

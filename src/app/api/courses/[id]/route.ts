@@ -83,6 +83,7 @@ export async function PUT(
       certificateEnabled,
       communityEnabled,
       lessonCommentsEnabled,
+      lessonReactionsEnabled,
       reviewsEnabled,
       gamificationEnabled,
       showStudentCount,
@@ -150,6 +151,9 @@ export async function PUT(
         }),
         ...(lessonCommentsEnabled !== undefined && {
           lessonCommentsEnabled: Boolean(lessonCommentsEnabled),
+        }),
+        ...(lessonReactionsEnabled !== undefined && {
+          lessonReactionsEnabled: Boolean(lessonReactionsEnabled),
         }),
         ...(reviewsEnabled !== undefined && {
           reviewsEnabled: Boolean(reviewsEnabled),
