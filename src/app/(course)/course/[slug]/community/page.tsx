@@ -60,11 +60,16 @@ export default function CommunityPage() {
   const [activeGroup, setActiveGroup] = useState<string | null>(null);
   const [groupsLoaded, setGroupsLoaded] = useState(false);
 
+  // Pagination
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+
   // Initial load: fetch posts + course info
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    fetch(`/api/posts?courseSlug=${params.slug}`)
+    fetch(`/api/posts?courseSlug=${params.slug}&page=1&limit=10`)
       .then(async (res) => {
         if (res.status === 403) {
           const body = await res.json().catch(() => ({}));
@@ -86,6 +91,8 @@ export default function CommunityPage() {
           setPosts(data.posts);
           setCourse(data.course);
           setIsStaffViewer(!!data.isStaffViewer);
+          setHasMore(!!data.hasMore);
+          setPage(1);
         }
       })
       .catch((e: Error) => {
@@ -127,11 +134,13 @@ export default function CommunityPage() {
       if (!course) return;
       setLoading(true);
       try {
-        const url = `/api/posts?courseSlug=${params.slug}${groupId ? `&groupId=${groupId}` : ""}`;
+        const url = `/api/posts?courseSlug=${params.slug}&page=1&limit=10${groupId ? `&groupId=${groupId}` : ""}`;
         const res = await fetch(url);
         if (res.ok) {
           const data = await res.json();
           setPosts(data.posts);
+          setHasMore(!!data.hasMore);
+          setPage(1);
         }
       } finally {
         setLoading(false);
@@ -139,6 +148,24 @@ export default function CommunityPage() {
     },
     [course, params.slug]
   );
+
+  async function loadMore() {
+    if (loadingMore || !hasMore) return;
+    setLoadingMore(true);
+    try {
+      const nextPage = page + 1;
+      const url = `/api/posts?courseSlug=${params.slug}&page=${nextPage}&limit=10${activeGroup ? `&groupId=${activeGroup}` : ""}`;
+      const res = await fetch(url);
+      if (res.ok) {
+        const data = await res.json();
+        setPosts((prev) => [...prev, ...data.posts]);
+        setHasMore(!!data.hasMore);
+        setPage(nextPage);
+      }
+    } finally {
+      setLoadingMore(false);
+    }
+  }
 
   useEffect(() => {
     if (!groupsLoaded) return;
@@ -427,6 +454,16 @@ export default function CommunityPage() {
               onTogglePin={togglePin}
             />
           ))}
+          {hasMore && (
+            <button
+              type="button"
+              onClick={loadMore}
+              disabled={loadingMore}
+              className="w-full py-3 text-sm text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors disabled:opacity-50"
+            >
+              {loadingMore ? "Carregando..." : "Carregar mais posts"}
+            </button>
+          )}
         </div>
       )}
 

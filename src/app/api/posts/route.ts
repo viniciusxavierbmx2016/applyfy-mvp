@@ -86,21 +86,29 @@ export async function GET(request: Request) {
       postWhere.groupId = groupId;
     }
 
-    const posts = await prisma.post.findMany({
-      where: postWhere,
-      orderBy: [{ pinned: "desc" }, { createdAt: "desc" }],
-      select: {
-        id: true,
-        content: true,
-        type: true,
-        pinned: true,
-        createdAt: true,
-        user: { select: { id: true, name: true, avatarUrl: true, role: true } },
-        group: { select: { id: true, name: true, slug: true, permission: true } },
-        likes: { where: { userId: user.id }, select: { id: true } },
-        _count: { select: { likes: true, comments: true } },
-      },
-    });
+    const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10) || 1);
+    const limit = Math.min(50, Math.max(1, parseInt(searchParams.get("limit") || "10", 10) || 10));
+
+    const [posts, total] = await Promise.all([
+      prisma.post.findMany({
+        where: postWhere,
+        orderBy: [{ pinned: "desc" }, { createdAt: "desc" }],
+        skip: (page - 1) * limit,
+        take: limit,
+        select: {
+          id: true,
+          content: true,
+          type: true,
+          pinned: true,
+          createdAt: true,
+          user: { select: { id: true, name: true, avatarUrl: true, role: true } },
+          group: { select: { id: true, name: true, slug: true, permission: true } },
+          likes: { where: { userId: user.id }, select: { id: true } },
+          _count: { select: { likes: true, comments: true } },
+        },
+      }),
+      prisma.post.count({ where: postWhere }),
+    ]);
 
     const withLiked = posts.map((p) => ({
       id: p.id,
@@ -117,6 +125,8 @@ export async function GET(request: Request) {
 
     return NextResponse.json({
       posts: withLiked,
+      total,
+      hasMore: total > page * limit,
       course: { id: course.id, slug: course.slug, title: course.title },
       isStaffViewer: isStaffOwner,
     });
