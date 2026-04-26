@@ -8,7 +8,7 @@ import TextAlign from "@tiptap/extension-text-align";
 import Color from "@tiptap/extension-color";
 import { TextStyle } from "@tiptap/extension-text-style";
 import Image from "@tiptap/extension-image";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 interface Props {
   value: string;
@@ -359,16 +359,65 @@ function LinkModal({
 }
 
 function ImageModal({ editor, onClose }: { editor: Editor; onClose: () => void }) {
+  const [tab, setTab] = useState<"upload" | "url">("upload");
   const [url, setUrl] = useState("");
   const [previewError, setPreviewError] = useState(false);
+  const [file, setFile] = useState<File | null>(null);
+  const [filePreview, setFilePreview] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const [uploadedUrl, setUploadedUrl] = useState("");
+  const [uploadError, setUploadError] = useState("");
+  const fileRef = useRef<HTMLInputElement>(null);
 
   function handleInsert() {
-    if (!url.trim()) return;
-    editor.chain().focus().setImage({ src: url.trim() }).run();
+    const src = tab === "upload" ? uploadedUrl : url.trim();
+    if (!src) return;
+    editor.chain().focus().setImage({ src }).run();
     onClose();
   }
 
-  const showPreview = url.trim().length > 0 && !previewError;
+  function handleFileSelect(selected: File | null) {
+    if (!selected) return;
+    if (!selected.type.startsWith("image/")) {
+      setUploadError("Formato não permitido. Use PNG, JPG, WebP ou GIF.");
+      return;
+    }
+    if (selected.size > 5 * 1024 * 1024) {
+      setUploadError("Arquivo muito grande (máx. 5MB)");
+      return;
+    }
+    setFile(selected);
+    setUploadError("");
+    setUploadedUrl("");
+    setFilePreview(URL.createObjectURL(selected));
+    uploadFile(selected);
+  }
+
+  async function uploadFile(f: File) {
+    setUploading(true);
+    setUploadError("");
+    try {
+      const formData = new FormData();
+      formData.append("file", f);
+      const res = await fetch("/api/community/upload", { method: "POST", body: formData });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Erro no upload");
+      setUploadedUrl(data.url);
+    } catch (err) {
+      setUploadError(err instanceof Error ? err.message : "Erro no upload");
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  function handleDrop(e: React.DragEvent) {
+    e.preventDefault();
+    const dropped = e.dataTransfer.files[0];
+    if (dropped) handleFileSelect(dropped);
+  }
+
+  const showUrlPreview = url.trim().length > 0 && !previewError;
+  const canInsert = tab === "upload" ? !!uploadedUrl : !!url.trim();
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center pt-[20vh]" onClick={onClose}>
@@ -377,37 +426,106 @@ function ImageModal({ editor, onClose }: { editor: Editor; onClose: () => void }
         className="relative bg-white dark:bg-[#141416] border border-gray-200 dark:border-[#28282e] rounded-2xl p-6 max-w-md w-full mx-4 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-5">Inserir imagem</h3>
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Inserir imagem</h3>
 
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">URL da imagem</label>
+        <div className="flex gap-1 mb-4 border-b border-gray-200 dark:border-[#28282e]">
+          <button
+            type="button"
+            onClick={() => setTab("upload")}
+            className={`px-4 py-2 text-sm font-medium transition-colors ${tab === "upload" ? "border-b-2 border-blue-500 text-blue-500" : "text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"}`}
+          >
+            Upload
+          </button>
+          <button
+            type="button"
+            onClick={() => setTab("url")}
+            className={`px-4 py-2 text-sm font-medium transition-colors ${tab === "url" ? "border-b-2 border-blue-500 text-blue-500" : "text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"}`}
+          >
+            URL
+          </button>
+        </div>
+
+        {tab === "upload" ? (
+          <div className="space-y-4">
             <input
-              autoFocus
-              type="url"
-              value={url}
-              onChange={(e) => { setUrl(e.target.value); setPreviewError(false); }}
-              placeholder="https://exemplo.com/imagem.jpg"
-              className="w-full px-4 py-3 bg-gray-50 dark:bg-[#0f1320] border border-gray-300 dark:border-[#1a1e2e] rounded-xl text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-blue-500/50"
-              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleInsert(); } }}
+              ref={fileRef}
+              type="file"
+              accept="image/png,image/jpeg,image/webp,image/gif"
+              className="hidden"
+              onChange={(e) => handleFileSelect(e.target.files?.[0] || null)}
             />
+            {!file ? (
+              <div
+                onClick={() => fileRef.current?.click()}
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={handleDrop}
+                className="flex flex-col items-center justify-center gap-2 py-10 border-2 border-dashed border-gray-300 dark:border-white/10 rounded-xl cursor-pointer hover:border-blue-500/30 hover:bg-blue-500/5 transition-colors"
+              >
+                <svg className="w-8 h-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+                </svg>
+                <p className="text-sm text-gray-600 dark:text-gray-300">Clique ou arraste uma imagem</p>
+                <p className="text-xs text-gray-400">PNG, JPG, WebP ou GIF · Máx 5MB</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <div className="rounded-xl overflow-hidden border border-gray-200 dark:border-[#1a1e2e] bg-gray-50 dark:bg-[#0f1320] p-2 relative">
+                  <img // eslint-disable-line @next/next/no-img-element
+                    src={filePreview}
+                    alt="Preview"
+                    className="w-full max-h-48 object-contain rounded-lg"
+                  />
+                  {uploading && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-xl">
+                      <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    </div>
+                  )}
+                </div>
+                <div className="flex items-center justify-between">
+                  <p className="text-xs text-gray-500 truncate max-w-[200px]">{file.name}</p>
+                  <button
+                    type="button"
+                    onClick={() => { setFile(null); setFilePreview(""); setUploadedUrl(""); setUploadError(""); }}
+                    className="text-xs text-gray-400 hover:text-red-400 transition-colors"
+                  >
+                    Remover
+                  </button>
+                </div>
+              </div>
+            )}
+            {uploadError && (
+              <p className="text-xs text-red-500">{uploadError}</p>
+            )}
           </div>
-
-          {showPreview && (
-            <div className="rounded-xl overflow-hidden border border-gray-200 dark:border-[#1a1e2e] bg-gray-50 dark:bg-[#0f1320] p-2">
-              <img // eslint-disable-line @next/next/no-img-element
-                src={url.trim()}
-                alt="Preview"
-                className="w-full max-h-48 object-contain rounded-lg"
-                onError={() => setPreviewError(true)}
+        ) : (
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">URL da imagem</label>
+              <input
+                autoFocus
+                type="url"
+                value={url}
+                onChange={(e) => { setUrl(e.target.value); setPreviewError(false); }}
+                placeholder="https://exemplo.com/imagem.jpg"
+                className="w-full px-4 py-3 bg-gray-50 dark:bg-[#0f1320] border border-gray-300 dark:border-[#1a1e2e] rounded-xl text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-blue-500/50"
+                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleInsert(); } }}
               />
             </div>
-          )}
-
-          {previewError && url.trim() && (
-            <p className="text-xs text-amber-500">Não foi possível carregar a imagem. Verifique a URL.</p>
-          )}
-        </div>
+            {showUrlPreview && (
+              <div className="rounded-xl overflow-hidden border border-gray-200 dark:border-[#1a1e2e] bg-gray-50 dark:bg-[#0f1320] p-2">
+                <img // eslint-disable-line @next/next/no-img-element
+                  src={url.trim()}
+                  alt="Preview"
+                  className="w-full max-h-48 object-contain rounded-lg"
+                  onError={() => setPreviewError(true)}
+                />
+              </div>
+            )}
+            {previewError && url.trim() && (
+              <p className="text-xs text-amber-500">Não foi possível carregar a imagem. Verifique a URL.</p>
+            )}
+          </div>
+        )}
 
         <div className="flex gap-3 mt-6">
           <button
@@ -420,10 +538,10 @@ function ImageModal({ editor, onClose }: { editor: Editor; onClose: () => void }
           <button
             type="button"
             onClick={handleInsert}
-            disabled={!url.trim()}
+            disabled={!canInsert || uploading}
             className="flex-1 px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium rounded-xl disabled:opacity-40 transition-colors"
           >
-            Inserir
+            {uploading ? "Enviando..." : "Inserir"}
           </button>
         </div>
       </div>
