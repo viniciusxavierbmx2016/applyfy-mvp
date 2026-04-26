@@ -86,6 +86,7 @@ export async function GET(
               id: true,
               name: true,
               email: true,
+              phone: true,
               avatarUrl: true,
               userTags: {
                 include: { tag: { select: { id: true, name: true, color: true } } },
@@ -144,6 +145,7 @@ export async function GET(
         userId: e.user.id,
         name: e.user.name,
         email: e.user.email,
+        phone: e.user.phone,
         avatarUrl: e.user.avatarUrl,
         enrolledAt: e.createdAt,
         expiresAt: e.expiresAt,

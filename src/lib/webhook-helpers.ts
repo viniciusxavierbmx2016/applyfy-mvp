@@ -10,7 +10,8 @@ import { createNotification } from "./notifications";
 export async function ensureUserByEmail(
   email: string,
   name?: string,
-  workspaceId?: string
+  workspaceId?: string,
+  phone?: string | null
 ) {
   const normalizedEmail = email.trim().toLowerCase();
 
@@ -18,15 +19,17 @@ export async function ensureUserByEmail(
     where: { email: normalizedEmail },
   });
   if (existing) {
-    // Auto-bind an unbound STUDENT to the workspace that's onboarding them.
-    if (
-      workspaceId &&
-      existing.role === "STUDENT" &&
-      !existing.workspaceId
-    ) {
+    const updates: Record<string, unknown> = {};
+    if (workspaceId && existing.role === "STUDENT" && !existing.workspaceId) {
+      updates.workspaceId = workspaceId;
+    }
+    if (phone && !existing.phone) {
+      updates.phone = phone;
+    }
+    if (Object.keys(updates).length > 0) {
       return prisma.user.update({
         where: { id: existing.id },
-        data: { workspaceId },
+        data: updates,
       });
     }
     return existing;
@@ -65,6 +68,7 @@ export async function ensureUserByEmail(
       email: normalizedEmail,
       name: name || normalizedEmail.split("@")[0],
       workspaceId: workspaceId ?? null,
+      phone: phone || null,
     },
   });
 

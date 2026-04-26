@@ -118,6 +118,7 @@ export async function GET(request: Request) {
         id: true,
         name: true,
         email: true,
+        phone: true,
         avatarUrl: true,
         role: true,
         points: true,

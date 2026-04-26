@@ -127,6 +127,7 @@ export async function POST(
 
     const email = body?.client?.email?.trim().toLowerCase();
     const name = body?.client?.name;
+    const phone = body?.client?.phone?.trim() || null;
     if (!email) {
       await logWebhook({
         event,
@@ -158,7 +159,7 @@ export async function POST(
     }
 
     if (GRANT_EVENTS.has(event)) {
-      const user = await ensureUserByEmail(email, name);
+      const user = await ensureUserByEmail(email, name, undefined, phone);
       // Access to a workspace is derived from Enrollment (course→workspace),
       // so we no longer write workspaceId on the User. Keeping that legacy
       // field synced here would re-introduce a single-workspace binding for
