@@ -140,6 +140,7 @@ export default function CourseStudentsPage({
   const [accessResult, setAccessResult] = useState<AccessResult | null>(null);
   const [editTarget, setEditTarget] = useState<Student | null>(null);
   const [toast, setToast] = useState<string | null>(null);
+  const [exporting, setExporting] = useState(false);
   const { confirm, ConfirmDialog } = useConfirm();
 
   function showToast(msg: string) {
@@ -200,6 +201,32 @@ export default function CourseStudentsPage({
     );
   }
 
+  async function handleExport() {
+    if (exporting) return;
+    setExporting(true);
+    try {
+      const res = await fetch(`/api/producer/students/export?courseId=${params.id}`);
+      if (!res.ok) throw new Error("fail");
+      const disposition = res.headers.get("Content-Disposition") || "";
+      const match = /filename="([^"]+)"/.exec(disposition);
+      const filename = match?.[1] || "alunos.csv";
+      const blob = await res.blob();
+      const href = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = href;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(href);
+      showToast("CSV exportado");
+    } catch {
+      showToast("Erro ao exportar CSV");
+    } finally {
+      setExporting(false);
+    }
+  }
+
   async function handleResend(enrollmentId: string) {
     const res = await fetch(
       `/api/courses/${params.id}/students/${enrollmentId}/resend`,
@@ -211,7 +238,7 @@ export default function CourseStudentsPage({
 
   return (
     <>
-      <div className="flex items-center justify-between gap-3 mb-4">
+      <div className="flex flex-wrap items-center gap-3 mb-4">
         <button
           onClick={() => setModalOpen(true)}
           className="inline-flex items-center gap-2 px-3 py-2 bg-blue-600 hover:bg-blue-500 text-white font-medium rounded-lg text-sm transition"
@@ -220,6 +247,26 @@ export default function CourseStudentsPage({
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
           </svg>
           Enviar acesso
+        </button>
+        <button
+          type="button"
+          onClick={handleExport}
+          disabled={exporting || loading}
+          className="inline-flex items-center gap-2 px-3 py-2 border border-gray-200 dark:border-white/10 hover:bg-gray-100 dark:hover:bg-white/5 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {exporting ? (
+            <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" className="opacity-25" />
+              <path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+            </svg>
+          ) : (
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+              <polyline strokeLinecap="round" strokeLinejoin="round" points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+          )}
+          {exporting ? "Exportando..." : "Exportar CSV"}
         </button>
       </div>
 
