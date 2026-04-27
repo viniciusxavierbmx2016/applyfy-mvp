@@ -103,24 +103,29 @@ export function MiniCalendar({
           const isEdge = isStart || isEnd;
           const col = i % 7;
 
+          const rangeBg = "bg-blue-500/10 dark:bg-blue-500/15";
           let bgClass = "";
           if (inRange) {
-            bgClass = "bg-blue-100 dark:bg-blue-500/15";
+            bgClass = rangeBg;
             if (col === 0) bgClass += " rounded-l-full";
             if (col === 6) bgClass += " rounded-r-full";
           }
           if (isStart && normEnd && normStart !== normEnd) {
-            bgClass = "bg-blue-100 dark:bg-blue-500/15 rounded-l-full";
+            bgClass = rangeBg + " rounded-l-full";
           }
           if (isEnd && normStart && normStart !== normEnd) {
-            bgClass = "bg-blue-100 dark:bg-blue-500/15 rounded-r-full";
+            bgClass = rangeBg + " rounded-r-full";
           }
 
           let dayClass = "w-8 h-8 flex items-center justify-center text-sm rounded-full transition-colors relative z-10 ";
           if (isEdge) {
             dayClass += "bg-blue-600 text-white font-medium";
           } else if (isT) {
-            dayClass += "ring-2 ring-blue-500 text-blue-600 dark:text-blue-400 font-medium";
+            if (inRange) {
+              dayClass += "bg-blue-600 text-white font-medium";
+            } else {
+              dayClass += "ring-2 ring-inset ring-blue-500 text-gray-700 dark:text-gray-300 font-medium";
+            }
           } else {
             dayClass += "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5";
           }
