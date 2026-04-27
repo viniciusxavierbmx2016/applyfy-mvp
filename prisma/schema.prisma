@@ -153,6 +153,8 @@ model Course {
   gamificationEnabled Boolean  @default(true)
   lessonCommentsModerationEnabled Boolean @default(false)
   communityModerationEnabled      Boolean @default(false)
+  termsContent       String?   @db.Text
+  termsUpdatedAt     DateTime?
   showStudentCount   Boolean   @default(false)
   supportEmail       String?
   supportWhatsapp    String?
@@ -268,9 +270,10 @@ model Enrollment {
   id        String           @id @default(uuid())
   userId    String
   courseId   String
-  status    EnrollmentStatus @default(ACTIVE)
-  expiresAt DateTime?
-  createdAt DateTime         @default(now())
+  status          EnrollmentStatus @default(ACTIVE)
+  expiresAt       DateTime?
+  termsAcceptedAt DateTime?
+  createdAt       DateTime         @default(now())
 
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)

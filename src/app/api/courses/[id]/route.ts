@@ -94,6 +94,7 @@ export async function PUT(
       showLessonSupport,
       featured,
       category,
+      termsContent,
     } = body;
 
     if (supportEmail !== undefined && supportEmail !== null && supportEmail !== "") {
@@ -118,9 +119,27 @@ export async function PUT(
       }
     }
 
+    let termsData = {};
+    if (termsContent !== undefined) {
+      const trimmed = typeof termsContent === "string" ? termsContent.trim() : null;
+      const newTerms = trimmed || null;
+      if (newTerms === null) {
+        termsData = { termsContent: null, termsUpdatedAt: null };
+      } else {
+        const current = await prisma.course.findUnique({
+          where: { id: params.id },
+          select: { termsContent: true },
+        });
+        if (current?.termsContent !== newTerms) {
+          termsData = { termsContent: newTerms, termsUpdatedAt: new Date() };
+        }
+      }
+    }
+
     const course = await prisma.course.update({
       where: { id: params.id },
       data: {
+        ...termsData,
         ...(title !== undefined && { title }),
         ...(slug !== undefined && { slug }),
         ...(description !== undefined && { description }),
