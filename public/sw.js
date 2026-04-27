@@ -1,4 +1,4 @@
-const SW_VERSION = '2.2.0';
+const SW_VERSION = '2.3.0';
 const CACHE_NAME = `mc-cache-v${SW_VERSION}`;
 
 const PRECACHE_URLS = [
