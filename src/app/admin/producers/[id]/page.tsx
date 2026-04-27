@@ -125,6 +125,7 @@ export default function ProducerDetailPage({
   const [data, setData] = useState<DetailResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
+  const [impersonating, setImpersonating] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>("info");
   const { confirm, ConfirmDialog } = useConfirm();
@@ -175,6 +176,26 @@ export default function ProducerDetailPage({
       showToast("Erro ao atualizar status");
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function handleImpersonate() {
+    setImpersonating(true);
+    try {
+      const res = await fetch(`/api/admin/producers/${p.id}/impersonate`, {
+        method: "POST",
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        showToast(json.error || "Erro ao gerar link");
+        return;
+      }
+      window.open(json.url, "_blank");
+      showToast(`Link gerado para ${json.email}`);
+    } catch {
+      showToast("Erro ao gerar link de acesso");
+    } finally {
+      setImpersonating(false);
     }
   }
 
@@ -259,6 +280,19 @@ export default function ProducerDetailPage({
             </div>
           </div>
           <div className="flex flex-wrap gap-2 sm:flex-shrink-0">
+            <button
+              type="button"
+              onClick={handleImpersonate}
+              disabled={impersonating}
+              className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
+            >
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
+                <polyline points="10 17 15 12 10 7"/>
+                <line x1="15" y1="12" x2="3" y2="12"/>
+              </svg>
+              {impersonating ? "Gerando link…" : "Login como produtor"}
+            </button>
             <Button
               variant={allInactive ? "primary" : "danger"}
               size="md"
