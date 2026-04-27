@@ -91,7 +91,8 @@ export default function CourseGroupLayout({
   }, [course]);
 
   useEffect(() => {
-    if (!course?.id || hasAccess === false) {
+    if (!course?.id) return;
+    if (hasAccess === false) {
       setTermsChecked(true);
       return;
     }
