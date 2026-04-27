@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { MiniCalendar } from "./mini-calendar";
 
 export type DateRangeOption =
   | "today"
@@ -167,12 +168,26 @@ function ChevronDown({ className = "" }: { className?: string }) {
     </svg>
   );
 }
-function CheckIcon({ className = "" }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <polyline points="20 6 9 17 4 12" />
-    </svg>
-  );
+
+function calcMonths(startDate: string, endDate: string) {
+  const startD = new Date(startDate);
+  const endD = new Date(endDate);
+  const left = { year: startD.getFullYear(), month: startD.getMonth() };
+  const sameMonth = endD.getMonth() === startD.getMonth() && endD.getFullYear() === startD.getFullYear();
+  const right = sameMonth
+    ? startD.getMonth() + 1 > 11
+      ? { year: startD.getFullYear() + 1, month: 0 }
+      : { year: startD.getFullYear(), month: startD.getMonth() + 1 }
+    : { year: endD.getFullYear(), month: endD.getMonth() };
+  return { left, right };
+}
+
+function navigateMonth(prev: { year: number; month: number }, delta: number) {
+  let m = prev.month + delta;
+  let y = prev.year;
+  if (m < 0) { m = 11; y--; }
+  if (m > 11) { m = 0; y++; }
+  return { year: y, month: m };
 }
 
 interface DateRangeSelectorProps {
@@ -182,13 +197,29 @@ interface DateRangeSelectorProps {
 
 export function DateRangeSelector({ value, onChange }: DateRangeSelectorProps) {
   const [open, setOpen] = useState(false);
-  const [customStart, setCustomStart] = useState(
-    value.option === "custom" ? value.startDate : ""
-  );
-  const [customEnd, setCustomEnd] = useState(
-    value.option === "custom" ? value.endDate : ""
-  );
+  const [tempOption, setTempOption] = useState<DateRangeOption>(value.option);
+  const [tempStart, setTempStart] = useState(value.startDate);
+  const [tempEnd, setTempEnd] = useState(value.endDate);
+  const [selectingStart, setSelectingStart] = useState(true);
+  const [leftMonth, setLeftMonth] = useState(() => calcMonths(value.startDate, value.endDate).left);
+  const [rightMonth, setRightMonth] = useState(() => calcMonths(value.startDate, value.endDate).right);
+  const [mobileCustomStart, setMobileCustomStart] = useState("");
+  const [mobileCustomEnd, setMobileCustomEnd] = useState("");
+
   const ref = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    setTempOption(value.option);
+    setTempStart(value.startDate);
+    setTempEnd(value.endDate);
+    setSelectingStart(true);
+    const months = calcMonths(value.startDate, value.endDate);
+    setLeftMonth(months.left);
+    setRightMonth(months.right);
+    setMobileCustomStart(value.option === "custom" ? value.startDate : "");
+    setMobileCustomEnd(value.option === "custom" ? value.endDate : "");
+  }, [open]);
 
   useEffect(() => {
     function onDocClick(e: MouseEvent) {
@@ -199,23 +230,59 @@ export function DateRangeSelector({ value, onChange }: DateRangeSelectorProps) {
     return () => document.removeEventListener("mousedown", onDocClick);
   }, [open]);
 
-  function pick(opt: DateRangeOption) {
+  function handlePresetClick(opt: DateRangeOption) {
     if (opt === "custom") {
-      if (customStart && customEnd) {
-        onChange(computeRange("custom", customStart, customEnd));
-        setOpen(false);
-      } else {
-        onChange({ ...value, option: "custom" });
-      }
+      setTempOption("custom");
+      setMobileCustomStart(tempStart);
+      setMobileCustomEnd(tempEnd);
       return;
     }
-    onChange(computeRange(opt));
+    const range = computeRange(opt);
+    setTempOption(opt);
+    setTempStart(range.startDate);
+    setTempEnd(range.endDate);
+    const months = calcMonths(range.startDate, range.endDate);
+    setLeftMonth(months.left);
+    setRightMonth(months.right);
+  }
+
+  function handleDayClick(date: string) {
+    setTempOption("custom");
+    if (selectingStart) {
+      setTempStart(date);
+      setTempEnd(date);
+      setSelectingStart(false);
+    } else {
+      let s = tempStart;
+      let e = date;
+      if (e < s) { [s, e] = [e, s]; }
+      setTempStart(s);
+      setTempEnd(e);
+      setSelectingStart(true);
+    }
+  }
+
+  function handleApply() {
+    if (tempOption === "custom") {
+      onChange(computeRange("custom", tempStart, tempEnd));
+    } else {
+      onChange(computeRange(tempOption));
+    }
     setOpen(false);
   }
 
-  function applyCustom() {
-    if (!customStart || !customEnd) return;
-    onChange(computeRange("custom", customStart, customEnd));
+  function handleMobileApply() {
+    if (tempOption === "custom") {
+      const s = mobileCustomStart || tempStart;
+      const e = mobileCustomEnd || tempEnd;
+      onChange(computeRange("custom", s, e));
+    } else {
+      onChange(computeRange(tempOption));
+    }
+    setOpen(false);
+  }
+
+  function handleCancel() {
     setOpen(false);
   }
 
@@ -232,61 +299,124 @@ export function DateRangeSelector({ value, onChange }: DateRangeSelectorProps) {
       </button>
 
       {open && (
-        <div className="absolute right-0 mt-1 w-auto min-w-[200px] max-w-[250px] rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-gray-950 shadow-xl z-30 overflow-hidden">
-          <ul className="py-1 max-h-[min(70vh,480px)] overflow-y-auto">
-            {OPTIONS.map((o) => {
-              const active = value.option === o.id;
-              return (
-                <li key={o.id}>
-                  <button
-                    type="button"
-                    onClick={() => pick(o.id)}
-                    className={`w-full flex items-center gap-2 px-3 py-2 text-sm text-left transition-colors ${
-                      active ? "text-blue-600 dark:text-blue-400 font-medium bg-blue-50 dark:bg-blue-500/5" : "text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5"
-                    }`}
-                  >
-                    <span className="w-4 inline-flex justify-center">
-                      {active && <CheckIcon className="w-4 h-4" />}
-                    </span>
-                    {o.label}
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
-
-          {value.option === "custom" && (
-            <div className="border-t border-gray-200 dark:border-white/10 p-3 space-y-2">
-              <div className="grid grid-cols-2 gap-2">
-                <label className="flex flex-col gap-1 text-[11px] uppercase tracking-wider text-gray-500">
-                  De
-                  <input
-                    type="date"
-                    value={customStart}
-                    onChange={(e) => setCustomStart(e.target.value)}
-                    className="bg-white dark:bg-gray-900/50 border border-gray-200 dark:border-white/10 rounded-md px-2 py-1.5 text-sm text-gray-900 dark:text-white focus:outline-none focus:border-blue-500/50 transition-colors"
-                  />
-                </label>
-                <label className="flex flex-col gap-1 text-[11px] uppercase tracking-wider text-gray-500">
-                  Até
-                  <input
-                    type="date"
-                    value={customEnd}
-                    onChange={(e) => setCustomEnd(e.target.value)}
-                    className="bg-white dark:bg-gray-900/50 border border-gray-200 dark:border-white/10 rounded-md px-2 py-1.5 text-sm text-gray-900 dark:text-white focus:outline-none focus:border-blue-500/50 transition-colors"
-                  />
-                </label>
+        <div className="absolute right-0 sm:right-auto sm:left-0 top-full mt-2 z-50 bg-white dark:bg-gray-950 border border-gray-200 dark:border-white/10 rounded-2xl shadow-2xl overflow-hidden">
+          {/* Mobile: presets only */}
+          <div className="sm:hidden">
+            <div className="py-2 max-h-[60vh] overflow-y-auto">
+              {OPTIONS.map((o) => (
+                <button
+                  key={o.id}
+                  type="button"
+                  onClick={() => handlePresetClick(o.id)}
+                  className={`w-full text-left px-4 py-2.5 text-sm flex items-center gap-2 transition-colors ${
+                    tempOption === o.id
+                      ? "bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400"
+                      : "text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5"
+                  }`}
+                >
+                  <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                    tempOption === o.id ? "border-blue-500" : "border-gray-300 dark:border-gray-600"
+                  }`}>
+                    {tempOption === o.id && <div className="w-2 h-2 rounded-full bg-blue-500" />}
+                  </div>
+                  {o.label}
+                </button>
+              ))}
+            </div>
+            {tempOption === "custom" && (
+              <div className="border-t border-gray-200 dark:border-white/10 p-3 space-y-2">
+                <div className="grid grid-cols-2 gap-2">
+                  <label className="flex flex-col gap-1 text-[11px] uppercase tracking-wider text-gray-500">
+                    De
+                    <input
+                      type="date"
+                      value={mobileCustomStart}
+                      onChange={(e) => setMobileCustomStart(e.target.value)}
+                      className="bg-white dark:bg-gray-900/50 border border-gray-200 dark:border-white/10 rounded-md px-2 py-1.5 text-sm text-gray-900 dark:text-white focus:outline-none focus:border-blue-500/50 transition-colors"
+                    />
+                  </label>
+                  <label className="flex flex-col gap-1 text-[11px] uppercase tracking-wider text-gray-500">
+                    Até
+                    <input
+                      type="date"
+                      value={mobileCustomEnd}
+                      onChange={(e) => setMobileCustomEnd(e.target.value)}
+                      className="bg-white dark:bg-gray-900/50 border border-gray-200 dark:border-white/10 rounded-md px-2 py-1.5 text-sm text-gray-900 dark:text-white focus:outline-none focus:border-blue-500/50 transition-colors"
+                    />
+                  </label>
+                </div>
               </div>
-              <button
-                type="button"
-                onClick={applyCustom}
-                disabled={!customStart || !customEnd}
-                className="w-full py-2 rounded-md bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white text-sm font-medium transition"
-              >
+            )}
+            <div className="flex items-center justify-end gap-3 px-4 py-3 border-t border-gray-200 dark:border-white/5">
+              <button type="button" onClick={handleCancel} className="px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white rounded-lg hover:bg-gray-100 dark:hover:bg-white/5 transition-colors">
+                Cancelar
+              </button>
+              <button type="button" onClick={handleMobileApply} className="px-4 py-2 text-sm font-medium bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-colors">
                 Aplicar
               </button>
             </div>
-          )}
+          </div>
+
+          {/* Desktop: presets + calendars */}
+          <div className="hidden sm:block">
+            <div className="flex">
+              {/* Presets */}
+              <div className="w-[180px] border-r border-gray-200 dark:border-white/5 py-2 max-h-[400px] overflow-y-auto">
+                {OPTIONS.map((o) => (
+                  <button
+                    key={o.id}
+                    type="button"
+                    onClick={() => handlePresetClick(o.id)}
+                    className={`w-full text-left px-4 py-2 text-sm flex items-center gap-2 transition-colors ${
+                      tempOption === o.id
+                        ? "bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400"
+                        : "text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5"
+                    }`}
+                  >
+                    <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                      tempOption === o.id ? "border-blue-500" : "border-gray-300 dark:border-gray-600"
+                    }`}>
+                      {tempOption === o.id && <div className="w-2 h-2 rounded-full bg-blue-500" />}
+                    </div>
+                    {o.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Calendars */}
+              <div className="flex gap-0 p-4">
+                <MiniCalendar
+                  year={leftMonth.year}
+                  month={leftMonth.month}
+                  rangeStart={tempStart}
+                  rangeEnd={tempEnd}
+                  onDayClick={handleDayClick}
+                  onPrevMonth={() => setLeftMonth((p) => navigateMonth(p, -1))}
+                  onNextMonth={() => setLeftMonth((p) => navigateMonth(p, 1))}
+                />
+                <div className="w-px bg-gray-200 dark:bg-white/5 mx-3" />
+                <MiniCalendar
+                  year={rightMonth.year}
+                  month={rightMonth.month}
+                  rangeStart={tempStart}
+                  rangeEnd={tempEnd}
+                  onDayClick={handleDayClick}
+                  onPrevMonth={() => setRightMonth((p) => navigateMonth(p, -1))}
+                  onNextMonth={() => setRightMonth((p) => navigateMonth(p, 1))}
+                />
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="flex items-center justify-end gap-3 px-4 py-3 border-t border-gray-200 dark:border-white/5">
+              <button type="button" onClick={handleCancel} className="px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white rounded-lg hover:bg-gray-100 dark:hover:bg-white/5 transition-colors">
+                Cancelar
+              </button>
+              <button type="button" onClick={handleApply} className="px-4 py-2 text-sm font-medium bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-colors">
+                Aplicar
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
