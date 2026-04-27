@@ -151,6 +151,8 @@ model Course {
   reviewsEnabled     Boolean   @default(true)
   lessonReactionsEnabled Boolean @default(true)
   gamificationEnabled Boolean  @default(true)
+  lessonCommentsModerationEnabled Boolean @default(false)
+  communityModerationEnabled      Boolean @default(false)
   showStudentCount   Boolean   @default(false)
   supportEmail       String?
   supportWhatsapp    String?
@@ -349,6 +351,7 @@ model Post {
   userId    String
   courseId   String
   groupId   String?
+  status    ModerationStatus @default(APPROVED)
   createdAt DateTime @default(now())
 
   user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -357,7 +360,7 @@ model Post {
   comments  Comment[]
   likes     Like[]
 
-  @@index([courseId, createdAt])
+  @@index([courseId, status, createdAt])
   @@index([groupId, createdAt])
   @@index([userId])
 }
@@ -369,12 +372,19 @@ enum PostType {
   FREE
 }
 
+enum ModerationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 model Comment {
   id        String   @id @default(uuid())
   content   String
   userId    String
   postId    String
   parentId  String?
+  status    ModerationStatus @default(APPROVED)
   createdAt DateTime @default(now())
 
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -382,7 +392,7 @@ model Comment {
   parent    Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
   replies   Comment[] @relation("CommentReplies")
 
-  @@index([postId, createdAt])
+  @@index([postId, status, createdAt])
   @@index([parentId])
 }
 
@@ -403,6 +413,7 @@ model LessonComment {
   userId    String
   lessonId  String
   parentId  String?
+  status    ModerationStatus @default(APPROVED)
   createdAt DateTime @default(now())
 
   user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -410,6 +421,7 @@ model LessonComment {
   parent    LessonComment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
   replies   LessonComment[] @relation("CommentReplies")
 
+  @@index([lessonId, status, createdAt])
   @@index([parentId])
 }
 
