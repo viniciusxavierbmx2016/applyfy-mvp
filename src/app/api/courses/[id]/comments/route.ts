@@ -24,12 +24,16 @@ export async function GET(
 
     const { searchParams } = new URL(request.url);
     const lessonFilter = searchParams.get("lessonId") || "";
+    const statusFilter = searchParams.get("status");
 
     const where: Record<string, unknown> = {
       lesson: { module: { courseId } },
     };
     if (lessonFilter) {
       where.lessonId = lessonFilter;
+    }
+    if (statusFilter === "PENDING" || statusFilter === "APPROVED" || statusFilter === "REJECTED") {
+      where.status = statusFilter;
     }
 
     const comments = await prisma.lessonComment.findMany({
@@ -58,13 +62,22 @@ export async function GET(
       take: 200,
     });
 
+    const pendingCount = await prisma.lessonComment.count({
+      where: {
+        lesson: { module: { courseId } },
+        parentId: null,
+        status: "PENDING",
+        ...(lessonFilter ? { lessonId: lessonFilter } : {}),
+      },
+    });
+
     const lessons = await prisma.lesson.findMany({
       where: { module: { courseId } },
       select: { id: true, title: true, module: { select: { title: true } } },
       orderBy: [{ module: { order: "asc" } }, { order: "asc" }],
     });
 
-    return NextResponse.json({ comments, lessons });
+    return NextResponse.json({ comments, lessons, pendingCount });
   } catch (error) {
     const message =
       error instanceof Error && error.message === "Forbidden"

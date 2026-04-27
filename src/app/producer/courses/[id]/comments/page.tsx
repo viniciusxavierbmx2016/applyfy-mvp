@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Avatar } from "@/components/ui/avatar";
 import { formatRelativeTime } from "@/lib/utils";
 import { useConfirm } from "@/hooks/use-confirm";
@@ -15,6 +15,7 @@ interface LessonOption {
 interface ReplyItem {
   id: string;
   content: string;
+  status?: string;
   createdAt: string;
   user: {
     id: string;
@@ -28,6 +29,7 @@ interface ReplyItem {
 interface CommentItem {
   id: string;
   content: string;
+  status?: string;
   createdAt: string;
   user: {
     id: string;
@@ -54,6 +56,14 @@ function RoleBadge({ role }: { role: string }) {
   return null;
 }
 
+function StatusBadge({ status }: { status?: string }) {
+  if (status === "PENDING")
+    return <span className="px-2 py-0.5 text-[10px] font-medium bg-amber-500/15 text-amber-500 rounded-full">Pendente</span>;
+  if (status === "REJECTED")
+    return <span className="px-2 py-0.5 text-[10px] font-medium bg-red-500/15 text-red-500 rounded-full">Rejeitado</span>;
+  return null;
+}
+
 export default function CourseCommentsPage({
   params,
 }: {
@@ -62,11 +72,14 @@ export default function CourseCommentsPage({
   const [comments, setComments] = useState<CommentItem[]>([]);
   const [lessons, setLessons] = useState<LessonOption[]>([]);
   const [lessonFilter, setLessonFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"all" | "PENDING">("all");
+  const [pendingCount, setPendingCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [replyText, setReplyText] = useState("");
   const [sending, setSending] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
   const { confirm, ConfirmDialog } = useConfirm();
 
   function showToast(msg: string) {
@@ -74,18 +87,26 @@ export default function CourseCommentsPage({
     setTimeout(() => setToast(null), 2500);
   }
 
-  useEffect(() => {
+  const fetchComments = useCallback(() => {
     setLoading(true);
-    const qs = lessonFilter ? `?lessonId=${lessonFilter}` : "";
-    fetch(`/api/courses/${params.id}/comments${qs}`)
-      .then((r) => (r.ok ? r.json() : { comments: [], lessons: [] }))
+    const qs = new URLSearchParams();
+    if (lessonFilter) qs.set("lessonId", lessonFilter);
+    if (statusFilter === "PENDING") qs.set("status", "PENDING");
+    const queryString = qs.toString() ? `?${qs.toString()}` : "";
+    fetch(`/api/courses/${params.id}/comments${queryString}`)
+      .then((r) => (r.ok ? r.json() : { comments: [], lessons: [], pendingCount: 0 }))
       .then((d) => {
         setComments(d.comments || []);
         setLessons(d.lessons || []);
+        setPendingCount(d.pendingCount || 0);
       })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [params.id, lessonFilter]);
+  }, [params.id, lessonFilter, statusFilter]);
+
+  useEffect(() => {
+    fetchComments();
+  }, [fetchComments]);
 
   async function handleReply(commentId: string, lessonId: string) {
     if (!replyText.trim() || sending) return;
@@ -146,9 +167,70 @@ export default function CourseCommentsPage({
     }
   }
 
+  async function handleModerate(id: string, action: "approve" | "reject") {
+    try {
+      const res = await fetch("/api/producer/moderation", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ items: [{ type: "lesson_comment", id }], action }),
+      });
+      if (res.ok) {
+        showToast(action === "approve" ? "Comentário aprovado" : "Comentário rejeitado");
+        fetchComments();
+        setSelected((prev) => { const n = new Set(prev); n.delete(id); return n; });
+      } else {
+        showToast("Erro ao moderar");
+      }
+    } catch {
+      showToast("Erro de rede");
+    }
+  }
+
+  async function handleBulkApprove() {
+    if (selected.size === 0) return;
+    try {
+      const res = await fetch("/api/producer/moderation", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          items: Array.from(selected).map((id) => ({ type: "lesson_comment", id })),
+          action: "approve",
+        }),
+      });
+      if (res.ok) {
+        showToast(`${selected.size} comentário(s) aprovado(s)`);
+        setSelected(new Set());
+        fetchComments();
+      } else {
+        showToast("Erro ao aprovar");
+      }
+    } catch {
+      showToast("Erro de rede");
+    }
+  }
+
+  const pendingComments = comments.filter((c) => c.status === "PENDING");
+  const allPendingSelected = pendingComments.length > 0 && pendingComments.every((c) => selected.has(c.id));
+
+  function toggleSelectAll() {
+    if (allPendingSelected) {
+      setSelected(new Set());
+    } else {
+      setSelected(new Set(pendingComments.map((c) => c.id)));
+    }
+  }
+
+  const tabClass = (tab: string) =>
+    `px-4 py-2.5 text-sm font-medium transition-colors border-b-2 ${
+      (tab === "all" && statusFilter === "all") || (tab === "PENDING" && statusFilter === "PENDING")
+        ? "border-blue-500 text-blue-600 dark:text-blue-400"
+        : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
+    }`;
+
   return (
     <>
-      <div className="mb-4">
+      {/* Filters */}
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-4">
         <CustomSelect
           value={lessonFilter}
           onChange={setLessonFilter}
@@ -158,6 +240,33 @@ export default function CourseCommentsPage({
             ...lessons.map((l) => ({ value: l.id, label: `${l.module.title} → ${l.title}` })),
           ]}
         />
+      </div>
+
+      {/* Tabs */}
+      <div className="flex items-center gap-0 border-b border-gray-200 dark:border-white/5 mb-4">
+        <button type="button" onClick={() => { setStatusFilter("all"); setSelected(new Set()); }} className={tabClass("all")}>
+          Todos
+        </button>
+        <button type="button" onClick={() => { setStatusFilter("PENDING"); setSelected(new Set()); }} className={tabClass("PENDING")}>
+          Aguardando aprovação
+          {pendingCount > 0 && (
+            <span className="ml-1.5 px-1.5 py-0.5 text-[10px] font-medium bg-amber-500/15 text-amber-500 rounded-full">
+              {pendingCount}
+            </span>
+          )}
+        </button>
+
+        {selected.size > 0 && (
+          <div className="ml-auto flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handleBulkApprove}
+              className="px-3 py-1.5 text-xs font-medium bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg transition-colors"
+            >
+              Aprovar {selected.size} selecionado(s)
+            </button>
+          </div>
+        )}
       </div>
 
       {loading ? (
@@ -178,17 +287,52 @@ export default function CourseCommentsPage({
       ) : comments.length === 0 ? (
         <div className="bg-white dark:bg-white/5 border border-gray-200 dark:border-white/5 rounded-xl p-8 text-center">
           <p className="text-gray-500 text-sm">
-            {lessonFilter ? "Nenhum comentário nesta aula." : "Nenhum comentário neste curso ainda."}
+            {statusFilter === "PENDING"
+              ? "Nenhum comentário aguardando aprovação."
+              : lessonFilter
+                ? "Nenhum comentário nesta aula."
+                : "Nenhum comentário neste curso ainda."}
           </p>
         </div>
       ) : (
         <div className="space-y-3">
+          {/* Select all header for pending tab */}
+          {statusFilter === "PENDING" && pendingComments.length > 0 && (
+            <div className="flex items-center gap-2 px-1">
+              <input
+                type="checkbox"
+                checked={allPendingSelected}
+                onChange={toggleSelectAll}
+                className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500"
+              />
+              <span className="text-xs text-gray-500">Selecionar todos</span>
+            </div>
+          )}
+
           {comments.map((c) => (
             <div
               key={c.id}
-              className="bg-white dark:bg-white/5 border border-gray-200 dark:border-white/5 rounded-xl p-4"
+              className={`bg-white dark:bg-white/5 border rounded-xl p-4 ${
+                c.status === "PENDING"
+                  ? "border-amber-300 dark:border-amber-500/30"
+                  : "border-gray-200 dark:border-white/5"
+              }`}
             >
               <div className="flex items-start gap-3">
+                {c.status === "PENDING" && (
+                  <input
+                    type="checkbox"
+                    checked={selected.has(c.id)}
+                    onChange={() => {
+                      setSelected((prev) => {
+                        const n = new Set(prev);
+                        if (n.has(c.id)) n.delete(c.id); else n.add(c.id);
+                        return n;
+                      });
+                    }}
+                    className="w-4 h-4 mt-2.5 rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500 shrink-0"
+                  />
+                )}
                 <Avatar src={c.user.avatarUrl} name={c.user.name} size="sm" />
                 <div className="flex-1 min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
@@ -196,6 +340,7 @@ export default function CourseCommentsPage({
                       {c.user.name}
                     </span>
                     <RoleBadge role={c.user.role} />
+                    <StatusBadge status={c.status} />
                     <span className="text-xs text-gray-500">
                       {formatRelativeTime(new Date(c.createdAt))}
                     </span>
@@ -208,21 +353,51 @@ export default function CourseCommentsPage({
                   </p>
 
                   <div className="flex items-center gap-3 mt-2">
-                    <button
-                      onClick={() => {
-                        setReplyingTo(replyingTo === c.id ? null : c.id);
-                        setReplyText("");
-                      }}
-                      className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 font-medium"
-                    >
-                      Responder
-                    </button>
-                    <button
-                      onClick={() => handleDelete(c.id, c.lesson.id, false)}
-                      className="text-xs text-red-500 hover:text-red-400 font-medium"
-                    >
-                      Excluir
-                    </button>
+                    {c.status === "PENDING" ? (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => handleModerate(c.id, "approve")}
+                          className="px-3 py-1 text-xs font-medium bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 rounded-md hover:bg-emerald-500/25 transition-colors"
+                        >
+                          Aprovar
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleModerate(c.id, "reject")}
+                          className="px-3 py-1 text-xs font-medium bg-red-500/15 text-red-600 dark:text-red-400 rounded-md hover:bg-red-500/25 transition-colors"
+                        >
+                          Rejeitar
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDelete(c.id, c.lesson.id, false)}
+                          className="text-xs text-red-500 hover:text-red-400 font-medium"
+                        >
+                          Excluir
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setReplyingTo(replyingTo === c.id ? null : c.id);
+                            setReplyText("");
+                          }}
+                          className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 font-medium"
+                        >
+                          Responder
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDelete(c.id, c.lesson.id, false)}
+                          className="text-xs text-red-500 hover:text-red-400 font-medium"
+                        >
+                          Excluir
+                        </button>
+                      </>
+                    )}
                   </div>
 
                   {replyingTo === c.id && (
@@ -237,6 +412,7 @@ export default function CourseCommentsPage({
                         autoFocus
                       />
                       <button
+                        type="button"
                         onClick={() => handleReply(c.id, c.lesson.id)}
                         disabled={sending || !replyText.trim()}
                         className="px-3 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium rounded-lg disabled:opacity-50 transition-colors"
@@ -244,6 +420,7 @@ export default function CourseCommentsPage({
                         {sending ? "..." : "Enviar"}
                       </button>
                       <button
+                        type="button"
                         onClick={() => { setReplyingTo(null); setReplyText(""); }}
                         className="px-3 py-2 text-sm text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
                       >
@@ -265,6 +442,7 @@ export default function CourseCommentsPage({
                             {r.user.name}
                           </span>
                           <RoleBadge role={r.user.role} />
+                          <StatusBadge status={r.status} />
                           <span className="text-xs text-gray-500">
                             {formatRelativeTime(new Date(r.createdAt))}
                           </span>
@@ -272,12 +450,33 @@ export default function CourseCommentsPage({
                         <p className="text-sm text-gray-700 dark:text-gray-300 mt-1 whitespace-pre-wrap break-words">
                           {r.content}
                         </p>
-                        <button
-                          onClick={() => handleDelete(r.id, c.lesson.id, true, c.id)}
-                          className="text-xs text-red-500 hover:text-red-400 font-medium mt-1"
-                        >
-                          Excluir
-                        </button>
+                        <div className="flex items-center gap-3 mt-1">
+                          {r.status === "PENDING" && (
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => handleModerate(r.id, "approve")}
+                                className="px-2 py-0.5 text-[11px] font-medium bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 rounded-md hover:bg-emerald-500/25 transition-colors"
+                              >
+                                Aprovar
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleModerate(r.id, "reject")}
+                                className="px-2 py-0.5 text-[11px] font-medium bg-red-500/15 text-red-600 dark:text-red-400 rounded-md hover:bg-red-500/25 transition-colors"
+                              >
+                                Rejeitar
+                              </button>
+                            </>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => handleDelete(r.id, c.lesson.id, true, c.id)}
+                            className="text-xs text-red-500 hover:text-red-400 font-medium"
+                          >
+                            Excluir
+                          </button>
+                        </div>
                       </div>
                     </div>
                   ))}

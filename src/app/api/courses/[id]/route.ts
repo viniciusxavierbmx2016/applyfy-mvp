@@ -86,6 +86,8 @@ export async function PUT(
       lessonReactionsEnabled,
       reviewsEnabled,
       gamificationEnabled,
+      lessonCommentsModerationEnabled,
+      communityModerationEnabled,
       showStudentCount,
       supportEmail,
       supportWhatsapp,
@@ -160,6 +162,12 @@ export async function PUT(
         }),
         ...(gamificationEnabled !== undefined && {
           gamificationEnabled: Boolean(gamificationEnabled),
+        }),
+        ...(lessonCommentsModerationEnabled !== undefined && {
+          lessonCommentsModerationEnabled: Boolean(lessonCommentsModerationEnabled),
+        }),
+        ...(communityModerationEnabled !== undefined && {
+          communityModerationEnabled: Boolean(communityModerationEnabled),
         }),
         ...(showStudentCount !== undefined && {
           showStudentCount: Boolean(showStudentCount),

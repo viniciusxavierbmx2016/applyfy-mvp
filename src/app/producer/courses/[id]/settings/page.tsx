@@ -6,7 +6,9 @@ import { CourseEditTabs } from "@/components/course-edit-tabs";
 
 interface CourseFlags {
   communityEnabled: boolean;
+  communityModerationEnabled: boolean;
   lessonCommentsEnabled: boolean;
+  lessonCommentsModerationEnabled: boolean;
   lessonReactionsEnabled: boolean;
   reviewsEnabled: boolean;
   certificateEnabled: boolean;
@@ -35,11 +37,25 @@ const ITEMS: SettingItem[] = [
     icon: <ChatIcon />,
   },
   {
+    key: "communityModerationEnabled",
+    title: "Moderação da comunidade",
+    description: "Posts e comentários dos alunos precisam ser aprovados antes de aparecer.",
+    disabledHint: "Desativado — publicação imediata na comunidade.",
+    icon: <ShieldIcon />,
+  },
+  {
     key: "lessonCommentsEnabled",
     title: "Comentários nas aulas",
     description: "Permite que alunos comentem em cada aula individualmente.",
     disabledHint: "Desativado — o painel de comentários das aulas ficará oculto.",
     icon: <MessageIcon />,
+  },
+  {
+    key: "lessonCommentsModerationEnabled",
+    title: "Moderação de comentários",
+    description: "Comentários dos alunos precisam ser aprovados antes de aparecer.",
+    disabledHint: "Desativado — publicação imediata de comentários.",
+    icon: <ShieldIcon />,
   },
   {
     key: "lessonReactionsEnabled",
@@ -114,7 +130,9 @@ export default function CourseSettingsPage({
         setCourseSlug(c.slug);
         setFlags({
           communityEnabled: Boolean(c.communityEnabled),
+          communityModerationEnabled: Boolean(c.communityModerationEnabled),
           lessonCommentsEnabled: Boolean(c.lessonCommentsEnabled),
+          lessonCommentsModerationEnabled: Boolean(c.lessonCommentsModerationEnabled),
           lessonReactionsEnabled: c.lessonReactionsEnabled !== false,
           reviewsEnabled: Boolean(c.reviewsEnabled),
           certificateEnabled: Boolean(c.certificateEnabled),
@@ -425,6 +443,22 @@ function UsersIcon() {
       <circle cx="9" cy="7" r="4" />
       <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
       <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+    </svg>
+  );
+}
+
+function ShieldIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="w-5 h-5"
+    >
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
     </svg>
   );
 }
