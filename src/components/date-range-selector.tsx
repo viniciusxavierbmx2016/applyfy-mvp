@@ -240,17 +240,13 @@ export function DateRangeSelector({ value, onChange }: DateRangeSelectorProps) {
   function handlePresetClick(opt: DateRangeOption) {
     if (opt === "custom") {
       setTempOption("custom");
+      setSelectingStart(true);
       setMobileCustomStart(tempStart);
       setMobileCustomEnd(tempEnd);
       return;
     }
-    const range = computeRange(opt);
-    setTempOption(opt);
-    setTempStart(range.startDate);
-    setTempEnd(range.endDate);
-    const months = calcMonths(range.startDate, range.endDate);
-    setLeftMonth(months.left);
-    setRightMonth(months.right);
+    onChange(computeRange(opt));
+    setOpen(false);
   }
 
   function handleDayClick(date: string) {
