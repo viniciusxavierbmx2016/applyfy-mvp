@@ -7,6 +7,7 @@ import { sanitizeHtml, stripHtml } from "@/lib/sanitize-html";
 import { PostType } from "@prisma/client";
 import { ensureDefaultGroup } from "@/lib/community-helpers";
 import { createNotification } from "@/lib/notifications";
+import { sendPushToUser } from "@/lib/push-send";
 
 const VALID_TYPES: PostType[] = ["QUESTION", "RESULT", "FEEDBACK", "FREE"];
 
@@ -300,13 +301,20 @@ export async function POST(request: Request) {
     }
 
     if (postStatus === "PENDING") {
+      const link = `/producer/community`;
       await createNotification({
         userId: course.workspace.ownerId,
         type: "COMMENT",
         message: `Novo post aguardando aprovação na comunidade`,
-        link: `/producer/community`,
+        link,
         actorId: user.id,
       });
+      sendPushToUser(course.workspace.ownerId, {
+        title: "Novo conteúdo para moderar",
+        body: `Post de ${user.name} na comunidade aguarda aprovação`,
+        url: link,
+        tag: "moderation",
+      }).catch(() => {});
     }
 
     return NextResponse.json(

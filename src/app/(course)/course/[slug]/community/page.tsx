@@ -214,9 +214,13 @@ export default function CommunityPage() {
           )
         );
       }
-      let msg = `+${body.pointsAwarded} pontos!`;
-      if (body.leveledUp) msg += " Subiu de nivel!";
-      showToast(msg);
+      if (body.post.status === "PENDING") {
+        showToast("Post enviado! Aguardando aprovação.");
+      } else {
+        let msg = `+${body.pointsAwarded} pontos!`;
+        if (body.leveledUp) msg += " Subiu de nivel!";
+        showToast(msg);
+      }
     } catch (e) {
       showToast(e instanceof Error ? e.message : "Erro");
     } finally {

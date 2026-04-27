@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentUser, isStaff } from "@/lib/auth";
 import { collaboratorCanActOnCourse } from "@/lib/collaborator";
 import { createNotification } from "@/lib/notifications";
+import { sendPushToUser } from "@/lib/push-send";
 
 async function checkAccess(userId: string, userRole: string, post: { courseId: string; course: { ownerId: string | null; workspace: { ownerId: string } } }) {
   if (userRole === "ADMIN") return true;
@@ -185,13 +186,20 @@ export async function POST(
     }
 
     if (commentStatus === "PENDING") {
+      const moderationLink = `/producer/community`;
       await createNotification({
         userId: post.course.workspace.ownerId,
         type: "COMMENT",
         message: `Novo comentário aguardando aprovação na comunidade`,
-        link: `/producer/community`,
+        link: moderationLink,
         actorId: user.id,
       });
+      sendPushToUser(post.course.workspace.ownerId, {
+        title: "Novo conteúdo para moderar",
+        body: `Comentário de ${user.name} na comunidade aguarda aprovação`,
+        url: moderationLink,
+        tag: "moderation",
+      }).catch(() => {});
     }
 
     return NextResponse.json({ comment }, { status: 201 });

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { createNotification } from "@/lib/notifications";
+import { sendPushToUser } from "@/lib/push-send";
 import { isStaff } from "@/lib/auth";
 
 async function collaboratorAllowed(
@@ -258,13 +259,20 @@ export async function POST(
         select: { ownerId: true },
       });
       if (workspace) {
+        const link = `/producer/courses/${lesson.module.courseId}/comments`;
         await createNotification({
           userId: workspace.ownerId,
           type: "COMMENT",
           message: `Novo comentário aguardando aprovação na aula ${lesson.title}`,
-          link: `/producer/courses/${lesson.module.courseId}/comments`,
+          link,
           actorId: user.id,
         });
+        sendPushToUser(workspace.ownerId, {
+          title: "Novo conteúdo para moderar",
+          body: `Comentário de ${user.name} em ${lesson.title} aguarda aprovação`,
+          url: link,
+          tag: "moderation",
+        }).catch(() => {});
       }
     }
 

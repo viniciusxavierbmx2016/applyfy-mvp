@@ -14,6 +14,7 @@ interface LessonCommentUser {
 interface LessonCommentItem {
   id: string;
   content: string;
+  status?: string;
   createdAt: string;
   user: LessonCommentUser;
   replies?: LessonCommentItem[];
@@ -92,6 +93,11 @@ function CommentBubble({
             <span className="text-[10px] text-gray-500">
               {formatRelativeTime(new Date(comment.createdAt))}
             </span>
+            {comment.status === "PENDING" && (
+              <span className="px-2 py-0.5 text-[10px] bg-amber-500/15 text-amber-500 rounded-full">
+                Aguardando aprovação
+              </span>
+            )}
           </div>
           <p className="text-sm text-gray-800 dark:text-gray-200 whitespace-pre-wrap break-words mt-1">
             {comment.content}
@@ -136,6 +142,7 @@ export function LessonComments({ lessonId }: { lessonId: string }) {
   const [loading, setLoading] = useState(true);
   const [content, setContent] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -167,6 +174,10 @@ export function LessonComments({ lessonId }: { lessonId: string }) {
         const body = await res.json();
         setComments((prev) => [{ ...body.comment, replies: [] }, ...prev]);
         setContent("");
+        if (body.comment.status === "PENDING") {
+          setToast("Comentário enviado! Aguardando aprovação.");
+          setTimeout(() => setToast(null), 3000);
+        }
       }
     } finally {
       setSubmitting(false);
@@ -232,6 +243,11 @@ export function LessonComments({ lessonId }: { lessonId: string }) {
             </div>
           ))}
         </ul>
+      )}
+      {toast && (
+        <div className="mt-3 px-3 py-2 bg-amber-500/15 text-amber-500 text-sm rounded-lg">
+          {toast}
+        </div>
       )}
     </div>
   );

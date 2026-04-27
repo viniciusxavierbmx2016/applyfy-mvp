@@ -33,6 +33,7 @@ export interface PostItem {
   content: string;
   type: "QUESTION" | "RESULT" | "FEEDBACK" | "FREE";
   pinned: boolean;
+  status?: string;
   createdAt: string;
   user: PostAuthor;
   liked: boolean;
@@ -44,6 +45,7 @@ export interface PostItem {
 export interface CommentItem {
   id: string;
   content: string;
+  status?: string;
   createdAt: string;
   user: PostAuthor;
   parentId?: string | null;
@@ -279,6 +281,11 @@ export function PostCard({
             {post.group && (
               <span className="text-[10px] px-2 py-0.5 rounded-full bg-gray-100 dark:bg-white/5 text-gray-500 dark:text-gray-400">
                 {post.group.name}
+              </span>
+            )}
+            {post.status === "PENDING" && (
+              <span className="px-2 py-0.5 text-[10px] bg-amber-500/15 text-amber-500 rounded-full">
+                Aguardando aprovação
               </span>
             )}
           </div>
@@ -557,6 +564,11 @@ function CommentBlock({
           <span className="text-[10px] text-gray-500">
             {formatRelativeTime(new Date(c.createdAt))}
           </span>
+          {c.status === "PENDING" && (
+            <span className="px-2 py-0.5 text-[10px] bg-amber-500/15 text-amber-500 rounded-full">
+              Aguardando aprovação
+            </span>
+          )}
           <div className="ml-auto flex items-center gap-2">
             {!isReply && onReply && (
               <button
