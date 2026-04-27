@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { Avatar } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -460,6 +461,13 @@ export default function AdminUsersPage() {
                         </svg>
                       </button>
                     )}
+                    <Link
+                      href={`/producer/users/${u.id}`}
+                      className="px-3 py-1.5 text-xs border border-gray-200 dark:border-white/10 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/5 transition-colors"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      Ver detalhes
+                    </Link>
                     <Button
                       variant="secondary"
                       size="sm"
