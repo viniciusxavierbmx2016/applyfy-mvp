@@ -147,7 +147,7 @@ export default function CourseGroupLayout({
             {course.title}
           </p>
         </header>
-        <main className="flex-1 min-h-0">{children}</main>
+        <main className="flex-1 min-h-0 overflow-hidden">{children}</main>
       </div>
     </div>
   );
