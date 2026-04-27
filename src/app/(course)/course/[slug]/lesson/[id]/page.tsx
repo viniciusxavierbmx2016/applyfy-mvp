@@ -295,7 +295,7 @@ export default function LessonPage({
   }
 
   return (
-    <div className="flex flex-col h-full bg-white dark:bg-gray-950">
+    <div className="flex flex-col h-full overflow-hidden bg-white dark:bg-gray-950">
       {/* Topbar */}
       <div className="h-[52px] shrink-0 border-b border-gray-200 dark:border-white/5 bg-gray-50 dark:bg-gray-900 flex items-center justify-between px-4 z-10">
         <div className="flex items-center gap-3 min-w-0">
