@@ -36,6 +36,7 @@ interface CourseData {
   supportWhatsapp: string | null;
   featured: boolean;
   category: string | null;
+  termsContent: string | null;
   modules: ModuleData[];
   sections: SectionData[];
 }
@@ -104,6 +105,7 @@ export default function EditCoursePage({
         supportWhatsapp: course.supportWhatsapp || "",
         featured: course.featured,
         category: course.category || "",
+        termsContent: course.termsContent || "",
       }}
     />
   ) : (

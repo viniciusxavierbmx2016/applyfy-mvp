@@ -32,6 +32,7 @@ interface CourseFormData {
   category: string;
   supportEmail: string;
   supportWhatsapp: string;
+  termsContent: string;
 }
 
 interface CourseFormProps {
@@ -114,6 +115,7 @@ export function CourseForm({ initial, mode }: CourseFormProps) {
   const [supportWhatsapp, setSupportWhatsapp] = useState(
     initial?.supportWhatsapp || ""
   );
+  const [termsContent, setTermsContent] = useState(initial?.termsContent || "");
   const [thumbMode, setThumbMode] = useState<"view" | "reposition">("view");
   const [bannerMode, setBannerMode] = useState<"view" | "reposition">("view");
   const [error, setError] = useState("");
@@ -157,6 +159,7 @@ export function CourseForm({ initial, mode }: CourseFormProps) {
       category: category.trim() || null,
       supportEmail: supportEmail.trim() || null,
       supportWhatsapp: supportWhatsapp.trim() || null,
+      termsContent: termsContent.trim() || null,
     };
 
     try {
@@ -435,6 +438,31 @@ export function CourseForm({ initial, mode }: CourseFormProps) {
             </p>
           </div>
         </div>
+      </div>
+
+      {/* SEÇÃO 5 — Termos de uso */}
+      <div className="pt-8 border-t border-gray-200 dark:border-white/5 mt-8">
+        <h2 className="text-sm font-medium text-gray-900 dark:text-white mb-0.5">Termos de uso</h2>
+        <p className="text-xs text-gray-500 mb-4">
+          Se preenchido, o aluno precisará aceitar os termos antes de acessar o curso pela primeira vez. Deixe vazio para não exigir aceitação.
+        </p>
+        <textarea
+          value={termsContent}
+          onChange={(e) => setTermsContent(e.target.value)}
+          placeholder="Cole aqui os termos de uso, política de privacidade e proteção de dados do seu curso..."
+          rows={8}
+          className={`${inputClass} min-h-[120px] resize-y`}
+        />
+        {termsContent.trim() && (
+          <p className="text-xs text-amber-500 mt-2 flex items-center gap-1.5">
+            <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+              <line x1="12" y1="9" x2="12" y2="13"/>
+              <line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+            Ao salvar, alunos que ainda não aceitaram precisarão aceitar antes de acessar o curso.
+          </p>
+        )}
       </div>
 
       {/* Footer sticky */}
