@@ -27,6 +27,13 @@ export async function POST(
       );
     }
 
+    if (post.status !== "APPROVED") {
+      return NextResponse.json(
+        { error: "Post aguardando aprovação" },
+        { status: 403 }
+      );
+    }
+
     const isCourseOwner =
       user.role === "PRODUCER" &&
       (post.course.ownerId === user.id ||

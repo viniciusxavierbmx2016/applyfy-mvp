@@ -6,6 +6,7 @@ import { GAMIFICATION, getLevelForPoints } from "@/lib/utils";
 import { sanitizeHtml, stripHtml } from "@/lib/sanitize-html";
 import { PostType } from "@prisma/client";
 import { ensureDefaultGroup } from "@/lib/community-helpers";
+import { createNotification } from "@/lib/notifications";
 
 const VALID_TYPES: PostType[] = ["QUESTION", "RESULT", "FEEDBACK", "FREE"];
 
@@ -51,7 +52,6 @@ export async function GET(request: Request) {
       );
     }
 
-    // Access: ADMIN bypass, PRODUCER owning workspace bypass, else must be enrolled
     const isStaffOwner =
       user.role === "ADMIN" ||
       (user.role === "PRODUCER" &&
@@ -81,9 +81,17 @@ export async function GET(request: Request) {
     await ensureDefaultGroup(course.id);
 
     const groupId = searchParams.get("groupId");
+    const staff = isStaffOwner || collabAllowed;
+
     const postWhere: Record<string, unknown> = { courseId: course.id };
     if (groupId) {
       postWhere.groupId = groupId;
+    }
+    if (!staff) {
+      postWhere.OR = [
+        { status: "APPROVED" },
+        { status: "PENDING", userId: user.id },
+      ];
     }
 
     const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10) || 1);
@@ -100,11 +108,17 @@ export async function GET(request: Request) {
           content: true,
           type: true,
           pinned: true,
+          status: true,
           createdAt: true,
           user: { select: { id: true, name: true, avatarUrl: true, role: true } },
           group: { select: { id: true, name: true, slug: true, permission: true } },
           likes: { where: { userId: user.id }, select: { id: true } },
-          _count: { select: { likes: true, comments: true } },
+          _count: {
+            select: {
+              likes: true,
+              comments: { where: { status: "APPROVED" } },
+            },
+          },
         },
       }),
       prisma.post.count({ where: postWhere }),
@@ -115,6 +129,7 @@ export async function GET(request: Request) {
       content: p.content,
       type: p.type,
       pinned: p.pinned,
+      status: p.status,
       createdAt: p.createdAt,
       user: p.user,
       group: p.group,
@@ -247,6 +262,10 @@ export async function POST(request: Request) {
       finalGroupId = defaultGroup.id;
     }
 
+    const staff = isStaffOwner || collabAllowed;
+    const moderationOn = course.communityModerationEnabled;
+    const postStatus = !moderationOn || staff ? "APPROVED" : "PENDING";
+
     const post = await prisma.post.create({
       data: {
         content: sanitized,
@@ -254,6 +273,7 @@ export async function POST(request: Request) {
         userId: user.id,
         courseId: course.id,
         groupId: finalGroupId,
+        status: postStatus,
       },
       include: {
         user: { select: { id: true, name: true, avatarUrl: true, role: true } },
@@ -262,12 +282,11 @@ export async function POST(request: Request) {
       },
     });
 
-    // Gamification: only award points if enabled on the course
     let pointsAwarded = 0;
     let leveledUp = false;
     let finalPoints = user.points;
     let finalLevel = user.level;
-    if (course.gamificationEnabled) {
+    if (postStatus === "APPROVED" && course.gamificationEnabled) {
       const newPoints = user.points + GAMIFICATION.POINTS.CREATE_POST;
       const newLevel = getLevelForPoints(newPoints).level;
       leveledUp = newLevel > user.level;
@@ -280,6 +299,16 @@ export async function POST(request: Request) {
       finalLevel = updated.level;
     }
 
+    if (postStatus === "PENDING") {
+      await createNotification({
+        userId: course.workspace.ownerId,
+        type: "COMMENT",
+        message: `Novo post aguardando aprovação na comunidade`,
+        link: `/producer/community`,
+        actorId: user.id,
+      });
+    }
+
     return NextResponse.json(
       {
         post: {
@@ -287,6 +316,7 @@ export async function POST(request: Request) {
           content: post.content,
           type: post.type,
           pinned: post.pinned,
+          status: post.status,
           createdAt: post.createdAt,
           user: post.user,
           group: post.group,

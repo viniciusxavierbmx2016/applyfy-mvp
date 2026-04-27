@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { createNotification } from "@/lib/notifications";
+import { isStaff } from "@/lib/auth";
 
 async function collaboratorAllowed(
   userId: string,
@@ -71,12 +72,35 @@ export async function GET(
       }
     }
 
+    const staff = isStaff(user);
+
+    const statusFilter = staff
+      ? undefined
+      : {
+          OR: [
+            { status: "APPROVED" as const },
+            { status: "PENDING" as const, userId: user.id },
+          ],
+        };
+
     const comments = await prisma.lessonComment.findMany({
-      where: { lessonId: lesson.id, parentId: null },
+      where: {
+        lessonId: lesson.id,
+        parentId: null,
+        ...statusFilter,
+      },
       orderBy: { createdAt: "desc" },
       include: {
         user: { select: { id: true, name: true, avatarUrl: true, role: true } },
         replies: {
+          where: staff
+            ? undefined
+            : {
+                OR: [
+                  { status: "APPROVED" },
+                  { status: "PENDING", userId: user.id },
+                ],
+              },
           orderBy: { createdAt: "asc" },
           include: {
             user: { select: { id: true, name: true, avatarUrl: true, role: true } },
@@ -116,7 +140,18 @@ export async function POST(
     const lesson = await prisma.lesson.findUnique({
       where: { id: params.id },
       include: {
-        module: { include: { course: { select: { lessonCommentsEnabled: true } } } },
+        module: {
+          include: {
+            course: {
+              select: {
+                lessonCommentsEnabled: true,
+                lessonCommentsModerationEnabled: true,
+                slug: true,
+                workspaceId: true,
+              },
+            },
+          },
+        },
       },
     });
     if (!lesson) {
@@ -159,7 +194,7 @@ export async function POST(
     if (parentId) {
       const parent = await prisma.lessonComment.findUnique({
         where: { id: parentId },
-        select: { lessonId: true },
+        select: { lessonId: true, status: true },
       });
       if (!parent || parent.lessonId !== lesson.id) {
         return NextResponse.json(
@@ -167,7 +202,17 @@ export async function POST(
           { status: 400 }
         );
       }
+      if (parent.status !== "APPROVED") {
+        return NextResponse.json(
+          { error: "Não é possível responder a um comentário pendente" },
+          { status: 403 }
+        );
+      }
     }
+
+    const staff = isStaff(user);
+    const moderationOn = lesson.module.course.lessonCommentsModerationEnabled;
+    const commentStatus = !moderationOn || staff ? "APPROVED" : "PENDING";
 
     const comment = await prisma.lessonComment.create({
       data: {
@@ -175,39 +220,53 @@ export async function POST(
         userId: user.id,
         lessonId: lesson.id,
         parentId: parentId || null,
+        status: commentStatus,
       },
       include: {
         user: { select: { id: true, name: true, avatarUrl: true, role: true } },
       },
     });
 
-    const course = await prisma.course.findUnique({
-      where: { id: lesson.module.courseId },
-      select: { slug: true },
-    });
-    const previousCommenters = await prisma.lessonComment.findMany({
-      where: {
-        lessonId: lesson.id,
-        userId: { not: user.id },
-        id: { not: comment.id },
-      },
-      distinct: ["userId"],
-      select: { userId: true },
-    });
-    const link = course
-      ? `/course/${course.slug}/lesson/${lesson.id}`
-      : null;
-    await Promise.all(
-      previousCommenters.map((c) =>
-        createNotification({
-          userId: c.userId,
-          type: "REPLY",
-          message: `${user.name} comentou na aula ${lesson.title}`,
-          link,
+    if (commentStatus === "APPROVED") {
+      const previousCommenters = await prisma.lessonComment.findMany({
+        where: {
+          lessonId: lesson.id,
+          userId: { not: user.id },
+          id: { not: comment.id },
+          status: "APPROVED",
+        },
+        distinct: ["userId"],
+        select: { userId: true },
+      });
+      const link = `/course/${lesson.module.course.slug}/lesson/${lesson.id}`;
+      await Promise.all(
+        previousCommenters.map((c) =>
+          createNotification({
+            userId: c.userId,
+            type: "REPLY",
+            message: `${user.name} comentou na aula ${lesson.title}`,
+            link,
+            actorId: user.id,
+          })
+        )
+      );
+    }
+
+    if (commentStatus === "PENDING") {
+      const workspace = await prisma.workspace.findUnique({
+        where: { id: lesson.module.course.workspaceId },
+        select: { ownerId: true },
+      });
+      if (workspace) {
+        await createNotification({
+          userId: workspace.ownerId,
+          type: "COMMENT",
+          message: `Novo comentário aguardando aprovação na aula ${lesson.title}`,
+          link: `/producer/courses/${lesson.module.courseId}/comments`,
           actorId: user.id,
-        })
-      )
-    );
+        });
+      }
+    }
 
     return NextResponse.json({ comment }, { status: 201 });
   } catch (error) {

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getCurrentUser } from "@/lib/auth";
+import { getCurrentUser, isStaff } from "@/lib/auth";
 import { collaboratorCanActOnCourse } from "@/lib/collaborator";
 import { createNotification } from "@/lib/notifications";
 
@@ -42,13 +42,35 @@ export async function GET(
     }
 
     const userSelect = { id: true, name: true, avatarUrl: true, role: true };
+    const staff = isStaff(user);
+
+    const statusFilter = staff
+      ? undefined
+      : {
+          OR: [
+            { status: "APPROVED" as const },
+            { status: "PENDING" as const, userId: user.id },
+          ],
+        };
 
     const comments = await prisma.comment.findMany({
-      where: { postId: post.id, parentId: null },
+      where: {
+        postId: post.id,
+        parentId: null,
+        ...statusFilter,
+      },
       orderBy: { createdAt: "asc" },
       include: {
         user: { select: userSelect },
         replies: {
+          where: staff
+            ? undefined
+            : {
+                OR: [
+                  { status: "APPROVED" },
+                  { status: "PENDING", userId: user.id },
+                ],
+              },
           orderBy: { createdAt: "asc" },
           include: { user: { select: userSelect } },
         },
@@ -81,12 +103,22 @@ export async function POST(
       where: { id: params.id },
       include: {
         course: {
-          select: { slug: true, ownerId: true, workspace: { select: { ownerId: true } } },
+          select: {
+            slug: true,
+            ownerId: true,
+            communityModerationEnabled: true,
+            workspaceId: true,
+            workspace: { select: { ownerId: true } },
+          },
         },
       },
     });
     if (!post) {
       return NextResponse.json({ error: "Post não encontrado" }, { status: 404 });
+    }
+
+    if (post.status !== "APPROVED") {
+      return NextResponse.json({ error: "Post aguardando aprovação" }, { status: 403 });
     }
 
     if (!(await checkAccess(user.id, user.role, post))) {
@@ -97,14 +129,20 @@ export async function POST(
     if (parentId) {
       const parentComment = await prisma.comment.findUnique({
         where: { id: parentId },
-        select: { id: true, postId: true, userId: true, parentId: true },
+        select: { id: true, postId: true, userId: true, parentId: true, status: true },
       });
       if (!parentComment || parentComment.postId !== post.id) {
         return NextResponse.json({ error: "Comentário pai inválido" }, { status: 400 });
       }
-      // Only allow 1 level of nesting — reply to a reply goes to the top-level parent
+      if (parentComment.status !== "APPROVED") {
+        return NextResponse.json({ error: "Não é possível responder a um comentário pendente" }, { status: 403 });
+      }
       validParentId = parentComment.parentId || parentComment.id;
     }
+
+    const staff = isStaff(user);
+    const moderationOn = post.course.communityModerationEnabled;
+    const commentStatus = !moderationOn || staff ? "APPROVED" : "PENDING";
 
     const comment = await prisma.comment.create({
       data: {
@@ -112,38 +150,48 @@ export async function POST(
         userId: user.id,
         postId: post.id,
         parentId: validParentId,
+        status: commentStatus,
       },
       include: {
         user: { select: { id: true, name: true, avatarUrl: true, role: true } },
       },
     });
 
-    // Notify post author
-    if (post.userId !== user.id) {
-      await createNotification({
-        userId: post.userId,
-        type: "COMMENT",
-        message: `${user.name} comentou no seu post`,
-        link: `/course/${post.course.slug}/community`,
-        actorId: user.id,
-      });
-    }
-
-    // Notify parent comment author (if reply)
-    if (validParentId) {
-      const parentComment = await prisma.comment.findUnique({
-        where: { id: validParentId },
-        select: { userId: true },
-      });
-      if (parentComment && parentComment.userId !== user.id && parentComment.userId !== post.userId) {
+    if (commentStatus === "APPROVED") {
+      if (post.userId !== user.id) {
         await createNotification({
-          userId: parentComment.userId,
-          type: "REPLY",
-          message: `${user.name} respondeu ao seu comentário`,
+          userId: post.userId,
+          type: "COMMENT",
+          message: `${user.name} comentou no seu post`,
           link: `/course/${post.course.slug}/community`,
           actorId: user.id,
         });
       }
+      if (validParentId) {
+        const parentComment = await prisma.comment.findUnique({
+          where: { id: validParentId },
+          select: { userId: true },
+        });
+        if (parentComment && parentComment.userId !== user.id && parentComment.userId !== post.userId) {
+          await createNotification({
+            userId: parentComment.userId,
+            type: "REPLY",
+            message: `${user.name} respondeu ao seu comentário`,
+            link: `/course/${post.course.slug}/community`,
+            actorId: user.id,
+          });
+        }
+      }
+    }
+
+    if (commentStatus === "PENDING") {
+      await createNotification({
+        userId: post.course.workspace.ownerId,
+        type: "COMMENT",
+        message: `Novo comentário aguardando aprovação na comunidade`,
+        link: `/producer/community`,
+        actorId: user.id,
+      });
     }
 
     return NextResponse.json({ comment }, { status: 201 });

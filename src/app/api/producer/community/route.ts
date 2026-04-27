@@ -42,6 +42,7 @@ export async function GET(request: Request) {
         : workspaceCourseIds;
 
     const groupId = searchParams.get("groupId");
+    const statusFilter = searchParams.get("status");
 
     const where: Record<string, unknown> = {};
     if (scopedCourseIds) {
@@ -56,11 +57,20 @@ export async function GET(request: Request) {
     if (groupId) {
       where.groupId = groupId;
     }
+    if (statusFilter === "PENDING" || statusFilter === "APPROVED" || statusFilter === "REJECTED") {
+      where.status = statusFilter;
+    }
 
     const posts = await prisma.post.findMany({
       where,
       orderBy: [{ pinned: "desc" }, { createdAt: "desc" }],
-      include: {
+      select: {
+        id: true,
+        content: true,
+        type: true,
+        pinned: true,
+        status: true,
+        createdAt: true,
         user: { select: { id: true, name: true, avatarUrl: true, role: true } },
         course: { select: { id: true, title: true, slug: true } },
         group: { select: { id: true, name: true } },
