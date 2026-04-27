@@ -17,6 +17,15 @@ export async function GET(
         avatarUrl: true,
         createdAt: true,
         role: true,
+        phone: true,
+        document: true,
+        businessType: true,
+        niche: true,
+        monthlyRevenue: true,
+        referralSource: true,
+        lastAccessAt: true,
+        points: true,
+        level: true,
       },
     });
     if (!producer || producer.role !== "PRODUCER") {
@@ -35,6 +44,8 @@ export async function GET(
         slug: true,
         isActive: true,
         createdAt: true,
+        logoUrl: true,
+        accentColor: true,
       },
     });
     const workspaceIds = workspaces.map((w) => w.id);
@@ -146,8 +157,29 @@ export async function GET(
     const activeSub = await prisma.subscription.findFirst({
       where: { userId: producer.id, status: { in: ["ACTIVE", "PAST_DUE", "PENDING"] } },
       orderBy: { createdAt: "desc" },
-      include: { plan: { select: { id: true, name: true, price: true, currency: true } } },
+      include: {
+        plan: true,
+        invoices: { orderBy: { createdAt: "desc" }, take: 5 },
+      },
     });
+
+    const [workspacesUsed, coursesUsed] = await Promise.all([
+      prisma.workspace.count({ where: { ownerId: producer.id } }),
+      prisma.course.count({ where: { ownerId: producer.id } }),
+    ]);
+
+    const recentStudents = courseIds.length
+      ? await prisma.enrollment.findMany({
+          where: { courseId: { in: courseIds }, status: "ACTIVE" },
+          orderBy: { createdAt: "desc" },
+          take: 20,
+          select: {
+            createdAt: true,
+            user: { select: { id: true, name: true, email: true, avatarUrl: true, lastAccessAt: true } },
+            course: { select: { id: true, title: true } },
+          },
+        })
+      : [];
 
     return NextResponse.json({
       producer,
@@ -155,6 +187,16 @@ export async function GET(
       courses: coursesOut,
       totalStudents: studentIdsAll.size,
       subscription: activeSub,
+      usage: { workspacesUsed, coursesUsed },
+      recentStudents: recentStudents.map((e) => ({
+        id: e.user.id,
+        name: e.user.name,
+        email: e.user.email,
+        avatarUrl: e.user.avatarUrl,
+        lastAccessAt: e.user.lastAccessAt,
+        enrolledAt: e.createdAt,
+        courseTitle: e.course.title,
+      })),
     });
   } catch (error) {
     console.error("GET /api/admin/producers/[id] error:", error);
