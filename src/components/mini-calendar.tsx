@@ -11,7 +11,8 @@ function formatDate(y: number, m: number, d: number): string {
 }
 
 function todayStr(): string {
-  return new Date().toISOString().split("T")[0];
+  const d = new Date();
+  return formatDate(d.getFullYear(), d.getMonth(), d.getDate());
 }
 
 interface MiniCalendarProps {

@@ -40,7 +40,14 @@ const OPTIONS: Array<{ id: DateRangeOption; label: string }> = [
 const LABEL_OF = new Map(OPTIONS.map((o) => [o.id, o.label]));
 
 function isoDay(d: Date) {
-  return d.toISOString().slice(0, 10);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+function parseLocalDate(s: string): Date {
+  const [y, m, d] = s.split("-").map(Number);
+  return new Date(y, m - 1, d);
 }
 function startOfDay(d: Date) {
   const x = new Date(d);
@@ -131,8 +138,8 @@ export function computeRange(
       break;
     }
     case "custom": {
-      if (customStart) start = startOfDay(new Date(customStart));
-      if (customEnd) end = endOfDay(new Date(customEnd));
+      if (customStart) start = startOfDay(parseLocalDate(customStart));
+      if (customEnd) end = endOfDay(parseLocalDate(customEnd));
       break;
     }
   }
@@ -170,8 +177,8 @@ function ChevronDown({ className = "" }: { className?: string }) {
 }
 
 function calcMonths(startDate: string, endDate: string) {
-  const startD = new Date(startDate);
-  const endD = new Date(endDate);
+  const startD = parseLocalDate(startDate);
+  const endD = parseLocalDate(endDate);
   const left = { year: startD.getFullYear(), month: startD.getMonth() };
   const sameMonth = endD.getMonth() === startD.getMonth() && endD.getFullYear() === startD.getFullYear();
   const right = sameMonth
