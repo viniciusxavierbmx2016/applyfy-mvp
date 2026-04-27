@@ -126,6 +126,9 @@ export default function ProducerDetailPage({
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [impersonating, setImpersonating] = useState(false);
+  const [impersonateUrl, setImpersonateUrl] = useState("");
+  const [impersonateCountdown, setImpersonateCountdown] = useState(0);
+  const [copied, setCopied] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>("info");
   const { confirm, ConfirmDialog } = useConfirm();
@@ -145,6 +148,12 @@ export default function ProducerDetailPage({
   useEffect(() => {
     loadData();
   }, [p.id]);
+
+  useEffect(() => {
+    if (impersonateCountdown <= 0) return;
+    const timer = setTimeout(() => setImpersonateCountdown((c) => c - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [impersonateCountdown]);
 
   async function handleToggleStatus() {
     if (!data) return;
@@ -179,8 +188,9 @@ export default function ProducerDetailPage({
     }
   }
 
-  async function handleImpersonate() {
+  async function handleGenerateLink() {
     setImpersonating(true);
+    setCopied(false);
     try {
       const res = await fetch(`/api/admin/producers/${p.id}/impersonate`, {
         method: "POST",
@@ -190,13 +200,19 @@ export default function ProducerDetailPage({
         showToast(json.error || "Erro ao gerar link");
         return;
       }
-      window.open(json.url, "_blank");
-      showToast(`Link gerado para ${json.email}`);
+      setImpersonateUrl(json.url);
+      setImpersonateCountdown(30);
     } catch {
       showToast("Erro ao gerar link de acesso");
     } finally {
       setImpersonating(false);
     }
+  }
+
+  function handleCopyLink() {
+    navigator.clipboard.writeText(impersonateUrl);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   }
 
   function accessWorkspace(workspaceId: string) {
@@ -282,7 +298,7 @@ export default function ProducerDetailPage({
           <div className="flex flex-wrap gap-2 sm:flex-shrink-0">
             <button
               type="button"
-              onClick={handleImpersonate}
+              onClick={handleGenerateLink}
               disabled={impersonating}
               className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
             >
@@ -351,6 +367,83 @@ export default function ProducerDetailPage({
           usage={data.usage}
           producerId={p.id}
         />
+      )}
+
+      {/* Impersonate modal */}
+      {impersonateUrl && (
+        <div
+          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
+          onClick={() => setImpersonateUrl("")}
+        >
+          <div
+            className="bg-white dark:bg-gray-950 border border-gray-200 dark:border-white/10 rounded-2xl max-w-md w-full p-6 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="text-center mb-5">
+              <div className="w-12 h-12 rounded-full bg-blue-500/10 flex items-center justify-center mx-auto mb-3">
+                <svg className="w-6 h-6 text-blue-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+                  <polyline points="10 17 15 12 10 7" />
+                  <line x1="15" y1="12" x2="3" y2="12" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+                Login como produtor
+              </h3>
+              <p className="text-sm text-gray-500 mt-1">
+                Copie o link abaixo e abra em uma janela anônima
+              </p>
+            </div>
+
+            <div className="bg-gray-100 dark:bg-gray-900/50 border border-gray-200 dark:border-white/10 rounded-lg p-3 mb-4">
+              <p className="text-xs text-gray-500 font-mono truncate select-all">
+                {impersonateUrl}
+              </p>
+            </div>
+
+            <div className="text-center mb-5">
+              {impersonateCountdown > 0 ? (
+                <p className="text-sm text-amber-500 flex items-center justify-center gap-1.5">
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <circle cx="12" cy="12" r="10" />
+                    <polyline points="12 6 12 12 16 14" />
+                  </svg>
+                  Este link expira em {impersonateCountdown}s
+                </p>
+              ) : (
+                <p className="text-sm text-red-500">Link expirado</p>
+              )}
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={handleCopyLink}
+                disabled={impersonateCountdown <= 0}
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-500 disabled:bg-gray-400 dark:disabled:bg-gray-700 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg transition-colors"
+              >
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                </svg>
+                {copied ? "Copiado!" : "Copiar link"}
+              </button>
+              <button
+                onClick={handleGenerateLink}
+                disabled={impersonateCountdown > 0 || impersonating}
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 border border-gray-200 dark:border-white/10 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 disabled:opacity-40 disabled:cursor-not-allowed text-sm font-medium rounded-lg transition-colors"
+              >
+                {impersonating ? "Gerando…" : "Gerar novo link"}
+              </button>
+            </div>
+
+            <button
+              onClick={() => setImpersonateUrl("")}
+              className="w-full mt-3 text-center text-xs text-gray-500 hover:text-gray-400 py-2"
+            >
+              Fechar
+            </button>
+          </div>
+        </div>
       )}
 
       {toast && (
