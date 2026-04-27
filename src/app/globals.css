@@ -388,12 +388,12 @@ body {
 .prose-editor .editor-button {
   display: inline-flex !important;
   align-items: center !important;
-  padding: 6px 16px !important;
+  padding: 4px 12px !important;
   background-color: var(--member-primary, #3b82f6);
   color: #ffffff !important;
-  border-radius: 6px !important;
+  border-radius: 5px !important;
   font-weight: 500 !important;
-  font-size: 0.8125rem !important;
+  font-size: 0.75rem !important;
   text-decoration: none !important;
   cursor: pointer;
   letter-spacing: 0.01em;
