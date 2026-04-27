@@ -51,6 +51,8 @@ model User {
   pushSubscriptions PushSubscription[]
   liveModerations    LiveModerator[]
   pendingExecutions  PendingExecution[]
+  impersonateTargets ImpersonateToken[] @relation("impersonateTarget")
+  impersonateAdmins  ImpersonateToken[] @relation("impersonateAdmin")
 
   @@index([workspaceId])
 }
@@ -916,4 +918,19 @@ model LiveModerator {
 
   @@unique([liveId, userId])
   @@index([liveId])
+}
+
+model ImpersonateToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  adminId   String
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user  User @relation("impersonateTarget", fields: [userId], references: [id], onDelete: Cascade)
+  admin User @relation("impersonateAdmin", fields: [adminId], references: [id], onDelete: Cascade)
+
+  @@index([token])
 }

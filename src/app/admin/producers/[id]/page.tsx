@@ -201,7 +201,7 @@ export default function ProducerDetailPage({
         return;
       }
       setImpersonateUrl(json.url);
-      setImpersonateCountdown(30);
+      setImpersonateCountdown(60);
     } catch {
       showToast("Erro ao gerar link de acesso");
     } finally {
@@ -391,7 +391,7 @@ export default function ProducerDetailPage({
                 Login como produtor
               </h3>
               <p className="text-sm text-gray-500 mt-1">
-                Copie o link abaixo e abra em uma janela anônima
+                Abra o link abaixo em uma janela anônima para logar como este produtor
               </p>
             </div>
 

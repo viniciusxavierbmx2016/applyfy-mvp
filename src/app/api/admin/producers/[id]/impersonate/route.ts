@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
-import { createAdminClient } from "@/lib/supabase-admin";
+import crypto from "crypto";
 
 export async function POST(
   request: Request,
@@ -29,35 +29,33 @@ export async function POST(
       );
     }
 
+    const token = crypto.randomBytes(32).toString("hex");
+
+    await prisma.impersonateToken.create({
+      data: {
+        token,
+        userId: producer.id,
+        adminId: admin.id,
+        expiresAt: new Date(Date.now() + 60 * 1000),
+      },
+    });
+
+    prisma.impersonateToken
+      .deleteMany({ where: { expiresAt: { lt: new Date() } } })
+      .catch(() => {});
+
     const origin =
       request.headers.get("origin") ||
       process.env.NEXT_PUBLIC_SITE_URL ||
+      process.env.NEXT_PUBLIC_APP_URL ||
       "";
-    const redirectTo = `${origin}/producer`;
-
-    const supabase = createAdminClient();
-    const { data, error } = await supabase.auth.admin.generateLink({
-      type: "magiclink",
-      email: producer.email,
-      options: { redirectTo },
-    });
-
-    if (error || !data?.properties?.action_link) {
-      console.error("[IMPERSONATE] Erro ao gerar link:", error);
-      return NextResponse.json(
-        { error: "Erro ao gerar link de acesso" },
-        { status: 500 }
-      );
-    }
+    const url = `${origin}/api/auth/impersonate/${token}`;
 
     console.log(
-      `[IMPERSONATE] Admin ${admin.email} (${admin.id}) logou como ${producer.email} (${producer.id}) em ${new Date().toISOString()}`
+      `[IMPERSONATE] Admin ${admin.email} (${admin.id}) gerou token para ${producer.email} (${producer.id}) em ${new Date().toISOString()}`
     );
 
-    return NextResponse.json({
-      url: data.properties.action_link,
-      email: producer.email,
-    });
+    return NextResponse.json({ url, email: producer.email, expiresIn: 60 });
   } catch (error) {
     console.error("[IMPERSONATE] error:", error);
     const msg = error instanceof Error ? error.message : "";
