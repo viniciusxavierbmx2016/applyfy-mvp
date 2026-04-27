@@ -93,7 +93,7 @@ export default function ProfilePage() {
             </div>
             <div className="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-2">
               <div
-                className="bg-blue-500 h-2 rounded-full transition-all"
+                className="bg-blue-500 h-2 rounded-full transition-[width]"
                 style={{ width: `${progressPercent}%` }}
               />
             </div>

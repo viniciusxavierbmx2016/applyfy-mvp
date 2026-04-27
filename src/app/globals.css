@@ -335,6 +335,18 @@ body {
 .course-customized .border-emerald-500\/20 { border-color: color-mix(in srgb, var(--member-primary, #10b981) 20%, transparent) !important; }
 .course-customized .hover\:bg-emerald-500\/20:hover { background-color: color-mix(in srgb, var(--member-primary, #10b981) 20%, transparent) !important; }
 
+/* Additional student-area coverage */
+.course-customized .bg-blue-600\/10 { background-color: color-mix(in srgb, var(--member-primary, #2563eb) 10%, transparent) !important; }
+.course-customized .bg-emerald-50 { background-color: color-mix(in srgb, var(--member-primary, #10b981) 8%, white) !important; }
+.course-customized .bg-emerald-600\/30 { background-color: color-mix(in srgb, var(--member-primary, #059669) 30%, transparent) !important; }
+.course-customized .dark\:bg-blue-500\/10 { background-color: color-mix(in srgb, var(--member-primary, #3b82f6) 10%, transparent) !important; }
+.course-customized .dark\:bg-emerald-500\/10 { background-color: color-mix(in srgb, var(--member-primary, #10b981) 10%, transparent) !important; }
+.course-customized .focus\:ring-blue-500:focus { --tw-ring-color: var(--member-primary, #3b82f6) !important; }
+.course-customized .hover\:border-blue-500\/50:hover { border-color: color-mix(in srgb, var(--member-primary, #3b82f6) 50%, transparent) !important; }
+.course-customized .text-blue-300 { color: var(--member-primary, #93c5fd) !important; }
+.course-customized .text-emerald-300 { color: var(--member-primary, #6ee7b7) !important; }
+.course-customized .to-blue-700 { --tw-gradient-to: var(--member-primary, #1d4ed8) !important; }
+
 /* ─── Rich text display (prose-lesson) ───────────────────────── */
 .prose-lesson { color: var(--member-text, #d1d5db); }
 .prose-lesson h1 { font-size: 1.5rem; font-weight: 700; margin: 1rem 0 0.5rem; }

@@ -458,7 +458,7 @@ export default function CourseHomePage() {
             </div>
             <div className="h-1.5 bg-gray-200 dark:bg-white/5 rounded-full overflow-hidden">
               <div
-                className="h-full bg-gradient-to-r from-blue-500 to-blue-400 rounded-full transition-all duration-500"
+                className="h-full bg-gradient-to-r from-blue-500 to-blue-400 rounded-full transition-[width] duration-500"
                 style={{ width: `${totals.pct}%` }}
               />
             </div>

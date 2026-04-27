@@ -368,7 +368,7 @@ export default function LessonPage({
                       type="button"
                       onClick={() => markCompleted(!data.lesson.completed)}
                       disabled={marking}
-                      className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 disabled:opacity-50 ${
+                      className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-colors duration-300 disabled:opacity-50 ${
                         data.lesson.completed
                           ? "bg-emerald-500/12 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20"
                           : "bg-gradient-to-r from-emerald-600 to-emerald-500 text-white hover:brightness-110"
@@ -596,7 +596,7 @@ export default function LessonPage({
 
         {/* Desktop sidebar — collapsible */}
         <div
-          className={`hidden lg:block border-l border-gray-200 dark:border-white/5 overflow-hidden transition-all duration-300 ${
+          className={`hidden lg:block border-l border-gray-200 dark:border-white/5 overflow-hidden transition-[width,border] duration-300 ${
             sidebarOpen ? "w-[340px]" : "w-0 border-l-0"
           }`}
         >

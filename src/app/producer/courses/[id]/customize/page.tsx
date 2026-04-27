@@ -121,7 +121,7 @@ export default function CourseCustomizePage() {
           });
         }
         const customRes = await fetch(`/api/producer/courses/${courseId}/customize`);
-        console.log("[customize] GET status:", customRes.status);
+
         if (!alive) return;
         if (customRes.ok) {
           const d = await customRes.json();
@@ -160,7 +160,7 @@ export default function CourseCustomizePage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(sanitizeForSave()),
       });
-      console.log("[customize] PUT status:", res.status);
+
       if (res.ok) {
         const d = await res.json();
         const merged = { ...EMPTY, ...d.customization };

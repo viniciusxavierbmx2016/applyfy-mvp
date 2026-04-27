@@ -186,7 +186,7 @@ export function LessonsSidebar({
                   <div className="mx-4 ml-[58px] mb-1.5">
                     <div className="h-[2px] bg-gray-200/70 dark:bg-white/5 rounded-full">
                       <div
-                        className="h-full bg-blue-500 rounded-full transition-all duration-500"
+                        className="h-full bg-blue-500 rounded-full transition-[width] duration-500"
                         style={{ width: `${modProgress}%` }}
                       />
                     </div>
