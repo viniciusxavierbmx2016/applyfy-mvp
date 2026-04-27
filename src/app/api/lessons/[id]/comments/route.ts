@@ -50,7 +50,7 @@ export async function GET(
       );
     }
 
-    if (user.role !== "ADMIN") {
+    if (user.role !== "ADMIN" && user.role !== "PRODUCER") {
       let allowed = false;
       if (user.role === "COLLABORATOR") {
         allowed = await collaboratorAllowed(
@@ -169,7 +169,7 @@ export async function POST(
       );
     }
 
-    if (user.role !== "ADMIN") {
+    if (user.role !== "ADMIN" && user.role !== "PRODUCER") {
       let allowed = false;
       if (user.role === "COLLABORATOR") {
         allowed = await collaboratorAllowed(

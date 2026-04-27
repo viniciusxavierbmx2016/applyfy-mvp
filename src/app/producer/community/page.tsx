@@ -151,18 +151,17 @@ export default function AdminCommunityPage() {
   const loadPending = useCallback(async (courseId: string) => {
     setPendingLoading(true);
     try {
-      let url = "/api/producer/moderation/pending?type=community";
-      if (courseId) url += `&courseId=${courseId}`;
+      let url = "/api/producer/moderation/pending";
+      if (courseId) url += `?courseId=${courseId}`;
       const res = await fetch(url);
       if (res.ok) {
         const data = await res.json();
-        const items = [
-          ...(data.community_posts || []).map((p: Record<string, unknown>) => ({ ...p, type: "community_post" as const })),
-          ...(data.community_comments || []).map((c: Record<string, unknown>) => ({ ...c, type: "community_comment" as const })),
-        ];
-        items.sort((a, b) => new Date(a.createdAt as string).getTime() - new Date(b.createdAt as string).getTime());
-        setPendingItems(items as PendingItem[]);
-        setPendingTotal(items.length);
+        const allItems = (data.items || []) as PendingItem[];
+        const communityItems = allItems.filter(
+          (i) => i.type === "community_post" || i.type === "community_comment"
+        );
+        setPendingItems(communityItems);
+        setPendingTotal(communityItems.length);
       }
     } finally {
       setPendingLoading(false);
