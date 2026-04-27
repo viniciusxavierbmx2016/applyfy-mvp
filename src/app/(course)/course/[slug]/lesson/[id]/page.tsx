@@ -511,7 +511,7 @@ export default function LessonPage({
                   <div className="p-5">
                     {shownTab === "description" && (
                       <>
-                        <div className="bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg p-5 min-h-[120px]">
+                        <div className="bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg p-5 min-h-[120px] break-words overflow-hidden">
                           {data.lesson.description ? (
                             <div
                               className="prose-lesson text-sm leading-relaxed"
