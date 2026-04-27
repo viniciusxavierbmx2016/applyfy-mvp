@@ -154,6 +154,7 @@ model Course {
   lessonCommentsModerationEnabled Boolean @default(false)
   communityModerationEnabled      Boolean @default(false)
   termsContent       String?   @db.Text
+  termsFileUrl       String?
   termsUpdatedAt     DateTime?
   showStudentCount   Boolean   @default(false)
   supportEmail       String?

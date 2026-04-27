@@ -18,13 +18,13 @@ export async function GET(
 
     const course = await prisma.course.findUnique({
       where: { id: params.id },
-      select: { termsContent: true, termsUpdatedAt: true },
+      select: { termsContent: true, termsFileUrl: true, termsUpdatedAt: true },
     });
     if (!course) {
       return NextResponse.json({ error: "Curso não encontrado" }, { status: 404 });
     }
 
-    if (!course.termsContent) {
+    if (!course.termsContent && !course.termsFileUrl) {
       return NextResponse.json({ required: false });
     }
 
@@ -36,15 +36,20 @@ export async function GET(
       return NextResponse.json({ required: false });
     }
 
+    const termsPayload = {
+      termsContent: course.termsContent,
+      termsFileUrl: course.termsFileUrl,
+    };
+
     if (!enrollment.termsAcceptedAt) {
-      return NextResponse.json({ required: true, termsContent: course.termsContent });
+      return NextResponse.json({ required: true, ...termsPayload });
     }
 
     if (
       course.termsUpdatedAt &&
       enrollment.termsAcceptedAt < course.termsUpdatedAt
     ) {
-      return NextResponse.json({ required: true, termsContent: course.termsContent });
+      return NextResponse.json({ required: true, ...termsPayload });
     }
 
     return NextResponse.json({ required: false });

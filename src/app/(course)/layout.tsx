@@ -35,6 +35,7 @@ export default function CourseGroupLayout({
   const [collapsed, setCollapsed] = useState(false);
   const [termsRequired, setTermsRequired] = useState(false);
   const [termsContent, setTermsContent] = useState("");
+  const [termsFileUrl, setTermsFileUrl] = useState("");
   const [termsChecked, setTermsChecked] = useState(false);
 
   useEffect(() => {
@@ -101,7 +102,8 @@ export default function CourseGroupLayout({
       .then((data) => {
         if (data?.required) {
           setTermsRequired(true);
-          setTermsContent(data.termsContent);
+          setTermsContent(data.termsContent || "");
+          setTermsFileUrl(data.termsFileUrl || "");
         } else {
           setTermsChecked(true);
         }
@@ -176,6 +178,7 @@ export default function CourseGroupLayout({
         <TermsModal
           courseId={course.id}
           termsContent={termsContent}
+          termsFileUrl={termsFileUrl}
           onAccepted={() => {
             setTermsRequired(false);
             setTermsChecked(true);

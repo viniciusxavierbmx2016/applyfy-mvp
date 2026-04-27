@@ -47,9 +47,13 @@ export async function POST(request: Request) {
       );
     }
 
-    if (!file.type.startsWith("image/")) {
+    const allowedTypes = ["image/", "application/pdf"];
+    const isAllowed = allowedTypes.some((t) =>
+      t.endsWith("/") ? file.type.startsWith(t) : file.type === t
+    );
+    if (!isAllowed) {
       return NextResponse.json(
-        { error: "Apenas imagens são permitidas" },
+        { error: "Apenas imagens e PDFs são permitidos" },
         { status: 400 }
       );
     }

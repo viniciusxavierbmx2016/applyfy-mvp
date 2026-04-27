@@ -95,6 +95,7 @@ export async function PUT(
       featured,
       category,
       termsContent,
+      termsFileUrl,
     } = body;
 
     if (supportEmail !== undefined && supportEmail !== null && supportEmail !== "") {
@@ -119,19 +120,29 @@ export async function PUT(
       }
     }
 
-    let termsData = {};
-    if (termsContent !== undefined) {
-      const trimmed = typeof termsContent === "string" ? termsContent.trim() : null;
-      const newTerms = trimmed || null;
-      if (newTerms === null) {
-        termsData = { termsContent: null, termsUpdatedAt: null };
+    const termsData: Record<string, unknown> = {};
+    if (termsContent !== undefined || termsFileUrl !== undefined) {
+      const newText = typeof termsContent === "string" ? termsContent.trim() || null : termsContent ?? undefined;
+      const newFile = typeof termsFileUrl === "string" ? termsFileUrl.trim() || null : termsFileUrl ?? undefined;
+
+      const current = await prisma.course.findUnique({
+        where: { id: params.id },
+        select: { termsContent: true, termsFileUrl: true },
+      });
+
+      if (newText !== undefined) termsData.termsContent = newText;
+      if (newFile !== undefined) termsData.termsFileUrl = newFile;
+
+      const finalText = newText !== undefined ? newText : current?.termsContent;
+      const finalFile = newFile !== undefined ? newFile : current?.termsFileUrl;
+
+      if (!finalText && !finalFile) {
+        termsData.termsUpdatedAt = null;
       } else {
-        const current = await prisma.course.findUnique({
-          where: { id: params.id },
-          select: { termsContent: true },
-        });
-        if (current?.termsContent !== newTerms) {
-          termsData = { termsContent: newTerms, termsUpdatedAt: new Date() };
+        const textChanged = newText !== undefined && current?.termsContent !== newText;
+        const fileChanged = newFile !== undefined && current?.termsFileUrl !== newFile;
+        if (textChanged || fileChanged) {
+          termsData.termsUpdatedAt = new Date();
         }
       }
     }

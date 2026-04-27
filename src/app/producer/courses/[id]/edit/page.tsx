@@ -37,6 +37,7 @@ interface CourseData {
   featured: boolean;
   category: string | null;
   termsContent: string | null;
+  termsFileUrl: string | null;
   modules: ModuleData[];
   sections: SectionData[];
 }
@@ -106,6 +107,7 @@ export default function EditCoursePage({
         featured: course.featured,
         category: course.category || "",
         termsContent: course.termsContent || "",
+        termsFileUrl: course.termsFileUrl || "",
       }}
     />
   ) : (

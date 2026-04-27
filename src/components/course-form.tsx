@@ -33,6 +33,7 @@ interface CourseFormData {
   supportEmail: string;
   supportWhatsapp: string;
   termsContent: string;
+  termsFileUrl: string;
 }
 
 interface CourseFormProps {
@@ -116,6 +117,8 @@ export function CourseForm({ initial, mode }: CourseFormProps) {
     initial?.supportWhatsapp || ""
   );
   const [termsContent, setTermsContent] = useState(initial?.termsContent || "");
+  const [termsFileUrl, setTermsFileUrl] = useState(initial?.termsFileUrl || "");
+  const [uploadingTerms, setUploadingTerms] = useState(false);
   const [thumbMode, setThumbMode] = useState<"view" | "reposition">("view");
   const [bannerMode, setBannerMode] = useState<"view" | "reposition">("view");
   const [error, setError] = useState("");
@@ -133,6 +136,34 @@ export function CourseForm({ initial, mode }: CourseFormProps) {
     setTitle(newTitle);
     if (!slugEdited) {
       setSlug(slugify(newTitle));
+    }
+  }
+
+  async function handleTermsFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.type !== "application/pdf") {
+      alert("Apenas arquivos PDF são aceitos");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      alert("O arquivo deve ter no máximo 5MB");
+      return;
+    }
+    setUploadingTerms(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("path", `terms/${initial?.id || "new"}`);
+      const res = await fetch("/api/upload", { method: "POST", body: formData });
+      if (!res.ok) throw new Error("Erro no upload");
+      const data = await res.json();
+      setTermsFileUrl(data.url);
+    } catch {
+      alert("Erro ao enviar o arquivo");
+    } finally {
+      setUploadingTerms(false);
+      e.target.value = "";
     }
   }
 
@@ -160,6 +191,7 @@ export function CourseForm({ initial, mode }: CourseFormProps) {
       supportEmail: supportEmail.trim() || null,
       supportWhatsapp: supportWhatsapp.trim() || null,
       termsContent: termsContent.trim() || null,
+      termsFileUrl: termsFileUrl.trim() || null,
     };
 
     try {
@@ -444,8 +476,72 @@ export function CourseForm({ initial, mode }: CourseFormProps) {
       <div className="pt-8 border-t border-gray-200 dark:border-white/5 mt-8">
         <h2 className="text-sm font-medium text-gray-900 dark:text-white mb-0.5">Termos de uso</h2>
         <p className="text-xs text-gray-500 mb-4">
-          Se preenchido, o aluno precisará aceitar os termos antes de acessar o curso pela primeira vez. Deixe vazio para não exigir aceitação.
+          Adicione os termos de uso do curso. O aluno precisará aceitar antes de acessar.
+          Você pode escrever o texto e/ou enviar um PDF.
         </p>
+
+        {/* Upload PDF */}
+        <div className="mb-4">
+          <label className="text-xs text-gray-400 mb-1.5 block">Arquivo PDF (opcional)</label>
+          {termsFileUrl ? (
+            <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-white/10 rounded-lg">
+              <svg className="w-8 h-8 text-red-500 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+              </svg>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm text-gray-700 dark:text-gray-300 truncate">Termos de uso.pdf</p>
+                <a href={termsFileUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-500 hover:underline">
+                  Visualizar PDF
+                </a>
+              </div>
+              <button
+                type="button"
+                onClick={() => setTermsFileUrl("")}
+                className="text-xs text-red-500 hover:text-red-400 px-2 py-1"
+              >
+                Remover
+              </button>
+            </div>
+          ) : (
+            <div>
+              <input
+                type="file"
+                accept="application/pdf"
+                onChange={handleTermsFileUpload}
+                className="hidden"
+                id="terms-pdf-upload"
+                disabled={uploadingTerms}
+              />
+              <label
+                htmlFor="terms-pdf-upload"
+                className="flex items-center justify-center gap-2 p-4 border-2 border-dashed border-gray-300 dark:border-white/10 rounded-lg cursor-pointer hover:border-blue-500/30 hover:bg-blue-500/5 transition-colors text-sm text-gray-500"
+              >
+                {uploadingTerms ? (
+                  <>
+                    <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <circle cx="12" cy="12" r="10" strokeDasharray="32" strokeDashoffset="32"/>
+                    </svg>
+                    Enviando...
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                      <polyline points="17 8 12 3 7 8"/>
+                      <line x1="12" y1="3" x2="12" y2="15"/>
+                    </svg>
+                    Clique para enviar um PDF
+                  </>
+                )}
+              </label>
+              <p className="text-[10px] text-gray-500 mt-1">PDF &middot; Máximo 5MB</p>
+            </div>
+          )}
+        </div>
+
+        {/* Textarea de texto */}
+        <label className="text-xs text-gray-400 mb-1.5 block">Texto dos termos (opcional)</label>
         <textarea
           value={termsContent}
           onChange={(e) => setTermsContent(e.target.value)}
@@ -453,7 +549,7 @@ export function CourseForm({ initial, mode }: CourseFormProps) {
           rows={8}
           className={`${inputClass} min-h-[120px] resize-y`}
         />
-        {termsContent.trim() && (
+        {(termsContent.trim() || termsFileUrl) && (
           <p className="text-xs text-amber-500 mt-2 flex items-center gap-1.5">
             <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
