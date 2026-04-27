@@ -21,10 +21,12 @@ const OPTIONS: sanitize.IOptions = {
     "h2",
     "h3",
     "span",
+    "img",
   ],
   allowedAttributes: {
     a: ["href", "target", "rel", "title"],
     span: ["class"],
+    img: ["src", "alt", "width", "height", "style", "class"],
   },
   allowedSchemes: ["http", "https", "mailto"],
   transformTags: {
