@@ -13,6 +13,7 @@ interface AdminPost {
   content: string;
   type: "QUESTION" | "RESULT" | "FEEDBACK" | "FREE";
   pinned: boolean;
+  status?: string;
   createdAt: string;
   user: {
     id: string;
@@ -23,6 +24,17 @@ interface AdminPost {
   course: { id: string; title: string; slug: string };
   group?: { id: string; name: string } | null;
   _count: { likes: number; comments: number };
+}
+
+interface PendingItem {
+  id: string;
+  type: "community_post" | "community_comment" | "lesson_comment";
+  content: string;
+  createdAt: string;
+  user: { id: string; name: string; email: string; avatarUrl: string | null };
+  course: { id: string; title: string; slug: string };
+  group?: { id: string; name: string } | null;
+  post?: { id: string; content: string } | null;
 }
 
 interface CourseOption {
@@ -56,8 +68,14 @@ export default function AdminCommunityPage() {
   const [courseFilter, setCourseFilter] = useState<string>("");
   const [groupFilter, setGroupFilter] = useState<string>("");
   const [loading, setLoading] = useState(true);
-  const [subTab, setSubTab] = useState<"posts" | "groups">("posts");
+  const [subTab, setSubTab] = useState<"posts" | "groups" | "pending">("posts");
   const { confirm, ConfirmDialog } = useConfirm();
+
+  // Pending moderation state
+  const [pendingItems, setPendingItems] = useState<PendingItem[]>([]);
+  const [pendingTotal, setPendingTotal] = useState(0);
+  const [pendingLoading, setPendingLoading] = useState(false);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
 
   // Groups state
   const [groups, setGroups] = useState<CommunityGroup[]>([]);
@@ -130,10 +148,32 @@ export default function AdminCommunityPage() {
     }
   }, []);
 
+  const loadPending = useCallback(async (courseId: string) => {
+    setPendingLoading(true);
+    try {
+      let url = "/api/producer/moderation/pending?type=community";
+      if (courseId) url += `&courseId=${courseId}`;
+      const res = await fetch(url);
+      if (res.ok) {
+        const data = await res.json();
+        const items = [
+          ...(data.community_posts || []).map((p: Record<string, unknown>) => ({ ...p, type: "community_post" as const })),
+          ...(data.community_comments || []).map((c: Record<string, unknown>) => ({ ...c, type: "community_comment" as const })),
+        ];
+        items.sort((a, b) => new Date(a.createdAt as string).getTime() - new Date(b.createdAt as string).getTime());
+        setPendingItems(items as PendingItem[]);
+        setPendingTotal(items.length);
+      }
+    } finally {
+      setPendingLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     loadPosts(courseFilter, groupFilter || undefined);
     loadGroupsForFilter(courseFilter);
-  }, [courseFilter, groupFilter, loadGroupsForFilter]);
+    loadPending(courseFilter);
+  }, [courseFilter, groupFilter, loadGroupsForFilter, loadPending]);
 
   useEffect(() => {
     if (subTab === "groups") loadGroups(courseFilter);
@@ -199,6 +239,57 @@ export default function AdminCommunityPage() {
     }
   }
 
+  async function handleModerate(item: PendingItem, action: "approve" | "reject") {
+    const res = await fetch("/api/producer/moderation", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ items: [{ type: item.type, id: item.id }], action }),
+    });
+    if (res.ok) {
+      setPendingItems((prev) => prev.filter((p) => p.id !== item.id));
+      setPendingTotal((prev) => prev - 1);
+      setSelected((prev) => { const s = new Set(prev); s.delete(item.id); return s; });
+      showToast(action === "approve" ? "Aprovado" : "Rejeitado");
+      if (action === "approve") loadPosts(courseFilter, groupFilter || undefined);
+    }
+  }
+
+  async function handleBulkAction(action: "approve" | "reject") {
+    if (selected.size === 0) return;
+    const items = pendingItems
+      .filter((p) => selected.has(p.id))
+      .map((p) => ({ type: p.type, id: p.id }));
+    const res = await fetch("/api/producer/moderation", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ items, action }),
+    });
+    if (res.ok) {
+      const ids = new Set(items.map((i) => i.id));
+      setPendingItems((prev) => prev.filter((p) => !ids.has(p.id)));
+      setPendingTotal((prev) => prev - items.length);
+      setSelected(new Set());
+      showToast(action === "approve" ? `${items.length} aprovado(s)` : `${items.length} rejeitado(s)`);
+      if (action === "approve") loadPosts(courseFilter, groupFilter || undefined);
+    }
+  }
+
+  function toggleSelected(id: string) {
+    setSelected((prev) => {
+      const s = new Set(prev);
+      if (s.has(id)) s.delete(id); else s.add(id);
+      return s;
+    });
+  }
+
+  function toggleSelectAll() {
+    if (selected.size === pendingItems.length) {
+      setSelected(new Set());
+    } else {
+      setSelected(new Set(pendingItems.map((p) => p.id)));
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
@@ -242,6 +333,21 @@ export default function AdminCommunityPage() {
           onClick={() => setSubTab("groups")}
         >
           Grupos
+        </button>
+        <button
+          className={`px-4 py-2 text-sm border-b-2 transition flex items-center gap-1.5 ${
+            subTab === "pending"
+              ? "border-blue-500 text-blue-500"
+              : "border-transparent text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+          }`}
+          onClick={() => setSubTab("pending")}
+        >
+          Pendentes
+          {pendingTotal > 0 && (
+            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-500 font-bold tabular-nums">
+              {pendingTotal}
+            </span>
+          )}
         </button>
       </div>
 
@@ -314,7 +420,13 @@ export default function AdminCommunityPage() {
                 return (
                   <div
                     key={post.id}
-                    className="bg-white dark:bg-white/5 border border-gray-200 dark:border-white/5 rounded-xl p-5"
+                    className={`bg-white dark:bg-white/5 border rounded-xl p-5 ${
+                      post.status === "PENDING"
+                        ? "border-amber-400/50"
+                        : post.status === "REJECTED"
+                        ? "border-red-400/50"
+                        : "border-gray-200 dark:border-white/5"
+                    }`}
                   >
                     <div className="flex items-start gap-3 mb-2">
                       <Avatar
@@ -345,6 +457,16 @@ export default function AdminCommunityPage() {
                           {post.group && (
                             <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-200 dark:bg-white/10 text-gray-600 dark:text-gray-400">
                               {post.group.name}
+                            </span>
+                          )}
+                          {post.status === "PENDING" && (
+                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-500 font-medium">
+                              Pendente
+                            </span>
+                          )}
+                          {post.status === "REJECTED" && (
+                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-red-500/20 text-red-400 font-medium">
+                              Rejeitado
                             </span>
                           )}
                         </div>
@@ -438,6 +560,133 @@ export default function AdminCommunityPage() {
           }}
           showToast={showToast}
         />
+      )}
+
+      {/* Pending tab */}
+      {subTab === "pending" && (
+        <>
+          {selected.size > 0 && (
+            <div className="flex items-center gap-3 bg-amber-500/10 border border-amber-500/20 rounded-xl px-4 py-3">
+              <span className="text-sm text-amber-600 dark:text-amber-400 font-medium">
+                {selected.size} selecionado(s)
+              </span>
+              <div className="ml-auto flex gap-2">
+                <button
+                  onClick={() => handleBulkAction("approve")}
+                  className="px-3 py-1.5 text-xs font-medium bg-green-600 hover:bg-green-700 text-white rounded-lg transition"
+                >
+                  Aprovar
+                </button>
+                <button
+                  onClick={() => handleBulkAction("reject")}
+                  className="px-3 py-1.5 text-xs font-medium bg-red-600 hover:bg-red-700 text-white rounded-lg transition"
+                >
+                  Rejeitar
+                </button>
+              </div>
+            </div>
+          )}
+
+          {pendingLoading ? (
+            <div className="space-y-3">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="h-24 rounded-xl bg-gray-100 dark:bg-white/5 animate-pulse" />
+              ))}
+            </div>
+          ) : pendingItems.length === 0 ? (
+            <div className="bg-white dark:bg-white/5 border border-gray-200 dark:border-white/5 rounded-xl p-10 text-center">
+              <div className="w-14 h-14 mx-auto rounded-full bg-green-500/10 flex items-center justify-center mb-4">
+                <svg className="w-7 h-7 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <p className="text-gray-500 text-sm">Nenhum item pendente de moderação.</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 px-1">
+                <label className="flex items-center gap-2 text-sm text-gray-500 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={selected.size === pendingItems.length}
+                    onChange={toggleSelectAll}
+                    className="accent-blue-500 rounded"
+                  />
+                  Selecionar todos
+                </label>
+              </div>
+
+              {pendingItems.map((item) => (
+                <div
+                  key={item.id}
+                  className="bg-white dark:bg-white/5 border border-amber-400/30 rounded-xl p-4 flex items-start gap-3"
+                >
+                  <input
+                    type="checkbox"
+                    checked={selected.has(item.id)}
+                    onChange={() => toggleSelected(item.id)}
+                    className="mt-1 accent-blue-500 rounded"
+                  />
+                  <Avatar
+                    src={item.user.avatarUrl}
+                    name={item.user.name}
+                    size="sm"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex flex-wrap items-center gap-2 mb-1">
+                      <span className="text-sm font-medium text-gray-900 dark:text-white">
+                        {item.user.name}
+                      </span>
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
+                        item.type === "community_post"
+                          ? "bg-blue-500/20 text-blue-400"
+                          : "bg-purple-500/20 text-purple-400"
+                      }`}>
+                        {item.type === "community_post" ? "Post" : "Comentário"}
+                      </span>
+                      <span className="text-[10px] text-gray-500">
+                        {item.course.title}
+                        {item.group ? ` · ${item.group.name}` : ""}
+                      </span>
+                    </div>
+                    {item.post && (
+                      <p className="text-xs text-gray-500 mb-1 truncate">
+                        Em resposta a: {item.post.content.replace(/<[^>]*>/g, "").slice(0, 80)}
+                      </p>
+                    )}
+                    <div
+                      className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed break-words line-clamp-3"
+                      dangerouslySetInnerHTML={{ __html: sanitizeHtml(item.content) }}
+                    />
+                    <p className="text-xs text-gray-500 mt-1.5">
+                      {formatRelativeTime(new Date(item.createdAt))}
+                    </p>
+                  </div>
+                  <div className="flex gap-1 flex-shrink-0">
+                    <button
+                      onClick={() => handleModerate(item, "approve")}
+                      title="Aprovar"
+                      className="p-1.5 text-gray-500 hover:text-green-500 hover:bg-green-500/10 rounded transition"
+                    >
+                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    </button>
+                    <button
+                      onClick={() => handleModerate(item, "reject")}
+                      title="Rejeitar"
+                      className="p-1.5 text-gray-500 hover:text-red-500 hover:bg-red-500/10 rounded transition"
+                    >
+                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </>
       )}
 
       {/* Group modal */}
