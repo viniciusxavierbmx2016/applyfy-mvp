@@ -299,7 +299,7 @@ export function DateRangeSelector({ value, onChange }: DateRangeSelectorProps) {
       </button>
 
       {open && (
-        <div className="absolute right-0 sm:right-auto sm:left-0 top-full mt-2 z-50 bg-white dark:bg-gray-950 border border-gray-200 dark:border-white/10 rounded-2xl shadow-2xl overflow-hidden">
+        <div className="absolute right-0 sm:left-0 sm:right-auto top-full mt-2 z-50 bg-white dark:bg-gray-950 border border-gray-200 dark:border-white/10 rounded-2xl shadow-2xl overflow-hidden sm:min-w-[720px]">
           {/* Mobile: presets only */}
           <div className="sm:hidden">
             <div className="py-2 max-h-[60vh] overflow-y-auto">
@@ -358,7 +358,7 @@ export function DateRangeSelector({ value, onChange }: DateRangeSelectorProps) {
           </div>
 
           {/* Desktop: presets + calendars */}
-          <div className="hidden sm:block">
+          <div className="hidden sm:flex sm:flex-col">
             <div className="flex">
               {/* Presets */}
               <div className="w-[180px] border-r border-gray-200 dark:border-white/5 py-2 max-h-[400px] overflow-y-auto">
