@@ -508,19 +508,17 @@ export default function LessonPage({
                     )}
                   </div>
 
-                  <div className="p-5">
+                  <div className="p-5 sm:p-6">
                     {shownTab === "description" && (
                       <>
-                        <div className="bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg p-5 min-h-[120px] break-words overflow-hidden">
-                          {data.lesson.description ? (
-                            <div
-                              className="prose-lesson text-sm leading-relaxed"
-                              dangerouslySetInnerHTML={{ __html: data.lesson.description }}
-                            />
-                          ) : (
-                            <p className="text-gray-500 text-sm">Sem descrição para esta aula.</p>
-                          )}
-                        </div>
+                        {data.lesson.description ? (
+                          <div
+                            className="prose-lesson text-sm leading-relaxed text-gray-700 dark:text-gray-300 break-words"
+                            dangerouslySetInnerHTML={{ __html: data.lesson.description }}
+                          />
+                        ) : (
+                          <p className="text-gray-400 dark:text-gray-500 text-sm italic">Sem descrição para esta aula.</p>
+                        )}
                         {materials.length > 0 && (
                           <div className="mt-5 pt-4 border-t border-gray-200/30 dark:border-white/5">
                             <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-500 mb-2.5">

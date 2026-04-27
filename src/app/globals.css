@@ -386,30 +386,23 @@ body {
 /* ─── Editor button style (link as button) ───────────────────── */
 .prose-lesson .editor-button,
 .prose-editor .editor-button {
-  display: inline-block;
-  padding: 8px 20px;
+  display: inline-flex !important;
+  align-items: center !important;
+  padding: 6px 16px !important;
   background-color: var(--member-primary, #3b82f6);
   color: #ffffff !important;
-  border-radius: 10px;
-  font-weight: 600;
-  font-size: 0.8125rem;
+  border-radius: 6px !important;
+  font-weight: 500 !important;
+  font-size: 0.8125rem !important;
   text-decoration: none !important;
   cursor: pointer;
   letter-spacing: 0.01em;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-  transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+  transition: filter 0.15s ease;
   position: relative;
 }
 .prose-lesson .editor-button:hover,
 .prose-editor .editor-button:hover {
-  transform: translateY(-1px);
-  filter: brightness(1.15);
-  box-shadow: 0 0 20px var(--btn-color, rgba(59, 130, 246, 0.5)), 0 0 40px color-mix(in srgb, var(--btn-color, #3b82f6) 25%, transparent), 0 4px 12px rgba(0, 0, 0, 0.3);
-}
-.prose-lesson .editor-button:active,
-.prose-editor .editor-button:active {
-  transform: translateY(0);
-  box-shadow: 0 0 10px var(--btn-color, rgba(59, 130, 246, 0.3)), 0 2px 6px rgba(0, 0, 0, 0.2);
+  filter: brightness(1.1) !important;
 }
 .prose-lesson a[style*="background"] {
   display: inline-block !important;
