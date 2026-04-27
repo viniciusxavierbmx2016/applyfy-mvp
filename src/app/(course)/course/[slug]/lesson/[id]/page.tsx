@@ -511,14 +511,16 @@ export default function LessonPage({
                   <div className="p-5">
                     {shownTab === "description" && (
                       <>
-                        {data.lesson.description ? (
-                          <div
-                            className="prose-lesson text-sm leading-relaxed"
-                            dangerouslySetInnerHTML={{ __html: data.lesson.description }}
-                          />
-                        ) : (
-                          <p className="text-gray-500 text-sm">Sem descrição para esta aula.</p>
-                        )}
+                        <div className="bg-gray-100/50 dark:bg-white/[0.03] border border-gray-200/30 dark:border-white/[0.04] rounded-lg p-4">
+                          {data.lesson.description ? (
+                            <div
+                              className="prose-lesson text-sm leading-relaxed"
+                              dangerouslySetInnerHTML={{ __html: data.lesson.description }}
+                            />
+                          ) : (
+                            <p className="text-gray-500 text-sm">Sem descrição para esta aula.</p>
+                          )}
+                        </div>
                         {materials.length > 0 && (
                           <div className="mt-5 pt-4 border-t border-gray-200/30 dark:border-white/5">
                             <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-500 mb-2.5">
