@@ -186,7 +186,7 @@ export default function CourseCommentsPage({
     }
   }
 
-  async function handleBulkApprove() {
+  async function handleBulkModerate(action: "approve" | "reject") {
     if (selected.size === 0) return;
     try {
       const res = await fetch("/api/producer/moderation", {
@@ -194,15 +194,16 @@ export default function CourseCommentsPage({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           items: Array.from(selected).map((id) => ({ type: "lesson_comment", id })),
-          action: "approve",
+          action,
         }),
       });
       if (res.ok) {
-        showToast(`${selected.size} comentário(s) aprovado(s)`);
+        const label = action === "approve" ? "aprovado(s)" : "rejeitado(s)";
+        showToast(`${selected.size} comentário(s) ${label}`);
         setSelected(new Set());
         fetchComments();
       } else {
-        showToast("Erro ao aprovar");
+        showToast(`Erro ao ${action === "approve" ? "aprovar" : "rejeitar"}`);
       }
     } catch {
       showToast("Erro de rede");
@@ -260,10 +261,17 @@ export default function CourseCommentsPage({
           <div className="ml-auto flex items-center gap-2">
             <button
               type="button"
-              onClick={handleBulkApprove}
+              onClick={() => handleBulkModerate("approve")}
               className="px-3 py-1.5 text-xs font-medium bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg transition-colors"
             >
               Aprovar {selected.size} selecionado(s)
+            </button>
+            <button
+              type="button"
+              onClick={() => handleBulkModerate("reject")}
+              className="px-3 py-1.5 text-xs font-medium bg-red-600 hover:bg-red-500 text-white rounded-lg transition-colors"
+            >
+              Rejeitar {selected.size} selecionado(s)
             </button>
           </div>
         )}
