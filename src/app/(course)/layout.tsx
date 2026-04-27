@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { CourseSidebar } from "@/components/course-sidebar";
+import { TermsModal } from "@/components/terms-modal";
 
 interface CourseSummary {
   id: string;
@@ -32,6 +33,9 @@ export default function CourseGroupLayout({
   const [hasAccess, setHasAccess] = useState<boolean | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
+  const [termsRequired, setTermsRequired] = useState(false);
+  const [termsContent, setTermsContent] = useState("");
+  const [termsChecked, setTermsChecked] = useState(false);
 
   useEffect(() => {
     try {
@@ -85,6 +89,24 @@ export default function CourseGroupLayout({
       for (const [key] of vars) root.style.removeProperty(key);
     };
   }, [course]);
+
+  useEffect(() => {
+    if (!course?.id || !hasAccess) {
+      setTermsChecked(true);
+      return;
+    }
+    fetch(`/api/courses/${course.id}/terms-status`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data?.required) {
+          setTermsRequired(true);
+          setTermsContent(data.termsContent);
+        } else {
+          setTermsChecked(true);
+        }
+      })
+      .catch(() => setTermsChecked(true));
+  }, [course?.id, hasAccess]);
 
   function toggleCollapsed() {
     setCollapsed((c) => {
@@ -149,6 +171,16 @@ export default function CourseGroupLayout({
         </header>
         <main className="flex-1 min-h-0 overflow-y-auto">{children}</main>
       </div>
+      {termsRequired && !termsChecked && course && (
+        <TermsModal
+          courseId={course.id}
+          termsContent={termsContent}
+          onAccepted={() => {
+            setTermsRequired(false);
+            setTermsChecked(true);
+          }}
+        />
+      )}
     </div>
   );
 }
