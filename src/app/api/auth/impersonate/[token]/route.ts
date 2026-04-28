@@ -110,6 +110,23 @@ export async function GET(
     const projectRef = new URL(supabaseUrl).hostname.split(".")[0];
     const cookiePrefix = `sb-${projectRef}-auth-token`;
 
+    const response = NextResponse.redirect(`${baseUrl}/producer`);
+
+    const allCookies = request.headers.get("cookie") || "";
+    const oldCookieNames = allCookies
+      .split(";")
+      .map((c) => c.trim().split("=")[0])
+      .filter((name) => name.startsWith("sb-") && name.includes("-auth-token"));
+
+    for (const name of oldCookieNames) {
+      response.cookies.set(name, "", { path: "/", maxAge: 0 });
+    }
+
+    console.log(
+      "[IMPERSONATE] Step 5 - Cleared old cookies:",
+      oldCookieNames.length
+    );
+
     const sessionStr = JSON.stringify({
       access_token: signInData.session.access_token,
       refresh_token: signInData.session.refresh_token,
@@ -119,18 +136,29 @@ export async function GET(
       user: signInData.session.user,
     });
 
-    const response = NextResponse.redirect(`${baseUrl}/producer`);
-
-    response.cookies.set(cookiePrefix, sessionStr, {
+    const CHUNK_SIZE = 3500;
+    const cookieOptions = {
       path: "/",
       httpOnly: false,
       secure: true,
-      sameSite: "lax",
+      sameSite: "lax" as const,
       maxAge: signInData.session.expires_in,
-    });
+    };
+
+    if (sessionStr.length <= CHUNK_SIZE) {
+      response.cookies.set(cookiePrefix, sessionStr, cookieOptions);
+    } else {
+      const chunks: string[] = [];
+      for (let i = 0; i < sessionStr.length; i += CHUNK_SIZE) {
+        chunks.push(sessionStr.slice(i, i + CHUNK_SIZE));
+      }
+      for (let i = 0; i < chunks.length; i++) {
+        response.cookies.set(`${cookiePrefix}.${i}`, chunks[i], cookieOptions);
+      }
+    }
 
     console.log(
-      `[IMPERSONATE] Step 5 - SUCCESS: Admin ${impToken.admin.email} → ${impToken.user.email}`
+      `[IMPERSONATE] Step 6 - SUCCESS: Admin ${impToken.admin.email} → ${impToken.user.email} (cookie size: ${sessionStr.length})`
     );
 
     return response;
