@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { createAdminClient } from "@/lib/supabase-admin";
+import { createServerSupabaseClient } from "@/lib/supabase-server";
 
 export async function GET(
   request: Request,
@@ -41,25 +42,43 @@ export async function GET(
       data: { used: true },
     });
 
-    const supabase = createAdminClient();
-    const redirectTo = `${baseUrl}/producer`;
-
-    const { data, error } = await supabase.auth.admin.generateLink({
+    const supabaseAdmin = createAdminClient();
+    const { data, error } = await supabaseAdmin.auth.admin.generateLink({
       type: "magiclink",
       email: impToken.user.email,
-      options: { redirectTo },
+      options: { redirectTo: `${baseUrl}/producer` },
     });
 
     if (error || !data?.properties?.action_link) {
-      console.error("[IMPERSONATE] Supabase generateLink error:", error);
+      console.error("[IMPERSONATE] generateLink error:", error);
       return errorRedirect("Erro ao autenticar");
     }
 
+    const actionUrl = new URL(data.properties.action_link);
+    const tokenHash = actionUrl.searchParams.get("token");
+    const type = actionUrl.searchParams.get("type");
+
+    if (!tokenHash || type !== "magiclink") {
+      console.error("[IMPERSONATE] invalid action_link format:", data.properties.action_link);
+      return errorRedirect("Erro ao autenticar");
+    }
+
+    const supabase = await createServerSupabaseClient();
+    const { error: verifyError } = await supabase.auth.verifyOtp({
+      token_hash: tokenHash,
+      type: "magiclink",
+    });
+
+    if (verifyError) {
+      console.error("[IMPERSONATE] verifyOtp error:", verifyError);
+      return errorRedirect("Erro ao verificar sessão");
+    }
+
     console.log(
-      `[IMPERSONATE] Admin ${impToken.admin.email} → ${impToken.user.email} (token consumed)`
+      `[IMPERSONATE] Admin ${impToken.admin.email} → ${impToken.user.email} (session set)`
     );
 
-    return NextResponse.redirect(data.properties.action_link);
+    return NextResponse.redirect(`${baseUrl}/producer`);
   } catch (error) {
     console.error("[IMPERSONATE] callback error:", error);
     return errorRedirect("Erro interno");
