@@ -2,12 +2,18 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
 import { useUserStore } from "@/stores/user-store";
 import {
   DateRangeSelector,
   computeRange,
   type DateRangeValue,
 } from "@/components/date-range-selector";
+
+const AdminGrowthChart = dynamic(
+  () => import("@/components/admin-growth-chart").then((m) => m.AdminGrowthChart),
+  { ssr: false, loading: () => <div className="w-full h-[300px] animate-pulse" /> }
+);
 
 interface DashboardData {
   kpis: {
@@ -194,6 +200,75 @@ export default function AdminDashboardPage() {
               value={data.kpis.suspended}
               valueColor="text-red-400"
             />
+          </div>
+
+          {/* Gráfico + Rankings */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+            {/* Gráfico — 2/3 */}
+            <div className="lg:col-span-2 bg-white dark:bg-white/5 border border-gray-200 dark:border-white/5 rounded-xl p-5">
+              <div className="mb-4">
+                <h2 className="text-sm font-semibold text-gray-900 dark:text-white">Crescimento</h2>
+                <p className="text-xs text-gray-500 mt-0.5">Novos produtores e cancelamentos por dia</p>
+              </div>
+              {data.chart.length > 0 ? (
+                <AdminGrowthChart data={data.chart} />
+              ) : (
+                <div className="flex items-center justify-center h-[300px] text-gray-500 text-sm">
+                  Sem dados para o período selecionado
+                </div>
+              )}
+            </div>
+
+            {/* Rankings — 1/3 */}
+            <div className="bg-white dark:bg-white/5 border border-gray-200 dark:border-white/5 rounded-xl p-5">
+              <h2 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">Produtores mais rentáveis</h2>
+              {data.topProducers.length > 0 ? (
+                <div className="space-y-3">
+                  {data.topProducers.map((p, i) => (
+                    <div key={p.id} className="flex items-center gap-3">
+                      <span className="text-xs text-gray-500 dark:text-gray-600 w-4">{i + 1}</span>
+                      <div className="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center text-xs font-bold text-blue-400 flex-shrink-0 overflow-hidden">
+                        {p.avatarUrl ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={p.avatarUrl} alt="" className="w-8 h-8 rounded-full object-cover" />
+                        ) : (
+                          (p.name?.[0] || "?").toUpperCase()
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm text-gray-900 dark:text-white truncate">{p.name || p.email}</p>
+                        <p className="text-[11px] text-gray-500 truncate">{p.email}</p>
+                      </div>
+                      <p className="text-sm font-semibold text-emerald-500 flex-shrink-0">
+                        {formatMoney(p.revenue)}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-gray-500 text-center py-8">Nenhum produtor ativo</p>
+              )}
+
+              {data.planDistribution.length > 0 && (
+                <div className="mt-6 pt-4 border-t border-gray-200 dark:border-white/5">
+                  <h3 className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">Distribuição por plano</h3>
+                  {data.planDistribution.map((plan) => (
+                    <div key={plan.planId} className="mb-3 last:mb-0">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-gray-700 dark:text-gray-300">{plan.planName}</span>
+                        <span className="text-gray-500">{plan.count}</span>
+                      </div>
+                      <div className="w-full h-1.5 bg-gray-100 dark:bg-white/5 rounded-full mt-1">
+                        <div
+                          className="h-full bg-blue-500 rounded-full transition-all duration-500"
+                          style={{ width: `${plan.percentage}%` }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </>
       ) : (
