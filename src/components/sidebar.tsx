@@ -151,6 +151,7 @@ const collaboratorLinks: NavLink[] = [
 const adminLinks: NavLink[] = [
   { href: "/admin", label: "Dashboard", icon: iconDashboard },
   { href: "/admin/producers", label: "Produtores", icon: iconBriefcase },
+  { href: "/admin/reports", label: "Relatórios", icon: iconAnalytics },
   { href: "/admin/plans", label: "Planos", icon: iconPlans },
   { href: "/admin/subscriptions", label: "Assinaturas", icon: iconSubscriptions },
   { href: "/admin/integrations", label: "Integrações", icon: iconIntegrations },
