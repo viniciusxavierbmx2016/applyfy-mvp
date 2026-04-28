@@ -171,6 +171,10 @@ async function handlePaid(
 
     await createInvoice(sub.id, amount, txId, paidAt);
 
+    await prisma.billingReminder.deleteMany({
+      where: { subscriptionId: sub.id },
+    });
+
     const plan = await prisma.plan.findUnique({ where: { id: sub.planId }, select: { name: true, price: true } });
     if (plan) {
       const fmt = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });

@@ -159,6 +159,12 @@ export async function PATCH(request: Request, { params }: Ctx) {
       },
     });
 
+    if (["activate", "reactivate", "exempt"].includes(action)) {
+      await prisma.billingReminder.deleteMany({
+        where: { subscriptionId: params.id },
+      });
+    }
+
     return NextResponse.json({ subscription: updated });
   } catch (error) {
     const msg = error instanceof Error ? error.message : "";

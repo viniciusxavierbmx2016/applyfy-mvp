@@ -218,14 +218,28 @@ export function subscriptionActivated(
 
 export function subscriptionExpiring(name: string, daysLeft: number) {
   const firstName = name.split(" ")[0];
+  const overdue = daysLeft < 0;
+  const absDays = Math.abs(daysLeft);
+  const headingText = overdue
+    ? `Pagamento atrasado há ${absDays} dia${absDays > 1 ? "s" : ""}`
+    : daysLeft === 0
+      ? "Sua assinatura vence hoje"
+      : `Sua assinatura vence em ${daysLeft} dia${daysLeft > 1 ? "s" : ""}`;
+  const bodyText = overdue
+    ? `Olá, ${firstName}. Sua assinatura do Members Club está com pagamento em atraso. Regularize para evitar a suspensão da sua área de membros.`
+    : `Olá, ${firstName}. Sua assinatura do Members Club está próxima do vencimento. Regularize seu pagamento para continuar com acesso completo.`;
+  const subjectText = overdue
+    ? `Pagamento atrasado - Members Club`
+    : daysLeft === 0
+      ? "Sua assinatura vence hoje"
+      : `Sua assinatura vence em ${daysLeft} dias`;
   const html = baseTemplate(`
-    ${heading(`Sua assinatura vence em ${daysLeft} dia${daysLeft > 1 ? "s" : ""}`)}
-    ${paragraph(`Olá, ${firstName}. Sua assinatura do Members Club está próxima do vencimento.`)}
-    ${paragraph("Regularize seu pagamento para continuar com acesso completo e evitar a suspensão da sua área de membros.")}
-    ${ctaButton("Renovar agora", `${APP_URL}/producer/settings/billing`, "#f59e0b")}
+    ${heading(headingText)}
+    ${paragraph(bodyText)}
+    ${ctaButton("Regularizar agora", `${APP_URL}/producer/settings/billing`, overdue ? "#ef4444" : "#f59e0b")}
   `);
   return {
-    subject: `Sua assinatura vence em ${daysLeft} dias`,
+    subject: subjectText,
     htmlContent: html,
   };
 }
