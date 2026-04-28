@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import type { SubscriptionStatus } from "@prisma/client";
 import { sendEmail } from "@/lib/email";
-import { subscriptionActivated, subscriptionSuspended } from "@/lib/email-templates";
+import { subscriptionActivated, subscriptionRenewed, subscriptionSuspended } from "@/lib/email-templates";
 
 type ApplyfyPayload = {
   event?: string;
@@ -24,6 +24,10 @@ type ApplyfyPayload = {
   } | null;
   orderItems?: Array<{ product?: { externalId?: string } }>;
 };
+
+function formatDateBR(d: Date): string {
+  return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" });
+}
 
 function log(event: string, email: string | undefined, txId: string | undefined, result: string) {
   console.log(`[members-club webhook] event=${event} email=${email ?? "?"} tx=${txId ?? "?"} → ${result}`);
@@ -143,7 +147,8 @@ async function handlePaid(
     const template = subscriptionActivated(
       producer.name || "Produtor",
       defaultPlan.name,
-      fmt.format(defaultPlan.price)
+      fmt.format(defaultPlan.price),
+      formatDateBR(periodEnd)
     );
     sendEmail({ to: { email: producer.email, name: producer.name || undefined }, ...template }).catch((err) => console.error("[EMAIL_ERROR] subscriptionActivated to:", producer.email, err?.message || err));
 
@@ -178,7 +183,7 @@ async function handlePaid(
     const plan = await prisma.plan.findUnique({ where: { id: sub.planId }, select: { name: true, price: true } });
     if (plan) {
       const fmt = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
-      const template = subscriptionActivated(producer.name || "Produtor", plan.name, fmt.format(plan.price));
+      const template = subscriptionActivated(producer.name || "Produtor", plan.name, fmt.format(plan.price), formatDateBR(periodEnd));
       sendEmail({ to: { email: producer.email, name: producer.name || undefined }, ...template }).catch((err) => console.error("[EMAIL_ERROR] subscriptionActivated to:", producer.email, err?.message || err));
     }
 
@@ -202,6 +207,18 @@ async function handlePaid(
     });
 
     await createInvoice(sub.id, amount, txId, paidAt);
+
+    await prisma.billingReminder.deleteMany({
+      where: { subscriptionId: sub.id },
+    });
+
+    const plan = await prisma.plan.findUnique({ where: { id: sub.planId }, select: { name: true, price: true } });
+    if (plan) {
+      const fmt = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
+      const template = subscriptionRenewed(producer.name || "Produtor", plan.name, fmt.format(amount || plan.price), formatDateBR(extended));
+      sendEmail({ to: { email: producer.email, name: producer.name || undefined }, ...template }).catch((err) => console.error("[EMAIL_ERROR] subscriptionRenewed to:", producer.email, err?.message || err));
+    }
+
     log("TRANSACTION_PAID", email, txId, "renewed (extended period)");
     return;
   }

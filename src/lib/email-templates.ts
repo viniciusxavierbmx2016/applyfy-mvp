@@ -191,9 +191,11 @@ export function collaboratorInvite(
 export function subscriptionActivated(
   name: string,
   planName: string,
-  amount: string
+  amount: string,
+  nextBillingDate?: string
 ) {
   const firstName = name.split(" ")[0];
+  const nextLabel = nextBillingDate || "em 30 dias";
   const html = baseTemplate(`
     ${heading("Assinatura ativada!")}
     ${paragraph(`Olá, ${firstName}! Sua assinatura do plano <strong style="color:#ffffff;">${planName}</strong> foi ativada com sucesso.`)}
@@ -202,16 +204,45 @@ export function subscriptionActivated(
         <p style="margin:0 0 4px;font-size:13px;color:#9ca3af;">Plano</p>
         <p style="margin:0 0 12px;font-size:16px;font-weight:bold;color:#ffffff;">${planName}</p>
         <p style="margin:0 0 4px;font-size:13px;color:#9ca3af;">Valor</p>
-        <p style="margin:0 0 12px;font-size:16px;font-weight:bold;color:#ffffff;">${amount}/mês</p>
+        <p style="margin:0 0 12px;font-size:16px;font-weight:bold;color:#10b981;">${amount}/mês</p>
         <p style="margin:0 0 4px;font-size:13px;color:#9ca3af;">Próxima cobrança</p>
-        <p style="margin:0;font-size:16px;font-weight:bold;color:#ffffff;">em 30 dias</p>
+        <p style="margin:0;font-size:16px;font-weight:bold;color:#ffffff;">${nextLabel}</p>
       </td></tr>
     </table>
-    ${paragraph("Agora você tem acesso completo a todos os recursos da plataforma.")}
+    ${paragraph("Agora você tem acesso completo a todos os recursos da plataforma. Crie seus cursos, adicione alunos e comece a faturar!")}
     ${ctaButton("Acessar o painel", `${APP_URL}/producer`)}
   `);
   return {
     subject: "Assinatura ativada - Members Club",
+    htmlContent: html,
+  };
+}
+
+export function subscriptionRenewed(
+  name: string,
+  planName: string,
+  amount: string,
+  nextBillingDate: string
+) {
+  const firstName = name.split(" ")[0];
+  const html = baseTemplate(`
+    ${heading("Assinatura renovada!")}
+    ${paragraph(`Olá, ${firstName}! Sua assinatura do plano <strong style="color:#ffffff;">${planName}</strong> foi renovada com sucesso.`)}
+    <table role="presentation" cellpadding="0" cellspacing="0" style="background-color:#0f0f23;border-radius:8px;width:100%;margin-bottom:14px;">
+      <tr><td style="padding:16px;">
+        <p style="margin:0 0 4px;font-size:13px;color:#9ca3af;">Plano</p>
+        <p style="margin:0 0 12px;font-size:16px;font-weight:bold;color:#ffffff;">${planName}</p>
+        <p style="margin:0 0 4px;font-size:13px;color:#9ca3af;">Valor pago</p>
+        <p style="margin:0 0 12px;font-size:16px;font-weight:bold;color:#10b981;">${amount}</p>
+        <p style="margin:0 0 4px;font-size:13px;color:#9ca3af;">Próxima renovação</p>
+        <p style="margin:0;font-size:16px;font-weight:bold;color:#ffffff;">${nextBillingDate}</p>
+      </td></tr>
+    </table>
+    ${paragraph("Obrigado por continuar com a gente! Seu acesso permanece ativo.")}
+    ${ctaButton("Acessar o painel", `${APP_URL}/producer`)}
+  `);
+  return {
+    subject: "Assinatura renovada - Members Club",
     htmlContent: html,
   };
 }
