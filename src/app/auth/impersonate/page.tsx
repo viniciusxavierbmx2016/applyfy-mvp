@@ -35,11 +35,22 @@ function ImpersonateContent() {
 
         setStatus(`Entrando como ${session.email}...`);
 
+        console.log("[IMPERSONATE-CLIENT] Tokens received:", {
+          hasAccessToken: !!session.access_token,
+          hasRefreshToken: !!session.refresh_token,
+          email: session.email,
+        });
+
         const supabase = createClient();
 
         const { error: sessionError } = await supabase.auth.setSession({
           access_token: session.access_token,
           refresh_token: session.refresh_token,
+        });
+
+        console.log("[IMPERSONATE-CLIENT] setSession result:", {
+          error: sessionError?.message || null,
+          code: sessionError?.status || null,
         });
 
         if (sessionError) {

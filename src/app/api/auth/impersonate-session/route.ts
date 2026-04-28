@@ -91,14 +91,17 @@ export async function POST(request: Request) {
       );
     }
 
-    const finalPassword = `locked_${Date.now()}_${Math.random().toString(36).slice(2)}${Math.random().toString(36).slice(2)}`;
-    await supabaseAdmin.auth.admin.updateUserById(impToken.user.id, {
-      password: finalPassword,
-    });
-
     console.log(
       `[IMPERSONATE-SESSION] Success: ${impToken.admin.email} → ${impToken.user.email}`
     );
+
+    console.log("[IMPERSONATE-SESSION] Tokens:", {
+      hasAccessToken: !!signInData.session.access_token,
+      accessTokenLength: signInData.session.access_token?.length,
+      hasRefreshToken: !!signInData.session.refresh_token,
+      refreshTokenLength: signInData.session.refresh_token?.length,
+      expiresAt: signInData.session.expires_at,
+    });
 
     return NextResponse.json({
       access_token: signInData.session.access_token,
