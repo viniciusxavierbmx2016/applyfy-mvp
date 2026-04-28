@@ -1,11 +1,20 @@
 "use client";
 
 import { useState } from "react";
+import dynamic from "next/dynamic";
 import { usePathname } from "next/navigation";
 import { Sidebar } from "@/components/sidebar";
 import { Header } from "@/components/header";
 import { SubscriptionGate } from "@/components/subscription-gate";
 import { ProducerThemeProvider } from "@/components/producer-theme-provider";
+
+const ProducerTour = dynamic(
+  () =>
+    import("@/components/producer-tour").then((m) => ({
+      default: m.ProducerTour,
+    })),
+  { ssr: false }
+);
 
 export default function ProducerLayout({
   children,
@@ -31,6 +40,7 @@ export default function ProducerLayout({
           <Header onMenuToggle={() => setSidebarOpen(!sidebarOpen)} />
 
           <main className="flex-1 p-4 lg:p-6">
+            <ProducerTour />
             <SubscriptionGate>
               {children}
             </SubscriptionGate>

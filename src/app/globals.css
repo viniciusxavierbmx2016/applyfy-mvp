@@ -428,3 +428,54 @@ body {
   text-decoration: none !important;
   box-sizing: border-box !important;
 }
+
+/* ─── Driver.js Tour ─────────────────────────────────────────── */
+.mc-tour-popover {
+  background: #1a1a2e !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 16px !important;
+  color: #fff !important;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5) !important;
+  max-width: 400px !important;
+}
+.mc-tour-popover .driver-popover-title {
+  font-size: 16px !important;
+  font-weight: 700 !important;
+  color: #fff !important;
+}
+.mc-tour-popover .driver-popover-description {
+  font-size: 14px !important;
+  color: #9ca3af !important;
+  line-height: 1.6 !important;
+}
+.mc-tour-popover .driver-popover-progress-text {
+  font-size: 12px !important;
+  color: #6b7280 !important;
+}
+.mc-tour-popover .driver-popover-prev-btn {
+  background: transparent !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  color: #9ca3af !important;
+  border-radius: 8px !important;
+  padding: 6px 16px !important;
+  font-size: 13px !important;
+}
+.mc-tour-popover .driver-popover-next-btn,
+.mc-tour-popover .driver-popover-done-btn {
+  background: #3b82f6 !important;
+  border: none !important;
+  color: #fff !important;
+  border-radius: 8px !important;
+  padding: 6px 16px !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+}
+.mc-tour-popover .driver-popover-close-btn {
+  color: #6b7280 !important;
+}
+.mc-tour-popover .driver-popover-arrow-side-left,
+.mc-tour-popover .driver-popover-arrow-side-right,
+.mc-tour-popover .driver-popover-arrow-side-top,
+.mc-tour-popover .driver-popover-arrow-side-bottom {
+  border-color: #1a1a2e !important;
+}
