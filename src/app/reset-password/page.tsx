@@ -1,12 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase";
 
 export default function ResetPasswordPage() {
-  const router = useRouter();
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [error, setError] = useState("");
@@ -75,10 +73,6 @@ export default function ResetPasswordPage() {
     };
   }, []);
 
-  function redirectAfterReset() {
-    router.push("/producer/login?reset=success");
-  }
-
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
@@ -100,8 +94,9 @@ export default function ResetPasswordPage() {
         return;
       }
       setDone(true);
+      await supabase.auth.signOut();
       setTimeout(() => {
-        redirectAfterReset();
+        window.location.href = "/producer/login?reset=success";
       }, 1200);
     } catch {
       setError("Erro ao conectar com o servidor");
