@@ -26,6 +26,8 @@ interface DashboardData {
     pastDue: number;
     totalProducers: number;
     suspended: number;
+    periodRevenue: number;
+    periodTransactions: number;
   };
   chart: Array<{ date: string; newProducers: number; cancellations: number }>;
   topProducers: Array<{
@@ -150,6 +152,13 @@ export default function AdminDashboardPage() {
         <SkeletonCards count={8} />
       ) : data ? (
         <>
+          {/* Faturamento do período */}
+          <PeriodRevenueCard
+            revenue={data.kpis.periodRevenue}
+            transactions={data.kpis.periodTransactions}
+            label={range.label}
+          />
+
           {/* KPI Cards — linha 1 */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
             <AnimatedKpiCard
@@ -359,6 +368,46 @@ function AnimatedSmallKpiCard({
       <p className={`text-lg font-bold mt-1 ${valueColor || "text-gray-900 dark:text-white"}`}>
         {display}
       </p>
+    </div>
+  );
+}
+
+function PeriodRevenueCard({
+  revenue,
+  transactions,
+  label,
+}: {
+  revenue: number;
+  transactions: number;
+  label: string;
+}) {
+  const display = useCountUp(revenue, {
+    prefix: "R$ ",
+    decimals: 2,
+    separator: ".",
+    decimalSeparator: ",",
+  });
+
+  return (
+    <div className="bg-gradient-to-r from-emerald-500/10 to-blue-500/10 border border-emerald-500/20 rounded-xl p-6 mb-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">
+            Faturamento no período ({label})
+          </p>
+          <p className="text-3xl font-bold text-emerald-500 dark:text-emerald-400">
+            {display}
+          </p>
+          <p className="text-sm text-gray-500 mt-1">
+            {transactions} transaç{transactions === 1 ? "ão" : "ões"}
+          </p>
+        </div>
+        <div className="w-14 h-14 rounded-xl bg-emerald-500/10 flex items-center justify-center">
+          <svg width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} className="text-emerald-500">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 1v22m5-18H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H7" />
+          </svg>
+        </div>
+      </div>
     </div>
   );
 }

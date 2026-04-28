@@ -40,6 +40,7 @@ export async function GET(req: NextRequest) {
       cancelledInRange,
       allPlans,
       producersList,
+      periodInvoices,
     ] = await Promise.all([
       prisma.user.count({ where: producerWhere }),
 
@@ -94,6 +95,16 @@ export async function GET(req: NextRequest) {
         where: { role: "PRODUCER" },
         select: { id: true, name: true, email: true },
         orderBy: { name: "asc" },
+      }),
+
+      prisma.invoice.aggregate({
+        where: {
+          status: "PAID",
+          paidAt: { gte: rangeStart, lte: rangeEnd },
+          ...(producerId ? { subscription: { userId: producerId } } : {}),
+        },
+        _sum: { amount: true },
+        _count: true,
       }),
     ]);
 
@@ -195,6 +206,8 @@ export async function GET(req: NextRequest) {
         pastDue: pastDueSubs,
         totalProducers,
         suspended: suspendedSubs,
+        periodRevenue: Math.round((periodInvoices._sum.amount || 0) * 100) / 100,
+        periodTransactions: periodInvoices._count || 0,
       },
       chart,
       topProducers,
