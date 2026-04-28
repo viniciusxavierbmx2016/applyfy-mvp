@@ -42,6 +42,7 @@ export async function GET(
         level: true,
         createdAt: true,
         lastAccessAt: true,
+        lastIpAddress: true,
         userTags: {
           select: { tag: { select: { name: true, color: true } } },
         },
@@ -125,6 +126,13 @@ export async function GET(
         }),
       ]);
 
+    const accessLogs = await prisma.accessLog.findMany({
+      where: { userId: user.id },
+      orderBy: { createdAt: "desc" },
+      take: 10,
+      select: { ip: true, userAgent: true, path: true, createdAt: true },
+    });
+
     const progressByCourse = new Map<string, number>();
     for (const p of progress) {
       const cid = p.lesson.module.courseId;
@@ -188,6 +196,7 @@ export async function GET(
         level: user.level,
         createdAt: user.createdAt,
         lastAccessAt: user.lastAccessAt,
+        lastIpAddress: user.lastIpAddress,
       },
       tags: user.userTags.map((ut) => ({ name: ut.tag.name, color: ut.tag.color })),
       enrollments: enrollmentsOut,
@@ -206,6 +215,7 @@ export async function GET(
         issuedAt: c.issuedAt,
       })),
       recentActivity: recentActivity.slice(0, 15),
+      accessLogs,
     });
   } catch (error) {
     console.error("GET /api/producer/students/[id] error:", error);

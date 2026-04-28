@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { createAdminClient, AVATAR_BUCKET } from "@/lib/supabase-admin";
@@ -6,7 +6,7 @@ import { createAdminClient, AVATAR_BUCKET } from "@/lib/supabase-admin";
 const MAX_BYTES = 2 * 1024 * 1024;
 const ALLOWED = new Set(["image/jpeg", "image/jpg", "image/png", "image/webp"]);
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   const t0 = Date.now();
   try {
     const user = await getCurrentUser();
@@ -15,6 +15,32 @@ export async function GET() {
       console.log(`[API /api/auth/me] auth:${t1 - t0}ms total:${t1 - t0}ms (unauth)`);
       return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
     }
+
+    const ip =
+      req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+      req.headers.get("x-real-ip") ||
+      "unknown";
+    const ua = req.headers.get("user-agent") || "";
+    const referer = req.headers.get("referer") || "";
+
+    prisma.user
+      .update({
+        where: { id: user.id },
+        data: { lastIpAddress: ip, lastAccessAt: new Date() },
+      })
+      .catch(() => {});
+
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+    prisma.accessLog
+      .findFirst({ where: { userId: user.id, createdAt: { gte: oneHourAgo } } })
+      .then((recent) => {
+        if (!recent) {
+          prisma.accessLog
+            .create({ data: { userId: user.id, ip, userAgent: ua, path: referer } })
+            .catch(() => {});
+        }
+      })
+      .catch(() => {});
     let collaborator: {
       permissions: string[];
       courseIds: string[];

@@ -25,6 +25,7 @@ model User {
   document        String?
   themeConfig   String?   @default("{}")
   lastAccessAt  DateTime?
+  lastIpAddress String?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
@@ -53,6 +54,7 @@ model User {
   pendingExecutions  PendingExecution[]
   impersonateTargets ImpersonateToken[] @relation("impersonateTarget")
   impersonateAdmins  ImpersonateToken[] @relation("impersonateAdmin")
+  accessLogs         AccessLog[]
 
   @@index([workspaceId])
 }
@@ -933,4 +935,17 @@ model ImpersonateToken {
   admin User @relation("impersonateAdmin", fields: [adminId], references: [id], onDelete: Cascade)
 
   @@index([token])
+}
+
+model AccessLog {
+  id        String   @id @default(cuid())
+  userId    String
+  ip        String
+  userAgent String?
+  path      String?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
 }

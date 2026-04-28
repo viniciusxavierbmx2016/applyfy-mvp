@@ -15,6 +15,7 @@ interface UserData {
   level: number;
   createdAt: string;
   lastAccessAt: string | null;
+  lastIpAddress: string | null;
 }
 interface TagData {
   name: string;
@@ -49,6 +50,12 @@ interface ActivityData {
   description: string;
   date: string;
 }
+interface AccessLogData {
+  ip: string;
+  userAgent: string | null;
+  path: string | null;
+  createdAt: string;
+}
 interface DetailResponse {
   user: UserData;
   tags: TagData[];
@@ -56,6 +63,7 @@ interface DetailResponse {
   stats: StatsData;
   certificates: CertData[];
   recentActivity: ActivityData[];
+  accessLogs: AccessLogData[];
 }
 
 type Tab = "info" | "courses" | "activity" | "engagement";
@@ -222,7 +230,7 @@ export default function StudentDetailPage({
       {/* Tab content */}
       {activeTab === "info" && <TabInfo user={user} tags={tags} />}
       {activeTab === "courses" && <TabCourses enrollments={data.enrollments} />}
-      {activeTab === "activity" && <TabActivity activity={data.recentActivity} />}
+      {activeTab === "activity" && <TabActivity activity={data.recentActivity} accessLogs={data.accessLogs} />}
       {activeTab === "engagement" && (
         <TabEngagement stats={stats} certificates={data.certificates} />
       )}
@@ -249,6 +257,10 @@ function TabInfo({ user, tags }: { user: UserData; tags: TagData[] }) {
           <InfoItem label="Nível" value={String(user.level)} />
           <InfoItem label="Data de cadastro" value={formatDateTime(user.createdAt)} />
           <InfoItem label="Último acesso" value={user.lastAccessAt ? formatDateTime(user.lastAccessAt) : null} />
+          <div>
+            <p className="text-[11px] text-gray-500 uppercase tracking-wider">Último IP</p>
+            <p className="text-sm text-gray-900 dark:text-white mt-1 font-mono">{user.lastIpAddress || "—"}</p>
+          </div>
         </InfoGrid>
       </Section>
 
@@ -343,11 +355,7 @@ function TabCourses({ enrollments }: { enrollments: EnrollmentData[] }) {
 }
 
 /* ── Tab: Atividade ── */
-function TabActivity({ activity }: { activity: ActivityData[] }) {
-  if (activity.length === 0) {
-    return <EmptyState text="Nenhuma atividade recente." />;
-  }
-
+function TabActivity({ activity, accessLogs }: { activity: ActivityData[]; accessLogs: AccessLogData[] }) {
   const icons: Record<string, string> = {
     lesson_completed: "✅",
     like: "👍",
@@ -357,28 +365,56 @@ function TabActivity({ activity }: { activity: ActivityData[] }) {
   };
 
   return (
-    <Section title="Atividade recente">
-      <div className="space-y-0">
-        {activity.map((a, i) => (
-          <div
-            key={i}
-            className="flex items-start gap-3 py-3 border-b border-gray-100 dark:border-white/[0.04] last:border-0"
-          >
-            <span className="text-base flex-shrink-0 mt-0.5">
-              {icons[a.type] || "📌"}
-            </span>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm text-gray-900 dark:text-white">
-                {a.description}
-              </p>
-              <p className="text-xs text-gray-500 mt-0.5">
-                {formatRelative(a.date)}
-              </p>
-            </div>
+    <div className="space-y-6">
+      {activity.length > 0 ? (
+        <Section title="Atividade recente">
+          <div className="space-y-0">
+            {activity.map((a, i) => (
+              <div
+                key={i}
+                className="flex items-start gap-3 py-3 border-b border-gray-100 dark:border-white/[0.04] last:border-0"
+              >
+                <span className="text-base flex-shrink-0 mt-0.5">
+                  {icons[a.type] || "📌"}
+                </span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm text-gray-900 dark:text-white">
+                    {a.description}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    {formatRelative(a.date)}
+                  </p>
+                </div>
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
-    </Section>
+        </Section>
+      ) : (
+        <EmptyState text="Nenhuma atividade recente." />
+      )}
+
+      <Section title="Histórico de acessos">
+        {accessLogs.length > 0 ? (
+          <div className="space-y-2">
+            {accessLogs.map((log, i) => (
+              <div key={i} className="flex items-center justify-between py-2 px-3 bg-gray-50 dark:bg-white/[0.02] rounded-lg">
+                <div className="flex items-center gap-3 min-w-0">
+                  <span className="text-xs font-mono text-blue-600 dark:text-blue-400 flex-shrink-0">{log.ip}</span>
+                  <span className="text-[10px] text-gray-400 dark:text-gray-600 truncate max-w-[200px]">
+                    {log.userAgent?.split("(")[0] || ""}
+                  </span>
+                </div>
+                <span className="text-xs text-gray-500 flex-shrink-0 ml-2">
+                  {formatDateTime(log.createdAt)}
+                </span>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-gray-500">Nenhum acesso registrado</p>
+        )}
+      </Section>
+    </div>
   );
 }
 
