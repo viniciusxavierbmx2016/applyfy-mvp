@@ -36,7 +36,7 @@ export async function POST(
         token,
         userId: producer.id,
         adminId: admin.id,
-        expiresAt: new Date(Date.now() + 60 * 1000),
+        expiresAt: new Date(Date.now() + 120 * 1000),
       },
     });
 
@@ -55,7 +55,7 @@ export async function POST(
       `[IMPERSONATE] Admin ${admin.email} (${admin.id}) gerou token para ${producer.email} (${producer.id}) em ${new Date().toISOString()}`
     );
 
-    return NextResponse.json({ url, email: producer.email, expiresIn: 60 });
+    return NextResponse.json({ url, email: producer.email, expiresIn: 120 });
   } catch (error) {
     console.error("[IMPERSONATE] error:", error);
     const msg = error instanceof Error ? error.message : "";

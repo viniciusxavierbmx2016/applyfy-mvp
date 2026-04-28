@@ -201,7 +201,7 @@ export default function ProducerDetailPage({
         return;
       }
       setImpersonateUrl(json.url);
-      setImpersonateCountdown(60);
+      setImpersonateCountdown(120);
     } catch {
       showToast("Erro ao gerar link de acesso");
     } finally {

@@ -12,8 +12,17 @@ export async function GET(
     process.env.NEXT_PUBLIC_APP_URL ||
     new URL(request.url).origin;
 
-  const errorRedirect = (msg: string) =>
-    NextResponse.redirect(`${baseUrl}/admin?error=${encodeURIComponent(msg)}`);
+  console.log("[IMPERSONATE] Step 0 - Request received:", {
+    tokenPrefix: params.token.substring(0, 10),
+    baseUrl,
+  });
+
+  const errorRedirect = (msg: string) => {
+    console.log("[IMPERSONATE] ERROR REDIRECT:", msg);
+    return NextResponse.redirect(
+      `${baseUrl}/admin?error=${encodeURIComponent(msg)}`
+    );
+  };
 
   try {
     const impToken = await prisma.impersonateToken.findUnique({
@@ -27,6 +36,16 @@ export async function GET(
     if (!impToken) {
       return errorRedirect("Token inválido");
     }
+
+    console.log("[IMPERSONATE] Step 1 - Token found:", {
+      tokenId: impToken.id,
+      used: impToken.used,
+      expiresAt: impToken.expiresAt.toISOString(),
+      now: new Date().toISOString(),
+      expired: impToken.expiresAt < new Date(),
+      targetEmail: impToken.user.email,
+      adminEmail: impToken.admin.email,
+    });
 
     if (impToken.used) {
       return errorRedirect("Token já utilizado");
@@ -49,24 +68,50 @@ export async function GET(
       options: { redirectTo: `${baseUrl}/producer` },
     });
 
+    console.log("[IMPERSONATE] Step 2 - generateLink result:", {
+      hasData: !!data,
+      hasActionLink: !!data?.properties?.action_link,
+      actionLinkPreview: data?.properties?.action_link?.substring(0, 100),
+      error: error?.message || null,
+    });
+
     if (error || !data?.properties?.action_link) {
       console.error("[IMPERSONATE] generateLink error:", error);
       return errorRedirect("Erro ao autenticar");
     }
 
     const actionUrl = new URL(data.properties.action_link);
-    const tokenHash = actionUrl.searchParams.get("token");
+    const tokenHash =
+      actionUrl.searchParams.get("token_hash") ||
+      actionUrl.searchParams.get("token");
     const type = actionUrl.searchParams.get("type");
 
+    console.log("[IMPERSONATE] Step 3 - Extracted from action_link:", {
+      tokenHashPreview: tokenHash?.substring(0, 20),
+      type,
+      allParams: Object.fromEntries(actionUrl.searchParams.entries()),
+    });
+
     if (!tokenHash || type !== "magiclink") {
-      console.error("[IMPERSONATE] invalid action_link format:", data.properties.action_link);
+      console.error(
+        "[IMPERSONATE] invalid action_link format:",
+        data.properties.action_link
+      );
       return errorRedirect("Erro ao autenticar");
     }
 
     const supabase = await createServerSupabaseClient();
-    const { error: verifyError } = await supabase.auth.verifyOtp({
-      token_hash: tokenHash,
-      type: "magiclink",
+    const { data: sessionData, error: verifyError } =
+      await supabase.auth.verifyOtp({
+        token_hash: tokenHash,
+        type: "magiclink",
+      });
+
+    console.log("[IMPERSONATE] Step 4 - verifyOtp result:", {
+      hasSession: !!sessionData?.session,
+      userEmail: sessionData?.user?.email || null,
+      error: verifyError?.message || null,
+      errorStatus: verifyError?.status || null,
     });
 
     if (verifyError) {
@@ -75,7 +120,7 @@ export async function GET(
     }
 
     console.log(
-      `[IMPERSONATE] Admin ${impToken.admin.email} → ${impToken.user.email} (session set)`
+      `[IMPERSONATE] Step 5 - SUCCESS: Admin ${impToken.admin.email} → ${impToken.user.email} (session set, redirecting to /producer)`
     );
 
     return NextResponse.redirect(`${baseUrl}/producer`);
