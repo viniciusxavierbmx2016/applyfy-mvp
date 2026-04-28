@@ -25,8 +25,15 @@ const GrowthChart = dynamic(
     import("@/components/admin-reports-charts").then((m) => m.GrowthChart),
   { ssr: false }
 );
+const FinancialCharts = dynamic(
+  () =>
+    import("@/components/admin-reports-charts").then(
+      (m) => m.FinancialCharts
+    ),
+  { ssr: false }
+);
 
-type Tab = "onboarding" | "funnel" | "growth";
+type Tab = "onboarding" | "funnel" | "growth" | "financial";
 
 interface DistItem {
   label: string;
@@ -47,6 +54,25 @@ interface ReportData {
     hasStudents: number;
   };
   growth: { month: string; count: number }[];
+  financial?: {
+    mrr: number;
+    arr: number;
+    arpu: number;
+    churnRate: number;
+    nrr: number;
+    ltv: number;
+    mrrGrowthRate: number;
+    activeSubscriptions: number;
+    cancelledInPeriod: number;
+    newSubscriptions: number;
+    revenueByPlan: {
+      planName: string;
+      price: number;
+      count: number;
+      mrr: number;
+    }[];
+    mrrHistory: { month: string; mrr: number; count: number }[];
+  };
 }
 
 const NICHE_LABELS: Record<string, string> = {
@@ -99,6 +125,7 @@ const TABS: { id: Tab; label: string }[] = [
   { id: "onboarding", label: "Onboarding" },
   { id: "funnel", label: "Funil" },
   { id: "growth", label: "Crescimento" },
+  { id: "financial", label: "Financeiro" },
 ];
 
 export default function AdminReportsPage() {
@@ -215,6 +242,10 @@ export default function AdminReportsPage() {
           {tab === "funnel" && <FunnelChart funnel={data.funnel} />}
 
           {tab === "growth" && <GrowthChart data={data.growth} />}
+
+          {tab === "financial" && data.financial && (
+            <FinancialCharts financial={data.financial} />
+          )}
         </>
       )}
     </div>

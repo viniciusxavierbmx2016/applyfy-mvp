@@ -11,6 +11,8 @@ import {
   XAxis,
   YAxis,
   CartesianGrid,
+  AreaChart,
+  Area,
 } from "recharts";
 
 const COLORS = [
@@ -197,6 +199,207 @@ function formatMonth(ym: string) {
     "Jul", "Ago", "Set", "Out", "Nov", "Dez",
   ];
   return `${months[Number(m) - 1]}/${y}`;
+}
+
+interface FinancialData {
+  mrr: number;
+  arr: number;
+  arpu: number;
+  churnRate: number;
+  nrr: number;
+  ltv: number;
+  mrrGrowthRate: number;
+  activeSubscriptions: number;
+  cancelledInPeriod: number;
+  newSubscriptions: number;
+  revenueByPlan: {
+    planName: string;
+    price: number;
+    count: number;
+    mrr: number;
+  }[];
+  mrrHistory: { month: string; mrr: number; count: number }[];
+}
+
+function formatBRL(value: number) {
+  return value.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+const tooltipStyle = {
+  background: "#1a1a2e",
+  border: "1px solid rgba(255,255,255,0.1)",
+  borderRadius: "8px",
+  fontSize: "12px",
+  color: "#fff",
+};
+
+export function FinancialCharts({ financial }: { financial: FinancialData }) {
+  const growthArrow =
+    financial.mrrGrowthRate > 0
+      ? "\u2191"
+      : financial.mrrGrowthRate < 0
+        ? "\u2193"
+        : "\u2192";
+
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.06] rounded-xl p-5">
+          <p className="text-[11px] text-gray-500 uppercase tracking-wider">MRR</p>
+          <p className="text-2xl font-bold text-emerald-500 mt-1">
+            R$ {formatBRL(financial.mrr)}
+          </p>
+          <p className="text-xs text-gray-500 mt-1">
+            {growthArrow} {Math.abs(financial.mrrGrowthRate).toFixed(1)}% vs mês anterior
+          </p>
+        </div>
+        <div className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.06] rounded-xl p-5">
+          <p className="text-[11px] text-gray-500 uppercase tracking-wider">ARR</p>
+          <p className="text-2xl font-bold text-blue-500 mt-1">
+            R$ {formatBRL(financial.arr)}
+          </p>
+          <p className="text-xs text-gray-500 mt-1">
+            {financial.activeSubscriptions} assinaturas ativas
+          </p>
+        </div>
+        <div className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.06] rounded-xl p-5">
+          <p className="text-[11px] text-gray-500 uppercase tracking-wider">ARPU</p>
+          <p className="text-2xl font-bold text-purple-500 mt-1">
+            R$ {formatBRL(financial.arpu)}
+          </p>
+          <p className="text-xs text-gray-500 mt-1">Receita média por produtor</p>
+        </div>
+        <div className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.06] rounded-xl p-5">
+          <p className="text-[11px] text-gray-500 uppercase tracking-wider">LTV ESTIMADO</p>
+          <p className="text-2xl font-bold text-amber-500 mt-1">
+            R$ {formatBRL(financial.ltv)}
+          </p>
+          <p className="text-xs text-gray-500 mt-1">Lifetime Value por cliente</p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.06] rounded-xl p-4">
+          <p className="text-[11px] text-gray-500 uppercase tracking-wider">CHURN RATE</p>
+          <p
+            className={`text-lg font-bold mt-1 ${financial.churnRate > 5 ? "text-red-500" : financial.churnRate > 2 ? "text-amber-500" : "text-emerald-500"}`}
+          >
+            {financial.churnRate.toFixed(1)}%
+          </p>
+        </div>
+        <div className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.06] rounded-xl p-4">
+          <p className="text-[11px] text-gray-500 uppercase tracking-wider">NRR</p>
+          <p
+            className={`text-lg font-bold mt-1 ${financial.nrr >= 100 ? "text-emerald-500" : "text-amber-500"}`}
+          >
+            {financial.nrr.toFixed(1)}%
+          </p>
+        </div>
+        <div className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.06] rounded-xl p-4">
+          <p className="text-[11px] text-gray-500 uppercase tracking-wider">NOVAS ASSINATURAS</p>
+          <p className="text-lg font-bold text-blue-400 mt-1">
+            {financial.newSubscriptions}
+          </p>
+        </div>
+        <div className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.06] rounded-xl p-4">
+          <p className="text-[11px] text-gray-500 uppercase tracking-wider">CANCELAMENTOS</p>
+          <p className="text-lg font-bold text-red-400 mt-1">
+            {financial.cancelledInPeriod}
+          </p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.06] rounded-xl p-5">
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">
+            Evolução do MRR
+          </h3>
+          <div className="h-[300px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={financial.mrrHistory}>
+                <defs>
+                  <linearGradient id="gradMrr" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#10b981" stopOpacity={0.3} />
+                    <stop offset="100%" stopColor="#10b981" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  stroke="rgba(255,255,255,0.05)"
+                  vertical={false}
+                />
+                <XAxis
+                  dataKey="month"
+                  tick={{ fontSize: 11, fill: "#9ca3af" }}
+                  axisLine={{ stroke: "rgba(255,255,255,0.08)" }}
+                  tickLine={false}
+                />
+                <YAxis
+                  tick={{ fontSize: 11, fill: "#9ca3af" }}
+                  axisLine={false}
+                  tickLine={false}
+                  tickFormatter={(v) =>
+                    v >= 1000 ? `R$${(v / 1000).toFixed(0)}k` : `R$${v}`
+                  }
+                />
+                <Tooltip
+                  contentStyle={tooltipStyle}
+                  formatter={(value) => [
+                    `R$ ${formatBRL(Number(value))}`,
+                    "MRR",
+                  ]}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="mrr"
+                  stroke="#10b981"
+                  fill="url(#gradMrr)"
+                  strokeWidth={2}
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        <div className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.06] rounded-xl p-5">
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">
+            Receita por plano
+          </h3>
+          <div className="space-y-4">
+            {financial.revenueByPlan.map((plan, i) => (
+              <div key={i}>
+                <div className="flex items-center justify-between text-sm mb-1">
+                  <span className="text-gray-700 dark:text-gray-300">
+                    {plan.planName}
+                  </span>
+                  <span className="text-emerald-500 font-medium">
+                    R$ {formatBRL(plan.mrr)}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-xs text-gray-500 mb-1">
+                  <span>{plan.count} assinantes</span>
+                  <span>R$ {formatBRL(plan.price)}/mês</span>
+                </div>
+                <div className="w-full h-1.5 bg-gray-100 dark:bg-white/[0.05] rounded-full">
+                  <div
+                    className="h-full bg-emerald-500 rounded-full"
+                    style={{
+                      width: `${financial.mrr > 0 ? (plan.mrr / financial.mrr) * 100 : 0}%`,
+                    }}
+                  />
+                </div>
+              </div>
+            ))}
+            {financial.revenueByPlan.length === 0 && (
+              <p className="text-sm text-gray-500 text-center py-4">
+                Nenhum plano ativo
+              </p>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export function GrowthChart({
