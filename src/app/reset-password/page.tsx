@@ -24,14 +24,43 @@ export default function ResetPasswordPage() {
     }
 
     const supabase = createClient();
-    supabase.auth.getSession().then(({ data }) => {
-      if (data.session) setReady(true);
-    });
-    const { data: sub } = supabase.auth.onAuthStateChange((event) => {
+
+    const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log("[RESET] Auth event:", event, session?.user?.email);
       if (event === "PASSWORD_RECOVERY" || event === "SIGNED_IN") {
         setReady(true);
       }
     });
+
+    async function init() {
+      const { data } = await supabase.auth.getSession();
+      console.log("[RESET] getSession result:", !!data.session, data.session?.user?.email);
+      if (data.session) {
+        setReady(true);
+        return;
+      }
+
+      if (hash.includes("access_token")) {
+        const params = new URLSearchParams(hash.substring(1));
+        const accessToken = params.get("access_token");
+        const refreshToken = params.get("refresh_token");
+        if (accessToken && refreshToken) {
+          console.log("[RESET] Setting session from hash tokens");
+          const { error } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken,
+          });
+          if (!error) {
+            setReady(true);
+          } else {
+            console.error("[RESET] setSession error:", error.message);
+            setExpired(true);
+          }
+        }
+      }
+    }
+
+    init();
 
     const timer = setTimeout(() => {
       setReady((r) => {
@@ -206,10 +235,10 @@ export default function ResetPasswordPage() {
                 </div>
                 <button
                   type="submit"
-                  disabled={loading}
+                  disabled={loading || !ready}
                   className="w-full py-3 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-medium rounded-lg transition"
                 >
-                  {loading ? "Salvando..." : "Salvar nova senha"}
+                  {loading ? "Salvando..." : !ready ? "Validando link..." : "Redefinir senha"}
                 </button>
               </form>
               <p className="mt-6 text-center text-sm text-gray-600 dark:text-gray-400">
