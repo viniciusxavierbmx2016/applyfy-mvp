@@ -1,11 +1,30 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import dynamic from "next/dynamic";
 import {
   DateRangeSelector,
   DateRangeValue,
   computeRange,
 } from "@/components/date-range-selector";
+
+const DistributionChart = dynamic(
+  () =>
+    import("@/components/admin-reports-charts").then(
+      (m) => m.DistributionChart
+    ),
+  { ssr: false }
+);
+const FunnelChart = dynamic(
+  () =>
+    import("@/components/admin-reports-charts").then((m) => m.FunnelChart),
+  { ssr: false }
+);
+const GrowthChart = dynamic(
+  () =>
+    import("@/components/admin-reports-charts").then((m) => m.GrowthChart),
+  { ssr: false }
+);
 
 type Tab = "onboarding" | "funnel" | "growth";
 
@@ -82,92 +101,6 @@ const TABS: { id: Tab; label: string }[] = [
   { id: "growth", label: "Crescimento" },
 ];
 
-function formatMonth(ym: string) {
-  const [y, m] = ym.split("-");
-  const months = [
-    "Jan", "Fev", "Mar", "Abr", "Mai", "Jun",
-    "Jul", "Ago", "Set", "Out", "Nov", "Dez",
-  ];
-  return `${months[Number(m) - 1]}/${y}`;
-}
-
-function DistributionTable({
-  title,
-  data,
-  labelMap,
-}: {
-  title: string;
-  data: DistItem[];
-  labelMap: Record<string, string>;
-}) {
-  const total = data.reduce((s, d) => s + d.count, 0);
-  return (
-    <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5">
-      <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">
-        {title}
-      </h3>
-      {data.length === 0 ? (
-        <p className="text-sm text-gray-500">Sem dados</p>
-      ) : (
-        <div className="space-y-2">
-          {data.map((item) => {
-            const pct = total > 0 ? (item.count / total) * 100 : 0;
-            return (
-              <div key={item.label}>
-                <div className="flex justify-between text-sm mb-1">
-                  <span className="text-gray-700 dark:text-gray-300">
-                    {labelMap[item.label] || item.label}
-                  </span>
-                  <span className="text-gray-500 dark:text-gray-400">
-                    {item.count}{" "}
-                    <span className="text-xs">({pct.toFixed(0)}%)</span>
-                  </span>
-                </div>
-                <div className="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-2">
-                  <div
-                    className="bg-blue-500 h-2 rounded-full transition-all"
-                    style={{ width: `${pct}%` }}
-                  />
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function FunnelStep({
-  label,
-  value,
-  total,
-  color,
-}: {
-  label: string;
-  value: number;
-  total: number;
-  color: string;
-}) {
-  const pct = total > 0 ? (value / total) * 100 : 0;
-  return (
-    <div className="flex items-center gap-4">
-      <div className="w-36 text-sm text-gray-700 dark:text-gray-300 text-right">
-        {label}
-      </div>
-      <div className="flex-1 bg-gray-100 dark:bg-gray-800 rounded-full h-8 relative overflow-hidden">
-        <div
-          className={`h-full rounded-full transition-all ${color}`}
-          style={{ width: `${pct}%` }}
-        />
-        <span className="absolute inset-0 flex items-center justify-center text-sm font-medium text-gray-900 dark:text-white">
-          {value} ({pct.toFixed(0)}%)
-        </span>
-      </div>
-    </div>
-  );
-}
-
 export default function AdminReportsPage() {
   const [range, setRange] = useState<DateRangeValue>(() =>
     computeRange("total")
@@ -230,17 +163,20 @@ export default function AdminReportsPage() {
       </div>
 
       {loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {[1, 2, 3, 4].map((i) => (
             <div
               key={i}
-              className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-5 animate-pulse"
+              className="bg-white dark:bg-white/[0.03] rounded-xl border border-gray-200 dark:border-white/[0.06] p-5 animate-pulse"
             >
               <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-32 mb-4" />
-              <div className="space-y-3">
-                <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-full" />
-                <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-3/4" />
-                <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/2" />
+              <div className="flex items-center gap-6">
+                <div className="w-[160px] h-[160px] rounded-full bg-gray-200 dark:bg-gray-700" />
+                <div className="flex-1 space-y-3">
+                  <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-full" />
+                  <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-3/4" />
+                  <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/2" />
+                </div>
               </div>
             </div>
           ))}
@@ -252,99 +188,33 @@ export default function AdminReportsPage() {
       ) : (
         <>
           {tab === "onboarding" && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <DistributionTable
-                title="Nicho"
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <DistributionChart
+                title="Por Nicho"
                 data={data.distributions.byNiche}
                 labelMap={NICHE_LABELS}
               />
-              <DistributionTable
-                title="Tipo de Negócio"
+              <DistributionChart
+                title="Por Tipo de Negócio"
                 data={data.distributions.byBusinessType}
                 labelMap={BUSINESS_LABELS}
               />
-              <DistributionTable
-                title="Faturamento Mensal"
+              <DistributionChart
+                title="Por Faixa de Receita"
                 data={data.distributions.byRevenue}
                 labelMap={REVENUE_LABELS}
               />
-              <DistributionTable
-                title="Origem"
+              <DistributionChart
+                title="Por Origem"
                 data={data.distributions.bySource}
                 labelMap={SOURCE_LABELS}
               />
             </div>
           )}
 
-          {tab === "funnel" && (
-            <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6">
-              <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-6">
-                Funil de Conversão
-              </h3>
-              <div className="space-y-4">
-                <FunnelStep
-                  label="Cadastrados"
-                  value={data.funnel.registered}
-                  total={data.funnel.registered}
-                  color="bg-blue-500"
-                />
-                <FunnelStep
-                  label="Onboarding"
-                  value={data.funnel.completedOnboarding}
-                  total={data.funnel.registered}
-                  color="bg-purple-500"
-                />
-                <FunnelStep
-                  label="Criou curso"
-                  value={data.funnel.createdCourse}
-                  total={data.funnel.registered}
-                  color="bg-emerald-500"
-                />
-                <FunnelStep
-                  label="Tem alunos"
-                  value={data.funnel.hasStudents}
-                  total={data.funnel.registered}
-                  color="bg-amber-500"
-                />
-              </div>
-            </div>
-          )}
+          {tab === "funnel" && <FunnelChart funnel={data.funnel} />}
 
-          {tab === "growth" && (
-            <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6">
-              <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">
-                Novos Produtores por Mês
-              </h3>
-              {data.growth.length === 0 ? (
-                <p className="text-sm text-gray-500 py-8 text-center">
-                  Sem dados no período
-                </p>
-              ) : (
-                <div className="space-y-2">
-                  {data.growth.map((item) => {
-                    const max = Math.max(...data.growth.map((g) => g.count));
-                    const pct = max > 0 ? (item.count / max) * 100 : 0;
-                    return (
-                      <div key={item.month} className="flex items-center gap-3">
-                        <span className="w-20 text-sm text-gray-500 dark:text-gray-400 text-right font-mono">
-                          {formatMonth(item.month)}
-                        </span>
-                        <div className="flex-1 bg-gray-100 dark:bg-gray-800 rounded-full h-6 relative overflow-hidden">
-                          <div
-                            className="bg-blue-500 h-full rounded-full transition-all"
-                            style={{ width: `${pct}%` }}
-                          />
-                        </div>
-                        <span className="w-8 text-sm font-medium text-gray-700 dark:text-gray-300 text-right">
-                          {item.count}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          )}
+          {tab === "growth" && <GrowthChart data={data.growth} />}
         </>
       )}
     </div>
