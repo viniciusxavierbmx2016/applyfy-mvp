@@ -3,7 +3,6 @@
 import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase";
 
 function ForgotPasswordForm() {
   const searchParams = useSearchParams();
@@ -19,14 +18,14 @@ function ForgotPasswordForm() {
     setError("");
     setLoading(true);
     try {
-      const supabase = createClient();
-      const origin =
-        typeof window !== "undefined" ? window.location.origin : "";
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${origin}/reset-password`,
+      const res = await fetch("/api/auth/forgot-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
       });
-      if (error) {
-        setError(error.message);
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setError(data.error || "Erro ao enviar email");
         setLoading(false);
         return;
       }
