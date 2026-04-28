@@ -160,7 +160,7 @@ function DashboardContent() {
         </div>
       )}
 
-      <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4">
+      <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4" data-tour="dashboard-header">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
             Dashboard
@@ -170,16 +170,20 @@ function DashboardContent() {
           </p>
         </div>
         <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
-          <CustomSelect
-            value={courseId}
-            onChange={setCourseId}
-            className="min-w-[180px]"
-            options={[
-              { value: "all", label: "Todos os cursos" },
-              ...courses.map((c) => ({ value: c.id, label: c.title })),
-            ]}
-          />
-          <DateRangeSelector value={range} onChange={setRange} />
+          <div data-tour="dashboard-course-selector">
+            <CustomSelect
+              value={courseId}
+              onChange={setCourseId}
+              className="min-w-[180px]"
+              options={[
+                { value: "all", label: "Todos os cursos" },
+                ...courses.map((c) => ({ value: c.id, label: c.title })),
+              ]}
+            />
+          </div>
+          <div data-tour="dashboard-date-selector">
+            <DateRangeSelector value={range} onChange={setRange} />
+          </div>
         </div>
       </div>
 

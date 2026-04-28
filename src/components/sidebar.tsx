@@ -19,6 +19,7 @@ type NavLink = {
   label: string;
   icon: React.ReactNode;
   requires?: string | string[];
+  tourId?: string;
 };
 
 const COLLAPSED_KEY = "admin_sidebar_collapsed";
@@ -109,15 +110,15 @@ const studentLinks: NavLink[] = [
 ];
 
 const producerLinks: NavLink[] = [
-  { href: "/producer", label: "Dashboard", icon: iconDashboard },
-  { href: "/producer/workspaces", label: "Workspaces", icon: iconWorkspaces },
-  { href: "/producer/courses", label: "Meus Cursos", icon: iconCourses },
-  { href: "/producer/users", label: "Meus Alunos", icon: iconUsers },
-  { href: "/producer/community", label: "Comunidade", icon: iconCommunity },
-  { href: "/producer/analytics", label: "Relatórios", icon: iconAnalytics },
-  { href: "/producer/automations", label: "Automações", icon: iconAutomations },
-  { href: "/producer/lives", label: "Lives", icon: iconLives },
-  { href: "/producer/settings", label: "Configurações", icon: iconSettings },
+  { href: "/producer", label: "Dashboard", icon: iconDashboard, tourId: "nav-dashboard" },
+  { href: "/producer/workspaces", label: "Workspaces", icon: iconWorkspaces, tourId: "nav-workspaces" },
+  { href: "/producer/courses", label: "Meus Cursos", icon: iconCourses, tourId: "nav-courses" },
+  { href: "/producer/users", label: "Meus Alunos", icon: iconUsers, tourId: "nav-students" },
+  { href: "/producer/community", label: "Comunidade", icon: iconCommunity, tourId: "nav-community" },
+  { href: "/producer/analytics", label: "Relatórios", icon: iconAnalytics, tourId: "nav-reports" },
+  { href: "/producer/automations", label: "Automações", icon: iconAutomations, tourId: "nav-automations" },
+  { href: "/producer/lives", label: "Lives", icon: iconLives, tourId: "nav-lives" },
+  { href: "/producer/settings", label: "Configurações", icon: iconSettings, tourId: "nav-settings" },
 ];
 
 const collaboratorLinks: NavLink[] = [
@@ -451,6 +452,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
                     onClick={onClose}
                     title={link.label}
                     className={linkCls(active)}
+                    {...(link.tourId ? { "data-tour": link.tourId } : {})}
                   >
                     <span className={iconWrapCls(active)}>{link.icon}</span>
                     <span className={cn("truncate", collapsed && "lg:hidden")}>

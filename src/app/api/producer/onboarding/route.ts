@@ -24,3 +24,16 @@ export async function POST() {
 
   return Response.json({ completed: true });
 }
+
+export async function DELETE() {
+  const user = await getCurrentUser();
+  if (!user)
+    return Response.json({ error: "Unauthorized" }, { status: 401 });
+
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { onboardingCompletedAt: null },
+  });
+
+  return Response.json({ completed: false });
+}

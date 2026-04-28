@@ -52,6 +52,7 @@ export default function SettingsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+  const [resettingTour, setResettingTour] = useState(false);
   const { confirm, ConfirmDialog } = useConfirm();
 
   function showToast(msg: string) {
@@ -278,6 +279,33 @@ export default function SettingsPage() {
             </div>
           </div>
         )}
+      </section>
+
+      <section className="bg-white dark:bg-white/5 border border-gray-200 dark:border-white/5 rounded-xl p-6 mt-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm font-medium text-gray-900 dark:text-white">Tour da plataforma</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              Reveja o tutorial guiado que apresenta as funcionalidades do painel
+            </p>
+          </div>
+          <button
+            onClick={async () => {
+              setResettingTour(true);
+              try {
+                await fetch("/api/producer/onboarding", { method: "DELETE" });
+                window.location.href = "/producer";
+              } catch {
+                showToast("Erro ao reiniciar tour");
+                setResettingTour(false);
+              }
+            }}
+            disabled={resettingTour}
+            className="px-4 py-2 bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-xl transition-colors disabled:opacity-50"
+          >
+            {resettingTour ? "Reiniciando..." : "Refazer tour"}
+          </button>
+        </div>
       </section>
 
       {toast && (
