@@ -189,7 +189,7 @@ export function WorkspaceShell({
   function linkCls(active: boolean) {
     return cn(
       "group relative flex items-center rounded-lg text-sm font-medium transition-colors duration-200",
-      collapsed ? "lg:justify-center lg:gap-0 lg:px-0 lg:py-2.5 lg:mx-auto lg:w-10 lg:h-10 gap-3 py-2.5 px-3" : "gap-3 py-2.5 px-3",
+      collapsed ? "justify-center w-10 h-10 mx-auto p-0" : "gap-3 px-3 py-2.5",
       active
         ? accent ? "" : "bg-blue-500/10 text-blue-600 dark:text-blue-400"
         : "text-gray-600 dark:text-gray-400 hover:bg-gray-50 hover:text-gray-900 dark:hover:bg-white/5 dark:hover:text-white"
@@ -291,7 +291,7 @@ export function WorkspaceShell({
         )}
         <aside
           className={cn(
-            "fixed lg:sticky top-14 lg:top-14 left-0 z-40 flex flex-col",
+            "fixed lg:fixed top-14 lg:top-14 left-0 z-40 lg:z-20 flex flex-col",
             "h-[calc(100vh-3.5rem)]",
             "border-r border-gray-200 dark:border-white/5",
             "bg-white dark:bg-gray-900",
@@ -379,19 +379,21 @@ export function WorkspaceShell({
                     </span>
                   )}
                 </span>
-                <span className={cn("truncate transition-opacity duration-200", collapsed ? "lg:opacity-0 lg:w-0 lg:overflow-hidden" : "lg:opacity-100")}>
-                  {item.label}
-                </span>
-                <span className={cn("ml-auto w-5 h-5 bg-red-500 rounded-full text-[10px] font-bold text-white flex items-center justify-center animate-pulse flex-shrink-0 transition-opacity duration-200", item.badge > 0 && !collapsed ? "opacity-100" : "opacity-0 w-0 overflow-hidden")}>
-                  {item.badge}
-                </span>
+                {!collapsed && (
+                  <span className="truncate">{item.label}</span>
+                )}
+                {!collapsed && item.badge > 0 && (
+                  <span className="ml-auto w-5 h-5 bg-red-500 rounded-full text-[10px] font-bold text-white flex items-center justify-center animate-pulse flex-shrink-0">
+                    {item.badge}
+                  </span>
+                )}
                 {collapsed && <span className={tooltipCls}>{item.label}</span>}
               </Link>
             ))}
           </nav>
         </aside>
 
-        <main className="flex-1 min-w-0">
+        <main className={cn("flex-1 min-w-0", collapsed ? "lg:ml-16" : "lg:ml-56")}>
           <PushOptIn />
           {children}
         </main>
