@@ -75,22 +75,8 @@ export default function ResetPasswordPage() {
     };
   }, []);
 
-  async function redirectAfterReset() {
-    try {
-      const res = await fetch("/api/auth/me");
-      if (res.ok) {
-        const data = await res.json();
-        if (data.user?.role === "PRODUCER" || data.user?.role === "ADMIN") {
-          router.push("/");
-          return;
-        }
-        if (data.workspace?.slug) {
-          router.push(`/w/${data.workspace.slug}`);
-          return;
-        }
-      }
-    } catch {}
-    router.push("/producer/login");
+  function redirectAfterReset() {
+    router.push("/producer/login?reset=success");
   }
 
   async function handleSubmit(e: React.FormEvent) {
