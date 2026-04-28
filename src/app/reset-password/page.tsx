@@ -1,10 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase";
 
-export default function ResetPasswordPage() {
+function ResetPasswordForm() {
+  const searchParams = useSearchParams();
+  const from = searchParams.get("from");
+  const loginHref = from === "admin" ? "/admin/login" : "/producer/login";
+  const forgotHref = from === "admin" ? "/forgot-password?from=admin" : "/forgot-password?from=producer";
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [error, setError] = useState("");
@@ -96,7 +101,7 @@ export default function ResetPasswordPage() {
       setDone(true);
       await supabase.auth.signOut();
       setTimeout(() => {
-        window.location.href = "/producer/login?reset=success";
+        window.location.href = `${loginHref}?reset=success`;
       }, 1200);
     } catch {
       setError("Erro ao conectar com o servidor");
@@ -141,7 +146,7 @@ export default function ResetPasswordPage() {
                 Solicite um novo link de recuperação para definir sua nova senha.
               </p>
               <Link
-                href="/forgot-password"
+                href={forgotHref}
                 className="inline-flex items-center justify-center w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition"
               >
                 Solicitar novo link
@@ -224,7 +229,7 @@ export default function ResetPasswordPage() {
               </form>
               <p className="mt-6 text-center text-sm text-gray-600 dark:text-gray-400">
                 <Link
-                  href="/producer/login"
+                  href={loginHref}
                   className="text-blue-600 dark:text-blue-400 hover:underline"
                 >
                   Voltar ao login
@@ -235,5 +240,13 @@ export default function ResetPasswordPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function ResetPasswordPage() {
+  return (
+    <Suspense>
+      <ResetPasswordForm />
+    </Suspense>
   );
 }

@@ -1,10 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { PlatformLogo } from "@/components/platform-logo";
 
-export default function AdminLoginPage() {
+function AdminLoginForm() {
+  const searchParams = useSearchParams();
+  const resetSuccess = searchParams.get("reset") === "success";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -69,6 +72,11 @@ export default function AdminLoginPage() {
         </div>
 
         <div className="bg-white dark:bg-white/[0.03] rounded-2xl p-8 shadow-xl border border-gray-200 dark:border-white/[0.06]">
+          {resetSuccess && !error && (
+            <div className="mb-4 p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-sm">
+              Senha redefinida com sucesso! Faça login.
+            </div>
+          )}
           {error && (
             <div className="mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
               <p>{error}</p>
@@ -133,7 +141,7 @@ export default function AdminLoginPage() {
 
           <div className="mt-6 text-center text-sm">
             <Link
-              href="/forgot-password"
+              href="/forgot-password?from=admin"
               className="text-blue-600 dark:text-blue-400 hover:underline"
             >
               Esqueci minha senha
@@ -146,5 +154,13 @@ export default function AdminLoginPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function AdminLoginPage() {
+  return (
+    <Suspense>
+      <AdminLoginForm />
+    </Suspense>
   );
 }

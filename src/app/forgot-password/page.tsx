@@ -7,7 +7,12 @@ import Link from "next/link";
 function ForgotPasswordForm() {
   const searchParams = useSearchParams();
   const workspace = searchParams.get("workspace");
-  const loginHref = workspace ? `/w/${workspace}/login` : "/producer/login";
+  const from = searchParams.get("from");
+  const loginHref = workspace
+    ? `/w/${workspace}/login`
+    : from === "admin"
+      ? "/admin/login"
+      : "/producer/login";
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
   const [sent, setSent] = useState(false);
@@ -21,7 +26,7 @@ function ForgotPasswordForm() {
       const res = await fetch("/api/auth/forgot-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email, from: from || "producer" }),
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));

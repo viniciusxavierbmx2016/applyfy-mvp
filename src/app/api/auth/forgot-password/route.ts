@@ -6,7 +6,7 @@ import { passwordReset } from "@/lib/email-templates";
 
 export async function POST(req: Request) {
   try {
-    const { email } = await req.json();
+    const { email, from } = await req.json();
 
     if (!email) {
       return NextResponse.json({ error: "Email obrigatório" }, { status: 400 });
@@ -29,7 +29,7 @@ export async function POST(req: Request) {
       type: "recovery",
       email: user.email,
       options: {
-        redirectTo: `${origin}/reset-password`,
+        redirectTo: `${origin}/reset-password${from ? `?from=${from}` : ""}`,
       },
     });
 

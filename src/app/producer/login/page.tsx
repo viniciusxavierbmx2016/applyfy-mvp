@@ -125,7 +125,7 @@ function ProducerLoginForm() {
 
           <div className="mt-6 flex items-center justify-between text-sm">
             <Link
-              href="/forgot-password"
+              href="/forgot-password?from=producer"
               className="text-blue-600 dark:text-blue-400 hover:underline"
             >
               Esqueci minha senha
