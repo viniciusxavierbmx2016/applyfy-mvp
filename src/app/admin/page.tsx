@@ -2,53 +2,70 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
-import dynamic from "next/dynamic";
-import { Skeleton } from "@/components/ui/skeleton";
 import { useUserStore } from "@/stores/user-store";
-
-const AdminRevenueChart = dynamic(
-  () =>
-    import("@/components/admin-revenue-chart").then((m) => m.AdminRevenueChart),
-  {
-    ssr: false,
-    loading: () => <div className="w-full h-[220px] animate-pulse" />,
-  }
-);
+import {
+  DateRangeSelector,
+  computeRange,
+  type DateRangeValue,
+} from "@/components/date-range-selector";
 
 interface DashboardData {
-  metrics: {
-    totalProducers: number;
-    totalStudents: number;
-    totalCourses: number;
-    activeProducers: number;
-  };
-  revenue: {
+  kpis: {
     mrr: number;
-    paidProducers: number;
-    freeProducers: number;
-    activeSubProducers: number;
+    activeProducers: number;
+    newProducers: number;
+    churn: number;
+    avgTicket: number;
+    pastDue: number;
+    totalProducers: number;
+    suspended: number;
   };
-  monthlyRevenue: Array<{ month: string; revenue: number }>;
-  recentProducers: Array<{
-    id: string;
-    name: string;
-    email: string;
-    avatarUrl: string | null;
-    createdAt: string;
-  }>;
+  chart: Array<{ date: string; newProducers: number; cancellations: number }>;
   topProducers: Array<{
     id: string;
     name: string;
     email: string;
     avatarUrl: string | null;
-    students: number;
+    revenue: number;
   }>;
+  planDistribution: Array<{
+    planId: string;
+    planName: string;
+    price: number;
+    count: number;
+    percentage: number;
+  }>;
+  producers: Array<{ id: string; name: string; email: string }>;
 }
+
+const IconDollar = () => (
+  <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M12 1v22m5-18H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H7" />
+  </svg>
+);
+const IconUsers = () => (
+  <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4-4v2m22-4a4 4 0 00-3-3.87M9 7a4 4 0 110-8 4 4 0 010 8zm7-1a4 4 0 110-8" />
+  </svg>
+);
+const IconUserPlus = () => (
+  <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4-4v2m19-2v6m3-3h-6M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+  </svg>
+);
+const IconUserMinus = () => (
+  <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4-4v2m19-4h-6M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+  </svg>
+);
 
 export default function AdminDashboardPage() {
   const { user } = useUserStore();
   const router = useRouter();
+  const [range, setRange] = useState<DateRangeValue>(() =>
+    computeRange("last_30_days")
+  );
+  const [producerId, setProducerId] = useState("");
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -60,258 +77,210 @@ export default function AdminDashboardPage() {
           ? "/producer"
           : "/"
       );
-      return;
     }
-    fetch("/api/admin/dashboard")
-      .then((r) => (r.ok ? r.json() : null))
-      .then((d) => setData(d))
-      .finally(() => setLoading(false));
   }, [user, router]);
 
-  if (!user || user.role !== "ADMIN" || loading || !data) {
+  useEffect(() => {
+    if (!user || user.role !== "ADMIN") return;
+    setLoading(true);
+    const params = new URLSearchParams();
+    params.set("startDate", range.startDate);
+    params.set("endDate", range.endDate);
+    if (producerId) params.set("producerId", producerId);
+
+    fetch(`/api/admin/dashboard?${params}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => setData(d))
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, [range, producerId, user]);
+
+  if (!user || user.role !== "ADMIN") {
     return (
       <div className="space-y-6">
-        <Skeleton className="h-8 w-48" />
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton key={i} className="h-24" />
-          ))}
-        </div>
-        <Skeleton className="h-64" />
+        <SkeletonCards count={8} />
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-          Dashboard Admin
-        </h1>
-        <p className="text-sm text-gray-600 dark:text-gray-400">
-          Visão global da plataforma.
-        </p>
-      </div>
-
-      {/* Global metrics */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card
-          label="Produtores"
-          value={data.metrics.totalProducers}
-          accent="text-blue-500 dark:text-blue-400"
-          href="/admin/producers"
-        />
-        <Card
-          label="Alunos totais"
-          value={data.metrics.totalStudents}
-          accent="text-emerald-500 dark:text-emerald-400"
-        />
-        <Card
-          label="Cursos totais"
-          value={data.metrics.totalCourses}
-          accent="text-amber-500 dark:text-amber-400"
-        />
-        <Card
-          label="Produtores ativos (30d)"
-          value={data.metrics.activeProducers}
-          accent="text-pink-500 dark:text-pink-400"
-        />
-      </div>
-
-      {/* Revenue section */}
-      <section className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.06] rounded-xl p-6">
-        <h2 className="text-base font-semibold text-gray-900 dark:text-white mb-4">
-          Receita da plataforma
-        </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-          <MetricBlock
-            label="MRR (receita recorrente)"
-            value={formatMoney(data.revenue.mrr)}
-            accent="text-emerald-500 dark:text-emerald-400"
-          />
-          <MetricBlock
-            label="Produtores pagantes"
-            value={data.revenue.paidProducers}
-            accent="text-blue-500 dark:text-blue-400"
-          />
-          <MetricBlock
-            label="Produtores Free"
-            value={data.revenue.freeProducers}
-            accent="text-gray-600 dark:text-gray-300"
-          />
+      {/* Header */}
+      <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4 mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+            Dashboard
+          </h1>
+          <p className="text-sm text-gray-500 mt-1">
+            Visão geral da plataforma
+          </p>
         </div>
-        <AdminRevenueChart
-          data={data.monthlyRevenue}
-          formatMoney={formatMoney}
-        />
-
-      </section>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Recent producers */}
-        <section className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.06] rounded-xl p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-base font-semibold text-gray-900 dark:text-white">
-              Últimos produtores cadastrados
-            </h2>
-            <Link
-              href="/admin/producers"
-              className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
-            >
-              Ver todos
-            </Link>
-          </div>
-          {data.recentProducers.length === 0 ? (
-            <p className="text-sm text-gray-500">Sem produtores ainda.</p>
-          ) : (
-            <ul>
-              {data.recentProducers.map((p) => (
-                <li key={p.id} className="border-b border-gray-100 dark:border-white/[0.04] last:border-0">
-                  <Link
-                    href={`/admin/producers/${p.id}`}
-                    className="flex items-center gap-3 py-3 hover:bg-gray-50 dark:hover:bg-white/[0.02] -mx-2 px-2 rounded-lg transition-colors duration-150"
-                  >
-                    {p.avatarUrl ? (
-                      <img
-                        src={p.avatarUrl}
-                        alt={p.name}
-                        className="w-9 h-9 rounded-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-9 h-9 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-semibold">
-                        {p.name.charAt(0).toUpperCase()}
-                      </div>
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                        {p.name}
-                      </p>
-                      <p className="text-xs text-gray-500 truncate">{p.email}</p>
-                    </div>
-                    <span className="text-xs text-gray-500">
-                      {formatDate(p.createdAt)}
-                    </span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
-
-        {/* Top producers */}
-        <section className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.06] rounded-xl p-6">
-          <h2 className="text-base font-semibold text-gray-900 dark:text-white mb-4">
-            Top 5 produtores (mais alunos)
-          </h2>
-          {data.topProducers.length === 0 ? (
-            <p className="text-sm text-gray-500">Sem dados ainda.</p>
-          ) : (
-            <ul>
-              {data.topProducers.map((p, i) => (
-                <li key={p.id} className="border-b border-gray-100 dark:border-white/[0.04] last:border-0">
-                  <Link
-                    href={`/admin/producers/${p.id}`}
-                    className="flex items-center gap-3 py-3 hover:bg-gray-50 dark:hover:bg-white/[0.02] -mx-2 px-2 rounded-lg transition-colors duration-150"
-                  >
-                    <span className="w-6 text-center text-xs font-semibold text-gray-500">
-                      {i + 1}
-                    </span>
-                    {p.avatarUrl ? (
-                      <img
-                        src={p.avatarUrl}
-                        alt={p.name}
-                        className="w-9 h-9 rounded-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-9 h-9 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-semibold">
-                        {p.name.charAt(0).toUpperCase()}
-                      </div>
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                        {p.name}
-                      </p>
-                      <p className="text-xs text-gray-500 truncate">{p.email}</p>
-                    </div>
-                    <span className="text-sm font-semibold text-amber-500 dark:text-amber-400">
-                      {p.students}
-                    </span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
+        <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
+          <select
+            value={producerId}
+            onChange={(e) => setProducerId(e.target.value)}
+            className="bg-white dark:bg-gray-900/50 border border-gray-200 dark:border-white/10 rounded-lg px-3 py-2 text-sm text-gray-700 dark:text-gray-300 min-w-[200px]"
+          >
+            <option value="">Todos os produtores</option>
+            {data?.producers?.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name || p.email}
+              </option>
+            ))}
+          </select>
+          <DateRangeSelector value={range} onChange={setRange} />
+        </div>
       </div>
+
+      {loading ? (
+        <SkeletonCards count={8} />
+      ) : data ? (
+        <>
+          {/* KPI Cards — linha 1 */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <KpiCard
+              icon={<IconDollar />}
+              iconBg="bg-emerald-500/10"
+              iconColor="text-emerald-500"
+              label="MRR"
+              value={formatMoney(data.kpis.mrr)}
+              valueColor="text-emerald-500"
+              subtitle="Receita recorrente mensal"
+            />
+            <KpiCard
+              icon={<IconUsers />}
+              iconBg="bg-blue-500/10"
+              iconColor="text-blue-500"
+              label="PRODUTORES ATIVOS"
+              value={data.kpis.activeProducers}
+              subtitle="Assinaturas ativas"
+            />
+            <KpiCard
+              icon={<IconUserPlus />}
+              iconBg="bg-purple-500/10"
+              iconColor="text-purple-500"
+              label="NOVOS PRODUTORES"
+              value={data.kpis.newProducers}
+              subtitle="No período selecionado"
+            />
+            <KpiCard
+              icon={<IconUserMinus />}
+              iconBg="bg-red-500/10"
+              iconColor="text-red-500"
+              label="CHURN"
+              value={data.kpis.churn}
+              valueColor="text-red-500"
+              subtitle="Cancelamentos no período"
+            />
+          </div>
+
+          {/* KPI Cards — linha 2 */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <SmallKpiCard
+              label="TICKET MÉDIO"
+              value={formatMoney(data.kpis.avgTicket)}
+            />
+            <SmallKpiCard
+              label="TOTAL PRODUTORES"
+              value={data.kpis.totalProducers}
+            />
+            <SmallKpiCard
+              label="INADIMPLENTES"
+              value={data.kpis.pastDue}
+              valueColor="text-amber-500"
+            />
+            <SmallKpiCard
+              label="SUSPENSOS"
+              value={data.kpis.suspended}
+              valueColor="text-red-400"
+            />
+          </div>
+        </>
+      ) : (
+        <p className="text-sm text-gray-500">Erro ao carregar dados.</p>
+      )}
     </div>
   );
 }
 
-function Card({
+function KpiCard({
+  icon,
+  iconBg,
+  iconColor,
   label,
   value,
-  accent,
-  href,
+  valueColor,
+  subtitle,
 }: {
+  icon: React.ReactNode;
+  iconBg: string;
+  iconColor: string;
   label: string;
   value: number | string;
-  accent: string;
-  href?: string;
-}) {
-  const content = (
-    <div className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.06] rounded-xl p-5 transition-colors duration-200 hover:border-gray-300 dark:hover:border-white/[0.1] h-full">
-      <p className="text-[11px] font-medium uppercase tracking-widest text-gray-500">
-        {label}
-      </p>
-      <p className={`mt-2 text-3xl font-bold ${accent}`}>{value}</p>
-    </div>
-  );
-  return href ? (
-    <Link href={href} className="block">
-      {content}
-    </Link>
-  ) : (
-    content
-  );
-}
-
-function MetricBlock({
-  label,
-  value,
-  accent,
-}: {
-  label: string;
-  value: number | string;
-  accent: string;
+  valueColor?: string;
+  subtitle: string;
 }) {
   return (
-    <div>
-      <p className="text-[11px] font-medium uppercase tracking-widest text-gray-500">
-        {label}
+    <div className="bg-white dark:bg-white/5 border border-gray-200 dark:border-white/5 rounded-xl p-5">
+      <div className="flex items-center gap-3 mb-3">
+        <div
+          className={`w-10 h-10 rounded-lg ${iconBg} flex items-center justify-center`}
+        >
+          <span className={iconColor}>{icon}</span>
+        </div>
+        <p className="text-[11px] text-gray-500 uppercase tracking-wider">
+          {label}
+        </p>
+      </div>
+      <p
+        className={`text-2xl font-bold ${valueColor || "text-gray-900 dark:text-white"}`}
+      >
+        {value}
       </p>
-      <p className={`mt-1 text-2xl font-bold ${accent}`}>{value}</p>
+      <p className="text-xs text-gray-500 mt-1">{subtitle}</p>
     </div>
   );
 }
 
-function formatDate(v: string) {
-  try {
-    return new Date(v).toLocaleDateString("pt-BR", {
-      day: "2-digit",
-      month: "2-digit",
-    });
-  } catch {
-    return "—";
-  }
-}
-function formatMoney(v: number) {
-  try {
-    return new Intl.NumberFormat("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-    }).format(v);
-  } catch {
-    return `R$ ${v.toFixed(2)}`;
-  }
+function SmallKpiCard({
+  label,
+  value,
+  valueColor,
+}: {
+  label: string;
+  value: number | string;
+  valueColor?: string;
+}) {
+  return (
+    <div className="bg-white dark:bg-white/5 border border-gray-200 dark:border-white/5 rounded-xl p-4">
+      <p className="text-[11px] text-gray-500 uppercase tracking-wider">
+        {label}
+      </p>
+      <p
+        className={`text-lg font-bold mt-1 ${valueColor || "text-gray-900 dark:text-white"}`}
+      >
+        {value}
+      </p>
+    </div>
+  );
 }
 
+function SkeletonCards({ count }: { count: number }) {
+  return (
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      {Array.from({ length: count }).map((_, i) => (
+        <div
+          key={i}
+          className="bg-white dark:bg-white/5 border border-gray-200 dark:border-white/5 rounded-xl p-5 animate-pulse"
+        >
+          <div className="h-4 w-24 bg-gray-200 dark:bg-white/10 rounded mb-3" />
+          <div className="h-8 w-20 bg-gray-200 dark:bg-white/10 rounded" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function formatMoney(v: number) {
+  return `R$ ${v.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
