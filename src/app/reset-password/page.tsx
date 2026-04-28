@@ -16,17 +16,13 @@ export default function ResetPasswordPage() {
   const [expired, setExpired] = useState(false);
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const hash = window.location.hash || "";
-      if (
-        hash.includes("error_code=otp_expired") ||
-        hash.includes("error=access_denied") ||
-        hash.includes("error_code=invalid_token")
-      ) {
-        setExpired(true);
-        return;
-      }
+    const hash = window.location.hash || "";
+
+    if (hash.includes("error=") || hash.includes("error_code=")) {
+      setExpired(true);
+      return;
     }
+
     const supabase = createClient();
     supabase.auth.getSession().then(({ data }) => {
       if (data.session) setReady(true);
@@ -36,12 +32,17 @@ export default function ResetPasswordPage() {
         setReady(true);
       }
     });
+
+    const hasTokens = hash.includes("access_token") || hash.includes("type=recovery");
+    const timeout = hasTokens ? 10000 : 8000;
+
     const timer = setTimeout(() => {
       setReady((r) => {
         if (!r) setExpired(true);
         return r;
       });
-    }, 3000);
+    }, timeout);
+
     return () => {
       sub.subscription.unsubscribe();
       clearTimeout(timer);
