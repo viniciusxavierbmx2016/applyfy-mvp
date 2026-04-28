@@ -212,7 +212,7 @@ export function CourseSidebar({
               "text-gray-500 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300",
               "transition-colors duration-200",
               collapsed
-                ? "lg:justify-center lg:py-3 lg:px-0 gap-2 py-3 px-4"
+                ? "lg:justify-center lg:gap-0 lg:py-3 lg:px-0 gap-2 py-3 px-4"
                 : "gap-2 py-3 px-4"
             )}
           >
@@ -257,15 +257,14 @@ export function CourseSidebar({
                 (pathname === href ||
                   (href !== `/course/${course.slug}` && pathname.startsWith(href)));
               const baseCls = cn(
-                "group relative flex items-center gap-3 rounded-lg text-sm font-medium transition-colors duration-200",
-                collapsed ? "lg:justify-center lg:p-2.5 py-2.5 px-3" : "py-2.5 px-3",
+                "group relative flex items-center rounded-lg text-sm font-medium transition-colors duration-200",
+                collapsed ? "lg:justify-center lg:gap-0 lg:p-2.5 gap-3 py-2.5 px-3" : "gap-3 py-2.5 px-3",
                 isActive
                   ? "bg-gray-200 text-gray-900 dark:bg-white/10 dark:text-white"
                   : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 hover:text-gray-900 dark:hover:bg-white/5 dark:hover:text-white"
               );
               const iconCls = cn(
                 "flex-shrink-0 transition-colors duration-200 [&>svg]:w-[18px] [&>svg]:h-[18px]",
-                collapsed && "lg:mx-auto",
                 isActive
                   ? "text-gray-900 dark:text-white"
                   : "text-gray-400 dark:text-gray-500 group-hover:text-gray-900 dark:group-hover:text-white"
