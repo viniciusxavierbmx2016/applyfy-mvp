@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { useUserStore } from "@/stores/user-store";
+import { useCountUp } from "@/hooks/use-count-up";
 import {
   DateRangeSelector,
   computeRange,
@@ -65,6 +66,13 @@ const IconUserMinus = () => (
   </svg>
 );
 
+function getGreeting() {
+  const h = new Date().getHours();
+  if (h < 12) return "Bom dia";
+  if (h < 18) return "Boa tarde";
+  return "Boa noite";
+}
+
 export default function AdminDashboardPage() {
   const { user } = useUserStore();
   const router = useRouter();
@@ -115,10 +123,10 @@ export default function AdminDashboardPage() {
       <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-            Dashboard
+            {getGreeting()}, Admin
           </h1>
           <p className="text-sm text-gray-500 mt-1">
-            Visão geral da plataforma
+            Painel de controle da plataforma Members Club
           </p>
         </div>
         <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
@@ -144,37 +152,38 @@ export default function AdminDashboardPage() {
         <>
           {/* KPI Cards — linha 1 */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-            <KpiCard
+            <AnimatedKpiCard
               icon={<IconDollar />}
               iconBg="bg-emerald-500/10"
               iconColor="text-emerald-500"
               label="MRR"
-              value={formatMoney(data.kpis.mrr)}
+              end={data.kpis.mrr}
+              isMoney
               valueColor="text-emerald-500"
               subtitle="Receita recorrente mensal"
             />
-            <KpiCard
+            <AnimatedKpiCard
               icon={<IconUsers />}
               iconBg="bg-blue-500/10"
               iconColor="text-blue-500"
               label="PRODUTORES ATIVOS"
-              value={data.kpis.activeProducers}
+              end={data.kpis.activeProducers}
               subtitle="Assinaturas ativas"
             />
-            <KpiCard
+            <AnimatedKpiCard
               icon={<IconUserPlus />}
               iconBg="bg-purple-500/10"
               iconColor="text-purple-500"
               label="NOVOS PRODUTORES"
-              value={data.kpis.newProducers}
+              end={data.kpis.newProducers}
               subtitle="No período selecionado"
             />
-            <KpiCard
+            <AnimatedKpiCard
               icon={<IconUserMinus />}
               iconBg="bg-red-500/10"
               iconColor="text-red-500"
               label="CHURN"
-              value={data.kpis.churn}
+              end={data.kpis.churn}
               valueColor="text-red-500"
               subtitle="Cancelamentos no período"
             />
@@ -182,22 +191,23 @@ export default function AdminDashboardPage() {
 
           {/* KPI Cards — linha 2 */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-            <SmallKpiCard
+            <AnimatedSmallKpiCard
               label="TICKET MÉDIO"
-              value={formatMoney(data.kpis.avgTicket)}
+              end={data.kpis.avgTicket}
+              isMoney
             />
-            <SmallKpiCard
+            <AnimatedSmallKpiCard
               label="TOTAL PRODUTORES"
-              value={data.kpis.totalProducers}
+              end={data.kpis.totalProducers}
             />
-            <SmallKpiCard
+            <AnimatedSmallKpiCard
               label="INADIMPLENTES"
-              value={data.kpis.pastDue}
+              end={data.kpis.pastDue}
               valueColor="text-amber-500"
             />
-            <SmallKpiCard
+            <AnimatedSmallKpiCard
               label="SUSPENSOS"
-              value={data.kpis.suspended}
+              end={data.kpis.suspended}
               valueColor="text-red-400"
             />
           </div>
@@ -213,8 +223,12 @@ export default function AdminDashboardPage() {
               {data.chart.length > 0 ? (
                 <AdminGrowthChart data={data.chart} />
               ) : (
-                <div className="flex items-center justify-center h-[300px] text-gray-500 text-sm">
-                  Sem dados para o período selecionado
+                <div className="flex flex-col items-center justify-center h-[300px] text-gray-400 dark:text-gray-600">
+                  <svg width="48" height="48" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5} className="mb-3 opacity-50">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+                  </svg>
+                  <p className="text-sm">Sem dados para o período selecionado</p>
+                  <p className="text-xs mt-1">Tente selecionar um período diferente</p>
                 </div>
               )}
             </div>
@@ -246,7 +260,12 @@ export default function AdminDashboardPage() {
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-gray-500 text-center py-8">Nenhum produtor ativo</p>
+                <div className="flex flex-col items-center justify-center py-8 text-gray-400 dark:text-gray-600">
+                  <svg width="40" height="40" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5} className="mb-2 opacity-50">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
+                  </svg>
+                  <p className="text-sm">Nenhum produtor ativo</p>
+                </div>
               )}
 
               {data.planDistribution.length > 0 && (
@@ -278,12 +297,13 @@ export default function AdminDashboardPage() {
   );
 }
 
-function KpiCard({
+function AnimatedKpiCard({
   icon,
   iconBg,
   iconColor,
   label,
-  value,
+  end,
+  isMoney,
   valueColor,
   subtitle,
 }: {
@@ -291,50 +311,53 @@ function KpiCard({
   iconBg: string;
   iconColor: string;
   label: string;
-  value: number | string;
+  end: number;
+  isMoney?: boolean;
   valueColor?: string;
   subtitle: string;
 }) {
+  const display = useCountUp(end, isMoney
+    ? { prefix: "R$ ", decimals: 2, separator: ".", decimalSeparator: "," }
+    : undefined
+  );
+
   return (
     <div className="bg-white dark:bg-white/5 border border-gray-200 dark:border-white/5 rounded-xl p-5">
       <div className="flex items-center gap-3 mb-3">
-        <div
-          className={`w-10 h-10 rounded-lg ${iconBg} flex items-center justify-center`}
-        >
+        <div className={`w-10 h-10 rounded-lg ${iconBg} flex items-center justify-center`}>
           <span className={iconColor}>{icon}</span>
         </div>
-        <p className="text-[11px] text-gray-500 uppercase tracking-wider">
-          {label}
-        </p>
+        <p className="text-[11px] text-gray-500 uppercase tracking-wider">{label}</p>
       </div>
-      <p
-        className={`text-2xl font-bold ${valueColor || "text-gray-900 dark:text-white"}`}
-      >
-        {value}
+      <p className={`text-2xl font-bold ${valueColor || "text-gray-900 dark:text-white"}`}>
+        {display}
       </p>
       <p className="text-xs text-gray-500 mt-1">{subtitle}</p>
     </div>
   );
 }
 
-function SmallKpiCard({
+function AnimatedSmallKpiCard({
   label,
-  value,
+  end,
+  isMoney,
   valueColor,
 }: {
   label: string;
-  value: number | string;
+  end: number;
+  isMoney?: boolean;
   valueColor?: string;
 }) {
+  const display = useCountUp(end, isMoney
+    ? { prefix: "R$ ", decimals: 2, separator: ".", decimalSeparator: "," }
+    : undefined
+  );
+
   return (
     <div className="bg-white dark:bg-white/5 border border-gray-200 dark:border-white/5 rounded-xl p-4">
-      <p className="text-[11px] text-gray-500 uppercase tracking-wider">
-        {label}
-      </p>
-      <p
-        className={`text-lg font-bold mt-1 ${valueColor || "text-gray-900 dark:text-white"}`}
-      >
-        {value}
+      <p className="text-[11px] text-gray-500 uppercase tracking-wider">{label}</p>
+      <p className={`text-lg font-bold mt-1 ${valueColor || "text-gray-900 dark:text-white"}`}>
+        {display}
       </p>
     </div>
   );
