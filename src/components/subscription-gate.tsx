@@ -40,7 +40,7 @@ export function SubscriptionGate({ children }: { children: React.ReactNode }) {
     if (fetched.current) return;
     fetched.current = true;
 
-    fetch("/api/producer/settings/billing")
+    fetch("/api/producer/billing")
       .then((r) => (r.ok ? r.json() : null))
       .then((data: BillingStatus | null) => {
         if (data) {
