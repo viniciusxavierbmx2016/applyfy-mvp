@@ -1,147 +1,205 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
 
-function monthKey(d: Date) {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+function parseDate(s: string | null): Date | null {
+  if (!s) return null;
+  const d = new Date(s + "T00:00:00");
+  return isNaN(d.getTime()) ? null : d;
 }
 
-function monthLabel(d: Date) {
-  return d.toLocaleDateString("pt-BR", { month: "short", year: "2-digit" });
+function endOfDay(d: Date): Date {
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59, 999);
 }
 
-export async function GET() {
+function isoDay(d: Date): string {
+  return d.toISOString().slice(0, 10);
+}
+
+export async function GET(req: NextRequest) {
   try {
     await requireAdmin();
 
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const sp = req.nextUrl.searchParams;
+    const startDate = parseDate(sp.get("startDate"));
+    const endDate = parseDate(sp.get("endDate"));
+    const producerId = sp.get("producerId") || null;
+
+    const now = new Date();
+    const rangeStart = startDate || new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
+    const rangeEnd = endDate ? endOfDay(endDate) : endOfDay(now);
+
+    const producerWhere = producerId ? { id: producerId, role: "PRODUCER" as const } : { role: "PRODUCER" as const };
 
     const [
       totalProducers,
-      totalStudents,
-      totalCourses,
-      activeProducers,
-      recentProducers,
+      newProducersInRange,
       activeSubs,
-      allSubs,
+      pastDueSubs,
+      suspendedSubs,
+      cancelledInRange,
+      allPlans,
+      producersList,
     ] = await Promise.all([
-      prisma.user.count({ where: { role: "PRODUCER" } }),
-      prisma.user.count({ where: { role: "STUDENT" } }),
-      prisma.course.count(),
+      prisma.user.count({ where: producerWhere }),
+
       prisma.user.count({
-        where: { role: "PRODUCER", updatedAt: { gte: thirtyDaysAgo } },
-      }),
-      prisma.user.findMany({
-        where: { role: "PRODUCER" },
-        orderBy: { createdAt: "desc" },
-        take: 10,
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          avatarUrl: true,
-          createdAt: true,
+        where: {
+          ...producerWhere,
+          createdAt: { gte: rangeStart, lte: rangeEnd },
         },
       }),
+
       prisma.subscription.findMany({
-        where: { status: "ACTIVE" },
-        select: { userId: true, plan: { select: { price: true } } },
-      }),
-      prisma.subscription.findMany({
+        where: {
+          status: "ACTIVE",
+          ...(producerId ? { userId: producerId } : {}),
+        },
         select: {
           userId: true,
-          status: true,
-          currentPeriodStart: true,
-          currentPeriodEnd: true,
-          createdAt: true,
-          plan: { select: { price: true } },
+          plan: { select: { id: true, name: true, price: true } },
+          user: { select: { id: true, name: true, email: true, avatarUrl: true } },
         },
+      }),
+
+      prisma.subscription.count({
+        where: {
+          status: "PAST_DUE",
+          ...(producerId ? { userId: producerId } : {}),
+        },
+      }),
+
+      prisma.subscription.count({
+        where: {
+          status: "SUSPENDED",
+          ...(producerId ? { userId: producerId } : {}),
+        },
+      }),
+
+      prisma.subscription.count({
+        where: {
+          status: "CANCELLED",
+          cancelledAt: { gte: rangeStart, lte: rangeEnd },
+          ...(producerId ? { userId: producerId } : {}),
+        },
+      }),
+
+      prisma.plan.findMany({
+        where: { active: true },
+        select: { id: true, name: true, price: true },
+        orderBy: { price: "asc" },
+      }),
+
+      prisma.user.findMany({
+        where: { role: "PRODUCER" },
+        select: { id: true, name: true, email: true },
+        orderBy: { name: "asc" },
       }),
     ]);
 
-    const mrr = activeSubs.reduce((s, x) => s + (x.plan?.price || 0), 0);
-    const paidProducers = new Set(
-      activeSubs.filter((s) => (s.plan?.price || 0) > 0).map((s) => s.userId)
-    ).size;
-    const activeSubProducers = new Set(activeSubs.map((s) => s.userId)).size;
-    const freeProducers = Math.max(0, totalProducers - paidProducers);
+    const activeProducers = new Set(activeSubs.map((s) => s.userId)).size;
+    const mrr = activeSubs.reduce((sum, s) => sum + (s.plan?.price || 0), 0);
+    const avgTicket = activeProducers > 0 ? mrr / activeProducers : 0;
 
-    const now = new Date();
-    const months: Array<{ key: string; label: string; date: Date }> = [];
-    for (let i = 11; i >= 0; i--) {
-      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      months.push({ key: monthKey(d), label: monthLabel(d), date: d });
-    }
-    const monthlyRevenue = months.map((m) => {
-      const endOfMonth = new Date(m.date.getFullYear(), m.date.getMonth() + 1, 0, 23, 59, 59);
-      let revenue = 0;
-      for (const s of allSubs) {
-        const started = s.currentPeriodStart || s.createdAt;
-        if (started > endOfMonth) continue;
-        const expires = s.currentPeriodEnd;
-        if (expires && expires < m.date) continue;
-        if (s.status === "CANCELLED" && started < m.date) continue;
-        revenue += s.plan?.price || 0;
+    // Top 7 producers by plan price
+    const producerRevMap = new Map<string, { user: typeof activeSubs[0]["user"]; revenue: number }>();
+    for (const s of activeSubs) {
+      const price = s.plan?.price || 0;
+      const existing = producerRevMap.get(s.userId);
+      if (existing) {
+        existing.revenue += price;
+      } else {
+        producerRevMap.set(s.userId, { user: s.user, revenue: price });
       }
-      return { month: m.label, revenue: Math.round(revenue * 100) / 100 };
-    });
-
-    // Top producers by student count
-    const workspaces = await prisma.workspace.findMany({
-      select: { id: true, ownerId: true },
-    });
-    const ownerByWs = new Map(workspaces.map((w) => [w.id, w.ownerId]));
-    const enrollments = await prisma.enrollment.findMany({
-      where: { status: "ACTIVE" },
-      select: { userId: true, course: { select: { workspaceId: true } } },
-    });
-    const studentsByProducer = new Map<string, Set<string>>();
-    for (const e of enrollments) {
-      const ownerId = ownerByWs.get(e.course.workspaceId);
-      if (!ownerId) continue;
-      if (!studentsByProducer.has(ownerId))
-        studentsByProducer.set(ownerId, new Set());
-      studentsByProducer.get(ownerId)!.add(e.userId);
     }
-    const topOwnerEntries = Array.from(studentsByProducer.entries())
-      .map(([ownerId, set]) => ({ ownerId, students: set.size }))
-      .sort((a, b) => b.students - a.students)
-      .slice(0, 5);
-    const topOwnerIds = topOwnerEntries.map((t) => t.ownerId);
-    const topOwners = topOwnerIds.length
-      ? await prisma.user.findMany({
-          where: { id: { in: topOwnerIds } },
-          select: { id: true, name: true, email: true, avatarUrl: true },
-        })
-      : [];
-    const topProducers = topOwnerEntries.map((t) => {
-      const u = topOwners.find((o) => o.id === t.ownerId);
+    const topProducers = Array.from(producerRevMap.values())
+      .sort((a, b) => b.revenue - a.revenue)
+      .slice(0, 7)
+      .map((p) => ({
+        id: p.user.id,
+        name: p.user.name,
+        email: p.user.email,
+        avatarUrl: p.user.avatarUrl,
+        revenue: Math.round(p.revenue * 100) / 100,
+      }));
+
+    // Plan distribution (ACTIVE subs)
+    const planCountMap = new Map<string, number>();
+    for (const s of activeSubs) {
+      const planId = s.plan?.id || "unknown";
+      planCountMap.set(planId, (planCountMap.get(planId) || 0) + 1);
+    }
+    const totalActiveSubs = activeSubs.length;
+    const planDistribution = allPlans.map((p) => {
+      const count = planCountMap.get(p.id) || 0;
       return {
-        id: t.ownerId,
-        name: u?.name || "",
-        email: u?.email || "",
-        avatarUrl: u?.avatarUrl || null,
-        students: t.students,
+        planId: p.id,
+        planName: p.name,
+        price: p.price,
+        count,
+        percentage: totalActiveSubs > 0 ? Math.round((count / totalActiveSubs) * 10000) / 100 : 0,
       };
     });
 
+    // Daily chart: new producers + cancellations (max 90 days)
+    const maxChartDays = 90;
+    const diffMs = rangeEnd.getTime() - rangeStart.getTime();
+    const diffDays = Math.min(Math.ceil(diffMs / (1000 * 60 * 60 * 24)), maxChartDays);
+    const chartStart = new Date(rangeEnd.getTime() - diffDays * 24 * 60 * 60 * 1000);
+
+    const [newProducersDaily, cancellationsDaily] = await Promise.all([
+      prisma.user.findMany({
+        where: {
+          ...producerWhere,
+          createdAt: { gte: chartStart, lte: rangeEnd },
+        },
+        select: { createdAt: true },
+      }),
+      prisma.subscription.findMany({
+        where: {
+          status: "CANCELLED",
+          cancelledAt: { gte: chartStart, lte: rangeEnd },
+          ...(producerId ? { userId: producerId } : {}),
+        },
+        select: { cancelledAt: true },
+      }),
+    ]);
+
+    const dayMap = new Map<string, { newProducers: number; cancellations: number }>();
+    for (let i = 0; i <= diffDays; i++) {
+      const d = new Date(chartStart.getTime() + i * 24 * 60 * 60 * 1000);
+      dayMap.set(isoDay(d), { newProducers: 0, cancellations: 0 });
+    }
+    for (const p of newProducersDaily) {
+      const key = isoDay(p.createdAt);
+      const entry = dayMap.get(key);
+      if (entry) entry.newProducers++;
+    }
+    for (const c of cancellationsDaily) {
+      if (!c.cancelledAt) continue;
+      const key = isoDay(c.cancelledAt);
+      const entry = dayMap.get(key);
+      if (entry) entry.cancellations++;
+    }
+    const chart = Array.from(dayMap.entries())
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([date, data]) => ({ date, ...data }));
+
     return NextResponse.json({
-      metrics: {
-        totalProducers,
-        totalStudents,
-        totalCourses,
-        activeProducers,
-      },
-      revenue: {
+      kpis: {
         mrr: Math.round(mrr * 100) / 100,
-        paidProducers,
-        freeProducers,
-        activeSubProducers,
+        activeProducers,
+        newProducers: newProducersInRange,
+        churn: cancelledInRange,
+        avgTicket: Math.round(avgTicket * 100) / 100,
+        pastDue: pastDueSubs,
+        totalProducers,
+        suspended: suspendedSubs,
       },
-      monthlyRevenue,
-      recentProducers,
+      chart,
       topProducers,
+      planDistribution,
+      producers: producersList,
     });
   } catch (error) {
     console.error("GET /api/admin/dashboard error:", error);
