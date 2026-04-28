@@ -71,40 +71,38 @@ export async function GET(
     console.log("[IMPERSONATE] Step 2 - generateLink result:", {
       hasData: !!data,
       hasActionLink: !!data?.properties?.action_link,
-      actionLinkPreview: data?.properties?.action_link?.substring(0, 100),
+      propertiesKeys: Object.keys(data?.properties || {}),
+      hashedTokenPreview: data?.properties?.hashed_token
+        ? data.properties.hashed_token.substring(0, 20) + "..."
+        : null,
       error: error?.message || null,
     });
 
-    if (error || !data?.properties?.action_link) {
+    if (error || !data?.properties) {
       console.error("[IMPERSONATE] generateLink error:", error);
       return errorRedirect("Erro ao autenticar");
     }
 
-    const actionUrl = new URL(data.properties.action_link);
-    const tokenHash =
-      actionUrl.searchParams.get("token_hash") ||
-      actionUrl.searchParams.get("token");
-    const type = actionUrl.searchParams.get("type");
+    const hashedToken = data.properties.hashed_token;
 
-    console.log("[IMPERSONATE] Step 3 - Extracted from action_link:", {
-      tokenHashPreview: tokenHash?.substring(0, 20),
-      type,
-      allParams: Object.fromEntries(actionUrl.searchParams.entries()),
-    });
-
-    if (!tokenHash || type !== "magiclink") {
+    if (!hashedToken) {
       console.error(
-        "[IMPERSONATE] invalid action_link format:",
-        data.properties.action_link
+        "[IMPERSONATE] No hashed_token in response. Properties:",
+        JSON.stringify(data.properties)
       );
       return errorRedirect("Erro ao autenticar");
     }
 
+    console.log("[IMPERSONATE] Step 3 - Using hashed_token directly:", {
+      hashedTokenPreview: hashedToken.substring(0, 20) + "...",
+      type: "email",
+    });
+
     const supabase = await createServerSupabaseClient();
     const { data: sessionData, error: verifyError } =
       await supabase.auth.verifyOtp({
-        token_hash: tokenHash,
-        type: "magiclink",
+        token_hash: hashedToken,
+        type: "email",
       });
 
     console.log("[IMPERSONATE] Step 4 - verifyOtp result:", {
