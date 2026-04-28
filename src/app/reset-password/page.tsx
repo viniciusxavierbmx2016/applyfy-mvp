@@ -90,7 +90,7 @@ export default function ResetPasswordPage() {
         }
       }
     } catch {}
-    router.push("/login");
+    router.push("/producer/login");
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -243,7 +243,7 @@ export default function ResetPasswordPage() {
               </form>
               <p className="mt-6 text-center text-sm text-gray-600 dark:text-gray-400">
                 <Link
-                  href="/login"
+                  href="/producer/login"
                   className="text-blue-600 dark:text-blue-400 hover:underline"
                 >
                   Voltar ao login
