@@ -7,7 +7,7 @@ import Link from "next/link";
 function ForgotPasswordForm() {
   const searchParams = useSearchParams();
   const workspace = searchParams.get("workspace");
-  const loginHref = workspace ? `/w/${workspace}/login` : "/login";
+  const loginHref = workspace ? `/w/${workspace}/login` : "/producer/login";
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
   const [sent, setSent] = useState(false);
