@@ -189,7 +189,7 @@ export function WorkspaceShell({
   function linkCls(active: boolean) {
     return cn(
       "group relative flex items-center rounded-lg text-sm font-medium transition-colors duration-200",
-      collapsed ? "lg:justify-center lg:gap-0 lg:p-2.5 gap-3 py-2.5 px-3" : "gap-3 py-2.5 px-3",
+      collapsed ? "lg:justify-center lg:gap-0 lg:px-0 lg:py-2.5 lg:mx-auto lg:w-10 lg:h-10 gap-3 py-2.5 px-3" : "gap-3 py-2.5 px-3",
       active
         ? accent ? "" : "bg-blue-500/10 text-blue-600 dark:text-blue-400"
         : "text-gray-600 dark:text-gray-400 hover:bg-gray-50 hover:text-gray-900 dark:hover:bg-white/5 dark:hover:text-white"
@@ -295,7 +295,7 @@ export function WorkspaceShell({
             "h-[calc(100vh-3.5rem)]",
             "border-r border-gray-200 dark:border-white/5",
             "bg-white dark:bg-gray-900",
-            "transform transition-transform duration-300 ease-in-out",
+            "transform transition-transform duration-200 ease-in-out",
             "lg:translate-x-0",
             "w-64",
             collapsed ? "lg:w-16" : "lg:w-56",
