@@ -12,20 +12,13 @@ export async function POST(
 
     const producer = await prisma.user.findUnique({
       where: { id: params.id },
-      select: { id: true, email: true, name: true, role: true },
+      select: { id: true, email: true, role: true },
     });
 
-    if (!producer) {
+    if (!producer || producer.role === "STUDENT") {
       return NextResponse.json(
         { error: "Produtor não encontrado" },
         { status: 404 }
-      );
-    }
-
-    if (producer.role !== "PRODUCER") {
-      return NextResponse.json(
-        { error: "Usuário não é produtor" },
-        { status: 400 }
       );
     }
 
@@ -49,13 +42,16 @@ export async function POST(
       process.env.NEXT_PUBLIC_SITE_URL ||
       process.env.NEXT_PUBLIC_APP_URL ||
       "";
-    const url = `${origin}/api/auth/impersonate/${token}`;
 
     console.log(
-      `[IMPERSONATE] Admin ${admin.email} (${admin.id}) → ${producer.email} (${producer.id}) em ${new Date().toISOString()}`
+      `[IMPERSONATE] Admin ${admin.email} gerou token para ${producer.email}`
     );
 
-    return NextResponse.json({ url, email: producer.email, expiresIn: 120 });
+    return NextResponse.json({
+      url: `${origin}/auth/impersonate?token=${token}`,
+      email: producer.email,
+      expiresIn: 120,
+    });
   } catch (error) {
     console.error("[IMPERSONATE] error:", error);
     const msg = error instanceof Error ? error.message : "";

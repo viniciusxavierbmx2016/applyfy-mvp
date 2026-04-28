@@ -9,6 +9,7 @@ const publicRoutes = new Set([
   "/forgot-password",
   "/reset-password",
   "/verify-email",
+  "/auth/impersonate",
 ]);
 
 const redirectIfAuthed = new Set([
