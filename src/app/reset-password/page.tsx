@@ -33,15 +33,12 @@ export default function ResetPasswordPage() {
       }
     });
 
-    const hasTokens = hash.includes("access_token") || hash.includes("type=recovery");
-    const timeout = hasTokens ? 10000 : 8000;
-
     const timer = setTimeout(() => {
       setReady((r) => {
         if (!r) setExpired(true);
         return r;
       });
-    }, timeout);
+    }, 60000);
 
     return () => {
       sub.subscription.unsubscribe();
@@ -209,7 +206,7 @@ export default function ResetPasswordPage() {
                 </div>
                 <button
                   type="submit"
-                  disabled={loading || !ready}
+                  disabled={loading}
                   className="w-full py-3 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-medium rounded-lg transition"
                 >
                   {loading ? "Salvando..." : "Salvar nova senha"}
