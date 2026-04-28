@@ -110,23 +110,6 @@ export async function GET(
     const projectRef = new URL(supabaseUrl).hostname.split(".")[0];
     const cookiePrefix = `sb-${projectRef}-auth-token`;
 
-    const response = NextResponse.redirect(`${baseUrl}/producer`);
-
-    const allCookies = request.headers.get("cookie") || "";
-    const oldCookieNames = allCookies
-      .split(";")
-      .map((c) => c.trim().split("=")[0])
-      .filter((name) => name.startsWith("sb-") && name.includes("-auth-token"));
-
-    for (const name of oldCookieNames) {
-      response.cookies.set(name, "", { path: "/", maxAge: 0 });
-    }
-
-    console.log(
-      "[IMPERSONATE] Step 5 - Cleared old cookies:",
-      oldCookieNames.length
-    );
-
     const sessionStr = JSON.stringify({
       access_token: signInData.session.access_token,
       refresh_token: signInData.session.refresh_token,
@@ -136,32 +119,56 @@ export async function GET(
       user: signInData.session.user,
     });
 
-    const CHUNK_SIZE = 3500;
-    const cookieOptions = {
-      path: "/",
-      httpOnly: false,
-      secure: true,
-      sameSite: "lax" as const,
-      maxAge: signInData.session.expires_in,
-    };
-
-    if (sessionStr.length <= CHUNK_SIZE) {
-      response.cookies.set(cookiePrefix, sessionStr, cookieOptions);
-    } else {
-      const chunks: string[] = [];
-      for (let i = 0; i < sessionStr.length; i += CHUNK_SIZE) {
-        chunks.push(sessionStr.slice(i, i + CHUNK_SIZE));
-      }
-      for (let i = 0; i < chunks.length; i++) {
-        response.cookies.set(`${cookiePrefix}.${i}`, chunks[i], cookieOptions);
-      }
-    }
+    const maxAge = signInData.session.expires_in;
+    const safeSession = sessionStr.replace(/\\/g, "\\\\").replace(/'/g, "\\'");
 
     console.log(
-      `[IMPERSONATE] Step 6 - SUCCESS: Admin ${impToken.admin.email} → ${impToken.user.email} (cookie size: ${sessionStr.length})`
+      `[IMPERSONATE] Step 5 - SUCCESS: Admin ${impToken.admin.email} → ${impToken.user.email} (cookie size: ${sessionStr.length})`
     );
 
-    return response;
+    const html = `<!DOCTYPE html>
+<html>
+<head><title>Carregando...</title></head>
+<body style="background:#0a0a0b;color:#fff;font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0">
+  <div style="text-align:center">
+    <p>Entrando como ${impToken.user.email}...</p>
+  </div>
+  <script>
+    (function() {
+      document.cookie.split(';').forEach(function(c) {
+        var name = c.trim().split('=')[0];
+        if (name.startsWith('sb-') && name.includes('-auth-token')) {
+          document.cookie = name + '=; path=/; max-age=0; secure; samesite=lax';
+        }
+      });
+
+      var cookieName = '${cookiePrefix}';
+      var cookieValue = '${safeSession}';
+      var maxAge = ${maxAge};
+      var chunkSize = 3500;
+
+      if (cookieValue.length <= chunkSize) {
+        document.cookie = cookieName + '=' + encodeURIComponent(cookieValue) + '; path=/; max-age=' + maxAge + '; secure; samesite=lax';
+      } else {
+        for (var i = 0; i < cookieValue.length; i += chunkSize) {
+          var chunk = cookieValue.slice(i, i + chunkSize);
+          var idx = Math.floor(i / chunkSize);
+          document.cookie = cookieName + '.' + idx + '=' + encodeURIComponent(chunk) + '; path=/; max-age=' + maxAge + '; secure; samesite=lax';
+        }
+      }
+
+      setTimeout(function() {
+        window.location.href = '/producer';
+      }, 500);
+    })();
+  </script>
+</body>
+</html>`;
+
+    return new Response(html, {
+      status: 200,
+      headers: { "Content-Type": "text/html" },
+    });
   } catch (err) {
     console.error(
       "[IMPERSONATE] Unexpected error:",
