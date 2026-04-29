@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireStaff, requirePermission, getStaffCourseIds } from "@/lib/auth";
 import { resolveStaffWorkspace } from "@/lib/workspace";
+import { decrypt } from "@/lib/encryption";
 
 function csvEscape(v: string | number | null | undefined): string {
   const s = v == null ? "" : String(v);
@@ -333,7 +334,7 @@ export async function GET(request: Request) {
           csvEscape(u.name),
           csvEscape(u.email),
           csvEscape(u.phone),
-          csvEscape(u.document),
+          csvEscape(u.document ? decrypt(u.document) : ""),
           csvEscape(tagNames),
           csvEscape(u.points),
           csvEscape(u.level),

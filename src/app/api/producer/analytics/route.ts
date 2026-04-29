@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireStaff, requirePermission, getStaffCourseIds } from "@/lib/auth";
 import { resolveStaffWorkspace } from "@/lib/workspace";
+import { decrypt } from "@/lib/encryption";
 
 function startOfDay(d: Date) {
   const x = new Date(d);
@@ -652,7 +653,7 @@ export async function GET(request: Request) {
             avatarUrl: e.user.avatarUrl,
             points: e.user.points,
             phone: e.user.phone ?? null,
-            document: e.user.document ?? null,
+            document: e.user.document ? decrypt(e.user.document) : null,
             level: e.user.level ?? 1,
             tags: e.user.userTags?.map((ut) => ut.tag.name).join("; ") || "",
             lessonsCompleted: completed,
@@ -721,7 +722,7 @@ export async function GET(request: Request) {
           avatarUrl: e.user.avatarUrl,
           points: e.user.points,
           phone: e.user.phone ?? null,
-          document: e.user.document ?? null,
+          document: e.user.document ? decrypt(e.user.document) : null,
           level: e.user.level ?? 1,
           tags: e.user.userTags?.map((ut) => ut.tag.name).join("; ") || "",
           lessonsCompleted: 0,
@@ -759,7 +760,7 @@ export async function GET(request: Request) {
             email: e.user.email,
             avatarUrl: e.user.avatarUrl,
             phone: e.user.phone ?? null,
-            document: e.user.document ?? null,
+            document: e.user.document ? decrypt(e.user.document) : null,
             level: e.user.level ?? 1,
             tags: e.user.userTags?.map((ut) => ut.tag.name).join("; ") || "",
             expiresAt: e.expiresAt!.toISOString(),

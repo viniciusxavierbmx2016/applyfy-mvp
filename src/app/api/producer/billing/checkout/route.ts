@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireStaff } from "@/lib/auth";
+import { decrypt } from "@/lib/encryption";
 
 export async function POST() {
   try {
@@ -25,7 +26,7 @@ export async function POST() {
     if (user.name) params.set("name", user.name);
     if (user.email) params.set("email", user.email);
     if (user.phone) params.set("phone", user.phone);
-    if (user.document) params.set("document", user.document);
+    if (user.document) params.set("document", decrypt(user.document));
 
     const separator = baseCheckoutUrl.includes("?") ? "&" : "?";
     const checkoutUrl = `${baseCheckoutUrl}${separator}${params.toString()}`;

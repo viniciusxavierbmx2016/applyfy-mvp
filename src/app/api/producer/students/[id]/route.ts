@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireStaff, requirePermission } from "@/lib/auth";
 import { resolveStaffWorkspace } from "@/lib/workspace";
+import { decrypt } from "@/lib/encryption";
 
 export async function GET(
   _request: Request,
@@ -190,7 +191,7 @@ export async function GET(
         name: user.name,
         email: user.email,
         phone: user.phone,
-        document: user.document,
+        document: user.document ? decrypt(user.document) : null,
         avatarUrl: user.avatarUrl,
         points: user.points,
         level: user.level,

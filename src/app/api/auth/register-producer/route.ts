@@ -5,6 +5,7 @@ import { sendEmail } from "@/lib/email";
 import { welcomeProducer } from "@/lib/email-templates";
 import { rateLimit } from "@/lib/rate-limit";
 import { registerSchema, validateBody } from "@/lib/validations";
+import { encrypt } from "@/lib/encryption";
 
 export async function POST(request: Request) {
   const limited = rateLimit(request);
@@ -55,7 +56,7 @@ export async function POST(request: Request) {
           niche: niche || null,
           monthlyRevenue: monthlyRevenue || null,
           referralSource: referralSource || null,
-          document: document || null,
+          document: document ? encrypt(document) : null,
         },
       });
 

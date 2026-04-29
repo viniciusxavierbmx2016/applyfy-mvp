@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
 import { logAudit, getRequestMeta } from "@/lib/audit";
+import { decrypt } from "@/lib/encryption";
 
 export async function GET(
   _request: Request,
@@ -183,7 +184,10 @@ export async function GET(
       : [];
 
     return NextResponse.json({
-      producer,
+      producer: {
+        ...producer,
+        document: producer.document ? decrypt(producer.document) : null,
+      },
       workspaces: workspacesWithStats,
       courses: coursesOut,
       totalStudents: studentIdsAll.size,
