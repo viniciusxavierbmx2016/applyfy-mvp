@@ -5,6 +5,7 @@ import { resolveStaffWorkspace } from "@/lib/workspace";
 import { createNotification } from "@/lib/notifications";
 import { GAMIFICATION, getLevelForPoints } from "@/lib/utils";
 import { moderateSchema, validateBody } from "@/lib/validations";
+import { logAudit, getRequestMeta } from "@/lib/audit";
 
 export async function POST(request: Request) {
   try {
@@ -141,6 +142,14 @@ export async function POST(request: Request) {
         }
       }
     }
+
+    await logAudit({
+      userId: staff.id,
+      action: `moderate_${action}`,
+      target: items[0]?.id,
+      details: { count: items.length, action, updated },
+      ...getRequestMeta(request),
+    });
 
     return NextResponse.json({ updated });
   } catch (error) {

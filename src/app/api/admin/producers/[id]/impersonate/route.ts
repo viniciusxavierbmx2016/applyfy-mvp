@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
 import crypto from "crypto";
+import { logAudit, getRequestMeta } from "@/lib/audit";
 
 export async function POST(
   request: Request,
@@ -46,6 +47,14 @@ export async function POST(
     console.log(
       `[IMPERSONATE] Admin ${admin.email} gerou token para ${producer.email}`
     );
+
+    await logAudit({
+      userId: admin.id,
+      action: "impersonate",
+      target: producer.id,
+      details: { email: producer.email },
+      ...getRequestMeta(request),
+    });
 
     return NextResponse.json({
       url: `${origin}/auth/impersonate?token=${token}`,

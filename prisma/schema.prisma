@@ -58,6 +58,7 @@ model User {
   impersonateTargets ImpersonateToken[] @relation("impersonateTarget")
   impersonateAdmins  ImpersonateToken[] @relation("impersonateAdmin")
   accessLogs         AccessLog[]
+  auditLogs          AuditLog[]         @relation("auditLogs")
 
   @@index([workspaceId])
 }
@@ -976,4 +977,20 @@ model AccessLog {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, createdAt])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String
+  action    String
+  target    String?
+  details   String?  @db.Text
+  ip        String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  user User @relation("auditLogs", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([action, createdAt])
 }

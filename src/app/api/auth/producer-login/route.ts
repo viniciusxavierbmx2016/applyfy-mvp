@@ -3,6 +3,8 @@ import { createRouteHandlerClient } from "@/lib/supabase-route";
 import { prisma } from "@/lib/prisma";
 import { rateLimit } from "@/lib/rate-limit";
 import { loginSchema, validateBody } from "@/lib/validations";
+import { logAudit, getRequestMeta } from "@/lib/audit";
+import { trackLoginFailure } from "@/lib/security-alerts";
 
 const MAX_SESSIONS = 3;
 
@@ -25,6 +27,8 @@ export async function POST(request: Request) {
 
     if (error) {
       console.error("[AUTH] Producer login error:", error.message);
+      const meta = getRequestMeta(request);
+      trackLoginFailure(meta.ip, email);
       return NextResponse.json(
         { error: "Credenciais inválidas" },
         { status: 401 }
@@ -72,6 +76,13 @@ export async function POST(request: Request) {
         device,
         expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
       },
+    });
+
+    await logAudit({
+      userId: user.id,
+      action: "producer_login",
+      details: { role: user.role },
+      ...getRequestMeta(request),
     });
 
     return NextResponse.json({

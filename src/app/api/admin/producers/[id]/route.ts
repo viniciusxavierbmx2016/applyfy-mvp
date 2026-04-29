@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
+import { logAudit, getRequestMeta } from "@/lib/audit";
 
 export async function GET(
   _request: Request,
@@ -212,7 +213,7 @@ export async function PATCH(
   { params }: { params: { id: string } }
 ) {
   try {
-    await requireAdmin();
+    const admin = await requireAdmin();
     const body = await request.json();
     const action = body.action as "suspend" | "activate";
 
@@ -234,6 +235,13 @@ export async function PATCH(
     await prisma.workspace.updateMany({
       where: { ownerId: producer.id },
       data: { isActive: action === "activate" },
+    });
+
+    await logAudit({
+      userId: admin.id,
+      action: action === "suspend" ? "suspend_producer" : "activate_producer",
+      target: producer.id,
+      ...getRequestMeta(request),
     });
 
     return NextResponse.json({ success: true });

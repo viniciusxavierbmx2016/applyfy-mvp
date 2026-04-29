@@ -103,6 +103,11 @@ const iconLives = (
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
   </svg>
 );
+const iconShield = (
+  <svg className={iconCls} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3l8 4v5c0 5-3.5 8.5-8 9-4.5-.5-8-4-8-9V7l8-4z" />
+  </svg>
+);
 
 const studentLinks: NavLink[] = [
   { href: "/", label: "Vitrine", icon: iconHome },
@@ -153,6 +158,7 @@ const adminLinks: NavLink[] = [
   { href: "/admin", label: "Dashboard", icon: iconDashboard },
   { href: "/admin/producers", label: "Produtores", icon: iconBriefcase },
   { href: "/admin/reports", label: "Relatórios", icon: iconAnalytics },
+  { href: "/admin/audit", label: "Logs", icon: iconShield },
   { href: "/admin/plans", label: "Planos", icon: iconPlans },
   { href: "/admin/subscriptions", label: "Assinaturas", icon: iconSubscriptions },
   { href: "/admin/integrations", label: "Integrações", icon: iconIntegrations },

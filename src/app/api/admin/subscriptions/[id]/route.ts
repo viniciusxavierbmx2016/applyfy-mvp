@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
 import type { SubscriptionStatus } from "@prisma/client";
+import { logAudit, getRequestMeta } from "@/lib/audit";
 
 interface Ctx {
   params: { id: string };
@@ -55,7 +56,7 @@ const ALLOWED_TRANSITIONS: Record<Action, SubscriptionStatus[]> = {
 
 export async function PATCH(request: Request, { params }: Ctx) {
   try {
-    await requireAdmin();
+    const admin = await requireAdmin();
 
     const sub = await prisma.subscription.findUnique({ where: { id: params.id } });
     if (!sub) {
@@ -164,6 +165,14 @@ export async function PATCH(request: Request, { params }: Ctx) {
         where: { subscriptionId: params.id },
       });
     }
+
+    await logAudit({
+      userId: admin.id,
+      action: `subscription_${action}`,
+      target: params.id,
+      details: { reason, planId: body.planId, days: body.days },
+      ...getRequestMeta(request),
+    });
 
     return NextResponse.json({ subscription: updated });
   } catch (error) {
