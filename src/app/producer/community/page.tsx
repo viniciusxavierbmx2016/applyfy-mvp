@@ -7,6 +7,7 @@ import { formatRelativeTime } from "@/lib/utils";
 import { sanitizeHtml } from "@/lib/sanitize-html";
 import { useConfirm } from "@/hooks/use-confirm";
 import { CustomSelect } from "@/components/custom-select";
+import { HelpTooltip } from "@/components/help-tooltip";
 
 interface AdminPost {
   id: string;
@@ -295,6 +296,7 @@ export default function AdminCommunityPage() {
         <div>
           <h1 className="text-xl font-bold text-gray-900 dark:text-white">
             Comunidade
+            <HelpTooltip text="Gerencie as postagens, grupos e moderação da comunidade de todos os cursos." />
           </h1>
           <p className="text-sm text-gray-500 mt-1">
             Postagens de todos os cursos
@@ -322,6 +324,7 @@ export default function AdminCommunityPage() {
           onClick={() => setSubTab("posts")}
         >
           Posts
+          <HelpTooltip text="Veja todas as postagens da comunidade. Fixe, edite ou exclua posts." />
         </button>
         <button
           className={`px-4 py-2 text-sm border-b-2 transition ${
@@ -332,6 +335,7 @@ export default function AdminCommunityPage() {
           onClick={() => setSubTab("groups")}
         >
           Grupos
+          <HelpTooltip text="Crie e gerencie grupos dentro da comunidade de cada curso." />
         </button>
         <button
           className={`px-4 py-2 text-sm border-b-2 transition flex items-center gap-1.5 ${
@@ -342,6 +346,7 @@ export default function AdminCommunityPage() {
           onClick={() => setSubTab("pending")}
         >
           Pendentes
+          <HelpTooltip text="Posts e comentários aguardando aprovação. Aprove ou rejeite em massa." />
           {pendingTotal > 0 && (
             <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-500 font-bold tabular-nums">
               {pendingTotal}

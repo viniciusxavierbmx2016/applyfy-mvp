@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { useUserStore } from "@/stores/user-store";
 import { useConfirm } from "@/hooks/use-confirm";
+import { HelpTooltip } from "@/components/help-tooltip";
 
 interface AdminCourse {
   id: string;
@@ -129,7 +130,10 @@ export default function AdminCoursesPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">Cursos</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
+            Cursos
+            <HelpTooltip text="Lista de todos os cursos do seu workspace. Crie, edite e gerencie seus cursos aqui." />
+          </h1>
           <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
             Gerencie seus cursos, módulos e aulas
           </p>
@@ -165,16 +169,19 @@ export default function AdminCoursesPage() {
                     Reordenar
                   </button>
                 )}
-                <Link
-                  href="/producer/courses/new"
-                  data-tour="create-course-btn"
-                  className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium rounded-lg transition"
-                >
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                  </svg>
-                  Novo curso
-                </Link>
+                <div className="flex items-center gap-0">
+                  <Link
+                    href="/producer/courses/new"
+                    data-tour="create-course-btn"
+                    className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium rounded-lg transition"
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    </svg>
+                    Novo curso
+                  </Link>
+                  <HelpTooltip text="Crie um novo curso para o seu workspace. Defina título, descrição, módulos e aulas." />
+                </div>
               </>
             )}
           </div>

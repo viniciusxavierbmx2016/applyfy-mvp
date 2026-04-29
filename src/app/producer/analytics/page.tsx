@@ -10,6 +10,7 @@ import {
   type DateRangeValue,
 } from "@/components/date-range-selector";
 import { CustomSelect } from "@/components/custom-select";
+import { HelpTooltip } from "@/components/help-tooltip";
 
 const ReportsContentTab = dynamic(
   () =>
@@ -114,6 +115,7 @@ function AdminAnalyticsPageInner() {
         <div>
           <h1 className="text-xl font-bold text-gray-900 dark:text-white">
             Relatórios
+            <HelpTooltip text="Relatórios detalhados de desempenho do conteúdo e engajamento dos alunos." />
           </h1>
           <p className="mt-1 text-sm text-gray-500">
             Análise detalhada de conteúdo e alunos
@@ -130,10 +132,13 @@ function AdminAnalyticsPageInner() {
             ]}
           />
           <DateRangeSelector value={range} onChange={setRange} />
-          <Button variant="secondary" size="sm" onClick={handleExport}>
-            <DownloadIcon className="w-4 h-4 mr-2" />
-            Exportar relatório
-          </Button>
+          <div className="flex items-center gap-0">
+            <Button variant="secondary" size="sm" onClick={handleExport}>
+              <DownloadIcon className="w-4 h-4 mr-2" />
+              Exportar relatório
+            </Button>
+            <HelpTooltip text="Baixe os dados da aba atual em formato CSV para análise externa." />
+          </div>
         </div>
       </div>
 

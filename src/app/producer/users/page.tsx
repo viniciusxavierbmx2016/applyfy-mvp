@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import { ImportStudentsModal } from "@/components/import-students-modal";
 import { useConfirm } from "@/hooks/use-confirm";
 import { CustomSelect } from "@/components/custom-select";
+import { HelpTooltip } from "@/components/help-tooltip";
 
 type EnrollmentStatus = "ACTIVE" | "EXPIRED" | "CANCELLED";
 
@@ -237,6 +238,7 @@ export default function AdminUsersPage() {
         <div>
           <h1 className="text-xl font-bold text-gray-900 dark:text-white">
             {viewerRole === "PRODUCER" ? "Meus Alunos" : "Usuários"}
+            <HelpTooltip text="Lista de todos os alunos matriculados no workspace. Gerencie acessos, tags e matrículas." />
           </h1>
           <p className="text-sm text-gray-500 mt-1">Gerencie todos os alunos do workspace</p>
         </div>
@@ -295,6 +297,7 @@ export default function AdminUsersPage() {
             )}
             <span>{exporting ? "Exportando..." : "Exportar CSV"}</span>
           </button>
+          <HelpTooltip text="Exporte a lista de alunos em formato CSV para usar em planilhas ou ferramentas externas." />
         </div>
       </div>
 
@@ -317,7 +320,7 @@ export default function AdminUsersPage() {
             type="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Buscar por nome ou email..."
+            placeholder="Buscar por nome ou e-mail..."
             className="w-full bg-white dark:bg-gray-900/50 border border-gray-200 dark:border-white/10 rounded-lg pl-9 pr-9 py-2.5 text-sm text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:border-blue-500/50 transition-colors"
           />
           {query && (
