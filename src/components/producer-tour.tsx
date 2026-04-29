@@ -152,7 +152,7 @@ export function ProducerTour() {
           popover: {
             title: "Tudo pronto!",
             description:
-              'Agora é só criar seu primeiro curso! Vá em "Meus Cursos" e clique em "Criar curso". Se tiver dúvidas, você pode refazer este tour em Configurações.',
+              'Agora é só criar seu primeiro curso! Vá em "Meus Cursos" e clique em "Criar curso". Se quiser refazer este tour, clique no seu nome no canto superior direito e selecione "Guia da plataforma".',
             side: "over" as const,
             align: "center" as const,
           },
