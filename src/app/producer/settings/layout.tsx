@@ -57,6 +57,17 @@ const tabs = [
       </svg>
     ),
   },
+  {
+    key: "security",
+    label: "Segurança",
+    href: "/producer/settings/security",
+    exact: false,
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
+        <path d="M12 3l8 4v5c0 5-3.5 8.5-8 9-4.5-.5-8-4-8-9V7l8-4z" />
+      </svg>
+    ),
+  },
 ];
 
 const baseCls = "flex items-center gap-2 px-4 py-2.5 text-sm font-medium whitespace-nowrap border-b-2 transition-colors";
