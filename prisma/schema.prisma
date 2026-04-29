@@ -28,6 +28,7 @@ model User {
   lastIpAddress          String?
   onboardingCompletedAt        DateTime?
   courseOnboardingCompletedAt   DateTime?
+  studentOnboardingCompletedAt DateTime?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 

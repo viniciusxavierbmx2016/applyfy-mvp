@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useUserStore } from "@/stores/user-store";
@@ -10,6 +11,14 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { InstallPrompt } from "@/components/install-prompt";
 import { NotificationsBell } from "@/components/notifications-bell";
 import { PushOptIn } from "@/components/push-opt-in";
+
+const StudentTour = dynamic(
+  () =>
+    import("@/components/student-tour").then((m) => ({
+      default: m.StudentTour,
+    })),
+  { ssr: false }
+);
 
 interface WorkspaceInfo {
   id: string;
@@ -179,9 +188,9 @@ export function WorkspaceShell({
   );
 
   const items = [
-    { href: vitrineHref, label: "Vitrine", icon: iconHome, active: !!isVitrine, badge: 0 },
-    { href: livesHref, label: "Lives", icon: iconLives, active: isLives, badge: liveCount },
-    { href: profileHref, label: "Meu Perfil", icon: iconProfile, active: isProfile, badge: 0 },
+    { href: vitrineHref, label: "Vitrine", icon: iconHome, active: !!isVitrine, badge: 0, tourId: "student-nav-home" },
+    { href: livesHref, label: "Lives", icon: iconLives, active: isLives, badge: liveCount, tourId: "student-nav-lives" },
+    { href: profileHref, label: "Meu Perfil", icon: iconProfile, active: isProfile, badge: 0, tourId: "student-nav-profile" },
   ];
 
   const accent = ws?.accentColor || null;
@@ -370,6 +379,7 @@ export function WorkspaceShell({
                 title={item.label}
                 className={linkCls(item.active)}
                 style={linkStyle(item.active)}
+                {...(item.tourId ? { "data-tour": item.tourId } : {})}
               >
                 <span className={cn("relative", iconWrapCls(item.active))} style={iconStyle(item.active)}>
                   {item.icon}
@@ -395,6 +405,7 @@ export function WorkspaceShell({
 
         <main className={cn("flex-1 min-w-0", collapsed ? "lg:ml-16" : "lg:ml-56")}>
           <PushOptIn />
+          {user?.role === "STUDENT" && <StudentTour />}
           {children}
         </main>
       </div>
