@@ -22,6 +22,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { LessonsManager, type LessonData } from "./lessons-manager";
 import { ThumbnailUpload } from "./thumbnail-upload";
 import { useConfirm } from "@/hooks/use-confirm";
+import { HelpTooltip } from "@/components/help-tooltip";
 
 export interface ModuleData {
   id: string;
@@ -257,26 +258,32 @@ export function ModulesManager({
         </h2>
         <div className="flex flex-wrap gap-2">
           {!creatingSection && (
-            <button
-              onClick={() => setCreatingSection(true)}
-              className="inline-flex items-center gap-2 px-3 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 text-sm font-medium rounded-lg transition"
-            >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-              Adicionar divisão
-            </button>
+            <div className="flex items-center gap-0">
+              <button
+                onClick={() => setCreatingSection(true)}
+                className="inline-flex items-center gap-2 px-3 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 text-sm font-medium rounded-lg transition"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+                Adicionar divisão
+              </button>
+              <HelpTooltip text="Divisões agrupam módulos visualmente na vitrine. Ex: Fase 1, Fase 2. São opcionais." />
+            </div>
           )}
           {!creatingModule && (
-            <button
-              onClick={() => setCreatingModule(true)}
-              className="inline-flex items-center gap-2 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition"
-            >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
-              Novo módulo
-            </button>
+            <div className="flex items-center gap-0">
+              <button
+                onClick={() => setCreatingModule(true)}
+                className="inline-flex items-center gap-2 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                Novo módulo
+              </button>
+              <HelpTooltip text="Módulos organizam seu curso em seções. Ex: Módulo 1 — Introdução, Módulo 2 — Fundamentos. Cada módulo contém aulas." />
+            </div>
           )}
         </div>
       </div>

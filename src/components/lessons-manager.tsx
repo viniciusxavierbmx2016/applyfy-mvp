@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import { LessonMaterials } from "@/components/lesson-materials";
 import { QuizManager } from "@/components/quiz-manager";
 import { useConfirm } from "@/hooks/use-confirm";
+import { HelpTooltip } from "@/components/help-tooltip";
 
 const RichTextEditor = dynamic(() => import("@/components/rich-text-editor"), {
   ssr: false,
@@ -149,15 +150,18 @@ export function LessonsManager({
           onCancel={() => setCreating(false)}
         />
       ) : (
-        <button
-          onClick={() => setCreating(true)}
-          className="w-full flex items-center justify-center gap-2 py-2 border border-dashed border-gray-300 dark:border-gray-700 hover:border-gray-500 dark:hover:border-gray-600 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 text-sm rounded-lg transition"
-        >
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
-          Adicionar aula
-        </button>
+        <div className="flex items-center justify-center gap-0">
+          <button
+            onClick={() => setCreating(true)}
+            className="flex-1 flex items-center justify-center gap-2 py-2 border border-dashed border-gray-300 dark:border-gray-700 hover:border-gray-500 dark:hover:border-gray-600 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 text-sm rounded-lg transition"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            Adicionar aula
+          </button>
+          <HelpTooltip text="Cada aula pode ter vídeo (YouTube, Vimeo), texto, materiais em PDF e quiz avaliativo." />
+        </div>
       )}
     </div>
   );

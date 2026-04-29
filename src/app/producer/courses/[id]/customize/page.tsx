@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { CourseMenuManager } from "@/components/course-menu-manager";
 import { useConfirm } from "@/hooks/use-confirm";
+import { HelpTooltip } from "@/components/help-tooltip";
 
 const HEX_RE = /^#[0-9a-fA-F]{6}$/;
 
@@ -65,15 +66,16 @@ const FEATURE_ITEMS: Array<{
   key: FlagKey;
   title: string;
   description: string;
+  tooltip?: string;
 }> = [
-  { key: "communityEnabled", title: "Comunidade do curso", description: "Alunos criam posts e interagem entre si" },
-  { key: "communityModerationEnabled", title: "Moderação da comunidade", description: "Posts e comentários dos alunos precisam ser aprovados antes de aparecer" },
-  { key: "lessonCommentsEnabled", title: "Comentários nas aulas", description: "Alunos comentam em cada aula" },
-  { key: "lessonCommentsModerationEnabled", title: "Moderação de comentários", description: "Comentários dos alunos precisam ser aprovados antes de aparecer" },
-  { key: "lessonReactionsEnabled", title: "Reações nas aulas", description: "Alunos podem dar gostei/não gostei nas aulas" },
-  { key: "reviewsEnabled", title: "Avaliações e reviews", description: "Alunos avaliam o curso com estrelas" },
-  { key: "certificateEnabled", title: "Certificado de conclusão", description: "PDF gerado ao concluir 100%" },
-  { key: "gamificationEnabled", title: "Pontos e níveis", description: "Pontos ao concluir aulas e interagir" },
+  { key: "communityEnabled", title: "Comunidade do curso", description: "Alunos criam posts e interagem entre si", tooltip: "Ativa uma comunidade integrada ao curso onde alunos podem postar, comentar e interagir." },
+  { key: "communityModerationEnabled", title: "Moderação da comunidade", description: "Posts e comentários dos alunos precisam ser aprovados antes de aparecer", tooltip: "Quando ativado, posts e comentários da comunidade precisam da sua aprovação antes de aparecer." },
+  { key: "lessonCommentsEnabled", title: "Comentários nas aulas", description: "Alunos comentam em cada aula", tooltip: "Permite que alunos comentem nas aulas. Desative se preferir sem interação." },
+  { key: "lessonCommentsModerationEnabled", title: "Moderação de comentários", description: "Comentários dos alunos precisam ser aprovados antes de aparecer", tooltip: "Quando ativado, comentários dos alunos ficam pendentes até você aprovar." },
+  { key: "lessonReactionsEnabled", title: "Reações nas aulas", description: "Alunos podem dar gostei/não gostei nas aulas", tooltip: "Botões de curtir/não curtir nas aulas. Ajuda a identificar quais aulas os alunos mais gostam." },
+  { key: "reviewsEnabled", title: "Avaliações e reviews", description: "Alunos avaliam o curso com estrelas", tooltip: "Permite que alunos avaliem o curso com estrelas. A nota média aparece na vitrine." },
+  { key: "certificateEnabled", title: "Certificado de conclusão", description: "PDF gerado ao concluir 100%", tooltip: "Gera certificado de conclusão automático quando o aluno finaliza todas as aulas do curso." },
+  { key: "gamificationEnabled", title: "Pontos e níveis", description: "Pontos ao concluir aulas e interagir", tooltip: "Sistema de pontos e níveis que recompensa alunos por ações como concluir aulas e participar da comunidade." },
   { key: "showStudentCount", title: "Exibir quantidade de alunos", description: "Mostra matriculados na página do curso" },
   { key: "showLessonSupport", title: "Suporte nas aulas", description: "Email e WhatsApp abaixo de cada aula" },
 ];
@@ -251,7 +253,10 @@ export default function CourseCustomizePage() {
         <div className="pb-20">
           {/* SEÇÃO 1 — Layout dos módulos */}
           <div className="mb-8">
-            <h2 className="text-sm font-medium text-gray-900 dark:text-white mb-0.5">Layout dos módulos</h2>
+            <h2 className="text-sm font-medium text-gray-900 dark:text-white mb-0.5">
+              Layout dos módulos
+              <HelpTooltip text="Escolha como os módulos são exibidos na vitrine do curso: em grade, lista ou carrossel." />
+            </h2>
             <p className="text-xs text-gray-500 mb-4">Escolha como os módulos são exibidos para o aluno</p>
 
             <div className="flex gap-3">
@@ -311,7 +316,10 @@ export default function CourseCustomizePage() {
 
           {/* SEÇÃO 2 — Cores */}
           <div className="mb-8 pt-8 border-t border-gray-200 dark:border-white/5">
-            <h2 className="text-sm font-medium text-gray-900 dark:text-white mb-0.5">Cores da área de membros</h2>
+            <h2 className="text-sm font-medium text-gray-900 dark:text-white mb-0.5">
+              Cores da área de membros
+              <HelpTooltip text="Personalize as cores da área onde o aluno assiste as aulas: fundo, sidebar, cabeçalho, cards, texto e cor principal." />
+            </h2>
             <p className="text-xs text-gray-500 mb-4">Personalize as cores que os alunos veem dentro do curso</p>
 
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -346,7 +354,10 @@ export default function CourseCustomizePage() {
 
           {/* SEÇÃO 3 — Mensagem de boas-vindas */}
           <div className="mb-8 pt-8 border-t border-gray-200 dark:border-white/5">
-            <h2 className="text-sm font-medium text-gray-900 dark:text-white mb-0.5">Mensagem de boas-vindas</h2>
+            <h2 className="text-sm font-medium text-gray-900 dark:text-white mb-0.5">
+              Mensagem de boas-vindas
+              <HelpTooltip text="Mensagem exibida ao aluno logo após ele se matricular no curso. Use para dar boas-vindas e orientações iniciais." />
+            </h2>
             <p className="text-xs text-gray-500 mb-4">Texto exibido para o aluno ao entrar na área de membros</p>
 
             <textarea
@@ -380,7 +391,10 @@ export default function CourseCustomizePage() {
                       }`}
                     >
                       <div className="min-w-0 mr-3">
-                        <p className="text-sm font-medium text-gray-900 dark:text-white">{item.title}</p>
+                        <p className="text-sm font-medium text-gray-900 dark:text-white">
+                          {item.title}
+                          {item.tooltip && <HelpTooltip text={item.tooltip} />}
+                        </p>
                         <p className="text-[11px] text-gray-500">{item.description}</p>
                       </div>
                       <button
@@ -415,7 +429,10 @@ export default function CourseCustomizePage() {
 
           {/* SEÇÃO 5 — Menu lateral */}
           <div className="pt-8 border-t border-gray-200 dark:border-white/5">
-            <h2 className="text-sm font-medium text-gray-900 dark:text-white mb-0.5">Menu lateral do curso</h2>
+            <h2 className="text-sm font-medium text-gray-900 dark:text-white mb-0.5">
+              Menu lateral do curso
+              <HelpTooltip text="Controla quais itens aparecem no menu lateral da área de membros: home, comunidade, continuar assistindo." />
+            </h2>
             <p className="text-xs text-gray-500 mb-4">Itens que aparecem na sidebar do aluno</p>
             <CourseMenuManager courseId={courseId} />
           </div>
