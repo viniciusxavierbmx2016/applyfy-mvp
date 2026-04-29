@@ -16,6 +16,10 @@ function ProducerLoginForm() {
     "ADMIN" | "STUDENT" | "COLLABORATOR" | null
   >(null);
   const [loading, setLoading] = useState(false);
+  const [mfaRequired, setMfaRequired] = useState(false);
+  const [factorId, setFactorId] = useState("");
+  const [mfaCode, setMfaCode] = useState("");
+  const [mfaError, setMfaError] = useState("");
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -41,9 +45,39 @@ function ProducerLoginForm() {
         setLoading(false);
         return;
       }
+      if (data.requiresMfa) {
+        setMfaRequired(true);
+        setFactorId(data.factorId);
+        setLoading(false);
+        return;
+      }
       window.location.href = data.redirect || "/";
     } catch {
       setError("Erro ao conectar com o servidor");
+      setLoading(false);
+    }
+  }
+
+  async function handleMfaVerify(e: React.FormEvent) {
+    e.preventDefault();
+    setMfaError("");
+    setLoading(true);
+    try {
+      const res = await fetch("/api/auth/mfa/challenge", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ factorId, code: mfaCode }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setMfaError(data.error || "Código inválido");
+        setLoading(false);
+        return;
+      }
+      window.location.href = "/";
+    } catch {
+      setMfaError("Erro ao verificar código");
       setLoading(false);
     }
   }
@@ -85,58 +119,125 @@ function ProducerLoginForm() {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Email
-              </label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                autoComplete="email"
-                className="w-full px-4 py-3 bg-gray-100 dark:bg-white/[0.04] border border-gray-300 dark:border-white/[0.08] rounded-xl text-gray-900 dark:text-white focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 transition"
-                placeholder="seu@email.com"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Senha
-              </label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                autoComplete="current-password"
-                className="w-full px-4 py-3 bg-gray-100 dark:bg-white/[0.04] border border-gray-300 dark:border-white/[0.08] rounded-xl text-gray-900 dark:text-white focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 transition"
-                placeholder="••••••••"
-              />
-            </div>
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-3 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-medium rounded-xl shadow-lg shadow-blue-500/20 transition"
-            >
-              {loading ? "Entrando..." : "Entrar"}
-            </button>
-          </form>
+          {mfaRequired ? (
+            <form onSubmit={handleMfaVerify} className="space-y-4">
+              <div className="text-center mb-6">
+                <div className="w-14 h-14 rounded-full bg-blue-500/10 flex items-center justify-center mx-auto mb-3">
+                  <svg
+                    className="w-7 h-7 text-blue-500"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 3l8 4v5c0 5-3.5 8.5-8 9-4.5-.5-8-4-8-9V7l8-4z"
+                    />
+                  </svg>
+                </div>
+                <h2 className="text-lg font-bold text-gray-900 dark:text-white">
+                  Verificação em dois fatores
+                </h2>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                  Digite o código de 6 dígitos do seu aplicativo autenticador
+                </p>
+              </div>
 
-          <div className="mt-6 flex items-center justify-between text-sm">
-            <Link
-              href="/forgot-password?from=producer"
-              className="text-blue-600 dark:text-blue-400 hover:underline"
-            >
-              Esqueci minha senha
-            </Link>
-            <Link
-              href="/producer/register"
-              className="text-blue-600 dark:text-blue-400 hover:underline"
-            >
-              Criar conta
-            </Link>
-          </div>
+              <input
+                type="text"
+                inputMode="numeric"
+                maxLength={6}
+                value={mfaCode}
+                onChange={(e) =>
+                  setMfaCode(e.target.value.replace(/\D/g, ""))
+                }
+                placeholder="000000"
+                className="w-full text-center text-2xl tracking-[0.5em] font-mono bg-gray-100 dark:bg-white/[0.04] border border-gray-300 dark:border-white/[0.08] rounded-xl px-4 py-3 text-gray-900 dark:text-white placeholder-gray-300 dark:placeholder-gray-600 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20"
+                autoFocus
+              />
+
+              {mfaError && (
+                <p className="text-red-500 text-sm text-center">{mfaError}</p>
+              )}
+
+              <button
+                type="submit"
+                disabled={mfaCode.length !== 6 || loading}
+                className="w-full py-2.5 bg-blue-600 hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-xl font-medium transition-colors"
+              >
+                {loading ? "Verificando..." : "Verificar"}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setMfaRequired(false);
+                  setMfaCode("");
+                  setMfaError("");
+                }}
+                className="w-full text-center text-sm text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+              >
+                Voltar ao login
+              </button>
+            </form>
+          ) : (
+            <>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Email
+                  </label>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    autoComplete="email"
+                    className="w-full px-4 py-3 bg-gray-100 dark:bg-white/[0.04] border border-gray-300 dark:border-white/[0.08] rounded-xl text-gray-900 dark:text-white focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 transition"
+                    placeholder="seu@email.com"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Senha
+                  </label>
+                  <input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    autoComplete="current-password"
+                    className="w-full px-4 py-3 bg-gray-100 dark:bg-white/[0.04] border border-gray-300 dark:border-white/[0.08] rounded-xl text-gray-900 dark:text-white focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 transition"
+                    placeholder="••••••••"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full py-3 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-medium rounded-xl shadow-lg shadow-blue-500/20 transition"
+                >
+                  {loading ? "Entrando..." : "Entrar"}
+                </button>
+              </form>
+
+              <div className="mt-6 flex items-center justify-between text-sm">
+                <Link
+                  href="/forgot-password?from=producer"
+                  className="text-blue-600 dark:text-blue-400 hover:underline"
+                >
+                  Esqueci minha senha
+                </Link>
+                <Link
+                  href="/producer/register"
+                  className="text-blue-600 dark:text-blue-400 hover:underline"
+                >
+                  Criar conta
+                </Link>
+              </div>
+            </>
+          )}
         </div>
 
         <p className="text-center text-xs text-gray-500 mt-8">

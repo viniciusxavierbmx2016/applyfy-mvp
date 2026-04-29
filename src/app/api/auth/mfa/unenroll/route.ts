@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createRouteHandlerClient } from "@/lib/supabase-route";
 import { getCurrentUser } from "@/lib/auth";
+import { logAudit, getRequestMeta } from "@/lib/audit";
 
 export async function POST(req: Request) {
   const user = await getCurrentUser();
@@ -28,6 +29,13 @@ export async function POST(req: Request) {
       { status: 500 }
     );
   }
+
+  await logAudit({
+    userId: user.id,
+    action: "mfa_disabled",
+    target: factorId,
+    ...getRequestMeta(req),
+  });
 
   return NextResponse.json({ unenrolled: true });
 }

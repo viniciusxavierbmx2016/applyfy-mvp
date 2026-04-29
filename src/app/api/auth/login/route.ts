@@ -58,6 +58,19 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: message }, { status: 403 });
     }
 
+    // 2FA check — if user has a verified TOTP factor, defer Session/audit to
+    // /api/auth/mfa/challenge. Cookies set by signInWithPassword stay (AAL1)
+    // until the challenge upgrades to AAL2.
+    const { data: factorsData } = await supabase.auth.mfa.listFactors();
+    const verifiedFactors =
+      factorsData?.totp?.filter((f) => f.status === "verified") ?? [];
+    if (verifiedFactors.length > 0) {
+      return NextResponse.json({
+        requiresMfa: true,
+        factorId: verifiedFactors[0].id,
+      });
+    }
+
     if (user) {
       // Clean up expired sessions
       await prisma.session.deleteMany({
