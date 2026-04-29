@@ -4,26 +4,26 @@ import { prisma } from "@/lib/prisma";
 import { sendEmail } from "@/lib/email";
 import { welcomeProducer } from "@/lib/email-templates";
 import { rateLimit } from "@/lib/rate-limit";
+import { registerSchema, validateBody } from "@/lib/validations";
 
 export async function POST(request: Request) {
   const limited = rateLimit(request);
   if (limited) return limited;
 
   try {
+    const body = await request.json();
+    const v = validateBody(registerSchema, body);
+    if (!v.success) return v.error;
     const {
       email, password, name, phone, businessType, niche,
       monthlyRevenue, referralSource, document,
-    } = await request.json();
-
-    if (!email || !password || !name) {
+    } = v.data as typeof v.data & {
+      phone?: string; businessType?: string; niche?: string;
+      monthlyRevenue?: string; referralSource?: string; document?: string;
+    };
+    if (!name) {
       return NextResponse.json(
-        { error: "Email, senha e nome são obrigatórios" },
-        { status: 400 }
-      );
-    }
-    if (password.length < 6) {
-      return NextResponse.json(
-        { error: "A senha precisa ter pelo menos 6 caracteres" },
+        { error: "Nome obrigatório" },
         { status: 400 }
       );
     }

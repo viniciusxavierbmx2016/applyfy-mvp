@@ -8,6 +8,7 @@ import { PostType } from "@prisma/client";
 import { ensureDefaultGroup } from "@/lib/community-helpers";
 import { createNotification } from "@/lib/notifications";
 import { sendPushToUser } from "@/lib/push-send";
+import { createPostSchema, validateBody } from "@/lib/validations";
 
 const VALID_TYPES: PostType[] = ["QUESTION", "RESULT", "FEEDBACK", "FREE"];
 
@@ -166,13 +167,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
     }
 
-    const { content, type, courseId, courseSlug, groupId } = await request.json();
-    if (!content || typeof content !== "string") {
-      return NextResponse.json(
-        { error: "Conteúdo obrigatório" },
-        { status: 400 }
-      );
-    }
+    const body = await request.json();
+    const v = validateBody(createPostSchema, body);
+    if (!v.success) return v.error;
+    const { content, type, courseId, courseSlug, groupId } = v.data;
+
     const sanitized = sanitizeHtml(content);
     if (!stripHtml(sanitized)) {
       return NextResponse.json(
@@ -186,7 +185,7 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
-    const postType = VALID_TYPES.includes(type) ? (type as PostType) : "FREE";
+    const postType = VALID_TYPES.includes(type as PostType) ? (type as PostType) : "FREE";
 
     const course = courseId
       ? await prisma.course.findUnique({

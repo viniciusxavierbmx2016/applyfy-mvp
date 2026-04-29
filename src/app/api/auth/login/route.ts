@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createRouteHandlerClient } from "@/lib/supabase-route";
 import { prisma } from "@/lib/prisma";
 import { rateLimit } from "@/lib/rate-limit";
+import { loginSchema, validateBody } from "@/lib/validations";
 
 const MAX_SESSIONS = 3;
 
@@ -10,14 +11,10 @@ export async function POST(request: Request) {
   if (limited) return limited;
 
   try {
-    const { email, password } = await request.json();
-
-    if (!email || !password) {
-      return NextResponse.json(
-        { error: "Email e senha são obrigatórios" },
-        { status: 400 }
-      );
-    }
+    const body = await request.json();
+    const v = validateBody(loginSchema, body);
+    if (!v.success) return v.error;
+    const { email, password } = v.data;
 
     const supabase = await createRouteHandlerClient();
 

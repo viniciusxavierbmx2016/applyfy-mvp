@@ -4,20 +4,17 @@ import { requireStaff } from "@/lib/auth";
 import { resolveStaffWorkspace } from "@/lib/workspace";
 import { createNotification } from "@/lib/notifications";
 import { GAMIFICATION, getLevelForPoints } from "@/lib/utils";
+import { moderateSchema, validateBody } from "@/lib/validations";
 
 export async function POST(request: Request) {
   try {
     const staff = await requireStaff();
     const { workspace } = await resolveStaffWorkspace(staff);
 
-    const { items, action } = await request.json();
-
-    if (!Array.isArray(items) || items.length === 0) {
-      return NextResponse.json({ error: "items obrigatório" }, { status: 400 });
-    }
-    if (action !== "approve" && action !== "reject") {
-      return NextResponse.json({ error: "action deve ser 'approve' ou 'reject'" }, { status: 400 });
-    }
+    const body = await request.json();
+    const v = validateBody(moderateSchema, body);
+    if (!v.success) return v.error;
+    const { items, action } = v.data;
 
     const newStatus = action === "approve" ? "APPROVED" : "REJECTED";
     let updated = 0;

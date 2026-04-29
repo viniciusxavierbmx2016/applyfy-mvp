@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireStaff, canEditCourse } from "@/lib/auth";
+import { updateCourseSchema, validateBody } from "@/lib/validations";
 
 async function assertCanEditCourse(courseId: string) {
   const staff = await requireStaff();
@@ -65,7 +66,11 @@ export async function PUT(
       return NextResponse.json({ error: check.error }, { status: check.status });
     }
 
-    const body = await request.json();
+    const rawBody = await request.json();
+    const v = validateBody(updateCourseSchema, rawBody);
+    if (!v.success) return v.error;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const body = v.data as Record<string, any>;
     const {
       title,
       slug,

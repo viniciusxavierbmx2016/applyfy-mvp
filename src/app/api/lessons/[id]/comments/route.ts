@@ -4,6 +4,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { createNotification } from "@/lib/notifications";
 import { sendPushToUser } from "@/lib/push-send";
 import { isStaff } from "@/lib/auth";
+import { createLessonCommentSchema, validateBody } from "@/lib/validations";
 
 async function collaboratorAllowed(
   userId: string,
@@ -130,8 +131,11 @@ export async function POST(
       return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
     }
 
-    const { content, parentId } = await request.json();
-    if (!content || typeof content !== "string" || !content.trim()) {
+    const body = await request.json();
+    const v = validateBody(createLessonCommentSchema, body);
+    if (!v.success) return v.error;
+    const { content, parentId } = v.data;
+    if (!content.trim()) {
       return NextResponse.json(
         { error: "Conteúdo obrigatório" },
         { status: 400 }

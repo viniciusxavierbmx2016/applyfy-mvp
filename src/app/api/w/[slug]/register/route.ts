@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { sendEmail } from "@/lib/email";
 import { welcomeStudent } from "@/lib/email-templates";
 import { rateLimit } from "@/lib/rate-limit";
+import { registerSchema, validateBody } from "@/lib/validations";
 
 export async function POST(
   request: Request,
@@ -13,11 +14,13 @@ export async function POST(
   if (limited) return limited;
 
   try {
-    const { email, password, name } = await request.json();
-
-    if (!email || !password || !name) {
+    const body = await request.json();
+    const v = validateBody(registerSchema, body);
+    if (!v.success) return v.error;
+    const { email, password, name } = v.data;
+    if (!name) {
       return NextResponse.json(
-        { error: "Email, senha e nome são obrigatórios" },
+        { error: "Nome obrigatório" },
         { status: 400 }
       );
     }

@@ -4,17 +4,17 @@ import { prisma } from "@/lib/prisma";
 import { sendEmail } from "@/lib/email";
 import { passwordReset } from "@/lib/email-templates";
 import { rateLimit } from "@/lib/rate-limit";
+import { forgotPasswordSchema, validateBody } from "@/lib/validations";
 
 export async function POST(req: Request) {
   const limited = rateLimit(req);
   if (limited) return limited;
 
   try {
-    const { email, from } = await req.json();
-
-    if (!email) {
-      return NextResponse.json({ error: "Email obrigatório" }, { status: 400 });
-    }
+    const body = await req.json();
+    const v = validateBody(forgotPasswordSchema, body);
+    if (!v.success) return v.error;
+    const { email, from } = v.data;
 
     const user = await prisma.user.findUnique({
       where: { email: email.toLowerCase().trim() },

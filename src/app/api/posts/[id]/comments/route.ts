@@ -4,6 +4,7 @@ import { getCurrentUser, isStaff } from "@/lib/auth";
 import { collaboratorCanActOnCourse } from "@/lib/collaborator";
 import { createNotification } from "@/lib/notifications";
 import { sendPushToUser } from "@/lib/push-send";
+import { createCommentSchema, validateBody } from "@/lib/validations";
 
 async function checkAccess(userId: string, userRole: string, post: { courseId: string; course: { ownerId: string | null; workspace: { ownerId: string } } }) {
   if (userRole === "ADMIN") return true;
@@ -95,8 +96,11 @@ export async function POST(
       return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
     }
 
-    const { content, parentId } = await request.json();
-    if (!content || typeof content !== "string" || !content.trim()) {
+    const body = await request.json();
+    const v = validateBody(createCommentSchema, body);
+    if (!v.success) return v.error;
+    const { content, parentId } = v.data;
+    if (!content.trim()) {
       return NextResponse.json({ error: "Conteúdo obrigatório" }, { status: 400 });
     }
 
