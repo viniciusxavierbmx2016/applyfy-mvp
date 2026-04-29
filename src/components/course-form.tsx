@@ -5,6 +5,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { ThumbnailUpload } from "./thumbnail-upload";
 import { BannerUpload } from "./banner-upload";
 import { slugify } from "@/lib/utils";
+import { HelpTooltip } from "@/components/help-tooltip";
 
 interface ImagePosition { x: number; y: number; }
 
@@ -250,7 +251,10 @@ export function CourseForm({ initial, mode }: CourseFormProps) {
             />
           </div>
           <div>
-            <label className={labelClass}>Slug (URL) *</label>
+            <label className={labelClass}>
+              Slug (URL) *
+              <HelpTooltip text="Identificador único do curso na URL. Ex: meu-curso aparece como /course/meu-curso. Use apenas letras minúsculas, números e hifens." />
+            </label>
             <div className="flex items-center gap-2">
               <span className="text-xs text-gray-500 shrink-0">/course/</span>
               <input
@@ -321,7 +325,10 @@ export function CourseForm({ initial, mode }: CourseFormProps) {
 
         <div className="grid sm:grid-cols-2 gap-4 mb-4">
           <div>
-            <label className={labelClass}>Link de checkout (externo)</label>
+            <label className={labelClass}>
+              Link de checkout (externo)
+              <HelpTooltip text="Link da página de pagamento onde o aluno compra o curso. Cole a URL da Hotmart, Kiwify, Eduzz ou qualquer plataforma." />
+            </label>
             <input
               type="url"
               value={checkoutUrl}
@@ -334,7 +341,10 @@ export function CourseForm({ initial, mode }: CourseFormProps) {
             </p>
           </div>
           <div>
-            <label className={labelClass}>Preço exibido</label>
+            <label className={labelClass}>
+              Preço exibido
+              <HelpTooltip text="Valor do curso exibido na vitrine. Apenas informativo — a cobrança é feita pelo link de checkout." />
+            </label>
             <div className="flex gap-2">
               <select
                 value={priceCurrency}
@@ -378,7 +388,10 @@ export function CourseForm({ initial, mode }: CourseFormProps) {
 
       {/* SEÇÃO 3 — Vitrine */}
       <div className="mb-8 pt-8 border-t border-gray-200 dark:border-white/5">
-        <h2 className="text-sm font-medium text-gray-900 dark:text-white mb-0.5">Vitrine</h2>
+        <h2 className="text-sm font-medium text-gray-900 dark:text-white mb-0.5">
+          Vitrine
+          <HelpTooltip text="Configure como o curso aparece na vitrine: thumbnail, descrição e módulos visíveis." />
+        </h2>
         <p className="text-xs text-gray-500 mb-4">Como o curso aparece na vitrine para os alunos</p>
 
         <div className="grid sm:grid-cols-2 gap-4">
@@ -402,30 +415,39 @@ export function CourseForm({ initial, mode }: CourseFormProps) {
             </p>
           </div>
           <div className="flex flex-col gap-4 sm:pt-5">
-            <Toggle
-              checked={isPublished}
-              onChange={setIsPublished}
-              label="Publicado"
-              description="Visível para alunos"
-            />
+            <div className="flex items-start gap-0">
+              <Toggle
+                checked={isPublished}
+                onChange={setIsPublished}
+                label="Publicado"
+                description="Visível para alunos"
+              />
+              <HelpTooltip text="Quando publicado, o curso fica visível para os alunos na vitrine. Quando não publicado, só você e colaboradores podem ver." />
+            </div>
             <Toggle
               checked={showInStore}
               onChange={setShowInStore}
               label="Na vitrine"
               description="Aparece em &ldquo;Outros cursos&rdquo;"
             />
-            <Toggle
-              checked={featured}
-              onChange={setFeatured}
-              label="Destaque"
-            />
+            <div className="flex items-start gap-0">
+              <Toggle
+                checked={featured}
+                onChange={setFeatured}
+                label="Destaque"
+              />
+              <HelpTooltip text="Cursos em destaque aparecem primeiro na vitrine do workspace." />
+            </div>
           </div>
         </div>
       </div>
 
       {/* SEÇÃO 4 — Suporte */}
       <div className="pt-8 border-t border-gray-200 dark:border-white/5">
-        <h2 className="text-sm font-medium text-gray-900 dark:text-white mb-0.5">Suporte</h2>
+        <h2 className="text-sm font-medium text-gray-900 dark:text-white mb-0.5">
+          Suporte
+          <HelpTooltip text="Número de WhatsApp ou email que aparece como contato de suporte dentro do curso para os alunos." />
+        </h2>
         <p className="text-xs text-gray-500 mb-4">Canais de atendimento para os alunos</p>
 
         <div className="grid sm:grid-cols-2 gap-4">
@@ -474,7 +496,10 @@ export function CourseForm({ initial, mode }: CourseFormProps) {
 
       {/* SEÇÃO 5 — Termos de uso */}
       <div className="pt-8 border-t border-gray-200 dark:border-white/5 mt-8">
-        <h2 className="text-sm font-medium text-gray-900 dark:text-white mb-0.5">Termos de uso</h2>
+        <h2 className="text-sm font-medium text-gray-900 dark:text-white mb-0.5">
+          Termos de uso
+          <HelpTooltip text="Se preenchido, o aluno precisará ler e aceitar os termos antes de acessar o curso pela primeira vez." />
+        </h2>
         <p className="text-xs text-gray-500 mb-4">
           Adicione os termos de uso do curso. O aluno precisará aceitar antes de acessar.
           Você pode escrever o texto e/ou enviar um PDF.

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { useConfirm } from "@/hooks/use-confirm";
+import { HelpTooltip } from "@/components/help-tooltip";
 
 interface WorkspaceRow {
   id: string;
@@ -80,15 +81,18 @@ export default function AdminWorkspacesPage() {
             Cada workspace é um espaço isolado com cursos e alunos próprios.
           </p>
         </div>
-        <Link
-          href="/producer/workspaces/new"
-          className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium rounded-lg"
-        >
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
-          Criar workspace
-        </Link>
+        <div className="flex items-center gap-0">
+          <Link
+            href="/producer/workspaces/new"
+            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium rounded-lg"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            Criar workspace
+          </Link>
+          <HelpTooltip text="Um workspace é um espaço isolado para seus cursos. Crie workspaces separados para marcas, projetos ou treinamentos diferentes." />
+        </div>
       </div>
 
       {loading ? (

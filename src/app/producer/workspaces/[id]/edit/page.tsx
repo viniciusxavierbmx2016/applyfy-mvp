@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { BannerUpload } from "@/components/banner-upload";
+import { HelpTooltip } from "@/components/help-tooltip";
 
 type LoginLayout = "central" | "lateral-left" | "lateral-right";
 
@@ -438,7 +439,10 @@ export default function EditWorkspacePage() {
               <p className="text-xs text-gray-500 mb-4">Logo, nome e link de acesso</p>
 
               <div className="mb-4">
-                <label className={labelClass}>Link do workspace</label>
+                <label className={labelClass}>
+                Link do workspace
+                <HelpTooltip text="Este é o link que você envia para seus alunos acessarem sua área de membros. Compartilhe nas redes sociais, email ou WhatsApp." />
+              </label>
                 <div className="flex items-stretch gap-2">
                   <input
                     type="text"
@@ -519,7 +523,10 @@ export default function EditWorkspacePage() {
 
               <div className="grid sm:grid-cols-2 gap-4">
                 <div>
-                  <label className={labelClass}>Senha master</label>
+                  <label className={labelClass}>
+                    Senha master
+                    <HelpTooltip text="Senha geral para proteger o acesso ao workspace. Se ativada, todos os visitantes precisam digitá-la antes de ver os cursos." />
+                  </label>
                   <div className="flex items-stretch gap-2">
                     <input
                       type={showMasterPassword ? "text" : "password"}
@@ -566,7 +573,10 @@ export default function EditWorkspacePage() {
           <div>
             {/* Layout */}
             <div className="mb-8">
-              <h2 className="text-sm font-medium text-gray-900 dark:text-white mb-0.5">Layout</h2>
+              <h2 className="text-sm font-medium text-gray-900 dark:text-white mb-0.5">
+                Layout
+                <HelpTooltip text="Escolha como o formulário de login aparece: centralizado na tela ou alinhado à esquerda com imagem de fundo." />
+              </h2>
               <p className="text-xs text-gray-500 mb-4">Escolha como o formulário aparece na tela</p>
               <div className="grid grid-cols-3 gap-3">
                 {(
@@ -600,7 +610,10 @@ export default function EditWorkspacePage() {
 
             {/* Cores */}
             <div className="mb-8 pt-8 border-t border-gray-200 dark:border-white/5">
-              <h2 className="text-sm font-medium text-gray-900 dark:text-white mb-0.5">Cores</h2>
+              <h2 className="text-sm font-medium text-gray-900 dark:text-white mb-0.5">
+                Cores
+                <HelpTooltip text="Personalize as cores do fundo e do botão principal da página de login." />
+              </h2>
               <p className="text-xs text-gray-500 mb-4">Personalize as cores da tela de login</p>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 <ColorField
@@ -686,7 +699,10 @@ export default function EditWorkspacePage() {
 
             {/* Imagens */}
             <div className="mb-8 pt-8 border-t border-gray-200 dark:border-white/5">
-              <h2 className="text-sm font-medium text-gray-900 dark:text-white mb-0.5">Imagens</h2>
+              <h2 className="text-sm font-medium text-gray-900 dark:text-white mb-0.5">
+                Imagens
+                <HelpTooltip text="Adicione uma imagem de fundo e seu logo na página de login. Formatos aceitos: JPG, PNG, WebP." />
+              </h2>
               <p className="text-xs text-gray-500 mb-4">Imagem de fundo e logo para a tela de login</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <ImageDropzone
@@ -735,7 +751,10 @@ export default function EditWorkspacePage() {
 
             {/* Textos */}
             <div className="pt-8 border-t border-gray-200 dark:border-white/5">
-              <h2 className="text-sm font-medium text-gray-900 dark:text-white mb-0.5">Textos</h2>
+              <h2 className="text-sm font-medium text-gray-900 dark:text-white mb-0.5">
+                Textos
+                <HelpTooltip text="Personalize o título e subtítulo que aparecem na página de login dos seus alunos." />
+              </h2>
               <p className="text-xs text-gray-500 mb-4">Mensagens que aparecem na tela de login</p>
               <div className="grid sm:grid-cols-2 gap-4">
                 <div>
@@ -772,7 +791,10 @@ export default function EditWorkspacePage() {
           <div>
             {/* Cor primária */}
             <div className="mb-8">
-              <h2 className="text-sm font-medium text-gray-900 dark:text-white mb-0.5">Cor primária</h2>
+              <h2 className="text-sm font-medium text-gray-900 dark:text-white mb-0.5">
+                Cor primária
+                <HelpTooltip text="Cor principal da sua vitrine e área de membros. Usada em botões, links e destaques." />
+              </h2>
               <p className="text-xs text-gray-500 mb-4">Usada em botões, links e destaques na vitrine e área do aluno</p>
               <div className="flex items-center gap-3">
                 <label
@@ -807,7 +829,10 @@ export default function EditWorkspacePage() {
 
             {/* Banner */}
             <div className="mb-8 pt-8 border-t border-gray-200 dark:border-white/5">
-              <h2 className="text-sm font-medium text-gray-900 dark:text-white mb-0.5">Banner da vitrine</h2>
+              <h2 className="text-sm font-medium text-gray-900 dark:text-white mb-0.5">
+                Banner da vitrine
+                <HelpTooltip text="Imagem de banner que aparece no topo da vitrine. Tamanho recomendado: 1920x400px." />
+              </h2>
               <p className="text-xs text-gray-500 mb-4">Imagem exibida no topo da vitrine para seus alunos</p>
               <BannerUpload
                 value={wsBannerUrl}
@@ -829,7 +854,10 @@ export default function EditWorkspacePage() {
 
             {/* Favicon */}
             <div className="mb-8 pt-8 border-t border-gray-200 dark:border-white/5">
-              <h2 className="text-sm font-medium text-gray-900 dark:text-white mb-0.5">Favicon</h2>
+              <h2 className="text-sm font-medium text-gray-900 dark:text-white mb-0.5">
+                Favicon
+                <HelpTooltip text="Ícone pequeno que aparece na aba do navegador. Tamanho recomendado: 32x32px ou 64x64px." />
+              </h2>
               <p className="text-xs text-gray-500 mb-4">Ícone que aparece na aba do navegador</p>
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center overflow-hidden border border-gray-200 dark:border-white/10">
@@ -877,7 +905,10 @@ export default function EditWorkspacePage() {
 
             {/* Tema */}
             <div className="pt-8 border-t border-gray-200 dark:border-white/5">
-              <h2 className="text-sm font-medium text-gray-900 dark:text-white mb-0.5">Tema para alunos</h2>
+              <h2 className="text-sm font-medium text-gray-900 dark:text-white mb-0.5">
+                Tema para alunos
+                <HelpTooltip text="Escolha entre tema escuro ou claro para a área de membros dos seus alunos." />
+              </h2>
               <p className="text-xs text-gray-500 mb-4">Force um tema específico para todos os alunos</p>
               <select
                 value={forceTheme}
