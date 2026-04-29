@@ -128,6 +128,23 @@ export const getCurrentUser = cache(async (): Promise<User | null> => {
   const user = await prisma.user.findUnique({
     where: { email: authUser.email.toLowerCase() },
   });
+  if (!user) return null;
+
+  // 2FA enforcement: if user has a verified TOTP factor but the current
+  // session is still AAL1 (logged in with password but didn't complete the
+  // MFA challenge), treat as not authenticated. /api/auth/mfa/challenge
+  // upgrades the session to AAL2 after a valid code.
+  // Restricted to staff roles since only ADMIN/PRODUCER can enroll factors.
+  if (user.role === "ADMIN" || user.role === "PRODUCER") {
+    const { data: factorsData } = await supabase.auth.mfa.listFactors();
+    const hasVerifiedFactor =
+      factorsData?.totp?.some((f) => f.status === "verified") ?? false;
+    if (hasVerifiedFactor) {
+      const { data: aalData } =
+        await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+      if (aalData?.currentLevel !== "aal2") return null;
+    }
+  }
 
   return user;
 });
