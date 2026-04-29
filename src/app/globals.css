@@ -452,23 +452,55 @@ body {
   font-size: 12px !important;
   color: #6b7280 !important;
 }
+.mc-tour-popover .driver-popover-footer {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 8px !important;
+  margin-top: 16px !important;
+}
+.mc-tour-popover .driver-popover-navigation-btns {
+  display: flex !important;
+  gap: 8px !important;
+}
 .mc-tour-popover .driver-popover-prev-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
   background: transparent !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
   color: #9ca3af !important;
   border-radius: 8px !important;
-  padding: 6px 16px !important;
-  font-size: 13px !important;
+  padding: 8px 20px !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  white-space: nowrap !important;
+  min-width: fit-content !important;
+  text-shadow: none !important;
 }
 .mc-tour-popover .driver-popover-next-btn,
 .mc-tour-popover .driver-popover-done-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
   background: #3b82f6 !important;
   border: none !important;
   color: #fff !important;
   border-radius: 8px !important;
-  padding: 6px 16px !important;
-  font-size: 13px !important;
+  padding: 8px 20px !important;
+  font-size: 14px !important;
   font-weight: 600 !important;
+  white-space: nowrap !important;
+  min-width: fit-content !important;
+  text-shadow: none !important;
+}
+.mc-tour-popover .driver-popover-prev-btn:hover {
+  background: rgba(255, 255, 255, 0.05) !important;
+  color: #fff !important;
+}
+.mc-tour-popover .driver-popover-next-btn:hover,
+.mc-tour-popover .driver-popover-done-btn:hover {
+  background: #2563eb !important;
 }
 .mc-tour-popover .driver-popover-close-btn {
   color: #6b7280 !important;
