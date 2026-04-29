@@ -4,6 +4,7 @@ import { Suspense, useEffect, useState, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useConfirm } from "@/hooks/use-confirm";
+import { HelpTooltip } from "@/components/help-tooltip";
 
 interface Plan {
   id: string;
@@ -228,7 +229,10 @@ function BillingContent() {
       )}
 
       <div>
-        <h1 className="text-xl font-bold text-gray-900 dark:text-white">Assinatura</h1>
+        <h1 className="text-xl font-bold text-gray-900 dark:text-white">
+          Assinatura
+          <HelpTooltip text="Gerencie seu plano, veja faturas e atualize informações de pagamento." />
+        </h1>
         <p className="text-sm text-gray-500 mt-1">Gerencie seu plano e pagamentos</p>
       </div>
 

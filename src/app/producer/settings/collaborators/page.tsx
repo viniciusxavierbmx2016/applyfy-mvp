@@ -7,6 +7,7 @@ import {
   type CollaboratorPermission,
 } from "@/lib/collaborator";
 import { useConfirm } from "@/hooks/use-confirm";
+import { HelpTooltip } from "@/components/help-tooltip";
 
 interface CourseOption {
   id: string;
@@ -115,6 +116,7 @@ export default function AdminCollaboratorsPage() {
         <div>
           <h1 className="text-xl font-bold text-gray-900 dark:text-white">
             Colaboradores
+            <HelpTooltip text="Convide membros da equipe para ajudar a gerenciar seus cursos. Cada colaborador tem permissões específicas." />
           </h1>
           <p className="text-sm text-gray-500 mt-1">
             Convide pessoas para ajudar no seu negócio com permissões

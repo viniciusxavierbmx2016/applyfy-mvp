@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import dynamic from "next/dynamic";
 import { useConfirm } from "@/hooks/use-confirm";
 import { CustomSelect } from "@/components/custom-select";
+import { HelpTooltip } from "@/components/help-tooltip";
 
 const EmailEditor = dynamic(() => import("@/components/email-editor"), {
   ssr: false,
@@ -335,13 +336,19 @@ export default function AutomationsPage() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
         <div>
-          <h1 className="text-xl font-bold text-gray-900 dark:text-white">Automações</h1>
+          <h1 className="text-xl font-bold text-gray-900 dark:text-white">
+            Automações
+            <HelpTooltip text="Crie automações que executam ações automaticamente quando eventos acontecem. Ex: enviar email quando aluno se matricula." />
+          </h1>
           <p className="text-sm text-gray-500 mt-1">Crie fluxos visuais que executam ações automaticamente</p>
         </div>
-        <button type="button" onClick={() => setShowNewModal(true)} className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium rounded-xl transition">
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
-          Nova automação
-        </button>
+        <div className="flex items-center gap-0">
+          <button type="button" onClick={() => setShowNewModal(true)} className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium rounded-xl transition">
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
+            Nova automação
+          </button>
+          <HelpTooltip text="Crie uma nova automação escolhendo um gatilho (evento) e uma ação (o que fazer quando o evento acontece)." />
+        </div>
       </div>
 
       {loading ? (

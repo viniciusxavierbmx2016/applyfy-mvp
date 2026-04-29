@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Skeleton } from "@/components/ui/skeleton";
 import { GatewayLogo } from "@/components/gateway-logo";
+import { HelpTooltip } from "@/components/help-tooltip";
 
 const DEFAULT_APPLYFY_LOGO = "/images/applyfy-logo.png";
 
@@ -47,6 +48,7 @@ export default function ProducerIntegrationsPage() {
         <div>
           <h1 className="text-xl font-bold text-gray-900 dark:text-white mb-1">
             Integrações
+            <HelpTooltip text="Conecte webhooks, APIs externas e ferramentas de terceiros ao seu workspace." />
           </h1>
           <p className="text-sm text-gray-500">
             Conecte gateways de pagamento para liberar cursos automaticamente.

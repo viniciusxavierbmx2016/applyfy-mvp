@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { SkeletonLiveCard } from "@/components/ui/skeleton";
+import { HelpTooltip } from "@/components/help-tooltip";
 
 interface LiveItem {
   id: string;
@@ -409,7 +410,10 @@ export default function ProducerLivesPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
         <div>
-          <h1 className="text-xl font-bold text-gray-900 dark:text-white">Lives</h1>
+          <h1 className="text-xl font-bold text-gray-900 dark:text-white">
+            Lives
+            <HelpTooltip text="Agende e gerencie transmissões ao vivo para seus alunos. Integre com YouTube, Zoom ou qualquer plataforma." />
+          </h1>
           <p className="text-sm text-gray-500 mt-1">
             {liveCount > 0 && (
               <span className="text-red-400 font-medium mr-3">
@@ -422,15 +426,18 @@ export default function ProducerLivesPage() {
             {liveCount === 0 && scheduledCount === 0 && "Gerencie suas transmissões ao vivo"}
           </p>
         </div>
-        <button
-          onClick={openCreate}
-          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg transition text-sm font-medium"
-        >
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
-          Nova Live
-        </button>
+        <div className="flex items-center gap-0">
+          <button
+            onClick={openCreate}
+            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg transition text-sm font-medium"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            Nova Live
+          </button>
+          <HelpTooltip text="Crie uma nova live com data, horário, link da transmissão e notifique seus alunos automaticamente." />
+        </div>
       </div>
 
       {/* Filters */}
