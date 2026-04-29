@@ -167,6 +167,7 @@ export default function AdminCoursesPage() {
                 )}
                 <Link
                   href="/producer/courses/new"
+                  data-tour="create-course-btn"
                   className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium rounded-lg transition"
                 >
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

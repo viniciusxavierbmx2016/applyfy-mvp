@@ -28,6 +28,7 @@ type TabDef = {
   label: string;
   requires?: string;
   icon: React.ReactNode;
+  tourId?: string;
 };
 
 const iconPencil = (
@@ -79,11 +80,11 @@ export function CourseEditTabs({
   const isCollaborator = user?.role === "COLLABORATOR";
 
   const allTabs: TabDef[] = [
-    { key: "info", label: "Informações", requires: "MANAGE_LESSONS", icon: iconPencil },
-    { key: "content", label: "Conteúdo", requires: "MANAGE_LESSONS", icon: iconBook },
-    { key: "students", label: "Alunos", requires: "MANAGE_STUDENTS", icon: iconUsers },
-    { key: "comments", label: "Comentários", requires: "REPLY_COMMENTS", icon: iconMessage },
-    { key: "customize", label: "Personalizar Curso", requires: "MANAGE_LESSONS", icon: iconPalette },
+    { key: "info", label: "Informações", requires: "MANAGE_LESSONS", icon: iconPencil, tourId: "course-tab-info" },
+    { key: "content", label: "Conteúdo", requires: "MANAGE_LESSONS", icon: iconBook, tourId: "course-tab-content" },
+    { key: "students", label: "Alunos", requires: "MANAGE_STUDENTS", icon: iconUsers, tourId: "course-tab-students" },
+    { key: "comments", label: "Comentários", requires: "REPLY_COMMENTS", icon: iconMessage, tourId: "course-tab-comments" },
+    { key: "customize", label: "Personalizar Curso", requires: "MANAGE_LESSONS", icon: iconPalette, tourId: "course-tab-customize" },
   ];
 
   const visibleTabs = isCollaborator
@@ -97,13 +98,13 @@ export function CourseEditTabs({
   }
 
   return (
-    <div className="-mx-4 sm:mx-0 border-b border-gray-200 dark:border-white/[0.06]">
+    <div className="-mx-4 sm:mx-0 border-b border-gray-200 dark:border-white/[0.06]" data-tour="course-tabs">
       <div className="flex gap-0 px-4 sm:px-0 overflow-x-auto">
         {visibleTabs.map((tab) => {
           const cls = `${baseCls} ${active === tab.key ? activeCls : inactiveCls}`;
 
           return (
-            <Link key={tab.key} href={href(tab.key)} className={cls}>
+            <Link key={tab.key} href={href(tab.key)} className={cls} {...(tab.tourId ? { "data-tour": tab.tourId } : {})}>
               {tab.icon}
               {tab.label}
               {tab.key === "students" && typeof studentsCount === "number" && (

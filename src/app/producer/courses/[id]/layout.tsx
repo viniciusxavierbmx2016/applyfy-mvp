@@ -2,8 +2,17 @@
 
 import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { useParams, usePathname, useSearchParams } from "next/navigation";
 import { CourseEditTabs, type CourseEditTab } from "@/components/course-edit-tabs";
+
+const CourseTour = dynamic(
+  () =>
+    import("@/components/producer-tour").then((m) => ({
+      default: m.CourseTour,
+    })),
+  { ssr: false }
+);
 
 interface CourseHeader {
   id: string;
@@ -119,6 +128,7 @@ function CourseLayoutInner({ children }: { children: React.ReactNode }) {
       </p>
 
       <CourseEditTabs courseId={course.id} active={getActiveTab()} />
+      <CourseTour />
 
       <div className="mt-6">{children}</div>
     </div>

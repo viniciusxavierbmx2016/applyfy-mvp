@@ -26,7 +26,8 @@ model User {
   themeConfig   String?   @default("{}")
   lastAccessAt  DateTime?
   lastIpAddress          String?
-  onboardingCompletedAt  DateTime?
+  onboardingCompletedAt        DateTime?
+  courseOnboardingCompletedAt   DateTime?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 

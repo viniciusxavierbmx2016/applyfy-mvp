@@ -165,3 +165,133 @@ export function ProducerTour() {
 
   return null;
 }
+
+const TOUR_CONFIG = {
+  showProgress: true,
+  animate: true,
+  allowClose: true,
+  overlayColor: "rgba(0, 0, 0, 0.75)",
+  stagePadding: 8,
+  stageRadius: 12,
+  popoverClass: "mc-tour-popover",
+  nextBtnText: "Próximo",
+  prevBtnText: "Anterior",
+  doneBtnText: "Concluir",
+  progressText: "{{current}} de {{total}}",
+};
+
+function getCourseTourSteps() {
+  return [
+    {
+      popover: {
+        title: "Criando seu curso",
+        description:
+          "Vamos entender como estruturar seu curso. Um curso é dividido em módulos, e cada módulo contém aulas.",
+        side: "over" as const,
+        align: "center" as const,
+      },
+    },
+    {
+      element: '[data-tour="course-tabs"]',
+      popover: {
+        title: "Abas do curso",
+        description:
+          "Cada curso tem várias seções: Informações (título, descrição, thumbnail), Conteúdo (módulos e aulas), Alunos, Comentários e Personalização.",
+        side: "bottom" as const,
+      },
+    },
+    {
+      element: '[data-tour="course-tab-info"]',
+      popover: {
+        title: "Informações",
+        description:
+          "Configure o título, descrição, thumbnail, preço e termos de uso do curso. Tudo que o aluno vê antes de se matricular.",
+        side: "bottom" as const,
+      },
+    },
+    {
+      element: '[data-tour="course-tab-content"]',
+      popover: {
+        title: "Conteúdo",
+        description:
+          "Aqui você cria os módulos e adiciona as aulas. Cada aula pode ter vídeo, texto, materiais em PDF e quiz.",
+        side: "bottom" as const,
+      },
+    },
+    {
+      element: '[data-tour="course-tab-students"]',
+      popover: {
+        title: "Alunos do curso",
+        description:
+          "Veja os alunos matriculados neste curso, seus progressos, e envie acessos manualmente.",
+        side: "bottom" as const,
+      },
+    },
+    {
+      element: '[data-tour="course-tab-comments"]',
+      popover: {
+        title: "Comentários",
+        description:
+          "Gerencie os comentários dos alunos nas aulas. Se a moderação estiver ativa, aprove ou rejeite antes de publicar.",
+        side: "bottom" as const,
+      },
+    },
+    {
+      element: '[data-tour="course-tab-customize"]',
+      popover: {
+        title: "Personalizar Curso",
+        description:
+          "Ative ou desative funcionalidades: comentários, comunidade, gamificação, certificado, moderação, reações. Cada curso pode ter configurações independentes.",
+        side: "bottom" as const,
+      },
+    },
+    {
+      popover: {
+        title: "Pronto pra criar!",
+        description:
+          'Comece criando os módulos na aba "Conteúdo" e adicione suas aulas. Seus alunos vão adorar!',
+        side: "over" as const,
+        align: "center" as const,
+      },
+    },
+  ];
+}
+
+export function CourseTour() {
+  const [shouldShow, setShouldShow] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/producer/onboarding?type=course")
+      .then((r) => r.json())
+      .then((data) => {
+        if (!data.completed) {
+          setShouldShow(true);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (!shouldShow) return;
+
+    const timer = setTimeout(() => {
+      const driverObj = driver({
+        ...TOUR_CONFIG,
+        onDestroyStarted: () => {
+          fetch("/api/producer/onboarding", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ type: "course" }),
+          }).catch(() => {});
+          driverObj.destroy();
+        },
+        steps: getCourseTourSteps(),
+      });
+      driverObj.drive();
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [shouldShow]);
+
+  return null;
+}
