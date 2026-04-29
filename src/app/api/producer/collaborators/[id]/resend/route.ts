@@ -39,7 +39,7 @@ export async function POST(
         request.headers.get("origin") ||
         process.env.NEXT_PUBLIC_SITE_URL ||
         "";
-      const redirectTo = `${origin}/invite/${c.id}`;
+      const redirectTo = `${origin}/invite/${c.id}?email=${encodeURIComponent(c.email)}`;
       const { data, error } = await supabase.auth.admin.generateLink({
         type: "magiclink",
         email: c.email,
@@ -55,7 +55,7 @@ export async function POST(
         request.headers.get("origin") ||
         process.env.NEXT_PUBLIC_SITE_URL ||
         "";
-      inviteLink = `${origin}/invite/${c.id}`;
+      inviteLink = `${origin}/invite/${c.id}?email=${encodeURIComponent(c.email)}`;
     }
 
     return NextResponse.json({ inviteLink });

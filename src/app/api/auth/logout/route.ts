@@ -7,7 +7,11 @@ export async function POST() {
     const { error } = await supabase.auth.signOut();
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      console.error("[AUTH] Logout error:", error.message);
+      return NextResponse.json(
+        { error: "Erro ao encerrar sessão" },
+        { status: 500 }
+      );
     }
 
     return NextResponse.json({ message: "Logout realizado com sucesso" });

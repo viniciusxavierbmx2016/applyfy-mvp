@@ -3,11 +3,15 @@ import { createRouteHandlerClient } from "@/lib/supabase-route";
 import { prisma } from "@/lib/prisma";
 import { sendEmail } from "@/lib/email";
 import { welcomeStudent } from "@/lib/email-templates";
+import { rateLimit } from "@/lib/rate-limit";
 
 export async function POST(
   request: Request,
   { params }: { params: { slug: string } }
 ) {
+  const limited = rateLimit(request);
+  if (limited) return limited;
+
   try {
     const { email, password, name } = await request.json();
 
@@ -37,7 +41,11 @@ export async function POST(
       options: { data: { name } },
     });
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 400 });
+      console.error("[AUTH] Workspace register error:", error.message);
+      return NextResponse.json(
+        { error: "Não foi possível criar a conta. Tente novamente." },
+        { status: 400 }
+      );
     }
 
     if (data.user) {

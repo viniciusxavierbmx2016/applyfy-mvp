@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import type { SubscriptionStatus } from "@prisma/client";
 import { sendEmail } from "@/lib/email";
 import { subscriptionActivated, subscriptionRenewed, subscriptionSuspended } from "@/lib/email-templates";
+import { safeCompare } from "@/lib/safe-compare";
 
 type ApplyfyPayload = {
   event?: string;
@@ -47,7 +48,7 @@ export async function POST(request: Request) {
 
   try {
     const token = process.env.MEMBERS_CLUB_WEBHOOK_TOKEN;
-    if (!token || body.token !== token) {
+    if (!token || !body.token || !safeCompare(body.token, token)) {
       log(event, email, txId, "invalid token");
       return NextResponse.json({ received: true }, { status: 401 });
     }

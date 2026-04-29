@@ -1,10 +1,14 @@
 import { NextResponse } from "next/server";
 import { createRouteHandlerClient } from "@/lib/supabase-route";
 import { prisma } from "@/lib/prisma";
+import { rateLimit } from "@/lib/rate-limit";
 
 const MAX_SESSIONS = 3;
 
 export async function POST(request: Request) {
+  const limited = rateLimit(request);
+  if (limited) return limited;
+
   try {
     const { email, password } = await request.json();
 
@@ -23,7 +27,11 @@ export async function POST(request: Request) {
     });
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 401 });
+      console.error("[AUTH] Producer login error:", error.message);
+      return NextResponse.json(
+        { error: "Credenciais inválidas" },
+        { status: 401 }
+      );
     }
 
     const user = await prisma.user.findUnique({ where: { email } });

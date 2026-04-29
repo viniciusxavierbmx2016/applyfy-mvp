@@ -32,6 +32,21 @@ const nextConfig = {
             key: "Permissions-Policy",
             value: "camera=(), microphone=(), geolocation=()",
           },
+          {
+            key: "Content-Security-Policy",
+            value: [
+              "default-src 'self'",
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+              "style-src 'self' 'unsafe-inline'",
+              "img-src 'self' data: blob: https://*.supabase.co https://*.supabase.in",
+              "font-src 'self' data:",
+              "connect-src 'self' https://*.supabase.co https://*.supabase.in wss://*.supabase.co",
+              "media-src 'self' https://*.youtube.com https://*.vimeo.com",
+              "frame-src 'self' https://*.youtube.com https://*.vimeo.com https://*.stripe.com",
+              "worker-src 'self' blob:",
+              "manifest-src 'self'",
+            ].join("; "),
+          },
         ],
       },
     ];

@@ -7,6 +7,7 @@ import {
   getSetting,
 } from "@/lib/webhook-helpers";
 import { processAutomations } from "@/lib/automation-engine";
+import { safeCompare } from "@/lib/safe-compare";
 
 // Applyfy webhook events.
 // Docs: https://app.applyfy.com.br/api/v1
@@ -88,7 +89,7 @@ export async function POST(request: Request) {
       (await getSetting("applyfy_token")) || process.env.APPLYFY_TOKEN || "";
     const providedToken = body?.token || "";
 
-    if (!storedToken || providedToken !== storedToken) {
+    if (!storedToken || !safeCompare(providedToken, storedToken)) {
       console.warn("[applyfy webhook] invalid token", { event });
       await logWebhook({
         event,

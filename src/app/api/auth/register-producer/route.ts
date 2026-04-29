@@ -3,8 +3,12 @@ import { createRouteHandlerClient } from "@/lib/supabase-route";
 import { prisma } from "@/lib/prisma";
 import { sendEmail } from "@/lib/email";
 import { welcomeProducer } from "@/lib/email-templates";
+import { rateLimit } from "@/lib/rate-limit";
 
 export async function POST(request: Request) {
+  const limited = rateLimit(request);
+  if (limited) return limited;
+
   try {
     const {
       email, password, name, phone, businessType, niche,
@@ -32,7 +36,11 @@ export async function POST(request: Request) {
       options: { data: { name, role: "PRODUCER" } },
     });
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 400 });
+      console.error("[AUTH] Register producer error:", error.message);
+      return NextResponse.json(
+        { error: "Não foi possível criar a conta. Tente novamente." },
+        { status: 400 }
+      );
     }
 
     if (data.user) {

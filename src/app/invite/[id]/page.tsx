@@ -1,13 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { PERMISSION_LABELS } from "@/lib/collaborator";
 
 interface InviteData {
   id: string;
-  email: string;
   name: string | null;
   status: "PENDING" | "ACCEPTED" | "REVOKED";
   permissions: string[];
@@ -20,7 +19,9 @@ interface InviteData {
 
 export default function InviteAcceptPage() {
   const params = useParams<{ id: string }>();
+  const search = useSearchParams();
   const router = useRouter();
+  const inviteEmail = search.get("email") ?? "";
   const [invite, setInvite] = useState<InviteData | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
@@ -32,7 +33,14 @@ export default function InviteAcceptPage() {
 
   useEffect(() => {
     async function load() {
-      const r = await fetch(`/api/invite/${params.id}`);
+      if (!inviteEmail) {
+        setNotFound(true);
+        setLoading(false);
+        return;
+      }
+      const r = await fetch(
+        `/api/invite/${params.id}?email=${encodeURIComponent(inviteEmail)}`
+      );
       if (!r.ok) {
         setNotFound(true);
         setLoading(false);
@@ -44,7 +52,7 @@ export default function InviteAcceptPage() {
       setLoading(false);
     }
     load();
-  }, [params.id]);
+  }, [params.id, inviteEmail]);
 
   async function acceptWithSignup(e: React.FormEvent) {
     e.preventDefault();
@@ -66,7 +74,7 @@ export default function InviteAcceptPage() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
-      body: JSON.stringify({ email: invite!.email, password }),
+      body: JSON.stringify({ email: inviteEmail, password }),
     });
     window.location.href = "/producer";
   }
@@ -80,7 +88,7 @@ export default function InviteAcceptPage() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
-      body: JSON.stringify({ email: invite!.email, password }),
+      body: JSON.stringify({ email: inviteEmail, password }),
     });
     if (!l.ok) {
       const d = await l.json().catch(() => ({}));
@@ -198,7 +206,7 @@ export default function InviteAcceptPage() {
           <p className="text-sm text-gray-500 mb-4">
             E-mail:{" "}
             <span className="font-medium text-gray-700 dark:text-gray-300">
-              {invite.email}
+              {inviteEmail}
             </span>
           </p>
 

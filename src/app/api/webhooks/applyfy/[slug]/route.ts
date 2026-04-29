@@ -9,6 +9,7 @@ import {
 import { sendEmail } from "@/lib/email";
 import { studentAccessGranted } from "@/lib/email-templates";
 import { processAutomations } from "@/lib/automation-engine";
+import { safeCompare } from "@/lib/safe-compare";
 
 // Workspace-scoped Applyfy webhook.
 // The workspace is identified by the `[slug]` segment (the workspace slug).
@@ -99,7 +100,7 @@ export async function POST(
       (await getSetting("applyfy_token")) ||
       "";
     const providedToken = body?.token || "";
-    if (!storedToken || providedToken !== storedToken) {
+    if (!storedToken || !safeCompare(providedToken, storedToken)) {
       await logWebhook({
         event,
         email: body?.client?.email,

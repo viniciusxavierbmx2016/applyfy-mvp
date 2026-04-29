@@ -134,7 +134,7 @@ export async function POST(request: Request) {
       process.env.NEXT_PUBLIC_APP_URL ||
       process.env.NEXT_PUBLIC_SITE_URL ||
       "";
-    const inviteLink = `${origin}/invite/${collaborator.id}`;
+    const inviteLink = `${origin}/invite/${collaborator.id}?email=${encodeURIComponent(collaborator.email)}`;
 
     const ws = await prisma.workspace.findUnique({
       where: { id: workspaceId },
