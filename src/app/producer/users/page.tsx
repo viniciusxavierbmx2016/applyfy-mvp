@@ -297,7 +297,6 @@ export default function AdminUsersPage() {
             )}
             <span>{exporting ? "Exportando..." : "Exportar CSV"}</span>
           </button>
-          <HelpTooltip text="Exporte a lista de alunos em formato CSV para usar em planilhas ou ferramentas externas." />
         </div>
       </div>
 

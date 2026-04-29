@@ -11,6 +11,7 @@ interface HelpTooltipProps {
 export function HelpTooltip({ text, side = "top", maxWidth = 260 }: HelpTooltipProps) {
   const [visible, setVisible] = useState(false);
   const [position, setPosition] = useState<"top" | "bottom">("top");
+  const [align, setAlign] = useState<"left" | "center" | "right">("center");
   const triggerRef = useRef<HTMLSpanElement>(null);
 
   useEffect(() => {
@@ -18,6 +19,10 @@ export function HelpTooltip({ text, side = "top", maxWidth = 260 }: HelpTooltipP
       const rect = triggerRef.current.getBoundingClientRect();
       if (rect.top < 80) setPosition("bottom");
       else setPosition(side === "bottom" ? "bottom" : "top");
+
+      if (rect.right > window.innerWidth - 150) setAlign("right");
+      else if (rect.left < 150) setAlign("left");
+      else setAlign("center");
     }
   }, [visible, side]);
 
@@ -40,18 +45,19 @@ export function HelpTooltip({ text, side = "top", maxWidth = 260 }: HelpTooltipP
             bg-gray-900 dark:bg-[#1a1a2e] border border-white/10
             rounded-lg shadow-xl pointer-events-none
             ${position === "bottom" ? "top-full mt-2" : "bottom-full mb-2"}
-            left-1/2 -translate-x-1/2
+            ${align === "right" ? "right-0" : align === "left" ? "left-0" : "left-1/2 -translate-x-1/2"}
           `}
           style={{ maxWidth, minWidth: 180 }}
         >
           {text}
           <span
             className={`
-              absolute left-1/2 -translate-x-1/2 w-2 h-2 rotate-45
+              absolute w-2 h-2 rotate-45
               bg-gray-900 dark:bg-[#1a1a2e] border border-white/10
               ${position === "bottom"
                 ? "-top-1 border-b-0 border-r-0"
                 : "-bottom-1 border-t-0 border-l-0"}
+              ${align === "right" ? "right-3" : align === "left" ? "left-3" : "left-1/2 -translate-x-1/2"}
             `}
           />
         </span>

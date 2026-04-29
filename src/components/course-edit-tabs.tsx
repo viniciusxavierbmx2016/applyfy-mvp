@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useUserStore } from "@/stores/user-store";
-import { HelpTooltip } from "@/components/help-tooltip";
+
 
 export type CourseEditTab =
   | "info"
@@ -82,11 +82,11 @@ export function CourseEditTabs({
   const isCollaborator = user?.role === "COLLABORATOR";
 
   const allTabs: TabDef[] = [
-    { key: "info", label: "Informações", requires: "MANAGE_LESSONS", icon: iconPencil, tourId: "course-tab-info", tooltip: "Edite título, descrição, thumbnail, preço e configurações gerais do curso." },
-    { key: "content", label: "Conteúdo", requires: "MANAGE_LESSONS", icon: iconBook, tourId: "course-tab-content", tooltip: "Gerencie módulos e aulas. Arraste para reordenar o conteúdo." },
-    { key: "students", label: "Alunos", requires: "MANAGE_STUDENTS", icon: iconUsers, tourId: "course-tab-students", tooltip: "Veja e gerencie os alunos matriculados neste curso." },
-    { key: "comments", label: "Comentários", requires: "REPLY_COMMENTS", icon: iconMessage, tourId: "course-tab-comments", tooltip: "Visualize e responda comentários dos alunos nas aulas." },
-    { key: "customize", label: "Personalizar Curso", requires: "MANAGE_LESSONS", icon: iconPalette, tourId: "course-tab-customize", tooltip: "Personalize cores, logo e aparência da página do curso." },
+    { key: "info", label: "Informações", requires: "MANAGE_LESSONS", icon: iconPencil, tourId: "course-tab-info" },
+    { key: "content", label: "Conteúdo", requires: "MANAGE_LESSONS", icon: iconBook, tourId: "course-tab-content" },
+    { key: "students", label: "Alunos", requires: "MANAGE_STUDENTS", icon: iconUsers, tourId: "course-tab-students" },
+    { key: "comments", label: "Comentários", requires: "REPLY_COMMENTS", icon: iconMessage, tourId: "course-tab-comments" },
+    { key: "customize", label: "Personalizar Curso", requires: "MANAGE_LESSONS", icon: iconPalette, tourId: "course-tab-customize" },
   ];
 
   const visibleTabs = isCollaborator
@@ -114,7 +114,6 @@ export function CourseEditTabs({
                   {studentsCount}
                 </span>
               )}
-              {tab.tooltip && <HelpTooltip text={tab.tooltip} />}
             </Link>
           );
         })}

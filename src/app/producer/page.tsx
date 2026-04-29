@@ -12,7 +12,7 @@ import {
   type DateRangeValue,
 } from "@/components/date-range-selector";
 import { CustomSelect } from "@/components/custom-select";
-import { HelpTooltip } from "@/components/help-tooltip";
+
 
 interface SalesStats {
   totalRevenue: number;
@@ -171,7 +171,7 @@ function DashboardContent() {
           </p>
         </div>
         <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
-          <div data-tour="dashboard-course-selector" className="flex items-center gap-0">
+          <div data-tour="dashboard-course-selector">
             <CustomSelect
               value={courseId}
               onChange={setCourseId}
@@ -181,11 +181,9 @@ function DashboardContent() {
                 ...courses.map((c) => ({ value: c.id, label: c.title })),
               ]}
             />
-            <HelpTooltip text="Selecione um curso específico ou veja dados de todos os cursos." />
           </div>
-          <div data-tour="dashboard-date-selector" className="flex items-center gap-0">
+          <div data-tour="dashboard-date-selector">
             <DateRangeSelector value={range} onChange={setRange} />
-            <HelpTooltip text="Filtre os dados por período. Os KPIs e gráficos se atualizam automaticamente." />
           </div>
         </div>
       </div>
@@ -244,7 +242,6 @@ function SalesKpis({ startDate, endDate }: { startDate?: string; endDate?: strin
         format="currency"
         accent="emerald"
         hint={noSales ? "Nenhuma venda no período" : "no período"}
-        tooltip="Total de vendas aprovadas menos reembolsos e chargebacks no período selecionado."
       />
       <SalesCard
         icon={
@@ -258,7 +255,6 @@ function SalesKpis({ startDate, endDate }: { startDate?: string; endDate?: strin
         format="integer"
         accent="blue"
         hint="transações"
-        tooltip="Número total de transações aprovadas no período."
       />
       <SalesCard
         icon={
@@ -272,7 +268,6 @@ function SalesKpis({ startDate, endDate }: { startDate?: string; endDate?: strin
         format="currency"
         accent="purple"
         hint="por venda"
-        tooltip="Valor médio de cada venda: receita total dividida pelo número de vendas."
       />
       <SalesCard
         icon={
@@ -286,7 +281,6 @@ function SalesKpis({ startDate, endDate }: { startDate?: string; endDate?: strin
         format="currency"
         accent="red"
         hint="devolvidos"
-        tooltip="Valor total devolvido aos compradores no período."
       />
     </div>
   );
@@ -307,7 +301,6 @@ function SalesCard({
   format,
   accent,
   hint,
-  tooltip,
 }: {
   icon: React.ReactNode;
   label: string;
@@ -316,7 +309,6 @@ function SalesCard({
   format?: "currency" | "integer";
   accent: keyof typeof SALES_ACCENT;
   hint?: string;
-  tooltip?: string;
 }) {
   const animated = useCountUp(numericValue ?? 0, {
     duration: 800,
@@ -332,7 +324,6 @@ function SalesCard({
       </span>
       <p className="mt-4 text-[11px] font-medium uppercase tracking-widest text-gray-500">
         {label}
-        {tooltip && <HelpTooltip text={tooltip} />}
       </p>
       <p className={`mt-1 text-2xl sm:text-3xl font-bold tabular-nums ${a.text}`}>{displayValue}</p>
       {hint && <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{hint}</p>}

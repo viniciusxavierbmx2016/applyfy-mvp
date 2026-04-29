@@ -132,13 +132,10 @@ function AdminAnalyticsPageInner() {
             ]}
           />
           <DateRangeSelector value={range} onChange={setRange} />
-          <div className="flex items-center gap-0">
-            <Button variant="secondary" size="sm" onClick={handleExport}>
-              <DownloadIcon className="w-4 h-4 mr-2" />
-              Exportar relatório
-            </Button>
-            <HelpTooltip text="Baixe os dados da aba atual em formato CSV para análise externa." />
-          </div>
+          <Button variant="secondary" size="sm" onClick={handleExport}>
+            <DownloadIcon className="w-4 h-4 mr-2" />
+            Exportar relatório
+          </Button>
         </div>
       </div>
 
