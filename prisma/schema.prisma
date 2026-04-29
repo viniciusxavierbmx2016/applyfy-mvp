@@ -328,6 +328,7 @@ model LessonProgress {
 
   @@unique([userId, lessonId])
   @@index([userId, lastAccessedAt])
+  @@index([lessonId])
 }
 
 enum GroupPermission {
@@ -405,6 +406,7 @@ model Comment {
 
   @@index([postId, status, createdAt])
   @@index([parentId])
+  @@index([userId])
 }
 
 model Like {
@@ -416,6 +418,7 @@ model Like {
   post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
 
   @@unique([userId, postId])
+  @@index([postId])
 }
 
 model LessonComment {
@@ -434,6 +437,7 @@ model LessonComment {
 
   @@index([lessonId, status, createdAt])
   @@index([parentId])
+  @@index([userId])
 }
 
 model Notification {
@@ -473,6 +477,7 @@ model Certificate {
   course     Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
 
   @@unique([userId, courseId])
+  @@index([courseId])
 }
 
 model Review {
@@ -602,6 +607,8 @@ model Session {
   expiresAt DateTime
 
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 // ─── Subscription billing ───────────────────────────────────────
@@ -646,6 +653,7 @@ model Subscription {
   @@index([userId])
   @@index([status])
   @@index([currentPeriodEnd])
+  @@index([planId])
 }
 
 model BillingReminder {
@@ -802,6 +810,7 @@ model PendingExecution {
 
   @@index([status, executeAt])
   @@index([automationId, userId])
+  @@index([userId])
 }
 
 model AutomationLog {
@@ -936,6 +945,7 @@ model LiveModerator {
 
   @@unique([liveId, userId])
   @@index([liveId])
+  @@index([userId])
 }
 
 model ImpersonateToken {
@@ -951,6 +961,8 @@ model ImpersonateToken {
   admin User @relation("impersonateAdmin", fields: [adminId], references: [id], onDelete: Cascade)
 
   @@index([token])
+  @@index([userId])
+  @@index([adminId])
 }
 
 model AccessLog {
