@@ -17,6 +17,7 @@ import {
   CartesianGrid,
 } from "recharts";
 import { Skeleton } from "@/components/ui/skeleton";
+import { HelpTooltip } from "@/components/help-tooltip";
 
 function Star({ className = "" }: { className?: string }) {
   return (
@@ -196,6 +197,7 @@ export function AnalyticsOverview({
           format="integer"
           accent="blue"
           hint={`${data.kpis.totalEnrolled} matrículas`}
+          tooltip="Total de alunos únicos matriculados em todos os seus cursos."
         />
         <KpiCard
           icon={<SparkleIcon className="w-4 h-4" />}
@@ -205,6 +207,7 @@ export function AnalyticsOverview({
           format="integer"
           accent="emerald"
           delta={newDelta}
+          tooltip="Alunos que se matricularam durante o período selecionado."
         />
         <KpiCard
           icon={<CheckCircleIcon className="w-4 h-4" />}
@@ -213,6 +216,7 @@ export function AnalyticsOverview({
           numericValue={data.kpis.avgCompletion}
           format="percent"
           accent="teal"
+          tooltip="Percentual médio de aulas concluídas por todos os alunos em seus cursos."
         />
         <KpiCard
           icon={<Star className="w-4 h-4" />}
@@ -229,6 +233,7 @@ export function AnalyticsOverview({
           format="decimal"
           accent="amber"
           hint={data.kpis.ratingCount > 0 ? `${data.kpis.ratingCount} avaliações` : "Sem avaliações"}
+          tooltip="Média das avaliações dadas pelos alunos aos seus cursos."
         />
         <KpiCard
           icon={<ActivityIcon className="w-4 h-4" />}
@@ -239,6 +244,7 @@ export function AnalyticsOverview({
           accent="purple"
           delta={lessonsDelta}
           deltaLabel="aulas"
+          tooltip="Alunos que acessaram pelo menos uma aula nos últimos 7 dias."
         />
         <KpiCard
           icon={<MoonIcon className="w-4 h-4" />}
@@ -248,12 +254,13 @@ export function AnalyticsOverview({
           format="integer"
           accent="rose"
           hint={`${data.kpis.neverAccessed} nunca acessaram`}
+          tooltip="Alunos que não acessaram nenhuma aula nos últimos 30 dias."
         />
       </div>
 
       {/* Two-column charts: area + bar */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-        <ChartCard title="Novas matrículas" subtitle={periodSubtitle}>
+        <ChartCard title="Novas matrículas" subtitle={periodSubtitle} tooltip="Quantidade de novos alunos matriculados por dia no período.">
           <ResponsiveContainer width="100%" height={260}>
             <AreaChart data={data.newEnrollmentsPerDay} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
               <defs>
@@ -271,7 +278,7 @@ export function AnalyticsOverview({
           </ResponsiveContainer>
         </ChartCard>
 
-        <ChartCard title="Aulas concluídas" subtitle={periodSubtitle}>
+        <ChartCard title="Aulas concluídas" subtitle={periodSubtitle} tooltip="Quantidade de aulas marcadas como concluídas por dia.">
           <ResponsiveContainer width="100%" height={260}>
             <BarChart data={data.lessonsCompletedPerDay} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
               <CartesianGrid stroke="currentColor" className="text-gray-200 dark:text-gray-800" strokeDasharray="3 3" vertical={false} />
@@ -286,7 +293,7 @@ export function AnalyticsOverview({
 
       {/* Two-column: progress dist + community donut */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-        <ChartCard title="Distribuição de progresso" subtitle="Quantos alunos em cada faixa">
+        <ChartCard title="Distribuição de progresso" subtitle="Quantos alunos em cada faixa" tooltip="Quantos alunos estão em cada faixa de progresso nos seus cursos.">
           {data.progressDistribution.every((b) => b.count === 0) ? <Empty /> : (
             <ResponsiveContainer width="100%" height={260}>
               <BarChart data={data.progressDistribution} layout="vertical" margin={{ top: 8, right: 16, left: 8, bottom: 0 }}>
@@ -304,7 +311,7 @@ export function AnalyticsOverview({
           )}
         </ChartCard>
 
-        <ChartCard title="Engajamento na comunidade" subtitle="Posts por tipo">
+        <ChartCard title="Engajamento na comunidade" subtitle="Posts por tipo" tooltip="Posts e comentários feitos pelos alunos na comunidade do curso.">
           {totalPosts === 0 ? <Empty /> : (
             <div className="relative">
               <ResponsiveContainer width="100%" height={260}>
@@ -476,6 +483,7 @@ function KpiCard({
   hint,
   delta,
   deltaLabel,
+  tooltip,
 }: {
   icon: React.ReactNode;
   label: string;
@@ -486,6 +494,7 @@ function KpiCard({
   hint?: string;
   delta?: number | null;
   deltaLabel?: string;
+  tooltip?: string;
 }) {
   const animated = useCountUp(numericValue ?? 0, {
     duration: 800,
@@ -517,18 +526,24 @@ function KpiCard({
           </span>
         )}
       </div>
-      <p className="mt-4 text-[11px] font-medium uppercase tracking-widest text-gray-500">{label}</p>
+      <p className="mt-4 text-[11px] font-medium uppercase tracking-widest text-gray-500">
+        {label}
+        {tooltip && <HelpTooltip text={tooltip} />}
+      </p>
       <p className={`mt-1 text-2xl sm:text-3xl font-bold tabular-nums ${a.text}`}>{displayValue}</p>
       {hint && <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{hint}</p>}
     </div>
   );
 }
 
-function ChartCard({ title, subtitle, children }: { title: string; subtitle?: string; children: React.ReactNode }) {
+function ChartCard({ title, subtitle, tooltip, children }: { title: string; subtitle?: string; tooltip?: string; children: React.ReactNode }) {
   return (
     <section className="bg-white dark:bg-white/5 border border-gray-200 dark:border-white/5 rounded-xl p-4 sm:p-6">
       <div className="mb-4">
-        <h2 className="text-base font-semibold text-gray-900 dark:text-white">{title}</h2>
+        <h2 className="text-base font-semibold text-gray-900 dark:text-white">
+          {title}
+          {tooltip && <HelpTooltip text={tooltip} />}
+        </h2>
         {subtitle && <p className="text-xs text-gray-500 mt-0.5">{subtitle}</p>}
       </div>
       {children}
