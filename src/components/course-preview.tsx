@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { ReviewsSection } from "@/components/reviews-section";
 import { StarRating } from "@/components/star-rating";
+import { formatWhatsappLink } from "@/lib/utils";
 
 export interface PreviewLesson {
   id: string;
@@ -44,6 +45,8 @@ export interface PreviewCourse {
   reviewsEnabled?: boolean;
   showStudentCount?: boolean;
   enrollmentCount?: number;
+  supportEmail?: string | null;
+  supportWhatsapp?: string | null;
   modules: PreviewModule[];
   sections: PreviewSection[];
 }
@@ -104,6 +107,8 @@ export function CoursePreview({
   );
   const priceLabel = formatPrice(course.price, course.priceCurrency);
 
+  const whatsappHref = formatWhatsappLink(course.supportWhatsapp);
+
   const checkoutCta = course.checkoutUrl ? (
     <a
       href={course.checkoutUrl}
@@ -116,13 +121,29 @@ export function CoursePreview({
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17 8l4 4m0 0l-4 4m4-4H3" />
       </svg>
     </a>
-  ) : (
+  ) : whatsappHref ? (
     <a
-      href="mailto:contato@exemplo.com"
+      href={whatsappHref}
+      target="_blank"
+      rel="noopener noreferrer"
       className="w-full inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-[15px] font-semibold rounded-xl transition-opacity duration-200 hover:opacity-90"
     >
       Entre em contato
     </a>
+  ) : course.supportEmail ? (
+    <a
+      href={`mailto:${course.supportEmail}`}
+      className="w-full inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-[15px] font-semibold rounded-xl transition-opacity duration-200 hover:opacity-90"
+    >
+      Entre em contato
+    </a>
+  ) : (
+    <button
+      disabled
+      className="w-full inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-[15px] font-semibold rounded-xl opacity-50 cursor-not-allowed"
+    >
+      Entre em contato
+    </button>
   );
 
   return (
@@ -404,13 +425,29 @@ export function CoursePreview({
               >
                 Comprar agora
               </a>
-            ) : (
+            ) : whatsappHref ? (
               <a
-                href="mailto:contato@exemplo.com"
+                href={whatsappHref}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 px-5 py-3 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-sm font-semibold rounded-xl"
               >
                 Contato
               </a>
+            ) : course.supportEmail ? (
+              <a
+                href={`mailto:${course.supportEmail}`}
+                className="inline-flex items-center gap-2 px-5 py-3 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-sm font-semibold rounded-xl"
+              >
+                Contato
+              </a>
+            ) : (
+              <button
+                disabled
+                className="inline-flex items-center gap-2 px-5 py-3 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-sm font-semibold rounded-xl opacity-50 cursor-not-allowed"
+              >
+                Contato
+              </button>
             )}
           </div>
         </div>

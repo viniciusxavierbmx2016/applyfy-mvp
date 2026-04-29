@@ -346,6 +346,8 @@ export default function CourseHomePage() {
           reviewsEnabled: course.reviewsEnabled,
           showStudentCount: course.showStudentCount,
           enrollmentCount: course.enrollmentCount,
+          supportEmail: course.supportEmail,
+          supportWhatsapp: course.supportWhatsapp,
           modules: course.modules.map((m) => ({
             id: m.id,
             title: m.title,
