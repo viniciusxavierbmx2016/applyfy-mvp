@@ -110,7 +110,7 @@ export function StudentTour() {
           popover: {
             title: "É isso! Bons estudos!",
             description:
-              "Agora é só acessar seus cursos e começar a aprender. Cada aula concluída conta pontos pro seu perfil!",
+              'Agora é só acessar seus cursos e começar a aprender. Se quiser refazer este tour, clique no ícone (?) no canto superior direito.',
             side: "over" as const,
             align: "center" as const,
           },

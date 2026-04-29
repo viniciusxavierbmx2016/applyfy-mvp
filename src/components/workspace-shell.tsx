@@ -281,6 +281,20 @@ export function WorkspaceShell({
               <span className="truncate">{user?.name?.split(" ")[0] || ""}</span>
             </Link>
             <button
+              onClick={async () => {
+                await fetch("/api/student/onboarding", { method: "DELETE" }).catch(() => {});
+                window.location.reload();
+              }}
+              className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white px-2 sm:px-3 py-1.5 rounded-lg"
+              title="Guia da plataforma"
+            >
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="12" r="10"/>
+                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+                <line x1="12" y1="17" x2="12.01" y2="17"/>
+              </svg>
+            </button>
+            <button
               onClick={handleLogout}
               className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white px-2 sm:px-3 py-1.5 rounded-lg"
             >
