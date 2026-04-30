@@ -4,10 +4,8 @@ import { requireStaff } from "@/lib/auth";
 import { canAccessWorkspace } from "@/lib/workspace";
 import { createAdminClient, STORAGE_BUCKET } from "@/lib/supabase-admin";
 
-export async function POST(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function POST(request: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   try {
     const staff = await requireStaff();
     if (!(await canAccessWorkspace(staff, params.id))) {

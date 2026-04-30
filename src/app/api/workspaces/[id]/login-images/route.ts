@@ -6,10 +6,8 @@ import { createAdminClient, STORAGE_BUCKET } from "@/lib/supabase-admin";
 
 type Kind = "bgImage" | "loginLogo" | "favicon";
 
-export async function POST(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function POST(request: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   try {
     const staff = await requireStaff();
     if (!(await canAccessWorkspace(staff, params.id))) {

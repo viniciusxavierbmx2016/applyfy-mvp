@@ -4,10 +4,8 @@ import { getCurrentUser } from "@/lib/auth";
 import { GAMIFICATION, getLevelForPoints } from "@/lib/utils";
 import { createNotification } from "@/lib/notifications";
 
-export async function POST(
-  _request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function POST(_request: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   try {
     const user = await getCurrentUser();
     if (!user) {

@@ -6,8 +6,9 @@ export const dynamic = "force-dynamic";
 
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string; questionId: string } }
+  props: { params: Promise<{ id: string; questionId: string }> }
 ) {
+  const params = await props.params;
   try {
     const staff = await requireStaff();
     if (!(await canEditLesson(staff, params.id))) {
@@ -53,8 +54,9 @@ export async function PUT(
 
 export async function DELETE(
   _request: Request,
-  { params }: { params: { id: string; questionId: string } }
+  props: { params: Promise<{ id: string; questionId: string }> }
 ) {
+  const params = await props.params;
   try {
     const staff = await requireStaff();
     if (!(await canEditLesson(staff, params.id))) {

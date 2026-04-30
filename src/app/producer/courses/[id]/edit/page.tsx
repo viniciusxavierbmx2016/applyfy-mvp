@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, use, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
 import { CourseForm } from "@/components/course-form";
@@ -42,11 +42,12 @@ interface CourseData {
   sections: SectionData[];
 }
 
-export default function EditCoursePage({
-  params,
-}: {
-  params: { id: string };
-}) {
+function EditCoursePageInner(
+  props: {
+    params: Promise<{ id: string }>;
+  }
+) {
+  const params = use(props.params);
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, collaborator } = useUserStore();
@@ -116,5 +117,26 @@ export default function EditCoursePage({
       initialModules={course.modules}
       initialSections={course.sections || []}
     />
+  );
+}
+
+export default function EditCoursePage(props: {
+  params: Promise<{ id: string }>;
+}) {
+  return (
+    <Suspense
+      fallback={
+        <div className="space-y-4">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div
+              key={i}
+              className="h-32 bg-gray-100 dark:bg-gray-900 rounded-xl animate-pulse"
+            />
+          ))}
+        </div>
+      }
+    >
+      <EditCoursePageInner {...props} />
+    </Suspense>
   );
 }

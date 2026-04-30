@@ -67,10 +67,8 @@ async function logWebhook(entry: {
   }
 }
 
-export async function POST(
-  request: Request,
-  { params }: { params: { slug: string } }
-) {
+export async function POST(request: Request, props: { params: Promise<{ slug: string }> }) {
+  const params = await props.params;
   let body: ApplyfyPayload = {};
   let workspaceId: string | null = null;
   try {

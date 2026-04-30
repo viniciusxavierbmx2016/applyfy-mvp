@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, use } from "react";
 import Link from "next/link";
 import { CourseEditTabs } from "@/components/course-edit-tabs";
 
@@ -107,11 +107,12 @@ const ITEMS: SettingItem[] = [
   },
 ];
 
-export default function CourseSettingsPage({
-  params,
-}: {
-  params: { id: string };
-}) {
+export default function CourseSettingsPage(
+  props: {
+    params: Promise<{ id: string }>;
+  }
+) {
+  const params = use(props.params);
   const [flags, setFlags] = useState<CourseFlags | null>(null);
   const [loading, setLoading] = useState(true);
   const [savingKey, setSavingKey] = useState<FlagKey | null>(null);

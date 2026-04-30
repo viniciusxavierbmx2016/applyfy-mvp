@@ -12,10 +12,8 @@ import {
 import { parseVideoUrl } from "@/lib/video";
 import { getAutomationLocks } from "@/lib/automation-locks";
 
-export async function GET(
-  _request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function GET(_request: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   try {
     const user = await getCurrentUser();
     if (!user) {

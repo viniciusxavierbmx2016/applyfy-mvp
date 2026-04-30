@@ -9,10 +9,8 @@ async function getWorkspaceId(staff: Parameters<typeof resolveStaffWorkspace>[0]
   return workspace.id;
 }
 
-export async function GET(
-  _request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function GET(_request: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   try {
     const staff = await requireStaff();
     const workspaceId = await getWorkspaceId(staff);
@@ -45,10 +43,8 @@ export async function GET(
   }
 }
 
-export async function PUT(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function PUT(request: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   try {
     const staff = await requireStaff();
     const workspaceId = await getWorkspaceId(staff);
@@ -89,10 +85,8 @@ export async function PUT(
   }
 }
 
-export async function DELETE(
-  _request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(_request: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   try {
     const staff = await requireStaff();
     const workspaceId = await getWorkspaceId(staff);

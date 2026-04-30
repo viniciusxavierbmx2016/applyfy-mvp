@@ -1,9 +1,10 @@
 import { redirect } from "next/navigation";
 
-export default function CourseAdminIndex({
-  params,
-}: {
-  params: { id: string };
-}) {
+export default async function CourseAdminIndex(
+  props: {
+    params: Promise<{ id: string }>;
+  }
+) {
+  const params = await props.params;
   redirect(`/producer/courses/${params.id}/edit`);
 }

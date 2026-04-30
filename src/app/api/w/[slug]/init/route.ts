@@ -4,10 +4,8 @@ import { getCurrentUser } from "@/lib/auth";
 import { hasWorkspaceAccess } from "@/lib/workspace-access";
 import { isWorkspaceSuspended } from "@/lib/subscription";
 
-export async function GET(
-  _request: Request,
-  { params }: { params: { slug: string } }
-) {
+export async function GET(_request: Request, props: { params: Promise<{ slug: string }> }) {
+  const params = await props.params;
   const t0 = Date.now();
   try {
     const [user, workspace] = await Promise.all([

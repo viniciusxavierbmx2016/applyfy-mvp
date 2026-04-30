@@ -4,10 +4,8 @@ import { requireStaff, requirePermission } from "@/lib/auth";
 import { resolveStaffWorkspace } from "@/lib/workspace";
 import { decrypt } from "@/lib/encryption";
 
-export async function GET(
-  _request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function GET(_request: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   try {
     const staff = await requireStaff();
     if (staff.role === "COLLABORATOR") {

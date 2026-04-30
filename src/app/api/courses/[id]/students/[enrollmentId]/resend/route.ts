@@ -7,8 +7,9 @@ import { studentAccessGranted } from "@/lib/email-templates";
 
 export async function POST(
   request: Request,
-  { params }: { params: { id: string; enrollmentId: string } }
+  props: { params: Promise<{ id: string; enrollmentId: string }> }
 ) {
+  const params = await props.params;
   try {
     const staff = await requireStaff();
     if (!(await canEditCourse(staff, params.id))) {

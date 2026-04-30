@@ -3,10 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { canEditCourse, requireStaff } from "@/lib/auth";
 import { collaboratorCanActOnCourse } from "@/lib/collaborator";
 
-export async function POST(
-  _request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function POST(_request: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   try {
     const staff = await requireStaff();
 

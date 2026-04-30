@@ -4,10 +4,8 @@ import { prisma } from "@/lib/prisma";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-export async function GET(
-  _request: Request,
-  { params }: { params: { slug: string } }
-) {
+export async function GET(_request: Request, props: { params: Promise<{ slug: string }> }) {
+  const params = await props.params;
   try {
     const workspace = await prisma.workspace.findUnique({
       where: { slug: params.slug },

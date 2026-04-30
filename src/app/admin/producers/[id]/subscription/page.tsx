@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, use } from "react";
 import Link from "next/link";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -106,11 +106,12 @@ function fmtDate(d: string | null) {
   return new Date(d).toLocaleDateString("pt-BR");
 }
 
-export default function ProducerSubscriptionPage({
-  params,
-}: {
-  params: { id: string };
-}) {
+export default function ProducerSubscriptionPage(
+  props: {
+    params: Promise<{ id: string }>;
+  }
+) {
+  const params = use(props.params);
   const [data, setData] = useState<Data | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -243,14 +244,12 @@ export default function ProducerSubscriptionPage({
           {toast}
         </div>
       )}
-
       <Link
         href={`/admin/producers/${params.id}`}
         className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
       >
         ← Voltar
       </Link>
-
       <div>
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
           Assinatura
@@ -275,16 +274,14 @@ export default function ProducerSubscriptionPage({
           </div>
         </div>
       </div>
-
       {error && (
         <div className="px-4 py-3 rounded-xl border bg-red-50 dark:bg-red-500/5 border-red-200 dark:border-red-500/20 text-red-700 dark:text-red-400 text-sm">
           {error}
         </div>
       )}
-
       {!sub ? (
         /* No subscription — create form */
-        <section className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.06] rounded-2xl p-6 space-y-4">
+        (<section className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.06] rounded-2xl p-6 space-y-4">
           <div className="flex items-center gap-2">
             <h2 className="text-sm font-semibold text-gray-900 dark:text-white">
               Sem assinatura ativa
@@ -342,7 +339,7 @@ export default function ProducerSubscriptionPage({
               {busy ? "Criando…" : "Criar assinatura"}
             </Button>
           </form>
-        </section>
+        </section>)
       ) : (
         <>
           {/* Plan card */}
@@ -497,7 +494,6 @@ export default function ProducerSubscriptionPage({
           </section>
         </>
       )}
-
       {/* Action modal */}
       {modal?.open && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">

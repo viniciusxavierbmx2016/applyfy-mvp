@@ -4,8 +4,9 @@ import { canEditCourse, requireStaff } from "@/lib/auth";
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string; itemId: string } }
+  props: { params: Promise<{ id: string; itemId: string }> }
 ) {
+  const params = await props.params;
   try {
     const staff = await requireStaff();
     if (!(await canEditCourse(staff, params.id))) {
@@ -48,8 +49,9 @@ export async function PATCH(
 
 export async function DELETE(
   _request: Request,
-  { params }: { params: { id: string; itemId: string } }
+  props: { params: Promise<{ id: string; itemId: string }> }
 ) {
+  const params = await props.params;
   try {
     const staff = await requireStaff();
     if (!(await canEditCourse(staff, params.id))) {

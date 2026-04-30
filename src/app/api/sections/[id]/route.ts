@@ -15,10 +15,8 @@ async function authorize(sectionId: string) {
   return { ok: true as const, courseId: section.courseId };
 }
 
-export async function PUT(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function PUT(request: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   try {
     const check = await authorize(params.id);
     if ("error" in check) {
@@ -39,10 +37,8 @@ export async function PUT(
   }
 }
 
-export async function DELETE(
-  _request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(_request: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   try {
     const check = await authorize(params.id);
     if ("error" in check) {
