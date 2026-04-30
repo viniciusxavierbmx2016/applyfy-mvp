@@ -43,9 +43,12 @@ export async function POST(request: Request) {
       },
     });
 
-    // /login is the ADMIN-only entry point. Reject other roles and clear the
-    // session cookies that signInWithPassword just wrote.
-    if (!user || user.role !== "ADMIN") {
+    // /login is the admin entry point — accepts ADMIN and ADMIN_COLLABORATOR.
+    // Reject other roles and clear the session cookies that signInWithPassword
+    // just wrote.
+    const isAdminRole =
+      user?.role === "ADMIN" || user?.role === "ADMIN_COLLABORATOR";
+    if (!user || !isAdminRole) {
       await supabase.auth.signOut();
       const message =
         user?.role === "PRODUCER"

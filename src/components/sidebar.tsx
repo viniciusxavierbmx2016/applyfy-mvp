@@ -154,15 +154,17 @@ const collaboratorLinks: NavLink[] = [
   },
 ];
 
+// `requires` lists the admin permission needed for ADMIN_COLLABORATOR to see
+// the link. Plain ADMIN bypasses this filter (gets all links).
 const adminLinks: NavLink[] = [
   { href: "/admin", label: "Dashboard", icon: iconDashboard },
-  { href: "/admin/producers", label: "Produtores", icon: iconBriefcase },
-  { href: "/admin/reports", label: "Relatórios", icon: iconAnalytics },
-  { href: "/admin/audit", label: "Logs", icon: iconShield },
-  { href: "/admin/plans", label: "Planos", icon: iconPlans },
-  { href: "/admin/subscriptions", label: "Assinaturas", icon: iconSubscriptions },
-  { href: "/admin/integrations", label: "Integrações", icon: iconIntegrations },
-  { href: "/admin/settings", label: "Configurações", icon: iconSettings },
+  { href: "/admin/producers", label: "Produtores", icon: iconBriefcase, requires: "MANAGE_PRODUCERS" },
+  { href: "/admin/reports", label: "Relatórios", icon: iconAnalytics, requires: "VIEW_REPORTS" },
+  { href: "/admin/audit", label: "Logs", icon: iconShield, requires: "VIEW_AUDIT" },
+  { href: "/admin/plans", label: "Planos", icon: iconPlans, requires: "MANAGE_PLANS" },
+  { href: "/admin/subscriptions", label: "Assinaturas", icon: iconSubscriptions, requires: "MANAGE_BILLING" },
+  { href: "/admin/integrations", label: "Integrações", icon: iconIntegrations, requires: "FULL_ACCESS" },
+  { href: "/admin/settings", label: "Configurações", icon: iconSettings, requires: "FULL_ACCESS" },
 ];
 
 const tooltipCls =
@@ -170,8 +172,9 @@ const tooltipCls =
 
 export function Sidebar({ open, onClose }: SidebarProps) {
   const pathname = usePathname();
-  const { user, collaborator } = useUserStore();
+  const { user, collaborator, adminPermissions } = useUserStore();
   const isAdmin = user?.role === "ADMIN";
+  const isAdminCollab = user?.role === "ADMIN_COLLABORATOR";
   const isProducer = user?.role === "PRODUCER";
   const isCollaborator = user?.role === "COLLABORATOR";
   const activeWorkspace = useActiveWorkspace();
@@ -202,8 +205,16 @@ export function Sidebar({ open, onClose }: SidebarProps) {
     return collabPerms.includes(l.requires);
   });
 
-  const staffLinks = isAdmin
+  const filteredAdminLinks = isAdmin
     ? adminLinks
+    : adminLinks.filter((l) => {
+        if (!l.requires) return true;
+        const req = Array.isArray(l.requires) ? l.requires : [l.requires];
+        return req.some((p) => adminPermissions.includes(p));
+      });
+
+  const staffLinks = isAdmin || isAdminCollab
+    ? filteredAdminLinks
     : isProducer
       ? producerLinks
       : isCollaborator
@@ -211,11 +222,13 @@ export function Sidebar({ open, onClose }: SidebarProps) {
         : null;
   const staffLabel = isAdmin
     ? "Admin"
-    : isProducer
-      ? "Produtor"
-      : isCollaborator
-        ? "Colaborador"
-        : null;
+    : isAdminCollab
+      ? "Admin"
+      : isProducer
+        ? "Produtor"
+        : isCollaborator
+          ? "Colaborador"
+          : null;
 
   const isActive = (href: string) =>
     pathname === href ||
@@ -389,7 +402,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
             </a>
           )}
 
-          {!isCollaborator && !isAdmin && !isProducer && (
+          {!isCollaborator && !isAdmin && !isAdminCollab && !isProducer && (
             <>
               <p
                 className={cn(
@@ -426,14 +439,14 @@ export function Sidebar({ open, onClose }: SidebarProps) {
                 <div
                   className={cn(
                     "my-2 border-t border-gray-200 dark:border-white/[0.04]",
-                    !isCollaborator && !isAdmin ? "" : "hidden"
+                    !isCollaborator && !isAdmin && !isAdminCollab ? "" : "hidden"
                   )}
                 />
               ) : (
                 <div
                   className={cn(
                     "pt-4 pb-1",
-                    !isCollaborator && !isAdmin
+                    !isCollaborator && !isAdmin && !isAdminCollab
                       ? "mt-2 border-t border-gray-200 dark:border-white/[0.04]"
                       : ""
                   )}

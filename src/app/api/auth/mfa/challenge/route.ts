@@ -84,9 +84,11 @@ export async function POST(req: Request) {
     },
   });
 
+  const isAdminRole =
+    user.role === "ADMIN" || user.role === "ADMIN_COLLABORATOR";
   await logAudit({
     userId: user.id,
-    action: user.role === "ADMIN" ? "admin_login" : "producer_login",
+    action: isAdminRole ? "admin_login" : "producer_login",
     details: { mfa: true, role: user.role },
     ...meta,
   });
