@@ -3,10 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { createAdminClient } from "@/lib/supabase-admin";
 import { getCurrentUser } from "@/lib/auth";
 
-export async function POST(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function POST(request: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   try {
     const invite = await prisma.collaborator.findUnique({
       where: { id: params.id },

@@ -5,10 +5,11 @@ import type { SubscriptionStatus } from "@prisma/client";
 import { logAudit, getRequestMeta } from "@/lib/audit";
 
 interface Ctx {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
-export async function GET(_req: Request, { params }: Ctx) {
+export async function GET(_req: Request, props: Ctx) {
+  const params = await props.params;
   try {
     await requireAdmin();
 
@@ -54,7 +55,8 @@ const ALLOWED_TRANSITIONS: Record<Action, SubscriptionStatus[]> = {
   extend: ["ACTIVE", "PAST_DUE"],
 };
 
-export async function PATCH(request: Request, { params }: Ctx) {
+export async function PATCH(request: Request, props: Ctx) {
+  const params = await props.params;
   try {
     const admin = await requireAdmin();
 

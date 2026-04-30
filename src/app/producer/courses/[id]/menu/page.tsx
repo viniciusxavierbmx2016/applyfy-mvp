@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, use } from "react";
 import Link from "next/link";
 import {
   DndContext,
@@ -33,7 +33,8 @@ interface MenuItem {
   enabled: boolean;
 }
 
-export default function CourseMenuPage({ params }: { params: { id: string } }) {
+export default function CourseMenuPage(props: { params: Promise<{ id: string }> }) {
+  const params = use(props.params);
   const [items, setItems] = useState<MenuItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);

@@ -3,10 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { hasWorkspaceAccess } from "@/lib/workspace-access";
 
-export async function GET(
-  _request: Request,
-  { params }: { params: { slug: string } }
-) {
+export async function GET(_request: Request, props: { params: Promise<{ slug: string }> }) {
+  const params = await props.params;
   try {
     const user = await getCurrentUser();
     if (!user) {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, use } from "react";
 import { Avatar } from "@/components/ui/avatar";
 import { formatRelativeTime } from "@/lib/utils";
 import { useConfirm } from "@/hooks/use-confirm";
@@ -64,11 +64,12 @@ function StatusBadge({ status }: { status?: string }) {
   return null;
 }
 
-export default function CourseCommentsPage({
-  params,
-}: {
-  params: { id: string };
-}) {
+export default function CourseCommentsPage(
+  props: {
+    params: Promise<{ id: string }>;
+  }
+) {
+  const params = use(props.params);
   const [comments, setComments] = useState<CommentItem[]>([]);
   const [lessons, setLessons] = useState<LessonOption[]>([]);
   const [lessonFilter, setLessonFilter] = useState("");

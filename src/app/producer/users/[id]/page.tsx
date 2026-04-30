@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, use } from "react";
 import Link from "next/link";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -74,11 +74,12 @@ const TABS: { key: Tab; label: string }[] = [
   { key: "engagement", label: "Engajamento" },
 ];
 
-export default function StudentDetailPage({
-  params,
-}: {
-  params: { id: string };
-}) {
+export default function StudentDetailPage(
+  props: {
+    params: Promise<{ id: string }>;
+  }
+) {
+  const params = use(props.params);
   const [data, setData] = useState<DetailResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<Tab>("info");

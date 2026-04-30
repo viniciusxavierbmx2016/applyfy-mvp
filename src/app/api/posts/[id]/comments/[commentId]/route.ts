@@ -5,8 +5,9 @@ import { collaboratorCanActOnCourse } from "@/lib/collaborator";
 
 export async function DELETE(
   _request: Request,
-  { params }: { params: { id: string; commentId: string } }
+  props: { params: Promise<{ id: string; commentId: string }> }
 ) {
+  const params = await props.params;
   try {
     const user = await getCurrentUser();
     if (!user) {

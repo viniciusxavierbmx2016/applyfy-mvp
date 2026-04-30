@@ -20,7 +20,7 @@ export function useCountUp(end: number, options?: CountUpOptions): string {
   } = options || {};
 
   const [current, setCurrent] = useState(0);
-  const frameRef = useRef<number>();
+  const frameRef = useRef<number | undefined>(undefined);
   const prevEnd = useRef<number | null>(null);
 
   useEffect(() => {

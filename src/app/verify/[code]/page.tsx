@@ -8,10 +8,11 @@ export const metadata: Metadata = {
 };
 
 interface PageProps {
-  params: { code: string };
+  params: Promise<{ code: string }>;
 }
 
-export default async function VerifyPage({ params }: PageProps) {
+export default async function VerifyPage(props: PageProps) {
+  const params = await props.params;
   const code = params.code.trim().toUpperCase();
 
   const cert = await prisma.certificate.findUnique({

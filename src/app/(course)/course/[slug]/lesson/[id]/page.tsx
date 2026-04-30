@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, use } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import dynamic from "next/dynamic";
@@ -58,11 +58,12 @@ interface ViewData {
   next: { id: string; title: string } | null;
 }
 
-export default function LessonPage({
-  params,
-}: {
-  params: { slug: string; id: string };
-}) {
+export default function LessonPage(
+  props: {
+    params: Promise<{ slug: string; id: string }>;
+  }
+) {
+  const params = use(props.params);
   const router = useRouter();
   const { setUser, user } = useUserStore();
   const [data, setData] = useState<ViewData | null>(null);

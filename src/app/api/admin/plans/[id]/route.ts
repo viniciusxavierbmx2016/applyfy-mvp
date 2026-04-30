@@ -3,10 +3,11 @@ import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
 
 interface Ctx {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
-export async function GET(_req: Request, { params }: Ctx) {
+export async function GET(_req: Request, props: Ctx) {
+  const params = await props.params;
   try {
     await requireAdmin();
 
@@ -34,7 +35,8 @@ export async function GET(_req: Request, { params }: Ctx) {
   }
 }
 
-export async function PATCH(request: Request, { params }: Ctx) {
+export async function PATCH(request: Request, props: Ctx) {
+  const params = await props.params;
   try {
     await requireAdmin();
 
@@ -66,7 +68,8 @@ export async function PATCH(request: Request, { params }: Ctx) {
   }
 }
 
-export async function DELETE(_req: Request, { params }: Ctx) {
+export async function DELETE(_req: Request, props: Ctx) {
+  const params = await props.params;
   try {
     await requireAdmin();
 

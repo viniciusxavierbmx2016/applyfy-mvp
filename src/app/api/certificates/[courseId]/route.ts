@@ -6,10 +6,8 @@ import {
   generateCertificateCode,
 } from "@/lib/certificate-pdf";
 
-export async function GET(
-  request: Request,
-  { params }: { params: { courseId: string } }
-) {
+export async function GET(request: Request, props: { params: Promise<{ courseId: string }> }) {
+  const params = await props.params;
   try {
     const user = await getCurrentUser();
     if (!user) {

@@ -1,10 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-export async function GET(
-  _request: Request,
-  { params }: { params: { code: string } }
-) {
+export async function GET(_request: Request, props: { params: Promise<{ code: string }> }) {
+  const params = await props.params;
   try {
     const code = params.code.trim().toUpperCase();
     if (!code) {

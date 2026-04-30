@@ -4,8 +4,9 @@ import { getCurrentUser } from "@/lib/auth";
 
 export async function DELETE(
   _request: Request,
-  { params }: { params: { id: string; messageId: string } }
+  props: { params: Promise<{ id: string; messageId: string }> }
 ) {
+  const params = await props.params;
   try {
     const user = await getCurrentUser();
     if (!user) {

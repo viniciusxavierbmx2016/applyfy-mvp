@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, use } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -115,11 +115,12 @@ const STATUS_LABELS: Record<string, string> = {
   CANCELLED: "Cancelada",
 };
 
-export default function ProducerDetailPage({
-  params,
-}: {
-  params: { id: string };
-}) {
+export default function ProducerDetailPage(
+  props: {
+    params: Promise<{ id: string }>;
+  }
+) {
+  const params = use(props.params);
   const p = params;
   const router = useRouter();
   const [data, setData] = useState<DetailResponse | null>(null);

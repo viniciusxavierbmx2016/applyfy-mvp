@@ -17,10 +17,8 @@ async function loadScoped(staffId: string, staffRole: string, id: string) {
   return ok ? c : null;
 }
 
-export async function PATCH(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function PATCH(request: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   try {
     const staff = await requireStaff();
     const c = await loadScoped(staff.id, staff.role, params.id);
@@ -73,10 +71,8 @@ export async function PATCH(
   }
 }
 
-export async function DELETE(
-  _request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(_request: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   try {
     const staff = await requireStaff();
     const c = await loadScoped(staff.id, staff.role, params.id);

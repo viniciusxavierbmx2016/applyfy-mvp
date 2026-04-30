@@ -4,10 +4,8 @@ import { requireStaff } from "@/lib/auth";
 import { resolveStaffWorkspace } from "@/lib/workspace";
 import { executeAction } from "@/lib/automation-engine";
 
-export async function POST(
-  _request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function POST(_request: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   try {
     const staff = await requireStaff();
     const { workspace } = await resolveStaffWorkspace(staff);

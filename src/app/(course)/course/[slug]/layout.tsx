@@ -10,13 +10,18 @@ const getCourseForceTheme = cache(async (slug: string) => {
   return row?.workspace?.forceTheme ?? null;
 });
 
-export default async function CourseSlugLayout({
-  children,
-  params,
-}: {
-  children: React.ReactNode;
-  params: { slug: string };
-}) {
+export default async function CourseSlugLayout(
+  props: {
+    children: React.ReactNode;
+    params: Promise<{ slug: string }>;
+  }
+) {
+  const params = await props.params;
+
+  const {
+    children
+  } = props;
+
   const forceTheme = await getCourseForceTheme(params.slug);
   return (
     <WorkspaceThemeLock forceTheme={forceTheme}>{children}</WorkspaceThemeLock>

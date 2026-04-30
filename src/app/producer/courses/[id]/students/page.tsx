@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, use } from "react";
 import { useConfirm } from "@/hooks/use-confirm";
 
 interface TagInfo {
@@ -126,11 +126,12 @@ function formatRelative(iso: string | null) {
   return `${Math.floor(days / 365)} anos atrás`;
 }
 
-export default function CourseStudentsPage({
-  params,
-}: {
-  params: { id: string };
-}) {
+export default function CourseStudentsPage(
+  props: {
+    params: Promise<{ id: string }>;
+  }
+) {
+  const params = use(props.params);
   const [data, setData] = useState<PageData | null>(null);
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState("");
@@ -269,7 +270,6 @@ export default function CourseStudentsPage({
           {exporting ? "Exportando..." : "Exportar CSV"}
         </button>
       </div>
-
       <div className="mb-4">
         <input
           type="search"
@@ -282,7 +282,6 @@ export default function CourseStudentsPage({
           className="w-full sm:max-w-sm px-3 py-2.5 bg-white dark:bg-gray-900/50 border border-gray-200 dark:border-white/10 rounded-lg text-gray-900 dark:text-white text-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-blue-500/50 transition-colors"
         />
       </div>
-
       {loading && !data ? (
         <div className="flex items-center justify-center py-16">
           <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
@@ -329,11 +328,11 @@ export default function CourseStudentsPage({
                           <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden flex items-center justify-center flex-shrink-0">
                             {s.avatarUrl ? (
                               // eslint-disable-next-line @next/next/no-img-element
-                              <img
+                              (<img
                                 src={s.avatarUrl}
                                 alt={s.name}
                                 className="w-full h-full object-cover"
-                              />
+                              />)
                             ) : (
                               <span className="text-xs font-bold text-gray-700 dark:text-gray-300">
                                 {s.name.charAt(0).toUpperCase()}
@@ -462,11 +461,11 @@ export default function CourseStudentsPage({
                     <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden flex items-center justify-center flex-shrink-0">
                       {s.avatarUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element
-                        <img
+                        (<img
                           src={s.avatarUrl}
                           alt={s.name}
                           className="w-full h-full object-cover"
-                        />
+                        />)
                       ) : (
                         <span className="text-sm font-bold text-gray-700 dark:text-gray-300">
                           {s.name.charAt(0).toUpperCase()}
@@ -596,7 +595,6 @@ export default function CourseStudentsPage({
           )}
         </>
       )}
-
       {modalOpen && (
         <SendAccessModal
           courseId={params.id}
@@ -608,14 +606,12 @@ export default function CourseStudentsPage({
           }}
         />
       )}
-
       {accessResult && (
         <AccessSuccessModal
           access={accessResult}
           onClose={() => setAccessResult(null)}
         />
       )}
-
       {editTarget && (
         <EditAccessModal
           courseId={params.id}

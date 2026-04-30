@@ -4,10 +4,8 @@ import { requireAdmin } from "@/lib/auth";
 import crypto from "crypto";
 import { logAudit, getRequestMeta } from "@/lib/audit";
 
-export async function POST(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function POST(request: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   try {
     const admin = await requireAdmin();
 

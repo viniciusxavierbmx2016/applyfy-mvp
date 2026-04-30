@@ -6,10 +6,8 @@ import { welcomeStudent } from "@/lib/email-templates";
 import { rateLimit } from "@/lib/rate-limit";
 import { registerSchema, validateBody } from "@/lib/validations";
 
-export async function POST(
-  request: Request,
-  { params }: { params: { slug: string } }
-) {
+export async function POST(request: Request, props: { params: Promise<{ slug: string }> }) {
+  const params = await props.params;
   const limited = rateLimit(request);
   if (limited) return limited;
 

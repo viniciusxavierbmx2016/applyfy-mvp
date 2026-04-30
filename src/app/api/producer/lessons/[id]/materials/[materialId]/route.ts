@@ -5,8 +5,9 @@ import { createAdminClient, MATERIALS_BUCKET } from "@/lib/supabase-admin";
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string; materialId: string } }
+  props: { params: Promise<{ id: string; materialId: string }> }
 ) {
+  const params = await props.params;
   try {
     const staff = await requireStaff();
     if (!(await canEditLesson(staff, params.id))) {
@@ -37,8 +38,9 @@ export async function PATCH(
 
 export async function DELETE(
   _request: Request,
-  { params }: { params: { id: string; materialId: string } }
+  props: { params: Promise<{ id: string; materialId: string }> }
 ) {
+  const params = await props.params;
   try {
     const staff = await requireStaff();
     if (!(await canEditLesson(staff, params.id))) {

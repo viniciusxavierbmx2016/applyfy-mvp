@@ -14,10 +14,8 @@ async function getOwnedTag(tagId: string) {
   return { tag, workspace };
 }
 
-export async function GET(
-  _request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function GET(_request: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   try {
     const { tag } = await getOwnedTag(params.id);
     const userTags = await prisma.userTag.findMany({
@@ -38,10 +36,8 @@ export async function GET(
   }
 }
 
-export async function PUT(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function PUT(request: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   try {
     const { tag, workspace } = await getOwnedTag(params.id);
     const body = await request.json();
@@ -71,10 +67,8 @@ export async function PUT(
   }
 }
 
-export async function DELETE(
-  _request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(_request: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   try {
     const { tag } = await getOwnedTag(params.id);
     await prisma.tag.delete({ where: { id: tag.id } });
