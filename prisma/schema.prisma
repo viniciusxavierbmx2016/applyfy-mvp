@@ -59,6 +59,8 @@ model User {
   impersonateAdmins  ImpersonateToken[] @relation("impersonateAdmin")
   accessLogs         AccessLog[]
   auditLogs          AuditLog[]         @relation("auditLogs")
+  adminCollaborator  AdminCollaborator? @relation("AdminCollabUser")
+  adminCollabsInvited AdminCollaborator[] @relation("AdminCollabInviter")
 
   @@index([workspaceId])
 }
@@ -109,6 +111,7 @@ enum Role {
   PRODUCER
   ADMIN
   COLLABORATOR
+  ADMIN_COLLABORATOR
 }
 
 model Collaborator {
@@ -993,4 +996,30 @@ model AuditLog {
 
   @@index([userId, createdAt])
   @@index([action, createdAt])
+}
+
+// Admin-side collaborator (platform helper, not workspace collaborator).
+// Distinct from `Collaborator` which is producer-scoped.
+model AdminCollaborator {
+  id          String                  @id @default(uuid())
+  email       String                  @unique
+  name        String?
+  userId      String?                 @unique
+  permissions String[]                // values from src/lib/admin-permissions.ts
+  status      AdminCollaboratorStatus @default(PENDING)
+  invitedById String
+  invitedAt   DateTime                @default(now())
+  acceptedAt  DateTime?
+
+  user      User? @relation("AdminCollabUser", fields: [userId], references: [id], onDelete: SetNull)
+  invitedBy User  @relation("AdminCollabInviter", fields: [invitedById], references: [id])
+
+  @@index([status])
+  @@index([invitedById])
+}
+
+enum AdminCollaboratorStatus {
+  PENDING
+  ACCEPTED
+  REVOKED
 }
