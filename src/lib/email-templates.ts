@@ -188,6 +188,39 @@ export function collaboratorInvite(
   };
 }
 
+export function adminCollaboratorInvite(
+  name: string,
+  inviterName: string,
+  inviteUrl: string,
+  permissions: string[]
+) {
+  const permLabels: Record<string, string> = {
+    SUPPORT: "Suporte",
+    MANAGE_PRODUCERS: "Gerenciar produtores",
+    MANAGE_PLANS: "Gerenciar planos",
+    MANAGE_BILLING: "Gerenciar assinaturas",
+    VIEW_REPORTS: "Ver relatórios",
+    VIEW_AUDIT: "Ver logs de auditoria",
+    FULL_ACCESS: "Acesso total",
+  };
+  const permList = permissions
+    .map((p) => `<li style="margin:0 0 6px;font-size:14px;color:#d1d5db;">${permLabels[p] || p}</li>`)
+    .join("");
+
+  const html = baseTemplate(`
+    ${heading(`Convite para colaborar no Members Club`)}
+    ${paragraph(`Olá, ${name}! ${inviterName} convidou você para ajudar na administração da plataforma Members Club.`)}
+    ${divider()}
+    ${paragraph("<strong style='color:#ffffff;'>Suas permissões:</strong>")}
+    <ul style="margin:0 0 14px;padding-left:20px;">${permList}</ul>
+    ${ctaButton("Aceitar convite", inviteUrl, "#3b82f6")}
+  `);
+  return {
+    subject: "Convite de administrador - Members Club",
+    htmlContent: html,
+  };
+}
+
 export function subscriptionActivated(
   name: string,
   planName: string,

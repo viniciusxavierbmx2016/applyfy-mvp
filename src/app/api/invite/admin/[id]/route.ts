@@ -1,0 +1,41 @@
+import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+import { rateLimit } from "@/lib/rate-limit";
+
+export async function GET(
+  request: Request,
+  props: { params: Promise<{ id: string }> }
+) {
+  const params = await props.params;
+  const limited = rateLimit(request);
+  if (limited) return limited;
+
+  const { searchParams } = new URL(request.url);
+  const email = searchParams.get("email")?.toLowerCase().trim();
+  if (!email) {
+    return NextResponse.json(
+      { error: "Convite não encontrado" },
+      { status: 404 }
+    );
+  }
+
+  const c = await prisma.adminCollaborator.findUnique({
+    where: { id: params.id },
+    include: { invitedBy: { select: { name: true } } },
+  });
+  if (!c || c.email.toLowerCase() !== email) {
+    return NextResponse.json(
+      { error: "Convite não encontrado" },
+      { status: 404 }
+    );
+  }
+  return NextResponse.json({
+    invite: {
+      id: c.id,
+      name: c.name,
+      status: c.status,
+      permissions: c.permissions,
+      invitedByName: c.invitedBy?.name ?? null,
+    },
+  });
+}
