@@ -20,6 +20,7 @@ type NavLink = {
   icon: React.ReactNode;
   requires?: string | string[];
   tourId?: string;
+  adminOnly?: boolean;
 };
 
 const COLLAPSED_KEY = "admin_sidebar_collapsed";
@@ -164,6 +165,7 @@ const adminLinks: NavLink[] = [
   { href: "/admin/plans", label: "Planos", icon: iconPlans, requires: "MANAGE_PLANS" },
   { href: "/admin/subscriptions", label: "Assinaturas", icon: iconSubscriptions, requires: "MANAGE_BILLING" },
   { href: "/admin/integrations", label: "Integrações", icon: iconIntegrations, requires: "FULL_ACCESS" },
+  { href: "/admin/collaborators", label: "Colaboradores", icon: iconUsers, adminOnly: true },
   { href: "/admin/settings", label: "Configurações", icon: iconSettings, requires: "FULL_ACCESS" },
 ];
 
@@ -208,6 +210,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
   const filteredAdminLinks = isAdmin
     ? adminLinks
     : adminLinks.filter((l) => {
+        if (l.adminOnly) return false;
         if (!l.requires) return true;
         const req = Array.isArray(l.requires) ? l.requires : [l.requires];
         return req.some((p) => adminPermissions.includes(p));

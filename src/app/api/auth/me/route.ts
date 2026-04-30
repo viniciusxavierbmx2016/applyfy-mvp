@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { createAdminClient, AVATAR_BUCKET } from "@/lib/supabase-admin";
-import { getAdminPermissions } from "@/lib/admin-permissions";
+import { getAdminPermissions } from "@/lib/admin-permissions-server";
 
 const MAX_BYTES = 2 * 1024 * 1024;
 const ALLOWED = new Set(["image/jpeg", "image/jpg", "image/png", "image/webp"]);
