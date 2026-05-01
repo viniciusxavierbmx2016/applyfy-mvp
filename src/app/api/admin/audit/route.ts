@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/auth";
+import { requireAdminPerm } from "@/lib/admin-permissions-server";
 
 const PAGE_SIZE = 50;
 
 export async function GET(req: Request) {
   try {
-    await requireAdmin();
+    await requireAdminPerm("VIEW_AUDIT");
 
     const { searchParams } = new URL(req.url);
     const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10) || 1);

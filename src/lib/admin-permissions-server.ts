@@ -56,3 +56,18 @@ export async function requireAdminPerm(perm: AdminPerm): Promise<User> {
   }
   return user;
 }
+
+// Allow any ADMIN or any ACCEPTED ADMIN_COLLABORATOR (regardless of which
+// specific permissions they have). Use this for routes that don't map cleanly
+// to a single permission but should be visible to anyone in the admin team
+// (e.g., /api/admin/dashboard).
+export async function requireAdminOrCollab(): Promise<User> {
+  const user = await getCurrentUser();
+  if (!user) throw new Error("Não autorizado");
+  if (user.role === "ADMIN") return user;
+  if (user.role !== "ADMIN_COLLABORATOR") throw new Error("Sem permissão");
+  // Empty Set means PENDING/REVOKED collaborator — block.
+  const perms = await getAdminPermissions(user.id, user.role);
+  if (perms.size === 0) throw new Error("Sem permissão");
+  return user;
+}

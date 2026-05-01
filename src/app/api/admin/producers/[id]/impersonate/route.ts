@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/auth";
+import { requireAdminPerm } from "@/lib/admin-permissions-server";
 import crypto from "crypto";
 import { logAudit, getRequestMeta } from "@/lib/audit";
 
 export async function POST(request: Request, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
   try {
-    const admin = await requireAdmin();
+    const admin = await requireAdminPerm("MANAGE_PRODUCERS");
 
     const producer = await prisma.user.findUnique({
       where: { id: params.id },

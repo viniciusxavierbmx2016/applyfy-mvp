@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/auth";
+import { requireAdminPerm } from "@/lib/admin-permissions-server";
 
 export async function GET() {
   try {
-    await requireAdmin();
+    await requireAdminPerm("MANAGE_PLANS");
 
     const plans = await prisma.plan.findMany({
       orderBy: { createdAt: "desc" },
@@ -27,7 +27,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    await requireAdmin();
+    await requireAdminPerm("MANAGE_PLANS");
 
     const body = await request.json();
     const { name, slug, price, currency, interval, maxWorkspaces, maxCoursesPerWorkspace, features } = body;

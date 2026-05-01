@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/auth";
+import { requireAdminPerm } from "@/lib/admin-permissions-server";
 import { logAudit, getRequestMeta } from "@/lib/audit";
 import { decrypt } from "@/lib/encryption";
 
 export async function GET(_request: Request, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
   try {
-    await requireAdmin();
+    await requireAdminPerm("MANAGE_PRODUCERS");
     const producer = await prisma.user.findUnique({
       where: { id: params.id },
       select: {
@@ -213,7 +213,7 @@ export async function GET(_request: Request, props: { params: Promise<{ id: stri
 export async function PATCH(request: Request, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
   try {
-    const admin = await requireAdmin();
+    const admin = await requireAdminPerm("MANAGE_PRODUCERS");
     const body = await request.json();
     const action = body.action as "suspend" | "activate";
 

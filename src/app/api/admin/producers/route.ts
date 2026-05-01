@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/auth";
+import { requireAdminPerm } from "@/lib/admin-permissions-server";
 
 export async function GET(request: Request) {
   try {
-    await requireAdmin();
+    await requireAdminPerm("MANAGE_PRODUCERS");
     const { searchParams } = new URL(request.url);
     const q = (searchParams.get("q") || "").trim();
 

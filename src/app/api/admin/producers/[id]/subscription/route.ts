@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/auth";
+import { requireAdminPerm } from "@/lib/admin-permissions-server";
 
 export async function GET(_request: Request, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
   try {
-    await requireAdmin();
+    await requireAdminPerm("MANAGE_PRODUCERS");
     const producer = await prisma.user.findUnique({
       where: { id: params.id },
       select: { id: true, role: true, name: true, email: true, avatarUrl: true },
@@ -54,7 +54,7 @@ export async function GET(_request: Request, props: { params: Promise<{ id: stri
 export async function POST(request: Request, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
   try {
-    await requireAdmin();
+    await requireAdminPerm("MANAGE_PRODUCERS");
     const producer = await prisma.user.findUnique({
       where: { id: params.id },
       select: { id: true, role: true },
