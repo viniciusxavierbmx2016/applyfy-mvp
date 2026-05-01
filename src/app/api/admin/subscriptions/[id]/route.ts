@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/auth";
+import { requireAdminPerm } from "@/lib/admin-permissions-server";
 import type { SubscriptionStatus } from "@prisma/client";
 import { logAudit, getRequestMeta } from "@/lib/audit";
 
@@ -11,7 +11,7 @@ interface Ctx {
 export async function GET(_req: Request, props: Ctx) {
   const params = await props.params;
   try {
-    await requireAdmin();
+    await requireAdminPerm("MANAGE_BILLING");
 
     const subscription = await prisma.subscription.findUnique({
       where: { id: params.id },
@@ -58,7 +58,7 @@ const ALLOWED_TRANSITIONS: Record<Action, SubscriptionStatus[]> = {
 export async function PATCH(request: Request, props: Ctx) {
   const params = await props.params;
   try {
-    const admin = await requireAdmin();
+    const admin = await requireAdminPerm("MANAGE_BILLING");
 
     const sub = await prisma.subscription.findUnique({ where: { id: params.id } });
     if (!sub) {

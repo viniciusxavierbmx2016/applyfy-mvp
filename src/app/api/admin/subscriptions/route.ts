@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/auth";
+import { requireAdminPerm } from "@/lib/admin-permissions-server";
 import type { SubscriptionStatus } from "@prisma/client";
 
 const VALID_STATUSES: SubscriptionStatus[] = ["PENDING", "ACTIVE", "PAST_DUE", "SUSPENDED", "CANCELLED"];
 
 export async function GET(request: Request) {
   try {
-    await requireAdmin();
+    await requireAdminPerm("MANAGE_BILLING");
 
     const { searchParams } = new URL(request.url);
     const status = searchParams.get("status") as SubscriptionStatus | null;

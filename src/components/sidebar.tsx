@@ -20,6 +20,7 @@ type NavLink = {
   icon: React.ReactNode;
   requires?: string | string[];
   tourId?: string;
+  adminOnly?: boolean;
 };
 
 const COLLAPSED_KEY = "admin_sidebar_collapsed";
@@ -108,6 +109,11 @@ const iconShield = (
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3l8 4v5c0 5-3.5 8.5-8 9-4.5-.5-8-4-8-9V7l8-4z" />
   </svg>
 );
+const iconSupport = (
+  <svg className={iconCls} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 5.636a9 9 0 010 12.728m0 0l-2.829-2.829m2.829 2.829L21 21M15.536 8.464a5 5 0 010 7.072m0 0l-2.829-2.829m-4.243 2.829a4.978 4.978 0 01-1.414-2.83m-1.414 5.658a9 9 0 01-2.167-9.238m7.824 2.167a1 1 0 111.414 1.414m-1.414-1.414L3 3m8.293 8.293l1.414 1.414" />
+  </svg>
+);
 
 const studentLinks: NavLink[] = [
   { href: "/", label: "Vitrine", icon: iconHome },
@@ -154,15 +160,19 @@ const collaboratorLinks: NavLink[] = [
   },
 ];
 
+// `requires` lists the admin permission needed for ADMIN_COLLABORATOR to see
+// the link. Plain ADMIN bypasses this filter (gets all links).
 const adminLinks: NavLink[] = [
   { href: "/admin", label: "Dashboard", icon: iconDashboard },
-  { href: "/admin/producers", label: "Produtores", icon: iconBriefcase },
-  { href: "/admin/reports", label: "Relatórios", icon: iconAnalytics },
-  { href: "/admin/audit", label: "Logs", icon: iconShield },
-  { href: "/admin/plans", label: "Planos", icon: iconPlans },
-  { href: "/admin/subscriptions", label: "Assinaturas", icon: iconSubscriptions },
-  { href: "/admin/integrations", label: "Integrações", icon: iconIntegrations },
-  { href: "/admin/settings", label: "Configurações", icon: iconSettings },
+  { href: "/admin/producers", label: "Produtores", icon: iconBriefcase, requires: "MANAGE_PRODUCERS" },
+  { href: "/admin/support", label: "Suporte", icon: iconSupport, requires: "SUPPORT" },
+  { href: "/admin/reports", label: "Relatórios", icon: iconAnalytics, requires: "VIEW_REPORTS" },
+  { href: "/admin/audit", label: "Logs", icon: iconShield, requires: "VIEW_AUDIT" },
+  { href: "/admin/plans", label: "Planos", icon: iconPlans, requires: "MANAGE_PLANS" },
+  { href: "/admin/subscriptions", label: "Assinaturas", icon: iconSubscriptions, requires: "MANAGE_BILLING" },
+  { href: "/admin/integrations", label: "Integrações", icon: iconIntegrations, requires: "FULL_ACCESS" },
+  { href: "/admin/collaborators", label: "Colaboradores", icon: iconUsers, adminOnly: true },
+  { href: "/admin/settings", label: "Configurações", icon: iconSettings, requires: "FULL_ACCESS" },
 ];
 
 const tooltipCls =
@@ -170,12 +180,39 @@ const tooltipCls =
 
 export function Sidebar({ open, onClose }: SidebarProps) {
   const pathname = usePathname();
-  const { user, collaborator } = useUserStore();
+  const { user, collaborator, adminPermissions } = useUserStore();
   const isAdmin = user?.role === "ADMIN";
+  const isAdminCollab = user?.role === "ADMIN_COLLABORATOR";
   const isProducer = user?.role === "PRODUCER";
   const isCollaborator = user?.role === "COLLABORATOR";
   const activeWorkspace = useActiveWorkspace();
   const showVitrine = (isProducer || isCollaborator) && !!activeWorkspace;
+  const [supportUnread, setSupportUnread] = useState(0);
+
+  const canSeeSupport =
+    isAdmin ||
+    (isAdminCollab &&
+      (adminPermissions.includes("SUPPORT") ||
+        adminPermissions.includes("FULL_ACCESS")));
+
+  useEffect(() => {
+    if (!canSeeSupport) return;
+    let cancelled = false;
+    async function fetchCount() {
+      try {
+        const r = await fetch("/api/support/unread-count");
+        if (!r.ok) return;
+        const d = await r.json();
+        if (!cancelled) setSupportUnread(d.count ?? 0);
+      } catch {}
+    }
+    fetchCount();
+    const i = setInterval(fetchCount, 60000);
+    return () => {
+      cancelled = true;
+      clearInterval(i);
+    };
+  }, [canSeeSupport]);
 
   const [collapsed, setCollapsed] = useState(false);
   useEffect(() => {
@@ -202,8 +239,17 @@ export function Sidebar({ open, onClose }: SidebarProps) {
     return collabPerms.includes(l.requires);
   });
 
-  const staffLinks = isAdmin
+  const filteredAdminLinks = isAdmin
     ? adminLinks
+    : adminLinks.filter((l) => {
+        if (l.adminOnly) return false;
+        if (!l.requires) return true;
+        const req = Array.isArray(l.requires) ? l.requires : [l.requires];
+        return req.some((p) => adminPermissions.includes(p));
+      });
+
+  const staffLinks = isAdmin || isAdminCollab
+    ? filteredAdminLinks
     : isProducer
       ? producerLinks
       : isCollaborator
@@ -211,11 +257,13 @@ export function Sidebar({ open, onClose }: SidebarProps) {
         : null;
   const staffLabel = isAdmin
     ? "Admin"
-    : isProducer
-      ? "Produtor"
-      : isCollaborator
-        ? "Colaborador"
-        : null;
+    : isAdminCollab
+      ? "Admin"
+      : isProducer
+        ? "Produtor"
+        : isCollaborator
+          ? "Colaborador"
+          : null;
 
   const isActive = (href: string) =>
     pathname === href ||
@@ -389,7 +437,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
             </a>
           )}
 
-          {!isCollaborator && !isAdmin && !isProducer && (
+          {!isCollaborator && !isAdmin && !isAdminCollab && !isProducer && (
             <>
               <p
                 className={cn(
@@ -426,14 +474,14 @@ export function Sidebar({ open, onClose }: SidebarProps) {
                 <div
                   className={cn(
                     "my-2 border-t border-gray-200 dark:border-white/[0.04]",
-                    !isCollaborator && !isAdmin ? "" : "hidden"
+                    !isCollaborator && !isAdmin && !isAdminCollab ? "" : "hidden"
                   )}
                 />
               ) : (
                 <div
                   className={cn(
                     "pt-4 pb-1",
-                    !isCollaborator && !isAdmin
+                    !isCollaborator && !isAdmin && !isAdminCollab
                       ? "mt-2 border-t border-gray-200 dark:border-white/[0.04]"
                       : ""
                   )}
@@ -451,6 +499,8 @@ export function Sidebar({ open, onClose }: SidebarProps) {
 
               {staffLinks.map((link) => {
                 const active = isActive(link.href);
+                const showSupportBadge =
+                  link.href === "/admin/support" && supportUnread > 0;
                 return (
                   <Link
                     key={link.href}
@@ -461,9 +511,14 @@ export function Sidebar({ open, onClose }: SidebarProps) {
                     {...(link.tourId ? { "data-tour": link.tourId } : {})}
                   >
                     <span className={iconWrapCls(active)}>{link.icon}</span>
-                    <span className={cn("truncate", collapsed && "lg:hidden")}>
+                    <span className={cn("truncate flex-1", collapsed && "lg:hidden")}>
                       {link.label}
                     </span>
+                    {showSupportBadge && (
+                      <span className={cn("ml-auto min-w-[20px] h-5 px-1.5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center", collapsed && "lg:hidden")}>
+                        {supportUnread > 9 ? "9+" : supportUnread}
+                      </span>
+                    )}
                     {collapsed && <span className={tooltipCls}>{link.label}</span>}
                   </Link>
                 );

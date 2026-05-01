@@ -17,3 +17,4 @@ export function createAdminClient() {
 export const STORAGE_BUCKET = "thumbnails";
 export const AVATAR_BUCKET = "avatars";
 export const MATERIALS_BUCKET = "materials";
+export const TICKET_ATTACHMENTS_BUCKET = "ticket-attachments";

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { createAdminClient, AVATAR_BUCKET } from "@/lib/supabase-admin";
+import { getAdminPermissions } from "@/lib/admin-permissions-server";
 
 const MAX_BYTES = 2 * 1024 * 1024;
 const ALLOWED = new Set(["image/jpeg", "image/jpg", "image/png", "image/webp"]);
@@ -61,11 +62,15 @@ export async function GET(req: NextRequest) {
         : Promise.resolve(null),
     ]);
     if (collabRow) collaborator = collabRow;
+    const adminPermissions =
+      user.role === "ADMIN" || user.role === "ADMIN_COLLABORATOR"
+        ? Array.from(await getAdminPermissions(user.id, user.role))
+        : [];
     const t2 = Date.now();
     console.log(
       `[API /api/auth/me] auth:${t1 - t0}ms query:${t2 - t1}ms total:${t2 - t0}ms`
     );
-    return NextResponse.json({ user, collaborator, workspace });
+    return NextResponse.json({ user, collaborator, workspace, adminPermissions });
   } catch (error) {
     console.error("Me error:", error);
     return NextResponse.json(

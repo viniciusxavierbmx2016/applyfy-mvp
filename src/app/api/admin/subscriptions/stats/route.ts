@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/auth";
+import { requireAdminPerm } from "@/lib/admin-permissions-server";
 
 export async function GET() {
   try {
-    await requireAdmin();
+    await requireAdminPerm("MANAGE_BILLING");
 
     const now = new Date();
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);

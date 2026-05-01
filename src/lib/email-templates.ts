@@ -188,6 +188,56 @@ export function collaboratorInvite(
   };
 }
 
+export function ticketReplyToProducer(
+  producerName: string,
+  ticketSubject: string,
+  ticketUrl: string
+) {
+  const html = baseTemplate(`
+    ${heading("Você tem uma resposta no suporte")}
+    ${paragraph(`Olá, ${producerName}! O time de suporte respondeu seu ticket <strong style="color:#ffffff;">${ticketSubject}</strong>.`)}
+    ${ctaButton("Ver resposta", ticketUrl, "#3b82f6")}
+    ${paragraph("Ou abra o chat de suporte direto na plataforma pelo ícone no canto inferior direito.")}
+  `);
+  return {
+    subject: `Resposta do suporte: ${ticketSubject}`,
+    htmlContent: html,
+  };
+}
+
+export function adminCollaboratorInvite(
+  name: string,
+  inviterName: string,
+  inviteUrl: string,
+  permissions: string[]
+) {
+  const permLabels: Record<string, string> = {
+    SUPPORT: "Suporte",
+    MANAGE_PRODUCERS: "Gerenciar produtores",
+    MANAGE_PLANS: "Gerenciar planos",
+    MANAGE_BILLING: "Gerenciar assinaturas",
+    VIEW_REPORTS: "Ver relatórios",
+    VIEW_AUDIT: "Ver logs de auditoria",
+    FULL_ACCESS: "Acesso total",
+  };
+  const permList = permissions
+    .map((p) => `<li style="margin:0 0 6px;font-size:14px;color:#d1d5db;">${permLabels[p] || p}</li>`)
+    .join("");
+
+  const html = baseTemplate(`
+    ${heading(`Convite para colaborar no Members Club`)}
+    ${paragraph(`Olá, ${name}! ${inviterName} convidou você para ajudar na administração da plataforma Members Club.`)}
+    ${divider()}
+    ${paragraph("<strong style='color:#ffffff;'>Suas permissões:</strong>")}
+    <ul style="margin:0 0 14px;padding-left:20px;">${permList}</ul>
+    ${ctaButton("Aceitar convite", inviteUrl, "#3b82f6")}
+  `);
+  return {
+    subject: "Convite de administrador - Members Club",
+    htmlContent: html,
+  };
+}
+
 export function subscriptionActivated(
   name: string,
   planName: string,

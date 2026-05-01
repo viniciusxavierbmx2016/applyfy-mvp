@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/auth";
+import { requireAdminPerm } from "@/lib/admin-permissions-server";
 import { createAdminClient, STORAGE_BUCKET } from "@/lib/supabase-admin";
 
 const ALLOWED_GATEWAYS = new Set(["applyfy"]);
@@ -20,7 +20,7 @@ function slugifyGateway(input: string) {
 
 export async function POST(request: Request) {
   try {
-    await requireAdmin();
+    await requireAdminPerm("FULL_ACCESS");
 
     if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
       return NextResponse.json(

@@ -1,8 +1,8 @@
-import { requireAdmin } from "@/lib/auth";
+import { requireAdminPerm } from "@/lib/admin-permissions-server";
 import { prisma } from "@/lib/prisma";
 
 export async function GET(req: Request) {
-  await requireAdmin();
+  await requireAdminPerm("VIEW_REPORTS");
 
   const { searchParams } = new URL(req.url);
   const startDate = searchParams.get("startDate");

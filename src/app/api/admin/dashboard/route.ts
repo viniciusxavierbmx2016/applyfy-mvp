@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/auth";
+import { requireAdminOrCollab } from "@/lib/admin-permissions-server";
 
 function parseDate(s: string | null): Date | null {
   if (!s) return null;
@@ -18,7 +18,7 @@ function isoDay(d: Date): string {
 
 export async function GET(req: NextRequest) {
   try {
-    await requireAdmin();
+    await requireAdminOrCollab();
 
     const sp = req.nextUrl.searchParams;
     const startDate = parseDate(sp.get("startDate"));

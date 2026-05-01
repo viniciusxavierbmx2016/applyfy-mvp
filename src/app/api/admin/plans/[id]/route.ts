@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/auth";
+import { requireAdminPerm } from "@/lib/admin-permissions-server";
 
 interface Ctx {
   params: Promise<{ id: string }>;
@@ -9,7 +9,7 @@ interface Ctx {
 export async function GET(_req: Request, props: Ctx) {
   const params = await props.params;
   try {
-    await requireAdmin();
+    await requireAdminPerm("MANAGE_PLANS");
 
     const plan = await prisma.plan.findUnique({
       where: { id: params.id },
@@ -38,7 +38,7 @@ export async function GET(_req: Request, props: Ctx) {
 export async function PATCH(request: Request, props: Ctx) {
   const params = await props.params;
   try {
-    await requireAdmin();
+    await requireAdminPerm("MANAGE_PLANS");
 
     const plan = await prisma.plan.findUnique({ where: { id: params.id } });
     if (!plan) {
@@ -71,7 +71,7 @@ export async function PATCH(request: Request, props: Ctx) {
 export async function DELETE(_req: Request, props: Ctx) {
   const params = await props.params;
   try {
-    await requireAdmin();
+    await requireAdminPerm("MANAGE_PLANS");
 
     const activeCount = await prisma.subscription.count({
       where: {

@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/auth";
+import { requireAdminPerm } from "@/lib/admin-permissions-server";
 
 export async function GET() {
   try {
-    await requireAdmin();
+    await requireAdminPerm("FULL_ACCESS");
     const requests = await prisma.integrationRequest.findMany({
       orderBy: [{ status: "asc" }, { createdAt: "desc" }],
     });

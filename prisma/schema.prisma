@@ -59,6 +59,11 @@ model User {
   impersonateAdmins  ImpersonateToken[] @relation("impersonateAdmin")
   accessLogs         AccessLog[]
   auditLogs          AuditLog[]         @relation("auditLogs")
+  adminCollaborator  AdminCollaborator? @relation("AdminCollabUser")
+  adminCollabsInvited AdminCollaborator[] @relation("AdminCollabInviter")
+  supportTickets     SupportTicket[]    @relation("ProducerTickets")
+  assignedTickets    SupportTicket[]    @relation("AssignedTickets")
+  ticketMessages     TicketMessage[]    @relation("TicketMessages")
 
   @@index([workspaceId])
 }
@@ -109,6 +114,7 @@ enum Role {
   PRODUCER
   ADMIN
   COLLABORATOR
+  ADMIN_COLLABORATOR
 }
 
 model Collaborator {
@@ -465,6 +471,8 @@ enum NotificationType {
   LEVEL_UP
   LIVE_SCHEDULED
   LIVE_STARTED
+  TICKET_NEW
+  TICKET_REPLY
 }
 
 model Certificate {
@@ -993,4 +1001,89 @@ model AuditLog {
 
   @@index([userId, createdAt])
   @@index([action, createdAt])
+}
+
+// Admin-side collaborator (platform helper, not workspace collaborator).
+// Distinct from `Collaborator` which is producer-scoped.
+model AdminCollaborator {
+  id          String                  @id @default(uuid())
+  email       String                  @unique
+  name        String?
+  userId      String?                 @unique
+  permissions String[]                // values from src/lib/admin-permissions.ts
+  status      AdminCollaboratorStatus @default(PENDING)
+  invitedById String
+  invitedAt   DateTime                @default(now())
+  acceptedAt  DateTime?
+
+  user      User? @relation("AdminCollabUser", fields: [userId], references: [id], onDelete: SetNull)
+  invitedBy User  @relation("AdminCollabInviter", fields: [invitedById], references: [id])
+
+  @@index([status])
+  @@index([invitedById])
+}
+
+enum AdminCollaboratorStatus {
+  PENDING
+  ACCEPTED
+  REVOKED
+}
+
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  WAITING_RESPONSE
+  RESOLVED
+  CLOSED
+}
+
+enum TicketPriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+model SupportTicket {
+  id                    String         @id @default(uuid())
+  subject               String
+  status                TicketStatus   @default(OPEN)
+  priority              TicketPriority @default(NORMAL)
+
+  producerId            String
+  producer              User           @relation("ProducerTickets", fields: [producerId], references: [id], onDelete: Cascade)
+
+  assignedToId          String?
+  assignedTo            User?          @relation("AssignedTickets", fields: [assignedToId], references: [id], onDelete: SetNull)
+
+  messages              TicketMessage[]
+
+  lastMessageAt         DateTime       @default(now())
+  lastReadByAdminAt     DateTime?
+  lastReadByProducerAt  DateTime?
+
+  closedAt              DateTime?
+  createdAt             DateTime       @default(now())
+  updatedAt             DateTime       @updatedAt
+
+  @@index([producerId, status])
+  @@index([status, lastMessageAt])
+  @@index([assignedToId])
+}
+
+model TicketMessage {
+  id          String   @id @default(uuid())
+  body        String   @db.Text
+  attachments String[]
+
+  ticketId    String
+  ticket      SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  senderId    String
+  sender      User   @relation("TicketMessages", fields: [senderId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime @default(now())
+
+  @@index([ticketId, createdAt])
+  @@index([senderId])
 }

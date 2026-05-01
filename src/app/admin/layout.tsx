@@ -28,7 +28,9 @@ export default function AdminLayout({
 
   if (isLoginPage) return <>{children}</>;
 
-  if (isLoading || !user || user.role !== "ADMIN") {
+  const isAdminRole =
+    user?.role === "ADMIN" || user?.role === "ADMIN_COLLABORATOR";
+  if (isLoading || !user || !isAdminRole) {
     return null;
   }
 

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/auth";
+import { requireAdminPerm } from "@/lib/admin-permissions-server";
 
 const VALID_STATUSES = ["PENDING", "REVIEWING", "COMPLETED"] as const;
 type Status = (typeof VALID_STATUSES)[number];
@@ -10,7 +10,7 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    await requireAdmin();
+    await requireAdminPerm("FULL_ACCESS");
     const { id } = await params;
 
     const body = await request.json().catch(() => ({}));
