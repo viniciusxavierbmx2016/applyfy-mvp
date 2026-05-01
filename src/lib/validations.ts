@@ -73,6 +73,37 @@ export const updateCourseSchema = z
   })
   .passthrough();
 
+// ─── Support tickets ───────────────────────────────────────────────
+
+const attachmentPath = z.string().min(1).max(500);
+
+export const createTicketSchema = z.object({
+  subject: z.string().min(1, "Assunto obrigatório").max(200),
+  body: z.string().min(1, "Mensagem obrigatória").max(20000),
+  attachments: z.array(attachmentPath).max(5).optional(),
+});
+
+export const ticketMessageSchema = z.object({
+  body: z.string().min(1, "Mensagem obrigatória").max(20000),
+  attachments: z.array(attachmentPath).max(5).optional(),
+});
+
+export const ticketUpdateSchema = z
+  .object({
+    status: z
+      .enum(["OPEN", "IN_PROGRESS", "WAITING_RESPONSE", "RESOLVED", "CLOSED"])
+      .optional(),
+    priority: z.enum(["LOW", "NORMAL", "HIGH", "URGENT"]).optional(),
+    assignedToId: z.union([z.string().min(1).max(100), z.null()]).optional(),
+  })
+  .refine(
+    (d) =>
+      d.status !== undefined ||
+      d.priority !== undefined ||
+      d.assignedToId !== undefined,
+    { message: "Nada para atualizar" }
+  );
+
 // ─── Moderation ────────────────────────────────────────────────────
 
 export const moderateSchema = z.object({
