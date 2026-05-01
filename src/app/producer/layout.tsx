@@ -16,6 +16,14 @@ const ProducerTour = dynamic(
   { ssr: false }
 );
 
+const SupportChatWidget = dynamic(
+  () =>
+    import("@/components/support-chat-widget").then((m) => ({
+      default: m.SupportChatWidget,
+    })),
+  { ssr: false }
+);
+
 export default function ProducerLayout({
   children,
 }: {
@@ -46,6 +54,8 @@ export default function ProducerLayout({
             </SubscriptionGate>
           </main>
         </div>
+
+        <SupportChatWidget />
       </div>
     </ProducerThemeProvider>
   );
