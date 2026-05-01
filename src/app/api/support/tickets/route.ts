@@ -4,6 +4,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { adminHasPerm } from "@/lib/admin-permissions-server";
 import { createTicketSchema, validateBody } from "@/lib/validations";
 import { logAudit, getRequestMeta } from "@/lib/audit";
+import { createNotification } from "@/lib/notifications";
 
 // GET /api/support/tickets — list tickets visible to the requester.
 // PRODUCER → only their own tickets.
@@ -108,5 +109,57 @@ export async function POST(request: Request) {
     ...getRequestMeta(request),
   });
 
+  // Notify the support team (in-app only — no email blast).
+  // ADMIN gets notified always; ADMIN_COLLABORATOR only if they have SUPPORT
+  // and are ACCEPTED (we filter via the AdminCollaborator join).
+  notifyTicketTeam(ticket.id, user.name, ticket.subject).catch((err) =>
+    console.error("[support] notify team failed:", err)
+  );
+
   return NextResponse.json({ ticket }, { status: 201 });
+}
+
+async function notifyTicketTeam(
+  ticketId: string,
+  producerName: string,
+  subject: string
+) {
+  const link = `/admin/support?ticket=${ticketId}`;
+  const message = `${producerName} abriu um ticket: ${subject}`;
+
+  // Plain ADMINs.
+  const admins = await prisma.user.findMany({
+    where: { role: "ADMIN" },
+    select: { id: true },
+  });
+
+  // ADMIN_COLLABORATOR with status=ACCEPTED whose permissions include SUPPORT
+  // (or FULL_ACCESS, which expands to all). Read userId off AdminCollaborator
+  // because not every accepted collab will have a User row pre-existing.
+  const collabs = await prisma.adminCollaborator.findMany({
+    where: {
+      status: "ACCEPTED",
+      userId: { not: null },
+      OR: [
+        { permissions: { has: "SUPPORT" } },
+        { permissions: { has: "FULL_ACCESS" } },
+      ],
+    },
+    select: { userId: true },
+  });
+
+  const userIds = new Set<string>();
+  for (const a of admins) userIds.add(a.id);
+  for (const c of collabs) if (c.userId) userIds.add(c.userId);
+
+  await Promise.all(
+    Array.from(userIds).map((uid) =>
+      createNotification({
+        userId: uid,
+        type: "TICKET_NEW",
+        message,
+        link,
+      })
+    )
+  );
 }

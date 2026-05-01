@@ -471,6 +471,8 @@ enum NotificationType {
   LEVEL_UP
   LIVE_SCHEDULED
   LIVE_STARTED
+  TICKET_NEW
+  TICKET_REPLY
 }
 
 model Certificate {

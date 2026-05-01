@@ -4,6 +4,9 @@ import { getCurrentUser } from "@/lib/auth";
 import { canAccessTicket } from "@/lib/ticket-access";
 import { ticketMessageSchema, validateBody } from "@/lib/validations";
 import { logAudit, getRequestMeta } from "@/lib/audit";
+import { createNotification } from "@/lib/notifications";
+import { sendEmail } from "@/lib/email";
+import { ticketReplyToProducer } from "@/lib/email-templates";
 
 export async function POST(
   request: Request,
@@ -21,6 +24,8 @@ export async function POST(
       id: true,
       producerId: true,
       status: true,
+      subject: true,
+      producer: { select: { name: true, email: true } },
     },
   });
   if (!ticket) {
@@ -91,6 +96,40 @@ export async function POST(
     details: { isProducer, attachments: attachments.length },
     ...getRequestMeta(request),
   });
+
+  // Admin reply → notify the producer (in-app + email).
+  // Producer reply → no notification to the team for now (admin polls inbox).
+  if (!isProducer) {
+    const link = `/producer?ticket=${ticket.id}`;
+    createNotification({
+      userId: ticket.producerId,
+      type: "TICKET_REPLY",
+      message: `Suporte respondeu: ${ticket.subject}`,
+      link,
+      actorId: user.id,
+    }).catch((err) =>
+      console.error("[support] notify producer failed:", err)
+    );
+    if (ticket.producer.email) {
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL || "";
+      const ticketUrl = `${appUrl}${link}`;
+      const tpl = ticketReplyToProducer(
+        ticket.producer.name,
+        ticket.subject,
+        ticketUrl
+      );
+      sendEmail({
+        to: { email: ticket.producer.email, name: ticket.producer.name },
+        ...tpl,
+      }).catch((err) =>
+        console.error(
+          "[EMAIL_ERROR] ticketReplyToProducer to:",
+          ticket.producer.email,
+          err?.message || err
+        )
+      );
+    }
+  }
 
   return NextResponse.json({ message }, { status: 201 });
 }

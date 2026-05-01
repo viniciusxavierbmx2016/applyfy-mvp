@@ -188,6 +188,23 @@ export function collaboratorInvite(
   };
 }
 
+export function ticketReplyToProducer(
+  producerName: string,
+  ticketSubject: string,
+  ticketUrl: string
+) {
+  const html = baseTemplate(`
+    ${heading("Você tem uma resposta no suporte")}
+    ${paragraph(`Olá, ${producerName}! O time de suporte respondeu seu ticket <strong style="color:#ffffff;">${ticketSubject}</strong>.`)}
+    ${ctaButton("Ver resposta", ticketUrl, "#3b82f6")}
+    ${paragraph("Ou abra o chat de suporte direto na plataforma pelo ícone no canto inferior direito.")}
+  `);
+  return {
+    subject: `Resposta do suporte: ${ticketSubject}`,
+    htmlContent: html,
+  };
+}
+
 export function adminCollaboratorInvite(
   name: string,
   inviterName: string,
