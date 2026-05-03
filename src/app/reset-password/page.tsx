@@ -91,15 +91,20 @@ function ResetPasswordForm() {
     }
     setLoading(true);
     try {
-      const supabase = createClient();
-      const { error } = await supabase.auth.updateUser({ password });
-      if (error) {
-        setError(error.message);
+      // Server-side reset (bypasses AAL2 requirement when the user has 2FA;
+      // see /api/auth/reset-password for the trust model).
+      const res = await fetch("/api/auth/reset-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(data.error || "Erro ao redefinir senha");
         setLoading(false);
         return;
       }
       setDone(true);
-      await supabase.auth.signOut();
       setTimeout(() => {
         window.location.href = `${loginHref}?reset=success`;
       }, 1200);
