@@ -92,7 +92,10 @@ function DashboardContent() {
       router.replace("/admin");
       return;
     }
-    if (user.role === "STUDENT") {
+    // A STUDENT who is also a workspace collaborator (post-C5) stays on
+    // /producer to do collaborator work. Pure students redirect to their
+    // workspace dashboard.
+    if (user.role === "STUDENT" && !collaborator) {
       fetch("/api/student/workspace")
         .then((r) => r.ok ? r.json() : null)
         .then((d) => {
@@ -121,7 +124,7 @@ function DashboardContent() {
     }
   }, [searchParams]);
 
-  if (!user || user.role === "ADMIN" || user.role === "STUDENT") {
+  if (!user || user.role === "ADMIN" || (user.role === "STUDENT" && !collaborator)) {
     return (
       <div className="space-y-6">
         <Skeleton className="h-8 w-48" />
