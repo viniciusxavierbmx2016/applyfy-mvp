@@ -1,6 +1,7 @@
 import { cookies, headers } from "next/headers";
 import { prisma } from "./prisma";
 import type { User, Workspace } from "@prisma/client";
+import { getCollaboratorContext } from "./auth";
 
 export const ACTIVE_WORKSPACE_COOKIE = "active_workspace_id";
 export const ACTIVE_WORKSPACE_HEADER = "x-workspace-id";
@@ -77,25 +78,24 @@ export async function getCurrentWorkspace(
 /**
  * Ensures the staff user is allowed to operate on the given workspace.
  * ADMIN: any workspace. PRODUCER: only their own.
+ * C6.5: any user with an ACCEPTED Collaborator row matching the workspace
+ * is also allowed (covers COLLABORATOR-by-role AND STUDENT-with-Collab).
  */
 export async function canAccessWorkspace(
   staff: Pick<User, "id" | "role">,
   workspaceId: string
 ): Promise<boolean> {
   if (staff.role === "ADMIN") return true;
-  if (staff.role === "COLLABORATOR") {
-    const c = await prisma.collaborator.findFirst({
-      where: { userId: staff.id, status: "ACCEPTED" },
-      select: { workspaceId: true },
+  if (staff.role === "PRODUCER") {
+    const ws = await prisma.workspace.findUnique({
+      where: { id: workspaceId },
+      select: { ownerId: true },
     });
-    return !!c && c.workspaceId === workspaceId;
+    if (!!ws && ws.ownerId === staff.id) return true;
+    // Producer might also be collaborator of another workspace — fall through.
   }
-  if (staff.role !== "PRODUCER") return false;
-  const ws = await prisma.workspace.findUnique({
-    where: { id: workspaceId },
-    select: { ownerId: true },
-  });
-  return !!ws && ws.ownerId === staff.id;
+  const ctx = await getCollaboratorContext(staff.id);
+  return !!ctx && ctx.workspaceId === workspaceId;
 }
 
 /**
@@ -115,17 +115,21 @@ export async function resolveStaffWorkspace(
     }
     return { workspace: null, scoped: false };
   }
-  if (staff.role === "COLLABORATOR") {
-    const c = await prisma.collaborator.findFirst({
-      where: { userId: staff.id, status: "ACCEPTED" },
-      select: { workspaceId: true },
-    });
-    if (!c) return { workspace: null, scoped: true };
+  // PRODUCER first: their own workspace wins. If they don't own one, fall
+  // through to the Collaborator-row check (covers a producer who is also a
+  // collab of another workspace — uncommon but possible).
+  if (staff.role === "PRODUCER") {
+    const ws = await getCurrentWorkspace(staff.id);
+    if (ws) return { workspace: ws, scoped: true };
+  }
+  // C6.5: any user with an ACCEPTED Collaborator row resolves to that
+  // workspace. Covers COLLABORATOR-by-role AND STUDENT-with-Collab.
+  const ctx = await getCollaboratorContext(staff.id);
+  if (ctx) {
     const ws = await prisma.workspace.findUnique({
-      where: { id: c.workspaceId },
+      where: { id: ctx.workspaceId },
     });
     return { workspace: ws, scoped: true };
   }
-  const ws = await getCurrentWorkspace(staff.id);
-  return { workspace: ws, scoped: true };
+  return { workspace: null, scoped: true };
 }

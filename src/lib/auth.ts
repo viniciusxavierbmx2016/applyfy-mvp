@@ -268,27 +268,26 @@ export async function isStaffOrCollaborator(
 }
 
 // Returns the effective list of course IDs the staff can act on, or `null`
-// meaning "no restriction" (ADMIN global, PRODUCER/COLLABORATOR with all
-// courses in workspace).
+// meaning "no restriction" (ADMIN global, PRODUCER scoped via workspace).
+// C6.5: resolve via Collaborator row instead of role-gating to
+// "COLLABORATOR". Covers STUDENT-with-Collab AND legacy COLLABORATOR-by-role
+// — requireCollaboratorContextIfAny was already updated in C6 to handle both.
 export async function getStaffCourseIds(
   staff: Pick<User, "id" | "role">
 ): Promise<string[] | null> {
   if (staff.role === "ADMIN") return null;
   if (staff.role === "PRODUCER") return null; // scoped at workspace level elsewhere
-  if (staff.role === "COLLABORATOR") {
-    const ctx = await requireCollaboratorContextIfAny(staff);
-    if (!ctx) return [];
-    if (ctx.courseIds.length === 0) {
-      // All workspace courses
-      const rows = await prisma.course.findMany({
-        where: { workspaceId: ctx.workspaceId },
-        select: { id: true },
-      });
-      return rows.map((r) => r.id);
-    }
-    return ctx.courseIds;
+  const ctx = await requireCollaboratorContextIfAny(staff);
+  if (!ctx) return [];
+  if (ctx.courseIds.length === 0) {
+    // No course filter set → all workspace courses.
+    const rows = await prisma.course.findMany({
+      where: { workspaceId: ctx.workspaceId },
+      select: { id: true },
+    });
+    return rows.map((r) => r.id);
   }
-  return [];
+  return ctx.courseIds;
 }
 
 export async function requirePermission(

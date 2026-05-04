@@ -4,6 +4,7 @@ import {
   getCurrentUser,
   requireStaff,
   getStaffCourseIds,
+  hasAcceptedCollaborator,
 } from "@/lib/auth";
 import { canAccessWorkspace, resolveStaffWorkspace } from "@/lib/workspace";
 import { hasWorkspaceAccess } from "@/lib/workspace-access";
@@ -24,7 +25,12 @@ export async function GET(request: Request) {
 
     const isAdmin = user.role === "ADMIN";
     const isProducer = user.role === "PRODUCER";
-    const isCollaborator = user.role === "COLLABORATOR";
+    // C6.5: STUDENT with ACCEPTED Collaborator row counts as collaborator.
+    // This endpoint uses getCurrentUser() (not requireStaff), so it doesn't
+    // benefit from the role-synthesis added in C6 — explicit dual-check here.
+    const isCollaborator =
+      user.role === "COLLABORATOR" ||
+      (user.role === "STUDENT" && (await hasAcceptedCollaborator(user.id)));
 
     if ((isAdmin || isProducer || isCollaborator) && filter === "all") {
       const { workspace, scoped } = await resolveStaffWorkspace(user);
