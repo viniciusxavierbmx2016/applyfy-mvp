@@ -9,10 +9,12 @@ import { createCommentSchema, validateBody } from "@/lib/validations";
 async function checkAccess(userId: string, userRole: string, post: { courseId: string; course: { ownerId: string | null; workspace: { ownerId: string } } }) {
   if (userRole === "ADMIN") return true;
   if (userRole === "PRODUCER" && (post.course.ownerId === userId || post.course.workspace.ownerId === userId)) return true;
-  if (userRole === "COLLABORATOR") {
-    const allowed = await collaboratorCanActOnCourse(userId, post.courseId, ["REPLY_COMMENTS", "MANAGE_COMMUNITY"]);
-    if (allowed) return true;
-  }
+  // C6: always try the collaborator path. collaboratorCanActOnCourse itself
+  // looks up an ACCEPTED Collaborator row + permission + course scope, so it
+  // returns false when there's no row (e.g., student without collab elevation).
+  // Removes the redundant role-gate that excluded STUDENT-with-Collaborator.
+  const allowed = await collaboratorCanActOnCourse(userId, post.courseId, ["REPLY_COMMENTS", "MANAGE_COMMUNITY"]);
+  if (allowed) return true;
   const enrollment = await prisma.enrollment.findUnique({
     where: { userId_courseId: { userId, courseId: post.courseId } },
   });

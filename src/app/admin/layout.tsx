@@ -13,18 +13,20 @@ export default function AdminLayout({
 }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, isLoading } = useUserStore();
+  const { user, collaborator, isLoading } = useUserStore();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const isLoginPage = pathname === "/admin/login";
 
   useEffect(() => {
     if (isLoginPage || isLoading || !user) return;
+    // C6: STUDENT with Collaborator row goes to /producer (workspace
+    // collab work) like a regular COLLABORATOR. Pure students go to /.
     if (user.role === "STUDENT") {
-      router.replace("/");
+      router.replace(collaborator ? "/producer" : "/");
     } else if (user.role === "PRODUCER" || user.role === "COLLABORATOR") {
       router.replace("/producer");
     }
-  }, [user, isLoading, router, isLoginPage]);
+  }, [user, collaborator, isLoading, router, isLoginPage]);
 
   if (isLoginPage) return <>{children}</>;
 

@@ -168,13 +168,25 @@ export async function requireAdmin(): Promise<User> {
 export async function requireStaff(): Promise<User> {
   const user = await requireAuth();
   if (
-    user.role !== "ADMIN" &&
-    user.role !== "PRODUCER" &&
-    user.role !== "COLLABORATOR"
+    user.role === "ADMIN" ||
+    user.role === "PRODUCER" ||
+    user.role === "COLLABORATOR"
   ) {
-    throw new Error("Sem permissão");
+    return user;
   }
-  return user;
+  // C6: a STUDENT with an ACCEPTED Collaborator row is treated as a
+  // COLLABORATOR for the rest of the request. We synthesize role on the
+  // returned object so the dozens of downstream checks `staff.role ===
+  // "COLLABORATOR"` keep working without per-call-site updates. This is a
+  // request-scoped logical role, not a DB write — the underlying User row
+  // still has role=STUDENT.
+  if (
+    user.role === "STUDENT" &&
+    (await hasAcceptedCollaborator(user.id))
+  ) {
+    return { ...user, role: "COLLABORATOR" };
+  }
+  throw new Error("Sem permissão");
 }
 
 export function isAdmin(user: Pick<User, "role">): boolean {
@@ -189,8 +201,10 @@ export function isStaff(user: Pick<User, "role">): boolean {
   );
 }
 
-// Resolves the collaborator context if the user is a COLLABORATOR, or null.
-// Throws Forbidden if user is COLLABORATOR but has no accepted record.
+// Resolves the collaborator context if the user is a workspace
+// collaborator (either by role or by accepted Collaborator row), or null.
+// Throws Forbidden if user is COLLABORATOR-by-role but has no accepted
+// record (data inconsistency — shouldn't happen post-C5).
 export async function requireCollaboratorContextIfAny(
   user: Pick<User, "id" | "role">
 ): Promise<{
@@ -198,13 +212,19 @@ export async function requireCollaboratorContextIfAny(
   permissions: string[];
   courseIds: string[];
 } | null> {
-  if (user.role !== "COLLABORATOR") return null;
-  const c = await prisma.collaborator.findFirst({
-    where: { userId: user.id, status: "ACCEPTED" },
-    select: { workspaceId: true, permissions: true, courseIds: true },
-  });
-  if (!c) throw new Error("Sem permissão");
-  return c;
+  if (user.role === "COLLABORATOR") {
+    const c = await prisma.collaborator.findFirst({
+      where: { userId: user.id, status: "ACCEPTED" },
+      select: { workspaceId: true, permissions: true, courseIds: true },
+    });
+    if (!c) throw new Error("Sem permissão");
+    return c;
+  }
+  // C6: STUDENT-with-Collaborator path.
+  if (user.role === "STUDENT") {
+    return await getCollaboratorContext(user.id);
+  }
+  return null;
 }
 
 // ─── Collaborator-by-row helpers (Stage C of role-fix) ──────────────────────

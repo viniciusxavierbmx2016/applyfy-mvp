@@ -50,13 +50,12 @@ export async function GET(_request: Request, props: { params: Promise<{ id: stri
     }
 
     if (user.role !== "ADMIN" && user.role !== "PRODUCER") {
-      let allowed = false;
-      if (user.role === "COLLABORATOR") {
-        allowed = await collaboratorAllowed(
-          user.id,
-          lesson.module.courseId
-        );
-      }
+      // C6: drop role gate — helper returns false when there's no
+      // ACCEPTED Collaborator row.
+      const allowed = await collaboratorAllowed(
+        user.id,
+        lesson.module.courseId
+      );
       if (!allowed) {
         const enrollment = await prisma.enrollment.findUnique({
           where: {
@@ -170,13 +169,12 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
     }
 
     if (user.role !== "ADMIN" && user.role !== "PRODUCER") {
-      let allowed = false;
-      if (user.role === "COLLABORATOR") {
-        allowed = await collaboratorAllowed(
-          user.id,
-          lesson.module.courseId
-        );
-      }
+      // C6: drop role gate — helper returns false when there's no
+      // ACCEPTED Collaborator row.
+      const allowed = await collaboratorAllowed(
+        user.id,
+        lesson.module.courseId
+      );
       if (!allowed) {
         const enrollment = await prisma.enrollment.findUnique({
           where: {
@@ -307,13 +305,12 @@ export async function DELETE(request: Request, props: { params: Promise<{ id: st
 
     const isOwner = comment.userId === user.id;
     const isAdmin = user.role === "ADMIN";
-    let isStaffAllowed = false;
-    if (user.role === "COLLABORATOR") {
-      isStaffAllowed = await collaboratorAllowed(
-        user.id,
-        comment.lesson.module.courseId
-      );
-    }
+    // C6: drop role gate — helper returns false when there's no
+    // ACCEPTED Collaborator row.
+    let isStaffAllowed = await collaboratorAllowed(
+      user.id,
+      comment.lesson.module.courseId
+    );
     if (user.role === "PRODUCER") {
       isStaffAllowed = true;
     }

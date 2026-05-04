@@ -14,7 +14,12 @@ interface HeaderProps {
 }
 
 export function Header({ onMenuToggle }: HeaderProps) {
-  const { user, logout: logoutStore } = useUserStore();
+  const { user, collaborator, logout: logoutStore } = useUserStore();
+  // C6: STUDENT with Collaborator row uses producer-side profile/UI.
+  const isCollabLike =
+    user?.role === "PRODUCER" ||
+    user?.role === "COLLABORATOR" ||
+    (user?.role === "STUDENT" && !!collaborator);
   const router = useRouter();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -118,11 +123,7 @@ export function Header({ onMenuToggle }: HeaderProps) {
                   <button
                     onClick={() => {
                       setDropdownOpen(false);
-                      const dest =
-                        user?.role === "PRODUCER" ||
-                        user?.role === "COLLABORATOR"
-                          ? "/producer/profile"
-                          : "/profile";
+                      const dest = isCollabLike ? "/producer/profile" : "/profile";
                       router.push(dest);
                     }}
                     className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/[0.05] transition-colors duration-200"
@@ -130,7 +131,7 @@ export function Header({ onMenuToggle }: HeaderProps) {
                     Meu Perfil
                   </button>
                 )}
-                {(user?.role === "PRODUCER" || user?.role === "COLLABORATOR") && (
+                {isCollabLike && (
                   <button
                     onClick={async () => {
                       setDropdownOpen(false);

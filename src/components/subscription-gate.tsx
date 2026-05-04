@@ -18,7 +18,7 @@ const CACHE_TTL = 60_000;
 export function SubscriptionGate({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, isLoading } = useUserStore();
+  const { user, collaborator, isLoading } = useUserStore();
   const [pastDueDays, setPastDueDays] = useState<number | null>(null);
   const fetched = useRef(false);
 
@@ -29,7 +29,14 @@ export function SubscriptionGate({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (skip || isLoading || !user) return;
-    if (user.role === "ADMIN" || user.role === "COLLABORATOR") return;
+    // C6: workspace collaborators (any role) bypass — they're not the
+    // producer paying for the subscription.
+    if (
+      user.role === "ADMIN" ||
+      user.role === "COLLABORATOR" ||
+      (user.role === "STUDENT" && !!collaborator)
+    )
+      return;
 
     const now = Date.now();
     if (cache.data && now - cache.ts < CACHE_TTL) {

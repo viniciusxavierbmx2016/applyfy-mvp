@@ -28,7 +28,8 @@ export async function PUT(request: Request, props: { params: Promise<{ id: strin
       });
       canEdit = course?.ownerId === user.id || course?.workspace.ownerId === user.id;
     }
-    if (!canEdit && user.role === "COLLABORATOR") {
+    // C6: drop role gate — helper handles "no Collaborator row → false".
+    if (!canEdit) {
       canEdit = await collaboratorCanActOnCourse(user.id, post.courseId, ["MANAGE_COMMUNITY"]);
     }
     if (!canEdit) {
@@ -98,7 +99,8 @@ export async function DELETE(_request: Request, props: { params: Promise<{ id: s
         course?.ownerId === user.id ||
         course?.workspace.ownerId === user.id;
     }
-    if (!canDelete && user.role === "COLLABORATOR") {
+    // C6: drop role gate — helper handles "no Collaborator row → false".
+    if (!canDelete) {
       canDelete = await collaboratorCanActOnCourse(user.id, post.courseId, [
         "MANAGE_COMMUNITY",
       ]);

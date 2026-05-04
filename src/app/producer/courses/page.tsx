@@ -41,7 +41,10 @@ export default function AdminCoursesPage() {
   const router = useRouter();
   const { user, collaborator } = useUserStore();
   const collabPerms = collaborator?.permissions ?? [];
-  const isCollaborator = user?.role === "COLLABORATOR";
+  // C6: STUDENT with Collaborator row counts as collaborator.
+  const isCollaborator =
+    user?.role === "COLLABORATOR" ||
+    (user?.role === "STUDENT" && !!collaborator);
   const hasManageLessons = !isCollaborator || collabPerms.includes("MANAGE_LESSONS");
 
   function courseHref(id: string) {

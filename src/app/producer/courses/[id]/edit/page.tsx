@@ -54,7 +54,10 @@ function EditCoursePageInner(
   const [course, setCourse] = useState<CourseData | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const isCollaborator = user?.role === "COLLABORATOR";
+  // C6: STUDENT with Collaborator row counts as collaborator.
+  const isCollaborator =
+    user?.role === "COLLABORATOR" ||
+    (user?.role === "STUDENT" && !!collaborator);
   const tab = searchParams.get("tab") === "content" ? "content" : "info";
 
   useEffect(() => {
