@@ -45,7 +45,8 @@ export async function DELETE(
         comment.post.course.ownerId === user.id ||
         comment.post.course.workspace.ownerId === user.id;
     }
-    if (!canDelete && user.role === "COLLABORATOR") {
+    // C6: drop role gate — helper handles "no Collaborator row → false".
+    if (!canDelete) {
       canDelete = await collaboratorCanActOnCourse(
         user.id,
         comment.post.courseId,

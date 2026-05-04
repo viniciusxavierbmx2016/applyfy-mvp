@@ -79,7 +79,10 @@ export function CourseEditTabs({
   const prefix = pathname.startsWith("/admin") ? "/admin" : "/producer";
 
   const perms = collaborator?.permissions ?? [];
-  const isCollaborator = user?.role === "COLLABORATOR";
+  // C6: STUDENT with Collaborator row counts as collaborator.
+  const isCollaborator =
+    user?.role === "COLLABORATOR" ||
+    (user?.role === "STUDENT" && !!collaborator);
 
   const allTabs: TabDef[] = [
     { key: "info", label: "Informações", requires: "MANAGE_LESSONS", icon: iconPencil, tourId: "course-tab-info" },

@@ -76,7 +76,7 @@ function getGreeting() {
 }
 
 export default function AdminDashboardPage() {
-  const { user } = useUserStore();
+  const { user, collaborator } = useUserStore();
   const router = useRouter();
   const [range, setRange] = useState<DateRangeValue>(() =>
     computeRange("last_30_days")
@@ -88,13 +88,15 @@ export default function AdminDashboardPage() {
   useEffect(() => {
     if (!user) return;
     if (user.role !== "ADMIN") {
-      router.replace(
-        user.role === "PRODUCER" || user.role === "COLLABORATOR"
-          ? "/producer"
-          : "/"
-      );
+      // C6: STUDENT-with-Collaborator goes to /producer (workspace work),
+      // pure students to /.
+      const isCollabLike =
+        user.role === "PRODUCER" ||
+        user.role === "COLLABORATOR" ||
+        (user.role === "STUDENT" && !!collaborator);
+      router.replace(isCollabLike ? "/producer" : "/");
     }
-  }, [user, router]);
+  }, [user, collaborator, router]);
 
   useEffect(() => {
     if (!user || user.role !== "ADMIN") return;

@@ -60,7 +60,10 @@ export async function GET(request: Request) {
         (course.ownerId === user.id ||
           course.workspace.ownerId === user.id));
     let collabAllowed = false;
-    if (!isStaffOwner && user.role === "COLLABORATOR") {
+    // C6: drop the role gate. collaboratorCanActOnCourse itself returns
+    // false when there's no ACCEPTED Collaborator row, so STUDENT without
+    // collab elevation is a no-op (and STUDENT-with-Collab now passes).
+    if (!isStaffOwner) {
       collabAllowed = await collaboratorCanActOnCourse(user.id, course.id, [
         "MANAGE_COMMUNITY",
         "REPLY_COMMENTS",
@@ -219,7 +222,10 @@ export async function POST(request: Request) {
         (course.ownerId === user.id ||
           course.workspace.ownerId === user.id));
     let collabAllowed = false;
-    if (!isStaffOwner && user.role === "COLLABORATOR") {
+    // C6: drop the role gate. collaboratorCanActOnCourse itself returns
+    // false when there's no ACCEPTED Collaborator row, so STUDENT without
+    // collab elevation is a no-op (and STUDENT-with-Collab now passes).
+    if (!isStaffOwner) {
       collabAllowed = await collaboratorCanActOnCourse(user.id, course.id, [
         "MANAGE_COMMUNITY",
         "REPLY_COMMENTS",

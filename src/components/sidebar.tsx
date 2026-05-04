@@ -184,7 +184,14 @@ export function Sidebar({ open, onClose }: SidebarProps) {
   const isAdmin = user?.role === "ADMIN";
   const isAdminCollab = user?.role === "ADMIN_COLLABORATOR";
   const isProducer = user?.role === "PRODUCER";
-  const isCollaborator = user?.role === "COLLABORATOR";
+  // C6: a STUDENT with an ACCEPTED Collaborator row is functionally a
+  // collaborator (post-C5 invitees keep role=STUDENT). `collaborator` is
+  // populated by /api/auth/me regardless of role (C2), so its presence
+  // is the discriminator for both legacy COLLABORATOR-by-role users and
+  // new STUDENT-with-Collaborator users.
+  const isCollaborator =
+    user?.role === "COLLABORATOR" ||
+    (user?.role === "STUDENT" && !!collaborator);
   const activeWorkspace = useActiveWorkspace();
   const showVitrine = (isProducer || isCollaborator) && !!activeWorkspace;
   const [supportUnread, setSupportUnread] = useState(0);

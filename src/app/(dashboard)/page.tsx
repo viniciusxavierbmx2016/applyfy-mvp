@@ -46,7 +46,7 @@ interface ContinueWatching {
 }
 
 export default function HomePage() {
-  const { user, workspace, isLoading: userLoading } = useUserStore();
+  const { user, workspace, collaborator, isLoading: userLoading } = useUserStore();
   const router = useRouter();
 
   useEffect(() => {
@@ -55,7 +55,12 @@ export default function HomePage() {
       router.replace("/admin");
       return;
     }
-    if (user.role === "PRODUCER" || user.role === "COLLABORATOR") {
+    // C6: STUDENT with Collaborator row goes to /producer.
+    if (
+      user.role === "PRODUCER" ||
+      user.role === "COLLABORATOR" ||
+      (user.role === "STUDENT" && !!collaborator)
+    ) {
       router.replace("/producer");
       return;
     }

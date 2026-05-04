@@ -47,13 +47,15 @@ export async function GET(req: NextRequest) {
       courseIds: string[];
       workspaceId: string;
     } | null = null;
+    // Resolve Collaborator independently of User.role (Stage C2). A STUDENT
+    // who has an ACCEPTED Collaborator row should still get the producer-side
+    // sidebar/permissions populated. Pre-C5 this branch only fired for
+    // role === "COLLABORATOR".
     const [collabRow, workspace] = await Promise.all([
-      user.role === "COLLABORATOR"
-        ? prisma.collaborator.findFirst({
-            where: { userId: user.id, status: "ACCEPTED" },
-            select: { permissions: true, courseIds: true, workspaceId: true },
-          })
-        : Promise.resolve(null),
+      prisma.collaborator.findFirst({
+        where: { userId: user.id, status: "ACCEPTED" },
+        select: { permissions: true, courseIds: true, workspaceId: true },
+      }),
       user.workspaceId
         ? prisma.workspace.findUnique({
             where: { id: user.workspaceId },

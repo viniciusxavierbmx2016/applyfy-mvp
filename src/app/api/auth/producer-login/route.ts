@@ -5,6 +5,7 @@ import { rateLimit } from "@/lib/rate-limit";
 import { loginSchema, validateBody } from "@/lib/validations";
 import { logAudit, getRequestMeta } from "@/lib/audit";
 import { trackLoginFailure } from "@/lib/security-alerts";
+import { hasAcceptedCollaborator } from "@/lib/auth";
 
 const MAX_SESSIONS = 3;
 
@@ -37,9 +38,18 @@ export async function POST(request: Request) {
 
     const user = await prisma.user.findUnique({ where: { email } });
 
+    // Accept PRODUCER, COLLABORATOR, and STUDENT-with-accepted-Collaborator
+    // (post-C5 Marcilene case: a student of a course who is also a workspace
+    // collaborator on the same workspace).
+    const isStudentCollab =
+      user?.role === "STUDENT" &&
+      (await hasAcceptedCollaborator(user.id));
+
     if (
       !user ||
-      (user.role !== "PRODUCER" && user.role !== "COLLABORATOR")
+      (user.role !== "PRODUCER" &&
+        user.role !== "COLLABORATOR" &&
+        !isStudentCollab)
     ) {
       await supabase.auth.signOut();
       const message =
