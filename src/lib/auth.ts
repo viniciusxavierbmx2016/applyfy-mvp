@@ -207,6 +207,46 @@ export async function requireCollaboratorContextIfAny(
   return c;
 }
 
+// ─── Collaborator-by-row helpers (Stage C of role-fix) ──────────────────────
+// These are independent of User.role so a STUDENT (or any role) who has an
+// ACCEPTED Collaborator row also counts as a workspace collaborator. After
+// stages C2-C5 land, these become the source of truth for "is X a workspace
+// collaborator", replacing the role === "COLLABORATOR" pattern that
+// historically required overwriting User.role on invite accept.
+//
+// requireCollaboratorContextIfAny above is intentionally left as-is for
+// back-compat; we'll migrate call sites in stage C6.
+
+export const getCollaboratorContext = cache(
+  async (
+    userId: string
+  ): Promise<{
+    workspaceId: string;
+    permissions: string[];
+    courseIds: string[];
+  } | null> => {
+    const c = await prisma.collaborator.findFirst({
+      where: { userId, status: "ACCEPTED" },
+      select: { workspaceId: true, permissions: true, courseIds: true },
+    });
+    return c ?? null;
+  }
+);
+
+export async function hasAcceptedCollaborator(userId: string): Promise<boolean> {
+  return (await getCollaboratorContext(userId)) !== null;
+}
+
+// Counts a user as part of the staff if they have a real staff role OR an
+// accepted Collaborator row (the latter lets a STUDENT serve as a workspace
+// collaborator after the C5 fix).
+export async function isStaffOrCollaborator(
+  user: Pick<User, "id" | "role">
+): Promise<boolean> {
+  if (isStaff(user)) return true;
+  return await hasAcceptedCollaborator(user.id);
+}
+
 // Returns the effective list of course IDs the staff can act on, or `null`
 // meaning "no restriction" (ADMIN global, PRODUCER/COLLABORATOR with all
 // courses in workspace).
