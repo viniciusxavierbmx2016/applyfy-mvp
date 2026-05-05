@@ -38,6 +38,16 @@ export async function POST(request: Request) {
     });
     if (error) {
       console.error("[AUTH] Register producer error:", error.message);
+      const msg = error.message ?? "";
+      if (
+        msg.includes("already registered") ||
+        msg.includes("already been registered")
+      ) {
+        return NextResponse.json(
+          { error: "Este email já está cadastrado. Tente fazer login." },
+          { status: 409 }
+        );
+      }
       return NextResponse.json(
         { error: "Não foi possível criar a conta. Tente novamente." },
         { status: 400 }
