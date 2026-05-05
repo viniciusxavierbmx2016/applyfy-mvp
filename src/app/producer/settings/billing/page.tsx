@@ -282,8 +282,18 @@ function BillingContent() {
                 <Feature>{plan.maxWorkspaces} workspaces</Feature>
                 <Feature>{plan.maxCoursesPerWorkspace} cursos por workspace</Feature>
                 <Feature>Alunos ilimitados</Feature>
-                <Feature>Comunidade integrada</Feature>
+                <Feature>Comunidade integrada com grupos</Feature>
                 <Feature>Certificados automáticos</Feature>
+                <Feature>Sistema de Lives</Feature>
+                <Feature>Aplicativo com notificações push</Feature>
+                <Feature>Automações de email inteligentes</Feature>
+                <Feature>Relatórios avançados e analytics</Feature>
+                <Feature>Quizzes e avaliações</Feature>
+                <Feature>Gamificação (pontos e níveis)</Feature>
+                <Feature>Moderação de comentários</Feature>
+                <Feature>Termos de uso por curso</Feature>
+                <Feature>Personalização completa (cores, logo, layout)</Feature>
+                <Feature>Checkout integrado</Feature>
                 <Feature>Suporte prioritário</Feature>
               </ul>
               <button
