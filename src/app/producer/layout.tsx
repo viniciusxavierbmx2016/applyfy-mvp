@@ -48,8 +48,8 @@ export default function ProducerLayout({
           <Header onMenuToggle={() => setSidebarOpen(!sidebarOpen)} />
 
           <main className="flex-1 p-4 lg:p-6">
-            <ProducerTour />
             <SubscriptionGate>
+              <ProducerTour />
               {children}
             </SubscriptionGate>
           </main>

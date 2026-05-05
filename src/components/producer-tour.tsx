@@ -3,15 +3,64 @@
 import { useEffect, useState } from "react";
 import { driver } from "driver.js";
 import "driver.js/dist/driver.css";
+import { useUserStore } from "@/stores/user-store";
+
+const PERM_TO_NAV: Record<string, string[]> = {
+  MANAGE_LESSONS: ["nav-courses"],
+  REPLY_COMMENTS: ["nav-courses"],
+  MANAGE_STUDENTS: ["nav-students"],
+  MANAGE_COMMUNITY: ["nav-community"],
+  VIEW_ANALYTICS: ["nav-reports"],
+};
+
+function getVisibleNavIds(perms: string[]): Set<string> {
+  const visible = new Set<string>();
+  for (const p of perms) {
+    for (const nav of PERM_TO_NAV[p] ?? []) visible.add(nav);
+  }
+  return visible;
+}
+
+type TourStep = {
+  element?: string;
+  popover: {
+    title: string;
+    description: string;
+    side?: "top" | "right" | "bottom" | "left" | "over";
+    align?: "start" | "center" | "end";
+  };
+};
+
+function filterStepsByCollaborator(
+  steps: TourStep[],
+  collaboratorPerms: string[] | null
+): TourStep[] {
+  if (!collaboratorPerms) return steps;
+  const visible = getVisibleNavIds(collaboratorPerms);
+  return steps.filter((step) => {
+    if (!step.element) return true;
+    const m = step.element.match(/data-tour="(nav-[^"]+)"/);
+    if (!m) return true;
+    return visible.has(m[1]);
+  });
+}
 
 export function ProducerTour() {
   const [shouldShow, setShouldShow] = useState(false);
+  const collaborator = useUserStore((s) => s.collaborator);
 
   useEffect(() => {
-    fetch("/api/producer/onboarding")
-      .then((r) => r.json())
-      .then((data) => {
-        if (!data.completed) {
+    Promise.all([
+      fetch("/api/producer/onboarding").then((r) => r.json()),
+      fetch("/api/producer/billing").then((r) => r.json()),
+    ])
+      .then(([onboarding, billing]) => {
+        const hasSubscription = billing?.subscription?.status === "ACTIVE";
+        if (
+          !onboarding.completed &&
+          hasSubscription &&
+          window.location.pathname === "/producer"
+        ) {
           setShouldShow(true);
         }
       })
@@ -29,26 +78,7 @@ export function ProducerTour() {
   }, [shouldShow]);
 
   function startTour() {
-    const driverObj = driver({
-      showProgress: true,
-      animate: true,
-      allowClose: true,
-      overlayColor: "rgba(0, 0, 0, 0.75)",
-      stagePadding: 8,
-      stageRadius: 12,
-      popoverClass: "mc-tour-popover",
-
-      nextBtnText: "Próximo",
-      prevBtnText: "Anterior",
-      doneBtnText: "Concluir",
-      progressText: "{{current}} de {{total}}",
-
-      onDestroyStarted: () => {
-        fetch("/api/producer/onboarding", { method: "POST" }).catch(() => {});
-        driverObj.destroy();
-      },
-
-      steps: [
+    const allSteps: TourStep[] = [
         {
           popover: {
             title: "Bem-vindo ao Members Club!",
@@ -157,7 +187,33 @@ export function ProducerTour() {
             align: "center" as const,
           },
         },
-      ],
+    ];
+
+    const steps = filterStepsByCollaborator(
+      allSteps,
+      collaborator?.permissions ?? null
+    );
+
+    const driverObj = driver({
+      showProgress: true,
+      animate: true,
+      allowClose: true,
+      overlayColor: "rgba(0, 0, 0, 0.75)",
+      stagePadding: 8,
+      stageRadius: 12,
+      popoverClass: "mc-tour-popover",
+
+      nextBtnText: "Próximo",
+      prevBtnText: "Anterior",
+      doneBtnText: "Concluir",
+      progressText: "{{current}} de {{total}}",
+
+      onDestroyStarted: () => {
+        fetch("/api/producer/onboarding", { method: "POST" }).catch(() => {});
+        driverObj.destroy();
+      },
+
+      steps,
     });
 
     driverObj.drive();
