@@ -8,10 +8,17 @@ export function ProducerTour() {
   const [shouldShow, setShouldShow] = useState(false);
 
   useEffect(() => {
-    fetch("/api/producer/onboarding")
-      .then((r) => r.json())
-      .then((data) => {
-        if (!data.completed) {
+    Promise.all([
+      fetch("/api/producer/onboarding").then((r) => r.json()),
+      fetch("/api/producer/billing").then((r) => r.json()),
+    ])
+      .then(([onboarding, billing]) => {
+        const hasSubscription = billing?.subscription?.status === "ACTIVE";
+        if (
+          !onboarding.completed &&
+          hasSubscription &&
+          window.location.pathname === "/producer"
+        ) {
           setShouldShow(true);
         }
       })
