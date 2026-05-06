@@ -1,5 +1,11 @@
 import { NextResponse, type NextRequest } from "next/server";
 
+// Hosts that serve the public marketing landing instead of the app.
+const APEX_HOSTS = new Set([
+  "mymembersclub.com.br",
+  "www.mymembersclub.com.br",
+]);
+
 const publicRoutes = new Set([
   "/login",
   "/register",
@@ -10,6 +16,7 @@ const publicRoutes = new Set([
   "/reset-password",
   "/verify-email",
   "/auth/impersonate",
+  "/landing",
 ]);
 
 const redirectIfAuthed = new Set([
@@ -37,6 +44,16 @@ function hasSessionCookie(request: NextRequest): boolean {
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const host = (request.headers.get("host") ?? "").toLowerCase();
+  const isApex = APEX_HOSTS.has(host);
+
+  // Apex domain serves the marketing landing on root via internal rewrite.
+  // The app stays at app.mymembersclub.com.br and keeps its auth flow.
+  if (isApex && pathname === "/") {
+    const url = request.nextUrl.clone();
+    url.pathname = "/landing";
+    return NextResponse.rewrite(url);
+  }
 
   // API routes: auth is enforced per-handler. Middleware does nothing.
   if (pathname.startsWith("/api/")) {
