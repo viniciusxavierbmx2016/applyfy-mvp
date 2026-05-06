@@ -193,16 +193,17 @@ export function LessonMaterials({ lessonId }: { lessonId: string }) {
 
                 <div className="flex items-center gap-0.5 shrink-0">
                   {idx > 0 && (
-                    <button onClick={() => handleMove(mat.id, "up")} className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" title="Mover para cima">
+                    <button type="button" onClick={() => handleMove(mat.id, "up")} className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" title="Mover para cima">
                       <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>
                     </button>
                   )}
                   {idx < materials.length - 1 && (
-                    <button onClick={() => handleMove(mat.id, "down")} className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" title="Mover para baixo">
+                    <button type="button" onClick={() => handleMove(mat.id, "down")} className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" title="Mover para baixo">
                       <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
                     </button>
                   )}
                   <button
+                    type="button"
                     onClick={() => { setEditingId(mat.id); setEditName(mat.name); }}
                     className="p-1 text-gray-400 hover:text-blue-500"
                     title="Renomear"
@@ -210,6 +211,7 @@ export function LessonMaterials({ lessonId }: { lessonId: string }) {
                     <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
                   </button>
                   <button
+                    type="button"
                     onClick={() => handleDelete(mat.id)}
                     className="p-1 text-gray-400 hover:text-red-500"
                     title="Excluir"

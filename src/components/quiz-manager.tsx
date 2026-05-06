@@ -293,8 +293,7 @@ function QuestionModal({
     });
   }
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  async function handleSubmit() {
     if (!text.trim()) { setError("Texto obrigatório"); return; }
     if (options.some((o) => !o.text.trim())) { setError("Todas as opções precisam de texto"); return; }
     setError(null);
@@ -328,7 +327,7 @@ function QuestionModal({
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
           {question ? "Editar pergunta" : "Nova pergunta"}
         </h3>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Pergunta</label>
             <textarea
@@ -404,14 +403,15 @@ function QuestionModal({
               Cancelar
             </button>
             <button
-              type="submit"
+              type="button"
+              onClick={handleSubmit}
               disabled={saving}
               className="flex-1 px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium rounded-xl disabled:opacity-50"
             >
               {saving ? "Salvando..." : "Salvar"}
             </button>
           </div>
-        </form>
+        </div>
       </div>
     </div>
   );
