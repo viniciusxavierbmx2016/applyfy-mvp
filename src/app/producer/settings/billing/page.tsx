@@ -133,15 +133,22 @@ function BillingContent() {
 
   async function handleCheckout() {
     setCheckingOut(true);
+    const newTab = window.open("about:blank", "_blank");
     try {
       const res = await fetch("/api/producer/billing/checkout", { method: "POST" });
       const body = await res.json().catch(() => ({}));
       if (!res.ok || !body.checkoutUrl) {
+        newTab?.close();
         showToast(body.error || "Erro ao gerar checkout", "red");
         return;
       }
-      window.location.href = body.checkoutUrl;
+      if (newTab) {
+        newTab.location.href = body.checkoutUrl;
+      } else {
+        window.location.href = body.checkoutUrl;
+      }
     } catch {
+      newTab?.close();
       showToast("Erro ao gerar checkout. Tente novamente.", "red");
     } finally {
       setCheckingOut(false);
