@@ -32,11 +32,7 @@ const LANDING_BODY = `
 <nav>
   <div class="nav-inner">
     <a href="#" class="nav-logo">
-      <svg viewBox="0 0 40 40" width="32" height="32" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="14" cy="20" r="12" stroke="#f0f0f5" stroke-width="2.5" fill="none"/>
-        <circle cx="26" cy="20" r="12" stroke="#f0f0f5" stroke-width="2.5" fill="none"/>
-        <path d="M14 12l6 8-6 8M26 12l-6 8 6 8" stroke="#f0f0f5" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
+      <img src="/logo.png" alt="Members Club" height="32" width="32" style="border-radius: 6px;" />
       <span>Members Club</span>
     </a>
     <div class="nav-links">
@@ -582,11 +578,7 @@ const LANDING_BODY = `
   <div class="container">
     <div class="footer-inner">
       <div class="footer-brand">
-        <svg viewBox="0 0 40 40" width="28" height="28" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="14" cy="20" r="12" stroke="#8b8b9e" stroke-width="2" fill="none"/>
-          <circle cx="26" cy="20" r="12" stroke="#8b8b9e" stroke-width="2" fill="none"/>
-          <path d="M14 12l6 8-6 8M26 12l-6 8 6 8" stroke="#8b8b9e" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
+        <img src="/logo.png" alt="Members Club" height="28" width="28" style="border-radius: 6px; opacity: 0.7;" />
         <span>Members Club</span>
       </div>
       <div class="footer-links">
