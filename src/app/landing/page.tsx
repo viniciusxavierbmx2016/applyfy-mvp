@@ -32,7 +32,7 @@ const LANDING_BODY = `
 <nav>
   <div class="nav-inner">
     <a href="#" class="nav-logo">
-      <img src="/logo.png" alt="Members Club" height="32" width="32" style="border-radius: 6px;" />
+      <img src="/logo-landing.png" alt="Members Club" height="36" width="36" />
       <span>Members Club</span>
     </a>
     <div class="nav-links">
@@ -578,7 +578,7 @@ const LANDING_BODY = `
   <div class="container">
     <div class="footer-inner">
       <div class="footer-brand">
-        <img src="/logo.png" alt="Members Club" height="28" width="28" style="border-radius: 6px; opacity: 0.7;" />
+        <img src="/logo-landing.png" alt="Members Club" height="32" width="32" style="opacity: 0.7;" />
         <span>Members Club</span>
       </div>
       <div class="footer-links">
