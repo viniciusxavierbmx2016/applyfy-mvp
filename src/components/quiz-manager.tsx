@@ -33,13 +33,13 @@ export function QuizManager({ lessonId }: Props) {
   const [quiz, setQuiz] = useState<Quiz | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [toast, setToast] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ msg: string; variant: "default" | "red" } | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingQuestion, setEditingQuestion] = useState<QuizQuestion | null>(null);
   const { confirm, ConfirmDialog } = useConfirm();
 
-  function showToast(msg: string) {
-    setToast(msg);
+  function showToast(msg: string, variant: "default" | "red" = "default") {
+    setToast({ msg, variant });
     setTimeout(() => setToast(null), 2600);
   }
 
@@ -60,11 +60,14 @@ export function QuizManager({ lessonId }: Props) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({}),
       });
-      if (res.ok) {
-        const d = await res.json();
-        setQuiz(d.quiz);
-        showToast("Quiz criado");
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        showToast(err.error || "Erro ao criar quiz", "red");
+        return;
       }
+      const d = await res.json();
+      setQuiz(d.quiz);
+      showToast("Quiz criado");
     } finally {
       setSaving(false);
     }
@@ -77,25 +80,36 @@ export function QuizManager({ lessonId }: Props) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
     });
-    if (res.ok) {
-      const d = await res.json();
-      setQuiz(d.quiz);
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      showToast(err.error || "Erro ao atualizar quiz", "red");
+      return;
     }
+    const d = await res.json();
+    setQuiz(d.quiz);
   }
 
   async function deleteQuiz() {
     if (!(await confirm({ title: "Excluir quiz", message: "Excluir o quiz e todas as perguntas?", variant: "danger", confirmText: "Excluir" }))) return;
     const res = await fetch(`/api/producer/lessons/${lessonId}/quiz`, { method: "DELETE" });
-    if (res.ok) {
-      setQuiz(null);
-      showToast("Quiz excluído");
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      showToast(err.error || "Erro ao excluir quiz", "red");
+      return;
     }
+    setQuiz(null);
+    showToast("Quiz excluído");
   }
 
   async function deleteQuestion(qId: string) {
     if (!(await confirm({ title: "Excluir pergunta", message: "Excluir esta pergunta?", variant: "danger", confirmText: "Excluir" }))) return;
     const res = await fetch(`/api/producer/lessons/${lessonId}/quiz/questions/${qId}`, { method: "DELETE" });
-    if (res.ok) load();
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      showToast(err.error || "Erro ao excluir pergunta", "red");
+      return;
+    }
+    load();
   }
 
   if (loading) {
@@ -223,8 +237,14 @@ export function QuizManager({ lessonId }: Props) {
       )}
 
       {toast && (
-        <div className="fixed bottom-6 right-6 z-50 bg-gray-900 dark:bg-white text-white dark:text-gray-900 px-4 py-3 rounded-lg shadow-2xl text-sm font-medium">
-          {toast}
+        <div
+          className={`fixed bottom-6 right-6 z-50 px-4 py-3 rounded-lg shadow-2xl text-sm font-medium ${
+            toast.variant === "red"
+              ? "bg-red-600 text-white"
+              : "bg-gray-900 dark:bg-white text-white dark:text-gray-900"
+          }`}
+        >
+          {toast.msg}
         </div>
       )}
       <ConfirmDialog />
