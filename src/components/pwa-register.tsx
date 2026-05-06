@@ -6,6 +6,14 @@ export function PWARegister() {
   useEffect(() => {
     if (!("serviceWorker" in navigator)) return;
 
+    // Skip SW registration on the apex marketing landing — only the app
+    // subdomain (app.mymembersclub.com.br) needs the PWA worker.
+    const hostname = window.location.hostname;
+    const isApex =
+      hostname === "mymembersclub.com.br" ||
+      hostname === "www.mymembersclub.com.br";
+    if (isApex) return;
+
     navigator.serviceWorker
       .register("/sw.js", { scope: "/" })
       .then((reg) => {
