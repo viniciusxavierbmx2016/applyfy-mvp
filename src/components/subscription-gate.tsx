@@ -86,6 +86,7 @@ export function SubscriptionGate({ children }: { children: React.ReactNode }) {
 
       router.replace("/producer/settings/billing?reason=subscription_required");
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally omitting collaborator: adding would re-fire redirect on store updates
   }, [skip, isLoading, user, router, pathname]);
 
   return (

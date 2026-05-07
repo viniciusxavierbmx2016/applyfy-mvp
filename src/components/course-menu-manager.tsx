@@ -46,6 +46,7 @@ export function CourseMenuManager({ courseId }: { courseId: string }) {
   );
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/immutability -- JS hoists function declarations; rule's TDZ check is overly strict
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

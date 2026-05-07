@@ -71,10 +71,12 @@ export function ProducerTour() {
     if (!shouldShow) return;
 
     const timer = setTimeout(() => {
+      // eslint-disable-next-line react-hooks/immutability -- JS hoists function declarations; rule's TDZ check is overly strict
       startTour();
     }, 1500);
 
     return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- startTour is hoisted within the same render scope; adding it would re-fire on every render
   }, [shouldShow]);
 
   function startTour() {

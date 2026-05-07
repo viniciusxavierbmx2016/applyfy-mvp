@@ -226,6 +226,7 @@ export function DateRangeSelector({ value, onChange }: DateRangeSelectorProps) {
     setRightMonth(months.right);
     setMobileCustomStart(value.option === "custom" ? value.startDate : "");
     setMobileCustomEnd(value.option === "custom" ? value.endDate : "");
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: re-init local temp state only when popover opens, not when external value changes
   }, [open]);
 
   useEffect(() => {

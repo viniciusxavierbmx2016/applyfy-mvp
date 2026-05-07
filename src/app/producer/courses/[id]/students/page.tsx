@@ -951,6 +951,7 @@ function EditAccessModal({
               {isLifetime
                 ? "Acesso permanente, sem data de expiração."
                 : `Nova expiração: ${new Date(
+                    // eslint-disable-next-line react-hooks/purity -- preview date based on time of render; intentional, not memoized
                     Date.now() +
                       (isCustom ? customDays : (opt.days as number)) *
                         86400000

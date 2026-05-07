@@ -51,6 +51,7 @@ export default function CourseMenuPage(props: { params: Promise<{ id: string }> 
   );
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/immutability -- JS hoists function declarations; rule's TDZ check is overly strict
     load();
     fetch(`/api/courses/${params.id}`)
       .then((r) => (r.ok ? r.json() : null))

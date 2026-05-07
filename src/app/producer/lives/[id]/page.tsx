@@ -321,6 +321,7 @@ export default function ProducerLiveRoomPage() {
   const modUserIds = new Set(moderators.map((m) => m.userId));
 
   const recentUsers = (() => {
+    // eslint-disable-next-line react-hooks/purity -- "last 10 min" is time-relative; recomputing per render is intentional
     const tenMinAgo = Date.now() - 10 * 60 * 1000;
     const seen = new Map<string, LiveMessage["user"]>();
     for (const msg of [...messages].reverse()) {

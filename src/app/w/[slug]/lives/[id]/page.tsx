@@ -148,6 +148,7 @@ export default function LiveRoomPage() {
     update();
     const interval = setInterval(update, 1000);
     return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- live identity changes per render; we only care about scheduledAt/status
   }, [live?.scheduledAt, live?.status]);
 
   useEffect(() => {

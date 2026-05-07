@@ -34,11 +34,13 @@ export function useConfirm() {
   const handleClose = useCallback(() => {
     state.resolve?.(false);
     setState((s) => ({ ...s, isOpen: false, resolve: null }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only state.resolve matters; tracking whole `state` would over-recreate the callback
   }, [state.resolve]);
 
   const handleConfirm = useCallback(() => {
     state.resolve?.(true);
     setState((s) => ({ ...s, isOpen: false, resolve: null }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only state.resolve matters; tracking whole `state` would over-recreate the callback
   }, [state.resolve]);
 
   const ConfirmDialog = useCallback(

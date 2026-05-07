@@ -18,6 +18,7 @@ export function StudentTour() {
 
   useEffect(() => {
     if (!shouldShow) return;
+    // eslint-disable-next-line react-hooks/immutability -- JS hoists function declarations; rule's TDZ check is overly strict
     const timer = setTimeout(() => startTour(), 1500);
     return () => clearTimeout(timer);
   }, [shouldShow]);

@@ -79,6 +79,7 @@ export function ThumbnailUpload({
     window.removeEventListener("mouseup", handleMouseUp);
     window.removeEventListener("touchmove", handleTouchMove);
     window.removeEventListener("touchend", handleTouchEnd);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- handlers are hoisted function declarations referenced for cleanup; including them would create a circular dep
   }, []);
 
   function handleMouseMove(e: MouseEvent) { handleMove(e.clientX, e.clientY); }

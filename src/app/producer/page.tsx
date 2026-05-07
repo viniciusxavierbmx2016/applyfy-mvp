@@ -115,6 +115,7 @@ function DashboardContent() {
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => d && Array.isArray(d.courses) && setCourses(d.courses))
       .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally omitting collaborator: adding would re-fire fetches on store updates
   }, [user, router, hasAnalytics]);
 
   useEffect(() => {

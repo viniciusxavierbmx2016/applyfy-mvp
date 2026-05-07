@@ -77,6 +77,7 @@ export default function HomePage() {
           .catch(() => router.replace("/login?error=sem-workspace"));
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally omitting collaborator: adding would re-fire redirect logic on store updates
   }, [user, workspace, userLoading, router]);
 
   if (userLoading || !user) {

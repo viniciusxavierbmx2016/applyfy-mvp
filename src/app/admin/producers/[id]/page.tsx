@@ -148,6 +148,7 @@ export default function ProducerDetailPage(
 
   useEffect(() => {
     loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- loadData is a function declaration with new identity per render; only re-fetch when producer id changes
   }, [p.id]);
 
   useEffect(() => {
