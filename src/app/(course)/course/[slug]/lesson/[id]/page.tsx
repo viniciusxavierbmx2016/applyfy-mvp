@@ -277,18 +277,29 @@ export default function LessonPage(
   }
 
   if (error || !data) {
+    const isExpiredError = !!error?.toLowerCase().includes("expirou");
     return (
       <div className="flex flex-col h-full bg-white dark:bg-gray-950">
         <div className="h-[52px] shrink-0 border-b border-gray-200 dark:border-white/5 bg-gray-50 dark:bg-gray-900" />
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
             <p className="text-red-400 mb-4">{error || "Aula não encontrada"}</p>
-            <Link
-              href={`/course/${params.slug}`}
-              className="text-blue-400 hover:text-blue-300 text-sm"
-            >
-              ← Voltar ao curso
-            </Link>
+            {isExpiredError && (
+              <a
+                href={`/course/${params.slug}`}
+                className="inline-flex items-center justify-center px-4 py-2 mb-4 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg transition"
+              >
+                Renovar acesso
+              </a>
+            )}
+            <div>
+              <Link
+                href={`/course/${params.slug}`}
+                className="text-blue-400 hover:text-blue-300 text-sm"
+              >
+                ← Voltar ao curso
+              </Link>
+            </div>
           </div>
         </div>
       </div>
