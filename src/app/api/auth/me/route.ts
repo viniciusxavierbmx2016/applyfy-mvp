@@ -3,6 +3,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { createAdminClient, AVATAR_BUCKET } from "@/lib/supabase-admin";
 import { getAdminPermissions } from "@/lib/admin-permissions-server";
+import { logger } from "@/lib/logger";
 
 const MAX_BYTES = 2 * 1024 * 1024;
 const ALLOWED = new Set(["image/jpeg", "image/jpg", "image/png", "image/webp"]);
@@ -13,7 +14,7 @@ export async function GET(req: NextRequest) {
     const user = await getCurrentUser();
     const t1 = Date.now();
     if (!user) {
-      console.log(`[API /api/auth/me] auth:${t1 - t0}ms total:${t1 - t0}ms (unauth)`);
+      logger.debug("API /api/auth/me", `auth:${t1 - t0}ms total:${t1 - t0}ms (unauth)`);
       return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
     }
 
@@ -69,8 +70,9 @@ export async function GET(req: NextRequest) {
         ? Array.from(await getAdminPermissions(user.id, user.role))
         : [];
     const t2 = Date.now();
-    console.log(
-      `[API /api/auth/me] auth:${t1 - t0}ms query:${t2 - t1}ms total:${t2 - t0}ms`
+    logger.debug(
+      "API /api/auth/me",
+      `auth:${t1 - t0}ms query:${t2 - t1}ms total:${t2 - t0}ms`
     );
     return NextResponse.json({ user, collaborator, workspace, adminPermissions });
   } catch (error) {

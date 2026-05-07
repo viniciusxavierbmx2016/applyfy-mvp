@@ -8,6 +8,7 @@ import {
 } from "@/lib/webhook-helpers";
 import { processAutomations } from "@/lib/automation-engine";
 import { safeCompare } from "@/lib/safe-compare";
+import { logger } from "@/lib/logger";
 
 // Applyfy webhook events.
 // Docs: https://app.applyfy.com.br/api/v1
@@ -77,7 +78,7 @@ export async function POST(request: Request) {
     body = (await request.json().catch(() => ({}))) as ApplyfyPayload;
     const event = body?.event || "UNKNOWN";
 
-    console.log("[applyfy webhook] received", {
+    logger.info("applyfy webhook", "received", {
       event,
       transactionId: body?.transaction?.id,
       email: body?.client?.email,
@@ -105,7 +106,7 @@ export async function POST(request: Request) {
     }
 
     if (IGNORED_EVENTS.has(event)) {
-      console.log("[applyfy webhook] ignored event", { event });
+      logger.info("applyfy webhook", "ignored event", { event });
       await logWebhook({
         event,
         email: body?.client?.email,

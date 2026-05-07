@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { logger } from "@/lib/logger";
 
 export function PWARegister() {
   useEffect(() => {
@@ -28,7 +29,7 @@ export function PWARegister() {
               newWorker.state === "activated" &&
               navigator.serviceWorker.controller
             ) {
-              console.log("[PWA] Nova versão disponível");
+              logger.info("PWA", "Nova versão disponível");
             }
           });
         });

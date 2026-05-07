@@ -1,4 +1,5 @@
 import { BrevoClient } from "@getbrevo/brevo";
+import { logger } from "@/lib/logger";
 
 const DEFAULT_SENDER = {
   name: "Members Club",
@@ -41,7 +42,7 @@ export async function sendEmail({
       textContent,
     });
 
-    console.log("[email] sent to", to.email, "subject:", subject);
+    logger.info("email", "sent", { to: to.email, subject });
     return {
       success: true,
       messageId: (result as Record<string, unknown>)?.messageId,

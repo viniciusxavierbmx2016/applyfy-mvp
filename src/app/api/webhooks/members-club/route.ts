@@ -4,6 +4,7 @@ import type { SubscriptionStatus } from "@prisma/client";
 import { sendEmail } from "@/lib/email";
 import { subscriptionActivated, subscriptionRenewed, subscriptionSuspended } from "@/lib/email-templates";
 import { safeCompare } from "@/lib/safe-compare";
+import { logger } from "@/lib/logger";
 
 type ApplyfyPayload = {
   event?: string;
@@ -31,7 +32,7 @@ function formatDateBR(d: Date): string {
 }
 
 function log(event: string, email: string | undefined, txId: string | undefined, result: string) {
-  console.log(`[members-club webhook] event=${event} email=${email ?? "?"} tx=${txId ?? "?"} → ${result}`);
+  logger.info("members-club webhook", `event=${event} email=${email ?? "?"} tx=${txId ?? "?"} → ${result}`);
 }
 
 export async function POST(request: Request) {

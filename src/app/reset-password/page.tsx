@@ -4,6 +4,7 @@ import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase";
+import { logger } from "@/lib/logger";
 
 function ResetPasswordForm() {
   const searchParams = useSearchParams();
@@ -29,7 +30,7 @@ function ResetPasswordForm() {
     const supabase = createClient();
 
     const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log("[RESET] Auth event:", event, session?.user?.email);
+      logger.debug("RESET", "Auth event", { event, email: session?.user?.email });
       if (event === "PASSWORD_RECOVERY" || event === "SIGNED_IN") {
         setReady(true);
       }
@@ -37,7 +38,7 @@ function ResetPasswordForm() {
 
     async function init() {
       const { data } = await supabase.auth.getSession();
-      console.log("[RESET] getSession result:", !!data.session, data.session?.user?.email);
+      logger.debug("RESET", "getSession result", { hasSession: !!data.session, email: data.session?.user?.email });
       if (data.session) {
         setReady(true);
         return;
@@ -48,7 +49,7 @@ function ResetPasswordForm() {
         const accessToken = params.get("access_token");
         const refreshToken = params.get("refresh_token");
         if (accessToken && refreshToken) {
-          console.log("[RESET] Setting session from hash tokens");
+          logger.debug("RESET", "Setting session from hash tokens");
           const { error } = await supabase.auth.setSession({
             access_token: accessToken,
             refresh_token: refreshToken,

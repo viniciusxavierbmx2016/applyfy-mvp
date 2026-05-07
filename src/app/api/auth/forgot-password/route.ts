@@ -5,6 +5,7 @@ import { sendEmail } from "@/lib/email";
 import { passwordReset } from "@/lib/email-templates";
 import { rateLimit } from "@/lib/rate-limit";
 import { forgotPasswordSchema, validateBody } from "@/lib/validations";
+import { logger } from "@/lib/logger";
 
 export async function POST(req: Request) {
   const limited = rateLimit(req);
@@ -52,7 +53,7 @@ export async function POST(req: Request) {
       console.error("[FORGOT-PASSWORD] sendEmail error:", err);
     });
 
-    console.log(`[FORGOT-PASSWORD] Email enviado para ${user.email}`);
+    logger.info("FORGOT-PASSWORD", `Email enviado para ${user.email}`);
 
     return NextResponse.json({ success: true });
   } catch (err) {

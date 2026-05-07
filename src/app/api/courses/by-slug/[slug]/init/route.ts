@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser, isEnrollmentActive } from "@/lib/auth";
 import { getAutomationLocks } from "@/lib/automation-locks";
+import { logger } from "@/lib/logger";
 
 const MENU_DEFAULTS = [
   { label: "Home", icon: "home", url: "/course/:slug", isDefault: true },
@@ -179,8 +180,9 @@ export async function GET(_request: Request, props: { params: Promise<{ slug: st
     });
 
     const t2 = Date.now();
-    console.log(
-      `[API /api/courses/by-slug/${params.slug}/init] auth:${t1 - t0}ms query:${t2 - t1}ms total:${t2 - t0}ms`
+    logger.debug(
+      `API /api/courses/by-slug/${params.slug}/init`,
+      `auth:${t1 - t0}ms query:${t2 - t1}ms total:${t2 - t0}ms`
     );
 
     return NextResponse.json(

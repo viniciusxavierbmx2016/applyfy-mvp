@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { createAdminClient } from "@/lib/supabase-admin";
 import { createClient } from "@supabase/supabase-js";
 import { rateLimit } from "@/lib/rate-limit";
+import { logger } from "@/lib/logger";
 
 export async function POST(request: Request) {
   const limited = rateLimit(request);
@@ -95,11 +96,12 @@ export async function POST(request: Request) {
       );
     }
 
-    console.log(
-      `[IMPERSONATE-SESSION] Success: ${impToken.admin.email} → ${impToken.user.email}`
+    logger.info(
+      "IMPERSONATE-SESSION",
+      `Success: ${impToken.admin.email} → ${impToken.user.email}`
     );
 
-    console.log("[IMPERSONATE-SESSION] Tokens:", {
+    logger.debug("IMPERSONATE-SESSION", "Tokens", {
       hasAccessToken: !!signInData.session.access_token,
       accessTokenLength: signInData.session.access_token?.length,
       hasRefreshToken: !!signInData.session.refresh_token,

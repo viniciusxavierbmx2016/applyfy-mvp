@@ -3,6 +3,7 @@
 import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase";
+import { logger } from "@/lib/logger";
 
 function ImpersonateContent() {
   const searchParams = useSearchParams();
@@ -35,7 +36,7 @@ function ImpersonateContent() {
 
         setStatus(`Entrando como ${session.email}...`);
 
-        console.log("[IMPERSONATE-CLIENT] Tokens received:", {
+        logger.debug("IMPERSONATE-CLIENT", "Tokens received", {
           hasAccessToken: !!session.access_token,
           hasRefreshToken: !!session.refresh_token,
           email: session.email,
@@ -48,7 +49,7 @@ function ImpersonateContent() {
           refresh_token: session.refresh_token,
         });
 
-        console.log("[IMPERSONATE-CLIENT] setSession result:", {
+        logger.debug("IMPERSONATE-CLIENT", "setSession result", {
           error: sessionError?.message || null,
           code: sessionError?.status || null,
         });

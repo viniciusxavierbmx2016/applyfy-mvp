@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminPerm } from "@/lib/admin-permissions-server";
 import crypto from "crypto";
 import { logAudit, getRequestMeta } from "@/lib/audit";
+import { logger } from "@/lib/logger";
 
 export async function POST(request: Request, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
@@ -42,8 +43,9 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
       process.env.NEXT_PUBLIC_APP_URL ||
       "";
 
-    console.log(
-      `[IMPERSONATE] Admin ${admin.email} gerou token para ${producer.email}`
+    logger.info(
+      "IMPERSONATE",
+      `Admin ${admin.email} gerou token para ${producer.email}`
     );
 
     await logAudit({

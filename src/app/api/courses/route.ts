@@ -9,6 +9,7 @@ import {
 import { canAccessWorkspace, resolveStaffWorkspace } from "@/lib/workspace";
 import { hasWorkspaceAccess } from "@/lib/workspace-access";
 import { checkPlanLimits, PlanLimitError } from "@/lib/plan-limits";
+import { logger } from "@/lib/logger";
 
 export async function GET(request: Request) {
   const t0 = Date.now();
@@ -16,7 +17,7 @@ export async function GET(request: Request) {
     const user = await getCurrentUser();
     const t1 = Date.now();
     if (!user) {
-      console.log(`[API /api/courses] auth:${t1 - t0}ms total:${t1 - t0}ms (unauth)`);
+      logger.debug("API /api/courses", `auth:${t1 - t0}ms total:${t1 - t0}ms (unauth)`);
       return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
     }
 
@@ -206,8 +207,9 @@ export async function GET(request: Request) {
     });
 
     const t2 = Date.now();
-    console.log(
-      `[API /api/courses] auth:${t1 - t0}ms query:${t2 - t1}ms total:${t2 - t0}ms`
+    logger.debug(
+      "API /api/courses",
+      `auth:${t1 - t0}ms query:${t2 - t1}ms total:${t2 - t0}ms`
     );
     return NextResponse.json(
       {

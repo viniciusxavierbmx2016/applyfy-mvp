@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { hasWorkspaceAccess } from "@/lib/workspace-access";
 import { isWorkspaceSuspended } from "@/lib/subscription";
+import { logger } from "@/lib/logger";
 
 export async function GET(_request: Request, props: { params: Promise<{ slug: string }> }) {
   const params = await props.params;
@@ -35,8 +36,9 @@ export async function GET(_request: Request, props: { params: Promise<{ slug: st
       );
     }
     if (!user) {
-      console.log(
-        `[API /api/w/${params.slug}/init] auth+ws:${t1 - t0}ms total:${t1 - t0}ms (unauth)`
+      logger.debug(
+        `API /api/w/${params.slug}/init`,
+        `auth+ws:${t1 - t0}ms total:${t1 - t0}ms (unauth)`
       );
       return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
     }
@@ -210,8 +212,9 @@ export async function GET(_request: Request, props: { params: Promise<{ slug: st
     });
 
     const t2 = Date.now();
-    console.log(
-      `[API /api/w/${params.slug}/init] auth+ws:${t1 - t0}ms query:${t2 - t1}ms total:${t2 - t0}ms`
+    logger.debug(
+      `API /api/w/${params.slug}/init`,
+      `auth+ws:${t1 - t0}ms query:${t2 - t1}ms total:${t2 - t0}ms`
     );
 
     return NextResponse.json(

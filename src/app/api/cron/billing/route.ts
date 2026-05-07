@@ -4,6 +4,7 @@ import {
   subscriptionExpiring,
   subscriptionSuspended,
 } from "@/lib/email-templates";
+import { logger } from "@/lib/logger";
 
 export async function GET(req: Request) {
   const authHeader = req.headers.get("authorization");
@@ -94,7 +95,7 @@ export async function GET(req: Request) {
     }
   }
 
-  console.log(`[BILLING-CRON] Done:`, results);
+  logger.info("BILLING-CRON", "Done", results as unknown as Record<string, unknown>);
   return Response.json(results);
 }
 
@@ -129,7 +130,7 @@ async function sendBillingEmail(
     )
   );
 
-  console.log(`[BILLING-CRON] Sent ${type} to ${sub.user.email}`);
+  logger.info("BILLING-CRON", `Sent ${type} to ${sub.user.email}`);
 }
 
 async function sendSuspendEmail(sub: SubWithRelations) {
@@ -146,5 +147,5 @@ async function sendSuspendEmail(sub: SubWithRelations) {
     )
   );
 
-  console.log(`[BILLING-CRON] Sent suspend to ${sub.user.email}`);
+  logger.info("BILLING-CRON", `Sent suspend to ${sub.user.email}`);
 }
