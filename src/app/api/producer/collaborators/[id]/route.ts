@@ -6,6 +6,7 @@ import {
   COLLABORATOR_PERMISSIONS,
   type CollaboratorPermission,
 } from "@/lib/collaborator";
+import { updateCollaboratorSchema, validateBody } from "@/lib/validations";
 
 async function loadScoped(staffId: string, staffRole: string, id: string) {
   const c = await prisma.collaborator.findUnique({ where: { id } });
@@ -25,7 +26,10 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
     if (!c) {
       return NextResponse.json({ error: "Não encontrado" }, { status: 404 });
     }
-    const body = await request.json();
+    const raw = await request.json().catch(() => ({}));
+    const v = validateBody(updateCollaboratorSchema, raw);
+    if (!v.success) return v.error;
+    const body = v.data;
     const data: {
       name?: string | null;
       permissions?: CollaboratorPermission[];

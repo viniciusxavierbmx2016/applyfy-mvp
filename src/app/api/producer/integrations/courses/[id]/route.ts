@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireStaff } from "@/lib/auth";
+import { updateCourseExternalIdSchema, validateBody } from "@/lib/validations";
 
 export async function PATCH(request: Request, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
@@ -21,7 +22,10 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
       return NextResponse.json({ error: "Sem permissão" }, { status: 403 });
     }
 
-    const body = await request.json().catch(() => ({}));
+    const rawBody = await request.json().catch(() => ({}));
+    const v = validateBody(updateCourseExternalIdSchema, rawBody);
+    if (!v.success) return v.error;
+    const body = v.data;
     const raw = body?.externalProductId;
     const externalProductId =
       typeof raw === "string" && raw.trim().length > 0 ? raw.trim() : null;

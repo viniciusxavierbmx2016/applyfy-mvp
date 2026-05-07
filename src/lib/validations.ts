@@ -151,6 +151,237 @@ export const subscriptionActionSchema = z
   })
   .passthrough();
 
+// ─── Producer — settings & generic ─────────────────────────────────
+
+export const producerSettingsSchema = z.object({
+  settings: z.record(z.string(), z.union([z.string(), z.null()])),
+});
+
+export const reorderItemsSchema = z.object({
+  items: z.array(
+    z.object({
+      id: z.string().min(1).max(100),
+      order: z.number().int().min(0),
+    })
+  ),
+});
+
+export const onboardingSchema = z
+  .object({
+    type: z.string().max(100).optional().nullable(),
+  })
+  .passthrough();
+
+// ─── Producer — collaborators ──────────────────────────────────────
+
+export const createCollaboratorSchema = z.object({
+  email: z.string().email("Email inválido").max(255),
+  name: z.string().max(255).optional().nullable(),
+  permissions: z.array(z.string().max(50)).optional(),
+  courseIds: z.array(idString).optional(),
+});
+
+export const updateCollaboratorSchema = z
+  .object({
+    name: z.string().max(255).optional().nullable(),
+    permissions: z.array(z.string().max(50)).optional(),
+    courseIds: z.array(idString).optional(),
+  })
+  .passthrough();
+
+// ─── Producer — tags ───────────────────────────────────────────────
+
+export const createTagSchema = z.object({
+  name: z.string().min(1, "Nome obrigatório").max(100),
+  color: z.string().max(20).optional(),
+});
+
+export const updateTagSchema = z.object({
+  name: z.string().max(100).optional(),
+  color: z.string().max(20).optional(),
+});
+
+// ─── Producer — theme & customize (loose, passthrough) ─────────────
+
+export const producerThemeSchema = z
+  .object({
+    mode: z.enum(["dark", "light"]).optional(),
+  })
+  .passthrough();
+
+export const courseCustomizeSchema = z
+  .object({
+    memberLayoutStyle: z.string().max(50).optional(),
+  })
+  .passthrough();
+
+// ─── Producer — automations ────────────────────────────────────────
+
+export const createAutomationSchema = z.object({
+  name: z.string().min(1, "Nome é obrigatório").max(255),
+  triggerType: z.string().min(1).max(100),
+  triggerConfig: z.record(z.string(), z.unknown()).optional(),
+  actionType: z.string().min(1).max(100),
+  actionConfig: z.record(z.string(), z.unknown()).optional(),
+  courseId: idString.optional().nullable(),
+});
+
+export const updateAutomationSchema = z
+  .object({
+    name: z.string().max(255).optional(),
+    active: z.boolean().optional(),
+    triggerType: z.string().max(100).optional(),
+    triggerConfig: z.record(z.string(), z.unknown()).optional(),
+    actionType: z.string().max(100).optional(),
+    actionConfig: z.record(z.string(), z.unknown()).optional(),
+  })
+  .passthrough();
+
+// ─── Producer — lives ──────────────────────────────────────────────
+
+const liveBaseFields = {
+  title: z.string().max(255),
+  description: z.string().max(5000).optional().nullable(),
+  platform: z.string().max(50),
+  externalUrl: z.string().max(2000),
+  embedUrl: z.string().max(2000).optional().nullable(),
+  scheduledAt: z.string().max(50),
+  courseId: idString.optional().nullable(),
+  thumbnailUrl: z.string().max(2000).optional().nullable(),
+  recordingUrl: z.string().max(2000).optional().nullable(),
+  savedAsLessonId: idString.optional().nullable(),
+  visibility: z.enum(["PUBLIC", "COURSE_ONLY"]).optional(),
+};
+
+export const createLiveSchema = z.object({
+  ...liveBaseFields,
+  title: z.string().min(1, "Título é obrigatório").max(255),
+  externalUrl: z.string().min(1, "Link da live é obrigatório").max(2000),
+  scheduledAt: z.string().min(1, "Data agendada é obrigatória").max(50),
+});
+
+export const updateLiveSchema = z
+  .object({
+    title: z.string().max(255).optional(),
+    description: z.string().max(5000).optional().nullable(),
+    platform: z.string().max(50).optional(),
+    externalUrl: z.string().max(2000).optional(),
+    embedUrl: z.string().max(2000).optional().nullable(),
+    scheduledAt: z.string().max(50).optional(),
+    courseId: idString.optional().nullable(),
+    thumbnailUrl: z.string().max(2000).optional().nullable(),
+    recordingUrl: z.string().max(2000).optional().nullable(),
+    savedAsLessonId: idString.optional().nullable(),
+    visibility: z.enum(["PUBLIC", "COURSE_ONLY"]).optional(),
+  })
+  .passthrough();
+
+export const moderateLiveSchema = z.object({
+  roomOpen: z.boolean().optional(),
+  chatEnabled: z.boolean().optional(),
+});
+
+export const liveStatusSchema = z.object({
+  status: z.string().min(1).max(50),
+});
+
+export const liveModeratorSchema = z.object({
+  userId: z.string().min(1).max(100),
+});
+
+// ─── Producer — integrations ───────────────────────────────────────
+
+export const integrationRequestSchema = z
+  .object({
+    gateway: z.string().max(100).optional(),
+    email: z.string().max(255).optional(),
+    notes: z.string().max(2000).optional(),
+  })
+  .passthrough();
+
+export const updateCourseExternalIdSchema = z
+  .object({
+    externalProductId: z.union([z.string().max(200), z.null()]).optional(),
+  })
+  .passthrough();
+
+// ─── Producer — community groups ───────────────────────────────────
+
+export const createCommunityGroupSchema = z.object({
+  courseId: z.string().min(1, "courseId obrigatório").max(100),
+  name: z.string().min(1, "name obrigatório").max(255),
+  description: z.string().max(2000).optional().nullable(),
+  permission: z.enum(["READ_WRITE", "READ_ONLY"]).optional(),
+  order: z.number().int().min(0).optional(),
+});
+
+export const updateCommunityGroupSchema = z
+  .object({
+    name: z.string().max(255).optional(),
+    description: z.string().max(2000).optional().nullable(),
+    permission: z.enum(["READ_WRITE", "READ_ONLY"]).optional(),
+    order: z.number().int().min(0).optional(),
+  })
+  .passthrough();
+
+// ─── Producer — students ───────────────────────────────────────────
+
+export const enrollStudentSchema = z.object({
+  courseId: z.string().min(1, "courseId obrigatório").max(100),
+});
+
+export const studentTagSchema = z.object({
+  tagId: z.string().min(1, "tagId obrigatório").max(100),
+});
+
+// ─── Producer — quiz ───────────────────────────────────────────────
+
+export const createQuizSchema = z
+  .object({
+    title: z.string().max(255).optional().nullable(),
+    passingScore: z.number().int().min(0).max(100).optional(),
+    showAnswers: z.boolean().optional(),
+  })
+  .passthrough();
+
+export const updateQuizSchema = z
+  .object({
+    title: z.string().max(255).optional().nullable(),
+    passingScore: z.union([z.number(), z.string()]).optional(),
+    showAnswers: z.boolean().optional(),
+  })
+  .passthrough();
+
+const quizOptionShape = z.object({
+  text: z.string().min(1, "Texto da opção obrigatório").max(500),
+  isCorrect: z.boolean().optional(),
+});
+
+export const createQuizQuestionSchema = z.object({
+  text: z.string().min(1, "Texto da pergunta obrigatório").max(2000),
+  options: z.array(quizOptionShape).min(2, "Mínimo 2 opções").max(6, "Máximo 6 opções"),
+});
+
+export const updateQuizQuestionSchema = z
+  .object({
+    text: z.string().min(1).max(2000).optional(),
+    options: z
+      .array(quizOptionShape)
+      .min(2, "Mínimo 2 opções")
+      .max(6, "Máximo 6 opções")
+      .optional(),
+  })
+  .passthrough();
+
+// ─── Producer — lesson materials ───────────────────────────────────
+
+export const updateLessonMaterialSchema = z
+  .object({
+    name: z.string().max(255).optional(),
+    sortOrder: z.number().int().min(0).optional(),
+  })
+  .passthrough();
+
 // ─── Community / posts ─────────────────────────────────────────────
 
 export const createPostSchema = z

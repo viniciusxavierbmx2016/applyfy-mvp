@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireStaff, requirePermission } from "@/lib/auth";
+import { updateCommunityGroupSchema, validateBody } from "@/lib/validations";
 
 function slugify(s: string): string {
   return (s
@@ -77,8 +78,10 @@ export async function PUT(request: Request, props: { params: Promise<{ id: strin
       );
     }
 
-    const body = await request.json();
-    const { name, description, permission, order } = body;
+    const raw = await request.json().catch(() => ({}));
+    const v = validateBody(updateCommunityGroupSchema, raw);
+    if (!v.success) return v.error;
+    const { name, description, permission, order } = v.data;
 
     const data: Record<string, unknown> = {};
 

@@ -4,6 +4,7 @@ import { requireStaff } from "@/lib/auth";
 import { resolveStaffWorkspace } from "@/lib/workspace";
 import { NotificationType } from "@prisma/client";
 import { sendPushToUsers } from "@/lib/push-send";
+import { liveStatusSchema, validateBody } from "@/lib/validations";
 
 const VALID_TRANSITIONS: Record<string, string[]> = {
   SCHEDULED: ["LIVE"],
@@ -30,8 +31,10 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
       return NextResponse.json({ error: "Live não encontrada" }, { status: 404 });
     }
 
-    const body = await request.json();
-    const { status } = body;
+    const raw = await request.json().catch(() => ({}));
+    const v = validateBody(liveStatusSchema, raw);
+    if (!v.success) return v.error;
+    const { status } = v.data;
 
     const allowed = VALID_TRANSITIONS[existing.status];
     if (!allowed || !allowed.includes(status)) {

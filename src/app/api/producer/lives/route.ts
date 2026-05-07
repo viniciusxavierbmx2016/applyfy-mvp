@@ -4,6 +4,7 @@ import { requireStaff } from "@/lib/auth";
 import { resolveStaffWorkspace } from "@/lib/workspace";
 import { NotificationType } from "@prisma/client";
 import { sendPushToUsers } from "@/lib/push-send";
+import { createLiveSchema, validateBody } from "@/lib/validations";
 
 const VALID_PLATFORMS = ["GOOGLE_MEET", "ZOOM", "YOUTUBE_LIVE", "CUSTOM"];
 const MAX_LIVES = 50;
@@ -50,21 +51,14 @@ export async function POST(request: Request) {
     const staff = await requireStaff();
     const workspaceId = await getWorkspaceId(staff);
 
-    const body = await request.json();
-    const { title, description, platform, externalUrl, embedUrl, scheduledAt, courseId, thumbnailUrl, visibility } = body;
+    const raw = await request.json().catch(() => ({}));
+    const v = validateBody(createLiveSchema, raw);
+    if (!v.success) return v.error;
+    const { title, description, platform, externalUrl, embedUrl, scheduledAt, courseId, thumbnailUrl, visibility } = v.data;
     const liveVisibility = visibility === "COURSE_ONLY" ? "COURSE_ONLY" : "PUBLIC";
 
-    if (!title?.trim()) {
-      return NextResponse.json({ error: "Título é obrigatório" }, { status: 400 });
-    }
-    if (!platform || !VALID_PLATFORMS.includes(platform)) {
+    if (!VALID_PLATFORMS.includes(platform)) {
       return NextResponse.json({ error: "Plataforma inválida" }, { status: 400 });
-    }
-    if (!externalUrl?.trim()) {
-      return NextResponse.json({ error: "Link da live é obrigatório" }, { status: 400 });
-    }
-    if (!scheduledAt) {
-      return NextResponse.json({ error: "Data agendada é obrigatória" }, { status: 400 });
     }
     if (liveVisibility === "COURSE_ONLY" && !courseId) {
       return NextResponse.json({ error: "Curso é obrigatório para lives restritas" }, { status: 400 });

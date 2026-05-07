@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireStaff } from "@/lib/auth";
 import { resolveStaffWorkspace } from "@/lib/workspace";
+import { liveModeratorSchema, validateBody } from "@/lib/validations";
 
 async function verifyOwnership(params: { id: string }) {
   const staff = await requireStaff();
@@ -42,7 +43,10 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
   try {
     await verifyOwnership(params);
 
-    const { userId } = await request.json();
+    const raw = await request.json().catch(() => ({}));
+    const v = validateBody(liveModeratorSchema, raw);
+    if (!v.success) return v.error;
+    const { userId } = v.data;
     if (!userId) {
       return NextResponse.json({ error: "userId é obrigatório" }, { status: 400 });
     }
@@ -74,7 +78,10 @@ export async function DELETE(request: Request, props: { params: Promise<{ id: st
   try {
     await verifyOwnership(params);
 
-    const { userId } = await request.json();
+    const raw = await request.json().catch(() => ({}));
+    const v = validateBody(liveModeratorSchema, raw);
+    if (!v.success) return v.error;
+    const { userId } = v.data;
     if (!userId) {
       return NextResponse.json({ error: "userId é obrigatório" }, { status: 400 });
     }

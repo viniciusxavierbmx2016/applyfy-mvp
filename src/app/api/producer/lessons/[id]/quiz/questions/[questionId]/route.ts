@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { canEditLesson, requireStaff } from "@/lib/auth";
+import { updateQuizQuestionSchema, validateBody } from "@/lib/validations";
 
 export const dynamic = "force-dynamic";
 
@@ -15,14 +16,15 @@ export async function PUT(
       return NextResponse.json({ error: "Sem permissão" }, { status: 403 });
     }
 
-    const body = await request.json();
+    const raw = await request.json().catch(() => ({}));
+    const v = validateBody(updateQuizQuestionSchema, raw);
+    if (!v.success) return v.error;
+    const body = v.data;
     const data: Record<string, unknown> = {};
-    if (body.text !== undefined) data.text = String(body.text).trim();
+    if (body.text !== undefined) data.text = body.text.trim();
 
     if (body.options) {
-      const opts = body.options as Array<{ text: string; isCorrect?: boolean }>;
-      if (opts.length < 2) return NextResponse.json({ error: "Mínimo 2 opções" }, { status: 400 });
-      if (opts.length > 6) return NextResponse.json({ error: "Máximo 6 opções" }, { status: 400 });
+      const opts = body.options;
       const correctCount = opts.filter((o) => o.isCorrect).length;
       if (correctCount !== 1) return NextResponse.json({ error: "Exatamente 1 opção correta" }, { status: 400 });
 

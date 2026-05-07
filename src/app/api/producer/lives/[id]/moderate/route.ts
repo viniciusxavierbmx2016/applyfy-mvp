@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireStaff } from "@/lib/auth";
 import { resolveStaffWorkspace } from "@/lib/workspace";
+import { moderateLiveSchema, validateBody } from "@/lib/validations";
 
 export async function PATCH(request: Request, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
@@ -20,7 +21,10 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
       return NextResponse.json({ error: "Live não encontrada" }, { status: 404 });
     }
 
-    const body = await request.json();
+    const raw = await request.json().catch(() => ({}));
+    const v = validateBody(moderateLiveSchema, raw);
+    if (!v.success) return v.error;
+    const body = v.data;
     const data: Record<string, unknown> = {};
 
     if (typeof body.roomOpen === "boolean") data.roomOpen = body.roomOpen;

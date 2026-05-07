@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireStaff } from "@/lib/auth";
 import { resolveStaffWorkspace } from "@/lib/workspace";
+import { updateAutomationSchema, validateBody } from "@/lib/validations";
 
 async function getWorkspaceId(staff: Parameters<typeof resolveStaffWorkspace>[0]) {
   const { workspace } = await resolveStaffWorkspace(staff);
@@ -51,7 +52,10 @@ export async function PUT(request: Request, props: { params: Promise<{ id: strin
       return NextResponse.json({ error: "Não encontrada" }, { status: 404 });
     }
 
-    const body = await request.json();
+    const raw = await request.json().catch(() => ({}));
+    const v = validateBody(updateAutomationSchema, raw);
+    if (!v.success) return v.error;
+    const body = v.data;
 
     const automation = await prisma.automation.update({
       where: { id: params.id },

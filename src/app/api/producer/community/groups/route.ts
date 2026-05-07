@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireStaff, requirePermission } from "@/lib/auth";
 import { ensureDefaultGroup } from "@/lib/community-helpers";
+import { createCommunityGroupSchema, validateBody } from "@/lib/validations";
 
 function slugify(s: string): string {
   return (
@@ -56,20 +57,12 @@ export async function POST(request: Request) {
       await requirePermission(staff, "MANAGE_COMMUNITY");
     }
 
-    const body = await request.json();
-    const { courseId, name, description, permission, order } = body;
+    const raw = await request.json().catch(() => ({}));
+    const v = validateBody(createCommunityGroupSchema, raw);
+    if (!v.success) return v.error;
+    const { courseId, name, description, permission, order } = v.data;
 
-    if (!courseId || !name || typeof name !== "string" || !name.trim()) {
-      return NextResponse.json(
-        { error: "courseId e name são obrigatórios" },
-        { status: 400 }
-      );
-    }
-
-    const validPermissions = ["READ_WRITE", "READ_ONLY"];
-    const perm = validPermissions.includes(permission)
-      ? permission
-      : "READ_WRITE";
+    const perm = permission ?? "READ_WRITE";
 
     const count = await prisma.communityGroup.count({ where: { courseId } });
     if (count >= 20) {

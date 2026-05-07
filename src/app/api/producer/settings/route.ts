@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireStaff } from "@/lib/auth";
+import { producerSettingsSchema, validateBody } from "@/lib/validations";
 
 const ADMIN_KEYS = new Set(["stripe_webhook_secret"]);
 const STAFF_KEYS = new Set(["applyfy_token"]);
@@ -45,12 +46,10 @@ export async function PUT(request: Request) {
     const staff = await requireStaff();
     const canAdmin = staff.role === "ADMIN";
 
-    const body = await request.json();
-    const updates = body?.settings as Record<string, string | null> | undefined;
-
-    if (!updates || typeof updates !== "object") {
-      return NextResponse.json({ error: "Payload inválido" }, { status: 400 });
-    }
+    const raw = await request.json().catch(() => ({}));
+    const v = validateBody(producerSettingsSchema, raw);
+    if (!v.success) return v.error;
+    const updates = v.data.settings;
 
     for (const key of Object.keys(updates)) {
       if (!ALL_KEYS.has(key)) continue;

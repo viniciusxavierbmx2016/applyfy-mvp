@@ -6,6 +6,7 @@ import { createNotification } from "@/lib/notifications";
 import { sendEmail } from "@/lib/email";
 import { studentAccessGranted } from "@/lib/email-templates";
 import { processAutomations } from "@/lib/automation-engine";
+import { enrollStudentSchema, validateBody } from "@/lib/validations";
 
 async function assertCanManageCourse(
   staff: { id: string; role: Role },
@@ -20,7 +21,10 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
   const params = await props.params;
   try {
     const staff = await requireStaff();
-    const { courseId } = await request.json();
+    const raw = await request.json().catch(() => ({}));
+    const v = validateBody(enrollStudentSchema, raw);
+    if (!v.success) return v.error;
+    const { courseId } = v.data;
     if (!courseId) {
       return NextResponse.json(
         { error: "courseId obrigatório" },

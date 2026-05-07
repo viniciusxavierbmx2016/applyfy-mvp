@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireStaff } from "@/lib/auth";
 import { resolveStaffWorkspace } from "@/lib/workspace";
+import { studentTagSchema, validateBody } from "@/lib/validations";
 
 export async function GET(_request: Request, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
@@ -30,8 +31,10 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
       return NextResponse.json({ error: "Workspace não encontrado" }, { status: 400 });
     }
 
-    const body = await request.json();
-    const tagId = body.tagId as string;
+    const raw = await request.json().catch(() => ({}));
+    const v = validateBody(studentTagSchema, raw);
+    if (!v.success) return v.error;
+    const tagId = v.data.tagId;
 
     if (!tagId) {
       return NextResponse.json({ error: "tagId obrigatório" }, { status: 400 });

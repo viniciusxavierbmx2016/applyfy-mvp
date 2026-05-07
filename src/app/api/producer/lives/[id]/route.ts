@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireStaff } from "@/lib/auth";
 import { resolveStaffWorkspace } from "@/lib/workspace";
+import { updateLiveSchema, validateBody } from "@/lib/validations";
 
 async function getWorkspaceId(staff: Parameters<typeof resolveStaffWorkspace>[0]) {
   const { workspace } = await resolveStaffWorkspace(staff);
@@ -56,8 +57,10 @@ export async function PUT(request: Request, props: { params: Promise<{ id: strin
       return NextResponse.json({ error: "Live não encontrada" }, { status: 404 });
     }
 
-    const body = await request.json();
-    const { title, description, platform, externalUrl, embedUrl, scheduledAt, courseId, thumbnailUrl, recordingUrl, savedAsLessonId, visibility } = body;
+    const raw = await request.json().catch(() => ({}));
+    const v = validateBody(updateLiveSchema, raw);
+    if (!v.success) return v.error;
+    const { title, description, platform, externalUrl, embedUrl, scheduledAt, courseId, thumbnailUrl, recordingUrl, savedAsLessonId, visibility } = v.data;
 
     const live = await prisma.live.update({
       where: { id: params.id },

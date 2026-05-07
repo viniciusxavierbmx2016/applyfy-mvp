@@ -8,6 +8,7 @@ import {
 } from "@/lib/collaborator";
 import { sendEmail } from "@/lib/email";
 import { collaboratorInvite } from "@/lib/email-templates";
+import { createCollaboratorSchema, validateBody } from "@/lib/validations";
 
 export async function GET() {
   try {
@@ -59,17 +60,15 @@ export async function POST(request: Request) {
       );
     }
 
-    const body = await request.json();
-    const email = String(body.email ?? "").trim().toLowerCase();
-    const name = body.name ? String(body.name).trim() : null;
-    const permissions: string[] = Array.isArray(body.permissions)
-      ? body.permissions
-      : [];
-    const courseIds: string[] = Array.isArray(body.courseIds)
-      ? body.courseIds
-      : [];
+    const raw = await request.json().catch(() => ({}));
+    const v = validateBody(createCollaboratorSchema, raw);
+    if (!v.success) return v.error;
+    const email = v.data.email.trim().toLowerCase();
+    const name = v.data.name ? String(v.data.name).trim() : null;
+    const permissions: string[] = v.data.permissions ?? [];
+    const courseIds: string[] = v.data.courseIds ?? [];
 
-    if (!email || !/^\S+@\S+\.\S+$/.test(email)) {
+    if (!/^\S+@\S+\.\S+$/.test(email)) {
       return NextResponse.json({ error: "E-mail inválido" }, { status: 400 });
     }
     const validPerms = permissions.filter((p) =>

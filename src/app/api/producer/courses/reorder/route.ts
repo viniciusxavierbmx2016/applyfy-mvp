@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireStaff } from "@/lib/auth";
 import { resolveStaffWorkspace } from "@/lib/workspace";
+import { reorderItemsSchema, validateBody } from "@/lib/validations";
 
 export async function PUT(request: Request) {
   try {
@@ -15,10 +16,12 @@ export async function PUT(request: Request) {
       return NextResponse.json({ error: "Workspace não encontrado" }, { status: 404 });
     }
 
-    const body = await request.json();
-    const items: Array<{ id: string; order: number }> = body.items;
+    const raw = await request.json().catch(() => ({}));
+    const v = validateBody(reorderItemsSchema, raw);
+    if (!v.success) return v.error;
+    const items = v.data.items;
 
-    if (!Array.isArray(items) || items.length === 0) {
+    if (items.length === 0) {
       return NextResponse.json({ error: "items é obrigatório" }, { status: 400 });
     }
 

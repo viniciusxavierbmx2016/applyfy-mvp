@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireStaff, requirePermission } from "@/lib/auth";
+import { reorderItemsSchema, validateBody } from "@/lib/validations";
 
 export async function PUT(request: Request) {
   try {
@@ -9,8 +10,11 @@ export async function PUT(request: Request) {
       await requirePermission(staff, "MANAGE_COMMUNITY");
     }
 
-    const { items } = await request.json();
-    if (!Array.isArray(items) || items.length === 0) {
+    const raw = await request.json().catch(() => ({}));
+    const v = validateBody(reorderItemsSchema, raw);
+    if (!v.success) return v.error;
+    const items = v.data.items;
+    if (items.length === 0) {
       return NextResponse.json(
         { error: "items é obrigatório" },
         { status: 400 }

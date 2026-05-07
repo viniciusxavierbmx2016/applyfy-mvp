@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireStaff } from "@/lib/auth";
 import { resolveStaffWorkspace } from "@/lib/workspace";
+import { updateTagSchema, validateBody } from "@/lib/validations";
 
 async function getOwnedTag(tagId: string) {
   const staff = await requireStaff();
@@ -40,9 +41,11 @@ export async function PUT(request: Request, props: { params: Promise<{ id: strin
   const params = await props.params;
   try {
     const { tag, workspace } = await getOwnedTag(params.id);
-    const body = await request.json();
-    const name = (body.name as string)?.trim();
-    const color = (body.color as string)?.trim();
+    const raw = await request.json().catch(() => ({}));
+    const v = validateBody(updateTagSchema, raw);
+    if (!v.success) return v.error;
+    const name = v.data.name?.trim();
+    const color = v.data.color?.trim();
 
     if (name && name !== tag.name) {
       const dup = await prisma.tag.findUnique({

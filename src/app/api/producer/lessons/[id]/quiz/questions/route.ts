@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { canEditLesson, requireStaff } from "@/lib/auth";
+import { createQuizQuestionSchema, validateBody } from "@/lib/validations";
 
 export const dynamic = "force-dynamic";
 
@@ -17,19 +18,12 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
       return NextResponse.json({ error: "Quiz não encontrado" }, { status: 404 });
     }
 
-    const body = await request.json();
-    const { text, options } = body;
+    const raw = await request.json().catch(() => ({}));
+    const v = validateBody(createQuizQuestionSchema, raw);
+    if (!v.success) return v.error;
+    const { text, options } = v.data;
 
-    if (!text?.trim()) {
-      return NextResponse.json({ error: "Texto da pergunta obrigatório" }, { status: 400 });
-    }
-    if (!Array.isArray(options) || options.length < 2) {
-      return NextResponse.json({ error: "Mínimo 2 opções" }, { status: 400 });
-    }
-    if (options.length > 6) {
-      return NextResponse.json({ error: "Máximo 6 opções" }, { status: 400 });
-    }
-    const correctCount = options.filter((o: { isCorrect?: boolean }) => o.isCorrect).length;
+    const correctCount = options.filter((o) => o.isCorrect).length;
     if (correctCount !== 1) {
       return NextResponse.json({ error: "Exatamente 1 opção correta" }, { status: 400 });
     }

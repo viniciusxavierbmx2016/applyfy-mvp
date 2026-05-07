@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { canEditCourse, requireStaff } from "@/lib/auth";
+import { courseCustomizeSchema, validateBody } from "@/lib/validations";
 
 export const dynamic = "force-dynamic";
 
@@ -52,7 +53,10 @@ export async function PUT(request: Request, props: { params: Promise<{ id: strin
       return NextResponse.json({ error: "Sem permissão para editar este curso" }, { status: 403 });
     }
 
-    const body = await request.json();
+    const raw = await request.json().catch(() => ({}));
+    const v = validateBody(courseCustomizeSchema, raw);
+    if (!v.success) return v.error;
+    const body: Record<string, unknown> = v.data;
     const data: Record<string, unknown> = {};
 
     for (const key of COLOR_FIELDS) {
@@ -68,7 +72,7 @@ export async function PUT(request: Request, props: { params: Promise<{ id: strin
     }
 
     if (body.memberLayoutStyle !== undefined) {
-      if (!ALLOWED_LAYOUTS.has(body.memberLayoutStyle)) {
+      if (typeof body.memberLayoutStyle !== "string" || !ALLOWED_LAYOUTS.has(body.memberLayoutStyle)) {
         return NextResponse.json({ error: "Layout inválido" }, { status: 400 });
       }
       data.memberLayoutStyle = body.memberLayoutStyle;

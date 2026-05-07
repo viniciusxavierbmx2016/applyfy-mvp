@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { canEditLesson, requireStaff } from "@/lib/auth";
+import {
+  createQuizSchema,
+  updateQuizSchema,
+  validateBody,
+} from "@/lib/validations";
 
 export const dynamic = "force-dynamic";
 
@@ -38,7 +43,10 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
       return NextResponse.json({ error: "Aula já possui quiz" }, { status: 400 });
     }
 
-    const body = await request.json();
+    const raw = await request.json().catch(() => ({}));
+    const v = validateBody(createQuizSchema, raw);
+    if (!v.success) return v.error;
+    const body = v.data;
     const quiz = await prisma.quiz.create({
       data: {
         lessonId: params.id,
@@ -71,7 +79,10 @@ export async function PUT(request: Request, props: { params: Promise<{ id: strin
       return NextResponse.json({ error: "Quiz não encontrado" }, { status: 404 });
     }
 
-    const body = await request.json();
+    const raw = await request.json().catch(() => ({}));
+    const v = validateBody(updateQuizSchema, raw);
+    if (!v.success) return v.error;
+    const body = v.data;
     const data: Record<string, unknown> = {};
     if (body.title !== undefined) data.title = body.title || null;
     if (body.passingScore !== undefined) data.passingScore = Math.max(0, Math.min(100, Number(body.passingScore)));

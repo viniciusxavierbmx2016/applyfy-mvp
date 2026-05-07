@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireStaff } from "@/lib/auth";
 import { resolveStaffWorkspace } from "@/lib/workspace";
+import { createAutomationSchema, validateBody } from "@/lib/validations";
 
 const VALID_TRIGGERS = [
   "LESSON_COMPLETED", "MODULE_COMPLETED", "COURSE_COMPLETED", "QUIZ_PASSED",
@@ -170,12 +171,10 @@ export async function POST(request: Request) {
       );
     }
 
-    const { name, triggerType, triggerConfig, actionType, actionConfig, courseId } =
-      await request.json();
-
-    if (!name?.trim()) {
-      return NextResponse.json({ error: "Nome é obrigatório" }, { status: 400 });
-    }
+    const raw = await request.json().catch(() => ({}));
+    const v = validateBody(createAutomationSchema, raw);
+    if (!v.success) return v.error;
+    const { name, triggerType, triggerConfig, actionType, actionConfig, courseId } = v.data;
 
     const validationError = validateAutomation(
       triggerType, actionType,

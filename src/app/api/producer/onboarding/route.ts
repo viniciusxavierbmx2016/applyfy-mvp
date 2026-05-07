@@ -1,6 +1,7 @@
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { NextRequest } from "next/server";
+import { onboardingSchema } from "@/lib/validations";
 
 function getField(type: string | null) {
   return type === "course"
@@ -30,8 +31,9 @@ export async function POST(req: NextRequest) {
 
   let type: string | null = null;
   try {
-    const body = await req.json();
-    type = body?.type ?? null;
+    const raw = await req.json();
+    const parsed = onboardingSchema.safeParse(raw);
+    type = parsed.success ? (parsed.data.type ?? null) : null;
   } catch {}
 
   const field = getField(type);

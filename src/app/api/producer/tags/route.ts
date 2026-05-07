@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireStaff } from "@/lib/auth";
 import { resolveStaffWorkspace } from "@/lib/workspace";
+import { createTagSchema, validateBody } from "@/lib/validations";
 
 export async function GET() {
   try {
@@ -42,9 +43,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Workspace não encontrado" }, { status: 400 });
     }
 
-    const body = await request.json();
-    const name = (body.name as string)?.trim();
-    const color = (body.color as string)?.trim() || "#3b82f6";
+    const raw = await request.json().catch(() => ({}));
+    const v = validateBody(createTagSchema, raw);
+    if (!v.success) return v.error;
+    const name = v.data.name.trim();
+    const color = (v.data.color ?? "").trim() || "#3b82f6";
 
     if (!name) {
       return NextResponse.json({ error: "Nome obrigatório" }, { status: 400 });

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireStaff } from "@/lib/auth";
+import { producerThemeSchema, validateBody } from "@/lib/validations";
 
 interface ThemeConfig {
   mode: string;
@@ -63,7 +64,10 @@ export async function GET() {
 export async function PUT(req: Request) {
   try {
     const staff = await requireStaff();
-    const body = await req.json();
+    const raw = await req.json().catch(() => ({}));
+    const v = validateBody(producerThemeSchema, raw);
+    if (!v.success) return v.error;
+    const body = v.data as Record<string, string | undefined>;
 
     for (const key of COLOR_KEYS) {
       if (body[key] !== undefined && !HEX_RE.test(body[key])) {

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { canEditLesson, requireStaff } from "@/lib/auth";
 import { createAdminClient, MATERIALS_BUCKET } from "@/lib/supabase-admin";
+import { updateLessonMaterialSchema, validateBody } from "@/lib/validations";
 
 export async function PATCH(
   request: Request,
@@ -14,7 +15,10 @@ export async function PATCH(
       return NextResponse.json({ error: "Sem permissão" }, { status: 403 });
     }
 
-    const body = await request.json();
+    const raw = await request.json().catch(() => ({}));
+    const v = validateBody(updateLessonMaterialSchema, raw);
+    if (!v.success) return v.error;
+    const body = v.data;
     const data: Record<string, unknown> = {};
     if (typeof body.name === "string" && body.name.trim()) {
       data.name = body.name.trim();

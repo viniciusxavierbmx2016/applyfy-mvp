@@ -1,12 +1,16 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireStaff } from "@/lib/auth";
+import { integrationRequestSchema, validateBody } from "@/lib/validations";
 
 export async function POST(request: Request) {
   try {
     await requireStaff();
 
-    const body = await request.json().catch(() => ({}));
+    const raw = await request.json().catch(() => ({}));
+    const v = validateBody(integrationRequestSchema, raw);
+    if (!v.success) return v.error;
+    const body = v.data;
     const gateway = typeof body?.gateway === "string" ? body.gateway.trim() : "";
     const email = typeof body?.email === "string" ? body.email.trim() : "";
     const notes =
