@@ -62,6 +62,95 @@ export const mfaVerifySchema = z.object({
   code: mfaCode,
 });
 
+// ─── Webhooks (Applyfy) ────────────────────────────────────────────
+// Covers /api/webhooks/applyfy, /api/webhooks/members-club, and the
+// workspace-scoped /api/webhooks/applyfy/[slug]. All three receive
+// the same Applyfy payload shape (members-club adds an optional
+// `subscription` block). passthrough() keeps unknown gateway fields.
+
+export const applyfyWebhookSchema = z
+  .object({
+    event: z.string().min(1).max(100).optional(),
+    token: z.string().max(500).optional(),
+    offerCode: z.string().max(200).optional(),
+    client: z
+      .object({
+        id: z.string().max(200).optional(),
+        name: z.string().max(255).optional(),
+        email: z.string().email().max(255).optional(),
+        phone: z.string().max(50).optional(),
+      })
+      .passthrough()
+      .optional(),
+    transaction: z
+      .object({
+        id: z.string().max(200).optional(),
+        status: z.string().max(50).optional(),
+        paymentMethod: z.string().max(50).optional(),
+        amount: z.number().optional(),
+        payedAt: z.string().max(50).optional(),
+      })
+      .passthrough()
+      .optional(),
+    subscription: z
+      .object({
+        id: z.string().max(200).optional(),
+        status: z.string().max(50).optional(),
+        intervalType: z.string().max(50).optional(),
+        intervalCount: z.number().optional(),
+        cycle: z.number().optional(),
+      })
+      .passthrough()
+      .nullable()
+      .optional(),
+    orderItems: z
+      .array(
+        z
+          .object({
+            id: z.string().max(200).optional(),
+            price: z.number().optional(),
+            product: z
+              .object({
+                id: z.string().max(200).optional(),
+                name: z.string().max(255).optional(),
+                externalId: z.string().max(200).optional(),
+              })
+              .passthrough()
+              .optional(),
+          })
+          .passthrough()
+      )
+      .optional(),
+  })
+  .passthrough();
+
+// ─── Billing / Subscription (admin) ────────────────────────────────
+
+export const createProducerSubscriptionSchema = z.object({
+  planId: z.string().min(1, "planId obrigatório").max(100),
+  exempt: z.boolean().optional(),
+  exemptReason: z.string().max(500).optional().nullable(),
+});
+
+export const subscriptionActionSchema = z
+  .object({
+    action: z.enum([
+      "activate",
+      "suspend",
+      "cancel",
+      "reactivate",
+      "exempt",
+      "remove_exempt",
+      "change_plan",
+      "extend",
+    ]),
+    reason: z.string().max(500).optional(),
+    planId: z.string().min(1).max(100).optional(),
+    // `extend` parses days via parseInt — accept number or numeric string.
+    days: z.union([z.number(), z.string()]).optional(),
+  })
+  .passthrough();
+
 // ─── Community / posts ─────────────────────────────────────────────
 
 export const createPostSchema = z

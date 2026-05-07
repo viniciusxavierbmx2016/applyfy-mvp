@@ -5,27 +5,10 @@ import { sendEmail } from "@/lib/email";
 import { subscriptionActivated, subscriptionRenewed, subscriptionSuspended } from "@/lib/email-templates";
 import { safeCompare } from "@/lib/safe-compare";
 import { logger } from "@/lib/logger";
+import { applyfyWebhookSchema } from "@/lib/validations";
+import type { z } from "zod";
 
-type ApplyfyPayload = {
-  event?: string;
-  token?: string;
-  client?: { email?: string; name?: string };
-  transaction?: {
-    id?: string;
-    status?: string;
-    amount?: number;
-    paymentMethod?: string;
-    payedAt?: string;
-  };
-  subscription?: {
-    id?: string;
-    status?: string;
-    intervalType?: string;
-    intervalCount?: number;
-    cycle?: number;
-  } | null;
-  orderItems?: Array<{ product?: { externalId?: string } }>;
-};
+type ApplyfyPayload = z.infer<typeof applyfyWebhookSchema>;
 
 function formatDateBR(d: Date): string {
   return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" });
@@ -36,12 +19,12 @@ function log(event: string, email: string | undefined, txId: string | undefined,
 }
 
 export async function POST(request: Request) {
-  let body: ApplyfyPayload = {};
-  try {
-    body = (await request.json().catch(() => ({}))) as ApplyfyPayload;
-  } catch {
+  const raw = await request.json().catch(() => ({}));
+  const parsed = applyfyWebhookSchema.safeParse(raw);
+  if (!parsed.success) {
     return NextResponse.json({ received: true });
   }
+  const body: ApplyfyPayload = parsed.data;
 
   const event = body.event || "UNKNOWN";
   const email = body.client?.email?.trim().toLowerCase();

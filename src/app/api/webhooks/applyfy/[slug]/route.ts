@@ -10,26 +10,14 @@ import { sendEmail } from "@/lib/email";
 import { studentAccessGranted } from "@/lib/email-templates";
 import { processAutomations } from "@/lib/automation-engine";
 import { safeCompare } from "@/lib/safe-compare";
+import { applyfyWebhookSchema } from "@/lib/validations";
+import type { z } from "zod";
 
 // Workspace-scoped Applyfy webhook.
 // The workspace is identified by the `[slug]` segment (the workspace slug).
 // Token per workspace is stored in Settings under key `applyfy_token:<workspaceId>`.
 
-type ApplyfyProduct = { id?: string; name?: string; externalId?: string };
-type ApplyfyOrderItem = { id?: string; price?: number; product?: ApplyfyProduct };
-type ApplyfyPayload = {
-  event?: string;
-  token?: string;
-  offerCode?: string;
-  client?: { id?: string; name?: string; email?: string; phone?: string };
-  transaction?: {
-    id?: string;
-    status?: string;
-    paymentMethod?: string;
-    amount?: number;
-  };
-  orderItems?: ApplyfyOrderItem[];
-};
+type ApplyfyPayload = z.infer<typeof applyfyWebhookSchema>;
 
 const GRANT_EVENTS = new Set(["TRANSACTION_PAID"]);
 const REVOKE_EVENTS = new Set([
@@ -72,7 +60,12 @@ export async function POST(request: Request, props: { params: Promise<{ slug: st
   let body: ApplyfyPayload = {};
   let workspaceId: string | null = null;
   try {
-    body = (await request.json().catch(() => ({}))) as ApplyfyPayload;
+    const raw = await request.json().catch(() => ({}));
+    const parsed = applyfyWebhookSchema.safeParse(raw);
+    if (!parsed.success) {
+      return NextResponse.json({ received: true }, { status: 200 });
+    }
+    body = parsed.data;
     const event = body?.event || "UNKNOWN";
 
     const workspace = await prisma.workspace.findUnique({

@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminPerm } from "@/lib/admin-permissions-server";
 import type { SubscriptionStatus } from "@prisma/client";
 import { logAudit, getRequestMeta } from "@/lib/audit";
+import { subscriptionActionSchema, validateBody } from "@/lib/validations";
 
 interface Ctx {
   params: Promise<{ id: string }>;
@@ -65,11 +66,14 @@ export async function PATCH(request: Request, props: Ctx) {
       return NextResponse.json({ error: "Assinatura não encontrada" }, { status: 404 });
     }
 
-    const body = await request.json();
-    const action = body.action as Action;
-    const reason = body.reason as string | undefined;
+    const raw = await request.json().catch(() => ({}));
+    const v = validateBody(subscriptionActionSchema, raw);
+    if (!v.success) return v.error;
+    const body = v.data;
+    const action: Action = body.action;
+    const reason = body.reason;
 
-    if (!action || !ALLOWED_TRANSITIONS[action]) {
+    if (!ALLOWED_TRANSITIONS[action]) {
       return NextResponse.json({ error: "Ação inválida" }, { status: 400 });
     }
 
@@ -141,7 +145,7 @@ export async function PATCH(request: Request, props: Ctx) {
         break;
       }
       case "extend": {
-        const days = parseInt(body.days, 10);
+        const days = parseInt(String(body.days ?? ""), 10);
         if (!days || days < 1) {
           return NextResponse.json({ error: "days obrigatório (mínimo 1)" }, { status: 400 });
         }

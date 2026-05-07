@@ -9,6 +9,8 @@ import {
 import { processAutomations } from "@/lib/automation-engine";
 import { safeCompare } from "@/lib/safe-compare";
 import { logger } from "@/lib/logger";
+import { applyfyWebhookSchema } from "@/lib/validations";
+import type { z } from "zod";
 
 // Applyfy webhook events.
 // Docs: https://app.applyfy.com.br/api/v1
@@ -20,21 +22,7 @@ import { logger } from "@/lib/logger";
 //   orderItems: [ { id, price, product: { id, name, externalId } } ]
 // }
 
-type ApplyfyProduct = { id?: string; name?: string; externalId?: string };
-type ApplyfyOrderItem = { id?: string; price?: number; product?: ApplyfyProduct };
-type ApplyfyPayload = {
-  event?: string;
-  token?: string;
-  offerCode?: string;
-  client?: { id?: string; name?: string; email?: string; phone?: string };
-  transaction?: {
-    id?: string;
-    status?: string;
-    paymentMethod?: string;
-    amount?: number;
-  };
-  orderItems?: ApplyfyOrderItem[];
-};
+type ApplyfyPayload = z.infer<typeof applyfyWebhookSchema>;
 
 const GRANT_EVENTS = new Set(["TRANSACTION_PAID"]);
 const REVOKE_EVENTS = new Set([
@@ -75,7 +63,12 @@ async function logWebhook(entry: {
 export async function POST(request: Request) {
   let body: ApplyfyPayload = {};
   try {
-    body = (await request.json().catch(() => ({}))) as ApplyfyPayload;
+    const raw = await request.json().catch(() => ({}));
+    const parsed = applyfyWebhookSchema.safeParse(raw);
+    if (!parsed.success) {
+      return NextResponse.json({ received: true }, { status: 200 });
+    }
+    body = parsed.data;
     const event = body?.event || "UNKNOWN";
 
     logger.info("applyfy webhook", "received", {

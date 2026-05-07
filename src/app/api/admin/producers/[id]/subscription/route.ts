@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminPerm } from "@/lib/admin-permissions-server";
+import {
+  createProducerSubscriptionSchema,
+  validateBody,
+} from "@/lib/validations";
 
 export async function GET(_request: Request, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
@@ -66,12 +70,10 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
       );
     }
 
-    const body = await request.json();
-    const { planId, exempt, exemptReason } = body;
-
-    if (!planId) {
-      return NextResponse.json({ error: "planId obrigatório" }, { status: 400 });
-    }
+    const raw = await request.json().catch(() => ({}));
+    const v = validateBody(createProducerSubscriptionSchema, raw);
+    if (!v.success) return v.error;
+    const { planId, exempt, exemptReason } = v.data;
 
     const plan = await prisma.plan.findUnique({ where: { id: planId } });
     if (!plan || !plan.active) {
