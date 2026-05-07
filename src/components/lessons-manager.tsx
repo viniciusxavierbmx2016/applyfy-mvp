@@ -163,7 +163,7 @@ export function LessonsManager({
             onMouseDown={(e) => e.stopPropagation()}
             className="inline-flex"
           >
-            <HelpTooltip text="Cada aula pode ter vídeo (YouTube, Vimeo), texto, materiais em PDF e quiz avaliativo." />
+            <HelpTooltip text="Cada aula pode ter vídeo (YouTube, Vimeo, Panda Video), texto, materiais em PDF e quiz avaliativo." />
           </span>
         </button>
       )}
@@ -331,7 +331,7 @@ function LessonForm({
         type="url"
         value={videoUrl}
         onChange={(e) => setVideoUrl(e.target.value)}
-        placeholder="URL do vídeo (YouTube, Vimeo...)"
+        placeholder="URL do vídeo (YouTube, Vimeo, Panda Video...)"
         required
         className="w-full px-3 py-2 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
       />

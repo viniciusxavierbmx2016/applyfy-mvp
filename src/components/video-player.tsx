@@ -173,6 +173,26 @@ export function VideoPlayer({ video, onEnded }: Props) {
         player.on("ended", () => onEndedRef.current?.());
         vimeoPlayerRef.current = player;
       });
+    } else if (video.provider === "panda") {
+      // Panda Video: simple iframe embed using the tenant-specific subdomain
+      // captured by parseVideoUrl. No JS SDK is required for basic playback;
+      // the fixed bottom controls (speed/fullscreen) handle the rest.
+      const host =
+        video.embedHost || "player-vz-default.tv.pandavideo.com.br";
+      const iframe = document.createElement("iframe");
+      iframe.src = `https://${host}/embed/?v=${video.videoId}`;
+      iframe.style.border = "none";
+      iframe.style.position = "absolute";
+      iframe.style.top = "0";
+      iframe.style.left = "0";
+      iframe.style.width = "100%";
+      iframe.style.height = "100%";
+      iframe.allow =
+        "accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture";
+      iframe.allowFullscreen = true;
+      iframe.setAttribute("fetchpriority", "high");
+      mountEl.innerHTML = "";
+      mountEl.appendChild(iframe);
     }
 
     return () => {
@@ -190,7 +210,7 @@ export function VideoPlayer({ video, onEnded }: Props) {
       // Clear the mount node so a new player can be built
       if (mountEl) mountEl.innerHTML = "";
     };
-  }, [video.provider, video.videoId, playerElId]);
+  }, [video.provider, video.videoId, video.embedHost, playerElId]);
 
   const changeSpeed = useCallback((rate: number) => {
     setSpeed(rate);
