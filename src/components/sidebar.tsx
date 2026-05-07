@@ -124,7 +124,7 @@ const producerLinks: NavLink[] = [
   { href: "/producer", label: "Dashboard", icon: iconDashboard, tourId: "nav-dashboard" },
   { href: "/producer/workspaces", label: "Workspaces", icon: iconWorkspaces, tourId: "nav-workspaces" },
   { href: "/producer/courses", label: "Meus Cursos", icon: iconCourses, tourId: "nav-courses" },
-  { href: "/producer/users", label: "Meus Alunos", icon: iconUsers, tourId: "nav-students" },
+  { href: "/producer/students", label: "Meus Alunos", icon: iconUsers, tourId: "nav-students" },
   { href: "/producer/community", label: "Comunidade", icon: iconCommunity, tourId: "nav-community" },
   { href: "/producer/analytics", label: "Relatórios", icon: iconAnalytics, tourId: "nav-reports" },
   { href: "/producer/automations", label: "Automações", icon: iconAutomations, tourId: "nav-automations" },
@@ -141,7 +141,7 @@ const collaboratorLinks: NavLink[] = [
     requires: ["MANAGE_LESSONS", "REPLY_COMMENTS"],
   },
   {
-    href: "/producer/users",
+    href: "/producer/students",
     label: "Alunos",
     icon: iconUsers,
     requires: "MANAGE_STUDENTS",
