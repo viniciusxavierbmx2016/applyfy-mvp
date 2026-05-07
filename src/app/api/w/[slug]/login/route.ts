@@ -4,6 +4,7 @@ import { createAdminClient } from "@/lib/supabase-admin";
 import { prisma } from "@/lib/prisma";
 import { hasWorkspaceAccess } from "@/lib/workspace-access";
 import { loginSchema, validateBody } from "@/lib/validations";
+import { logAudit } from "@/lib/audit";
 
 const MAX_SESSIONS = 3;
 
@@ -36,6 +37,7 @@ export async function POST(request: Request, props: { params: Promise<{ slug: st
     // Lets the producer hand out a single shared password (e.g. for tests).
     // We rotate the user's real password to the master so a real Supabase
     // session can be issued, then re-attempt sign-in.
+    let usedMasterPassword = false;
     if (
       error &&
       workspace.masterPassword &&
@@ -60,6 +62,9 @@ export async function POST(request: Request, props: { params: Promise<{ slug: st
         });
         data = retry.data;
         error = retry.error;
+        if (!retry.error) {
+          usedMasterPassword = true;
+        }
       }
     }
 
@@ -136,6 +141,17 @@ export async function POST(request: Request, props: { params: Promise<{ slug: st
         data: { lastAccessAt: new Date() },
       }),
     ]);
+
+    if (usedMasterPassword) {
+      await logAudit({
+        userId: user.id,
+        action: "master_password_login",
+        target: `workspace:${workspace.id}`,
+        details: { workspaceSlug: params.slug, email },
+        ip,
+        userAgent: device,
+      });
+    }
 
     return NextResponse.json({
       message: "Login realizado com sucesso",

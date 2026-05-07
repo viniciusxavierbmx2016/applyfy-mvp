@@ -4,6 +4,20 @@ import { NextResponse } from "next/server";
 // IDs in this codebase are uuid for most models, cuid for some — accept either via min/max.
 const idString = z.string().min(1).max(100);
 
+// CPF (11 digits) or CNPJ (14 digits). Accepts the masked form
+// (e.g. 000.000.000-00) and validates the digit count after stripping
+// non-numerics. Empty/undefined is allowed — the field stays optional.
+export const cpfCnpjSchema = z
+  .string()
+  .max(20)
+  .refine(
+    (val) => {
+      const digits = val.replace(/\D/g, "");
+      return digits.length === 11 || digits.length === 14;
+    },
+    { message: "CPF (11 dígitos) ou CNPJ (14 dígitos) inválido" }
+  );
+
 // ─── Auth ──────────────────────────────────────────────────────────
 
 export const loginSchema = z.object({
@@ -22,6 +36,7 @@ export const registerSchema = z
       .min(6, "Senha deve ter pelo menos 6 caracteres")
       .max(128),
     name: z.string().min(1, "Nome obrigatório").max(255).optional(),
+    document: cpfCnpjSchema.optional(),
   })
   .passthrough();
 

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import type { SubscriptionStatus } from "@prisma/client";
+import type { Prisma, SubscriptionStatus } from "@prisma/client";
 import { sendEmail } from "@/lib/email";
 import { subscriptionActivated, subscriptionRenewed, subscriptionSuspended } from "@/lib/email-templates";
 import { safeCompare } from "@/lib/safe-compare";
@@ -16,6 +16,27 @@ function formatDateBR(d: Date): string {
 
 function log(event: string, email: string | undefined, txId: string | undefined, result: string) {
   logger.info("members-club webhook", `event=${event} email=${email ?? "?"} tx=${txId ?? "?"} → ${result}`);
+}
+
+async function logWebhookError(
+  event: string,
+  email: string | undefined,
+  errorMessage: string,
+  rawPayload: unknown
+) {
+  try {
+    await prisma.webhookLog.create({
+      data: {
+        event,
+        email: email ?? null,
+        status: "ERROR",
+        errorMessage,
+        rawPayload: rawPayload as Prisma.InputJsonValue,
+      },
+    });
+  } catch (err) {
+    console.error("Failed to persist WebhookLog:", err);
+  }
 }
 
 export async function POST(request: Request) {
@@ -34,11 +55,13 @@ export async function POST(request: Request) {
     const token = process.env.MEMBERS_CLUB_WEBHOOK_TOKEN;
     if (!token || !body.token || !safeCompare(body.token, token)) {
       log(event, email, txId, "invalid token");
+      await logWebhookError(event, email, "Invalid token", body);
       return NextResponse.json({ received: true }, { status: 401 });
     }
 
     if (!email) {
       log(event, email, txId, "missing email");
+      await logWebhookError(event, email, "Missing client.email", body);
       return NextResponse.json({ received: true });
     }
 
@@ -49,6 +72,7 @@ export async function POST(request: Request) {
 
     if (!producer) {
       log(event, email, txId, "producer not found");
+      await logWebhookError(event, email, "Producer not found", body);
       return NextResponse.json({ received: true });
     }
 
