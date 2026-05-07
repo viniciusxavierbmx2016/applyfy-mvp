@@ -275,10 +275,12 @@ export default function LiveRoomPage() {
       return (
         <div className="relative w-full aspect-video bg-gray-900 rounded-xl flex flex-col items-center justify-center text-center p-6">
           {live.thumbnailUrl && (
-            <img
+            <Image
               src={live.thumbnailUrl}
               alt=""
-              className="absolute inset-0 w-full h-full object-cover rounded-xl opacity-20"
+              fill
+              sizes="100vw"
+              className="object-cover rounded-xl opacity-20"
             />
           )}
           <div className="relative z-10">

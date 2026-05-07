@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, use } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -253,9 +254,11 @@ export default function ProducerDetailPage(
         <div className="flex flex-col sm:flex-row gap-4 sm:items-start sm:justify-between">
           <div className="flex items-center gap-4">
             {data.producer.avatarUrl ? (
-              <img
+              <Image
                 src={data.producer.avatarUrl}
                 alt={data.producer.name}
+                width={64}
+                height={64}
                 className="w-16 h-16 rounded-full object-cover"
               />
             ) : (
@@ -513,9 +516,11 @@ function TabWorkspaces({
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-3 min-w-0">
               {w.logoUrl ? (
-                <img
+                <Image
                   src={w.logoUrl}
                   alt={w.name}
+                  width={40}
+                  height={40}
                   className="w-10 h-10 rounded-lg object-cover"
                 />
               ) : (
@@ -581,9 +586,11 @@ function TabCourses({ courses }: { courses: CourseRow[] }) {
           className="border border-gray-200 dark:border-white/[0.06] rounded-xl overflow-hidden bg-white dark:bg-white/[0.03]"
         >
           {c.thumbnail ? (
-            <img
+            <Image
               src={c.thumbnail}
               alt={c.title}
+              width={400}
+              height={225}
               className="w-full aspect-video object-cover"
             />
           ) : (
@@ -654,9 +661,11 @@ function TabStudents({
                     <td className="py-3 px-4">
                       <div className="flex items-center gap-2.5">
                         {s.avatarUrl ? (
-                          <img
+                          <Image
                             src={s.avatarUrl}
                             alt={s.name}
+                            width={28}
+                            height={28}
                             className="w-7 h-7 rounded-full object-cover"
                           />
                         ) : (

@@ -498,9 +498,11 @@ export default function ProducerLivesPage() {
                 {/* Thumbnail */}
                 {live.thumbnailUrl && (
                   <div className="w-32 h-20 rounded-lg overflow-hidden flex-shrink-0 bg-black/30">
-                    <img
+                    <Image
                       src={live.thumbnailUrl}
                       alt=""
+                      width={128}
+                      height={80}
                       className="w-full h-full object-cover"
                     />
                   </div>

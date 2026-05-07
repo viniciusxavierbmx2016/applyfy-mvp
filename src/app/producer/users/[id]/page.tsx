@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, use } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -121,9 +122,11 @@ export default function StudentDetailPage(
         <div className="flex flex-col sm:flex-row gap-4 sm:items-start sm:justify-between">
           <div className="flex items-center gap-4">
             {user.avatarUrl ? (
-              <img
+              <Image
                 src={user.avatarUrl}
                 alt={user.name}
+                width={56}
+                height={56}
                 className="w-14 h-14 rounded-full object-cover"
               />
             ) : (
@@ -302,9 +305,11 @@ function TabCourses({ enrollments }: { enrollments: EnrollmentData[] }) {
         >
           <div className="flex gap-4">
             {e.course.thumbnail ? (
-              <img
+              <Image
                 src={e.course.thumbnail}
                 alt={e.course.title}
+                width={80}
+                height={56}
                 className="w-20 h-14 rounded-lg object-cover flex-shrink-0"
               />
             ) : (

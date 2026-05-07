@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, use } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -256,9 +257,11 @@ export default function ProducerSubscriptionPage(
         </h1>
         <div className="flex items-center gap-3 mt-1">
           {data.producer.avatarUrl ? (
-            <img
+            <Image
               src={data.producer.avatarUrl}
               alt=""
+              width={32}
+              height={32}
               className="w-8 h-8 rounded-full object-cover"
             />
           ) : (

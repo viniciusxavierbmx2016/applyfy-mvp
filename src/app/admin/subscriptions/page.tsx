@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import Image from "next/image";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useConfirm } from "@/hooks/use-confirm";
 
@@ -306,9 +307,11 @@ export default function AdminSubscriptionsPage() {
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-3">
                           {s.user.avatarUrl ? (
-                            <img
+                            <Image
                               src={s.user.avatarUrl}
                               alt=""
+                              width={32}
+                              height={32}
                               className="w-8 h-8 rounded-full object-cover"
                             />
                           ) : (

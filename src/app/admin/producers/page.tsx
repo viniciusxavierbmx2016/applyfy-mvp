@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -158,9 +159,11 @@ export default function AdminProducersPage() {
                     <td className="py-4 px-4">
                       <div className="flex items-center gap-3">
                         {p.avatarUrl ? (
-                          <img
+                          <Image
                             src={p.avatarUrl}
                             alt={p.name}
+                            width={36}
+                            height={36}
                             className="w-9 h-9 rounded-full object-cover"
                           />
                         ) : (

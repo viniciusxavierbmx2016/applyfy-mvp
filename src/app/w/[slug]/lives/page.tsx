@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { SkeletonLiveCard } from "@/components/ui/skeleton";
@@ -102,7 +103,13 @@ export default function WorkspaceLivesPage() {
               <div className="flex items-start gap-4">
                 {live.thumbnailUrl && (
                   <div className="w-28 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100 dark:bg-black/30">
-                    <img src={live.thumbnailUrl} alt="" className="w-full h-full object-cover" />
+                    <Image
+                      src={live.thumbnailUrl}
+                      alt=""
+                      width={112}
+                      height={64}
+                      className="w-full h-full object-cover"
+                    />
                   </div>
                 )}
                 <div className="flex-1 min-w-0">
