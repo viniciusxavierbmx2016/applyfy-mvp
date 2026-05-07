@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createRouteHandlerClient } from "@/lib/supabase-route";
 import { getCurrentUser } from "@/lib/auth";
 import { logAudit, getRequestMeta } from "@/lib/audit";
+import { mfaVerifySchema, validateBody } from "@/lib/validations";
 
 export async function POST(req: Request) {
   const user = await getCurrentUser();
@@ -9,14 +10,10 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { factorId, code } = await req.json().catch(() => ({}));
-
-  if (!factorId || !code) {
-    return NextResponse.json(
-      { error: "Dados obrigatórios" },
-      { status: 400 }
-    );
-  }
+  const raw = await req.json().catch(() => ({}));
+  const v = validateBody(mfaVerifySchema, raw);
+  if (!v.success) return v.error;
+  const { factorId, code } = v.data;
 
   const supabase = await createRouteHandlerClient();
 

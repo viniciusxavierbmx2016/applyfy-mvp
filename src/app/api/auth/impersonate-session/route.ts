@@ -4,20 +4,17 @@ import { createAdminClient } from "@/lib/supabase-admin";
 import { createClient } from "@supabase/supabase-js";
 import { rateLimit } from "@/lib/rate-limit";
 import { logger } from "@/lib/logger";
+import { impersonateSessionSchema, validateBody } from "@/lib/validations";
 
 export async function POST(request: Request) {
   const limited = rateLimit(request);
   if (limited) return limited;
 
   try {
-    const { token } = await request.json();
-
-    if (!token) {
-      return NextResponse.json(
-        { error: "Token obrigatório" },
-        { status: 400 }
-      );
-    }
+    const raw = await request.json().catch(() => ({}));
+    const v = validateBody(impersonateSessionSchema, raw);
+    if (!v.success) return v.error;
+    const { token } = v.data;
 
     const impToken = await prisma.impersonateToken.findUnique({
       where: { token },

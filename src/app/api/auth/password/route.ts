@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { createAdminClient } from "@/lib/supabase-admin";
+import { passwordChangeSchema, validateBody } from "@/lib/validations";
 
 export async function PATCH(request: Request) {
   try {
@@ -13,22 +14,10 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
     }
 
-    const { currentPassword, newPassword } = await request.json();
-    if (
-      typeof currentPassword !== "string" ||
-      typeof newPassword !== "string"
-    ) {
-      return NextResponse.json(
-        { error: "Dados inválidos" },
-        { status: 400 }
-      );
-    }
-    if (newPassword.length < 6) {
-      return NextResponse.json(
-        { error: "A nova senha precisa ter pelo menos 6 caracteres" },
-        { status: 400 }
-      );
-    }
+    const raw = await request.json().catch(() => ({}));
+    const v = validateBody(passwordChangeSchema, raw);
+    if (!v.success) return v.error;
+    const { currentPassword, newPassword } = v.data;
 
     // Verify current password using an ephemeral client (no cookie writes).
     const verifier = createClient(

@@ -30,6 +30,38 @@ export const forgotPasswordSchema = z.object({
   from: z.string().max(50).optional(),
 });
 
+export const resetPasswordSchema = z.object({
+  password: z
+    .string()
+    .min(6, "Senha deve ter pelo menos 6 caracteres")
+    .max(128, "Senha muito longa"),
+});
+
+export const passwordChangeSchema = z.object({
+  currentPassword: z.string().min(1, "Senha atual obrigatória").max(128),
+  newPassword: z
+    .string()
+    .min(6, "A nova senha precisa ter pelo menos 6 caracteres")
+    .max(128, "Senha muito longa"),
+});
+
+export const impersonateSessionSchema = z.object({
+  token: z.string().min(1, "Token obrigatório").max(200),
+});
+
+const mfaFactorId = z.string().min(1, "Factor ID obrigatório").max(100);
+const mfaCode = z.string().min(6, "Código inválido").max(8);
+
+export const mfaUnenrollSchema = z.object({ factorId: mfaFactorId });
+export const mfaChallengeSchema = z.object({
+  factorId: mfaFactorId,
+  code: mfaCode,
+});
+export const mfaVerifySchema = z.object({
+  factorId: mfaFactorId,
+  code: mfaCode,
+});
+
 // ─── Community / posts ─────────────────────────────────────────────
 
 export const createPostSchema = z

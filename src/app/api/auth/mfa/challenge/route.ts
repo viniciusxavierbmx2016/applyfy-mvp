@@ -3,6 +3,7 @@ import { createRouteHandlerClient } from "@/lib/supabase-route";
 import { rateLimit } from "@/lib/rate-limit";
 import { prisma } from "@/lib/prisma";
 import { logAudit, getRequestMeta } from "@/lib/audit";
+import { mfaChallengeSchema, validateBody } from "@/lib/validations";
 
 const MAX_SESSIONS = 3;
 
@@ -10,14 +11,10 @@ export async function POST(req: Request) {
   const limited = rateLimit(req);
   if (limited) return limited;
 
-  const { factorId, code } = await req.json().catch(() => ({}));
-
-  if (!factorId || !code) {
-    return NextResponse.json(
-      { error: "Dados obrigatórios" },
-      { status: 400 }
-    );
-  }
+  const raw = await req.json().catch(() => ({}));
+  const v = validateBody(mfaChallengeSchema, raw);
+  if (!v.success) return v.error;
+  const { factorId, code } = v.data;
 
   const supabase = await createRouteHandlerClient();
 

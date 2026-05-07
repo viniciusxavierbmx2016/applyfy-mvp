@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createRouteHandlerClient } from "@/lib/supabase-route";
 import { createAdminClient } from "@/lib/supabase-admin";
 import { rateLimit } from "@/lib/rate-limit";
+import { resetPasswordSchema, validateBody } from "@/lib/validations";
 
 // Server-side password reset that bypasses the AAL2 requirement.
 //
@@ -19,20 +20,10 @@ export async function POST(req: Request) {
   if (limited) return limited;
 
   try {
-    const { password } = await req.json().catch(() => ({}));
-
-    if (!password || typeof password !== "string" || password.length < 6) {
-      return NextResponse.json(
-        { error: "Senha deve ter pelo menos 6 caracteres" },
-        { status: 400 }
-      );
-    }
-    if (password.length > 128) {
-      return NextResponse.json(
-        { error: "Senha muito longa" },
-        { status: 400 }
-      );
-    }
+    const raw = await req.json().catch(() => ({}));
+    const v = validateBody(resetPasswordSchema, raw);
+    if (!v.success) return v.error;
+    const { password } = v.data;
 
     // Pull the AAL1 session set by the recovery link.
     const supabase = await createRouteHandlerClient();
