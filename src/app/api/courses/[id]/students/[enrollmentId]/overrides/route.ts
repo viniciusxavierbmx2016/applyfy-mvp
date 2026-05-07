@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { canEditCourse, requireStaff } from "@/lib/auth";
+import { enrollmentOverrideSchema, validateBody } from "@/lib/validations";
 
 async function loadEnrollment(enrollmentId: string, courseId: string) {
   const enrollment = await prisma.enrollment.findUnique({
@@ -57,7 +58,10 @@ export async function POST(
         { status: 404 }
       );
     }
-    const body = await request.json().catch(() => ({}));
+    const rawBody = await request.json().catch(() => ({}));
+    const v = validateBody(enrollmentOverrideSchema, rawBody);
+    if (!v.success) return v.error;
+    const body = v.data;
     const moduleId: string | null = body.moduleId ?? null;
     const lessonId: string | null = body.lessonId ?? null;
     const released: boolean = body.released !== false;

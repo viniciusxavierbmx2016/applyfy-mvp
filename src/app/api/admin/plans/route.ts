@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminPerm } from "@/lib/admin-permissions-server";
+import { createPlanSchema, validateBody } from "@/lib/validations";
 
 export async function GET() {
   try {
@@ -29,12 +30,10 @@ export async function POST(request: Request) {
   try {
     await requireAdminPerm("MANAGE_PLANS");
 
-    const body = await request.json();
-    const { name, slug, price, currency, interval, maxWorkspaces, maxCoursesPerWorkspace, features } = body;
-
-    if (!name || !slug || price == null) {
-      return NextResponse.json({ error: "name, slug e price são obrigatórios" }, { status: 400 });
-    }
+    const raw = await request.json().catch(() => ({}));
+    const v = validateBody(createPlanSchema, raw);
+    if (!v.success) return v.error;
+    const { name, slug, price, currency, interval, maxWorkspaces, maxCoursesPerWorkspace, features } = v.data;
 
     const existing = await prisma.plan.findUnique({ where: { slug } });
     if (existing) {

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { canEditModule, requireStaff } from "@/lib/auth";
+import { reorderLessonsSchema, validateBody } from "@/lib/validations";
 
 export async function PATCH(request: Request, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
@@ -9,13 +10,10 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
     if (!(await canEditModule(staff, params.id))) {
       return NextResponse.json({ error: "Sem permissão" }, { status: 403 });
     }
-    const { lessonIds } = await request.json();
-    if (!Array.isArray(lessonIds)) {
-      return NextResponse.json(
-        { error: "lessonIds deve ser um array" },
-        { status: 400 }
-      );
-    }
+    const raw = await request.json().catch(() => ({}));
+    const v = validateBody(reorderLessonsSchema, raw);
+    if (!v.success) return v.error;
+    const { lessonIds } = v.data;
 
     await prisma.$transaction(
       lessonIds.map((id: string, index: number) =>

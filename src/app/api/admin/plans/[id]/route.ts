@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdminPerm } from "@/lib/admin-permissions-server";
+import { updatePlanSchema, validateBody } from "@/lib/validations";
 
 interface Ctx {
   params: Promise<{ id: string }>;
@@ -45,8 +46,10 @@ export async function PATCH(request: Request, props: Ctx) {
       return NextResponse.json({ error: "Plano não encontrado" }, { status: 404 });
     }
 
-    const body = await request.json();
-    const { name, price, maxWorkspaces, maxCoursesPerWorkspace, features, active } = body;
+    const raw = await request.json().catch(() => ({}));
+    const v = validateBody(updatePlanSchema, raw);
+    if (!v.success) return v.error;
+    const { name, price, maxWorkspaces, maxCoursesPerWorkspace, features, active } = v.data;
 
     const updated = await prisma.plan.update({
       where: { id: params.id },

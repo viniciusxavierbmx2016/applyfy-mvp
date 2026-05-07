@@ -4,6 +4,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { collaboratorCanActOnCourse } from "@/lib/collaborator";
 import { sanitizeHtml, stripHtml } from "@/lib/sanitize-html";
 import { PostType } from "@prisma/client";
+import { updatePostSchema, validateBody } from "@/lib/validations";
 
 const VALID_TYPES: PostType[] = ["QUESTION", "RESULT", "FEEDBACK", "FREE"];
 
@@ -36,7 +37,10 @@ export async function PUT(request: Request, props: { params: Promise<{ id: strin
       return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
     }
 
-    const { content, type } = await request.json();
+    const raw = await request.json().catch(() => ({}));
+    const v = validateBody(updatePostSchema, raw);
+    if (!v.success) return v.error;
+    const { content, type } = v.data;
 
     const data: Record<string, unknown> = {};
     if (content !== undefined) {

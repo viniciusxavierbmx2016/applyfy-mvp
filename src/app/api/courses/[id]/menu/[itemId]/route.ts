@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { canEditCourse, requireStaff } from "@/lib/auth";
+import { updateMenuItemSchema, validateBody } from "@/lib/validations";
 
 export async function PATCH(
   request: Request,
@@ -19,7 +20,10 @@ export async function PATCH(
       return NextResponse.json({ error: "Não encontrado" }, { status: 404 });
     }
 
-    const body = await request.json();
+    const raw = await request.json().catch(() => ({}));
+    const v = validateBody(updateMenuItemSchema, raw);
+    if (!v.success) return v.error;
+    const body = v.data;
     const data: {
       label?: string;
       icon?: string;

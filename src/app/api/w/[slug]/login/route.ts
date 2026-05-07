@@ -3,19 +3,17 @@ import { createRouteHandlerClient } from "@/lib/supabase-route";
 import { createAdminClient } from "@/lib/supabase-admin";
 import { prisma } from "@/lib/prisma";
 import { hasWorkspaceAccess } from "@/lib/workspace-access";
+import { loginSchema, validateBody } from "@/lib/validations";
 
 const MAX_SESSIONS = 3;
 
 export async function POST(request: Request, props: { params: Promise<{ slug: string }> }) {
   const params = await props.params;
   try {
-    const { email, password } = await request.json();
-    if (!email || !password) {
-      return NextResponse.json(
-        { error: "Email e senha são obrigatórios" },
-        { status: 400 }
-      );
-    }
+    const raw = await request.json().catch(() => ({}));
+    const v = validateBody(loginSchema, raw);
+    if (!v.success) return v.error;
+    const { email, password } = v.data;
 
     const workspace = await prisma.workspace.findUnique({
       where: { slug: params.slug },

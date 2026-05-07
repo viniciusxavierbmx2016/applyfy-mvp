@@ -8,6 +8,7 @@ import {
 import { sendEmail } from "@/lib/email";
 import { adminCollaboratorInvite } from "@/lib/email-templates";
 import { logAudit, getRequestMeta } from "@/lib/audit";
+import { createAdminCollaboratorSchema, validateBody } from "@/lib/validations";
 
 export async function GET() {
   try {
@@ -32,16 +33,12 @@ export async function POST(request: Request) {
   try {
     const admin = await requireAdmin();
 
-    const body = await request.json();
-    const email = String(body.email ?? "").trim().toLowerCase();
-    const name = body.name ? String(body.name).trim() : null;
-    const permissions: string[] = Array.isArray(body.permissions)
-      ? body.permissions
-      : [];
-
-    if (!email || !/^\S+@\S+\.\S+$/.test(email)) {
-      return NextResponse.json({ error: "E-mail inválido" }, { status: 400 });
-    }
+    const raw = await request.json().catch(() => ({}));
+    const v = validateBody(createAdminCollaboratorSchema, raw);
+    if (!v.success) return v.error;
+    const email = v.data.email.trim().toLowerCase();
+    const name = v.data.name ? String(v.data.name).trim() : null;
+    const permissions: string[] = v.data.permissions ?? [];
 
     const validPerms = permissions.filter((p) =>
       (ALL_ADMIN_PERMS as string[]).includes(p)

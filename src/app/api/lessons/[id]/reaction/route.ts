@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import type { ReactionType } from "@prisma/client";
+import { lessonReactionSchema, validateBody } from "@/lib/validations";
 
 export async function GET(_request: Request, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
@@ -81,11 +82,10 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
       return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
     }
 
-    const body = await request.json();
-    const type = body.type as ReactionType;
-    if (type !== "LIKE" && type !== "DISLIKE") {
-      return NextResponse.json({ error: "type deve ser LIKE ou DISLIKE" }, { status: 400 });
-    }
+    const raw = await request.json().catch(() => ({}));
+    const v = validateBody(lessonReactionSchema, raw);
+    if (!v.success) return v.error;
+    const type = v.data.type as ReactionType;
 
     const lesson = await prisma.lesson.findUnique({
       where: { id: params.id },

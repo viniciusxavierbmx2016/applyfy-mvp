@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { canEditLesson, requireStaff } from "@/lib/auth";
+import { updateLessonSchema, validateBody } from "@/lib/validations";
 
 export async function PUT(request: Request, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
@@ -9,8 +10,10 @@ export async function PUT(request: Request, props: { params: Promise<{ id: strin
     if (!(await canEditLesson(staff, params.id))) {
       return NextResponse.json({ error: "Sem permissão" }, { status: 403 });
     }
-    const { title, description, videoUrl, duration, daysToRelease } =
-      await request.json();
+    const raw = await request.json().catch(() => ({}));
+    const v = validateBody(updateLessonSchema, raw);
+    if (!v.success) return v.error;
+    const { title, description, videoUrl, duration, daysToRelease } = v.data;
 
     const lesson = await prisma.lesson.update({
       where: { id: params.id },

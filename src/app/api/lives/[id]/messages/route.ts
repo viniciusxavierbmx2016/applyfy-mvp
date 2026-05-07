@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
+import { liveMessageSchema, validateBody } from "@/lib/validations";
 
 const MAX_MESSAGE_LENGTH = 500;
 const PAGE_SIZE = 100;
@@ -65,12 +66,11 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
       return NextResponse.json({ error: "Chat desativado pelo moderador" }, { status: 403 });
     }
 
-    const body = await request.json();
-    const { content } = body;
+    const raw = await request.json().catch(() => ({}));
+    const v = validateBody(liveMessageSchema, raw);
+    if (!v.success) return v.error;
+    const { content } = v.data;
 
-    if (!content?.trim()) {
-      return NextResponse.json({ error: "Mensagem vazia" }, { status: 400 });
-    }
     if (content.length > MAX_MESSAGE_LENGTH) {
       return NextResponse.json({ error: `Mensagem deve ter no máximo ${MAX_MESSAGE_LENGTH} caracteres` }, { status: 400 });
     }

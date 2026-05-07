@@ -9,6 +9,7 @@ import {
 import { GAMIFICATION, getLevelForPoints } from "@/lib/utils";
 import { createNotification } from "@/lib/notifications";
 import { processAutomations } from "@/lib/automation-engine";
+import { progressSchema, validateBody } from "@/lib/validations";
 
 export async function POST(request: Request) {
   try {
@@ -17,13 +18,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
     }
 
-    const { lessonId, completed } = await request.json();
-    if (!lessonId || typeof completed !== "boolean") {
-      return NextResponse.json(
-        { error: "lessonId e completed são obrigatórios" },
-        { status: 400 }
-      );
-    }
+    const raw = await request.json().catch(() => ({}));
+    const v = validateBody(progressSchema, raw);
+    if (!v.success) return v.error;
+    const { lessonId, completed } = v.data;
 
     const lesson = await prisma.lesson.findUnique({
       where: { id: lessonId },

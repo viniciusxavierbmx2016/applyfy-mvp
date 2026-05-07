@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
+import { courseReviewSchema, validateBody } from "@/lib/validations";
 
 export async function GET(request: Request, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
@@ -88,7 +89,10 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
       );
     }
 
-    const body = await request.json();
+    const rawBody = await request.json().catch(() => ({}));
+    const v = validateBody(courseReviewSchema, rawBody);
+    if (!v.success) return v.error;
+    const body = v.data;
     const rating = Number(body.rating);
     if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
       return NextResponse.json(

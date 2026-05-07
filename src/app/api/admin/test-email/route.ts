@@ -11,6 +11,7 @@ import {
   subscriptionExpiring,
   subscriptionSuspended,
 } from "@/lib/email-templates";
+import { testEmailSchema, validateBody } from "@/lib/validations";
 
 const TEMPLATES: Record<string, () => { subject: string; htmlContent: string }> = {
   welcomeProducer: () => welcomeProducer("Teste Producer"),
@@ -26,11 +27,10 @@ const TEMPLATES: Record<string, () => { subject: string; htmlContent: string }> 
 export async function POST(request: Request) {
   try {
     await requireAdmin();
-    const { to, template } = await request.json();
-
-    if (!to || !template) {
-      return NextResponse.json({ error: "to e template obrigatórios" }, { status: 400 });
-    }
+    const raw = await request.json().catch(() => ({}));
+    const v = validateBody(testEmailSchema, raw);
+    if (!v.success) return v.error;
+    const { to, template } = v.data;
 
     const buildTemplate = TEMPLATES[template];
     if (!buildTemplate) {

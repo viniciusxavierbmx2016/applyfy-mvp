@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { canEditModule, requireStaff } from "@/lib/auth";
+import { updateModuleSchema, validateBody } from "@/lib/validations";
 
 export async function PUT(request: Request, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
@@ -9,8 +10,10 @@ export async function PUT(request: Request, props: { params: Promise<{ id: strin
     if (!(await canEditModule(staff, params.id))) {
       return NextResponse.json({ error: "Sem permissão" }, { status: 403 });
     }
-    const { title, daysToRelease, thumbnailUrl, sectionId, hideTitle, releaseAt } =
-      await request.json();
+    const raw = await request.json().catch(() => ({}));
+    const v = validateBody(updateModuleSchema, raw);
+    if (!v.success) return v.error;
+    const { title, daysToRelease, thumbnailUrl, sectionId, hideTitle, releaseAt } = v.data;
 
     const updated = await prisma.module.update({
       where: { id: params.id },

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { canEditModule, requireStaff } from "@/lib/auth";
+import { createLessonSchema, validateBody } from "@/lib/validations";
 
 export async function POST(request: Request, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
@@ -10,14 +11,10 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
       return NextResponse.json({ error: "Sem permissão" }, { status: 403 });
     }
 
-    const { title, description, videoUrl, duration, daysToRelease } =
-      await request.json();
-    if (!title || !videoUrl) {
-      return NextResponse.json(
-        { error: "Título e videoUrl são obrigatórios" },
-        { status: 400 }
-      );
-    }
+    const raw = await request.json().catch(() => ({}));
+    const v = validateBody(createLessonSchema, raw);
+    if (!v.success) return v.error;
+    const { title, description, videoUrl, duration, daysToRelease } = v.data;
 
     const lastLesson = await prisma.lesson.findFirst({
       where: { moduleId: params.id },

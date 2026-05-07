@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireStaff } from "@/lib/auth";
 import { checkPlanLimits, PlanLimitError } from "@/lib/plan-limits";
+import { createWorkspaceSchema, validateBody } from "@/lib/validations";
 
 const SLUG_RE = /^[a-z0-9][a-z0-9-]{1,48}[a-z0-9]$/;
 
@@ -40,17 +41,12 @@ export async function POST(request: Request) {
       }
     }
 
-    const body = await request.json();
-    const name: string | undefined = body?.name?.toString().trim();
-    const slug: string | undefined = body?.slug?.toString().trim().toLowerCase();
-    const loginBgColor: string | null = body?.loginBgColor || null;
-
-    if (!name || !slug) {
-      return NextResponse.json(
-        { error: "Nome e slug são obrigatórios" },
-        { status: 400 }
-      );
-    }
+    const raw = await request.json().catch(() => ({}));
+    const v = validateBody(createWorkspaceSchema, raw);
+    if (!v.success) return v.error;
+    const name = v.data.name.trim();
+    const slug = v.data.slug.trim().toLowerCase();
+    const loginBgColor: string | null = v.data.loginBgColor ?? null;
     if (!SLUG_RE.test(slug)) {
       return NextResponse.json(
         {

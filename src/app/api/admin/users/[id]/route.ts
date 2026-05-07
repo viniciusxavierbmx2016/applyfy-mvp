@@ -2,12 +2,16 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
 import { Role } from "@prisma/client";
+import { adminUserRoleSchema, validateBody } from "@/lib/validations";
 
 export async function PATCH(request: Request, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
   try {
     const admin = await requireAdmin();
-    const { role } = await request.json();
+    const raw = await request.json().catch(() => ({}));
+    const v = validateBody(adminUserRoleSchema, raw);
+    if (!v.success) return v.error;
+    const { role } = v.data;
 
     if (role !== "STUDENT" && role !== "PRODUCER" && role !== "ADMIN") {
       return NextResponse.json({ error: "Role inválida" }, { status: 400 });

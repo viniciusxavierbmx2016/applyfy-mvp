@@ -4,6 +4,7 @@ import { createAdminClient } from "@/lib/supabase-admin";
 import { getCurrentUser } from "@/lib/auth";
 import { rateLimit } from "@/lib/rate-limit";
 import { logAudit, getRequestMeta } from "@/lib/audit";
+import { inviteAcceptSchema, validateBody } from "@/lib/validations";
 
 export async function POST(
   request: Request,
@@ -33,8 +34,11 @@ export async function POST(
       return NextResponse.json({ ok: true, alreadyAccepted: true });
     }
 
-    const body = await request.json().catch(() => ({}));
-    const mode = body.mode as "login" | "signup" | undefined;
+    const rawBody = await request.json().catch(() => ({}));
+    const v = validateBody(inviteAcceptSchema, rawBody);
+    if (!v.success) return v.error;
+    const body = v.data;
+    const mode = body.mode;
     const sessionUser = await getCurrentUser();
 
     // If already authenticated, bind & accept (sets role to ADMIN_COLLABORATOR).

@@ -373,6 +373,261 @@ export const updateQuizQuestionSchema = z
   })
   .passthrough();
 
+// ─── Public / Student ──────────────────────────────────────────────
+
+export const progressSchema = z.object({
+  lessonId: z.string().min(1).max(100),
+  completed: z.boolean(),
+});
+
+export const pushSubscribeSchema = z.object({
+  endpoint: z.string().min(1).max(2000),
+  p256dh: z.string().min(1).max(500),
+  auth: z.string().min(1).max(500),
+  device: z.string().max(500).optional().nullable(),
+});
+
+export const lessonReactionSchema = z.object({
+  type: z.enum(["LIKE", "DISLIKE"]),
+});
+
+export const quizAttemptSchema = z.object({
+  answers: z
+    .array(
+      z.object({
+        questionId: z.string().min(1).max(100),
+        selectedOptionId: z.string().min(1).max(100),
+      })
+    )
+    .min(1),
+});
+
+export const liveMessageSchema = z.object({
+  content: z.string().min(1, "Mensagem vazia").max(5000),
+});
+
+export const courseReviewSchema = z.object({
+  rating: z.union([z.number(), z.string()]),
+  comment: z.string().max(5000).optional(),
+});
+
+export const inviteAcceptSchema = z
+  .object({
+    mode: z.enum(["login", "signup"]).optional(),
+    name: z.string().max(255).optional(),
+    password: z.string().max(128).optional(),
+  })
+  .passthrough();
+
+// ─── Admin — collaborators / users / plans / settings ──────────────
+
+export const createAdminCollaboratorSchema = z.object({
+  email: z.string().email("Email inválido").max(255),
+  name: z.string().max(255).optional().nullable(),
+  permissions: z.array(z.string().max(50)).optional(),
+});
+
+export const updateAdminCollaboratorSchema = z
+  .object({
+    name: z.string().max(255).optional().nullable(),
+    permissions: z.array(z.string().max(50)).optional(),
+    status: z.string().max(50).optional(),
+  })
+  .passthrough();
+
+export const createPlanSchema = z.object({
+  name: z.string().min(1, "name obrigatório").max(255),
+  slug: z.string().min(1, "slug obrigatório").max(100),
+  price: z.number(),
+  currency: z.string().max(10).optional(),
+  interval: z.string().max(50).optional(),
+  maxWorkspaces: z.number().int().optional(),
+  maxCoursesPerWorkspace: z.number().int().optional(),
+  features: z.string().max(50000).optional().nullable(),
+});
+
+export const updatePlanSchema = z
+  .object({
+    name: z.string().max(255).optional(),
+    price: z.number().optional(),
+    maxWorkspaces: z.number().int().optional(),
+    maxCoursesPerWorkspace: z.number().int().optional(),
+    features: z.string().max(50000).optional().nullable(),
+    active: z.boolean().optional(),
+  })
+  .passthrough();
+
+export const testEmailSchema = z.object({
+  to: z.string().email("Email inválido").max(255),
+  template: z.string().min(1).max(100),
+});
+
+export const platformSettingsSchema = z
+  .object({
+    logoUrl: z.string().max(2000).optional().nullable(),
+    faviconUrl: z.string().max(2000).optional().nullable(),
+  })
+  .passthrough();
+
+export const adminUserRoleSchema = z.object({
+  role: z.string().min(1).max(50),
+});
+
+export const adminProducerActionSchema = z.object({
+  action: z.enum(["suspend", "activate"]),
+});
+
+export const integrationRequestStatusSchema = z.object({
+  status: z.string().min(1).max(50),
+});
+
+// ─── Workspaces ────────────────────────────────────────────────────
+
+export const createWorkspaceSchema = z.object({
+  name: z.string().min(1, "Nome obrigatório").max(255),
+  slug: z.string().min(1, "Slug obrigatório").max(100),
+  loginBgColor: z.string().max(20).optional().nullable(),
+});
+
+export const updateWorkspaceSchema = z
+  .object({
+    name: z.string().max(255).optional(),
+    logoUrl: z.string().max(2000).optional().nullable(),
+    isActive: z.boolean().optional(),
+    masterPassword: z.string().max(255).optional().nullable(),
+    loginLayout: z.string().max(50).optional(),
+    loginBoxOpacity: z.union([z.number(), z.string()]).optional(),
+  })
+  .passthrough();
+
+// ─── Courses CRUD ──────────────────────────────────────────────────
+
+export const createCourseSchema = z
+  .object({
+    title: z.string().min(1, "title obrigatório").max(255),
+    slug: z.string().min(1, "slug obrigatório").max(255),
+    description: z.string().min(1, "description obrigatório").max(50000),
+    thumbnail: z.string().max(2000).optional().nullable(),
+    checkoutUrl: z.string().max(2000).optional().nullable(),
+    externalProductId: z.string().max(200).optional().nullable(),
+    isPublished: z.boolean().optional(),
+    showInStore: z.boolean().optional(),
+    featured: z.boolean().optional(),
+    category: z.string().max(100).optional().nullable(),
+    workspaceId: z.string().max(100).optional(),
+  })
+  .passthrough();
+
+export const courseReorderSchema = z
+  .object({
+    items: z
+      .array(
+        z.object({
+          type: z.string().min(1).max(50),
+          id: z.string().min(1).max(100),
+        })
+      )
+      .optional(),
+    // Legacy fallback used by older clients
+    moduleIds: z.array(z.string().min(1).max(100)).optional(),
+  })
+  .passthrough();
+
+export const titleOnlySchema = z.object({
+  title: z.string().min(1, "Título obrigatório").max(255),
+});
+
+export const enrollCourseStudentSchema = z.object({
+  email: z.string().email("Email inválido").max(255),
+  name: z.string().max(255).optional(),
+  days: z.union([z.number(), z.string()]).optional(),
+  phone: z.string().max(50).optional(),
+});
+
+export const createMenuItemSchema = z.object({
+  label: z.string().min(1, "label obrigatório").max(255),
+  icon: z.string().min(1).max(100),
+  url: z.string().min(1).max(2000),
+});
+
+export const updateMenuItemSchema = z
+  .object({
+    label: z.string().max(255).optional(),
+    icon: z.string().max(100).optional(),
+    url: z.string().max(2000).optional(),
+    enabled: z.boolean().optional(),
+  })
+  .passthrough();
+
+export const menuReorderSchema = z.object({
+  itemIds: z.array(z.string().min(1).max(100)),
+});
+
+export const createCourseModuleSchema = z.object({
+  title: z.string().min(1, "Título obrigatório").max(255),
+  daysToRelease: z.number().int().min(0).optional(),
+});
+
+export const enrollmentUpdateSchema = z
+  .object({
+    expiresAt: z.union([z.string(), z.null()]).optional(),
+  })
+  .passthrough();
+
+export const enrollmentOverrideSchema = z
+  .object({
+    moduleId: z.string().max(100).optional().nullable(),
+    lessonId: z.string().max(100).optional().nullable(),
+    released: z.boolean().optional(),
+  })
+  .passthrough();
+
+// ─── Modules / Sections / Lessons CRUD ─────────────────────────────
+
+export const updateSectionSchema = z.object({
+  title: z.string().min(1).max(255),
+});
+
+export const updateModuleSchema = z
+  .object({
+    title: z.string().max(255).optional(),
+    daysToRelease: z.number().int().min(0).optional(),
+    thumbnailUrl: z.string().max(2000).optional().nullable(),
+    sectionId: z.string().max(100).optional().nullable(),
+    hideTitle: z.boolean().optional(),
+    releaseAt: z.union([z.string(), z.null()]).optional(),
+  })
+  .passthrough();
+
+export const reorderLessonsSchema = z.object({
+  lessonIds: z.array(z.string().min(1).max(100)),
+});
+
+export const createLessonSchema = z.object({
+  title: z.string().min(1, "Título obrigatório").max(255),
+  description: z.string().max(50000).optional().nullable(),
+  videoUrl: z.string().min(1, "videoUrl obrigatório").max(2000),
+  duration: z.union([z.number(), z.null()]).optional(),
+  daysToRelease: z.number().int().min(0).optional(),
+});
+
+export const updateLessonSchema = z
+  .object({
+    title: z.string().max(255).optional(),
+    description: z.string().max(50000).optional().nullable(),
+    videoUrl: z.string().max(2000).optional(),
+    duration: z.union([z.number(), z.null()]).optional(),
+    daysToRelease: z.number().optional(),
+  })
+  .passthrough();
+
+// ─── Posts (community) ─────────────────────────────────────────────
+
+export const updatePostSchema = z.object({
+  content: z.string().min(1).max(20000),
+  type: z.enum(["FREE", "QUESTION", "RESULT", "FEEDBACK"]).optional(),
+});
+
 // ─── Producer — lesson materials ───────────────────────────────────
 
 export const updateLessonMaterialSchema = z

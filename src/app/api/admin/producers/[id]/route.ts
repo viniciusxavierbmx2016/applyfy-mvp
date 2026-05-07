@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminPerm } from "@/lib/admin-permissions-server";
 import { logAudit, getRequestMeta } from "@/lib/audit";
 import { decrypt } from "@/lib/encryption";
+import { adminProducerActionSchema, validateBody } from "@/lib/validations";
 
 export async function GET(_request: Request, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
@@ -214,8 +215,10 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
   const params = await props.params;
   try {
     const admin = await requireAdminPerm("MANAGE_PRODUCERS");
-    const body = await request.json();
-    const action = body.action as "suspend" | "activate";
+    const raw = await request.json().catch(() => ({}));
+    const v = validateBody(adminProducerActionSchema, raw);
+    if (!v.success) return v.error;
+    const action = v.data.action;
 
     const producer = await prisma.user.findUnique({
       where: { id: params.id },

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { canEditCourse, requireStaff } from "@/lib/auth";
+import { titleOnlySchema, validateBody } from "@/lib/validations";
 
 export async function POST(request: Request, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
@@ -9,10 +10,10 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
     if (!(await canEditCourse(staff, params.id))) {
       return NextResponse.json({ error: "Sem permissão" }, { status: 403 });
     }
-    const { title } = await request.json();
-    if (!title?.trim()) {
-      return NextResponse.json({ error: "Título obrigatório" }, { status: 400 });
-    }
+    const raw = await request.json().catch(() => ({}));
+    const v = validateBody(titleOnlySchema, raw);
+    if (!v.success) return v.error;
+    const { title } = v.data;
 
     const last = await prisma.section.findFirst({
       where: { courseId: params.id },

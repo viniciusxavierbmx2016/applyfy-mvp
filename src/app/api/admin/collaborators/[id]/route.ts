@@ -6,6 +6,7 @@ import {
   type AdminPerm,
 } from "@/lib/admin-permissions";
 import { logAudit, getRequestMeta } from "@/lib/audit";
+import { updateAdminCollaboratorSchema, validateBody } from "@/lib/validations";
 
 export async function PATCH(
   request: Request,
@@ -14,7 +15,10 @@ export async function PATCH(
   const params = await props.params;
   try {
     const admin = await requireAdmin();
-    const body = await request.json();
+    const raw = await request.json().catch(() => ({}));
+    const v = validateBody(updateAdminCollaboratorSchema, raw);
+    if (!v.success) return v.error;
+    const body = v.data;
 
     const collab = await prisma.adminCollaborator.findUnique({
       where: { id: params.id },

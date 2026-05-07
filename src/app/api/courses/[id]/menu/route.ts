@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { canEditCourse, getCurrentUser, requireStaff } from "@/lib/auth";
+import { createMenuItemSchema, validateBody } from "@/lib/validations";
 
 const DEFAULTS = [
   { label: "Home", icon: "home", url: "/course/:slug", isDefault: true },
@@ -65,13 +66,10 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
     if (!(await canEditCourse(staff, params.id))) {
       return NextResponse.json({ error: "Sem permissão" }, { status: 403 });
     }
-    const { label, icon, url } = await request.json();
-    if (!label || !url) {
-      return NextResponse.json(
-        { error: "Nome e URL obrigatórios" },
-        { status: 400 }
-      );
-    }
+    const raw = await request.json().catch(() => ({}));
+    const v = validateBody(createMenuItemSchema, raw);
+    if (!v.success) return v.error;
+    const { label, icon, url } = v.data;
     const last = await prisma.menuItem.findFirst({
       where: { courseId: params.id },
       orderBy: { order: "desc" },

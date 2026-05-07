@@ -10,6 +10,7 @@ import { canAccessWorkspace, resolveStaffWorkspace } from "@/lib/workspace";
 import { hasWorkspaceAccess } from "@/lib/workspace-access";
 import { checkPlanLimits, PlanLimitError } from "@/lib/plan-limits";
 import { logger } from "@/lib/logger";
+import { createCourseSchema, validateBody } from "@/lib/validations";
 
 export async function GET(request: Request) {
   const t0 = Date.now();
@@ -243,7 +244,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Sem permissão" }, { status: 403 });
     }
 
-    const body = await request.json();
+    const raw = await request.json().catch(() => ({}));
+    const vb = validateBody(createCourseSchema, raw);
+    if (!vb.success) return vb.error;
     const {
       title,
       slug,
@@ -256,14 +259,7 @@ export async function POST(request: Request) {
       featured,
       category,
       workspaceId: explicitWorkspaceId,
-    } = body;
-
-    if (!title || !slug || !description) {
-      return NextResponse.json(
-        { error: "Título, slug e descrição são obrigatórios" },
-        { status: 400 }
-      );
-    }
+    } = vb.data;
 
     let targetWorkspaceId: string | null = null;
     if (explicitWorkspaceId) {

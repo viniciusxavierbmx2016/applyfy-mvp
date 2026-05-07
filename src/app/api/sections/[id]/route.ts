@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { canEditCourse, requireStaff } from "@/lib/auth";
+import { updateSectionSchema, validateBody } from "@/lib/validations";
 
 async function authorize(sectionId: string) {
   const staff = await requireStaff();
@@ -22,10 +23,13 @@ export async function PUT(request: Request, props: { params: Promise<{ id: strin
     if ("error" in check) {
       return NextResponse.json({ error: check.error }, { status: check.status });
     }
-    const { title } = await request.json();
+    const raw = await request.json().catch(() => ({}));
+    const v = validateBody(updateSectionSchema, raw);
+    if (!v.success) return v.error;
+    const { title } = v.data;
     const section = await prisma.section.update({
       where: { id: params.id },
-      data: { ...(title !== undefined && { title: String(title).trim() }) },
+      data: { title: title.trim() },
     });
     return NextResponse.json({ section });
   } catch (error) {

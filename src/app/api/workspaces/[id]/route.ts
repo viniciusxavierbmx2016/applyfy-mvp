@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireStaff } from "@/lib/auth";
 import { canAccessWorkspace } from "@/lib/workspace";
+import { updateWorkspaceSchema, validateBody } from "@/lib/validations";
 
 export async function PATCH(request: Request, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
@@ -11,7 +12,10 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
       return NextResponse.json({ error: "Sem permissão" }, { status: 403 });
     }
 
-    const body = await request.json();
+    const raw = await request.json().catch(() => ({}));
+    const v = validateBody(updateWorkspaceSchema, raw);
+    if (!v.success) return v.error;
+    const body: Record<string, unknown> = v.data;
     const data: Record<string, unknown> = {};
     const hexRe = /^#[0-9a-fA-F]{6}$/;
     const allowedLayouts = new Set(["central", "lateral-left", "lateral-right"]);

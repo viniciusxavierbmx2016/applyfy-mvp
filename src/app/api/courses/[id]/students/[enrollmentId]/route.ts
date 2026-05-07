@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { canManageStudentsOfCourse, requireStaff } from "@/lib/auth";
+import { enrollmentUpdateSchema, validateBody } from "@/lib/validations";
 
 export async function PATCH(
   request: Request,
@@ -24,7 +25,10 @@ export async function PATCH(
       );
     }
 
-    const body = await request.json().catch(() => ({}));
+    const rawBody = await request.json().catch(() => ({}));
+    const v = validateBody(enrollmentUpdateSchema, rawBody);
+    if (!v.success) return v.error;
+    const body = v.data;
     if (!("expiresAt" in body)) {
       return NextResponse.json(
         { error: "Campo expiresAt obrigatório" },
@@ -33,7 +37,7 @@ export async function PATCH(
     }
 
     let expiresAt: Date | null = null;
-    if (body.expiresAt !== null) {
+    if (body.expiresAt) {
       const d = new Date(body.expiresAt);
       if (isNaN(d.getTime())) {
         return NextResponse.json(

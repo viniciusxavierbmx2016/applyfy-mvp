@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
 import { invalidatePlatformSettingsCache } from "@/lib/platform-settings";
+import { platformSettingsSchema, validateBody } from "@/lib/validations";
 
 export const dynamic = "force-dynamic";
 
@@ -23,8 +24,10 @@ export async function GET() {
 export async function PUT(request: Request) {
   try {
     await requireAdmin();
-    const body = await request.json();
-    const { logoUrl, faviconUrl } = body;
+    const raw = await request.json().catch(() => ({}));
+    const v = validateBody(platformSettingsSchema, raw);
+    if (!v.success) return v.error;
+    const { logoUrl, faviconUrl } = v.data;
 
     const settings = await prisma.platformSettings.upsert({
       where: { id: "platform" },

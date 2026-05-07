@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { processAutomations } from "@/lib/automation-engine";
+import { quizAttemptSchema, validateBody } from "@/lib/validations";
 
 export const dynamic = "force-dynamic";
 
@@ -71,10 +72,12 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
 
     if (!quiz) return NextResponse.json({ error: "Quiz não encontrado" }, { status: 404 });
 
-    const body = await request.json();
-    const submittedAnswers = body.answers as Array<{ questionId: string; selectedOptionId: string }>;
+    const raw = await request.json().catch(() => ({}));
+    const v = validateBody(quizAttemptSchema, raw);
+    if (!v.success) return v.error;
+    const submittedAnswers = v.data.answers;
 
-    if (!Array.isArray(submittedAnswers) || submittedAnswers.length !== quiz.questions.length) {
+    if (submittedAnswers.length !== quiz.questions.length) {
       return NextResponse.json({ error: "Responda todas as perguntas" }, { status: 400 });
     }
 

@@ -10,6 +10,7 @@ import { createNotification } from "@/lib/notifications";
 import { processAutomations } from "@/lib/automation-engine";
 import { sendEmail } from "@/lib/email";
 import { studentAccessGranted } from "@/lib/email-templates";
+import { enrollCourseStudentSchema, validateBody } from "@/lib/validations";
 
 function randomTempPassword(len = 8) {
   const alphabet = "abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -181,15 +182,10 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
       return NextResponse.json({ error: "Sem permissão" }, { status: 403 });
     }
 
-    const { email, name, days, phone } = (await request.json()) as {
-      email?: string;
-      name?: string;
-      days?: number | null;
-      phone?: string;
-    };
-    if (!email) {
-      return NextResponse.json({ error: "Email obrigatório" }, { status: 400 });
-    }
+    const raw = await request.json().catch(() => ({}));
+    const v = validateBody(enrollCourseStudentSchema, raw);
+    if (!v.success) return v.error;
+    const { email, name, days, phone } = v.data;
 
     const course = await prisma.course.findUnique({
       where: { id: params.id },

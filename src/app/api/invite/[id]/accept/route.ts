@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { createAdminClient } from "@/lib/supabase-admin";
 import { getCurrentUser } from "@/lib/auth";
+import { inviteAcceptSchema, validateBody } from "@/lib/validations";
 
 export async function POST(request: Request, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
@@ -25,8 +26,11 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
       return NextResponse.json({ ok: true, alreadyAccepted: true });
     }
 
-    const body = await request.json().catch(() => ({}));
-    const mode = body.mode as "login" | "signup" | undefined;
+    const rawBody = await request.json().catch(() => ({}));
+    const v = validateBody(inviteAcceptSchema, rawBody);
+    if (!v.success) return v.error;
+    const body = v.data;
+    const mode = body.mode;
 
     const sessionUser = await getCurrentUser();
 

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { canEditCourse, requireStaff } from "@/lib/auth";
+import { courseReorderSchema, validateBody } from "@/lib/validations";
 
 export async function PATCH(request: Request, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
@@ -11,11 +12,14 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
       return NextResponse.json({ error: "Sem permissão" }, { status: 403 });
     }
 
-    const body = await request.json();
+    const raw = await request.json().catch(() => ({}));
+    const v = validateBody(courseReorderSchema, raw);
+    if (!v.success) return v.error;
+    const body = v.data;
 
     // New: items = [{ type: 'section'|'module', id }]
     if (Array.isArray(body.items)) {
-      const items = body.items as Array<{ type: string; id: string }>;
+      const items = body.items;
       let currentSectionId: string | null = null;
       let moduleIndex = 0;
       let sectionIndex = 0;

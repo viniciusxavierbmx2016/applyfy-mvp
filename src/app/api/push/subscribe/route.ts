@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
+import { pushSubscribeSchema, validateBody } from "@/lib/validations";
 
 export async function POST(request: Request) {
   try {
@@ -9,14 +10,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
     }
 
-    const { endpoint, p256dh, auth, device } = await request.json();
-
-    if (!endpoint || !p256dh || !auth) {
-      return NextResponse.json(
-        { error: "Dados de subscription inválidos" },
-        { status: 400 }
-      );
-    }
+    const raw = await request.json().catch(() => ({}));
+    const v = validateBody(pushSubscribeSchema, raw);
+    if (!v.success) return v.error;
+    const { endpoint, p256dh, auth, device } = v.data;
 
     await prisma.pushSubscription.upsert({
       where: {
