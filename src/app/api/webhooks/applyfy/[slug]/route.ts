@@ -10,6 +10,7 @@ import { sendEmail } from "@/lib/email";
 import { studentAccessGranted } from "@/lib/email-templates";
 import { processAutomations } from "@/lib/automation-engine";
 import { safeCompare } from "@/lib/safe-compare";
+import { logger } from "@/lib/logger";
 import { applyfyWebhookSchema } from "@/lib/validations";
 import type { z } from "zod";
 
@@ -166,36 +167,60 @@ export async function POST(request: Request, props: { params: Promise<{ slug: st
 
       for (const item of items) {
         const externalId = item?.product?.externalId?.trim();
-        if (!externalId) {
+        const productId = item?.product?.id?.trim();
+        const lookupId = externalId || productId || "";
+        if (!externalId && !productId) {
           await logWebhook({
             event,
             email,
             workspaceId,
             status: "ERROR",
-            errorMessage: "Missing product.externalId",
+            errorMessage: "Missing product.externalId and product.id",
             rawPayload: item,
           });
-          results.push({ externalId: "", granted: false, reason: "missing externalId" });
+          results.push({ externalId: "", granted: false, reason: "missing product identifiers" });
           continue;
         }
 
-        const course = await prisma.course.findFirst({
-          where: { externalProductId: externalId, workspaceId },
-          select: { id: true, title: true, slug: true },
-        });
+        // Try externalId first (configured per-product when available),
+        // fall back to product.id (Applyfy's stable internal id).
+        let course = externalId
+          ? await prisma.course.findFirst({
+              where: { externalProductId: externalId, workspaceId },
+              select: { id: true, title: true, slug: true, externalProductId: true },
+            })
+          : null;
+        if (!course && productId) {
+          course = await prisma.course.findFirst({
+            where: { externalProductId: productId, workspaceId },
+            select: { id: true, title: true, slug: true, externalProductId: true },
+          });
+        }
+
         if (!course) {
+          logger.info(
+            "applyfy webhook",
+            `no course in workspace for externalId=${externalId ?? ""} productId=${productId ?? ""}`
+          );
           await logWebhook({
             event,
             email,
-            productExternalId: externalId,
+            productExternalId: lookupId,
             workspaceId,
             status: "ERROR",
-            errorMessage: `No course linked to externalId ${externalId} in workspace`,
+            errorMessage: `No course linked to externalId=${externalId ?? ""} productId=${productId ?? ""} in workspace`,
             rawPayload: item,
           });
-          results.push({ externalId, granted: false, reason: "no course" });
+          results.push({ externalId: lookupId, granted: false, reason: "no course" });
           continue;
         }
+
+        const matchedVia =
+          course.externalProductId === externalId ? "externalId" : "productId";
+        logger.info(
+          "applyfy webhook",
+          `matched course "${course.title}" via ${matchedVia}`
+        );
 
         await activateEnrollment(user.id, course.id);
 
@@ -242,13 +267,13 @@ export async function POST(request: Request, props: { params: Promise<{ slug: st
         await logWebhook({
           event,
           email,
-          productExternalId: externalId,
+          productExternalId: course.externalProductId ?? lookupId,
           courseId: course.id,
           workspaceId,
           status: "SUCCESS",
           rawPayload: item,
         });
-        results.push({ externalId, courseId: course.id, granted: true });
+        results.push({ externalId: lookupId, courseId: course.id, granted: true });
       }
 
       return NextResponse.json({ ok: true, results }, { status: 200 });
@@ -280,19 +305,27 @@ export async function POST(request: Request, props: { params: Promise<{ slug: st
       let revoked = 0;
       for (const item of items) {
         const externalId = item?.product?.externalId?.trim();
-        if (!externalId) continue;
+        const productId = item?.product?.id?.trim();
+        if (!externalId && !productId) continue;
 
-        const course = await prisma.course.findFirst({
-          where: { externalProductId: externalId, workspaceId },
-        });
+        let course = externalId
+          ? await prisma.course.findFirst({
+              where: { externalProductId: externalId, workspaceId },
+            })
+          : null;
+        if (!course && productId) {
+          course = await prisma.course.findFirst({
+            where: { externalProductId: productId, workspaceId },
+          });
+        }
         if (!course) {
           await logWebhook({
             event,
             email,
-            productExternalId: externalId,
+            productExternalId: externalId || productId || null,
             workspaceId,
             status: "ERROR",
-            errorMessage: `No course linked to externalId ${externalId} in workspace`,
+            errorMessage: `No course linked to externalId=${externalId ?? ""} productId=${productId ?? ""} in workspace`,
             rawPayload: item,
           });
           continue;
@@ -307,7 +340,7 @@ export async function POST(request: Request, props: { params: Promise<{ slug: st
         await logWebhook({
           event,
           email,
-          productExternalId: externalId,
+          productExternalId: course.externalProductId ?? null,
           courseId: course.id,
           workspaceId,
           status: "SUCCESS",
