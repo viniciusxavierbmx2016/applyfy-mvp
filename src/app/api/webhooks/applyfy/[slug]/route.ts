@@ -144,7 +144,7 @@ export async function POST(request: Request, props: { params: Promise<{ slug: st
     }
 
     const email = body?.client?.email?.trim().toLowerCase();
-    const name = body?.client?.name;
+    const name = body?.client?.name ?? undefined;
     const phone = body?.client?.phone?.trim() || null;
     if (!email) {
       await logWebhook({

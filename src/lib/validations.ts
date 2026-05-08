@@ -87,40 +87,51 @@ export const applyfyWebhookSchema = z
   .object({
     event: z.string().min(1).max(100).optional(),
     token: z.string().max(500).optional(),
-    offerCode: z.string().max(200).optional(),
+    offerCode: z.string().max(200).nullable().optional(),
+    // Applyfy frequently sends `null` for optional sub-objects and scalars
+    // (no CNPJ, no payment installments, no externalId on test products).
+    // Every field below allows null so a missing-vs-null distinction in the
+    // payload doesn't reject the webhook.
     client: z
       .object({
-        id: z.string().max(200).optional(),
-        name: z.string().max(255).optional(),
+        id: z.string().max(200).nullable().optional(),
+        name: z.string().max(255).nullable().optional(),
         // Email comes from Applyfy in shapes that don't always pass strict
         // RFC validation (extra spaces, missing TLD on test orders, etc.).
         // We accept any string here and revalidate downstream.
-        email: z.string().max(255).optional(),
-        phone: z.string().max(50).optional(),
+        email: z.string().max(255).nullable().optional(),
+        phone: z.string().max(50).nullable().optional(),
+        cnpj: z.string().max(50).nullable().optional(),
+        cpf: z.string().max(50).nullable().optional(),
+        address: z.unknown().nullable().optional(),
       })
       .passthrough()
+      .nullable()
       .optional(),
     transaction: z
       .object({
-        id: z.string().max(200).optional(),
-        status: z.string().max(50).optional(),
-        paymentMethod: z.string().max(50).optional(),
+        id: z.string().max(200).nullable().optional(),
+        status: z.string().max(50).nullable().optional(),
+        paymentMethod: z.string().max(50).nullable().optional(),
         // Applyfy sometimes serializes amounts as strings ("99.90"), so we
         // coerce numeric fields. Same for installments / exchange rate.
-        amount: z.coerce.number().optional(),
-        installments: z.coerce.number().optional(),
-        exchangeRate: z.coerce.number().optional(),
-        payedAt: z.string().max(50).optional(),
+        amount: z.coerce.number().nullable().optional(),
+        installments: z.coerce.number().nullable().optional(),
+        exchangeRate: z.coerce.number().nullable().optional(),
+        payedAt: z.string().max(50).nullable().optional(),
+        pixInformation: z.unknown().nullable().optional(),
+        boletoInformation: z.unknown().nullable().optional(),
       })
       .passthrough()
+      .nullable()
       .optional(),
     subscription: z
       .object({
-        id: z.string().max(200).optional(),
-        status: z.string().max(50).optional(),
-        intervalType: z.string().max(50).optional(),
-        intervalCount: z.coerce.number().optional(),
-        cycle: z.coerce.number().optional(),
+        id: z.string().max(200).nullable().optional(),
+        status: z.string().max(50).nullable().optional(),
+        intervalType: z.string().max(50).nullable().optional(),
+        intervalCount: z.coerce.number().nullable().optional(),
+        cycle: z.coerce.number().nullable().optional(),
       })
       .passthrough()
       .nullable()
@@ -129,19 +140,21 @@ export const applyfyWebhookSchema = z
       .array(
         z
           .object({
-            id: z.string().max(200).optional(),
-            price: z.coerce.number().optional(),
+            id: z.string().max(200).nullable().optional(),
+            price: z.coerce.number().nullable().optional(),
             product: z
               .object({
-                id: z.string().max(200).optional(),
-                name: z.string().max(255).optional(),
-                externalId: z.string().max(200).optional(),
+                id: z.string().max(200).nullable().optional(),
+                name: z.string().max(255).nullable().optional(),
+                externalId: z.string().max(200).nullable().optional(),
               })
               .passthrough()
+              .nullable()
               .optional(),
           })
           .passthrough()
       )
+      .nullable()
       .optional(),
   })
   .passthrough();

@@ -48,8 +48,8 @@ export async function POST(request: Request) {
   const body: ApplyfyPayload = parsed.data;
 
   const event = body.event || "UNKNOWN";
-  const email = body.client?.email?.trim().toLowerCase();
-  const txId = body.transaction?.id;
+  const email = body.client?.email?.trim().toLowerCase() ?? undefined;
+  const txId = body.transaction?.id ?? undefined;
 
   try {
     const token = process.env.MEMBERS_CLUB_WEBHOOK_TOKEN;
@@ -103,8 +103,8 @@ async function handlePaid(
   body: ApplyfyPayload
 ) {
   const producerId = producer.id;
-  const email = body.client?.email;
-  const txId = body.transaction?.id;
+  const email = body.client?.email ?? undefined;
+  const txId = body.transaction?.id ?? undefined;
   const amount = body.transaction?.amount ?? 0;
   const paidAt = body.transaction?.payedAt ? new Date(body.transaction.payedAt) : new Date();
   const applyfySubId = body.subscription?.id ?? null;
@@ -236,8 +236,8 @@ async function handlePaid(
 }
 
 async function handleCanceled(producerId: string, body: ApplyfyPayload) {
-  const email = body.client?.email;
-  const txId = body.transaction?.id;
+  const email = body.client?.email ?? undefined;
+  const txId = body.transaction?.id ?? undefined;
 
   const sub = await prisma.subscription.findFirst({
     where: {
@@ -278,8 +278,8 @@ async function handleRefund(
   body: ApplyfyPayload,
   event: string
 ) {
-  const email = body.client?.email;
-  const txId = body.transaction?.id;
+  const email = body.client?.email ?? undefined;
+  const txId = body.transaction?.id ?? undefined;
 
   const sub = await prisma.subscription.findFirst({
     where: {

@@ -134,7 +134,7 @@ export async function POST(request: Request) {
     }
 
     const email = body?.client?.email?.trim().toLowerCase();
-    const name = body?.client?.name;
+    const name = body?.client?.name ?? undefined;
 
     if (!email) {
       await logWebhook({
