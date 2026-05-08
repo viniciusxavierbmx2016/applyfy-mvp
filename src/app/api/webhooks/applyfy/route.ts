@@ -167,6 +167,28 @@ export async function POST(request: Request) {
     }
 
     if (GRANT_EVENTS.has(event)) {
+      // Idempotency: short-circuit if a SUCCESS row for this transaction
+      // already exists in the last 24h. Applyfy retries on timeouts and
+      // some producers configure both the global and the scoped webhook
+      // URLs, so without this guard the same purchase could enrol the
+      // student twice (idempotent) AND trigger duplicate access emails.
+      const txId = body?.transaction?.id;
+      if (txId) {
+        const existing = await prisma.webhookLog.findFirst({
+          where: {
+            event,
+            status: "SUCCESS",
+            createdAt: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) },
+            rawPayload: { path: ["transaction", "id"], equals: txId },
+          },
+          select: { id: true },
+        });
+        if (existing) {
+          logger.info("applyfy webhook", "duplicate webhook skipped", { txId });
+          return NextResponse.json({ ok: true, duplicate: true }, { status: 200 });
+        }
+      }
+
       const { user, tempPassword } = await ensureUserByEmail(email, name);
       const results: Array<{
         externalId: string;
@@ -279,7 +301,9 @@ export async function POST(request: Request) {
           productExternalId: course.externalProductId ?? lookupId,
           courseId: course.id,
           status: "SUCCESS",
-          rawPayload: item,
+          // Store the full body (not just the item) so the idempotency
+          // guard at the top can match by transaction.id on retry.
+          rawPayload: body,
         });
         results.push({ externalId: lookupId, courseId: course.id, granted: true });
       }

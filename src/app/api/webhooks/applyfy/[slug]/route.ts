@@ -177,6 +177,31 @@ export async function POST(request: Request, props: { params: Promise<{ slug: st
     }
 
     if (GRANT_EVENTS.has(event)) {
+      // Idempotency: short-circuit if a SUCCESS row for this transaction
+      // already exists in this workspace in the last 24h. Applyfy retries
+      // on timeouts; without this guard the student would receive
+      // duplicate access emails.
+      const txId = body?.transaction?.id;
+      if (txId) {
+        const existing = await prisma.webhookLog.findFirst({
+          where: {
+            event,
+            status: "SUCCESS",
+            workspaceId,
+            createdAt: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) },
+            rawPayload: { path: ["transaction", "id"], equals: txId },
+          },
+          select: { id: true },
+        });
+        if (existing) {
+          logger.info("applyfy webhook", "duplicate webhook skipped", {
+            slug: params.slug,
+            txId,
+          });
+          return NextResponse.json({ ok: true, duplicate: true }, { status: 200 });
+        }
+      }
+
       const { user, tempPassword } = await ensureUserByEmail(email, name, undefined, phone);
       // Access to a workspace is derived from Enrollment (course→workspace),
       // so we no longer write workspaceId on the User. Keeping that legacy
@@ -297,7 +322,9 @@ export async function POST(request: Request, props: { params: Promise<{ slug: st
           courseId: course.id,
           workspaceId,
           status: "SUCCESS",
-          rawPayload: item,
+          // Store the full body so the idempotency guard at the top can
+          // match by transaction.id on retry.
+          rawPayload: body,
         });
         results.push({ externalId: lookupId, courseId: course.id, granted: true });
       }
