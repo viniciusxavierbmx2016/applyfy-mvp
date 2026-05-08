@@ -9,104 +9,125 @@ datasource db {
 }
 
 model User {
-  id            String    @id @default(uuid())
-  email         String    @unique
-  name          String
-  avatarUrl     String?
-  role          Role      @default(STUDENT)
-  points        Int       @default(0)
-  level         Int       @default(1)
-  workspaceId   String?
-  phone           String?
-  businessType    String?
-  niche           String?
-  monthlyRevenue  String?
-  referralSource  String?
-  document        String?
-  themeConfig   String?   @default("{}")
-  lastAccessAt  DateTime?
-  lastIpAddress          String?
+  id                           String    @id @default(uuid())
+  email                        String    @unique
+  name                         String
+  avatarUrl                    String?
+  role                         Role      @default(STUDENT)
+  points                       Int       @default(0)
+  level                        Int       @default(1)
+  workspaceId                  String?
+  phone                        String?
+  businessType                 String?
+  niche                        String?
+  monthlyRevenue               String?
+  referralSource               String?
+  document                     String?
+  themeConfig                  String?   @default("{}")
+  lastAccessAt                 DateTime?
+  lastIpAddress                String?
   onboardingCompletedAt        DateTime?
-  courseOnboardingCompletedAt   DateTime?
+  courseOnboardingCompletedAt  DateTime?
   studentOnboardingCompletedAt DateTime?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  createdAt                    DateTime  @default(now())
+  updatedAt                    DateTime  @updatedAt
 
-  enrollments      Enrollment[]
-  progress         LessonProgress[]
-  posts            Post[]
-  comments         Comment[]
-  lessonComments   LessonComment[]
-  likes            Like[]
-  lessonReactions  LessonReaction[]
-  sessions         Session[]
-  notifications    Notification[]
-  certificates     Certificate[]
-  reviews          Review[]
-  ownedCourses     Course[]         @relation("CourseOwner")
-  ownedWorkspaces  Workspace[]      @relation("WorkspaceOwner")
-  workspace        Workspace?       @relation("WorkspaceMembers", fields: [workspaceId], references: [id], onDelete: SetNull)
-  collaborators    Collaborator[]
-  subscriptions    Subscription[]
-  quizAttempts     QuizAttempt[]
-  userTags         UserTag[]
-  liveMessages     LiveMessage[]
-  liveNotifications LiveNotification[]
-  pushSubscriptions PushSubscription[]
-  liveModerations    LiveModerator[]
-  pendingExecutions  PendingExecution[]
-  impersonateTargets ImpersonateToken[] @relation("impersonateTarget")
-  impersonateAdmins  ImpersonateToken[] @relation("impersonateAdmin")
-  accessLogs         AccessLog[]
-  auditLogs          AuditLog[]         @relation("auditLogs")
-  adminCollaborator  AdminCollaborator? @relation("AdminCollabUser")
-  adminCollabsInvited AdminCollaborator[] @relation("AdminCollabInviter")
-  supportTickets     SupportTicket[]    @relation("ProducerTickets")
-  assignedTickets    SupportTicket[]    @relation("AssignedTickets")
-  ticketMessages     TicketMessage[]    @relation("TicketMessages")
+  enrollments          Enrollment[]
+  progress             LessonProgress[]
+  posts                Post[]
+  comments             Comment[]
+  lessonComments       LessonComment[]
+  likes                Like[]
+  lessonReactions      LessonReaction[]
+  sessions             Session[]
+  notifications        Notification[]
+  certificates         Certificate[]
+  reviews              Review[]
+  ownedCourses         Course[]              @relation("CourseOwner")
+  ownedWorkspaces      Workspace[]           @relation("WorkspaceOwner")
+  workspace            Workspace?            @relation("WorkspaceMembers", fields: [workspaceId], references: [id], onDelete: SetNull)
+  collaborators        Collaborator[]
+  subscriptions        Subscription[]
+  quizAttempts         QuizAttempt[]
+  userTags             UserTag[]
+  liveMessages         LiveMessage[]
+  liveNotifications    LiveNotification[]
+  pushSubscriptions    PushSubscription[]
+  liveModerations      LiveModerator[]
+  pendingExecutions    PendingExecution[]
+  impersonateTargets   ImpersonateToken[]    @relation("impersonateTarget")
+  impersonateAdmins    ImpersonateToken[]    @relation("impersonateAdmin")
+  accessLogs           AccessLog[]
+  auditLogs            AuditLog[]            @relation("auditLogs")
+  adminCollaborator    AdminCollaborator?    @relation("AdminCollabUser")
+  adminCollabsInvited  AdminCollaborator[]   @relation("AdminCollabInviter")
+  supportTickets       SupportTicket[]       @relation("ProducerTickets")
+  assignedTickets      SupportTicket[]       @relation("AssignedTickets")
+  ticketMessages       TicketMessage[]       @relation("TicketMessages")
+  workspaceCredentials WorkspaceCredential[]
 
   @@index([workspaceId])
 }
 
 model Workspace {
-  id             String   @id @default(uuid())
-  slug           String   @unique
-  name           String
-  logoUrl        String?
-  loginLayout       String  @default("central")
+  id                String   @id @default(uuid())
+  slug              String   @unique
+  name              String
+  logoUrl           String?
+  loginLayout       String   @default("central")
   loginBgImageUrl   String?
-  loginBgColor      String? @default("#0a0a1a")
-  loginPrimaryColor String? @default("#6366f1")
+  loginBgColor      String?  @default("#0a0a1a")
+  loginPrimaryColor String?  @default("#6366f1")
   loginLogoUrl      String?
   loginTitle        String?
   loginSubtitle     String?
-  loginBoxColor     String? @default("#1a1a2e")
-  loginBoxOpacity   Float?  @default(0.85)
-  loginSideColor    String? @default("#0a0a1a")
-  loginLinkColor    String? @default("#818cf8")
-  accentColor    String?
-  bannerUrl      String?
-  bannerPosition String?  @default("{\"x\":50,\"y\":50}")
-  faviconUrl     String?
-  forceTheme     String?
-  customDomain   String?  @unique
-  masterPassword String?
-  ownerId        String
-  isActive       Boolean  @default(true)
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  loginBoxColor     String?  @default("#1a1a2e")
+  loginBoxOpacity   Float?   @default(0.85)
+  loginSideColor    String?  @default("#0a0a1a")
+  loginLinkColor    String?  @default("#818cf8")
+  accentColor       String?
+  bannerUrl         String?
+  bannerPosition    String?  @default("{\"x\":50,\"y\":50}")
+  faviconUrl        String?
+  forceTheme        String?
+  customDomain      String?  @unique
+  masterPassword    String?
+  ownerId           String
+  isActive          Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 
-  owner       User         @relation("WorkspaceOwner", fields: [ownerId], references: [id], onDelete: Cascade)
-  members     User[]       @relation("WorkspaceMembers")
-  courses     Course[]
-  webhookLogs WebhookLog[]
-  collaborators Collaborator[]
-  transactions ProducerTransaction[]
-  automations  Automation[]
-  tags         Tag[]
-  lives        Live[]
+  owner                User                  @relation("WorkspaceOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  members              User[]                @relation("WorkspaceMembers")
+  courses              Course[]
+  webhookLogs          WebhookLog[]
+  collaborators        Collaborator[]
+  transactions         ProducerTransaction[]
+  automations          Automation[]
+  tags                 Tag[]
+  lives                Live[]
+  workspaceCredentials WorkspaceCredential[]
 
   @@index([ownerId])
+}
+
+model WorkspaceCredential {
+  id           String    @id @default(uuid())
+  userId       String
+  workspaceId  String
+  passwordHash String
+  salt         String
+  resetToken   String?
+  resetExpires DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, workspaceId])
+  @@index([workspaceId])
+  @@index([resetToken])
 }
 
 enum Role {
@@ -118,15 +139,15 @@ enum Role {
 }
 
 model Collaborator {
-  id          String              @id @default(uuid())
+  id          String             @id @default(uuid())
   email       String
   name        String?
   workspaceId String
   userId      String?
   permissions String[]
   courseIds   String[]
-  status      CollaboratorStatus  @default(PENDING)
-  invitedAt   DateTime            @default(now())
+  status      CollaboratorStatus @default(PENDING)
+  invitedAt   DateTime           @default(now())
   acceptedAt  DateTime?
 
   workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
@@ -143,64 +164,63 @@ enum CollaboratorStatus {
   REVOKED
 }
 
-
 model Course {
-  id                 String    @id @default(uuid())
-  title              String
-  slug               String    @unique
-  description        String
-  thumbnail          String?
-  thumbnailPosition  String?  @default("{\"x\":50,\"y\":50}")
-  bannerUrl          String?
-  bannerPosition     String?  @default("{\"x\":50,\"y\":50}")
-  checkoutUrl        String?
-  price              Float?
-  priceCurrency      String    @default("BRL")
-  externalProductId  String?   @unique
-  isPublished        Boolean   @default(false)
-  showInStore        Boolean   @default(true)
-  certificateEnabled Boolean   @default(true)
-  communityEnabled   Boolean   @default(true)
-  lessonCommentsEnabled Boolean @default(true)
-  reviewsEnabled     Boolean   @default(true)
-  lessonReactionsEnabled Boolean @default(true)
-  gamificationEnabled Boolean  @default(true)
-  lessonCommentsModerationEnabled Boolean @default(false)
-  communityModerationEnabled      Boolean @default(false)
-  termsContent       String?   @db.Text
-  termsFileUrl       String?
-  termsUpdatedAt     DateTime?
-  showStudentCount   Boolean   @default(false)
-  supportEmail       String?
-  supportWhatsapp    String?
-  showLessonSupport  Boolean   @default(true)
-  memberBgColor       String?
-  memberSidebarColor  String?
-  memberHeaderColor   String?
-  memberCardColor     String?
-  memberPrimaryColor  String?
-  memberTextColor     String?
-  memberWelcomeText   String?
-  memberLayoutStyle   String?  @default("netflix")
-  featured           Boolean   @default(false)
-  category           String?
-  order              Int       @default(0)
-  ownerId            String?
-  workspaceId        String
-  createdAt          DateTime  @default(now())
-  updatedAt          DateTime  @updatedAt
+  id                              String    @id @default(uuid())
+  title                           String
+  slug                            String    @unique
+  description                     String
+  thumbnail                       String?
+  thumbnailPosition               String?   @default("{\"x\":50,\"y\":50}")
+  bannerUrl                       String?
+  bannerPosition                  String?   @default("{\"x\":50,\"y\":50}")
+  checkoutUrl                     String?
+  price                           Float?
+  priceCurrency                   String    @default("BRL")
+  externalProductId               String?   @unique
+  isPublished                     Boolean   @default(false)
+  showInStore                     Boolean   @default(true)
+  certificateEnabled              Boolean   @default(true)
+  communityEnabled                Boolean   @default(true)
+  lessonCommentsEnabled           Boolean   @default(true)
+  reviewsEnabled                  Boolean   @default(true)
+  lessonReactionsEnabled          Boolean   @default(true)
+  gamificationEnabled             Boolean   @default(true)
+  lessonCommentsModerationEnabled Boolean   @default(false)
+  communityModerationEnabled      Boolean   @default(false)
+  termsContent                    String?   @db.Text
+  termsFileUrl                    String?
+  termsUpdatedAt                  DateTime?
+  showStudentCount                Boolean   @default(false)
+  supportEmail                    String?
+  supportWhatsapp                 String?
+  showLessonSupport               Boolean   @default(true)
+  memberBgColor                   String?
+  memberSidebarColor              String?
+  memberHeaderColor               String?
+  memberCardColor                 String?
+  memberPrimaryColor              String?
+  memberTextColor                 String?
+  memberWelcomeText               String?
+  memberLayoutStyle               String?   @default("netflix")
+  featured                        Boolean   @default(false)
+  category                        String?
+  order                           Int       @default(0)
+  ownerId                         String?
+  workspaceId                     String
+  createdAt                       DateTime  @default(now())
+  updatedAt                       DateTime  @updatedAt
 
-  owner         User?         @relation("CourseOwner", fields: [ownerId], references: [id], onDelete: SetNull)
-  workspace     Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  modules       Module[]
-  sections      Section[]
-  enrollments   Enrollment[]
-  posts            Post[]
-  certificates     Certificate[]
-  reviews          Review[]
-  menuItems        MenuItem[]
-  lives            Live[]
-  communityGroups  CommunityGroup[]
+  owner           User?            @relation("CourseOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+  workspace       Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  modules         Module[]
+  sections        Section[]
+  enrollments     Enrollment[]
+  posts           Post[]
+  certificates    Certificate[]
+  reviews         Review[]
+  menuItems       MenuItem[]
+  lives           Live[]
+  communityGroups CommunityGroup[]
 
   @@index([ownerId])
   @@index([workspaceId])
@@ -218,7 +238,7 @@ model MenuItem {
   enabled   Boolean  @default(true)
   createdAt DateTime @default(now())
 
-  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
 
   @@index([courseId])
 }
@@ -230,19 +250,19 @@ model Settings {
 }
 
 model Module {
-  id             String    @id @default(uuid())
-  title          String
-  order          Int       @default(0)
-  daysToRelease  Int       @default(0)
-  releaseAt      DateTime?
-  thumbnailUrl   String?
-  hideTitle      Boolean   @default(false)
-  sectionId      String?
-  courseId       String
-  course         Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  section        Section? @relation(fields: [sectionId], references: [id], onDelete: SetNull)
+  id            String    @id @default(uuid())
+  title         String
+  order         Int       @default(0)
+  daysToRelease Int       @default(0)
+  releaseAt     DateTime?
+  thumbnailUrl  String?
+  hideTitle     Boolean   @default(false)
+  sectionId     String?
+  courseId      String
+  course        Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  section       Section?  @relation(fields: [sectionId], references: [id], onDelete: SetNull)
 
-  lessons   Lesson[]
+  lessons Lesson[]
 
   @@index([sectionId])
   @@index([courseId, order])
@@ -255,43 +275,43 @@ model Section {
   courseId  String
   createdAt DateTime @default(now())
 
-  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  modules   Module[]
+  course  Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  modules Module[]
 
   @@index([courseId])
 }
 
 model Lesson {
-  id             String   @id @default(uuid())
-  title          String
-  description    String?
-  videoUrl       String
-  duration       Int?
-  order          Int      @default(0)
-  daysToRelease  Int      @default(0)
-  moduleId       String
-  module         Module   @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  id            String  @id @default(uuid())
+  title         String
+  description   String?
+  videoUrl      String
+  duration      Int?
+  order         Int     @default(0)
+  daysToRelease Int     @default(0)
+  moduleId      String
+  module        Module  @relation(fields: [moduleId], references: [id], onDelete: Cascade)
 
-  progress    LessonProgress[]
-  comments    LessonComment[]
-  materials   LessonMaterial[]
-  reactions   LessonReaction[]
-  quiz        Quiz?
+  progress  LessonProgress[]
+  comments  LessonComment[]
+  materials LessonMaterial[]
+  reactions LessonReaction[]
+  quiz      Quiz?
 
   @@index([moduleId, order])
 }
 
 model Enrollment {
-  id        String           @id @default(uuid())
-  userId    String
-  courseId   String
+  id              String           @id @default(uuid())
+  userId          String
+  courseId        String
   status          EnrollmentStatus @default(ACTIVE)
   expiresAt       DateTime?
   termsAcceptedAt DateTime?
   createdAt       DateTime         @default(now())
 
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  user      User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course    Course               @relation(fields: [courseId], references: [id], onDelete: Cascade)
   overrides EnrollmentOverride[]
 
   @@unique([userId, courseId])
@@ -323,15 +343,15 @@ enum EnrollmentStatus {
 }
 
 model LessonProgress {
-  id          String    @id @default(uuid())
-  userId      String
-  lessonId    String
+  id             String    @id @default(uuid())
+  userId         String
+  lessonId       String
   completed      Boolean   @default(false)
   completedAt    DateTime?
   lastAccessedAt DateTime?
 
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  lesson      Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
 
   @@unique([userId, lessonId])
   @@index([userId, lastAccessedAt])
@@ -348,7 +368,7 @@ model CommunityGroup {
   name        String
   description String?
   slug        String
-  courseId     String
+  courseId    String
   isDefault   Boolean         @default(false)
   permission  GroupPermission @default(READ_WRITE)
   order       Int             @default(0)
@@ -363,21 +383,21 @@ model CommunityGroup {
 }
 
 model Post {
-  id        String   @id @default(uuid())
+  id        String           @id @default(uuid())
   content   String
-  type      PostType @default(FREE)
-  pinned    Boolean  @default(false)
+  type      PostType         @default(FREE)
+  pinned    Boolean          @default(false)
   userId    String
-  courseId   String
+  courseId  String
   groupId   String?
   status    ModerationStatus @default(APPROVED)
-  createdAt DateTime @default(now())
+  createdAt DateTime         @default(now())
 
-  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  course    Course           @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  group     CommunityGroup?  @relation(fields: [groupId], references: [id], onDelete: SetNull)
-  comments  Comment[]
-  likes     Like[]
+  user     User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course   Course          @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  group    CommunityGroup? @relation(fields: [groupId], references: [id], onDelete: SetNull)
+  comments Comment[]
+  likes    Like[]
 
   @@index([courseId, status, createdAt])
   @@index([groupId, createdAt])
@@ -398,18 +418,18 @@ enum ModerationStatus {
 }
 
 model Comment {
-  id        String   @id @default(uuid())
+  id        String           @id @default(uuid())
   content   String
   userId    String
   postId    String
   parentId  String?
   status    ModerationStatus @default(APPROVED)
-  createdAt DateTime @default(now())
+  createdAt DateTime         @default(now())
 
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  post      Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
-  parent    Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
-  replies   Comment[] @relation("CommentReplies")
+  user    User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post    Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
+  parent  Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies Comment[] @relation("CommentReplies")
 
   @@index([postId, status, createdAt])
   @@index([parentId])
@@ -417,30 +437,30 @@ model Comment {
 }
 
 model Like {
-  id        String   @id @default(uuid())
-  userId    String
-  postId    String
+  id     String @id @default(uuid())
+  userId String
+  postId String
 
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
 
   @@unique([userId, postId])
   @@index([postId])
 }
 
 model LessonComment {
-  id        String   @id @default(uuid())
+  id        String           @id @default(uuid())
   content   String
   userId    String
   lessonId  String
   parentId  String?
   status    ModerationStatus @default(APPROVED)
-  createdAt DateTime @default(now())
+  createdAt DateTime         @default(now())
 
-  user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  lesson    Lesson          @relation(fields: [lessonId], references: [id], onDelete: Cascade)
-  parent    LessonComment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
-  replies   LessonComment[] @relation("CommentReplies")
+  user    User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lesson  Lesson          @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  parent  LessonComment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies LessonComment[] @relation("CommentReplies")
 
   @@index([lessonId, status, createdAt])
   @@index([parentId])
@@ -456,7 +476,7 @@ model Notification {
   read      Boolean          @default(false)
   createdAt DateTime         @default(now())
 
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, read])
   @@index([userId, createdAt])
@@ -476,14 +496,14 @@ enum NotificationType {
 }
 
 model Certificate {
-  id         String   @id @default(uuid())
-  code       String   @unique
-  userId     String
-  courseId   String
-  issuedAt   DateTime @default(now())
+  id       String   @id @default(uuid())
+  code     String   @unique
+  userId   String
+  courseId String
+  issuedAt DateTime @default(now())
 
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  course     Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
 
   @@unique([userId, courseId])
   @@index([courseId])
@@ -498,8 +518,8 @@ model Review {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
 
   @@unique([userId, courseId])
   @@index([courseId, createdAt])
@@ -517,15 +537,15 @@ model LessonReaction {
   type      ReactionType
   createdAt DateTime     @default(now())
 
-  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  lesson    Lesson       @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
 
   @@unique([userId, lessonId])
   @@index([lessonId, type])
 }
 
 model WebhookLog {
-  id                String            @id @default(uuid())
+  id                String           @id @default(uuid())
   event             String
   email             String?
   productExternalId String?
@@ -534,9 +554,9 @@ model WebhookLog {
   status            WebhookLogStatus
   errorMessage      String?
   rawPayload        Json
-  createdAt         DateTime          @default(now())
+  createdAt         DateTime         @default(now())
 
-  workspace         Workspace?        @relation(fields: [workspaceId], references: [id], onDelete: SetNull)
+  workspace Workspace? @relation(fields: [workspaceId], references: [id], onDelete: SetNull)
 
   @@index([event, createdAt])
   @@index([createdAt])
@@ -553,7 +573,7 @@ model ProducerTransaction {
   id            String   @id @default(uuid())
   workspaceId   String
   userId        String?
-  courseId       String?
+  courseId      String?
   amount        Float
   currency      String   @default("BRL")
   status        String
@@ -615,7 +635,7 @@ model Session {
   createdAt DateTime @default(now())
   expiresAt DateTime
 
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
 }
@@ -623,18 +643,18 @@ model Session {
 // ─── Subscription billing ───────────────────────────────────────
 
 model Plan {
-  id                    String   @id @default(uuid())
-  name                  String
-  slug                  String   @unique
-  price                 Float
-  currency              String   @default("BRL")
-  interval              String   @default("monthly")
-  maxWorkspaces         Int      @default(10)
-  maxCoursesPerWorkspace Int     @default(30)
-  features              String?
-  active                Boolean  @default(true)
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt
+  id                     String   @id @default(uuid())
+  name                   String
+  slug                   String   @unique
+  price                  Float
+  currency               String   @default("BRL")
+  interval               String   @default("monthly")
+  maxWorkspaces          Int      @default(10)
+  maxCoursesPerWorkspace Int      @default(30)
+  features               String?
+  active                 Boolean  @default(true)
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
 
   subscriptions Subscription[]
 }
@@ -654,10 +674,10 @@ model Subscription {
   createdAt          DateTime           @default(now())
   updatedAt          DateTime           @updatedAt
 
-  user              User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  plan              Plan              @relation(fields: [planId], references: [id])
-  invoices          Invoice[]
-  billingReminders  BillingReminder[]
+  user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan             Plan              @relation(fields: [planId], references: [id])
+  invoices         Invoice[]
+  billingReminders BillingReminder[]
 
   @@index([userId])
   @@index([status])
@@ -666,12 +686,12 @@ model Subscription {
 }
 
 model BillingReminder {
-  id             String       @id @default(cuid())
+  id             String   @id @default(cuid())
   subscriptionId String
   type           String
-  sentAt         DateTime     @default(now())
+  sentAt         DateTime @default(now())
 
-  subscription   Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  subscription Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
 
   @@unique([subscriptionId, type])
   @@index([subscriptionId])
@@ -776,27 +796,27 @@ model QuizAttempt {
 }
 
 model Automation {
-  id             String    @id @default(uuid())
-  workspaceId    String
-  courseId        String?
-  name           String
-  active         Boolean   @default(true)
+  id          String  @id @default(uuid())
+  workspaceId String
+  courseId    String?
+  name        String
+  active      Boolean @default(true)
 
-  triggerType    String
-  triggerConfig  String    @default("{}")
+  triggerType   String
+  triggerConfig String @default("{}")
 
-  actionType     String
-  actionConfig   String    @default("{}")
+  actionType   String
+  actionConfig String @default("{}")
 
   executionCount Int       @default(0)
   lastExecutedAt DateTime?
 
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  logs               AutomationLog[]
-  pendingExecutions  PendingExecution[]
+  workspace         Workspace          @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  logs              AutomationLog[]
+  pendingExecutions PendingExecution[]
 
   @@index([workspaceId])
   @@index([triggerType])
@@ -867,29 +887,29 @@ model UserTag {
 }
 
 model Live {
-  id            String    @id @default(cuid())
-  title         String
-  description   String?   @db.Text
-  platform      String
-  externalUrl   String
-  embedUrl      String?
-  status        String    @default("SCHEDULED")
-  scheduledAt   DateTime
-  startedAt     DateTime?
-  endedAt       DateTime?
-  recordingUrl     String?
-  thumbnailUrl     String?
-  savedAsLessonId  String?
-  visibility       String    @default("PUBLIC")
-  roomOpen         Boolean   @default(true)
-  chatEnabled      Boolean   @default(true)
-  courseId          String?
-  workspaceId      String
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id              String    @id @default(cuid())
+  title           String
+  description     String?   @db.Text
+  platform        String
+  externalUrl     String
+  embedUrl        String?
+  status          String    @default("SCHEDULED")
+  scheduledAt     DateTime
+  startedAt       DateTime?
+  endedAt         DateTime?
+  recordingUrl    String?
+  thumbnailUrl    String?
+  savedAsLessonId String?
+  visibility      String    @default("PUBLIC")
+  roomOpen        Boolean   @default(true)
+  chatEnabled     Boolean   @default(true)
+  courseId        String?
+  workspaceId     String
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
-  course        Course?   @relation(fields: [courseId], references: [id])
-  workspace     Workspace @relation(fields: [workspaceId], references: [id])
+  course        Course?            @relation(fields: [courseId], references: [id])
+  workspace     Workspace          @relation(fields: [workspaceId], references: [id])
   messages      LiveMessage[]
   notifications LiveNotification[]
   moderators    LiveModerator[]
@@ -1010,7 +1030,7 @@ model AdminCollaborator {
   email       String                  @unique
   name        String?
   userId      String?                 @unique
-  permissions String[]                // values from src/lib/admin-permissions.ts
+  permissions String[] // values from src/lib/admin-permissions.ts
   status      AdminCollaboratorStatus @default(PENDING)
   invitedById String
   invitedAt   DateTime                @default(now())
@@ -1045,26 +1065,26 @@ enum TicketPriority {
 }
 
 model SupportTicket {
-  id                    String         @id @default(uuid())
-  subject               String
-  status                TicketStatus   @default(OPEN)
-  priority              TicketPriority @default(NORMAL)
+  id       String         @id @default(uuid())
+  subject  String
+  status   TicketStatus   @default(OPEN)
+  priority TicketPriority @default(NORMAL)
 
-  producerId            String
-  producer              User           @relation("ProducerTickets", fields: [producerId], references: [id], onDelete: Cascade)
+  producerId String
+  producer   User   @relation("ProducerTickets", fields: [producerId], references: [id], onDelete: Cascade)
 
-  assignedToId          String?
-  assignedTo            User?          @relation("AssignedTickets", fields: [assignedToId], references: [id], onDelete: SetNull)
+  assignedToId String?
+  assignedTo   User?   @relation("AssignedTickets", fields: [assignedToId], references: [id], onDelete: SetNull)
 
-  messages              TicketMessage[]
+  messages TicketMessage[]
 
-  lastMessageAt         DateTime       @default(now())
-  lastReadByAdminAt     DateTime?
-  lastReadByProducerAt  DateTime?
+  lastMessageAt        DateTime  @default(now())
+  lastReadByAdminAt    DateTime?
+  lastReadByProducerAt DateTime?
 
-  closedAt              DateTime?
-  createdAt             DateTime       @default(now())
-  updatedAt             DateTime       @updatedAt
+  closedAt  DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 
   @@index([producerId, status])
   @@index([status, lastMessageAt])
@@ -1076,13 +1096,13 @@ model TicketMessage {
   body        String   @db.Text
   attachments String[]
 
-  ticketId    String
-  ticket      SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  ticketId String
+  ticket   SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
 
-  senderId    String
-  sender      User   @relation("TicketMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  senderId String
+  sender   User   @relation("TicketMessages", fields: [senderId], references: [id], onDelete: Cascade)
 
-  createdAt   DateTime @default(now())
+  createdAt DateTime @default(now())
 
   @@index([ticketId, createdAt])
   @@index([senderId])
