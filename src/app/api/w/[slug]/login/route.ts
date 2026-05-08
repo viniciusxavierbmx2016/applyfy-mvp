@@ -167,35 +167,23 @@ export async function POST(request: Request, props: { params: Promise<{ slug: st
       return NextResponse.json({ error: "Usuário não encontrado" }, { status: 404 });
     }
 
-    if (user.role !== "STUDENT") {
-      await supabase.auth.signOut();
-      const message =
-        user.role === "ADMIN"
-          ? "Use /admin/login para acessar o painel admin"
-          : user.role === "PRODUCER"
-            ? "Use /producer/login para acessar o painel do produtor"
-            : user.role === "COLLABORATOR" || user.role === "ADMIN_COLLABORATOR"
-              ? "Use /producer/login para acessar o painel de colaborador"
-              : "Conta sem permissão para esta área de membros";
-      return NextResponse.json({ error: message }, { status: 403 });
-    }
-
-    // Students may access a workspace if they have at least one Enrollment
-    // in a course of that workspace (or an accepted Collaborator record, or
-    // they own the workspace). Staff (PRODUCER/ADMIN) are global and not
-    // subject to this gate.
-    if (user.role === "STUDENT") {
-      const allowed = await hasWorkspaceAccess(user.id, workspace.id);
-      if (!allowed) {
-        await supabase.auth.signOut();
-        return NextResponse.json(
-          {
-            error:
-              "Você não tem matrícula neste workspace. Entre em contato com o produtor.",
-          },
-          { status: 403 }
-        );
-      }
+    // Workspace access gate. Applies to every role: STUDENTs need an
+    // Enrollment, COLLABORATORs need an accepted Collaborator row, and
+    // PRODUCERs need to be the workspace owner. ADMINs without any of
+    // those bindings get rejected here too — they should use /admin
+    // entry points. We do NOT supabase.auth.signOut() on rejection
+    // because the user authenticated successfully against their
+    // platform-wide identity; tearing that session down would also kill
+    // valid /producer or /admin sessions in other tabs.
+    const allowed = await hasWorkspaceAccess(user.id, workspace.id);
+    if (!allowed) {
+      return NextResponse.json(
+        {
+          error:
+            "Você não tem acesso a esta área de membros. Entre em contato com o produtor.",
+        },
+        { status: 403 }
+      );
     }
 
     // Session bookkeeping (mirrors /api/auth/login)

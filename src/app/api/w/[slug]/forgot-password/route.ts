@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { createAdminClient } from "@/lib/supabase-admin";
 import { sendEmail } from "@/lib/email";
-import { workspacePasswordReset } from "@/lib/email-templates";
+import { passwordReset, workspacePasswordReset } from "@/lib/email-templates";
 import { rateLimit } from "@/lib/rate-limit";
 import { logger } from "@/lib/logger";
 import {
@@ -57,8 +58,10 @@ export async function POST(
     }
 
     // Staff and accepted-Collaborator buyers authenticate platform-wide;
-    // their reset must go through the global flow, not the per-workspace
-    // credential. Tell the client to redirect.
+    // their reset must rotate the global Supabase Auth password, not a
+    // WorkspaceCredential. We dispatch the recovery server-side and
+    // return the same generic message used for STUDENTs so the response
+    // never reveals whether the email belongs to a staff account.
     const acceptedCollab = STAFF_ROLES.has(user.role)
       ? null
       : await prisma.collaborator.findFirst({
@@ -66,10 +69,51 @@ export async function POST(
           select: { id: true },
         });
     if (STAFF_ROLES.has(user.role) || acceptedCollab) {
-      return NextResponse.json({
-        message: "Use a recuperação de senha do Members Club.",
-        redirectTo: "/forgot-password?from=producer",
-      });
+      const origin =
+        request.headers.get("origin") ||
+        process.env.NEXT_PUBLIC_APP_URL ||
+        "https://app.mymembersclub.com.br";
+      try {
+        const admin = createAdminClient();
+        const { data: linkData, error: linkError } =
+          await admin.auth.admin.generateLink({
+            type: "recovery",
+            email,
+            options: {
+              redirectTo: `${origin}/reset-password?from=workspace&workspace=${workspace.slug}`,
+            },
+          });
+        if (!linkError && linkData?.properties?.action_link) {
+          const template = passwordReset(
+            user.name || "Usuário",
+            linkData.properties.action_link
+          );
+          sendEmail({
+            to: { email, name: user.name },
+            subject: template.subject,
+            htmlContent: template.htmlContent,
+          }).catch((err) =>
+            logger.error("workspace forgot", "staff recovery email failed", {
+              email,
+              slug: workspace.slug,
+              error: String(err),
+            })
+          );
+        } else if (linkError) {
+          logger.error("workspace forgot", "staff generateLink failed", {
+            email,
+            slug: workspace.slug,
+            error: linkError.message,
+          });
+        }
+      } catch (err) {
+        logger.error("workspace forgot", "staff recovery error", {
+          email,
+          slug: workspace.slug,
+          error: String(err),
+        });
+      }
+      return NextResponse.json({ message: GENERIC_OK });
     }
 
     // Ensure a WorkspaceCredential exists. If not, seed one with a
