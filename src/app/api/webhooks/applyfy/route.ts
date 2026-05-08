@@ -167,27 +167,13 @@ export async function POST(request: Request) {
     }
 
     if (GRANT_EVENTS.has(event)) {
-      // Idempotency: short-circuit if a SUCCESS row for this transaction
-      // already exists in the last 24h. Applyfy retries on timeouts and
-      // some producers configure both the global and the scoped webhook
-      // URLs, so without this guard the same purchase could enrol the
-      // student twice (idempotent) AND trigger duplicate access emails.
-      const txId = body?.transaction?.id;
-      if (txId) {
-        const existing = await prisma.webhookLog.findFirst({
-          where: {
-            event,
-            status: "SUCCESS",
-            createdAt: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) },
-            rawPayload: { path: ["transaction", "id"], equals: txId },
-          },
-          select: { id: true },
-        });
-        if (existing) {
-          logger.info("applyfy webhook", "duplicate webhook skipped", { txId });
-          return NextResponse.json({ ok: true, duplicate: true }, { status: 200 });
-        }
-      }
+      // We don't short-circuit duplicate webhooks anymore: enrolment
+      // (activateEnrollment) and ProducerTransaction (upsert) are both
+      // idempotent on retry, and we WANT them re-confirmed so the
+      // dashboard always reflects what Applyfy currently believes.
+      // What we DO suppress, per buyer/transaction, is the access
+      // email — that check happens just before sendEmail, in the loop.
+      const txId = body?.transaction?.id?.trim() || null;
 
       const results: Array<{
         externalId: string;
@@ -300,39 +286,62 @@ export async function POST(request: Request) {
         // Send access email. Pure STUDENTs receive a workspace-scoped
         // mc-XXXXXX password (when newly issued); staff/collab buyers
         // are pointed at their existing Members Club credentials.
+        // De-dup per (transaction.id, email) within the last 24h so a
+        // retried webhook never produces a second copy of the email.
         try {
-          const courseWithWorkspace = await prisma.course.findUnique({
-            where: { id: course.id },
-            include: { workspace: true },
-          });
-          if (courseWithWorkspace?.workspace) {
-            const ws = courseWithWorkspace.workspace;
-            const appUrl = process.env.NEXT_PUBLIC_APP_URL || "";
-            const loginUrl = `${appUrl}/w/${ws.slug}/login`;
-            const template = isStaff
-              ? staffAccessGranted(
-                  name || email.split("@")[0],
-                  course.title,
-                  ws.name,
-                  loginUrl
-                )
-              : studentAccessGranted(
-                  name || email.split("@")[0],
-                  course.title,
-                  ws.name,
-                  loginUrl,
-                  tempPassword
-                );
-            await sendEmail({
-              to: { email, name: name || undefined },
-              ...template,
-              senderName: ws.name,
-            }).catch((err) =>
-              logger.error("applyfy webhook", "email send failed", {
+          let alreadyEmailed = false;
+          if (txId && email) {
+            const prior = await prisma.webhookLog.findFirst({
+              where: {
+                event: "TRANSACTION_PAID",
+                status: "SUCCESS",
                 email,
-                error: String(err),
-              })
-            );
+                createdAt: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) },
+                rawPayload: { path: ["transaction", "id"], equals: txId },
+              },
+              select: { id: true },
+            });
+            alreadyEmailed = !!prior;
+          }
+          if (alreadyEmailed) {
+            logger.info("applyfy webhook", "skipping duplicate email", {
+              email,
+              txId,
+            });
+          } else {
+            const courseWithWorkspace = await prisma.course.findUnique({
+              where: { id: course.id },
+              include: { workspace: true },
+            });
+            if (courseWithWorkspace?.workspace) {
+              const ws = courseWithWorkspace.workspace;
+              const appUrl = process.env.NEXT_PUBLIC_APP_URL || "";
+              const loginUrl = `${appUrl}/w/${ws.slug}/login`;
+              const template = isStaff
+                ? staffAccessGranted(
+                    name || email.split("@")[0],
+                    course.title,
+                    ws.name,
+                    loginUrl
+                  )
+                : studentAccessGranted(
+                    name || email.split("@")[0],
+                    course.title,
+                    ws.name,
+                    loginUrl,
+                    tempPassword
+                  );
+              await sendEmail({
+                to: { email, name: name || undefined },
+                ...template,
+                senderName: ws.name,
+              }).catch((err) =>
+                logger.error("applyfy webhook", "email send failed", {
+                  email,
+                  error: String(err),
+                })
+              );
+            }
           }
         } catch (emailErr) {
           logger.error("applyfy webhook", "email block error", {

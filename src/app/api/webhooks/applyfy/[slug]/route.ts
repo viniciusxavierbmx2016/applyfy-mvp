@@ -177,30 +177,11 @@ export async function POST(request: Request, props: { params: Promise<{ slug: st
     }
 
     if (GRANT_EVENTS.has(event)) {
-      // Idempotency: short-circuit if a SUCCESS row for this transaction
-      // already exists in this workspace in the last 24h. Applyfy retries
-      // on timeouts; without this guard the student would receive
-      // duplicate access emails.
-      const txId = body?.transaction?.id;
-      if (txId) {
-        const existing = await prisma.webhookLog.findFirst({
-          where: {
-            event,
-            status: "SUCCESS",
-            workspaceId,
-            createdAt: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) },
-            rawPayload: { path: ["transaction", "id"], equals: txId },
-          },
-          select: { id: true },
-        });
-        if (existing) {
-          logger.info("applyfy webhook", "duplicate webhook skipped", {
-            slug: params.slug,
-            txId,
-          });
-          return NextResponse.json({ ok: true, duplicate: true }, { status: 200 });
-        }
-      }
+      // We let enrolment + ProducerTransaction reprocess on retry —
+      // both are idempotent. Only the access email is suppressed when
+      // we've already sent it for this (transaction, email) pair, and
+      // that check happens just before sendEmail in the loop.
+      const txId = body?.transaction?.id?.trim() || null;
 
       const { user, tempPassword, isStaff } = await ensureUserByEmail(
         email,
@@ -309,18 +290,44 @@ export async function POST(request: Request, props: { params: Promise<{ slug: st
           }
         }
 
-        const appUrl = process.env.NEXT_PUBLIC_APP_URL || "";
-        const loginUrl = `${appUrl}/w/${workspace.slug}/login`;
-        const template = isStaff
-          ? staffAccessGranted(name || email, course.title, workspace.name, loginUrl)
-          : studentAccessGranted(
-              name || email,
-              course.title,
-              workspace.name,
-              loginUrl,
-              tempPassword
-            );
-        sendEmail({ to: { email, name: name || undefined }, ...template, senderName: workspace.name }).catch((err) => console.error("[EMAIL_ERROR] access email to:", email, err?.message || err));
+        // De-dup the access email per (transaction, email) within 24h.
+        // Enrolment + producerTransaction above are idempotent — we still
+        // re-run them on retry — but the email must not duplicate.
+        let alreadyEmailed = false;
+        if (txId && email) {
+          const prior = await prisma.webhookLog.findFirst({
+            where: {
+              event: "TRANSACTION_PAID",
+              status: "SUCCESS",
+              email,
+              workspaceId,
+              createdAt: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) },
+              rawPayload: { path: ["transaction", "id"], equals: txId },
+            },
+            select: { id: true },
+          });
+          alreadyEmailed = !!prior;
+        }
+        if (alreadyEmailed) {
+          logger.info("applyfy webhook", "skipping duplicate email", {
+            slug: params.slug,
+            email,
+            txId,
+          });
+        } else {
+          const appUrl = process.env.NEXT_PUBLIC_APP_URL || "";
+          const loginUrl = `${appUrl}/w/${workspace.slug}/login`;
+          const template = isStaff
+            ? staffAccessGranted(name || email, course.title, workspace.name, loginUrl)
+            : studentAccessGranted(
+                name || email,
+                course.title,
+                workspace.name,
+                loginUrl,
+                tempPassword
+              );
+          sendEmail({ to: { email, name: name || undefined }, ...template, senderName: workspace.name }).catch((err) => console.error("[EMAIL_ERROR] access email to:", email, err?.message || err));
+        }
 
         await logWebhook({
           event,
