@@ -551,6 +551,15 @@ export const createCourseSchema = z
     featured: z.boolean().optional(),
     category: z.string().max(100).optional().nullable(),
     workspaceId: z.string().max(100).optional(),
+    supportEmail: z
+      .string()
+      .min(1, "Email de suporte obrigatório")
+      .email("Email inválido")
+      .max(255),
+    supportWhatsapp: z
+      .string()
+      .min(8, "WhatsApp de suporte obrigatório")
+      .max(50),
   })
   .passthrough();
 
@@ -713,6 +722,17 @@ export const updateCourseSchema = z
     price: z.union([z.number().min(0), z.string(), z.null()]).optional(),
     priceCurrency: z.string().max(10).optional(),
     isPublished: z.boolean().optional(),
+    supportEmail: z
+      .string()
+      .min(1, "Email de suporte obrigatório")
+      .email("Email inválido")
+      .max(255)
+      .optional(),
+    supportWhatsapp: z
+      .string()
+      .min(8, "WhatsApp de suporte obrigatório")
+      .max(50)
+      .optional(),
   })
   .passthrough();
 

@@ -171,6 +171,16 @@ export function CourseForm({ initial, mode }: CourseFormProps) {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
+
+    if (!supportEmail.trim()) {
+      setError("Email de suporte é obrigatório");
+      return;
+    }
+    if (!supportWhatsapp.trim()) {
+      setError("WhatsApp de suporte é obrigatório");
+      return;
+    }
+
     setSaving(true);
 
     const payload = {
@@ -189,8 +199,8 @@ export function CourseForm({ initial, mode }: CourseFormProps) {
       showInStore,
       featured,
       category: category.trim() || null,
-      supportEmail: supportEmail.trim() || null,
-      supportWhatsapp: supportWhatsapp.trim() || null,
+      supportEmail: supportEmail.trim(),
+      supportWhatsapp: supportWhatsapp.trim(),
       termsContent: termsContent.trim() || null,
       termsFileUrl: termsFileUrl.trim() || null,
     };
@@ -261,14 +271,30 @@ export function CourseForm({ initial, mode }: CourseFormProps) {
                 type="text"
                 value={slug}
                 onChange={(e) => {
+                  if (mode === "edit") return;
                   setSlug(slugify(e.target.value));
                   setSlugEdited(true);
                 }}
                 required
-                className={inputClass}
+                readOnly={mode === "edit"}
+                className={`${inputClass} ${
+                  mode === "edit"
+                    ? "bg-gray-100 dark:bg-gray-900 cursor-not-allowed opacity-70"
+                    : ""
+                }`}
+                title={
+                  mode === "edit"
+                    ? "O slug não pode ser alterado após a criação do curso"
+                    : ""
+                }
                 placeholder="marketing-digital"
               />
             </div>
+            {mode === "edit" && (
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                O slug não pode ser alterado para não quebrar links dos alunos.
+              </p>
+            )}
           </div>
         </div>
 
@@ -460,7 +486,7 @@ export function CourseForm({ initial, mode }: CourseFormProps) {
 
         <div className="grid sm:grid-cols-2 gap-4">
           <div>
-            <label className={labelClass}>Email de suporte</label>
+            <label className={labelClass}>Email de suporte *</label>
             <div className="relative">
               <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400 dark:text-gray-500 pointer-events-none">
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -472,6 +498,7 @@ export function CourseForm({ initial, mode }: CourseFormProps) {
                 value={supportEmail}
                 onChange={(e) => setSupportEmail(e.target.value)}
                 placeholder="suporte@exemplo.com"
+                required
                 className={`${inputClass} !pl-10`}
               />
             </div>
@@ -480,7 +507,7 @@ export function CourseForm({ initial, mode }: CourseFormProps) {
             </p>
           </div>
           <div>
-            <label className={labelClass}>WhatsApp de suporte</label>
+            <label className={labelClass}>WhatsApp de suporte *</label>
             <div className="relative">
               <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400 dark:text-gray-500 pointer-events-none">
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -492,6 +519,7 @@ export function CourseForm({ initial, mode }: CourseFormProps) {
                 value={supportWhatsapp}
                 onChange={(e) => setSupportWhatsapp(e.target.value)}
                 placeholder="(11) 99999-8888"
+                required
                 className={`${inputClass} !pl-10`}
               />
             </div>
