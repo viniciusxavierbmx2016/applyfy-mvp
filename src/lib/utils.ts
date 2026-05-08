@@ -107,3 +107,8 @@ export function stripHtml(html: string): string {
   if (!html) return "";
   return html.replace(/<[^>]*>/g, "").trim();
 }
+
+export function truncateText(text: string, maxLength: number): string {
+  if (!text || text.length <= maxLength) return text;
+  return text.slice(0, maxLength).trimEnd() + "…";
+}
