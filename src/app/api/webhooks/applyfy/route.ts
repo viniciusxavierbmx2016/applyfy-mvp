@@ -260,6 +260,36 @@ export async function POST(request: Request) {
 
         await activateEnrollment(user.id, course.id);
 
+        // Record the sale on ProducerTransaction so /api/producer/sales/stats
+        // (the dashboard KPIs) sees it. The scoped webhook already does this
+        // on its own path; mirroring it here closes the gap for producers
+        // pointing Applyfy at the global URL.
+        const txExternalId = body?.transaction?.id?.trim() || null;
+        if (txExternalId) {
+          await prisma.producerTransaction
+            .upsert({
+              where: { externalId: txExternalId },
+              update: {},
+              create: {
+                workspaceId: course.workspaceId,
+                userId: user.id,
+                courseId: course.id,
+                amount: Number(body?.transaction?.amount) || Number(item?.price) || 0,
+                status: "COMPLETED",
+                paymentMethod: body?.transaction?.paymentMethod ?? null,
+                externalId: txExternalId,
+                customerEmail: email,
+                customerName: name ?? null,
+              },
+            })
+            .catch((err) =>
+              logger.error("applyfy webhook", "ProducerTransaction upsert failed", {
+                txId: txExternalId,
+                error: String(err),
+              })
+            );
+        }
+
         processAutomations({
           type: "STUDENT_ENROLLED",
           workspaceId: course.workspaceId,
