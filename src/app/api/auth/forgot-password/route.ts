@@ -15,7 +15,7 @@ export async function POST(req: Request) {
     const body = await req.json();
     const v = validateBody(forgotPasswordSchema, body);
     if (!v.success) return v.error;
-    const { email, from } = v.data;
+    const { email, from, workspace } = v.data;
 
     const user = await prisma.user.findUnique({
       where: { email: email.toLowerCase().trim() },
@@ -30,11 +30,25 @@ export async function POST(req: Request) {
     const origin =
       req.headers.get("origin") || process.env.NEXT_PUBLIC_APP_URL || "https://app.mymembersclub.com.br";
 
+    // Build the recovery redirectTo. Workspace context — when present —
+    // takes precedence so students return to the correct /w/<slug>/login
+    // after setting their new password.
+    const safeWorkspace = workspace?.replace(/[^a-z0-9-]/gi, "").slice(0, 200);
+    const params = new URLSearchParams();
+    if (safeWorkspace) {
+      params.set("from", "workspace");
+      params.set("workspace", safeWorkspace);
+    } else if (from) {
+      params.set("from", from);
+    }
+    const qs = params.toString();
+    const redirectTo = `${origin}/reset-password${qs ? `?${qs}` : ""}`;
+
     const { data, error } = await supabase.auth.admin.generateLink({
       type: "recovery",
       email: user.email,
       options: {
-        redirectTo: `${origin}/reset-password${from ? `?from=${from}` : ""}`,
+        redirectTo,
       },
     });
 

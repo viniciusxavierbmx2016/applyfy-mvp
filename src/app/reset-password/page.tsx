@@ -9,8 +9,19 @@ import { logger } from "@/lib/logger";
 function ResetPasswordForm() {
   const searchParams = useSearchParams();
   const from = searchParams.get("from");
-  const loginHref = from === "admin" ? "/admin/login" : "/producer/login";
-  const forgotHref = from === "admin" ? "/forgot-password?from=admin" : "/forgot-password?from=producer";
+  const workspace = searchParams.get("workspace");
+  const safeWorkspace = workspace?.replace(/[^a-z0-9-]/gi, "").slice(0, 200) || "";
+  const isWorkspaceFlow = from === "workspace" && safeWorkspace.length > 0;
+  const loginHref = isWorkspaceFlow
+    ? `/w/${safeWorkspace}/login`
+    : from === "admin"
+      ? "/admin/login"
+      : "/producer/login";
+  const forgotHref = isWorkspaceFlow
+    ? `/forgot-password?workspace=${safeWorkspace}`
+    : from === "admin"
+      ? "/forgot-password?from=admin"
+      : "/forgot-password?from=producer";
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [error, setError] = useState("");

@@ -43,6 +43,7 @@ export const registerSchema = z
 export const forgotPasswordSchema = z.object({
   email: z.string().email("Email inválido").max(255),
   from: z.string().max(50).optional(),
+  workspace: z.string().max(200).optional(),
 });
 
 export const resetPasswordSchema = z.object({
