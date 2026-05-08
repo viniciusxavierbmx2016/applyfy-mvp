@@ -65,7 +65,15 @@ export default function HomePage() {
       return;
     }
     if (user.role === "STUDENT") {
-      if (workspace?.slug) {
+      // Prefer the slug from the most recent /w/<slug>/login (cookie
+      // written by that route). Falls back to the store's workspace, then
+      // to the latest active enrollment.
+      const cookieSlug = document.cookie.match(
+        /(?:^|; )active_workspace_slug=([^;]+)/
+      )?.[1];
+      if (cookieSlug && /^[a-z0-9-]+$/.test(cookieSlug)) {
+        router.replace(`/w/${cookieSlug}`);
+      } else if (workspace?.slug) {
         router.replace(`/w/${workspace.slug}`);
       } else {
         fetch("/api/student/workspace")
