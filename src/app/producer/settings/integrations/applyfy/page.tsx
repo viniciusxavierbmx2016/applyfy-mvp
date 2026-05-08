@@ -77,7 +77,7 @@ export default function AdminIntegrationsPage() {
     setLogsLoading(true);
     try {
       const qs = filter === "ALL" ? "" : `?event=${filter}`;
-      const res = await fetch(`/api/admin/integrations/webhook-logs${qs}`);
+      const res = await fetch(`/api/producer/integrations/webhook-logs${qs}`);
       if (res.ok) {
         const d = await res.json();
         setLogs(d.logs || []);

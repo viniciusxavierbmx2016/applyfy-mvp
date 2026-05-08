@@ -8,6 +8,8 @@ import {
 } from "@/lib/webhook-helpers";
 import { processAutomations } from "@/lib/automation-engine";
 import { safeCompare } from "@/lib/safe-compare";
+import { sendEmail } from "@/lib/email";
+import { studentAccessGranted } from "@/lib/email-templates";
 import { logger } from "@/lib/logger";
 import { applyfyWebhookSchema } from "@/lib/validations";
 import type { z } from "zod";
@@ -234,6 +236,41 @@ export async function POST(request: Request) {
           courseId: course.id,
           userId: user.id,
         }).catch(() => {});
+
+        // Send access email to the student. Failures are logged but never
+        // block the webhook — Applyfy must always receive 200 OK.
+        try {
+          const courseWithWorkspace = await prisma.course.findUnique({
+            where: { id: course.id },
+            include: { workspace: true },
+          });
+          if (courseWithWorkspace?.workspace) {
+            const ws = courseWithWorkspace.workspace;
+            const appUrl = process.env.NEXT_PUBLIC_APP_URL || "";
+            const loginUrl = `${appUrl}/w/${ws.slug}/login`;
+            const template = studentAccessGranted(
+              name || email.split("@")[0],
+              course.title,
+              ws.name,
+              loginUrl
+            );
+            await sendEmail({
+              to: { email, name: name || undefined },
+              ...template,
+              senderName: ws.name,
+            }).catch((err) =>
+              logger.error("applyfy webhook", "email send failed", {
+                email,
+                error: String(err),
+              })
+            );
+          }
+        } catch (emailErr) {
+          logger.error("applyfy webhook", "email block error", {
+            email,
+            error: String(emailErr),
+          });
+        }
 
         await logWebhook({
           event,
