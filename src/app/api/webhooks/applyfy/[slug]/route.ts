@@ -64,6 +64,31 @@ export async function POST(request: Request, props: { params: Promise<{ slug: st
     const raw = await request.json().catch(() => ({}));
     const parsed = applyfyWebhookSchema.safeParse(raw);
     if (!parsed.success) {
+      const errorSummary = parsed.error.issues
+        .map((e) => `${e.path.join(".")}: ${e.message}`)
+        .join(", ");
+      logger.error("applyfy webhook", "Zod validation failed", {
+        slug: params.slug,
+        errors: errorSummary,
+        rawPayload: JSON.stringify(raw).slice(0, 500),
+      });
+      const rawObj = (raw ?? {}) as Record<string, unknown>;
+      const client = rawObj.client as Record<string, unknown> | undefined;
+      const fallbackEvent =
+        typeof rawObj.event === "string" ? rawObj.event : "UNKNOWN";
+      const fallbackEmail =
+        typeof client?.email === "string" ? client.email : null;
+      await prisma.webhookLog
+        .create({
+          data: {
+            event: fallbackEvent,
+            email: fallbackEmail,
+            status: "ERROR",
+            errorMessage: `Zod validation: ${errorSummary}`.slice(0, 500),
+            rawPayload: rawObj as Prisma.InputJsonValue,
+          },
+        })
+        .catch(() => {});
       return NextResponse.json({ received: true }, { status: 200 });
     }
     body = parsed.data;

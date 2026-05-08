@@ -92,7 +92,10 @@ export const applyfyWebhookSchema = z
       .object({
         id: z.string().max(200).optional(),
         name: z.string().max(255).optional(),
-        email: z.string().email().max(255).optional(),
+        // Email comes from Applyfy in shapes that don't always pass strict
+        // RFC validation (extra spaces, missing TLD on test orders, etc.).
+        // We accept any string here and revalidate downstream.
+        email: z.string().max(255).optional(),
         phone: z.string().max(50).optional(),
       })
       .passthrough()
@@ -102,7 +105,11 @@ export const applyfyWebhookSchema = z
         id: z.string().max(200).optional(),
         status: z.string().max(50).optional(),
         paymentMethod: z.string().max(50).optional(),
-        amount: z.number().optional(),
+        // Applyfy sometimes serializes amounts as strings ("99.90"), so we
+        // coerce numeric fields. Same for installments / exchange rate.
+        amount: z.coerce.number().optional(),
+        installments: z.coerce.number().optional(),
+        exchangeRate: z.coerce.number().optional(),
         payedAt: z.string().max(50).optional(),
       })
       .passthrough()
@@ -112,8 +119,8 @@ export const applyfyWebhookSchema = z
         id: z.string().max(200).optional(),
         status: z.string().max(50).optional(),
         intervalType: z.string().max(50).optional(),
-        intervalCount: z.number().optional(),
-        cycle: z.number().optional(),
+        intervalCount: z.coerce.number().optional(),
+        cycle: z.coerce.number().optional(),
       })
       .passthrough()
       .nullable()
@@ -123,7 +130,7 @@ export const applyfyWebhookSchema = z
         z
           .object({
             id: z.string().max(200).optional(),
-            price: z.number().optional(),
+            price: z.coerce.number().optional(),
             product: z
               .object({
                 id: z.string().max(200).optional(),
