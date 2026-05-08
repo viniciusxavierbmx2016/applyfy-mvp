@@ -7,7 +7,7 @@ import {
   getSetting,
 } from "@/lib/webhook-helpers";
 import { sendEmail } from "@/lib/email";
-import { studentAccessGranted } from "@/lib/email-templates";
+import { staffAccessGranted, studentAccessGranted } from "@/lib/email-templates";
 import { processAutomations } from "@/lib/automation-engine";
 import { safeCompare } from "@/lib/safe-compare";
 import { logger } from "@/lib/logger";
@@ -202,7 +202,12 @@ export async function POST(request: Request, props: { params: Promise<{ slug: st
         }
       }
 
-      const { user, tempPassword } = await ensureUserByEmail(email, name, undefined, phone);
+      const { user, tempPassword, isStaff } = await ensureUserByEmail(
+        email,
+        name,
+        workspace.id,
+        phone
+      );
       // Access to a workspace is derived from Enrollment (course→workspace),
       // so we no longer write workspaceId on the User. Keeping that legacy
       // field synced here would re-introduce a single-workspace binding for
@@ -306,14 +311,16 @@ export async function POST(request: Request, props: { params: Promise<{ slug: st
 
         const appUrl = process.env.NEXT_PUBLIC_APP_URL || "";
         const loginUrl = `${appUrl}/w/${workspace.slug}/login`;
-        const template = studentAccessGranted(
-          name || email,
-          course.title,
-          workspace.name,
-          loginUrl,
-          tempPassword
-        );
-        sendEmail({ to: { email, name: name || undefined }, ...template, senderName: workspace.name }).catch((err) => console.error("[EMAIL_ERROR] studentAccessGranted to:", email, err?.message || err));
+        const template = isStaff
+          ? staffAccessGranted(name || email, course.title, workspace.name, loginUrl)
+          : studentAccessGranted(
+              name || email,
+              course.title,
+              workspace.name,
+              loginUrl,
+              tempPassword
+            );
+        sendEmail({ to: { email, name: name || undefined }, ...template, senderName: workspace.name }).catch((err) => console.error("[EMAIL_ERROR] access email to:", email, err?.message || err));
 
         await logWebhook({
           event,

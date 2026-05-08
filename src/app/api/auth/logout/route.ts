@@ -14,7 +14,16 @@ export async function POST() {
       );
     }
 
-    return NextResponse.json({ message: "Logout realizado com sucesso" });
+    const response = NextResponse.json({
+      message: "Logout realizado com sucesso",
+    });
+    // Clear the per-workspace context cookie so the next login routes
+    // the user based on their fresh session, not a stale slug.
+    response.cookies.set("active_workspace_slug", "", {
+      maxAge: 0,
+      path: "/",
+    });
+    return response;
   } catch (error) {
     console.error("Logout error:", error);
     return NextResponse.json(

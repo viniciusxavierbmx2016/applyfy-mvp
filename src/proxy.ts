@@ -63,7 +63,7 @@ export function proxy(request: NextRequest) {
   const authed = hasSessionCookie(request);
 
   const isWorkspacePublic =
-    /^\/w\/[^/]+\/(login|register|forgot-password|reset-password)\/?$/.test(
+    /^\/w\/[^/]+\/(login|forgot-password|reset-password)\/?$/.test(
       pathname
     );
   const isPublic =
@@ -87,6 +87,14 @@ export function proxy(request: NextRequest) {
 
   if (authed && pathname === "/") {
     const url = request.nextUrl.clone();
+    // If the user landed via /w/<slug>/login earlier, that route set the
+    // active_workspace_slug cookie. Honour it here so STUDENTs go straight
+    // to their workspace instead of bouncing through /producer first.
+    const activeWs = request.cookies.get("active_workspace_slug")?.value;
+    if (activeWs && /^[a-z0-9-]+$/.test(activeWs)) {
+      url.pathname = `/w/${activeWs}`;
+      return NextResponse.redirect(url);
+    }
     url.pathname = "/producer";
     return NextResponse.redirect(url);
   }

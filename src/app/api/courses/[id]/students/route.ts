@@ -11,6 +11,7 @@ import { processAutomations } from "@/lib/automation-engine";
 import { sendEmail } from "@/lib/email";
 import { studentAccessGranted } from "@/lib/email-templates";
 import { enrollCourseStudentSchema, validateBody } from "@/lib/validations";
+import { generateSalt, hashPassword } from "@/lib/workspace-auth";
 
 function randomTempPassword(len = 8) {
   const alphabet = "abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -205,7 +206,12 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
       );
     }
 
-    const { user } = await ensureUserByEmail(email, name, course.workspace.id, phone?.trim() || undefined);
+    const { user, isStaff } = await ensureUserByEmail(
+      email,
+      name,
+      course.workspace.id,
+      phone?.trim() || undefined
+    );
 
     const expiresAt =
       typeof days === "number" && days > 0
@@ -252,18 +258,45 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
 
     // Build a shareable credential block so the producer can hand the access
     // directly to the student. Master password (if set) wins so the student
-    // can reuse the same credential the producer already shares; otherwise we
-    // generate a fresh 8-char password and rotate the Supabase auth user.
+    // can reuse the same credential the producer already shares; otherwise
+    // we generate a fresh 8-char password.
+    //
+    // For pure STUDENTs (the new model), we write the shared password to
+    // their per-workspace credential — overwriting the auto-generated
+    // mc-XXXXXX from ensureUserByEmail — so /w/<slug>/login can verify it
+    // via scrypt without touching the global Supabase Auth password. For
+    // staff we keep the legacy Supabase rotation, since staff still
+    // authenticates platform-wide.
     let sharedPassword: string | null = null;
     if (course.workspace.masterPassword) {
       sharedPassword = course.workspace.masterPassword;
     } else {
       sharedPassword = randomTempPassword(8);
       try {
-        const admin = createAdminClient();
-        await admin.auth.admin.updateUserById(user.id, {
-          password: sharedPassword,
-        });
+        if (isStaff) {
+          const admin = createAdminClient();
+          await admin.auth.admin.updateUserById(user.id, {
+            password: sharedPassword,
+          });
+        } else {
+          const salt = generateSalt();
+          const passwordHash = hashPassword(sharedPassword, salt);
+          await prisma.workspaceCredential.upsert({
+            where: {
+              userId_workspaceId: {
+                userId: user.id,
+                workspaceId: course.workspace.id,
+              },
+            },
+            create: {
+              userId: user.id,
+              workspaceId: course.workspace.id,
+              passwordHash,
+              salt,
+            },
+            update: { passwordHash, salt },
+          });
+        }
       } catch (e) {
         console.error("rotate temp password error:", e);
         sharedPassword = null;

@@ -9,7 +9,7 @@ import {
 import { processAutomations } from "@/lib/automation-engine";
 import { safeCompare } from "@/lib/safe-compare";
 import { sendEmail } from "@/lib/email";
-import { studentAccessGranted } from "@/lib/email-templates";
+import { staffAccessGranted, studentAccessGranted } from "@/lib/email-templates";
 import { logger } from "@/lib/logger";
 import { applyfyWebhookSchema } from "@/lib/validations";
 import type { z } from "zod";
@@ -189,7 +189,6 @@ export async function POST(request: Request) {
         }
       }
 
-      const { user, tempPassword } = await ensureUserByEmail(email, name);
       const results: Array<{
         externalId: string;
         courseId?: string;
@@ -250,6 +249,15 @@ export async function POST(request: Request) {
           `matched course "${course.title}" via ${matchedVia}`
         );
 
+        // Resolve the user and ensure a per-workspace credential exists for
+        // pure STUDENTs. Subsequent iterations of the same buyer/workspace
+        // are no-ops (existing credential is left untouched).
+        const { user, tempPassword, isStaff } = await ensureUserByEmail(
+          email,
+          name,
+          course.workspaceId
+        );
+
         await activateEnrollment(user.id, course.id);
 
         processAutomations({
@@ -259,8 +267,9 @@ export async function POST(request: Request) {
           userId: user.id,
         }).catch(() => {});
 
-        // Send access email to the student. Failures are logged but never
-        // block the webhook — Applyfy must always receive 200 OK.
+        // Send access email. Pure STUDENTs receive a workspace-scoped
+        // mc-XXXXXX password (when newly issued); staff/collab buyers
+        // are pointed at their existing Members Club credentials.
         try {
           const courseWithWorkspace = await prisma.course.findUnique({
             where: { id: course.id },
@@ -270,13 +279,20 @@ export async function POST(request: Request) {
             const ws = courseWithWorkspace.workspace;
             const appUrl = process.env.NEXT_PUBLIC_APP_URL || "";
             const loginUrl = `${appUrl}/w/${ws.slug}/login`;
-            const template = studentAccessGranted(
-              name || email.split("@")[0],
-              course.title,
-              ws.name,
-              loginUrl,
-              tempPassword
-            );
+            const template = isStaff
+              ? staffAccessGranted(
+                  name || email.split("@")[0],
+                  course.title,
+                  ws.name,
+                  loginUrl
+                )
+              : studentAccessGranted(
+                  name || email.split("@")[0],
+                  course.title,
+                  ws.name,
+                  loginUrl,
+                  tempPassword
+                );
             await sendEmail({
               to: { email, name: name || undefined },
               ...template,

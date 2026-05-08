@@ -70,20 +70,13 @@ export default function WorkspaceLoginPage() {
     <WorkspaceAuthShell
       ws={ws}
       footer={
-        <div className="mt-6 flex items-center justify-between text-sm">
+        <div className="mt-6 text-center text-sm">
           <Link
-            href={`/forgot-password?workspace=${slug}`}
+            href={`/w/${slug}/forgot-password`}
             className="hover:underline transition-colors"
             style={{ color: theme.linkColor }}
           >
             Esqueci minha senha
-          </Link>
-          <Link
-            href={`/w/${slug}/register`}
-            className="hover:underline transition-colors"
-            style={{ color: theme.linkColor }}
-          >
-            Criar conta
           </Link>
         </div>
       }

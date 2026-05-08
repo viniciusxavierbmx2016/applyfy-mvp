@@ -161,7 +161,8 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
     // Also fixes a latent bug: the previous create branch let id default to
     // a fresh @default(uuid()), decoupling Prisma.User from the Supabase
     // Auth user. We now set id explicitly to authUserId so the two stay
-    // in sync (matches /api/w/[slug]/register and other create paths).
+    // in sync (matches the auth-user → prisma-user pairing used by other
+    // create paths in the codebase).
     const targetEmail = invite.email.toLowerCase();
     const existing = await prisma.user.findUnique({
       where: { email: targetEmail },
