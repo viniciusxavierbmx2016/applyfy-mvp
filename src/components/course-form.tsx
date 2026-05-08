@@ -276,10 +276,18 @@ export function CourseForm({ initial, mode }: CourseFormProps) {
           <label className={labelClass}>Descrição *</label>
           <textarea
             value={description}
-            onChange={(e) => setDescription(e.target.value)}
+            onChange={(e) => setDescription(e.target.value.slice(0, 200))}
+            maxLength={200}
             className={`${inputClass} min-h-[80px] resize-y`}
             placeholder="Descreva o que os alunos vão aprender..."
           />
+          <p
+            className={`text-xs mt-1 ${
+              description.length > 180 ? "text-yellow-500" : "text-gray-500"
+            }`}
+          >
+            {description.length}/200 caracteres
+          </p>
         </div>
 
         <div className="grid sm:grid-cols-2 gap-4">
