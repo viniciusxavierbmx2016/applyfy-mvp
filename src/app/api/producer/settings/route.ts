@@ -1,35 +1,63 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireStaff } from "@/lib/auth";
+import { resolveStaffWorkspace } from "@/lib/workspace";
 import { producerSettingsSchema, validateBody } from "@/lib/validations";
 
+// Admin-only globals (no per-workspace scoping)
 const ADMIN_KEYS = new Set(["stripe_webhook_secret"]);
-const STAFF_KEYS = new Set(["applyfy_token"]);
-const ALL_KEYS = new Set(["stripe_webhook_secret", "applyfy_token"]);
+// Per-workspace keys: stored as `<key>:<workspaceId>` so each producer's token
+// is isolated. The producer UI still talks in plain key names ("applyfy_token");
+// the route resolves the workspace and translates on read/write.
+const WORKSPACE_KEYS = new Set(["applyfy_token"]);
+
+function workspaceKey(key: string, workspaceId: string) {
+  return `${key}:${workspaceId}`;
+}
 
 export async function GET() {
   try {
     const staff = await requireStaff();
     const canAdmin = staff.role === "ADMIN";
-
-    const visibleKeys = canAdmin
-      ? Array.from(ALL_KEYS)
-      : Array.from(STAFF_KEYS);
-
-    const rows = await prisma.settings.findMany({
-      where: { key: { in: visibleKeys } },
-    });
-
-    const map: Record<string, string> = {};
-    for (const r of rows) map[r.key] = r.value;
+    const { workspace } = await resolveStaffWorkspace(staff);
 
     const masked: Record<string, { set: boolean; preview: string }> = {};
-    for (const k of visibleKeys) {
-      const v = map[k] || "";
-      masked[k] = {
-        set: v.length > 0,
-        preview: v ? `••••${v.slice(-4)}` : "",
-      };
+
+    if (workspace) {
+      const wsKeys = Array.from(WORKSPACE_KEYS).map((k) =>
+        workspaceKey(k, workspace.id)
+      );
+      const rows = await prisma.settings.findMany({
+        where: { key: { in: wsKeys } },
+      });
+      const map: Record<string, string> = {};
+      for (const r of rows) map[r.key] = r.value;
+      for (const k of WORKSPACE_KEYS) {
+        const v = map[workspaceKey(k, workspace.id)] || "";
+        masked[k] = {
+          set: v.length > 0,
+          preview: v ? `••••${v.slice(-4)}` : "",
+        };
+      }
+    } else {
+      for (const k of WORKSPACE_KEYS) {
+        masked[k] = { set: false, preview: "" };
+      }
+    }
+
+    if (canAdmin) {
+      const adminRows = await prisma.settings.findMany({
+        where: { key: { in: Array.from(ADMIN_KEYS) } },
+      });
+      const adminMap: Record<string, string> = {};
+      for (const r of adminRows) adminMap[r.key] = r.value;
+      for (const k of ADMIN_KEYS) {
+        const v = adminMap[k] || "";
+        masked[k] = {
+          set: v.length > 0,
+          preview: v ? `••••${v.slice(-4)}` : "",
+        };
+      }
     }
 
     return NextResponse.json({ settings: masked });
@@ -45,6 +73,7 @@ export async function PUT(request: Request) {
   try {
     const staff = await requireStaff();
     const canAdmin = staff.role === "ADMIN";
+    const { workspace } = await resolveStaffWorkspace(staff);
 
     const raw = await request.json().catch(() => ({}));
     const v = validateBody(producerSettingsSchema, raw);
@@ -52,18 +81,37 @@ export async function PUT(request: Request) {
     const updates = v.data.settings;
 
     for (const key of Object.keys(updates)) {
-      if (!ALL_KEYS.has(key)) continue;
-      if (ADMIN_KEYS.has(key) && !canAdmin) continue;
       const value = updates[key];
-      if (value === null || value === "") {
-        await prisma.settings.deleteMany({ where: { key } });
-      } else if (typeof value === "string") {
-        await prisma.settings.upsert({
-          where: { key },
-          create: { key, value },
-          update: { value },
-        });
+
+      if (WORKSPACE_KEYS.has(key)) {
+        if (!workspace) continue; // no workspace scope → cannot persist
+        const storeKey = workspaceKey(key, workspace.id);
+        if (value === null || value === "") {
+          await prisma.settings.deleteMany({ where: { key: storeKey } });
+        } else if (typeof value === "string") {
+          await prisma.settings.upsert({
+            where: { key: storeKey },
+            create: { key: storeKey, value },
+            update: { value },
+          });
+        }
+        continue;
       }
+
+      if (ADMIN_KEYS.has(key)) {
+        if (!canAdmin) continue;
+        if (value === null || value === "") {
+          await prisma.settings.deleteMany({ where: { key } });
+        } else if (typeof value === "string") {
+          await prisma.settings.upsert({
+            where: { key },
+            create: { key, value },
+            update: { value },
+          });
+        }
+        continue;
+      }
+      // unknown key → ignore
     }
 
     return NextResponse.json({ ok: true });

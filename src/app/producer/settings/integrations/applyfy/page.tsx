@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Skeleton } from "@/components/ui/skeleton";
 import { GatewayLogo } from "@/components/gateway-logo";
+import { useActiveWorkspace } from "@/hooks/use-active-workspace";
 
 const DEFAULT_APPLYFY_LOGO =
   "https://play-lh.googleusercontent.com/GBYSf20osBl2a2Kpm_kN1EM9MhhBNJBM5syYac-d2IkpEL4nde5gjxVKuhMjFJM7Eg=w240-h480-rw";
@@ -44,6 +45,7 @@ const EVENT_FILTERS = [
 type EventFilter = (typeof EVENT_FILTERS)[number];
 
 export default function AdminIntegrationsPage() {
+  const activeWorkspace = useActiveWorkspace();
   const [origin, setOrigin] = useState("");
   const [tokenStatus, setTokenStatus] = useState<SettingStatus | null>(null);
   const [tokenInput, setTokenInput] = useState("");
@@ -62,9 +64,12 @@ export default function AdminIntegrationsPage() {
   const [copied, setCopied] = useState(false);
   const [logoUrl, setLogoUrl] = useState<string>(DEFAULT_APPLYFY_LOGO);
 
-  const webhookUrl = origin
-    ? `${origin}/api/webhooks/applyfy`
-    : `${process.env.NEXT_PUBLIC_APP_URL || ""}/api/webhooks/applyfy`;
+  // Scoped URL: webhook isola por workspace via slug. Token salvo aqui
+  // (key = "applyfy_token") fica como `applyfy_token:<workspaceId>` no banco.
+  const baseUrl = origin || process.env.NEXT_PUBLIC_APP_URL || "";
+  const webhookUrl = activeWorkspace
+    ? `${baseUrl}/api/webhooks/applyfy/${activeWorkspace.slug}`
+    : `${baseUrl}/api/webhooks/applyfy`;
 
   const isActive = !!tokenStatus?.set;
 

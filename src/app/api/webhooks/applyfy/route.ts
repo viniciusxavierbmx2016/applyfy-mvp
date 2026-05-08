@@ -104,24 +104,59 @@ export async function POST(request: Request) {
       items: body?.orderItems?.length ?? 0,
     });
 
-    // Token validation — reject fast, but still return 200 per Applyfy spec
-    const storedToken =
-      (await getSetting("applyfy_token")) || process.env.APPLYFY_TOKEN || "";
+    // Token validation — reject fast, but still return 200 per Applyfy spec.
+    // Order:
+    //  1. Try the per-workspace token `applyfy_token:<workspaceId>` for any
+    //     workspace whose course matches an item in the payload. New producers
+    //     point Applyfy at the scoped URL, but if any are still on this global
+    //     URL their per-workspace token still works.
+    //  2. Fall back to the legacy global `applyfy_token` / APPLYFY_TOKEN env.
     const providedToken = body?.token || "";
-
-    if (!storedToken || !safeCompare(providedToken, storedToken)) {
-      console.warn("[applyfy webhook] invalid token", { event });
-      await logWebhook({
-        event,
-        email: body?.client?.email,
-        status: "ERROR",
-        errorMessage: "Invalid token",
-        rawPayload: body,
+    const peekItems = Array.isArray(body?.orderItems) ? body.orderItems : [];
+    const candidateExternalIds = Array.from(
+      new Set(
+        peekItems
+          .flatMap((it) => [
+            it?.product?.externalId?.trim(),
+            it?.product?.id?.trim(),
+          ])
+          .filter((v): v is string => !!v)
+      )
+    );
+    let matchedToken = false;
+    if (providedToken && candidateExternalIds.length > 0) {
+      const candidateCourses = await prisma.course.findMany({
+        where: { externalProductId: { in: candidateExternalIds } },
+        select: { workspaceId: true },
       });
-      return NextResponse.json(
-        { ok: false, error: "Invalid token" },
-        { status: 200 }
+      const workspaceIds = Array.from(
+        new Set(candidateCourses.map((c) => c.workspaceId))
       );
+      for (const wsId of workspaceIds) {
+        const wsToken = await getSetting(`applyfy_token:${wsId}`);
+        if (wsToken && safeCompare(providedToken, wsToken)) {
+          matchedToken = true;
+          break;
+        }
+      }
+    }
+    if (!matchedToken) {
+      const legacyToken =
+        (await getSetting("applyfy_token")) || process.env.APPLYFY_TOKEN || "";
+      if (!legacyToken || !safeCompare(providedToken, legacyToken)) {
+        console.warn("[applyfy webhook] invalid token", { event });
+        await logWebhook({
+          event,
+          email: body?.client?.email,
+          status: "ERROR",
+          errorMessage: "Invalid token",
+          rawPayload: body,
+        });
+        return NextResponse.json(
+          { ok: false, error: "Invalid token" },
+          { status: 200 }
+        );
+      }
     }
 
     if (IGNORED_EVENTS.has(event)) {

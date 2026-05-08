@@ -170,7 +170,9 @@ const adminLinks: NavLink[] = [
   { href: "/admin/audit", label: "Logs", icon: iconShield, requires: "VIEW_AUDIT" },
   { href: "/admin/plans", label: "Planos", icon: iconPlans, requires: "MANAGE_PLANS" },
   { href: "/admin/subscriptions", label: "Assinaturas", icon: iconSubscriptions, requires: "MANAGE_BILLING" },
-  { href: "/admin/integrations", label: "Integrações", icon: iconIntegrations, requires: "FULL_ACCESS" },
+  // Admin não configura gateway de pagamento aqui — cada producer cuida do
+  // próprio token Applyfy em /producer/settings/integrations/applyfy.
+  // O endpoint global /api/webhooks/members-club é configurado fora do painel.
   { href: "/admin/collaborators", label: "Colaboradores", icon: iconUsers, adminOnly: true },
   { href: "/admin/settings", label: "Configurações", icon: iconSettings, requires: "FULL_ACCESS" },
 ];
