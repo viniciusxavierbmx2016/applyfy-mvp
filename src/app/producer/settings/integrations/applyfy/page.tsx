@@ -271,7 +271,10 @@ export default function AdminIntegrationsPage() {
             )}
             <div className="flex flex-col sm:flex-row gap-2">
               <input
-                type="password"
+                // text quando não há token configurado: evita que o browser /
+                // gerenciadores de senha preencham este campo com senha salva
+                // do domínio. Vira password quando já há token (substituição).
+                type={tokenStatus?.set ? "password" : "text"}
                 value={tokenInput}
                 onChange={(e) => setTokenInput(e.target.value)}
                 placeholder={
@@ -279,6 +282,15 @@ export default function AdminIntegrationsPage() {
                     ? "Digite um novo valor para substituir"
                     : "Cole o token gerado pelo Applyfy"
                 }
+                name="applyfy-integration-token"
+                autoComplete="off"
+                autoCorrect="off"
+                autoCapitalize="off"
+                spellCheck={false}
+                data-1p-ignore
+                data-lpignore="true"
+                data-bwignore="true"
+                data-form-type="other"
                 className="flex-1 px-4 py-2.5 bg-white dark:bg-gray-900/50 border border-gray-200 dark:border-white/10 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-blue-500/50"
               />
               <button
