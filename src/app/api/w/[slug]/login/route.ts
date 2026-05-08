@@ -107,6 +107,25 @@ export async function POST(request: Request, props: { params: Promise<{ slug: st
         if (error || !data.session || !data.user) {
           return NextResponse.json({ error: "Senha incorreta" }, { status: 401 });
         }
+
+        // 2FA gate (mirrors /api/auth/producer-login). If the staff member
+        // has a verified TOTP factor, defer the rest of the flow to
+        // /api/auth/mfa/challenge. Cookies are AAL1 at this point — they
+        // get upgraded to AAL2 when the challenge succeeds. Without this,
+        // staff with 2FA would land on the workspace with an AAL1 session
+        // that getCurrentUser silently rejects (returns null), making
+        // every protected request 401.
+        const { data: factorsData } = await supabase.auth.mfa.listFactors();
+        const verifiedFactors =
+          factorsData?.totp?.filter((f) => f.status === "verified") ?? [];
+        if (verifiedFactors.length > 0) {
+          return NextResponse.json({
+            requiresMfa: true,
+            factorId: verifiedFactors[0].id,
+            workspace: { id: workspace.id, slug: workspace.slug },
+          });
+        }
+
         authData = { user: data.user, session: data.session };
       } else {
         // Pure STUDENT path.
