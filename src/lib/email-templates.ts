@@ -125,7 +125,7 @@ export function studentAccessGranted(
          <tr><td style="padding:12px 16px;">
            <p style="margin:0 0 8px;font-size:13px;color:#9ca3af;">Senha temporária:</p>
            <p style="margin:0;font-size:18px;font-weight:bold;color:#ffffff;font-family:monospace;letter-spacing:2px;">${tempPassword}</p>
-           <p style="margin:8px 0 0;font-size:12px;color:#6b7280;">Recomendamos alterar sua senha após o primeiro login.</p>
+           <p style="margin:8px 0 0;font-size:12px;color:#6b7280;">Esta senha vale apenas para <strong>${workspaceName}</strong>. Recomendamos alterá-la após o primeiro login.</p>
          </td></tr>
        </table>`
     : "";
@@ -134,6 +134,25 @@ export function studentAccessGranted(
     ${heading(`Acesso liberado: ${courseName}`)}
     ${paragraph(`Olá, ${firstName}! Seu acesso ao curso <strong style="color:#ffffff;">${courseName}</strong> na área <strong style="color:#ffffff;">${workspaceName}</strong> foi liberado.`)}
     ${credentialsBlock}
+    ${ctaButton("Acessar o curso", loginUrl)}
+  `, workspaceName);
+  return {
+    subject: `Acesso liberado: ${courseName}`,
+    htmlContent: html,
+  };
+}
+
+export function staffAccessGranted(
+  name: string,
+  courseName: string,
+  workspaceName: string,
+  loginUrl: string
+) {
+  const firstName = name.split(" ")[0];
+  const html = baseTemplate(`
+    ${heading(`Acesso liberado: ${courseName}`)}
+    ${paragraph(`Olá, ${firstName}! Seu acesso ao curso <strong style="color:#ffffff;">${courseName}</strong> na área <strong style="color:#ffffff;">${workspaceName}</strong> foi liberado.`)}
+    ${paragraph(`Use a sua <strong style="color:#ffffff;">senha do Members Club</strong> para entrar — a mesma que você utiliza no painel do produtor.`)}
     ${ctaButton("Acessar o curso", loginUrl)}
   `, workspaceName);
   return {

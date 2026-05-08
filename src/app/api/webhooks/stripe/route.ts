@@ -115,7 +115,10 @@ export async function POST(request: Request) {
       );
     }
 
-    const { user } = await ensureUserByEmail(email, name);
+    // Pass workspaceId so a per-workspace credential is provisioned for
+    // pure STUDENTs (no email is sent here, but the credential needs to
+    // exist before the buyer attempts /w/<slug>/login).
+    const { user } = await ensureUserByEmail(email, name, course.workspaceId);
     await activateEnrollment(user.id, course.id);
 
     processAutomations({
