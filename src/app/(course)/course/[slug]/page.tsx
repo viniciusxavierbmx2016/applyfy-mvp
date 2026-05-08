@@ -92,6 +92,34 @@ function moduleStats(m: ModuleItem) {
   return { pct, done, total };
 }
 
+// Picks the lesson to land on when the user clicks a module: the first
+// RELEASED-and-incomplete lesson (in order). Falls back to the first
+// released lesson when everything's done. Returns null when no lesson
+// in the module is released yet — callers should send the user to the
+// module overview page in that case so they can see when each unlocks.
+function pickResumeLessonId(
+  m: ModuleItem,
+  enrollmentCreatedAt: Date | null,
+  overrides: { modules: Set<string>; lessons: Set<string> },
+  bypassRelease: boolean
+): string | null {
+  const moduleOverridden = overrides.modules.has(m.id) || bypassRelease;
+  const ordered = m.lessons.slice().sort((a, b) => a.order - b.order);
+  const released = ordered.filter((l) => {
+    if (overrides.lessons.has(l.id) || moduleOverridden) return true;
+    const r = releaseInfo(
+      enrollmentCreatedAt,
+      Math.max(m.daysToRelease ?? 0, l.daysToRelease ?? 0)
+    );
+    return r.released;
+  });
+  if (released.length === 0) return null;
+  const incomplete = released.find(
+    (l) => !l.progress?.some((p) => p.completed)
+  );
+  return (incomplete ?? released[0]).id;
+}
+
 function toCarouselModule(
   m: ModuleItem,
   course: CourseDetail,
@@ -109,10 +137,17 @@ function toCarouselModule(
   const dateLocked = m.releaseAt ? new Date(m.releaseAt) > new Date() : false;
   const locked = lockedByAutomation || (hasAccess && !overridden && (!rel.released || dateLocked));
   const empty = stats.total === 0;
-  const resumeLessonId =
-    m.firstIncompleteLesson ?? m.lessons.slice().sort((a, b) => a.order - b.order)[0]?.id ?? null;
-  const clickable = hasAccess && !locked && !empty && !!resumeLessonId;
+  const resumeLessonId = pickResumeLessonId(m, enrollmentCreatedAt, overrides, bypassRelease);
+  const clickable = hasAccess && !locked && !empty;
   const displayReleaseAt = dateLocked && m.releaseAt ? new Date(m.releaseAt) : rel.releaseAt;
+  // When the module itself is released but every lesson inside is still
+  // gated by a per-lesson drip, send the user to the module overview
+  // page where each lesson shows its unlock date.
+  const moduleHref = clickable
+    ? resumeLessonId
+      ? `/course/${course.slug}/lesson/${resumeLessonId}`
+      : `/course/${course.slug}/module/${m.id}`
+    : `/course/${course.slug}`;
   return {
     id: m.id,
     title: m.title,
@@ -124,10 +159,7 @@ function toCarouselModule(
     empty,
     hideTitle: m.hideTitle,
     releaseAt: lockedByAutomation ? undefined : displayReleaseAt,
-    href:
-      clickable && resumeLessonId
-        ? `/course/${course.slug}/lesson/${resumeLessonId}`
-        : `/course/${course.slug}`,
+    href: moduleHref,
     clickable,
   };
 }
@@ -148,8 +180,7 @@ function toListModule(
   const rel = releaseInfo(enrollmentCreatedAt, m.daysToRelease ?? 0);
   const dateLocked = m.releaseAt ? new Date(m.releaseAt) > new Date() : false;
   const locked = lockedByAutomation || (hasAccess && !overridden && (!rel.released || dateLocked));
-  const resumeLessonId =
-    m.firstIncompleteLesson ?? m.lessons.slice().sort((a, b) => a.order - b.order)[0]?.id ?? null;
+  const resumeLessonId = pickResumeLessonId(m, enrollmentCreatedAt, overrides, bypassRelease);
   return {
     id: m.id,
     title: m.title,
@@ -169,7 +200,7 @@ function toListModule(
     lockReason: lockedByAutomation ? autoLock.reason : undefined,
     resumeHref: resumeLessonId
       ? `/course/${course.slug}/lesson/${resumeLessonId}`
-      : `/course/${course.slug}`,
+      : `/course/${course.slug}/module/${m.id}`,
     lessons: m.lessons
       .slice()
       .sort((a, b) => a.order - b.order)
