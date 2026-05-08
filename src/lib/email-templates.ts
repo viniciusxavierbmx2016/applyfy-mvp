@@ -177,6 +177,26 @@ export function passwordReset(name: string, resetUrl: string) {
   };
 }
 
+export function workspacePasswordReset(
+  name: string,
+  workspaceName: string,
+  resetUrl: string
+) {
+  const firstName = name.split(" ")[0];
+  const html = baseTemplate(`
+    ${heading("Redefinir sua senha")}
+    ${paragraph(`Olá, ${firstName}. Recebemos uma solicitação para redefinir a senha da sua conta em <strong style="color:#ffffff;">${workspaceName}</strong>.`)}
+    ${paragraph("Clique no botão abaixo para criar uma nova senha. Este link expira em 1 hora e vale apenas para esta área de membros.")}
+    ${ctaButton("Redefinir senha", resetUrl)}
+    ${divider()}
+    ${paragraph("<span style='font-size:13px;color:#6b7280;'>Se você não solicitou esta alteração, ignore este email. Sua senha permanecerá a mesma.</span>")}
+  `, workspaceName);
+  return {
+    subject: `Redefinir sua senha - ${workspaceName}`,
+    htmlContent: html,
+  };
+}
+
 export function collaboratorInvite(
   name: string,
   workspaceName: string,

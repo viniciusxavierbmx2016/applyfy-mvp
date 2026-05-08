@@ -72,7 +72,7 @@ export default function WorkspaceLoginPage() {
       footer={
         <div className="mt-6 flex items-center justify-between text-sm">
           <Link
-            href={`/forgot-password?workspace=${slug}`}
+            href={`/w/${slug}/forgot-password`}
             className="hover:underline transition-colors"
             style={{ color: theme.linkColor }}
           >
