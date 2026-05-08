@@ -1,15 +1,24 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireStaff } from "@/lib/auth";
+import { resolveStaffWorkspace } from "@/lib/workspace";
 
 export async function GET() {
   try {
     const staff = await requireStaff();
     const isAdmin = staff.role === "ADMIN";
+    const { workspace } = await resolveStaffWorkspace(staff);
+
+    // Token is scoped per-workspace (`applyfy_token:<workspaceId>`).
+    // Logo is still global today; if the producer has no workspace there is
+    // no scope to read a token from, so the gateway shows "Não configurado".
+    const tokenKey = workspace ? `applyfy_token:${workspace.id}` : null;
+    const settingKeys = ["applyfy_logo_url"];
+    if (tokenKey) settingKeys.push(tokenKey);
 
     const [rows, pendingRequests] = await Promise.all([
       prisma.settings.findMany({
-        where: { key: { in: ["applyfy_token", "applyfy_logo_url"] } },
+        where: { key: { in: settingKeys } },
         select: { key: true, value: true },
       }),
       isAdmin
@@ -22,7 +31,7 @@ export async function GET() {
     return NextResponse.json({
       gateways: {
         applyfy: {
-          connected: !!(map.get("applyfy_token") || "").length,
+          connected: tokenKey ? !!(map.get(tokenKey) || "").length : false,
           logoUrl: map.get("applyfy_logo_url") || null,
         },
       },
