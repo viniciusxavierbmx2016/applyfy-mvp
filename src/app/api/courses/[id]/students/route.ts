@@ -205,7 +205,7 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
       );
     }
 
-    const user = await ensureUserByEmail(email, name, course.workspace.id, phone?.trim() || undefined);
+    const { user } = await ensureUserByEmail(email, name, course.workspace.id, phone?.trim() || undefined);
 
     const expiresAt =
       typeof days === "number" && days > 0

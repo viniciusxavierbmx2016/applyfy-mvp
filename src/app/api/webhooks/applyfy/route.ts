@@ -167,7 +167,7 @@ export async function POST(request: Request) {
     }
 
     if (GRANT_EVENTS.has(event)) {
-      const user = await ensureUserByEmail(email, name);
+      const { user, tempPassword } = await ensureUserByEmail(email, name);
       const results: Array<{
         externalId: string;
         courseId?: string;
@@ -252,7 +252,8 @@ export async function POST(request: Request) {
               name || email.split("@")[0],
               course.title,
               ws.name,
-              loginUrl
+              loginUrl,
+              tempPassword
             );
             await sendEmail({
               to: { email, name: name || undefined },

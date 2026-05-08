@@ -177,7 +177,7 @@ export async function POST(request: Request, props: { params: Promise<{ slug: st
     }
 
     if (GRANT_EVENTS.has(event)) {
-      const user = await ensureUserByEmail(email, name, undefined, phone);
+      const { user, tempPassword } = await ensureUserByEmail(email, name, undefined, phone);
       // Access to a workspace is derived from Enrollment (course→workspace),
       // so we no longer write workspaceId on the User. Keeping that legacy
       // field synced here would re-introduce a single-workspace binding for
@@ -285,7 +285,8 @@ export async function POST(request: Request, props: { params: Promise<{ slug: st
           name || email,
           course.title,
           workspace.name,
-          loginUrl
+          loginUrl,
+          tempPassword
         );
         sendEmail({ to: { email, name: name || undefined }, ...template, senderName: workspace.name }).catch((err) => console.error("[EMAIL_ERROR] studentAccessGranted to:", email, err?.message || err));
 

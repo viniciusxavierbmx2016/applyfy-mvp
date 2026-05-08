@@ -115,7 +115,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const user = await ensureUserByEmail(email, name);
+    const { user } = await ensureUserByEmail(email, name);
     await activateEnrollment(user.id, course.id);
 
     processAutomations({

@@ -1,18 +1,27 @@
+import type { User } from "@prisma/client";
 import { prisma } from "./prisma";
 import { createAdminClient } from "./supabase-admin";
 import { createNotification } from "./notifications";
 
 /**
  * Upsert a user in the database and in Supabase Auth.
- * If the Supabase auth user doesn't exist, creates one with a random password
- * and email_confirm:true. The buyer should use "forgot password" to set their own.
+ *
+ * Returns `{ user, tempPassword? }`:
+ * - When the Prisma User already exists, `tempPassword` is undefined — we
+ *   never rotate an existing account's password from this helper.
+ * - When the Supabase auth user already exists but the Prisma row is
+ *   missing, we adopt the existing auth identity without rotating either,
+ *   so `tempPassword` is undefined.
+ * - When we provision a brand-new identity, we generate a friendly
+ *   `mc-XXXXXX` password, set it on Supabase, and return it so the
+ *   caller can include it in the access email.
  */
 export async function ensureUserByEmail(
   email: string,
   name?: string,
   workspaceId?: string,
   phone?: string | null
-) {
+): Promise<{ user: User; tempPassword?: string }> {
   const normalizedEmail = email.trim().toLowerCase();
 
   const existing = await prisma.user.findUnique({
@@ -27,12 +36,13 @@ export async function ensureUserByEmail(
       updates.phone = phone;
     }
     if (Object.keys(updates).length > 0) {
-      return prisma.user.update({
+      const updated = await prisma.user.update({
         where: { id: existing.id },
         data: updates,
       });
+      return { user: updated };
     }
-    return existing;
+    return { user: existing };
   }
 
   const admin = createAdminClient();
@@ -44,13 +54,13 @@ export async function ensureUserByEmail(
   );
 
   let authId = existingAuth?.id;
+  let tempPassword: string | undefined;
 
   if (!authId) {
-    const randomPassword =
-      Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2);
+    tempPassword = `mc-${Math.random().toString(36).slice(2, 8)}`;
     const { data, error } = await admin.auth.admin.createUser({
       email: normalizedEmail,
-      password: randomPassword,
+      password: tempPassword,
       email_confirm: true,
       user_metadata: { name: name || normalizedEmail.split("@")[0] },
     });
@@ -72,7 +82,7 @@ export async function ensureUserByEmail(
     },
   });
 
-  return user;
+  return { user, tempPassword };
 }
 
 /**
