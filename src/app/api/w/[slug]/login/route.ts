@@ -1,12 +1,26 @@
 import { NextResponse } from "next/server";
+import type { Session, User as SupabaseUser } from "@supabase/supabase-js";
 import { createRouteHandlerClient } from "@/lib/supabase-route";
 import { createAdminClient } from "@/lib/supabase-admin";
 import { prisma } from "@/lib/prisma";
 import { hasWorkspaceAccess } from "@/lib/workspace-access";
 import { loginSchema, validateBody } from "@/lib/validations";
 import { logAudit } from "@/lib/audit";
+import {
+  generateSalt,
+  hashPassword,
+  verifyPassword,
+} from "@/lib/workspace-auth";
 
 const MAX_SESSIONS = 3;
+const STAFF_ROLES = new Set<string>([
+  "PRODUCER",
+  "ADMIN",
+  "COLLABORATOR",
+  "ADMIN_COLLABORATOR",
+]);
+
+type AuthSuccess = { user: SupabaseUser; session: Session };
 
 export async function POST(request: Request, props: { params: Promise<{ slug: string }> }) {
   const params = await props.params;
@@ -15,10 +29,11 @@ export async function POST(request: Request, props: { params: Promise<{ slug: st
     const v = validateBody(loginSchema, raw);
     if (!v.success) return v.error;
     const { email, password } = v.data;
+    const normalizedEmail = email.toLowerCase();
 
     const workspace = await prisma.workspace.findUnique({
       where: { slug: params.slug },
-      select: { id: true, isActive: true, masterPassword: true },
+      select: { id: true, slug: true, isActive: true, masterPassword: true },
     });
     if (!workspace || !workspace.isActive) {
       return NextResponse.json(
@@ -27,63 +42,127 @@ export async function POST(request: Request, props: { params: Promise<{ slug: st
       );
     }
 
-    const supabase = await createRouteHandlerClient();
-    let { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
+    const target = await prisma.user.findUnique({
+      where: { email: normalizedEmail },
+      select: { id: true, role: true },
     });
+    if (!target) {
+      return NextResponse.json({ error: "Senha incorreta" }, { status: 401 });
+    }
 
-    // Fallback: master password configured for the workspace.
-    // Lets the producer hand out a single shared password (e.g. for tests)
-    // without rotating the student's real Supabase password — we mint a
-    // magic-link token via the admin API and consume it on the route
-    // client to establish a session. The original password (set by the
-    // student via reset) stays intact, so other workspaces this student
-    // belongs to keep working.
-    let usedMasterPassword = false;
-    if (
-      error &&
-      workspace.masterPassword &&
-      password === workspace.masterPassword
-    ) {
-      const target = await prisma.user.findUnique({
-        where: { email: email.toLowerCase() },
-        select: { id: true, role: true },
+    const supabase = await createRouteHandlerClient();
+    const admin = createAdminClient();
+
+    // Magic-link helper: mints a one-time token via the admin API and
+    // consumes it on the route client. Returns null on failure. Used by
+    // master-password login and by STUDENT scoped login so we never
+    // touch the user's stored password.
+    async function sessionViaMagicLink(): Promise<AuthSuccess | null> {
+      const { data: linkData, error: linkError } =
+        await admin.auth.admin.generateLink({ type: "magiclink", email });
+      const tokenHash = linkData?.properties?.hashed_token;
+      if (linkError || !tokenHash) return null;
+      const otp = await supabase.auth.verifyOtp({
+        token_hash: tokenHash,
+        type: "magiclink",
       });
-      if (
-        target &&
-        target.role === "STUDENT" &&
-        (await hasWorkspaceAccess(target.id, workspace.id))
-      ) {
-        const admin = createAdminClient();
-        const { data: linkData, error: linkError } =
-          await admin.auth.admin.generateLink({
-            type: "magiclink",
-            email,
-          });
-        const tokenHash = linkData?.properties?.hashed_token;
-        if (!linkError && tokenHash) {
-          const otp = await supabase.auth.verifyOtp({
-            token_hash: tokenHash,
-            type: "magiclink",
-          });
-          if (!otp.error && otp.data.session && otp.data.user) {
-            data = {
-              user: otp.data.user,
-              session: otp.data.session,
-            };
-            error = null;
-            usedMasterPassword = true;
+      if (otp.error || !otp.data.session || !otp.data.user) return null;
+      return { user: otp.data.user, session: otp.data.session };
+    }
+
+    let authData: AuthSuccess | null = null;
+    let usedMasterPassword = false;
+
+    // 1) Master password — highest priority. STUDENT only, must already
+    //    have workspace access. Does not rotate the user's real password.
+    if (
+      workspace.masterPassword &&
+      password === workspace.masterPassword &&
+      target.role === "STUDENT" &&
+      (await hasWorkspaceAccess(target.id, workspace.id))
+    ) {
+      const sess = await sessionViaMagicLink();
+      if (sess) {
+        authData = sess;
+        usedMasterPassword = true;
+      }
+    }
+
+    // 2) Role-based dual auth. Staff and STUDENTs with an accepted
+    //    Collaborator row keep using the global Supabase Auth password
+    //    (their identity is platform-wide). Pure STUDENTs are scoped
+    //    per workspace via WorkspaceCredential.
+    if (!authData) {
+      const collab = await prisma.collaborator.findFirst({
+        where: { userId: target.id, status: "ACCEPTED" },
+        select: { id: true },
+      });
+      const useGlobalAuth = STAFF_ROLES.has(target.role) || !!collab;
+
+      if (useGlobalAuth) {
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+        if (error || !data.session || !data.user) {
+          return NextResponse.json({ error: "Senha incorreta" }, { status: 401 });
+        }
+        authData = { user: data.user, session: data.session };
+      } else {
+        // Pure STUDENT path.
+        const credential = await prisma.workspaceCredential.findUnique({
+          where: {
+            userId_workspaceId: {
+              userId: target.id,
+              workspaceId: workspace.id,
+            },
+          },
+        });
+
+        if (credential) {
+          const ok = verifyPassword(password, credential.passwordHash, credential.salt);
+          if (!ok) {
+            return NextResponse.json({ error: "Senha incorreta" }, { status: 401 });
           }
+          const sess = await sessionViaMagicLink();
+          if (!sess) {
+            return NextResponse.json({ error: "Falha na autenticação" }, { status: 500 });
+          }
+          authData = sess;
+        } else {
+          // Legacy compatibility window: no scoped credential yet.
+          // Try the global Supabase Auth password and lazy-migrate.
+          const { data, error } = await supabase.auth.signInWithPassword({
+            email,
+            password,
+          });
+          if (error || !data.session || !data.user) {
+            return NextResponse.json(
+              {
+                error:
+                  "Senha incorreta. Se é seu primeiro acesso, clique em 'Esqueci minha senha'.",
+              },
+              { status: 401 }
+            );
+          }
+          const salt = generateSalt();
+          const passwordHash = hashPassword(password, salt);
+          await prisma.workspaceCredential
+            .create({
+              data: {
+                userId: target.id,
+                workspaceId: workspace.id,
+                passwordHash,
+                salt,
+              },
+            })
+            .catch(() => {});
+          authData = { user: data.user, session: data.session };
         }
       }
     }
 
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 401 });
-    }
-
-    const user = await prisma.user.findUnique({ where: { email } });
+    const user = await prisma.user.findUnique({ where: { email: normalizedEmail } });
     if (!user) {
       return NextResponse.json({ error: "Usuário não encontrado" }, { status: 404 });
     }
@@ -95,7 +174,7 @@ export async function POST(request: Request, props: { params: Promise<{ slug: st
           ? "Use /admin/login para acessar o painel admin"
           : user.role === "PRODUCER"
             ? "Use /producer/login para acessar o painel do produtor"
-            : user.role === "COLLABORATOR"
+            : user.role === "COLLABORATOR" || user.role === "ADMIN_COLLABORATOR"
               ? "Use /producer/login para acessar o painel de colaborador"
               : "Conta sem permissão para esta área de membros";
       return NextResponse.json({ error: message }, { status: 403 });
@@ -164,12 +243,20 @@ export async function POST(request: Request, props: { params: Promise<{ slug: st
       });
     }
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       message: "Login realizado com sucesso",
-      user: data.user,
-      session: data.session,
-      workspace: { id: workspace.id, slug: params.slug },
+      user: authData.user,
+      session: authData.session,
+      workspace: { id: workspace.id, slug: workspace.slug },
     });
+    response.cookies.set("active_workspace_slug", workspace.slug, {
+      httpOnly: false,
+      sameSite: "lax",
+      path: "/",
+      maxAge: 60 * 60 * 24 * 30,
+      secure: process.env.NODE_ENV === "production",
+    });
+    return response;
   } catch (error) {
     console.error("POST /api/w/[slug]/login error:", error);
     return NextResponse.json({ error: "Erro interno" }, { status: 500 });
