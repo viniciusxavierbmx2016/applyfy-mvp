@@ -301,7 +301,7 @@ export async function POST(request: Request, props: { params: Promise<{ slug: st
               status: "SUCCESS",
               email,
               workspaceId,
-              createdAt: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) },
+              createdAt: { gte: new Date(Date.now() - 60 * 1000) },
               rawPayload: { path: ["transaction", "id"], equals: txId },
             },
             select: { id: true },
