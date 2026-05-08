@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireStaff } from "@/lib/auth";
-import { createAdminClient } from "@/lib/supabase-admin";
+import { ensureUserByEmail } from "@/lib/webhook-helpers";
 import { createNotification } from "@/lib/notifications";
 import { processAutomations } from "@/lib/automation-engine";
 import { resolveStaffWorkspace } from "@/lib/workspace";
 import { sendEmail } from "@/lib/email";
-import { studentAccessGranted } from "@/lib/email-templates";
+import { staffAccessGranted, studentAccessGranted } from "@/lib/email-templates";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 const MAX_ROWS = 500;
@@ -148,7 +148,6 @@ export async function POST(request: Request) {
       );
     }
 
-    const admin = createAdminClient();
     const baseUrl = new URL(request.url).origin;
 
     const summary = {
@@ -188,72 +187,31 @@ export async function POST(request: Request) {
       }
 
       try {
-        let user = await prisma.user.findUnique({
+        const preExisting = await prisma.user.findUnique({
           where: { email },
+          select: { id: true },
         });
-        const isNewUser = !user;
-        let tempPassword = "";
+        const isNewUser = !preExisting;
 
-        if (!user) {
-          let authId: string | undefined;
-          tempPassword = workspace.masterPassword || generateTempPassword();
+        // Provision the user + per-workspace credential. ensureUserByEmail
+        // returns:
+        //   - tempPassword: the freshly-generated mc-XXXXXX (or undefined
+        //     when a WorkspaceCredential already exists for this pair)
+        //   - isStaff: true for staff or accepted-Collaborator buyers, who
+        //     authenticate against global Supabase Auth and should be
+        //     pointed at their existing Members Club credentials.
+        const ensured = await ensureUserByEmail(email, name, workspaceId);
+        const user = ensured.user;
+        const scopedTemp = ensured.tempPassword;
+        const isStaff = ensured.isStaff;
 
-          const { data: createData, error: createError } =
-            await admin.auth.admin.createUser({
-              email,
-              password: tempPassword,
-              email_confirm: true,
-              user_metadata: { name },
-            });
+        // Master password (when configured) wins for the displayed
+        // credential because /w/<slug>/login validates master first via
+        // magic link. Otherwise show the scoped password if we just
+        // issued one.
+        const tempPassword = workspace.masterPassword || scopedTemp || "";
 
-          if (createError) {
-            if (
-              createError.message?.includes("already been registered") ||
-              createError.message?.includes("already exists")
-            ) {
-              const { data: listData } = await admin.auth.admin.listUsers();
-              const found = listData?.users.find(
-                (u) => u.email?.toLowerCase() === email
-              );
-              if (found) {
-                authId = found.id;
-                try {
-                  await admin.auth.admin.updateUserById(found.id, {
-                    password: tempPassword,
-                  });
-                } catch {}
-              }
-            }
-            if (!authId) {
-              summary.errors.push({
-                line: lineNum,
-                email,
-                reason: `Supabase: ${createError.message}`,
-              });
-              csvResultRows.push([
-                name,
-                email,
-                "Erro",
-                "",
-                "",
-                "",
-                createError.message,
-              ]);
-              continue;
-            }
-          } else {
-            authId = createData.user.id;
-          }
-
-          user = await prisma.user.create({
-            data: {
-              id: authId!,
-              email,
-              name,
-              workspaceId,
-            },
-          });
-
+        if (isNewUser) {
           summary.created++;
         } else {
           if (!user.workspaceId && user.role === "STUDENT") {
@@ -308,21 +266,23 @@ export async function POST(request: Request) {
 
         if (enrolledCourseNames.length > 0) {
           const courseName = enrolledCourseNames.join(", ");
-          const template = studentAccessGranted(
-            name,
-            courseName,
-            workspace.name,
-            loginUrl,
-            isNewUser ? tempPassword || undefined : undefined
-          );
-          sendEmail({ to: { email, name }, ...template, senderName: workspace.name }).catch((err) => console.error("[EMAIL_ERROR] studentAccessGranted to:", email, err?.message || err));
+          const template = isStaff
+            ? staffAccessGranted(name, courseName, workspace.name, loginUrl)
+            : studentAccessGranted(
+                name,
+                courseName,
+                workspace.name,
+                loginUrl,
+                isNewUser ? tempPassword || undefined : undefined
+              );
+          sendEmail({ to: { email, name }, ...template, senderName: workspace.name }).catch((err) => console.error("[EMAIL_ERROR] access email to:", email, err?.message || err));
         }
 
         csvResultRows.push([
           name,
           email,
           isNewUser ? "Criado" : "Já existia",
-          isNewUser ? tempPassword : "",
+          isNewUser && !isStaff ? tempPassword : "",
           isNewUser ? loginUrl : "",
           enrolledCourseNames.join(", ") || "Já matriculado",
           "",
@@ -369,13 +329,3 @@ export async function POST(request: Request) {
   }
 }
 
-function generateTempPassword(): string {
-  const letters = "ABCDEFGHJKLMNPQRSTUVWXYZ";
-  const numbers = "0123456789";
-  const specials = "!@#$";
-  let pwd = "";
-  for (let i = 0; i < 3; i++) pwd += letters[Math.floor(Math.random() * letters.length)];
-  for (let i = 0; i < 4; i++) pwd += numbers[Math.floor(Math.random() * numbers.length)];
-  pwd += specials[Math.floor(Math.random() * specials.length)];
-  return pwd;
-}
