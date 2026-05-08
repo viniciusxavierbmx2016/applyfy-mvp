@@ -542,7 +542,7 @@ export const createCourseSchema = z
   .object({
     title: z.string().min(1, "title obrigatório").max(255),
     slug: z.string().min(1, "slug obrigatório").max(255),
-    description: z.string().min(1, "description obrigatório").max(200),
+    description: z.string().min(1, "description obrigatório").max(110),
     thumbnail: z.string().max(2000).optional().nullable(),
     checkoutUrl: z.string().max(2000).optional().nullable(),
     externalProductId: z.string().max(200).optional().nullable(),
@@ -709,7 +709,7 @@ export const updateCourseSchema = z
       .max(255)
       .regex(/^[a-z0-9-]+$/, "Slug inválido")
       .optional(),
-    description: z.string().max(200).optional().nullable(),
+    description: z.string().max(110).optional().nullable(),
     price: z.union([z.number().min(0), z.string(), z.null()]).optional(),
     priceCurrency: z.string().max(10).optional(),
     isPublished: z.boolean().optional(),
