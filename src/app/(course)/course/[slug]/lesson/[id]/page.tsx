@@ -69,6 +69,10 @@ export default function LessonPage(
   const [data, setData] = useState<ViewData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [errorDetails, setErrorDetails] = useState<{
+    releaseDate: string | null;
+    daysRemaining: number | null;
+  } | null>(null);
   const [marking, setMarking] = useState(false);
   const [showCountdown, setShowCountdown] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
@@ -98,11 +102,28 @@ export default function LessonPage(
     let cancelled = false;
     setLoading(true);
     setError(null);
+    setErrorDetails(null);
     setShowCountdown(false);
 
     fetch(`/api/lessons/${params.id}/view`)
       .then(async (res) => {
-        if (res.status === 403 || res.status === 404) {
+        if (res.status === 403) {
+          // Surface the API's reason instead of bouncing silently. The
+          // payload carries `error`, plus optional `releaseDate` /
+          // `daysRemaining` for drip / scheduled-release locks.
+          const body = await res.json().catch(() => ({}));
+          if (!cancelled) {
+            setError(body.error || "Acesso não disponível");
+            setErrorDetails({
+              releaseDate:
+                typeof body.releaseDate === "string" ? body.releaseDate : null,
+              daysRemaining:
+                typeof body.daysRemaining === "number" ? body.daysRemaining : null,
+            });
+          }
+          return null;
+        }
+        if (res.status === 404) {
           if (!cancelled) router.replace(`/course/${params.slug}`);
           return null;
         }
@@ -277,13 +298,53 @@ export default function LessonPage(
   }
 
   if (error || !data) {
-    const isExpiredError = !!error?.toLowerCase().includes("expirou");
+    const lower = error?.toLowerCase() ?? "";
+    const isExpiredError = lower.includes("expirou");
+    const isDripError =
+      lower.includes("liberado em") ||
+      lower.includes("ainda não está disponível");
+    const isLockedError = lower.includes("bloqueado");
+    const isUnenrolled = lower.includes("não está matriculado");
+
+    const formattedReleaseDate = errorDetails?.releaseDate
+      ? new Date(errorDetails.releaseDate).toLocaleDateString("pt-BR", {
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+        })
+      : null;
+
+    const icon = isDripError ? (
+      <svg className="w-12 h-12 mx-auto mb-3 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+    ) : isLockedError ? (
+      <svg className="w-12 h-12 mx-auto mb-3 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+      </svg>
+    ) : (
+      <svg className="w-12 h-12 mx-auto mb-3 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+      </svg>
+    );
+
     return (
       <div className="flex flex-col h-full bg-white dark:bg-gray-950">
         <div className="h-[52px] shrink-0 border-b border-gray-200 dark:border-white/5 bg-gray-50 dark:bg-gray-900" />
-        <div className="flex-1 flex items-center justify-center">
-          <div className="text-center">
-            <p className="text-red-400 mb-4">{error || "Aula não encontrada"}</p>
+        <div className="flex-1 flex items-center justify-center px-4">
+          <div className="text-center max-w-md">
+            {icon}
+            <p className="text-base font-medium text-gray-900 dark:text-white mb-2">
+              {error || "Aula não encontrada"}
+            </p>
+            {formattedReleaseDate && (
+              <p className="text-sm text-gray-500 mb-4">
+                Disponível em <strong>{formattedReleaseDate}</strong>
+                {errorDetails?.daysRemaining
+                  ? ` (em ${errorDetails.daysRemaining} dia${errorDetails.daysRemaining === 1 ? "" : "s"})`
+                  : ""}
+              </p>
+            )}
             {isExpiredError && (
               <a
                 href={`/course/${params.slug}`}
@@ -292,10 +353,15 @@ export default function LessonPage(
                 Renovar acesso
               </a>
             )}
+            {isUnenrolled && (
+              <p className="text-xs text-gray-500 mb-4">
+                Entre em contato com o produtor do curso.
+              </p>
+            )}
             <div>
               <Link
                 href={`/course/${params.slug}`}
-                className="text-blue-400 hover:text-blue-300 text-sm"
+                className="text-blue-500 hover:text-blue-400 text-sm"
               >
                 ← Voltar ao curso
               </Link>

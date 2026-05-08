@@ -210,11 +210,13 @@ function toListModule(
           Math.max(m.daysToRelease ?? 0, l.daysToRelease ?? 0)
         );
         const lOverridden = overrides.lessons.has(l.id) || overridden || bypassRelease;
+        const locked = hasAccess && !lOverridden && !lRel.released;
         return {
           id: l.id,
           title: l.title,
           completed: l.progress?.some((p) => p.completed) ?? false,
-          locked: hasAccess && !lOverridden && !lRel.released,
+          locked,
+          releaseDate: locked ? lRel.releaseAt.toISOString() : null,
         };
       }),
   };

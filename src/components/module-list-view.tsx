@@ -9,6 +9,7 @@ export interface ListLesson {
   title: string;
   completed: boolean;
   locked?: boolean;
+  releaseDate?: string | null;
 }
 
 export interface ListModule {
@@ -142,6 +143,12 @@ export function ModuleListView({ groups, courseSlug }: Props) {
                       <div className="ml-20 mt-1 space-y-0.5 pb-2">
                         {mod.lessons.map((lesson) => {
                           if (lesson.locked) {
+                            const releaseLabel = lesson.releaseDate
+                              ? new Date(lesson.releaseDate).toLocaleDateString(
+                                  "pt-BR",
+                                  { day: "2-digit", month: "2-digit", year: "numeric" }
+                                )
+                              : null;
                             return (
                               <div
                                 key={lesson.id}
@@ -150,7 +157,14 @@ export function ModuleListView({ groups, courseSlug }: Props) {
                                 <svg className="w-4 h-4 text-gray-400 dark:text-gray-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                                 </svg>
-                                <span className="truncate">{lesson.title}</span>
+                                <div className="min-w-0">
+                                  <span className="block truncate">{lesson.title}</span>
+                                  {releaseLabel && (
+                                    <span className="block text-xs text-gray-400 dark:text-gray-600 mt-0.5">
+                                      Libera em {releaseLabel}
+                                    </span>
+                                  )}
+                                </div>
                               </div>
                             );
                           }
