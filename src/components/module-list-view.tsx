@@ -146,7 +146,12 @@ export function ModuleListView({ groups, courseSlug }: Props) {
                             const releaseLabel = lesson.releaseDate
                               ? new Date(lesson.releaseDate).toLocaleDateString(
                                   "pt-BR",
-                                  { day: "2-digit", month: "2-digit", year: "numeric" }
+                                  {
+                                    day: "2-digit",
+                                    month: "2-digit",
+                                    year: "numeric",
+                                    timeZone: "UTC",
+                                  }
                                 )
                               : null;
                             return (

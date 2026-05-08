@@ -157,6 +157,7 @@ export default function ModuleDetailPage() {
             day: "2-digit",
             month: "2-digit",
             year: "numeric",
+            timeZone: "UTC",
           })}
         </div>
       )}
@@ -198,6 +199,7 @@ export default function ModuleDetailPage() {
                       day: "2-digit",
                       month: "2-digit",
                       year: "numeric",
+                      timeZone: "UTC",
                     })}
                   </p>
                 </div>

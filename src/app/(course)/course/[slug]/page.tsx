@@ -193,9 +193,9 @@ function toListModule(
     releaseAt: lockedByAutomation
       ? undefined
       : dateLocked && m.releaseAt
-        ? new Date(m.releaseAt).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })
+        ? new Date(m.releaseAt).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", timeZone: "UTC" })
         : locked && !rel.released
-          ? rel.releaseAt.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })
+          ? rel.releaseAt.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", timeZone: "UTC" })
           : undefined,
     lockReason: lockedByAutomation ? autoLock.reason : undefined,
     resumeHref: resumeLessonId

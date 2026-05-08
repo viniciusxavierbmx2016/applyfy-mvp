@@ -26,7 +26,10 @@ export async function PUT(request: Request, props: { params: Promise<{ id: strin
         ...(sectionId !== undefined && { sectionId: sectionId || null }),
         ...(typeof hideTitle === "boolean" && { hideTitle }),
         ...(releaseAt !== undefined && {
-          releaseAt: releaseAt ? new Date(releaseAt) : null,
+          // Anchor at noon UTC. The producer form sends "YYYY-MM-DD"
+          // which would otherwise parse as midnight UTC and drift back
+          // one day in any negative-offset timezone (Brazil = UTC-3).
+          releaseAt: releaseAt ? new Date(`${releaseAt.slice(0, 10)}T12:00:00Z`) : null,
         }),
       },
     });
