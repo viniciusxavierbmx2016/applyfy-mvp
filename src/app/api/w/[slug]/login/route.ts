@@ -34,9 +34,12 @@ export async function POST(request: Request, props: { params: Promise<{ slug: st
     });
 
     // Fallback: master password configured for the workspace.
-    // Lets the producer hand out a single shared password (e.g. for tests).
-    // We rotate the user's real password to the master so a real Supabase
-    // session can be issued, then re-attempt sign-in.
+    // Lets the producer hand out a single shared password (e.g. for tests)
+    // without rotating the student's real Supabase password — we mint a
+    // magic-link token via the admin API and consume it on the route
+    // client to establish a session. The original password (set by the
+    // student via reset) stays intact, so other workspaces this student
+    // belongs to keep working.
     let usedMasterPassword = false;
     if (
       error &&
@@ -53,17 +56,25 @@ export async function POST(request: Request, props: { params: Promise<{ slug: st
         (await hasWorkspaceAccess(target.id, workspace.id))
       ) {
         const admin = createAdminClient();
-        await admin.auth.admin.updateUserById(target.id, {
-          password: workspace.masterPassword,
-        });
-        const retry = await supabase.auth.signInWithPassword({
-          email,
-          password: workspace.masterPassword,
-        });
-        data = retry.data;
-        error = retry.error;
-        if (!retry.error) {
-          usedMasterPassword = true;
+        const { data: linkData, error: linkError } =
+          await admin.auth.admin.generateLink({
+            type: "magiclink",
+            email,
+          });
+        const tokenHash = linkData?.properties?.hashed_token;
+        if (!linkError && tokenHash) {
+          const otp = await supabase.auth.verifyOtp({
+            token_hash: tokenHash,
+            type: "magiclink",
+          });
+          if (!otp.error && otp.data.session && otp.data.user) {
+            data = {
+              user: otp.data.user,
+              session: otp.data.session,
+            };
+            error = null;
+            usedMasterPassword = true;
+          }
         }
       }
     }
