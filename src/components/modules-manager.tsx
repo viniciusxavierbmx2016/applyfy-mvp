@@ -21,6 +21,7 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { LessonsManager, type LessonData } from "./lessons-manager";
 import { ThumbnailUpload } from "./thumbnail-upload";
+import { DatePickerSingle } from "./date-picker-single";
 import { useConfirm } from "@/hooks/use-confirm";
 import { HelpTooltip } from "@/components/help-tooltip";
 
@@ -698,11 +699,10 @@ function SortableModule({
               <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Liberação a partir de
               </label>
-              <input
-                type="date"
+              <DatePickerSingle
                 value={releaseAtInput}
-                onChange={(e) => saveReleaseAt(e.target.value)}
-                className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                onChange={saveReleaseAt}
+                placeholder="Selecionar data"
               />
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                 Disponível somente a partir desta data. Vazio = sem restrição.
