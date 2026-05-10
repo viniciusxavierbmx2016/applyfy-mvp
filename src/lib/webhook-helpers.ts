@@ -2,6 +2,7 @@ import type { User } from "@prisma/client";
 import { prisma } from "./prisma";
 import { createAdminClient } from "./supabase-admin";
 import { createNotification } from "./notifications";
+import { encrypt } from "./encryption";
 import {
   generateSalt,
   generateTempPassword,
@@ -37,7 +38,8 @@ export async function ensureUserByEmail(
   email: string,
   name?: string,
   workspaceId?: string,
-  phone?: string | null
+  phone?: string | null,
+  document?: string | null
 ): Promise<{ user: User; tempPassword?: string; isStaff: boolean }> {
   const normalizedEmail = email.trim().toLowerCase();
 
@@ -55,6 +57,9 @@ export async function ensureUserByEmail(
     }
     if (phone && !existing.phone) {
       updates.phone = phone;
+    }
+    if (document && !existing.document) {
+      updates.document = encrypt(document);
     }
     user = Object.keys(updates).length
       ? await prisma.user.update({ where: { id: existing.id }, data: updates })
@@ -88,6 +93,7 @@ export async function ensureUserByEmail(
         name: name || normalizedEmail.split("@")[0],
         workspaceId: workspaceId ?? null,
         phone: phone || null,
+        document: document ? encrypt(document) : null,
       },
     });
   }

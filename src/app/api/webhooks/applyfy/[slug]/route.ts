@@ -146,6 +146,8 @@ export async function POST(request: Request, props: { params: Promise<{ slug: st
     const email = body?.client?.email?.trim().toLowerCase();
     const name = body?.client?.name ?? undefined;
     const phone = body?.client?.phone?.trim() || null;
+    const document =
+      body?.client?.cpf?.trim() || body?.client?.cnpj?.trim() || null;
     if (!email) {
       await logWebhook({
         event,
@@ -187,7 +189,8 @@ export async function POST(request: Request, props: { params: Promise<{ slug: st
         email,
         name,
         workspace.id,
-        phone
+        phone,
+        document
       );
       // Access to a workspace is derived from Enrollment (course→workspace),
       // so we no longer write workspaceId on the User. Keeping that legacy

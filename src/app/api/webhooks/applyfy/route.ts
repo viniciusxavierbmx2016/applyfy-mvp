@@ -173,6 +173,8 @@ export async function POST(request: Request) {
     const email = body?.client?.email?.trim().toLowerCase();
     const name = body?.client?.name ?? undefined;
     const phone = body?.client?.phone?.trim() || null;
+    const document =
+      body?.client?.cpf?.trim() || body?.client?.cnpj?.trim() || null;
 
     if (!email) {
       await logWebhook({
@@ -278,7 +280,8 @@ export async function POST(request: Request) {
           email,
           name,
           course.workspaceId,
-          phone
+          phone,
+          document
         );
 
         await activateEnrollment(user.id, course.id);
