@@ -201,6 +201,31 @@ export async function GET(request: Request) {
           where: { userId: { in: userIds } },
         })
       : [];
+
+    const transactions =
+      userIds.length > 0
+        ? await prisma.producerTransaction.findMany({
+            where: workspaceId
+              ? { userId: { in: userIds }, workspaceId }
+              : { userId: { in: userIds } },
+            select: {
+              userId: true,
+              amount: true,
+              status: true,
+              paymentMethod: true,
+              createdAt: true,
+            },
+            orderBy: { createdAt: "desc" },
+          })
+        : [];
+    type TxRow = (typeof transactions)[number];
+    const txByUser = new Map<string, TxRow[]>();
+    for (const tx of transactions) {
+      if (!tx.userId) continue;
+      const arr = txByUser.get(tx.userId);
+      if (arr) arr.push(tx);
+      else txByUser.set(tx.userId, [tx]);
+    }
     const userLikes = new Map<string, number>();
     const userDislikes = new Map<string, number>();
     for (const r of reactionsByUser) {
@@ -263,6 +288,10 @@ export async function GET(request: Request) {
       "Status do acesso",
       "Likes dados",
       "Dislikes dados",
+      "Valor total",
+      "Método pagamento",
+      "Data compra",
+      "Status pagamento",
     ];
     const lines: string[] = [headers.map(csvEscape).join(",")];
 
@@ -329,6 +358,22 @@ export async function GET(request: Request) {
 
       const tagNames = u.userTags?.map((ut) => ut.tag.name).join("; ") || "";
 
+      const userTx = txByUser.get(u.id) ?? [];
+      const totalPaid = userTx
+        .filter((t) => t.status === "COMPLETED")
+        .reduce((sum, t) => sum + t.amount, 0);
+      const methods = Array.from(
+        new Set(
+          userTx
+            .map((t) => t.paymentMethod)
+            .filter((m): m is string => !!m)
+        )
+      ).join(", ");
+      // userTx is sorted desc by createdAt → first is most recent, last is oldest
+      const firstPurchase =
+        userTx.length > 0 ? userTx[userTx.length - 1].createdAt : null;
+      const lastStatus = userTx.length > 0 ? userTx[0].status : "";
+
       lines.push(
         [
           csvEscape(u.name),
@@ -349,6 +394,10 @@ export async function GET(request: Request) {
           csvEscape(status),
           csvEscape(userLikes.get(u.id) || 0),
           csvEscape(userDislikes.get(u.id) || 0),
+          csvEscape(totalPaid > 0 ? totalPaid.toFixed(2) : ""),
+          csvEscape(methods),
+          csvEscape(formatDate(firstPurchase)),
+          csvEscape(lastStatus),
         ].join(",")
       );
     }
