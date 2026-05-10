@@ -22,6 +22,7 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const startDate = searchParams.get("startDate");
     const endDate = searchParams.get("endDate");
+    const courseId = searchParams.get("courseId");
 
     const where: Record<string, unknown> = {};
     if (scoped && workspace) {
@@ -32,6 +33,9 @@ export async function GET(request: Request) {
         ...(startDate ? { gte: new Date(startDate) } : {}),
         ...(endDate ? { lte: new Date(`${endDate}T23:59:59.999Z`) } : {}),
       };
+    }
+    if (courseId && courseId !== "all") {
+      where.courseId = courseId;
     }
 
     const transactions = await prisma.producerTransaction.findMany({

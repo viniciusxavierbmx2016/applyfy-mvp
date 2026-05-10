@@ -192,7 +192,7 @@ function DashboardContent() {
         </div>
       </div>
 
-      <SalesKpis startDate={range.startDate} endDate={range.endDate} />
+      <SalesKpis startDate={range.startDate} endDate={range.endDate} courseId={courseId} />
 
       <AnalyticsOverview
         courseId={courseId}
@@ -204,7 +204,7 @@ function DashboardContent() {
   );
 }
 
-function SalesKpis({ startDate, endDate }: { startDate?: string; endDate?: string }) {
+function SalesKpis({ startDate, endDate, courseId }: { startDate?: string; endDate?: string; courseId?: string }) {
   const [data, setData] = useState<SalesStats | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -213,11 +213,12 @@ function SalesKpis({ startDate, endDate }: { startDate?: string; endDate?: strin
     const qs = new URLSearchParams();
     if (startDate) qs.set("startDate", startDate);
     if (endDate) qs.set("endDate", endDate);
+    if (courseId && courseId !== "all") qs.set("courseId", courseId);
     fetch(`/api/producer/sales/stats?${qs.toString()}`)
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => setData(d))
       .finally(() => setLoading(false));
-  }, [startDate, endDate]);
+  }, [startDate, endDate, courseId]);
 
   if (loading) {
     return (
