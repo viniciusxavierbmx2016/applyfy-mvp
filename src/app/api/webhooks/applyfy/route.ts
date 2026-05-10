@@ -172,6 +172,7 @@ export async function POST(request: Request) {
 
     const email = body?.client?.email?.trim().toLowerCase();
     const name = body?.client?.name ?? undefined;
+    const phone = body?.client?.phone?.trim() || null;
 
     if (!email) {
       await logWebhook({
@@ -276,7 +277,8 @@ export async function POST(request: Request) {
         const { user, tempPassword, isStaff } = await ensureUserByEmail(
           email,
           name,
-          course.workspaceId
+          course.workspaceId,
+          phone
         );
 
         await activateEnrollment(user.id, course.id);
