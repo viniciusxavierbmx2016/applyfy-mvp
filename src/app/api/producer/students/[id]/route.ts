@@ -132,6 +132,50 @@ export async function GET(_request: Request, props: { params: Promise<{ id: stri
       select: { ip: true, userAgent: true, path: true, createdAt: true },
     });
 
+    const transactions = await prisma.producerTransaction.findMany({
+      where: workspaceId
+        ? { userId: user.id, workspaceId }
+        : { userId: user.id },
+      select: {
+        id: true,
+        amount: true,
+        currency: true,
+        status: true,
+        paymentMethod: true,
+        externalId: true,
+        courseId: true,
+        createdAt: true,
+      },
+      orderBy: { createdAt: "desc" },
+      take: 50,
+    });
+
+    const txCourseIds = Array.from(
+      new Set(
+        transactions
+          .map((t) => t.courseId)
+          .filter((id): id is string => !!id)
+      )
+    );
+    const txCourses = txCourseIds.length
+      ? await prisma.course.findMany({
+          where: { id: { in: txCourseIds } },
+          select: { id: true, title: true },
+        })
+      : [];
+    const courseTitleById = new Map(txCourses.map((c) => [c.id, c.title]));
+
+    const transactionsOut = transactions.map((t) => ({
+      id: t.id,
+      amount: t.amount,
+      currency: t.currency,
+      status: t.status,
+      paymentMethod: t.paymentMethod,
+      externalId: t.externalId,
+      createdAt: t.createdAt,
+      courseTitle: t.courseId ? courseTitleById.get(t.courseId) ?? null : null,
+    }));
+
     const progressByCourse = new Map<string, number>();
     for (const p of progress) {
       const cid = p.lesson.module.courseId;
@@ -215,6 +259,7 @@ export async function GET(_request: Request, props: { params: Promise<{ id: stri
       })),
       recentActivity: recentActivity.slice(0, 15),
       accessLogs,
+      transactions: transactionsOut,
     });
   } catch (error) {
     console.error("GET /api/producer/students/[id] error:", error);

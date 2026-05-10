@@ -57,6 +57,16 @@ interface AccessLogData {
   path: string | null;
   createdAt: string;
 }
+interface TransactionData {
+  id: string;
+  amount: number;
+  currency: string;
+  status: string;
+  paymentMethod: string | null;
+  externalId: string | null;
+  createdAt: string;
+  courseTitle: string | null;
+}
 interface DetailResponse {
   user: UserData;
   tags: TagData[];
@@ -65,12 +75,14 @@ interface DetailResponse {
   certificates: CertData[];
   recentActivity: ActivityData[];
   accessLogs: AccessLogData[];
+  transactions: TransactionData[];
 }
 
-type Tab = "info" | "courses" | "activity" | "engagement";
+type Tab = "info" | "courses" | "sales" | "activity" | "engagement";
 const TABS: { key: Tab; label: string }[] = [
   { key: "info", label: "Informações" },
   { key: "courses", label: "Cursos" },
+  { key: "sales", label: "Compras" },
   { key: "activity", label: "Atividade" },
   { key: "engagement", label: "Engajamento" },
 ];
@@ -234,6 +246,7 @@ export default function StudentDetailPage(
       {/* Tab content */}
       {activeTab === "info" && <TabInfo user={user} tags={tags} />}
       {activeTab === "courses" && <TabCourses enrollments={data.enrollments} />}
+      {activeTab === "sales" && <TabSales transactions={data.transactions} />}
       {activeTab === "activity" && <TabActivity activity={data.recentActivity} accessLogs={data.accessLogs} />}
       {activeTab === "engagement" && (
         <TabEngagement stats={stats} certificates={data.certificates} />
@@ -577,4 +590,103 @@ function formatWhatsAppUrl(phone: string): string {
   const digits = phone.replace(/\D/g, "");
   const num = digits.startsWith("55") ? digits : `55${digits}`;
   return `https://wa.me/${num}`;
+}
+
+/* ── Tab: Compras ── */
+function TabSales({ transactions }: { transactions: TransactionData[] }) {
+  if (transactions.length === 0) {
+    return <EmptyState text="Nenhuma transação registrada." />;
+  }
+  return (
+    <Section title="Histórico de Compras">
+      <div className="overflow-x-auto -mx-5 px-5">
+        <table className="min-w-full text-sm">
+          <thead>
+            <tr className="text-[11px] text-gray-500 uppercase tracking-wider">
+              <th className="text-left font-medium pb-3 pr-4">Data</th>
+              <th className="text-left font-medium pb-3 pr-4">Curso</th>
+              <th className="text-right font-medium pb-3 pr-4">Valor</th>
+              <th className="text-left font-medium pb-3 pr-4">Método</th>
+              <th className="text-left font-medium pb-3">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {transactions.map((t) => (
+              <tr
+                key={t.id}
+                className="border-t border-gray-100 dark:border-white/[0.06]"
+              >
+                <td className="py-3 pr-4 text-gray-700 dark:text-gray-300 whitespace-nowrap">
+                  {formatDate(t.createdAt)}
+                </td>
+                <td className="py-3 pr-4 text-gray-900 dark:text-white">
+                  {t.courseTitle || "—"}
+                </td>
+                <td className="py-3 pr-4 text-right text-gray-900 dark:text-white tabular-nums whitespace-nowrap">
+                  {formatCurrency(t.amount, t.currency)}
+                </td>
+                <td className="py-3 pr-4 text-gray-700 dark:text-gray-300 whitespace-nowrap">
+                  {formatPaymentMethod(t.paymentMethod)}
+                </td>
+                <td className="py-3">
+                  <TransactionStatusBadge status={t.status} />
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </Section>
+  );
+}
+
+function TransactionStatusBadge({ status }: { status: string }) {
+  const config: Record<string, { label: string; cls: string }> = {
+    COMPLETED: {
+      label: "Pago",
+      cls: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+    },
+    REFUNDED: {
+      label: "Reembolsado",
+      cls: "bg-red-500/10 text-red-600 dark:text-red-400",
+    },
+    CHARGED_BACK: {
+      label: "Chargeback",
+      cls: "bg-red-500/10 text-red-600 dark:text-red-400",
+    },
+  };
+  const cfg =
+    config[status] ?? {
+      label: status,
+      cls: "bg-gray-500/10 text-gray-600 dark:text-gray-400",
+    };
+  return (
+    <span
+      className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium ${cfg.cls}`}
+    >
+      {cfg.label}
+    </span>
+  );
+}
+
+function formatCurrency(amount: number, currency: string): string {
+  try {
+    return new Intl.NumberFormat("pt-BR", {
+      style: "currency",
+      currency: currency || "BRL",
+    }).format(amount);
+  } catch {
+    return `R$ ${amount.toFixed(2)}`;
+  }
+}
+
+function formatPaymentMethod(method: string | null): string {
+  if (!method) return "—";
+  const map: Record<string, string> = {
+    PIX: "PIX",
+    CREDIT_CARD: "Cartão",
+    DEBIT_CARD: "Débito",
+    BOLETO: "Boleto",
+  };
+  return map[method.toUpperCase()] ?? method;
 }
