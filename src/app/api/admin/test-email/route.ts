@@ -19,7 +19,7 @@ const TEMPLATES: Record<string, () => { subject: string; htmlContent: string }> 
   studentAccessGranted: () => studentAccessGranted("Teste Aluno", "Curso Teste", "Workspace Teste", "https://example.com/login", "temp1234"),
   passwordReset: () => passwordReset("Teste User", "https://example.com/reset"),
   collaboratorInvite: () => collaboratorInvite("Teste Collab", "Workspace Teste", "https://example.com/invite", ["MANAGE_COURSES", "MANAGE_STUDENTS"]),
-  subscriptionActivated: () => subscriptionActivated("Teste Producer", "Pro", "R$ 97,00/mês"),
+  subscriptionActivated: () => subscriptionActivated("Teste Producer", "Pro", "R$ 597,00/mês"),
   subscriptionExpiring: () => subscriptionExpiring("Teste Producer", 7),
   subscriptionSuspended: () => subscriptionSuspended("Teste Producer"),
 };

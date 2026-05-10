@@ -8,7 +8,7 @@ export const metadata: Metadata = {
     absolute: "Members Club — A Plataforma de Área de Membros Premium",
   },
   description:
-    "Plataforma 100% brasileira para criar e gerenciar sua área de membros. 50+ funcionalidades, vitrine Netflix, comunidade, gamificação e checkout — R$ 97/mês.",
+    "Plataforma 100% brasileira para criar e gerenciar sua área de membros. 50+ funcionalidades, vitrine Netflix, comunidade, gamificação e checkout — R$ 597/mês.",
   alternates: { canonical: "/" },
   openGraph: {
     type: "website",
@@ -57,7 +57,7 @@ const LANDING_BODY = `
       A área de membros que seu<br><span class="brand-text">infoproduto merece</span>
     </h1>
     <p class="hero-sub anim-fade-up anim-d2">
-      Mais de 50 funcionalidades integradas. Vitrine Netflix, comunidade, gamificação, certificados, automações e checkout — tudo em um só lugar por R$&nbsp;97/mês.
+      Mais de 50 funcionalidades integradas. Vitrine Netflix, comunidade, gamificação, certificados, automações e checkout — tudo em um só lugar por R$&nbsp;597/mês.
     </p>
     <div class="hero-ctas anim-fade-up anim-d3">
       <a href="https://app.mymembersclub.com.br/producer/register" class="btn btn-primary btn-large">
@@ -532,7 +532,7 @@ const LANDING_BODY = `
       <span class="pricing-badge">Plano Pro</span>
       <div class="pricing-price">
         <span class="pricing-currency">R$</span>
-        <span class="pricing-value">97</span>
+        <span class="pricing-value">597</span>
       </div>
       <div class="pricing-period">por mês · tudo incluído</div>
       <ul class="pricing-features">

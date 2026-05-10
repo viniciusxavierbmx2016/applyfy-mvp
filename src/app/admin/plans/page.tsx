@@ -307,7 +307,7 @@ export default function AdminPlansPage() {
                     value={form.price}
                     onChange={(e) => setForm((f) => ({ ...f, price: e.target.value }))}
                     className="w-full px-3 py-2 bg-gray-100 dark:bg-white/[0.04] border border-gray-300 dark:border-white/[0.08] rounded-xl text-gray-900 dark:text-white text-sm focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 transition"
-                    placeholder="97.00"
+                    placeholder="597.00"
                   />
                 </div>
                 <div>
