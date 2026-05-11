@@ -1,7 +1,7 @@
 # Members Club — Roadmap
 
 > Cronograma de evolução da plataforma, organizado por prioridade e impacto.
-> Última atualização: 06 de maio de 2026.
+> Última atualização: 11 de maio de 2026.
 
 ---
 
@@ -16,20 +16,20 @@
 
 ## Fase 0 — Fundação (✅ COMPLETA)
 
-> Tudo que foi feito nas sessões #01 a #04. Plataforma funcional e segura.
+> Tudo que foi feito nas sessões #01 a #04 + atualizações 06–11/05/2026. Plataforma funcional e segura.
 
 | Item | Status |
 |------|--------|
 | Stack Next.js 16 + Supabase + Prisma + Vercel | ✅ |
-| 51 models, 16 enums, 156 APIs | ✅ |
+| 52 models, 16 enums, 156 APIs | ✅ |
 | RBAC 5 roles + 12 permissões granulares | ✅ |
-| RLS 50 tabelas + Storage policies | ✅ |
+| RLS 51 tabelas + Storage policies | ✅ |
 | Zod 88/88 routes (100%) | ✅ |
 | CSP + WAF + DDoS + DNSSEC + SSL Full Strict | ✅ |
-| 2FA (TOTP) admin + producer | ✅ |
-| Landing page mymembersclub.com.br | ✅ |
+| 2FA (TOTP) admin + producer + workspace login | ✅ |
+| Landing page redesenhada com pricing dual R$0/R$597 | ✅ |
 | Pagamentos via Applyfy (webhook + checkout) | ✅ |
-| Video player YouTube/Vimeo | ✅ |
+| Video player YouTube/Vimeo/**Panda Video** | ✅ |
 | Quizzes por aula | ✅ |
 | Comunidade por curso | ✅ |
 | Automações (11 triggers, 5 actions) | ✅ |
@@ -39,9 +39,31 @@
 | Lives com chat | ✅ |
 | PWA + push notifications | ✅ |
 | Logger estruturado | ✅ |
-| ESLint flat config | ✅ |
+| ESLint flat config (**0 warnings**) | ✅ |
 | Varredura completa 15/15 | ✅ |
 | 6 documentos de projeto | ✅ |
+| **WorkspaceCredential** (senha por workspace para STUDENT) | ✅ |
+| **Login dual** workspace (STUDENT/staff) | ✅ |
+| **Forgot/Reset scoped** por workspace | ✅ |
+| **Master password** via magic link (não destrói credential) | ✅ |
+| **MFA TOTP** no workspace login | ✅ |
+| **Token Applyfy por workspace** (isolamento de tenant) | ✅ |
+| Webhook salva phone + CPF/CNPJ encriptado | ✅ |
+| Webhook fallback product.id | ✅ |
+| Dedup email 24h → 60s | ✅ |
+| **OG image** social media (1200x630) | ✅ |
+| **Favicon adaptável** light/dark mode | ✅ |
+| Detalhe do aluno com aba **Compras** | ✅ |
+| **Dashboard filtra por curso** | ✅ |
+| CSV export com colunas financeiras | ✅ |
+| WhatsApp clicável em Meus Alunos | ✅ |
+| Module drip → primeira aula liberada | ✅ |
+| Lesson lock UI com data | ✅ |
+| Date picker custom módulo release | ✅ |
+| PII removido do checkout query string | ✅ |
+| Naming `/users` → `/students` | ✅ |
+| 3 componentes mortos removidos | ✅ |
+| Preço R$97 → R$597 | ✅ |
 
 ---
 
@@ -68,13 +90,14 @@
 
 | # | Item | Prioridade | Esforço | Notas |
 |---|------|-----------|---------|-------|
-| 2.1 | Naming consistency: UI `/users` vs API `/students` | 🟡 | Médio | Renomear pra consistência |
-| 2.2 | Arte real logo Applyfy | 🟢 | Baixo | Substituir placeholder em public/images/ |
-| 2.3 | 91 warnings ESLint | 🟢 | Médio | react-hooks/set-state-in-effect (62), no-img-element (12), exhaustive-deps (13) |
-| 2.4 | PII em query string do checkout | 🟡 | Médio | CPF vai como query param → mover pra body POST ou token |
-| 2.5 | Brevo no staging | 🟡 | Baixo | Configurar Brevo com domínio de staging pra testar emails sem afetar prod |
-| 2.6 | Error boundaries em páginas críticas | 🟡 | Médio | Player, dashboard, checkout — evitar tela branca |
-| 2.7 | Testes automatizados (Playwright) | 🟢 | Alto | Smoke tests dos 6 fluxos críticos |
+| 2.1 | Arte real logo Applyfy | 🟢 | Baixo | Substituir placeholder em public/images/ |
+| 2.2 | Brevo no staging | 🟡 | Baixo | Configurar Brevo com domínio de staging pra testar emails sem afetar prod |
+| 2.3 | Error boundaries em páginas críticas | 🟡 | Médio | Player, dashboard, checkout — evitar tela branca |
+| 2.4 | Testes automatizados (Playwright) | 🟢 | Alto | Smoke tests dos 6 fluxos críticos |
+| 2.5 | Backfill phone/CPF de alunos antigos | 🟢 | Baixo | Script `scripts/backfill-cpf.mjs` já existe; rodar pra alunos antigos sem document |
+| 2.6 | Migração `Plan` no banco para R$ 597 | 🟡 | Baixo | UPDATE no banco — propaga automaticamente pra billing UI, emails, cron |
+
+> Itens removidos da Fase 2 por conclusão: naming /users → /students ✅, 91 warnings ESLint ✅, PII checkout ✅
 
 ---
 
@@ -212,7 +235,7 @@ Mai 2026     Jun 2026     Jul 2026     Ago 2026     Set 2026
 | Fase | Métrica | Meta |
 |------|---------|------|
 | 1 | Todos os 87 testes passando | 100% |
-| 2 | Warnings ESLint | < 20 |
+| 2 | Warnings ESLint | 0 (já atingido) |
 | 3 | Uptime | 99.9% |
 | 3 | Pentest | 0 achados HIGH/CRITICAL |
 | 4 | Custom domains ativos | 10+ producers usando |
@@ -244,4 +267,4 @@ Mai 2026     Jun 2026     Jul 2026     Ago 2026     Set 2026
 | Skool | Comunidade forte | Comunidade por curso, gamificação | Feed estilo rede social mais elaborado |
 | Teachable | Analytics robustos | Dashboard + relatórios | Cohort analysis, LTV |
 
-**Diferencial Members Club:** Segurança enterprise-grade (13 camadas, RLS, 2FA, Zod 100%, pentest) com preço acessível (R$97/mês). Nenhum concorrente BR tem esse nível de segurança documentado.
+**Diferencial Members Club:** Segurança enterprise-grade (13 camadas, RLS, 2FA, Zod 100%, pentest) com preço acessível (R$ 597/mês ou R$ 0 com checkout Applyfy). Nenhum concorrente BR tem esse nível de segurança documentado.

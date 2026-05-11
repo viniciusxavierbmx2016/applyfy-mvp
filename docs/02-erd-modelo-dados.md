@@ -1,13 +1,13 @@
 # Members Club — ERD (Entity Relationship Diagram)
 
-> Modelo de dados completo — 51 models em 13 domínios.
-> Última atualização: 06 de maio de 2026.
+> Modelo de dados completo — 52 models em 13 domínios.
+> Última atualização: 11 de maio de 2026.
 
 ---
 
 ## Visão Geral
 
-51 models organizados em 13 domínios. Cada seta → indica "belongs to" (FK), ← indica "has many".
+52 models organizados em 13 domínios. Cada seta → indica "belongs to" (FK), ← indica "has many".
 
 **Convenções de IDs:**
 - UUID v4: maioria dos models (User, Course, Module, Lesson, Enrollment, etc.)
@@ -40,13 +40,15 @@ erDiagram
 
 ---
 
-## 2. Workspace & RBAC (3 models)
+## 2. Workspace & RBAC (4 models)
 
 ```mermaid
 erDiagram
   Workspace ||--o{ User : "members"
   Workspace }o--|| User : "owner"
   Workspace ||--o{ Collaborator : "has"
+  Workspace ||--o{ WorkspaceCredential : "scoped passwords"
+  User ||--o{ WorkspaceCredential : "has per workspace"
 ```
 
 | Model | Campos-chave | Notas |
@@ -54,8 +56,15 @@ erDiagram
 | **Workspace** | id (PK), slug (UK), name, ownerId (FK), customDomain (UK), isActive, masterPassword | Container do producer — multi-tenant |
 | **Collaborator** | id (PK), email, workspaceId (FK), userId (FK nullable), permissions[], courseIds[], status | Equipe do producer com permissões granulares |
 | **AdminCollaborator** | id (PK), email (UK), userId (FK UK), permissions[], invitedById (FK), status | Equipe do admin da plataforma |
+| **WorkspaceCredential** | id (PK), userId (FK), workspaceId (FK), passwordHash, salt, createdAt, updatedAt | Senha por workspace para STUDENT (`mc-XXXXXX`). Staff continua autenticando via Supabase Auth |
 
-**Únicos:** Collaborator(workspaceId, email), AdminCollaborator.email, AdminCollaborator.userId (1:1 com User).
+**Únicos:** Collaborator(workspaceId, email), AdminCollaborator.email, AdminCollaborator.userId (1:1 com User), **WorkspaceCredential(userId, workspaceId)** (1 senha por par aluno-workspace).
+
+**WorkspaceCredential:**
+- Hash: sha256(salt + password) via `src/lib/workspace-auth.ts`
+- Password format: `mc-XXXXXX` (gerado pelo webhook na primeira compra)
+- Nunca rotacionado silenciosamente — credential existente fica intocado em re-compras
+- Master password (`Workspace.masterPassword`) é checada como fallback e **não substitui** essa credential (entrada via magic link sem mutar hash)
 
 ---
 
@@ -201,7 +210,7 @@ erDiagram
 ```
 
 **2 fluxos financeiros distintos:**
-- **Plataforma → Producer:** Plan + Subscription + Invoice (assinatura mensal R$97)
+- **Plataforma → Producer:** Plan + Subscription + Invoice (assinatura mensal R$597 ou R$0 com checkout Applyfy)
 - **Producer → Aluno:** ProducerTransaction (pagamentos dos alunos via webhooks Applyfy/Stripe)
 
 | Model | Campos-chave | Notas |
@@ -210,7 +219,7 @@ erDiagram
 | **Subscription** | id, userId (FK), planId (FK), status, currentPeriodStart/End, externalId (UK), exempt | Assinatura do producer |
 | **Invoice** | id, subscriptionId (FK), amount, status, externalId (UK), paidAt | Fatura mensal |
 | **BillingReminder** | id, subscriptionId (FK), type, sentAt | Único: (subscriptionId, type) |
-| **ProducerTransaction** | id, workspaceId (FK), status, amount, externalId (UK), customerEmail | Pagamento do aluno |
+| **ProducerTransaction** | id, workspaceId (FK), userId (FK opt), courseId (FK opt), status, amount, paymentMethod, externalId (UK), customerEmail, customerName | Pagamento do aluno — usado pelo detalhe do aluno (aba Compras) e dashboard com filtro por curso |
 
 ---
 
@@ -255,8 +264,8 @@ erDiagram
 
 | Origem | Destinos Cascade | Destinos SetNull |
 |--------|-----------------|------------------|
-| **User delete** | sessions, posts, comments, lessonComments, likes, reactions, certificates, reviews, enrollments, progress, quizAttempts, userTags, liveMessages, notifications, pushSubscriptions, moderations, pendingExecutions, tokens, logs, tickets | workspace (member), assignedTickets, Collaborator.user, Course.owner |
-| **Workspace delete** | courses, webhookLogs, collaborators, transactions, automations, tags, lives | User.workspaceId (null) |
+| **User delete** | sessions, posts, comments, lessonComments, likes, reactions, certificates, reviews, enrollments, progress, quizAttempts, userTags, liveMessages, notifications, pushSubscriptions, moderations, pendingExecutions, tokens, logs, tickets, **workspaceCredentials** | workspace (member), assignedTickets, Collaborator.user, Course.owner |
+| **Workspace delete** | courses, webhookLogs, collaborators, transactions, automations, tags, lives, **workspaceCredentials** | User.workspaceId (null) |
 | **Course delete** | modules, sections, enrollments, posts, certificates, reviews, menuItems, lives, communityGroups | — |
 | **Module delete** | lessons | — |
 | **Section delete** | — | module.sectionId (null) |
@@ -288,7 +297,10 @@ erDiagram
 
 | Model.campo | Significado |
 |-------------|------------|
-| User.document | CPF/CNPJ encriptado AES-256 com ENCRYPTION_SECRET |
+| User.document | CPF/CNPJ encriptado AES-256 com ENCRYPTION_SECRET. Populado pelo webhook Applyfy (preferência CPF > CNPJ) ou manualmente |
+| User.phone | Telefone para botão WhatsApp clicável (Meus Alunos, Detalhe, CSV). Populado pelo webhook Applyfy |
+| WorkspaceCredential.passwordHash | sha256(salt + plaintext). Plaintext format `mc-XXXXXX`. Nunca rotacionado silenciosamente |
+| Workspace.masterPassword | Senha mestre do producer — entrada via magic link, não destrói WorkspaceCredential do aluno |
 | User.themeConfig | JSON serializado das cores do tema do produtor |
 | Workspace.masterPassword | Senha mestre opcional para login do workspace |
 | Course.externalProductId | Chave de matching com Applyfy/Stripe (unique) |

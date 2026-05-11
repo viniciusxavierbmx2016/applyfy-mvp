@@ -1,7 +1,7 @@
 # Members Club — RBAC & RLS (Controle de Acesso)
 
 > Mapeamento completo de roles, permissões, RLS, rate limiting e camadas de segurança.
-> Última atualização: 06 de maio de 2026.
+> Última atualização: 11 de maio de 2026.
 
 ---
 
@@ -103,7 +103,9 @@
 
 ### Rotas Públicas (não exigem sessão)
 
-/login, /register, /admin/login, /producer/login, /producer/register, /forgot-password, /reset-password, /verify-email, /auth/impersonate, /landing, /verify/*, /invite/*, /w/[slug]/(login|register|forgot-password|reset-password)
+/login, /register, /admin/login, /producer/login, /producer/register, /forgot-password, /reset-password, /verify-email, /auth/impersonate, /landing, /verify/*, /invite/*, /w/[slug]/(login|forgot-password|reset-password)
+
+> Nota: `/w/[slug]/register` foi **removido** — aluno não cria conta, entra via email pós-compra (Applyfy webhook → ensureUserByEmail).
 
 ### Redirect se Autenticado
 
@@ -182,9 +184,9 @@ isEnrollmentActive(enrollment)               // Acesso ao conteúdo
 
 **Postura:** RLS habilitado sem policies permissivas = bloqueio total para anon/authenticated. O app sempre usa service_role (Prisma), que bypassa RLS. RLS serve como defesa em profundidade contra leakage via Supabase client direto.
 
-**50 tabelas com RLS habilitado:**
+**51 tabelas com RLS habilitado:**
 
-AccessLog, AdminCollaborator, AuditLog, Automation, AutomationLog, BillingReminder, Certificate, Collaborator, Comment, CommunityGroup, Course, Enrollment, EnrollmentOverride, ImpersonateToken, IntegrationRequest, Invoice, Lesson, LessonComment, LessonMaterial, LessonProgress, LessonReaction, Like, Live, LiveMessage, LiveModerator, LiveNotification, MenuItem, Module, Notification, PendingExecution, Plan, PlatformSettings, Post, ProducerTransaction, PushSubscription, Quiz, QuizAttempt, QuizOption, QuizQuestion, Review, Section, Session, Settings, Subscription, SupportTicket, Tag, TicketMessage, User, UserTag, WebhookLog, Workspace
+AccessLog, AdminCollaborator, AuditLog, Automation, AutomationLog, BillingReminder, Certificate, Collaborator, Comment, CommunityGroup, Course, Enrollment, EnrollmentOverride, ImpersonateToken, IntegrationRequest, Invoice, Lesson, LessonComment, LessonMaterial, LessonProgress, LessonReaction, Like, Live, LiveMessage, LiveModerator, LiveNotification, MenuItem, Module, Notification, PendingExecution, Plan, PlatformSettings, Post, ProducerTransaction, PushSubscription, Quiz, QuizAttempt, QuizOption, QuizQuestion, Review, Section, Session, Settings, Subscription, SupportTicket, Tag, TicketMessage, User, UserTag, WebhookLog, **WorkspaceCredential**, Workspace
 
 ---
 
@@ -215,7 +217,33 @@ AccessLog, AdminCollaborator, AuditLog, Automation, AutomationLog, BillingRemind
 
 | Campo | Modelo | Algoritmo |
 |-------|--------|-----------|
-| User.document | CPF/CNPJ | AES-256 com ENCRYPTION_SECRET |
+| User.document | CPF/CNPJ | AES-256 com ENCRYPTION_SECRET. Populado pelo webhook Applyfy (preferência CPF > CNPJ) |
+| WorkspaceCredential.passwordHash | Hash sha256(salt + plaintext) — não é encryption, mas é defesa de credentials |
+
+---
+
+## 11.5. Workspace Auth (Dual)
+
+**Modelo:** STUDENT autentica com senha por workspace, staff com senha global.
+
+| Tipo de user | Como autentica no workspace | Tabela usada |
+|--------------|----------------------------|--------------|
+| STUDENT puro | Password `mc-XXXXXX` por workspace | `WorkspaceCredential` (sha256(salt+pw)) |
+| PRODUCER / ADMIN / COLLABORATOR | Email + senha global Members Club | Supabase Auth (`auth.users`) |
+| Master password do producer | Magic link (não destrói credential do aluno) | `Workspace.masterPassword` |
+
+**Fluxo POST `/api/w/[slug]/login`:**
+1. Busca user por email
+2. Se `User.role` é staff OU tem `Collaborator(ACCEPTED)` → autentica via Supabase Auth (mesmo flow do /producer/login, incluindo MFA TOTP)
+3. Senão (STUDENT puro) → busca `WorkspaceCredential(userId, workspaceId)` e compara hash
+4. Falha em qualquer ramo → 401 sem revelar qual ramo bateu (defesa contra enumeration)
+
+**Forgot/Reset scoped:**
+- `/w/[slug]/forgot-password` → envia link com token específico do workspace
+- `/w/[slug]/reset-password` → valida token e atualiza **apenas** o `WorkspaceCredential` daquele workspace
+- Reset em workspace A NÃO afeta workspace B do mesmo email
+
+**`WorkspaceCredential` RLS:** apenas `service_role`. Anon/authenticated não enxergam.
 
 ---
 
@@ -270,7 +298,7 @@ AccessLog, AdminCollaborator, AuditLog, Automation, AutomationLog, BillingRemind
  5. Per-handler auth            — requireAuth/Staff/Admin/AdminPerm
  6. Resource ownership          — canEditCourse/Module/Lesson
  7. Granular perm checks        — requirePermission / adminHasPerm
- 8. RLS (50 tables)             — anon bloqueado por padrão
+ 8. RLS (51 tables)             — anon bloqueado por padrão
  9. Storage policies            — service_role only para writes
 10. AES-256 (document)          — PII encriptada
 11. Audit log                   — operações privilegiadas

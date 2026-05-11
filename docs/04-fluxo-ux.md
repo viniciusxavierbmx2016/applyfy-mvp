@@ -1,7 +1,7 @@
 # Members Club — Fluxo UX
 
 > Mapa completo de navegação — 75 páginas, sidebars por role, fluxos de auth/onboarding, redirects, estados especiais, tours guiados, modais e PWA.
-> Última atualização: 06 de maio de 2026.
+> Última atualização: 11 de maio de 2026.
 
 ---
 
@@ -24,8 +24,12 @@
 | /verify/[code] | Validação pública de certificado |
 | /invite/[id] | Aceitar convite de Collaborator |
 | /invite/admin/[id] | Aceitar convite de AdminCollaborator |
-| /w/[slug]/login, /register | Auth do workspace |
+| /w/[slug]/login | Login dual (STUDENT → WorkspaceCredential, staff → Supabase Auth) |
+| /w/[slug]/forgot-password | Solicitar reset scoped por workspace |
+| /w/[slug]/reset-password | Confirmar reset (atualiza só o WorkspaceCredential do workspace) |
 | /offline | Fallback PWA quando offline |
+
+> Nota: `/w/[slug]/register` foi removido — aluno não cria conta, entra via email pós-compra.
 
 ### Painel ADMIN (/admin/*)
 
@@ -59,8 +63,8 @@
 | /producer/courses/[id]/customize | Personalização (cores, layout) |
 | /producer/courses/[id]/menu | Menu lateral custom |
 | /producer/courses/[id]/settings | Settings + comunidade |
-| /producer/users | Listar alunos do workspace |
-| /producer/users/[id] | Detalhe do aluno (IP, atividade, tags) |
+| /producer/students | Listar alunos do workspace (renomeado de /users) |
+| /producer/students/[id] | Detalhe do aluno (5 abas: Informações, Cursos, Compras, Atividade, Engajamento) |
 | /producer/community | Comunidade global |
 | /producer/analytics | Dashboard analytics |
 | /producer/automations | Listar automações |
@@ -94,7 +98,8 @@
 | /w/[slug] | Vitrine themed do workspace |
 | /w/[slug]/lives, /lives/[id] | Lives da workspace |
 | /w/[slug]/profile | Perfil dentro da workspace |
-| /w/[slug]/login, /register | Auth scoped ao workspace |
+| /w/[slug]/login | Login scoped ao workspace (dual: STUDENT vs staff) |
+| /w/[slug]/forgot-password, /reset-password | Reset scoped (não vaza pra outros workspaces) |
 
 ---
 
@@ -114,7 +119,7 @@
 | Dashboard | /producer | nav-dashboard |
 | Workspaces | /producer/workspaces | nav-workspaces |
 | Meus Cursos | /producer/courses | nav-courses |
-| Meus Alunos | /producer/users | nav-students |
+| Meus Alunos | /producer/students | nav-students |
 | Comunidade | /producer/community | nav-community |
 | Relatórios | /producer/analytics | nav-reports |
 | Automações | /producer/automations | nav-automations |
@@ -165,6 +170,39 @@ Dashboard (VIEW_ANALYTICS), Cursos (sempre), Alunos (MANAGE_STUDENTS), Comunidad
   ↓ Email com link → /reset-password com hash de tokens
   ↓ setSession (AAL1 recovery) → digita nova senha
   ↓ POST /api/auth/reset-password → signOut → forçar relogin (pede MFA)
+```
+
+### Login Workspace (DUAL)
+```
+/w/[slug]/login (sem cookie)
+  ↓ Submit email+password → POST /api/w/[slug]/login
+  ↓ Busca user por email
+  ├── Staff (PRODUCER/ADMIN/COLLAB) → Supabase Auth signIn (mesma senha global)
+  │     ├── Tem MFA verified → response { requiresMfa, factorId }
+  │     │     ↓ TOTP challenge → AAL2 → session → /w/[slug]
+  │     └── Sem MFA → session → /w/[slug]
+  └── STUDENT puro → busca WorkspaceCredential(userId, workspaceId)
+        ├── Hash bate → session → /w/[slug]
+        └── Hash falha → 401 (mensagem genérica, sem revelar qual ramo bateu)
+  ↓ Cookie active_workspace_slug = slug → proxy redireciona automaticamente
+```
+
+### Reset Senha Workspace (scoped)
+```
+/w/[slug]/forgot-password → POST /api/w/[slug]/forgot-password
+  ↓ Email com link específico do workspace
+  ↓ /w/[slug]/reset-password com token assinado
+  ↓ POST /api/w/[slug]/reset-password
+  ↓ Atualiza APENAS WorkspaceCredential daquele workspace
+  ↓ Reset em A NÃO afeta B (mesmo email, workspaces diferentes)
+```
+
+### Master Password do Producer
+```
+Producer com Workspace.masterPassword configurada
+  ↓ Acessa /w/[slug]/login → tenta entrar como aluno
+  ↓ Sistema gera magic link temporário (não destrói WorkspaceCredential do aluno)
+  ↓ Producer entra como qualquer aluno do workspace pra debug
 ```
 
 ### Impersonate
@@ -220,8 +258,10 @@ Email de matrícula (access link)
 ### Mecanismos de Drip Release
 - Module.daysToRelease e Lesson.daysToRelease cumulativos (max)
 - Base = Enrollment.createdAt
-- Module.releaseAt (data absoluta) como override
+- Module.releaseAt (data absoluta) como override (date picker custom no editor)
 - EnrollmentOverride libera módulo/aula manualmente para aluno específico
+- **Module drip fix**: ao clicar num curso, navega pra primeira aula LIBERADA (não a primeira do módulo bloqueado)
+- **Lesson lock UI**: aula trancada mostra mensagem + data de liberação formatada em pt-BR
 
 ---
 
@@ -317,17 +357,30 @@ Steps: student-nav-home, student-banner, student-my-courses, student-search, stu
 
 ## 11. Landing Page (mymembersclub.com.br)
 
+**Redesign 11/05/2026** — novo layout premium, fontes Outfit + Plus Jakarta Sans + Instrument Serif via `next/font/google`, 4 mockups SVG inline em [src/components/landing-mockups.tsx](../src/components/landing-mockups.tsx).
+
 **Estrutura:**
 1. Nav fixo — links âncora + CTAs (Entrar / Criar minha conta)
-2. Hero — headline + 2 CTAs
-3. Stats — 50+, ∞, 10, 99.9%
-4. Features — 12 cards
-5. Mockups — 3 sections (Dashboard / Comunidade / Personalização)
-6. Diferenciais — 3 cards (Segurança, Automações, Painel)
-7. Security — 8 itens
-8. Pricing — Plano Pro R$97/mês + 16 features
-9. CTA Final — "Criar minha conta grátis"
-10. Footer
+2. Hero — headline + selo "Mensalidade ZERO usando o checkout Applyfy!"
+3. Stats — 50+, ∞, 10, 99.9%, AES-256
+4. Marquee — nichos atendidos (loop infinito)
+5. Vitrine + Dashboard + Comunidade + Personalização — 4 sections com mockup SVG real
+6. Features — 12 cards numerados
+7. Diferenciais — 3 cards (Segurança, Automações, Painel)
+8. Security — 8 itens (Cloudflare WAF, AES-256, DDoS+DNSSEC, RLS, 2FA, Audit, Rate Limit, Pentest)
+9. Testimonials — 3 depoimentos com avatar inicial
+10. **Pricing — DUAL:**
+    - **R$ 0/mês** usando checkout Applyfy (CTA WhatsApp: 5531973107233 com mensagem pré-preenchida)
+    - **R$ 597/mês** mensalidade fixa, qualquer gateway (CTA WhatsApp idem)
+11. FAQ — 7 perguntas
+12. CTA Final — "Criar minha conta grátis"
+13. Footer
+
+**Metadata SEO + OG Image:**
+- `next/font/google` no [layout.tsx](../src/app/landing/layout.tsx) (server component, exporta `metadata`)
+- `page.tsx` é client component (`'use client'`)
+- OG image `/og-image.png` 1200x630 (dark gradient + logo + título)
+- Configurado em `openGraph.images` e `twitter.images`
 
 ---
 
@@ -342,8 +395,44 @@ Steps: student-nav-home, student-banner, student-my-courses, student-search, stu
 ## 13. Fluxos Críticos (Resumo)
 
 1. **Producer onboarding:** landing → register → verify → billing → dashboard → workspace → curso
-2. **Student access:** email → login → vitrine → curso → aula → quiz/certificado
+2. **Student access:** webhook Applyfy → email com mc-XXXXXX → /w/[slug]/login → vitrine → curso → aula → quiz/certificado
 3. **Quiz:** lesson → submeter → score → tentativa salva
 4. **Comunidade:** feed categorizado → composer → comentários threaded → likes → moderação
 5. **Lives:** agendar → notificação push → LIVE → chat → ENDED → salvar como Lesson
 6. **Suporte:** producer abre ticket → admin responde → threading + attachments + read receipts
+
+---
+
+## 14. Video Player — 3 Providers
+
+[src/components/video-player.tsx](../src/components/video-player.tsx) suporta:
+- **YouTube** (youtube-nocookie masked embed)
+- **Vimeo** (Vimeo Player API)
+- **Panda Video** (3º provider adicionado — embed iframe seguro)
+
+Detecção por padrão do URL: `youtu.be`/`youtube` → YouTube; `vimeo` → Vimeo; `pandavideo.com.br` → Panda.
+
+---
+
+## 15. Detalhe do Aluno — 5 Abas
+
+[/producer/students/[id]](../src/app/producer/students/%5Bid%5D/page.tsx) (renomeado de /users):
+
+| Tab | Conteúdo |
+|-----|----------|
+| Informações | Nome, email, **WhatsApp clicável** (phone), **CPF/CNPJ decryptado**, gamificação, IP, tags |
+| Cursos | Enrollments com progresso, status, data de matrícula |
+| Compras | Histórico ProducerTransaction (data, curso, valor, método, status) — fonte: webhook |
+| Atividade | Atividade recente (aulas concluídas, reações) + Access logs (IP+userAgent) |
+| Engajamento | Stats (cursos, aulas, likes, posts, certificados) |
+
+---
+
+## 16. Favicon Adaptável
+
+[src/components/dynamic-favicon.tsx](../src/components/dynamic-favicon.tsx):
+- Detecta `prefers-color-scheme` via matchMedia
+- **Dark mode**: usa logo direto (branco contrasta no fundo escuro do browser)
+- **Light mode**: desenha quadrado arredondado `#1e293b` em canvas e logo por cima (contrasta no fundo claro)
+- Listener reativo a troca de tema do OS
+- Custom faviconUrl do platform-settings tem prioridade

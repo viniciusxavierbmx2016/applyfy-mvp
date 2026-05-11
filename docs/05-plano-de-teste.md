@@ -1,8 +1,8 @@
 # Members Club — Plano de Teste MVP
 
 > Checklist formalizado de testes para validar a plataforma antes de cada release.
-> Baseado na varredura completa realizada na sessão #04 (06/05/2026).
-> Última atualização: 06 de maio de 2026.
+> Baseado na varredura completa realizada na sessão #04 (06/05/2026) + atualizações 11/05/2026.
+> Última atualização: 11 de maio de 2026.
 
 ---
 
@@ -23,7 +23,7 @@
 | 1.2 | TypeScript zero erros | `npx tsc --noEmit` → sem output | ✅ |
 | 1.3 | ESLint roda sem crash | `npm run lint` → exit 0 | ✅ |
 | 1.4 | npm audit zero vulns | `npm audit` → 0 vulnerabilities | ✅ |
-| 1.5 | 129/129 páginas estáticas | Build output mostra todas as páginas | ✅ |
+| 1.5 | Páginas estáticas geradas no build | Build output mostra todas as páginas | ✅ |
 | 1.6 | Deploy Vercel sem erros | Vercel dashboard → último deploy "Ready" | ✅ |
 
 ---
@@ -43,6 +43,14 @@
 | 2.9 | Redirect se autenticado | Acessar /producer/login logado → redireciona /producer | ✅ |
 | 2.10 | Redirect se não autenticado | Acessar /producer sem login → redireciona /producer/login | ✅ |
 | 2.11 | Rate limiting login | 100+ tentativas rápidas → 429 Too Many Requests | ✅ |
+| 2.12 | Workspace login STUDENT | /w/[slug]/login → email+mc-XXXXXX → vitrine themed | ✅ |
+| 2.13 | Workspace login staff | Producer entra em /w/[slug]/login com senha global | ✅ |
+| 2.14 | Workspace login staff com MFA | Producer com 2FA → desafio TOTP no /w/[slug]/login | ✅ |
+| 2.15 | Mesma senha em workspaces diferentes | Aluno com 2 workspaces tem 2 WorkspaceCredentials independentes | ✅ |
+| 2.16 | Reset scoped não afeta outros workspaces | Reset em workspace A → workspace B continua com a senha antiga | ✅ |
+| 2.17 | Master password (magic link) | Producer entra como aluno via magic link, WorkspaceCredential intocada | ✅ |
+| 2.18 | Aluno novo recebe senha por email | Webhook TRANSACTION_PAID → email "mc-XXXXXX" → loga | ✅ |
+| 2.19 | /w/[slug]/register não existe | Acessar → 404 (rota removida) | ✅ |
 
 ---
 
@@ -59,6 +67,12 @@
 | 3.7 | Assets carregam | /logo-landing.png, /manifest.json → 200 (não 307) | ✅ |
 | 3.8 | PWA não registra no apex | DevTools → Application → Service Workers → vazio no apex | ✅ |
 | 3.9 | Animações funcionam | Scroll → cards aparecem com fade-in | ✅ |
+| 3.10 | Pricing dual aparece | 2 cards: R$ 0 com Applyfy + R$ 597 mensalidade fixa | ✅ |
+| 3.11 | CTAs Pricing abrem WhatsApp | Clicar "Fale conosco" → wa.me/5531973107233 com mensagem específica | ✅ |
+| 3.12 | OG image em redes sociais | Compartilhar URL no WhatsApp/Twitter → preview com og-image.png 1200x630 | ✅ |
+| 3.13 | Fontes Google carregam | DevTools: Outfit, Plus Jakarta Sans, Instrument Serif baixadas | ✅ |
+| 3.14 | 4 mockups SVG renderizam | Vitrine, Dashboard, Comunidade, Personalização → visíveis | ✅ |
+| 3.15 | Favicon adaptável | Trocar OS pra light mode → favicon ganha fundo escuro arredondado | ✅ |
 
 ---
 
@@ -115,6 +129,9 @@
 | 6.12 | Like/dislike aula | Botões de reação → toggle funciona | ✅ |
 | 6.13 | Comentários na aula | Postar comentário → aparece na thread | ✅ |
 | 6.14 | Curso expirado | Acesso expirado → CTA "Renovar acesso" aparece | ✅ 🔧 |
+| 6.15 | Panda Video carrega | Aula com URL pandavideo.com.br → player Panda renderiza | ✅ |
+| 6.16 | Module drip — primeira aula liberada | Clicar curso com módulo trancado → navega pra primeira aula DESBLOQUEADA | ✅ |
+| 6.17 | Lesson lock mensagem | Acessar aula trancada → mensagem + data de liberação formatada em pt-BR | ✅ |
 
 ---
 
@@ -144,6 +161,11 @@
 | 8.6 | Gerenciar assinaturas | Ativar/suspender/cancelar subscription | ✅ |
 | 8.7 | Audit log | /admin/audit → lista de ações com filtros | ✅ |
 | 8.8 | Admin collaborators | Convidar → aceitar → permissões funcionam | ✅ |
+| 8.9 | Dashboard filtra por curso | Trocar seletor de curso → KPIs (receita, ticket, vendas) atualizam | ✅ |
+| 8.10 | Curso sem vendas → KPIs zero | Selecionar curso sem ProducerTransaction → todos KPIs em 0 | ✅ |
+| 8.11 | Detalhe do aluno — aba Compras | /producer/students/[id] → tab Compras → tabela com transações | ✅ |
+| 8.12 | CSV export inclui dados financeiros | Export → 4 novas colunas: Valor total, Método, Data compra, Status | ✅ |
+| 8.13 | Meus Alunos — WhatsApp clicável | /producer/students → ícone WhatsApp leva pra wa.me com phone preenchido | ✅ |
 
 ---
 
@@ -156,7 +178,7 @@
 | 9.3 | CSP headers | DevTools → Response Headers → content-security-policy presente | ✅ |
 | 9.4 | Webhook skip rule | Cloudflare permite /api/webhooks/* | ✅ |
 | 9.5 | DNS limpo | Nenhum wildcard ou IP antigo | ✅ |
-| 9.6 | RLS ativado | 50 tabelas com RLS no Supabase | ✅ |
+| 9.6 | RLS ativado | 51 tabelas com RLS no Supabase | ✅ |
 | 9.7 | Zod validation | 88/88 routes JSON com validação | ✅ |
 | 9.8 | Logger estruturado | Logs de debug não aparecem em prod | ✅ |
 | 9.9 | npm audit clean | 0 vulnerabilities | ✅ |
@@ -176,6 +198,11 @@
 | 10.6 | Cron automações | /api/cron/automations roda a cada 6h | ✅ |
 | 10.7 | Webhook Applyfy | POST /api/webhooks/applyfy → 200 | ✅ |
 | 10.8 | Webhook Members Club | POST /api/webhooks/members-club → 200 | ✅ |
+| 10.9 | Webhook idempotente (email único) | Reenviar mesmo TRANSACTION_PAID → enrollment idempotente, **1 email** apenas (dedup 60s) | ✅ |
+| 10.10 | Webhook salva phone e CPF | Após TRANSACTION_PAID → User.phone preenchido + User.document encriptado | ✅ |
+| 10.11 | Webhook fallback product.id | Quando externalId não bate, fallback pra product.id da Applyfy | ✅ |
+| 10.12 | Webhook Zod logging | Payload malformado → WebhookLog com errorMessage "Zod validation:..." | ✅ |
+| 10.13 | Token Applyfy por workspace | Cada workspace tem applyfy_token:<id> próprio em Settings | ✅ |
 
 ---
 

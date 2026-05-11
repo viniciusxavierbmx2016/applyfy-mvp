@@ -1,6 +1,6 @@
 # Members Club — Knowledge Base
 
-> Documento técnico completo da plataforma. Última atualização: 06 de maio de 2026.
+> Documento técnico completo da plataforma. Última atualização: 11 de maio de 2026.
 > Projeto: Members Club (app.mymembersclub.com.br) — SaaS multi-tenant de cursos/memberships
 
 ---
@@ -59,22 +59,28 @@
 |------|------|-------------|
 | Landing page | /landing (rewrite do apex) | Qualquer um |
 | Auth flows | /forgot-password, /reset-password, /verify-email, /auth/impersonate | Público (com token/cookie) |
-| Admin | /admin/* (audit, collaborators, integrations, login, plans, producers, reports, settings, subscriptions, support) | ADMIN, ADMIN_COLLABORATOR |
-| Producer | /producer/* (analytics, automations, billing, collaborators, community, courses, integrations, lives, settings, users, workspaces, login, register, profile) | PRODUCER, COLLABORATOR |
-| Workspace student | /w/[slug]/* (page, lives, login, profile, register) | STUDENT do workspace |
+| Admin | /admin/* (audit, collaborators, login, plans, producers, reports, settings, subscriptions, support) | ADMIN, ADMIN_COLLABORATOR |
+| Producer | /producer/* (analytics, automations, billing, collaborators, community, courses, integrations, lives, settings, students, workspaces, login, register, profile) | PRODUCER, COLLABORATOR |
+| Workspace student | /w/[slug]/* (page, lives, login, profile, forgot-password, reset-password) | STUDENT do workspace |
 | Course view | /course/[slug], .../module/[moduleId], .../lesson/[id], .../community | Matriculado |
 | Invites | /invite/[id], /invite/admin/[id] | Convidado |
 | Verify | /verify/[code] | Público (validar certificado) |
+
+**Mudanças recentes:**
+- `/admin/integrations` removido (centralizado no producer scope)
+- `/producer/users` → `/producer/students` (naming consistency)
+- `/w/[slug]/register` removido (aluno não cria conta — entra via email pós-compra)
+- `/w/[slug]/forgot-password` e `/w/[slug]/reset-password` adicionados (reset scoped por workspace)
 
 **Totais:** 75 páginas, 156 API route handlers, 65 componentes, 36 libs.
 
 ---
 
-## 4. Modelo de Dados — 51 Models
+## 4. Modelo de Dados — 52 Models
 
 | Domínio | Models |
 |---------|--------|
-| Identidade | User, Session, AccessLog, AuditLog, ImpersonateToken |
+| Identidade | User, Session, AccessLog, AuditLog, ImpersonateToken, WorkspaceCredential |
 | Workspace | Workspace, Settings, PlatformSettings, MenuItem |
 | RBAC | Collaborator, AdminCollaborator |
 | Conteúdo | Course, Module, Section, Lesson, LessonMaterial |
@@ -137,7 +143,15 @@ requireAuth(), requireAdmin(), requireStaff() (PRODUCER/ADMIN/COLLABORATOR/ADMIN
 
 ### Row Level Security (RLS)
 
-49 tabelas com RLS ativado no Supabase. Storage policies configuradas para buckets públicos e privados. FK indexes em todas as relações.
+51 tabelas com RLS ativado no Supabase. Storage policies configuradas para buckets públicos e privados. FK indexes em todas as relações.
+
+### Workspace Auth (dual)
+
+- **STUDENT**: senha por workspace (`WorkspaceCredential`, password `mc-XXXXXX` gerada no primeiro acesso pós-compra). Login via `/api/w/[slug]/login`.
+- **PRODUCER / ADMIN / COLLABORATOR**: senha global Members Club (Supabase Auth). Login no workspace usa as mesmas credenciais.
+- **Master password** (`Workspace.masterPassword`): producer pode entrar como aluno via magic link — **não destrói** a `WorkspaceCredential` do aluno.
+- **MFA TOTP**: staff com 2FA enrollado é desafiado no workspace login (mesmo fluxo do `/producer/login`).
+- **Forgot/Reset scoped**: links de recuperação ficam restritos ao workspace de origem (não vazam pra outros workspaces do mesmo email).
 
 ---
 
@@ -259,7 +273,7 @@ Supabase Auth com MFA TOTP (5 endpoints /api/auth/mfa/*).
 | Applyfy | Gateway de pagamentos (checkout + webhooks matrícula) | webhooks/applyfy, members-club |
 | Stripe | Webhook (HMAC verify) | webhooks/stripe |
 | Web Push (VAPID) | Notificações PWA | src/hooks/use-push-notifications.ts, src/lib/push-send.ts |
-| YouTube/Vimeo | Player das aulas (IFrame API, youtube-nocookie) | src/components/video-player.tsx |
+| YouTube / Vimeo / Panda Video | Player das aulas (IFrame API, youtube-nocookie, Panda Video player) | src/components/video-player.tsx |
 | Cloudflare Insights | Analytics RUM | Script externo permitido na CSP |
 | Google Fonts | Outfit + Plus Jakarta Sans (landing) | src/app/landing/page.tsx |
 
@@ -277,7 +291,7 @@ Supabase Auth com MFA TOTP (5 endpoints /api/auth/mfa/*).
 
 ### Implementado
 
-- RLS em 49 tabelas + Storage policies + FK indexes
+- RLS em 51 tabelas + Storage policies + FK indexes
 - Rate limiting + CSP headers + Zod validation (100%)
 - Audit trail + 2FA admin+producer
 - Column encryption (CPF) via AES-256
@@ -330,3 +344,51 @@ Supabase Auth com MFA TOTP (5 endpoints /api/auth/mfa/*).
 - Enrollment com expiração + CTA renovação
 - Lives com chat + moderação
 - Workspace login customization
+
+---
+
+## 16. Mudanças desde a versão anterior (06/05 → 11/05/2026)
+
+### Autenticação
+- Nova tabela `WorkspaceCredential` (senha por workspace para STUDENT)
+- Login dual no workspace: STUDENT lê `WorkspaceCredential`, staff usa Supabase Auth
+- Forgot/Reset scoped por workspace (4 novas rotas)
+- Master password via magic link (não sobrescreve senha do aluno)
+- MFA TOTP exigido no workspace login para staff com 2FA
+- Cookie `active_workspace_slug` para redirect proxy
+- `/w/[slug]/register` removido (aluno não cria conta)
+
+### Integrações
+- **Panda Video** como 3º provider de vídeo (junto com YouTube e Vimeo)
+- Token Applyfy isolado por workspace (`applyfy_token:<workspaceId>`); legado `applyfy_token` global mantido como fallback
+- Webhook Applyfy global agora envia email de acesso + cria `ProducerTransaction`
+- Webhook fallback: tenta `product.id` quando `externalId` não bate
+- Zod loga falhas de validação no webhook (não silencioso)
+- Dedup de email reduzido de 24h → 60s
+- CPF/CNPJ extraído do webhook e salvo encriptado em `User.document`
+- Phone extraído do webhook para WhatsApp clicável funcionar em Meus Alunos / Detalhe do Aluno / CSV
+
+### UI/UX
+- Landing page redesenhada (design premium, 4 mockups SVG, fontes Outfit + Plus Jakarta Sans + Instrument Serif)
+- Pricing dual: R$ 0 (com checkout Applyfy) + R$ 597 (mensalidade fixa)
+- Favicon adaptável light/dark mode (canvas com fundo escuro arredondado no modo claro)
+- Date picker custom (módulo release)
+- Slug travado em edição (read-only)
+- Suporte email/whatsapp obrigatório
+- Descrição do curso limitada a 110 chars
+- Module drip navega para a primeira aula LIBERADA
+- Lesson lock mostra mensagem + data de liberação
+- OG image para preview em redes sociais (1200x630)
+- Detalhe do aluno tem aba "Compras" (ProducerTransaction history)
+- Dashboard de vendas filtra por curso selecionado
+
+### Segurança
+- PII removido do checkout (CPF não vai mais na query string)
+- Admin sem aba de integrações (centralizado no producer)
+- Integration status lê token scoped (não global)
+
+### Código
+- ESLint: 91 warnings → 0
+- 3 componentes mortos removidos (361 linhas)
+- Naming: `/producer/users` → `/producer/students`
+- Preço: R$ 97 → R$ 597 (landing + admin placeholder + email teste)
