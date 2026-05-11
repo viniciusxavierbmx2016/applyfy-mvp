@@ -131,7 +131,7 @@ function Hero() {
         <div className="max-w-[720px] mx-auto mb-11 flex flex-col items-center gap-[18px] text-[clamp(17px,1.6vw,22px)] text-[var(--mc-ink2)] leading-[1.55]">
           <span>Área de Membros Premium com Vitrine Netflix 100% personalizável.</span>
           <span className="mc-sub-zero inline-flex items-center gap-2.5 px-5 py-3 rounded-full font-display font-semibold text-[clamp(18px,1.9vw,26px)] tracking-tight text-white relative">
-            Mensalidade <span className="mc-zero-glow">ZERO</span> usando nosso checkout!
+            Mensalidade <span className="mc-zero-glow">ZERO</span> usando o checkout Applyfy!
           </span>
         </div>
         <div className="flex gap-3.5 justify-center flex-wrap">
@@ -434,11 +434,11 @@ function Pricing() {
       <div className="max-w-[1240px] mx-auto px-8">
         <SecHead eyebrow="Planos"
           title={<>Dois caminhos. <span className="font-serif italic font-normal">Sem taxa por aluno.</span><br/>Sem letra miúda.</>}
-          desc={<>Use nosso checkout (Applyfy) e tenha a área de membros completa com <strong className="text-white font-semibold">mensalidade zero</strong>. Ou prefira mensalidade fixa, sem comissão de venda. Você escolhe e em ambos é tudo incluído.</>}/>
+          desc={<>Use o checkout Applyfy e tenha a área de membros completa com <strong className="text-white font-semibold">mensalidade zero</strong>. Ou prefira mensalidade fixa, sem comissão de venda. Você escolhe e em ambos é tudo incluído.</>}/>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-7 max-w-[1100px] mx-auto">
           <PriceCard featured title="Members Club + Applyfy"
             badge="★ Mais escolhido · Mensalidade ZERO"
-            desc={<>Plataforma completa <em>de graça</em> usando nosso gateway de pagamento. Você só paga a taxa do checkout — zero mensalidade.</>}
+            desc={<>Plataforma completa <em>de graça</em> usando o checkout Applyfy. Você só paga a taxa do checkout — zero mensalidade.</>}
             value="0" period="/mês · usando o checkout Applyfy"
             cta="primary" fine="Ideal para quem está começando ou já vende com Applyfy."
             href="https://wa.me/5531973107233?text=Ol%C3%A1%2C%20tudo%20bem%3F%20Quero%20saber%20mais%20sobre%20a%20%C3%A1rea%20de%20membros%20com%20mensalidade%20zero%20usando%20o%20checkout%20Applyfy."/>
