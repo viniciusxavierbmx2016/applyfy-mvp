@@ -440,19 +440,21 @@ function Pricing() {
             badge="★ Mais escolhido · Mensalidade ZERO"
             desc={<>Plataforma completa <em>de graça</em> usando nosso gateway de pagamento. Você só paga a taxa do checkout — zero mensalidade.</>}
             value="0" period="/mês · usando o checkout Applyfy"
-            cta="primary" fine="Ideal para quem está começando ou já vende com Applyfy."/>
+            cta="primary" fine="Ideal para quem está começando ou já vende com Applyfy."
+            href="https://wa.me/5531973107233?text=Ol%C3%A1%2C%20tudo%20bem%3F%20Quero%20saber%20mais%20sobre%20a%20%C3%A1rea%20de%20membros%20com%20mensalidade%20zero%20usando%20o%20checkout%20Applyfy."/>
           <PriceCard title="Members Club Pro"
             badge="Plano Pro · Mensalidade fixa"
             desc="Prefere usar seu próprio gateway? Mensalidade fixa, zero comissão sobre venda. Para quem já tem volume e quer máximo controle."
             value="597" period="/mês · alunos ilimitados"
-            cta="outline" fine="Use qualquer gateway: Hotmart, Eduzz, Kiwify, Stripe, etc."/>
+            cta="outline" fine="Use qualquer gateway: Hotmart, Eduzz, Kiwify, Stripe, etc."
+            href="https://wa.me/5531973107233?text=Ol%C3%A1%2C%20tudo%20bem%3F%20Quero%20saber%20mais%20sobre%20o%20plano%20Pro%20de%20R%24%20597%2Fm%C3%AAs%20da%20%C3%A1rea%20de%20membros."/>
         </div>
       </div>
     </section>
   );
 }
 
-function PriceCard({ featured, title, badge, desc, value, period, cta, fine }: { featured?: boolean; title: string; badge: string; desc: React.ReactNode; value: string; period: string; cta: 'primary'|'outline'; fine: string }) {
+function PriceCard({ featured, title, badge, desc, value, period, cta, fine, href }: { featured?: boolean; title: string; badge: string; desc: React.ReactNode; value: string; period: string; cta: 'primary'|'outline'; fine: string; href: string }) {
   return (
     <div className={`mc-reveal relative overflow-hidden rounded-[28px] p-12 border ${featured ? 'border-[var(--mc-accent)] shadow-[0_0_140px_var(--mc-accent-soft),0_0_0_1px_var(--mc-accent)_inset]' : 'border-[var(--mc-accent-ring)] shadow-[0_0_100px_var(--mc-accent-soft)]'}`}
          style={{ background: featured ? 'linear-gradient(180deg, color-mix(in oklab, var(--mc-accent) 18%, var(--mc-g2)), var(--mc-g2))' : 'var(--mc-g2)' }}>
@@ -470,7 +472,7 @@ function PriceCard({ featured, title, badge, desc, value, period, cta, fine }: {
           <li key={i} className="flex items-center gap-2.5 text-sm"><Ic.check className="flex-shrink-0 text-[var(--mc-accent)]"/>{f}</li>
         ))}
       </ul>
-      <a href={URLS.register} className={`${cta === 'primary' ? 'mc-btn-primary' : 'mc-btn-outline'} mc-btn-lg w-full justify-center`}>
+      <a href={href} target="_blank" rel="noopener noreferrer" className={`${cta === 'primary' ? 'mc-btn-primary' : 'mc-btn-outline'} mc-btn-lg w-full justify-center`}>
         Fale conosco <Ic.arrow/>
       </a>
       <div className="mt-4 text-[13px] text-[var(--mc-ink2)] text-center italic">{fine}</div>
