@@ -1,15 +1,57 @@
-// Nested layout for the /landing route.
-//
-// Next.js app router enforces a single root <html>/<body>, declared in
-// src/app/layout.tsx. This nested layout cannot redeclare them, so it acts
-// as a passthrough. The root providers (AuthProvider, ThemeProvider,
-// PWARegister) still wrap the page but render no visible UI for an
-// unauthenticated visitor. The landing's CSS overrides the body background
-// (with !important) so this route stays visually self-contained.
+import type { Metadata } from "next";
+import { Outfit, Plus_Jakarta_Sans, Instrument_Serif } from "next/font/google";
+
+const outfit = Outfit({
+  subsets: ["latin"],
+  variable: "--font-outfit",
+  display: "swap",
+});
+const jakarta = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  variable: "--font-jakarta",
+  display: "swap",
+});
+const instrument = Instrument_Serif({
+  subsets: ["latin"],
+  weight: "400",
+  style: ["normal", "italic"],
+  variable: "--font-instrument",
+  display: "swap",
+});
+
+export const metadata: Metadata = {
+  metadataBase: new URL("https://mymembersclub.com.br"),
+  title: {
+    absolute: "Members Club — A Plataforma de Área de Membros Premium",
+  },
+  description:
+    "Plataforma 100% brasileira para criar e gerenciar sua área de membros. 50+ funcionalidades, vitrine Netflix, comunidade, gamificação e checkout — R$ 597/mês.",
+  alternates: { canonical: "/" },
+  openGraph: {
+    type: "website",
+    url: "https://mymembersclub.com.br",
+    siteName: "Members Club",
+    title: "Members Club — A Plataforma de Área de Membros Premium",
+    description:
+      "Plataforma 100% brasileira para criar e gerenciar sua área de membros.",
+    locale: "pt_BR",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Members Club — A Plataforma de Área de Membros Premium",
+    description:
+      "Plataforma 100% brasileira para criar e gerenciar sua área de membros.",
+  },
+};
+
 export default function LandingLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return <>{children}</>;
+  return (
+    <div className={`${outfit.variable} ${jakarta.variable} ${instrument.variable}`}>
+      {children}
+    </div>
+  );
 }

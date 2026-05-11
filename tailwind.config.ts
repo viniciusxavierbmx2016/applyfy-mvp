@@ -9,6 +9,11 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        display: ["var(--font-outfit)", "system-ui", "sans-serif"],
+        body: ["var(--font-jakarta)", "system-ui", "sans-serif"],
+        serif: ["var(--font-instrument)", "Times New Roman", "serif"],
+      },
       colors: {
         background: "var(--background)",
         foreground: "var(--foreground)",
