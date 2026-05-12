@@ -135,7 +135,7 @@ function ResendButton({
       type="button"
       onClick={onClick}
       disabled={disabled || loading}
-      className="text-xs font-medium px-3 py-1.5 rounded-lg border border-white/10 text-gray-300 hover:bg-white/[0.04] hover:text-white hover:border-blue-500/40 transition disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+      className="text-xs font-medium px-3 py-1.5 rounded-lg border border-gray-200 dark:border-white/10 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/[0.04] hover:text-gray-900 dark:hover:text-white hover:border-blue-500/30 dark:hover:border-blue-500/40 transition disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
     >
       {loading ? "Enviando…" : "Reenviar acesso"}
     </button>
@@ -402,8 +402,8 @@ export function ReportsStudentsTab({ courseId, startDate, endDate }: Props) {
           />
         ) : (
           <div className="space-y-2">
-            <div className="mb-4 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-300 text-xs font-medium">
-              <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />
+            <div className="mb-4 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-700 dark:text-blue-300 text-xs font-medium">
+              <span className="w-1.5 h-1.5 rounded-full bg-blue-500 dark:bg-blue-400" />
               {data.expiredCount} aluno{data.expiredCount === 1 ? "" : "s"} no total
             </div>
             {expired.map((s) => {
@@ -413,7 +413,7 @@ export function ReportsStudentsTab({ courseId, startDate, endDate }: Props) {
                   key={s.enrollmentId}
                   name={s.name}
                   email={s.email}
-                  avatarColor="bg-blue-500/20 text-blue-300"
+                  avatarColor="bg-blue-500/20 text-blue-700 dark:text-blue-300"
                   stats={[
                     { label: "Progresso", value: `${s.progressPercent}%` },
                     { label: "Aulas", value: `${s.lessonsCompleted}/${s.totalLessons}` },
@@ -435,8 +435,8 @@ export function ReportsStudentsTab({ courseId, startDate, endDate }: Props) {
           role="status"
           className={`fixed bottom-6 right-6 z-50 px-4 py-3 rounded-lg shadow-2xl text-sm font-medium border ${
             toast.type === "success"
-              ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-300"
-              : "bg-rose-500/10 border-rose-500/30 text-rose-300"
+              ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-700 dark:text-emerald-300"
+              : "bg-rose-500/10 border-rose-500/30 text-rose-700 dark:text-rose-300"
           }`}
         >
           {toast.message}

@@ -4,17 +4,11 @@ import type { ReactNode } from "react";
 
 /* ─────────────────────────────────────────────────────────────
    Shared visual primitives for the analytics redesign.
-   Dark-only (fixed colors, no `dark:` prefix) to match the
-   producer dashboard look. Icons are passed as ReactNode —
-   the codebase convention is inline SVGs (no icon library).
+   Light/dark switchable to match the rest of the producer
+   dashboard (bg-white dark:bg-gray-900 etc.). Icons are passed
+   as ReactNode — codebase convention is inline SVGs.
 ───────────────────────────────────────────────────────────── */
 
-// ─── Tokens ───
-const BG_CARD = "#111119";
-const BORDER = "#1e1e2a";
-const TEXT_PRIMARY = "#f0f0f5";
-const TEXT_MUTED = "#8b8b9e";
-const TEXT_DIM = "#5a5a6e";
 const ACCENT = "#3b82f6";
 
 // ─── Helpers ───
@@ -59,14 +53,14 @@ export function getInitials(name: string): string {
 }
 
 const AVATAR_PALETTE = [
-  "bg-blue-500/20 text-blue-300",
-  "bg-emerald-500/20 text-emerald-300",
-  "bg-amber-500/20 text-amber-300",
-  "bg-purple-500/20 text-purple-300",
-  "bg-rose-500/20 text-rose-300",
-  "bg-cyan-500/20 text-cyan-300",
-  "bg-fuchsia-500/20 text-fuchsia-300",
-  "bg-orange-500/20 text-orange-300",
+  "bg-blue-500/20 text-blue-700 dark:text-blue-300",
+  "bg-emerald-500/20 text-emerald-700 dark:text-emerald-300",
+  "bg-amber-500/20 text-amber-700 dark:text-amber-300",
+  "bg-purple-500/20 text-purple-700 dark:text-purple-300",
+  "bg-rose-500/20 text-rose-700 dark:text-rose-300",
+  "bg-cyan-500/20 text-cyan-700 dark:text-cyan-300",
+  "bg-fuchsia-500/20 text-fuchsia-700 dark:text-fuchsia-300",
+  "bg-orange-500/20 text-orange-700 dark:text-orange-300",
 ] as const;
 
 export function getAvatarColor(index: number): string {
@@ -75,7 +69,7 @@ export function getAvatarColor(index: number): string {
   return AVATAR_PALETTE[i];
 }
 
-// ─── Default icons (only ones we render unconditionally) ───
+// ─── Default icons ───
 
 function DownloadIcon() {
   return (
@@ -118,10 +112,7 @@ export function Section({
   exportLabel = "Exportar CSV",
 }: SectionProps) {
   return (
-    <section
-      className="rounded-2xl border p-6 sm:p-7"
-      style={{ backgroundColor: BG_CARD, borderColor: BORDER }}
-    >
+    <section className="rounded-2xl border bg-white dark:bg-gray-900 border-gray-200 dark:border-white/[0.06] p-6 sm:p-7">
       <header className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-6">
         <div className="flex items-start gap-3 min-w-0">
           {icon ? (
@@ -136,17 +127,11 @@ export function Section({
             </div>
           ) : null}
           <div className="min-w-0">
-            <h2
-              className="text-base sm:text-lg font-semibold tracking-tight"
-              style={{ color: TEXT_PRIMARY }}
-            >
+            <h2 className="text-base sm:text-lg font-semibold tracking-tight text-gray-900 dark:text-white">
               {title}
             </h2>
             {description ? (
-              <p
-                className="text-sm mt-1 leading-relaxed"
-                style={{ color: TEXT_MUTED }}
-              >
+              <p className="text-sm mt-1 leading-relaxed text-gray-600 dark:text-gray-400">
                 {description}
               </p>
             ) : null}
@@ -156,12 +141,7 @@ export function Section({
           <button
             type="button"
             onClick={onExport}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition border shrink-0 self-start sm:self-auto"
-            style={{
-              color: TEXT_MUTED,
-              borderColor: BORDER,
-              backgroundColor: "transparent",
-            }}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition border shrink-0 self-start sm:self-auto text-gray-600 dark:text-gray-400 border-gray-200 dark:border-white/[0.06] hover:bg-gray-50 dark:hover:bg-white/[0.02] hover:text-gray-900 dark:hover:text-white"
           >
             <DownloadIcon />
             {exportLabel}
@@ -188,37 +168,28 @@ export function KpiCard({
   value,
   icon,
   sub,
-  valueColor = TEXT_PRIMARY,
+  valueColor,
 }: KpiCardProps) {
   return (
-    <div
-      className="rounded-xl border p-5"
-      style={{ backgroundColor: BG_CARD, borderColor: BORDER }}
-    >
+    <div className="rounded-xl border bg-white dark:bg-gray-900 border-gray-200 dark:border-white/[0.06] p-5">
       <div className="flex items-center gap-2 mb-3">
         {icon ? (
-          <span
-            className="w-5 h-5 inline-flex items-center justify-center"
-            style={{ color: TEXT_MUTED }}
-          >
+          <span className="w-5 h-5 inline-flex items-center justify-center text-gray-600 dark:text-gray-400">
             {icon}
           </span>
         ) : null}
-        <span
-          className="text-xs font-medium uppercase tracking-wider"
-          style={{ color: TEXT_MUTED }}
-        >
+        <span className="text-xs font-medium uppercase tracking-wider text-gray-600 dark:text-gray-400">
           {label}
         </span>
       </div>
       <div
-        className="text-3xl font-bold tabular-nums tracking-tight leading-none"
-        style={{ color: valueColor }}
+        className="text-3xl font-bold tabular-nums tracking-tight leading-none text-gray-900 dark:text-white"
+        style={valueColor ? { color: valueColor } : undefined}
       >
         {value}
       </div>
       {sub ? (
-        <div className="text-xs mt-2" style={{ color: TEXT_DIM }}>
+        <div className="text-xs mt-2 text-gray-400 dark:text-gray-500">
           {sub}
         </div>
       ) : null}
@@ -237,23 +208,17 @@ interface AlertRowProps {
 
 export function AlertRow({ label, description, count, dotColor }: AlertRowProps) {
   return (
-    <div
-      className="flex items-center gap-4 px-4 py-3.5 rounded-lg border"
-      style={{ backgroundColor: "rgba(255,255,255,0.02)", borderColor: BORDER }}
-    >
+    <div className="flex items-center gap-4 px-4 py-3.5 rounded-lg border bg-gray-50 dark:bg-white/[0.02] border-gray-200 dark:border-white/[0.06]">
       <span
         className="w-2.5 h-2.5 rounded-full shrink-0"
         style={{ backgroundColor: dotColor, boxShadow: `0 0 12px ${dotColor}` }}
         aria-hidden
       />
       <div className="min-w-0 flex-1">
-        <div
-          className="text-sm font-semibold truncate"
-          style={{ color: TEXT_PRIMARY }}
-        >
+        <div className="text-sm font-semibold truncate text-gray-900 dark:text-white">
           {label}
         </div>
-        <div className="text-xs mt-0.5" style={{ color: TEXT_MUTED }}>
+        <div className="text-xs mt-0.5 text-gray-600 dark:text-gray-400">
           {description}
         </div>
       </div>
@@ -289,10 +254,7 @@ export function ProgressRow({
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between gap-3">
-        <span
-          className="text-sm font-medium truncate"
-          style={{ color: TEXT_PRIMARY }}
-        >
+        <span className="text-sm font-medium truncate text-gray-900 dark:text-white">
           {label}
         </span>
         <span
@@ -302,10 +264,7 @@ export function ProgressRow({
           {displayValue ?? `${value}/${max}`}
         </span>
       </div>
-      <div
-        className="h-2 rounded-full overflow-hidden"
-        style={{ backgroundColor: "rgba(255,255,255,0.05)" }}
-      >
+      <div className="h-2 rounded-full overflow-hidden bg-gray-200 dark:bg-white/[0.05]">
         <div
           className="h-full rounded-full transition-[width] duration-500"
           style={{ width: `${Math.max(2, pct)}%`, backgroundColor: color }}
@@ -329,10 +288,14 @@ interface StudentRowProps {
 }
 
 const BADGE_STYLES: Record<BadgeVariant, string> = {
-  success: "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20",
-  warning: "bg-amber-500/10 text-amber-400 border border-amber-500/20",
-  danger: "bg-rose-500/10 text-rose-400 border border-rose-500/20",
-  neutral: "bg-white/5 text-gray-300 border border-white/10",
+  success:
+    "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20",
+  warning:
+    "bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20",
+  danger:
+    "bg-rose-500/10 text-rose-700 dark:text-rose-400 border border-rose-500/20",
+  neutral:
+    "bg-gray-100 dark:bg-white/5 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-white/10",
 };
 
 export function StudentRow({
@@ -346,10 +309,7 @@ export function StudentRow({
   const initials = getInitials(name);
   const avatarCls = avatarColor ?? AVATAR_PALETTE[0];
   return (
-    <div
-      className="flex flex-col lg:flex-row lg:items-center gap-4 px-4 py-3.5 rounded-lg border transition hover:bg-white/[0.02]"
-      style={{ backgroundColor: "transparent", borderColor: BORDER }}
-    >
+    <div className="flex flex-col lg:flex-row lg:items-center gap-4 px-4 py-3.5 rounded-lg border border-gray-200 dark:border-white/[0.06] transition hover:bg-gray-50 dark:hover:bg-white/[0.02]">
       <div className="flex items-center gap-3 min-w-0 flex-1">
         <span
           className={`inline-flex items-center justify-center w-10 h-10 rounded-full font-semibold text-sm shrink-0 ${avatarCls}`}
@@ -357,13 +317,10 @@ export function StudentRow({
           {initials}
         </span>
         <div className="min-w-0">
-          <div
-            className="text-sm font-semibold truncate"
-            style={{ color: TEXT_PRIMARY }}
-          >
+          <div className="text-sm font-semibold truncate text-gray-900 dark:text-white">
             {name}
           </div>
-          <div className="text-xs truncate" style={{ color: TEXT_MUTED }}>
+          <div className="text-xs truncate text-gray-600 dark:text-gray-400">
             {email}
           </div>
         </div>
@@ -372,16 +329,10 @@ export function StudentRow({
         <div className="flex items-center gap-5 sm:gap-6 lg:gap-8 shrink-0 lg:ml-auto">
           {stats.map((s) => (
             <div key={s.label} className="min-w-0">
-              <div
-                className="text-[10px] font-medium uppercase tracking-wider"
-                style={{ color: TEXT_DIM }}
-              >
+              <div className="text-[10px] font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500">
                 {s.label}
               </div>
-              <div
-                className="text-sm font-semibold tabular-nums mt-0.5 truncate"
-                style={{ color: TEXT_PRIMARY }}
-              >
+              <div className="text-sm font-semibold tabular-nums mt-0.5 truncate text-gray-900 dark:text-white">
                 {s.value}
               </div>
             </div>
@@ -417,21 +368,15 @@ export function LessonRow({
 }: LessonRowProps) {
   const pct = Math.max(0, Math.min(100, percentage));
   return (
-    <div className="flex items-center gap-4 px-4 py-3 rounded-lg transition hover:bg-white/[0.02]">
+    <div className="flex items-center gap-4 px-4 py-3 rounded-lg transition hover:bg-gray-50 dark:hover:bg-white/[0.02]">
       <div className="min-w-0 flex-1">
-        <div
-          className="text-sm font-semibold truncate"
-          style={{ color: TEXT_PRIMARY }}
-        >
+        <div className="text-sm font-semibold truncate text-gray-900 dark:text-white">
           {title}
         </div>
-        <div className="text-xs truncate mt-0.5" style={{ color: TEXT_MUTED }}>
+        <div className="text-xs truncate mt-0.5 text-gray-600 dark:text-gray-400">
           {moduleName}
         </div>
-        <div
-          className="h-1 mt-2 rounded-full overflow-hidden"
-          style={{ backgroundColor: "rgba(255,255,255,0.05)" }}
-        >
+        <div className="h-1 mt-2 rounded-full overflow-hidden bg-gray-200 dark:bg-white/[0.05]">
           <div
             className="h-full rounded-full transition-[width] duration-500"
             style={{ width: `${Math.max(2, pct)}%`, backgroundColor: barColor }}
@@ -439,11 +384,11 @@ export function LessonRow({
         </div>
       </div>
       <span
-        className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-bold tabular-nums shrink-0"
+        className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-bold tabular-nums shrink-0 border"
         style={{
           backgroundColor: `${barColor}1a`,
           color: barColor,
-          border: `1px solid ${barColor}33`,
+          borderColor: `${barColor}33`,
         }}
       >
         {pct}%
@@ -463,16 +408,11 @@ export function EmptyState({ icon, message }: EmptyStateProps) {
   return (
     <div className="flex flex-col items-center justify-center py-12 px-6 text-center">
       {icon ? (
-        <div
-          className="w-12 h-12 mb-3 inline-flex items-center justify-center"
-          style={{ color: TEXT_DIM }}
-        >
+        <div className="w-12 h-12 mb-3 inline-flex items-center justify-center text-gray-400 dark:text-gray-500">
           {icon}
         </div>
       ) : null}
-      <p className="text-sm" style={{ color: TEXT_MUTED }}>
-        {message}
-      </p>
+      <p className="text-sm text-gray-600 dark:text-gray-400">{message}</p>
     </div>
   );
 }
