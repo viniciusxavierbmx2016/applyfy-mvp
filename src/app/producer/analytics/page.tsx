@@ -12,6 +12,19 @@ import {
 import { CustomSelect } from "@/components/custom-select";
 import { HelpTooltip } from "@/components/help-tooltip";
 
+const ReportsOverviewTab = dynamic(
+  () =>
+    import("@/components/reports-overview-tab").then(
+      (m) => m.ReportsOverviewTab
+    ),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-64 bg-gray-100 dark:bg-gray-900/50 rounded-xl animate-pulse" />
+    ),
+  }
+);
+
 const ReportsContentTab = dynamic(
   () =>
     import("@/components/reports-content-tab").then((m) => m.ReportsContentTab),
@@ -36,10 +49,11 @@ const ReportsStudentsTab = dynamic(
   }
 );
 
-type TabId = "content" | "students";
+type TabId = "overview" | "lessons" | "students";
 
 const TABS: Array<{ id: TabId; label: string }> = [
-  { id: "content", label: "Conteúdo" },
+  { id: "overview", label: "Visão geral" },
+  { id: "lessons", label: "Aulas" },
   { id: "students", label: "Alunos" },
 ];
 
@@ -66,15 +80,17 @@ export default function AdminAnalyticsPage() {
 function AdminAnalyticsPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const rawTab = searchParams.get("tab") || "content";
+  const rawTab = searchParams.get("tab") || "overview";
   const tab: TabId = TABS.some((t) => t.id === rawTab)
     ? (rawTab as TabId)
-    : "content";
+    : "overview";
 
   useEffect(() => {
-    if (rawTab === "overview" || !TABS.some((t) => t.id === rawTab)) {
+    if (!TABS.some((t) => t.id === rawTab)) {
       const sp = new URLSearchParams(searchParams.toString());
-      sp.set("tab", "content");
+      // Backwards-compat: old URL ?tab=content → ?tab=lessons.
+      // Everything else falls back to the new default.
+      sp.set("tab", rawTab === "content" ? "lessons" : "overview");
       router.replace(`/producer/analytics?${sp.toString()}`);
     }
   }, [rawTab, router, searchParams]);
@@ -103,7 +119,10 @@ function AdminAnalyticsPageInner() {
     if (courseId !== "all") qs.set("courseId", courseId);
     qs.set("startDate", range.startDate);
     qs.set("endDate", range.endDate);
-    qs.set("tab", tab);
+    // Map URL tab → API tab. The API only knows "content" and "students";
+    // "overview" and "lessons" both export the content/lessons dataset.
+    const apiTab = tab === "students" ? "students" : "content";
+    qs.set("tab", apiTab);
     qs.set("format", "csv");
     window.location.href = `/api/producer/analytics?${qs.toString()}`;
   }
@@ -168,7 +187,14 @@ function AdminAnalyticsPageInner() {
       </div>
 
       {/* Tab content */}
-      {tab === "content" && (
+      {tab === "overview" && (
+        <ReportsOverviewTab
+          courseId={courseId}
+          startDate={range.startDate}
+          endDate={range.endDate}
+        />
+      )}
+      {tab === "lessons" && (
         <ReportsContentTab
           courseId={courseId}
           startDate={range.startDate}
