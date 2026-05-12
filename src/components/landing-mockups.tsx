@@ -1,4 +1,3 @@
-/* eslint-disable react/no-unknown-property */
 // Members Club landing — SVG mockups (Vitrine, Dashboard, Comunidade, Personalização).
 // Pure SVG components, no hooks. CSS variables (--accent, --accent-soft, --accent-ring,
 // --ink1) are aliased inside .mc-root in landing/page.tsx McStyles.
