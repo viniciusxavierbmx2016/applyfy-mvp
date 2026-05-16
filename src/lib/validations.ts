@@ -585,7 +585,7 @@ export const titleOnlySchema = z.object({
 export const enrollCourseStudentSchema = z.object({
   email: z.string().email("Email inválido").max(255),
   name: z.string().max(255).optional(),
-  days: z.union([z.number(), z.string()]).optional(),
+  days: z.union([z.number(), z.string()]).optional().nullable(),
   phone: z.string().max(50).optional(),
 });
 
