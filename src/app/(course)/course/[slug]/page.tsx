@@ -227,14 +227,14 @@ function groupBySection(modules: ModuleItem[], sections: SectionItem[]) {
   const sortedModules = [...modules].sort((a, b) => a.order - b.order);
   const unsectioned = sortedModules.filter((m) => !m.sectionId);
   const groups: Array<{ section: SectionItem | null; modules: ModuleItem[] }> = [];
-  if (unsectioned.length > 0) {
-    groups.push({ section: null, modules: unsectioned });
-  }
   for (const s of sortedSections) {
     groups.push({
       section: s,
       modules: sortedModules.filter((m) => m.sectionId === s.id),
     });
+  }
+  if (unsectioned.length > 0) {
+    groups.push({ section: null, modules: unsectioned });
   }
   return groups;
 }
