@@ -233,7 +233,7 @@ export function CourseSidebar({
         {/* Itens do menu */}
         <nav
           className={cn(
-            "flex-1 flex flex-col py-3 gap-1 overflow-y-auto",
+            "flex-1 flex flex-col py-3 gap-1 overflow-y-auto min-h-0",
             collapsed ? "lg:px-2 px-3" : "px-3"
           )}
         >
