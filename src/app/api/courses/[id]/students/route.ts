@@ -11,7 +11,11 @@ import { processAutomations } from "@/lib/automation-engine";
 import { sendEmail } from "@/lib/email";
 import { studentAccessGranted } from "@/lib/email-templates";
 import { enrollCourseStudentSchema, validateBody } from "@/lib/validations";
-import { generateSalt, hashPassword } from "@/lib/workspace-auth";
+import {
+  generateSalt,
+  generateTempPassword,
+  hashPassword,
+} from "@/lib/workspace-auth";
 
 function randomTempPassword(len = 8) {
   const alphabet = "abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -206,7 +210,7 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
       );
     }
 
-    const { user, isStaff } = await ensureUserByEmail(
+    const { user, tempPassword, isStaff } = await ensureUserByEmail(
       email,
       name,
       course.workspace.id,
@@ -257,50 +261,54 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
     );
 
     // Build a shareable credential block so the producer can hand the access
-    // directly to the student. Master password (if set) wins so the student
-    // can reuse the same credential the producer already shares; otherwise
-    // we generate a fresh 8-char password.
+    // directly to the student. ALWAYS generate a unique password per student
+    // — never email the workspace's master password (security: a leaked email
+    // would expose the credential shared by every other student).
     //
-    // For pure STUDENTs (the new model), we write the shared password to
-    // their per-workspace credential — overwriting the auto-generated
-    // mc-XXXXXX from ensureUserByEmail — so /w/<slug>/login can verify it
-    // via scrypt without touching the global Supabase Auth password. For
-    // staff we keep the legacy Supabase rotation, since staff still
-    // authenticates platform-wide.
+    // For pure STUDENTs: reuse the mc-XXXXXX that ensureUserByEmail just
+    // generated when this is a fresh credential, otherwise rotate the
+    // existing one. Master password (if set) is preserved on the workspace
+    // for the producer's own use (magic-link entry as student) but never
+    // leaves the server.
+    //
+    // For staff (PRODUCER/ADMIN/COLLAB): rotate the global Supabase Auth
+    // password since staff authenticates platform-wide, not per-workspace.
     let sharedPassword: string | null = null;
-    if (course.workspace.masterPassword) {
-      sharedPassword = course.workspace.masterPassword;
-    } else {
-      sharedPassword = randomTempPassword(8);
-      try {
-        if (isStaff) {
-          const admin = createAdminClient();
-          await admin.auth.admin.updateUserById(user.id, {
-            password: sharedPassword,
-          });
-        } else {
-          const salt = generateSalt();
-          const passwordHash = hashPassword(sharedPassword, salt);
-          await prisma.workspaceCredential.upsert({
-            where: {
-              userId_workspaceId: {
-                userId: user.id,
-                workspaceId: course.workspace.id,
-              },
-            },
-            create: {
+    try {
+      if (isStaff) {
+        sharedPassword = randomTempPassword(8);
+        const admin = createAdminClient();
+        await admin.auth.admin.updateUserById(user.id, {
+          password: sharedPassword,
+        });
+      } else if (tempPassword) {
+        // ensureUserByEmail already created the WorkspaceCredential with
+        // this mc-XXXXXX — reuse it instead of rotating again.
+        sharedPassword = tempPassword;
+      } else {
+        // Existing credential — rotate it with a fresh mc-XXXXXX.
+        sharedPassword = generateTempPassword();
+        const salt = generateSalt();
+        const passwordHash = hashPassword(sharedPassword, salt);
+        await prisma.workspaceCredential.upsert({
+          where: {
+            userId_workspaceId: {
               userId: user.id,
               workspaceId: course.workspace.id,
-              passwordHash,
-              salt,
             },
-            update: { passwordHash, salt },
-          });
-        }
-      } catch (e) {
-        console.error("rotate temp password error:", e);
-        sharedPassword = null;
+          },
+          create: {
+            userId: user.id,
+            workspaceId: course.workspace.id,
+            passwordHash,
+            salt,
+          },
+          update: { passwordHash, salt },
+        });
       }
+    } catch (e) {
+      console.error("rotate temp password error:", e);
+      sharedPassword = null;
     }
 
     const workspaceUrl = `${baseUrl}/w/${course.workspace.slug}`;
@@ -325,7 +333,7 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
         email: user.email,
         password: sharedPassword,
         workspaceUrl,
-        isMaster: !!course.workspace.masterPassword,
+        isMaster: false,
       },
     });
   } catch (error) {
