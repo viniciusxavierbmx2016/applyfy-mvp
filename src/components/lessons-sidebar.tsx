@@ -82,7 +82,7 @@ export function LessonsSidebar({
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto min-h-0">
         {modules.map((mod) => {
           const isOpen = !mod.locked && openModules.has(mod.id);
           const completedCount = mod.lessons.filter((l) => l.completed).length;

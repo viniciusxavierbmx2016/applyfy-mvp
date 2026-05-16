@@ -675,11 +675,11 @@ export default function LessonPage(
 
         {/* Desktop sidebar — collapsible */}
         <div
-          className={`hidden lg:block border-l border-gray-200 dark:border-white/5 overflow-hidden transition-[width,border] duration-300 ${
+          className={`hidden lg:block h-full border-l border-gray-200 dark:border-white/5 overflow-hidden transition-[width,border] duration-300 ${
             sidebarOpen ? "w-[340px]" : "w-0 border-l-0"
           }`}
         >
-          <div className={`${sidebarOpen ? "opacity-100" : "opacity-0 pointer-events-none"} transition-opacity duration-200 w-[340px]`}>
+          <div className={`${sidebarOpen ? "opacity-100" : "opacity-0 pointer-events-none"} transition-opacity duration-200 w-[340px] h-full`}>
             <LessonsSidebar
               courseSlug={data.course.slug}
               courseTitle={data.course.title}
