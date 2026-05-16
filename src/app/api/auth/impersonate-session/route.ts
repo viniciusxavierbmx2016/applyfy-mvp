@@ -53,20 +53,22 @@ export async function POST(request: Request) {
 
     const supabaseAdmin = createAdminClient();
 
-    const tempPassword = `imp_${Date.now()}_${Math.random().toString(36).slice(2)}`;
-
-    const { error: updateError } =
-      await supabaseAdmin.auth.admin.updateUserById(impToken.user.id, {
-        password: tempPassword,
+    // Create a session via magic-link OTP instead of overwriting the
+    // producer's real Supabase Auth password. The previous flow rotated the
+    // password to `imp_*` and signed in with it — leaving the producer
+    // locked out of their own account until they ran a password reset.
+    const { data: linkData, error: linkError } =
+      await supabaseAdmin.auth.admin.generateLink({
+        type: "magiclink",
+        email: impToken.user.email,
       });
 
-    if (updateError) {
-      console.error(
-        "[IMPERSONATE-SESSION] updateUser error:",
-        updateError.message
-      );
+    if (linkError || !linkData?.properties?.hashed_token) {
+      logger.error("IMPERSONATE-SESSION", "generateLink failed", {
+        error: linkError ? linkError.message : "missing hashed_token",
+      });
       return NextResponse.json(
-        { error: "Erro ao preparar acesso" },
+        { error: "Falha ao criar sessão" },
         { status: 500 }
       );
     }
@@ -76,19 +78,17 @@ export async function POST(request: Request) {
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     );
 
-    const { data: signInData, error: signInError } =
-      await tempClient.auth.signInWithPassword({
-        email: impToken.user.email,
-        password: tempPassword,
-      });
+    const { data: otpData, error: otpError } = await tempClient.auth.verifyOtp({
+      token_hash: linkData.properties.hashed_token,
+      type: "magiclink",
+    });
 
-    if (signInError || !signInData.session) {
-      console.error(
-        "[IMPERSONATE-SESSION] signIn error:",
-        signInError?.message
-      );
+    if (otpError || !otpData.session) {
+      logger.error("IMPERSONATE-SESSION", "verifyOtp failed", {
+        error: otpError?.message ?? "no session",
+      });
       return NextResponse.json(
-        { error: "Erro ao autenticar" },
+        { error: "Falha ao criar sessão" },
         { status: 500 }
       );
     }
@@ -98,19 +98,11 @@ export async function POST(request: Request) {
       `Success: ${impToken.admin.email} → ${impToken.user.email}`
     );
 
-    logger.debug("IMPERSONATE-SESSION", "Tokens", {
-      hasAccessToken: !!signInData.session.access_token,
-      accessTokenLength: signInData.session.access_token?.length,
-      hasRefreshToken: !!signInData.session.refresh_token,
-      refreshTokenLength: signInData.session.refresh_token?.length,
-      expiresAt: signInData.session.expires_at,
-    });
-
     return NextResponse.json({
-      access_token: signInData.session.access_token,
-      refresh_token: signInData.session.refresh_token,
-      expires_in: signInData.session.expires_in,
-      expires_at: signInData.session.expires_at,
+      access_token: otpData.session.access_token,
+      refresh_token: otpData.session.refresh_token,
+      expires_in: otpData.session.expires_in,
+      expires_at: otpData.session.expires_at,
       email: impToken.user.email,
     });
   } catch (err) {
