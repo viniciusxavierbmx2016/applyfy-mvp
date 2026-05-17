@@ -142,7 +142,7 @@ export default function StudentDetailPage(
                 className="w-14 h-14 rounded-full object-cover"
               />
             ) : (
-              <div className="w-14 h-14 rounded-full bg-blue-600 text-white flex items-center justify-center text-lg font-semibold">
+              <div className="w-14 h-14 rounded-full bg-primary text-white flex items-center justify-center text-lg font-semibold">
                 {user.name.charAt(0).toUpperCase()}
               </div>
             )}
@@ -160,7 +160,7 @@ export default function StudentDetailPage(
                 )}
               </div>
               <div className="flex flex-wrap items-center gap-2 mt-2">
-                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-primary/10 text-primary border border-primary/20">
                   Nv {user.level} · {user.points} pts
                 </span>
                 <span className="text-xs text-gray-500">
@@ -218,7 +218,7 @@ export default function StudentDetailPage(
 
       {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <StatCard label="Cursos ativos" value={stats.activeCourses} accent="text-blue-500 dark:text-blue-400" />
+        <StatCard label="Cursos ativos" value={stats.activeCourses} accent="text-primary" />
         <StatCard label="Aulas concluídas" value={stats.totalLessonsCompleted} accent="text-emerald-500 dark:text-emerald-400" />
         <StatCard label="Posts / Comentários" value={`${stats.totalPosts} / ${stats.totalComments}`} accent="text-amber-500 dark:text-amber-400" />
         <StatCard label="Certificados" value={stats.totalCertificates} accent="text-purple-500 dark:text-purple-400" />
@@ -233,7 +233,7 @@ export default function StudentDetailPage(
               onClick={() => setActiveTab(tab.key)}
               className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
                 activeTab === tab.key
-                  ? "border-blue-500 text-blue-600 dark:text-blue-400"
+                  ? "border-primary text-primary"
                   : "border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
               }`}
             >
@@ -359,7 +359,7 @@ function TabCourses({ enrollments }: { enrollments: EnrollmentData[] }) {
                 <div className="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-2">
                   <div
                     className={`h-2 rounded-full transition-[width] ${
-                      e.progress >= 100 ? "bg-emerald-500" : "bg-blue-500"
+                      e.progress >= 100 ? "bg-emerald-500" : "bg-primary"
                     }`}
                     style={{ width: `${Math.min(e.progress, 100)}%` }}
                   />
@@ -418,7 +418,7 @@ function TabActivity({ activity, accessLogs }: { activity: ActivityData[]; acces
             {accessLogs.map((log, i) => (
               <div key={i} className="flex items-center justify-between py-2 px-3 bg-gray-50 dark:bg-white/[0.02] rounded-lg">
                 <div className="flex items-center gap-3 min-w-0">
-                  <span className="text-xs font-mono text-blue-600 dark:text-blue-400 flex-shrink-0">{log.ip}</span>
+                  <span className="text-xs font-mono text-primary flex-shrink-0">{log.ip}</span>
                   <span className="text-[10px] text-gray-400 dark:text-gray-600 truncate max-w-[200px]">
                     {log.userAgent?.split("(")[0] || ""}
                   </span>

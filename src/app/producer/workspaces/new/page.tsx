@@ -86,7 +86,7 @@ export default function NewWorkspacePage() {
             required
             maxLength={80}
             placeholder="Meu Workspace"
-            className="w-full px-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary"
           />
         </div>
 
@@ -104,7 +104,7 @@ export default function NewWorkspacePage() {
             required
             maxLength={50}
             placeholder="meu-workspace"
-            className="w-full px-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm"
+            className="w-full px-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary font-mono text-sm"
           />
           <p className="mt-1.5 text-xs text-gray-500">
             URL do aluno:{" "}
@@ -130,7 +130,7 @@ export default function NewWorkspacePage() {
           <button
             type="submit"
             disabled={submitting || !name.trim() || !slug.trim()}
-            className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-sm font-medium rounded-lg"
+            className="px-4 py-2.5 bg-primary hover:bg-primary-hover disabled:opacity-50 text-white text-sm font-medium rounded-lg"
           >
             {submitting ? "Criando..." : "Criar workspace"}
           </button>

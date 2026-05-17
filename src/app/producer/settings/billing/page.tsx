@@ -281,7 +281,7 @@ function BillingContent() {
                     </span>
                   </p>
                 </div>
-                <span className="px-3 py-1 text-xs font-medium rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400">
+                <span className="px-3 py-1 text-xs font-medium rounded-full bg-primary/10 text-primary">
                   Recomendado
                 </span>
               </div>
@@ -306,7 +306,7 @@ function BillingContent() {
               <button
                 onClick={handleCheckout}
                 disabled={checkingOut}
-                className="block w-full text-center px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white font-medium rounded-xl transition text-sm disabled:opacity-50"
+                className="block w-full text-center px-6 py-3 bg-primary hover:bg-primary text-white font-medium rounded-xl transition text-sm disabled:opacity-50"
               >
                 {checkoutLabel}
               </button>
@@ -374,7 +374,7 @@ function BillingContent() {
                 <button
                   onClick={handleCheckout}
                   disabled={checkingOut}
-                  className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-500 rounded-lg transition disabled:opacity-50"
+                  className="px-4 py-2 text-sm font-medium text-white bg-primary hover:bg-primary rounded-lg transition disabled:opacity-50"
                 >
                   {checkingOut ? "Gerando checkout..." : "Reativar assinatura"}
                 </button>
@@ -447,7 +447,7 @@ function BillingContent() {
 
 function Banner({ color, children }: { color: string; children: React.ReactNode }) {
   const colors: Record<string, string> = {
-    blue: "bg-blue-50 dark:bg-blue-500/5 border-blue-200 dark:border-blue-500/20 text-blue-700 dark:text-blue-400",
+    blue: "bg-primary/10 dark:bg-primary/5 border-primary/30 dark:border-primary/20 text-primary",
     amber: "bg-amber-50 dark:bg-amber-500/5 border-amber-200 dark:border-amber-500/20 text-amber-700 dark:text-amber-400",
     red: "bg-red-50 dark:bg-red-500/5 border-red-200 dark:border-red-500/20 text-red-700 dark:text-red-400",
   };
@@ -533,7 +533,7 @@ function UsageBar({ label, used, max }: { label: string; used: number; max: numb
       <div className="h-2 bg-gray-100 dark:bg-white/5 rounded-full overflow-hidden">
         <div
           className={`h-full rounded-full transition-[width] duration-500 ${
-            warn ? "bg-amber-500" : "bg-blue-500"
+            warn ? "bg-amber-500" : "bg-primary"
           }`}
           style={{ width: `${pct}%` }}
         />

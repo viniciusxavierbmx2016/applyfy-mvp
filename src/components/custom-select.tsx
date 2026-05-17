@@ -72,7 +72,7 @@ export const CustomSelect = React.memo(function CustomSelect({ value, onChange, 
                     onClick={() => { onChange(o.value); setOpen(false); }}
                     className={`w-full flex items-center gap-2 px-3 py-2 text-sm text-left transition-colors ${
                       active
-                        ? "text-blue-600 dark:text-blue-400 font-medium bg-blue-50 dark:bg-blue-500/5"
+                        ? "text-primary font-medium bg-primary/10 dark:bg-primary/5"
                         : "text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5"
                     }`}
                   >

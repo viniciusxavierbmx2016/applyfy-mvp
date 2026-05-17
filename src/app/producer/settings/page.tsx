@@ -364,7 +364,7 @@ function ColorPicker({
               handleHexInput(e.target.value);
             }
           }}
-          className="flex-1 min-w-0 px-3 py-2 bg-gray-50 dark:bg-gray-900/50 border border-gray-300 dark:border-white/10 rounded-lg text-sm text-gray-900 dark:text-white font-mono focus:outline-none focus:border-blue-500/50 transition-colors"
+          className="flex-1 min-w-0 px-3 py-2 bg-gray-50 dark:bg-gray-900/50 border border-gray-300 dark:border-white/10 rounded-lg text-sm text-gray-900 dark:text-white font-mono focus:outline-none focus:border-primary/50 transition-colors"
           placeholder="#000000"
           maxLength={7}
         />

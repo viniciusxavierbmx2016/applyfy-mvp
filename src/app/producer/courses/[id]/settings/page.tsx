@@ -241,7 +241,7 @@ export default function CourseSettingsPage(
                 <span
                   className={`shrink-0 w-10 h-10 rounded-lg inline-flex items-center justify-center ${
                     enabled
-                      ? "bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400"
+                      ? "bg-primary/10 text-primary dark:bg-primary/10 dark:text-primary"
                       : "bg-gray-100 text-gray-400 dark:bg-[#1a1e2e] dark:text-gray-500"
                   }`}
                 >
@@ -300,8 +300,8 @@ function Toggle({
       aria-label={label}
       disabled={disabled}
       onClick={onChange}
-      className={`relative shrink-0 inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 focus:ring-offset-white dark:focus:ring-offset-gray-900 ${
-        checked ? "bg-blue-600" : "bg-gray-300 dark:bg-[#1a1e2e]"
+      className={`relative shrink-0 inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary focus:ring-offset-white dark:focus:ring-offset-gray-900 ${
+        checked ? "bg-primary" : "bg-gray-300 dark:bg-[#1a1e2e]"
       } ${disabled ? "opacity-60 cursor-not-allowed" : "cursor-pointer"}`}
     >
       <span

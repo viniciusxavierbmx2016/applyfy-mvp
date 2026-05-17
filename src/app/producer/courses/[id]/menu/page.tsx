@@ -168,7 +168,7 @@ export default function CourseMenuPage(props: { params: Promise<{ id: string }> 
 
       {loading ? (
         <div className="flex items-center justify-center h-32">
-          <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+          <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
         </div>
       ) : (
         <>
@@ -206,7 +206,7 @@ export default function CourseMenuPage(props: { params: Promise<{ id: string }> 
                   value={newLabel}
                   onChange={(e) => setNewLabel(e.target.value)}
                   placeholder="Nome (ex: Instagram)"
-                  className="px-3 py-2 bg-gray-50 dark:bg-[#0f1320] border border-gray-300 dark:border-[#1a1e2e] rounded-xl text-sm text-gray-900 dark:text-white focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20"
+                  className="px-3 py-2 bg-gray-50 dark:bg-[#0f1320] border border-gray-300 dark:border-[#1a1e2e] rounded-xl text-sm text-gray-900 dark:text-white focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20"
                 />
               </div>
               <input
@@ -214,12 +214,12 @@ export default function CourseMenuPage(props: { params: Promise<{ id: string }> 
                 value={newUrl}
                 onChange={(e) => setNewUrl(e.target.value)}
                 placeholder="URL (ex: https://instagram.com/seucanal)"
-                className="w-full px-3 py-2 bg-gray-50 dark:bg-[#0f1320] border border-gray-300 dark:border-[#1a1e2e] rounded-xl text-sm text-gray-900 dark:text-white focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20"
+                className="w-full px-3 py-2 bg-gray-50 dark:bg-[#0f1320] border border-gray-300 dark:border-[#1a1e2e] rounded-xl text-sm text-gray-900 dark:text-white focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20"
               />
               <div className="flex gap-2">
                 <button
                   onClick={handleCreate}
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium rounded-lg transition"
+                  className="px-4 py-2 bg-primary hover:bg-primary text-white text-sm font-medium rounded-lg transition"
                 >
                   Adicionar
                 </button>
@@ -262,7 +262,7 @@ function IconSelect({
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="pl-10 pr-8 py-2 bg-white dark:bg-gray-900/50 border border-gray-200 dark:border-white/10 rounded-lg text-sm text-gray-900 dark:text-white appearance-none focus:outline-none focus:border-blue-500/50 transition-colors"
+        className="pl-10 pr-8 py-2 bg-white dark:bg-gray-900/50 border border-gray-200 dark:border-white/10 rounded-lg text-sm text-gray-900 dark:text-white appearance-none focus:outline-none focus:border-primary/50 transition-colors"
       >
         {MENU_ICON_KEYS.map((k) => (
           <option key={k} value={k}>
@@ -325,7 +325,7 @@ function SortableRow({
         type="text"
         value={item.label}
         onChange={(e) => onUpdate(item.id, { label: e.target.value })}
-        className="flex-1 min-w-0 px-3 py-2 bg-gray-50 dark:bg-[#0f1320] border border-gray-300 dark:border-[#1a1e2e] rounded-xl text-sm text-gray-900 dark:text-white focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20"
+        className="flex-1 min-w-0 px-3 py-2 bg-gray-50 dark:bg-[#0f1320] border border-gray-300 dark:border-[#1a1e2e] rounded-xl text-sm text-gray-900 dark:text-white focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20"
       />
 
       <input
@@ -333,7 +333,7 @@ function SortableRow({
         value={item.url}
         onChange={(e) => onUpdate(item.id, { url: e.target.value })}
         disabled={!canEditUrl}
-        className="hidden md:block flex-1 min-w-0 px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        className="hidden md:block flex-1 min-w-0 px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-sm text-gray-900 dark:text-white disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-primary"
       />
 
       {canToggle && (
@@ -342,7 +342,7 @@ function SortableRow({
             type="checkbox"
             checked={item.enabled}
             onChange={(e) => onUpdate(item.id, { enabled: e.target.checked })}
-            className="h-4 w-4 accent-blue-500"
+            className="h-4 w-4 accent-primary"
           />
           <span className="text-xs text-gray-600 dark:text-gray-400 hidden sm:inline">
             Ativo

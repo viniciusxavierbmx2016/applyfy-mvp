@@ -128,7 +128,7 @@ export default function AdminCollaboratorsPage() {
             setEditing(null);
             setShowModal(true);
           }}
-          className="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium rounded-xl shadow-lg shadow-blue-500/20 hover:shadow-blue-500/30 transition-colors"
+          className="px-5 py-2.5 bg-primary hover:bg-primary text-white text-sm font-medium rounded-xl shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-colors"
         >
           Convidar colaborador
         </button>
@@ -151,8 +151,8 @@ export default function AdminCollaboratorsPage() {
         </div>
       ) : items.length === 0 ? (
         <div className="py-16 text-center bg-white dark:bg-white/5 border border-gray-200 dark:border-white/5 rounded-2xl">
-          <div className="w-14 h-14 mx-auto rounded-full bg-blue-500/10 flex items-center justify-center mb-4">
-            <svg className="w-7 h-7 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className="w-14 h-14 mx-auto rounded-full bg-primary/10 flex items-center justify-center mb-4">
+            <svg className="w-7 h-7 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
             </svg>
           </div>
@@ -209,7 +209,7 @@ export default function AdminCollaboratorsPage() {
                       {c.status === "PENDING" && (
                         <button
                           onClick={() => handleResend(c.id)}
-                          className="px-3 py-1.5 text-xs font-medium text-blue-600 dark:text-blue-400 bg-white/5 hover:bg-white/10 rounded-lg border border-gray-200 dark:border-white/10 transition"
+                          className="px-3 py-1.5 text-xs font-medium text-primary bg-white/5 hover:bg-white/10 rounded-lg border border-gray-200 dark:border-white/10 transition"
                         >
                           Reenviar
                         </button>
@@ -283,7 +283,7 @@ export default function AdminCollaboratorsPage() {
                 navigator.clipboard.writeText(inviteLink);
                 showToast("Link copiado");
               }}
-              className="px-3 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium rounded-md"
+              className="px-3 py-2 bg-primary hover:bg-primary text-white text-xs font-medium rounded-md"
             >
               Copiar
             </button>
@@ -411,7 +411,7 @@ function CollaboratorModal({
                 onChange={(e) => setEmail(e.target.value)}
                 disabled={!!editing}
                 placeholder="colaborador@exemplo.com"
-                className="w-full px-3 py-2 bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:border-blue-500/50 disabled:opacity-60"
+                className="w-full px-3 py-2 bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:border-primary/50 disabled:opacity-60"
               />
             </div>
             <div>
@@ -423,7 +423,7 @@ function CollaboratorModal({
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Nome da pessoa"
-                className="w-full px-3 py-2 bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:border-blue-500/50"
+                className="w-full px-3 py-2 bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:border-primary/50"
               />
             </div>
           </div>
@@ -442,7 +442,7 @@ function CollaboratorModal({
                     type="checkbox"
                     checked={permissions.includes(p)}
                     onChange={() => togglePerm(p)}
-                    className="w-4 h-4 accent-blue-600"
+                    className="w-4 h-4 accent-primary"
                   />
                   <span className="text-sm text-gray-800 dark:text-gray-200">
                     {PERMISSION_LABELS[p]}
@@ -461,7 +461,7 @@ function CollaboratorModal({
                 type="checkbox"
                 checked={allCourses}
                 onChange={(e) => setAllCourses(e.target.checked)}
-                className="w-4 h-4 accent-blue-600"
+                className="w-4 h-4 accent-primary"
               />
               <span className="text-sm text-gray-800 dark:text-gray-200">
                 Todos os cursos do workspace
@@ -483,7 +483,7 @@ function CollaboratorModal({
                       type="checkbox"
                       checked={courseIds.includes(c.id)}
                       onChange={() => toggleCourse(c.id)}
-                      className="w-4 h-4 accent-blue-600"
+                      className="w-4 h-4 accent-primary"
                     />
                     {c.title}
                   </label>
@@ -509,7 +509,7 @@ function CollaboratorModal({
           <button
             onClick={save}
             disabled={saving || !email || permissions.length === 0}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg"
+            className="px-4 py-2 bg-primary hover:bg-primary disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg"
           >
             {saving
               ? "Salvando…"

@@ -48,7 +48,7 @@ interface CommentItem {
 
 function RoleBadge({ role }: { role: string }) {
   if (role === "ADMIN")
-    return <span className="text-[9px] px-1 rounded bg-blue-600/30 text-blue-300">ADMIN</span>;
+    return <span className="text-[9px] px-1 rounded bg-primary/30 text-primary">ADMIN</span>;
   if (role === "PRODUCER")
     return <span className="text-[9px] px-1 rounded bg-purple-600/30 text-purple-300">PRODUTOR</span>;
   if (role === "COLLABORATOR")
@@ -225,7 +225,7 @@ export default function CourseCommentsPage(
   const tabClass = (tab: string) =>
     `px-4 py-2.5 text-sm font-medium transition-colors border-b-2 ${
       (tab === "all" && statusFilter === "all") || (tab === "PENDING" && statusFilter === "PENDING")
-        ? "border-blue-500 text-blue-600 dark:text-blue-400"
+        ? "border-primary text-primary"
         : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
     }`;
 
@@ -312,7 +312,7 @@ export default function CourseCommentsPage(
                 type="checkbox"
                 checked={allPendingSelected}
                 onChange={toggleSelectAll}
-                className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500"
+                className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-primary focus:ring-primary"
               />
               <span className="text-xs text-gray-500">Selecionar todos</span>
             </div>
@@ -339,7 +339,7 @@ export default function CourseCommentsPage(
                         return n;
                       });
                     }}
-                    className="w-4 h-4 mt-2.5 rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500 shrink-0"
+                    className="w-4 h-4 mt-2.5 rounded border-gray-300 dark:border-gray-600 text-primary focus:ring-primary shrink-0"
                   />
                 )}
                 <Avatar src={c.user.avatarUrl} name={c.user.name} size="sm" />
@@ -354,7 +354,7 @@ export default function CourseCommentsPage(
                       {formatRelativeTime(new Date(c.createdAt))}
                     </span>
                   </div>
-                  <p className="text-xs text-blue-600 dark:text-blue-400 mt-0.5">
+                  <p className="text-xs text-primary mt-0.5">
                     {c.lesson.module.title} → {c.lesson.title}
                   </p>
                   <p className="text-sm text-gray-700 dark:text-gray-300 mt-2 whitespace-pre-wrap break-words">
@@ -394,7 +394,7 @@ export default function CourseCommentsPage(
                             setReplyingTo(replyingTo === c.id ? null : c.id);
                             setReplyText("");
                           }}
-                          className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 font-medium"
+                          className="text-xs text-primary hover:text-primary dark:hover:text-primary font-medium"
                         >
                           Responder
                         </button>
@@ -417,14 +417,14 @@ export default function CourseCommentsPage(
                         onChange={(e) => setReplyText(e.target.value)}
                         onKeyDown={(e) => e.key === "Enter" && handleReply(c.id, c.lesson.id)}
                         placeholder="Escreva sua resposta..."
-                        className="flex-1 min-w-0 px-3 py-2.5 bg-white dark:bg-gray-900/50 border border-gray-200 dark:border-white/10 rounded-lg text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-blue-500/50 transition-colors"
+                        className="flex-1 min-w-0 px-3 py-2.5 bg-white dark:bg-gray-900/50 border border-gray-200 dark:border-white/10 rounded-lg text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-primary/50 transition-colors"
                         autoFocus
                       />
                       <button
                         type="button"
                         onClick={() => handleReply(c.id, c.lesson.id)}
                         disabled={sending || !replyText.trim()}
-                        className="px-3 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium rounded-lg disabled:opacity-50 transition-colors"
+                        className="px-3 py-2 bg-primary hover:bg-primary text-white text-sm font-medium rounded-lg disabled:opacity-50 transition-colors"
                       >
                         {sending ? "..." : "Enviar"}
                       </button>

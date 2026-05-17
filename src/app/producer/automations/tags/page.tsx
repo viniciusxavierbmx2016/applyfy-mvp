@@ -134,7 +134,7 @@ export default function TagsPage() {
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
             placeholder="Nome da tag..."
-            className="flex-1 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:border-blue-500"
+            className="flex-1 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:border-primary"
             onKeyDown={(e) => e.key === "Enter" && handleCreate()}
           />
           <div className="flex items-center gap-1.5">
@@ -160,7 +160,7 @@ export default function TagsPage() {
 
       {loading ? (
         <div className="flex items-center justify-center py-16">
-          <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+          <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
         </div>
       ) : tags.length === 0 ? (
         <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-10 text-center">
@@ -225,7 +225,7 @@ export default function TagsPage() {
                     <button
                       type="button"
                       onClick={() => toggleExpand(t.id)}
-                      className="inline-flex items-center gap-1 text-gray-600 dark:text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 transition"
+                      className="inline-flex items-center gap-1 text-gray-600 dark:text-gray-400 hover:text-primary transition"
                     >
                       <svg className={`w-3 h-3 transition-transform ${expandedTag === t.id ? "rotate-90" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
                       {t.studentCount}
@@ -240,7 +240,7 @@ export default function TagsPage() {
                         <>
                           <button
                             onClick={() => handleUpdate(t.id)}
-                            className="px-2.5 py-1 text-xs font-medium rounded-lg bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 border border-blue-500/20 transition"
+                            className="px-2.5 py-1 text-xs font-medium rounded-lg bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 transition"
                           >
                             Salvar
                           </button>
@@ -275,7 +275,7 @@ export default function TagsPage() {
                     <td colSpan={4} className="px-4 py-3 bg-gray-50 dark:bg-gray-800/50">
                       {loadingStudents ? (
                         <div className="flex items-center gap-2 py-2">
-                          <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                          <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
                           <span className="text-xs text-gray-500">Carregando...</span>
                         </div>
                       ) : tagStudents.length === 0 ? (
@@ -310,7 +310,7 @@ export default function TagsPage() {
       )}
 
       {toast && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-5 py-3 bg-blue-600 text-white rounded-lg shadow-xl text-sm font-medium">
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-5 py-3 bg-primary text-white rounded-lg shadow-xl text-sm font-medium">
           {toast}
         </div>
       )}

@@ -102,7 +102,7 @@ function ApplyfyCard({
         href="/producer/settings/integrations/applyfy"
         className="group/title block focus:outline-none"
       >
-        <h2 className="text-base font-semibold text-gray-900 dark:text-white group-hover/title:text-blue-600 dark:group-hover/title:text-blue-400 transition-colors">
+        <h2 className="text-base font-semibold text-gray-900 dark:text-white group-hover/title:text-primary dark:group-hover/title:text-primary transition-colors">
           Applyfy
         </h2>
         <p className="text-sm text-gray-600 dark:text-gray-400 mt-0.5">
@@ -111,7 +111,7 @@ function ApplyfyCard({
       </Link>
       <Link
         href="/producer/settings/integrations/applyfy"
-        className="group/cta mt-auto pt-1 inline-flex items-center text-xs text-blue-600 dark:text-blue-400 font-medium hover:text-blue-700 dark:hover:text-blue-300 w-fit"
+        className="group/cta mt-auto pt-1 inline-flex items-center text-xs text-primary font-medium hover:text-primary-hover dark:hover:text-primary w-fit"
       >
         {connected ? "Gerenciar" : "Configurar"}
         <svg
@@ -144,7 +144,7 @@ function StripeCard() {
         href="/producer/settings/integrations/stripe"
         className="group/title block focus:outline-none"
       >
-        <h2 className="text-base font-semibold text-gray-900 dark:text-white group-hover/title:text-blue-600 dark:group-hover/title:text-blue-400 transition-colors">
+        <h2 className="text-base font-semibold text-gray-900 dark:text-white group-hover/title:text-primary dark:group-hover/title:text-primary transition-colors">
           Stripe
         </h2>
         <p className="text-sm text-gray-600 dark:text-gray-400 mt-0.5">
@@ -153,7 +153,7 @@ function StripeCard() {
       </Link>
       <Link
         href="/producer/settings/integrations/stripe"
-        className="group/cta mt-auto pt-1 inline-flex items-center text-xs text-blue-600 dark:text-blue-400 font-medium hover:text-blue-700 dark:hover:text-blue-300 w-fit"
+        className="group/cta mt-auto pt-1 inline-flex items-center text-xs text-primary font-medium hover:text-primary-hover dark:hover:text-primary w-fit"
       >
         Ver instruções
         <svg
@@ -174,11 +174,11 @@ function RequestIntegrationCard({ onOpen }: { onOpen: () => void }) {
     <button
       type="button"
       onClick={onOpen}
-      className="group flex flex-col items-center justify-center gap-3 p-5 rounded-xl bg-transparent border-2 border-dashed border-gray-300 dark:border-white/10 hover:border-blue-400 dark:hover:border-blue-500 hover:bg-blue-50/40 dark:hover:bg-blue-950/20 transition-colors duration-200 text-center min-h-[176px]"
+      className="group flex flex-col items-center justify-center gap-3 p-5 rounded-xl bg-transparent border-2 border-dashed border-gray-300 dark:border-white/10 hover:border-primary dark:hover:border-primary hover:bg-primary/40 dark:hover:bg-primary/20 transition-colors duration-200 text-center min-h-[176px]"
     >
-      <div className="w-12 h-12 rounded-xl border-2 border-dashed border-gray-300 dark:border-white/10 group-hover:border-blue-400 dark:group-hover:border-blue-500 flex items-center justify-center flex-shrink-0 transition">
+      <div className="w-12 h-12 rounded-xl border-2 border-dashed border-gray-300 dark:border-white/10 group-hover:border-primary dark:group-hover:border-primary flex items-center justify-center flex-shrink-0 transition">
         <svg
-          className="w-6 h-6 text-gray-400 dark:text-gray-500 group-hover:text-blue-500"
+          className="w-6 h-6 text-gray-400 dark:text-gray-500 group-hover:text-primary"
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
@@ -264,7 +264,7 @@ function RequestModal({ onClose }: { onClose: () => void }) {
             <button
               type="button"
               onClick={onClose}
-              className="w-full sm:w-auto px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium rounded-lg"
+              className="w-full sm:w-auto px-5 py-2.5 bg-primary hover:bg-primary text-white text-sm font-medium rounded-lg"
             >
               Fechar
             </button>
@@ -305,7 +305,7 @@ function RequestModal({ onClose }: { onClose: () => void }) {
                   required
                   maxLength={100}
                   placeholder="Ex: Kiwify, Eduzz, Monetizze..."
-                  className="w-full px-4 py-2.5 bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-blue-500/50 transition"
+                  className="w-full px-4 py-2.5 bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-primary/50 transition"
                 />
                 <div className="flex flex-wrap gap-1.5 mt-2">
                   {GATEWAY_SUGGESTIONS.map((s) => (
@@ -313,7 +313,7 @@ function RequestModal({ onClose }: { onClose: () => void }) {
                       key={s}
                       type="button"
                       onClick={() => setGateway(s)}
-                      className="text-[11px] px-2 py-0.5 rounded-full bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-700 dark:text-gray-300 hover:border-blue-400 dark:hover:border-blue-500 transition"
+                      className="text-[11px] px-2 py-0.5 rounded-full bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-700 dark:text-gray-300 hover:border-primary dark:hover:border-primary transition"
                     >
                       {s}
                     </button>
@@ -331,7 +331,7 @@ function RequestModal({ onClose }: { onClose: () => void }) {
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   placeholder="voce@email.com"
-                  className="w-full px-4 py-2.5 bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-blue-500/50 transition"
+                  className="w-full px-4 py-2.5 bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-primary/50 transition"
                 />
               </div>
 
@@ -345,7 +345,7 @@ function RequestModal({ onClose }: { onClose: () => void }) {
                   rows={3}
                   maxLength={2000}
                   placeholder="Conte um pouco sobre o uso que você pretende dar..."
-                  className="w-full px-4 py-2.5 bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-blue-500/50 transition resize-none"
+                  className="w-full px-4 py-2.5 bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-primary/50 transition resize-none"
                 />
               </div>
 
@@ -366,7 +366,7 @@ function RequestModal({ onClose }: { onClose: () => void }) {
                 <button
                   type="submit"
                   disabled={submitting || !gateway.trim() || !email.trim()}
-                  className="px-4 py-2.5 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white text-sm font-medium rounded-lg"
+                  className="px-4 py-2.5 bg-primary hover:bg-primary disabled:opacity-50 text-white text-sm font-medium rounded-lg"
                 >
                   {submitting ? "Enviando..." : "Enviar solicitação"}
                 </button>

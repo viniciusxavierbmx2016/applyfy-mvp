@@ -197,7 +197,7 @@ export default function ProducerSecurityPage() {
           <button
             onClick={handleEnroll}
             disabled={enrolling}
-            className="mt-4 px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            className="mt-4 px-4 py-2.5 bg-primary hover:bg-primary text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {enrolling
               ? "Configurando..."
@@ -248,7 +248,7 @@ export default function ProducerSecurityPage() {
                       setCode(e.target.value.replace(/\D/g, ""))
                     }
                     placeholder="000000"
-                    className="w-full text-center text-xl tracking-[0.3em] font-mono bg-gray-100 dark:bg-white/[0.04] border border-gray-300 dark:border-white/[0.08] rounded-lg px-4 py-2.5 text-gray-900 dark:text-white placeholder-gray-300 dark:placeholder-gray-600 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20"
+                    className="w-full text-center text-xl tracking-[0.3em] font-mono bg-gray-100 dark:bg-white/[0.04] border border-gray-300 dark:border-white/[0.08] rounded-lg px-4 py-2.5 text-gray-900 dark:text-white placeholder-gray-300 dark:placeholder-gray-600 focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20"
                     autoFocus
                   />
                 </div>
@@ -261,7 +261,7 @@ export default function ProducerSecurityPage() {
                   <button
                     onClick={handleVerify}
                     disabled={code.length !== 6 || verifying}
-                    className="flex-1 py-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg"
+                    className="flex-1 py-2 bg-primary hover:bg-primary disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg"
                   >
                     {verifying ? "Verificando..." : "Confirmar"}
                   </button>

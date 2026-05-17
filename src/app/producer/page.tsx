@@ -144,8 +144,8 @@ function DashboardContent() {
       {showWelcome && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
           <div className="bg-white dark:bg-gray-900 rounded-2xl p-8 max-w-md w-full mx-4 text-center space-y-4 border border-gray-200 dark:border-white/10 shadow-2xl">
-            <div className="mx-auto w-16 h-16 rounded-full bg-blue-500/10 flex items-center justify-center text-3xl">
-              <svg className="w-8 h-8 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div className="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center text-3xl">
+              <svg className="w-8 h-8 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
               </svg>
             </div>
@@ -157,7 +157,7 @@ function DashboardContent() {
             </p>
             <button
               onClick={() => setShowWelcome(false)}
-              className="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white font-medium rounded-xl transition"
+              className="w-full py-3 bg-primary hover:bg-primary-hover text-white font-medium rounded-xl transition"
             >
               Começar agora
             </button>
@@ -293,7 +293,7 @@ function SalesKpis({ startDate, endDate, courseId }: { startDate?: string; endDa
 
 const SALES_ACCENT: Record<string, { text: string; bg: string }> = {
   emerald: { text: "text-emerald-600 dark:text-emerald-400", bg: "bg-emerald-50 dark:bg-emerald-900/30" },
-  blue: { text: "text-blue-600 dark:text-blue-400", bg: "bg-blue-50 dark:bg-blue-900/30" },
+  blue: { text: "text-primary", bg: "bg-primary/10 dark:bg-primary/30" },
   purple: { text: "text-purple-600 dark:text-purple-400", bg: "bg-purple-50 dark:bg-purple-900/30" },
   red: { text: "text-red-600 dark:text-red-400", bg: "bg-red-50 dark:bg-red-900/30" },
 };

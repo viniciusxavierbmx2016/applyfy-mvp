@@ -343,7 +343,7 @@ export default function AutomationsPage() {
           <p className="text-sm text-gray-500 mt-1">Crie fluxos visuais que executam ações automaticamente</p>
         </div>
         <div className="flex items-center gap-0">
-          <button type="button" onClick={() => setShowNewModal(true)} className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium rounded-xl transition">
+          <button type="button" onClick={() => setShowNewModal(true)} className="inline-flex items-center gap-2 px-4 py-2.5 bg-primary hover:bg-primary-hover text-white text-sm font-medium rounded-xl transition">
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
             Nova automação
           </button>
@@ -363,12 +363,12 @@ export default function AutomationsPage() {
         </div>
       ) : automations.length === 0 ? (
         <div className="bg-white dark:bg-white/5 border border-gray-200 dark:border-white/5 rounded-2xl p-12 text-center">
-          <div className="w-16 h-16 mx-auto rounded-2xl bg-blue-500/10 flex items-center justify-center mb-5">
-            <svg className="w-8 h-8 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+          <div className="w-16 h-16 mx-auto rounded-2xl bg-primary/10 flex items-center justify-center mb-5">
+            <svg className="w-8 h-8 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
           </div>
           <p className="text-gray-900 dark:text-white font-semibold text-lg mb-2">Automatize tarefas repetitivas</p>
           <p className="text-gray-500 text-sm mb-6 max-w-md mx-auto">Crie fluxos visuais que executam ações automaticamente</p>
-          <button type="button" onClick={() => setShowNewModal(true)} className="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium rounded-xl transition">+ Criar primeira automação</button>
+          <button type="button" onClick={() => setShowNewModal(true)} className="px-5 py-2.5 bg-primary hover:bg-primary-hover text-white text-sm font-medium rounded-xl transition">+ Criar primeira automação</button>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -379,7 +379,7 @@ export default function AutomationsPage() {
             const ad = getActionDetail(auto, courses);
             const courseName = courses.find((c) => c.id === auto.courseId)?.title;
             return (
-              <div key={auto.id} onClick={() => setEditorAuto(auto)} className="bg-white dark:bg-white/5 border border-gray-200 dark:border-white/5 rounded-2xl p-5 cursor-pointer transition hover:border-blue-500/30 hover:shadow-lg hover:shadow-blue-500/5">
+              <div key={auto.id} onClick={() => setEditorAuto(auto)} className="bg-white dark:bg-white/5 border border-gray-200 dark:border-white/5 rounded-2xl p-5 cursor-pointer transition hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5">
                 <div className="flex items-center justify-between mb-3">
                   <h3 className="text-sm font-semibold text-gray-900 dark:text-white truncate pr-2">{auto.name}</h3>
                   <div className="flex items-center gap-2 flex-shrink-0">
@@ -395,14 +395,14 @@ export default function AutomationsPage() {
                     </div>
                   </div>
                 </div>
-                {courseName && <p className="text-[10px] text-blue-400 mb-2 truncate">{courseName}</p>}
+                {courseName && <p className="text-[10px] text-primary mb-2 truncate">{courseName}</p>}
                 <div className="bg-[#0a0a0b] rounded-xl p-3 mb-3 overflow-hidden" style={{ backgroundImage: "radial-gradient(circle, #1d1d23 1px, transparent 1px)", backgroundSize: "16px 16px" }}>
                   <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0"><svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg></div>
+                    <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center flex-shrink-0"><svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg></div>
                     <div className="w-4 h-px bg-[#3b3b44]" />
                     <div className="flex-1 min-w-0 bg-[#141416] border border-[#28282e] rounded-lg px-2 py-1.5">
                       <div className="flex items-center gap-1">
-                        <span className="text-[8px] uppercase tracking-wider text-blue-400 font-semibold">Quando</span>
+                        <span className="text-[8px] uppercase tracking-wider text-primary font-semibold">Quando</span>
                         {trigger?.behavioral && <span className="text-[7px] px-1 py-px rounded bg-amber-500/20 text-amber-400 font-medium">Cron</span>}
                       </div>
                       <div className="text-[10px] text-gray-300 truncate">{trigger?.short || auto.triggerType}</div>
@@ -442,7 +442,7 @@ export default function AutomationsPage() {
       {showNewModal && <NewAutomationModal onClose={() => setShowNewModal(false)} onScratch={() => { setShowNewModal(false); setEditorNew(true); }} onTemplate={(t) => { setShowNewModal(false); setEditorTemplate(t); }} />}
       <ConfirmDialog />
       {toast && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-5 py-3 bg-blue-600 text-white rounded-lg shadow-xl text-sm font-medium">
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-5 py-3 bg-primary text-white rounded-lg shadow-xl text-sm font-medium">
           {toast}
         </div>
       )}
@@ -464,13 +464,13 @@ function NewAutomationModal({ onClose, onScratch, onTemplate }: { onClose: () =>
         </div>
         {!showTemplates ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <button type="button" onClick={onScratch} className="flex flex-col items-center gap-3 p-6 rounded-xl border-2 border-gray-200 dark:border-white/10 hover:border-blue-500/50 hover:bg-blue-500/5 transition text-center group">
-              <div className="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center group-hover:bg-blue-500/20 transition">
-                <svg className="w-6 h-6 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+            <button type="button" onClick={onScratch} className="flex flex-col items-center gap-3 p-6 rounded-xl border-2 border-gray-200 dark:border-white/10 hover:border-primary/50 hover:bg-primary/5 transition text-center group">
+              <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition">
+                <svg className="w-6 h-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
               </div>
               <div><p className="text-sm font-semibold text-gray-900 dark:text-white">Criar do zero</p><p className="text-xs text-gray-500 mt-1">Monte seu fluxo personalizado</p></div>
             </button>
-            <button type="button" onClick={() => setShowTemplates(true)} className="flex flex-col items-center gap-3 p-6 rounded-xl border-2 border-gray-200 dark:border-white/10 hover:border-blue-500/50 hover:bg-blue-500/5 transition text-center group">
+            <button type="button" onClick={() => setShowTemplates(true)} className="flex flex-col items-center gap-3 p-6 rounded-xl border-2 border-gray-200 dark:border-white/10 hover:border-primary/50 hover:bg-primary/5 transition text-center group">
               <div className="w-12 h-12 rounded-xl bg-amber-500/10 flex items-center justify-center group-hover:bg-amber-500/20 transition">
                 <svg className="w-6 h-6 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
               </div>
@@ -487,7 +487,7 @@ function NewAutomationModal({ onClose, onScratch, onTemplate }: { onClose: () =>
               {TEMPLATES.map((t, i) => {
                 const trigger = TRIGGER_META[t.triggerType];
                 return (
-                  <button key={i} type="button" onClick={() => onTemplate(t)} className="flex flex-col items-start gap-2 p-4 rounded-xl border border-gray-200 dark:border-white/10 hover:border-blue-500/50 hover:bg-blue-500/5 transition text-left">
+                  <button key={i} type="button" onClick={() => onTemplate(t)} className="flex flex-col items-start gap-2 p-4 rounded-xl border border-gray-200 dark:border-white/10 hover:border-primary/50 hover:bg-primary/5 transition text-left">
                     <span className="text-2xl">{t.emoji}</span>
                     <p className="text-sm font-semibold text-gray-900 dark:text-white leading-tight">{t.name}</p>
                     <p className="text-xs text-gray-500 leading-relaxed">{t.description}</p>
@@ -686,7 +686,7 @@ function FlowEditor({ editing, template, courses, tags, onBack }: { editing: Aut
           <button type="button" onClick={() => setActive(!active)} className={`flex items-center gap-2 text-xs px-3 py-1.5 rounded-full font-medium transition ${active ? "bg-emerald-500/15 text-emerald-400" : "bg-gray-500/15 text-gray-400"}`}>
             <span className={`w-1.5 h-1.5 rounded-full ${active ? "bg-emerald-400" : "bg-gray-500"}`} />{active ? "Ativo" : "Inativo"}
           </button>
-          <button type="button" onClick={handleSave} disabled={saving} className="px-4 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium rounded-lg disabled:opacity-40 transition">{saving ? "Salvando..." : "Salvar"}</button>
+          <button type="button" onClick={handleSave} disabled={saving} className="px-4 py-1.5 bg-primary hover:bg-primary-hover text-white text-sm font-medium rounded-lg disabled:opacity-40 transition">{saving ? "Salvando..." : "Salvar"}</button>
         </div>
       </div>
 
@@ -700,12 +700,12 @@ function FlowEditor({ editing, template, courses, tags, onBack }: { editing: Aut
             </svg>
 
             <div data-node-id="start" className="absolute flex flex-col items-center gap-2" style={{ transform: `translate(${startNode.x}px, ${startNode.y}px)`, width: START_R * 2 }}>
-              <div className="w-12 h-12 rounded-full bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-600/30"><svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg></div>
+              <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center shadow-lg shadow-primary/30"><svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg></div>
               <span className="text-[10px] text-gray-500 font-medium">Início</span>
             </div>
 
-            <div data-node-id="trigger" className={`absolute cursor-move select-none rounded-xl ${editingNode === "trigger" ? "ring-2 ring-blue-500 ring-offset-2 ring-offset-[#0a0a0b]" : ""}`} style={{ transform: `translate(${triggerNode.x}px, ${triggerNode.y}px)`, width: NODE_W }} onMouseDown={(e) => handleNodeMouseDown(e, "trigger")} onClick={(e) => { e.stopPropagation(); if (!dragging.current) setEditingNode("trigger"); }}>
-              <div className="bg-[#141416] border border-[#28282e] rounded-xl overflow-hidden shadow-lg hover:border-blue-500/40 transition">
+            <div data-node-id="trigger" className={`absolute cursor-move select-none rounded-xl ${editingNode === "trigger" ? "ring-2 ring-primary ring-offset-2 ring-offset-[#0a0a0b]" : ""}`} style={{ transform: `translate(${triggerNode.x}px, ${triggerNode.y}px)`, width: NODE_W }} onMouseDown={(e) => handleNodeMouseDown(e, "trigger")} onClick={(e) => { e.stopPropagation(); if (!dragging.current) setEditingNode("trigger"); }}>
+              <div className="bg-[#141416] border border-[#28282e] rounded-xl overflow-hidden shadow-lg hover:border-primary/40 transition">
                 <div className={`px-3 py-2 flex items-center gap-2 ${triggerType === "HAS_TAG" ? "bg-purple-600/10" : "bg-blue-600/10"}`}>
                   <svg className={`w-3.5 h-3.5 ${triggerType === "HAS_TAG" ? "text-purple-400" : "text-blue-400"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d={triggerMeta?.icon || "M13 10V3L4 14h7v7l9-11h-7z"} /></svg>
                   <span className={`text-[10px] uppercase tracking-widest font-semibold ${triggerType === "HAS_TAG" ? "text-purple-400" : "text-blue-400"}`}>Quando</span>
@@ -776,7 +776,7 @@ function SidePanel({
   onClose: () => void;
 }) {
   const isTrigger = type === "trigger";
-  const selectCls = "w-full px-3 py-2.5 bg-white dark:bg-gray-900/50 border border-gray-200 dark:border-white/10 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:border-blue-500/50 transition-colors";
+  const selectCls = "w-full px-3 py-2.5 bg-white dark:bg-gray-900/50 border border-gray-200 dark:border-white/10 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:border-primary/50 transition-colors";
   const labelCls = "block text-xs font-medium text-gray-400 mb-1.5";
   const inputCls = selectCls;
   const stepCls = "text-[11px] uppercase tracking-wider font-semibold text-gray-400 mb-3";
@@ -810,8 +810,8 @@ function SidePanel({
               <div className="grid grid-cols-2 gap-2">
                 {Object.entries(TRIGGER_META).map(([key, m]) => (
                   <button key={key} type="button" onClick={() => setTriggerType(key)}
-                    className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border text-center transition-colors cursor-pointer ${triggerType === key ? "border-blue-500 bg-blue-500/5 dark:bg-blue-500/10" : "bg-white dark:bg-white/5 border-gray-200 dark:border-white/10 hover:border-blue-500/30"}`}>
-                    <svg className="w-5 h-5 text-blue-400 mx-auto mb-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d={m.icon} /></svg>
+                    className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border text-center transition-colors cursor-pointer ${triggerType === key ? "border-primary bg-primary/5 dark:bg-primary/10" : "bg-white dark:bg-white/5 border-gray-200 dark:border-white/10 hover:border-primary/30"}`}>
+                    <svg className="w-5 h-5 text-primary mx-auto mb-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d={m.icon} /></svg>
                     <span className="text-[11px] font-medium text-gray-700 dark:text-gray-300 leading-tight">{m.short}</span>
                     {m.behavioral && <span className="text-[8px] px-1.5 py-px rounded bg-amber-500/15 text-amber-500 dark:text-amber-400 font-medium">Cron</span>}
                   </button>
@@ -1069,7 +1069,7 @@ function MobileFlowEditor({
   delayValue: string; setDelayValue: (v: string) => void;
   delayUnit: string; setDelayUnit: (v: string) => void;
 }) {
-  const selectCls = "w-full px-3 py-2.5 bg-white dark:bg-gray-900/50 border border-gray-200 dark:border-white/10 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:border-blue-500/50 transition-colors";
+  const selectCls = "w-full px-3 py-2.5 bg-white dark:bg-gray-900/50 border border-gray-200 dark:border-white/10 rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:border-primary/50 transition-colors";
   const labelCls = "block text-xs font-medium text-gray-400 mb-1.5";
   const inputCls = selectCls;
 
@@ -1082,7 +1082,7 @@ function MobileFlowEditor({
         <button type="button" onClick={onBack} className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition flex items-center gap-1">
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>Voltar
         </button>
-        <button type="button" onClick={onSave} disabled={saving} className="px-4 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium rounded-lg disabled:opacity-40 transition">{saving ? "..." : "Salvar"}</button>
+        <button type="button" onClick={onSave} disabled={saving} className="px-4 py-1.5 bg-primary hover:bg-primary-hover text-white text-sm font-medium rounded-lg disabled:opacity-40 transition">{saving ? "..." : "Salvar"}</button>
       </div>
       <div className="p-4 space-y-6 pb-24">
         {error && <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm">{error}</div>}
@@ -1100,12 +1100,12 @@ function MobileFlowEditor({
 
         {/* Trigger */}
         <div className="bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl overflow-hidden">
-          <div className="px-4 py-2.5 bg-blue-600/10"><span className="text-[10px] uppercase tracking-widest font-semibold text-blue-400">Quando</span></div>
+          <div className="px-4 py-2.5 bg-primary/10"><span className="text-[10px] uppercase tracking-widest font-semibold text-primary">Quando</span></div>
           <div className="p-4 space-y-3">
             <div className="grid grid-cols-2 gap-2">
               {Object.entries(TRIGGER_META).map(([key, m]) => (
-                <button key={key} type="button" onClick={() => { setTriggerType(key); setTriggerConfig({}); }} className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border text-center transition-colors ${triggerType === key ? "border-blue-500 bg-blue-500/5 dark:bg-blue-500/10" : "bg-white dark:bg-white/5 border-gray-200 dark:border-white/10 hover:border-blue-500/30"}`}>
-                  <svg className="w-5 h-5 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d={m.icon} /></svg>
+                <button key={key} type="button" onClick={() => { setTriggerType(key); setTriggerConfig({}); }} className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border text-center transition-colors ${triggerType === key ? "border-primary bg-primary/5 dark:bg-primary/10" : "bg-white dark:bg-white/5 border-gray-200 dark:border-white/10 hover:border-primary/30"}`}>
+                  <svg className="w-5 h-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d={m.icon} /></svg>
                   <span className="text-[11px] font-medium text-gray-700 dark:text-gray-300">{m.short}</span>
                   {m.behavioral && <span className="text-[8px] px-1.5 py-px rounded bg-amber-500/15 text-amber-500 dark:text-amber-400 font-medium">Cron</span>}
                 </button>

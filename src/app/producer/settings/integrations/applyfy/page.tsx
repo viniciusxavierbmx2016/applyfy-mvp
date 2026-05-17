@@ -255,7 +255,7 @@ export default function AdminIntegrationsPage() {
               <button
                 type="button"
                 onClick={copyUrl}
-                className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg whitespace-nowrap"
+                className="px-4 py-2.5 bg-primary hover:bg-primary-hover text-white text-sm font-medium rounded-lg whitespace-nowrap"
               >
                 {copied ? "Copiado!" : "Copiar"}
               </button>
@@ -291,13 +291,13 @@ export default function AdminIntegrationsPage() {
                 data-lpignore="true"
                 data-bwignore="true"
                 data-form-type="other"
-                className="flex-1 px-4 py-2.5 bg-white dark:bg-gray-900/50 border border-gray-200 dark:border-white/10 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-blue-500/50"
+                className="flex-1 px-4 py-2.5 bg-white dark:bg-gray-900/50 border border-gray-200 dark:border-white/10 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-primary/50"
               />
               <button
                 type="button"
                 onClick={() => saveToken(tokenInput.trim())}
                 disabled={!tokenInput.trim() || savingToken}
-                className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-sm font-medium rounded-lg"
+                className="px-4 py-2.5 bg-primary hover:bg-primary-hover disabled:opacity-50 text-white text-sm font-medium rounded-lg"
               >
                 {savingToken ? "Salvando..." : "Salvar"}
               </button>
@@ -366,7 +366,7 @@ export default function AdminIntegrationsPage() {
                           }))
                         }
                         placeholder="ex: KSA912"
-                        className="flex-1 px-3 py-2 bg-white dark:bg-gray-900/50 border border-gray-200 dark:border-white/10 rounded-lg text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-blue-500/50"
+                        className="flex-1 px-3 py-2 bg-white dark:bg-gray-900/50 border border-gray-200 dark:border-white/10 rounded-lg text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-primary/50"
                       />
                       <button
                         type="button"
@@ -374,7 +374,7 @@ export default function AdminIntegrationsPage() {
                         disabled={
                           !dirty || savingCourseId === c.id
                         }
-                        className="px-3 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-medium rounded-lg whitespace-nowrap"
+                        className="px-3 py-2 bg-primary hover:bg-primary-hover disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-medium rounded-lg whitespace-nowrap"
                       >
                         {savingCourseId === c.id ? "Salvando..." : "Salvar"}
                       </button>
@@ -417,7 +417,7 @@ export default function AdminIntegrationsPage() {
                   onClick={() => setEventFilter(ev)}
                   className={`text-xs px-3 py-1.5 rounded-full border transition ${
                     eventFilter === ev
-                      ? "bg-blue-600 border-blue-500 text-white"
+                      ? "bg-primary border-primary text-white"
                       : "bg-gray-100 dark:bg-gray-900/50 border-gray-300 dark:border-white/10 text-gray-700 dark:text-gray-300 hover:border-gray-400 dark:hover:border-gray-600"
                   }`}
                 >
@@ -558,7 +558,7 @@ export default function AdminIntegrationsPage() {
       )}
 
       {toast && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-5 py-3 bg-blue-600 text-white rounded-lg shadow-xl text-sm font-medium">
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-5 py-3 bg-primary text-white rounded-lg shadow-xl text-sm font-medium">
           {toast}
         </div>
       )}

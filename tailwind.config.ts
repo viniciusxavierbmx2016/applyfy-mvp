@@ -18,6 +18,8 @@ const config: Config = {
         background: "var(--background)",
         foreground: "var(--foreground)",
         primary: {
+          DEFAULT: "var(--producer-primary, #3b82f6)",
+          hover: "var(--producer-primary-hover, #2563eb)",
           50: "#eef2ff",
           100: "#e0e7ff",
           200: "#c7d2fe",

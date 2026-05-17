@@ -45,7 +45,7 @@ const DEFAULT_LINK = "#3b82f6";
 const HEX_RE = /^#[0-9a-fA-F]{6}$/;
 
 const inputClass =
-  "w-full px-3 py-2.5 bg-white dark:bg-gray-900/50 border border-gray-200 dark:border-white/10 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-blue-500/50 transition-colors text-sm";
+  "w-full px-3 py-2.5 bg-white dark:bg-gray-900/50 border border-gray-200 dark:border-white/10 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-primary/50 transition-colors text-sm";
 
 const labelClass = "block text-xs text-gray-500 dark:text-gray-400 mb-1.5";
 
@@ -369,7 +369,7 @@ export default function EditWorkspacePage() {
         <p className="text-gray-500">Workspace não encontrado.</p>
         <Link
           href="/producer/workspaces"
-          className="inline-block mt-4 text-blue-600 dark:text-blue-400"
+          className="inline-block mt-4 text-primary"
         >
           Voltar
         </Link>
@@ -413,7 +413,7 @@ export default function EditWorkspacePage() {
               className={cn(
                 "flex items-center gap-1.5 px-4 py-2.5 text-[13px] font-medium border-b-2 transition-colors whitespace-nowrap",
                 tab === t.key
-                  ? "border-blue-500 text-blue-600 dark:text-blue-400"
+                  ? "border-primary text-primary"
                   : "border-transparent text-gray-500 hover:text-gray-900 dark:hover:text-white"
               )}
             >
@@ -593,7 +593,7 @@ export default function EditWorkspacePage() {
                     className={cn(
                       "group rounded-xl p-3 transition flex flex-col items-center gap-2",
                       loginLayout === opt.key
-                        ? "border-2 border-blue-500 bg-blue-500/5"
+                        ? "border-2 border-primary bg-primary/5"
                         : "border border-gray-200 dark:border-white/10 hover:border-gray-400 dark:hover:border-white/20"
                     )}
                   >
@@ -668,7 +668,7 @@ export default function EditWorkspacePage() {
                       step={1}
                       value={Math.round(loginBoxOpacity * 100)}
                       onChange={(e) => setLoginBoxOpacity(Number(e.target.value) / 100)}
-                      className="w-full h-1 accent-blue-600"
+                      className="w-full h-1 accent-primary"
                     />
                   </div>
                   <div
@@ -949,7 +949,7 @@ export default function EditWorkspacePage() {
             type="button"
             onClick={() => save()}
             disabled={saving || !name.trim()}
-            className="px-6 py-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white text-sm font-medium rounded-lg transition-colors"
+            className="px-6 py-2 bg-primary hover:bg-primary disabled:opacity-50 text-white text-sm font-medium rounded-lg transition-colors"
           >
             {saving ? "Salvando..." : "Salvar alterações"}
           </button>
@@ -1019,7 +1019,7 @@ export default function EditWorkspacePage() {
                   href={`/w/${ws.slug}/login`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 px-3.5 py-2 text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-lg"
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 text-sm font-medium bg-primary hover:bg-primary-hover text-white rounded-lg"
                 >
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
@@ -1147,7 +1147,7 @@ function ImageDropzone({
           type="button"
           onClick={onPick}
           disabled={uploading}
-          className="w-full h-[120px] rounded-lg border-2 border-dashed border-gray-300 dark:border-white/10 hover:border-blue-400 dark:hover:border-blue-500 hover:bg-blue-500/5 transition flex flex-col items-center justify-center gap-1.5 disabled:opacity-50"
+          className="w-full h-[120px] rounded-lg border-2 border-dashed border-gray-300 dark:border-white/10 hover:border-primary dark:hover:border-primary hover:bg-primary/5 transition flex flex-col items-center justify-center gap-1.5 disabled:opacity-50"
         >
           {initial && !imageUrl ? (
             <span className="text-2xl font-bold text-gray-400">{initial}</span>
@@ -1172,7 +1172,7 @@ function LayoutIllustration({ kind }: { kind: LoginLayout }) {
         <div className="w-10 h-12 rounded bg-white dark:bg-gray-600 border border-gray-300 dark:border-gray-500 shadow-sm flex flex-col items-center justify-center gap-0.5 p-1">
           <div className="w-full h-1 rounded bg-gray-300 dark:bg-gray-500" />
           <div className="w-full h-1 rounded bg-gray-300 dark:bg-gray-500" />
-          <div className="w-full h-1.5 rounded bg-blue-400" />
+          <div className="w-full h-1.5 rounded bg-primary" />
         </div>
       </div>
     );
@@ -1184,7 +1184,7 @@ function LayoutIllustration({ kind }: { kind: LoginLayout }) {
           <div className="w-7 h-9 rounded-sm bg-white/80 flex flex-col items-center justify-center gap-0.5 p-0.5">
             <div className="w-full h-0.5 rounded bg-gray-300" />
             <div className="w-full h-0.5 rounded bg-gray-300" />
-            <div className="w-full h-1 rounded bg-blue-400" />
+            <div className="w-full h-1 rounded bg-primary" />
           </div>
         </div>
         <div className="w-1/2 bg-gradient-to-br from-blue-400 to-purple-500" />
@@ -1198,7 +1198,7 @@ function LayoutIllustration({ kind }: { kind: LoginLayout }) {
         <div className="w-7 h-9 rounded-sm bg-white/80 flex flex-col items-center justify-center gap-0.5 p-0.5">
           <div className="w-full h-0.5 rounded bg-gray-300" />
           <div className="w-full h-0.5 rounded bg-gray-300" />
-          <div className="w-full h-1 rounded bg-blue-400" />
+          <div className="w-full h-1 rounded bg-primary" />
         </div>
       </div>
     </div>

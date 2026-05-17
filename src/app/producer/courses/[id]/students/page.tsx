@@ -242,7 +242,7 @@ export default function CourseStudentsPage(
       <div className="flex flex-wrap items-center gap-3 mb-4">
         <button
           onClick={() => setModalOpen(true)}
-          className="inline-flex items-center gap-2 px-3 py-2 bg-blue-600 hover:bg-blue-500 text-white font-medium rounded-lg text-sm transition"
+          className="inline-flex items-center gap-2 px-3 py-2 bg-primary hover:bg-primary text-white font-medium rounded-lg text-sm transition"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -279,12 +279,12 @@ export default function CourseStudentsPage(
             setQ(e.target.value);
             setPage(1);
           }}
-          className="w-full sm:max-w-sm px-3 py-2.5 bg-white dark:bg-gray-900/50 border border-gray-200 dark:border-white/10 rounded-lg text-gray-900 dark:text-white text-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-blue-500/50 transition-colors"
+          className="w-full sm:max-w-sm px-3 py-2.5 bg-white dark:bg-gray-900/50 border border-gray-200 dark:border-white/10 rounded-lg text-gray-900 dark:text-white text-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-primary/50 transition-colors"
         />
       </div>
       {loading && !data ? (
         <div className="flex items-center justify-center py-16">
-          <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+          <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
         </div>
       ) : !data || data.students.length === 0 ? (
         <div className="bg-white dark:bg-white/5 border border-gray-200 dark:border-white/5 rounded-xl p-12 text-center">
@@ -296,7 +296,7 @@ export default function CourseStudentsPage(
           {!debouncedQ && (
             <button
               onClick={() => setModalOpen(true)}
-              className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-medium rounded-lg text-sm transition"
+              className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary text-white font-medium rounded-lg text-sm transition"
             >
               Enviar primeiro acesso
             </button>
@@ -371,7 +371,7 @@ export default function CourseStudentsPage(
                         <div className="flex items-center gap-2">
                           <div className="flex-1 min-w-[80px] h-1.5 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
                             <div
-                              className="h-full bg-blue-500 rounded-full"
+                              className="h-full bg-primary rounded-full"
                               style={{ width: `${s.progress}%` }}
                             />
                           </div>
@@ -391,7 +391,7 @@ export default function CourseStudentsPage(
                           <span className={exp.color}>{exp.text}</span>
                           <button
                             onClick={() => setEditTarget(s)}
-                            className="p-1 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 rounded"
+                            className="p-1 text-gray-400 hover:text-primary dark:hover:text-primary rounded"
                             aria-label="Editar tempo de acesso"
                             title="Editar tempo de acesso"
                           >
@@ -504,7 +504,7 @@ export default function CourseStudentsPage(
                         <p className={exp.color}>{exp.text}</p>
                         <button
                           onClick={() => setEditTarget(s)}
-                          className="p-1 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 rounded"
+                          className="p-1 text-gray-400 hover:text-primary dark:hover:text-primary rounded"
                           aria-label="Editar tempo de acesso"
                         >
                           <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -517,7 +517,7 @@ export default function CourseStudentsPage(
                   <div className="flex items-center gap-2 mb-3">
                     <div className="flex-1 h-1.5 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
                       <div
-                        className="h-full bg-blue-500 rounded-full"
+                        className="h-full bg-primary rounded-full"
                         style={{ width: `${s.progress}%` }}
                       />
                     </div>
@@ -922,7 +922,7 @@ function EditAccessModal({
                   onClick={() => setDurationIdx(i)}
                   className={`px-3 py-2 rounded-lg text-xs font-medium border transition ${
                     durationIdx === i
-                      ? "bg-blue-600 text-white border-blue-600"
+                      ? "bg-primary text-white border-primary"
                       : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
                   }`}
                 >
@@ -940,7 +940,7 @@ function EditAccessModal({
                   onChange={(e) =>
                     setCustomDays(Math.max(1, Number(e.target.value) || 1))
                   }
-                  className="w-28 px-3 py-2 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-28 px-3 py-2 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                 />
                 <span className="text-sm text-gray-600 dark:text-gray-400">
                   dias
@@ -970,7 +970,7 @@ function EditAccessModal({
             <button
               type="submit"
               disabled={saving}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-sm font-medium rounded-lg"
+              className="px-4 py-2 bg-primary hover:bg-primary-hover disabled:opacity-50 text-white text-sm font-medium rounded-lg"
             >
               {saving ? "Salvando..." : "Salvar"}
             </button>
@@ -985,7 +985,7 @@ function EditAccessModal({
                 type="button"
                 onClick={handleReleaseAll}
                 disabled={releaseBusy}
-                className="flex-1 px-3 py-2 text-xs font-medium bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-lg"
+                className="flex-1 px-3 py-2 text-xs font-medium bg-primary hover:bg-primary-hover disabled:opacity-50 text-white rounded-lg"
               >
                 Liberar tudo
               </button>
@@ -1029,7 +1029,7 @@ function EditAccessModal({
                           <span
                             className={`text-xs ${
                               modOn
-                                ? "text-blue-600 dark:text-blue-400 font-medium"
+                                ? "text-primary font-medium"
                                 : "text-gray-500"
                             }`}
                           >
@@ -1047,7 +1047,7 @@ function EditAccessModal({
                               )
                             }
                           />
-                          <span className="relative inline-block w-9 h-5 bg-gray-300 dark:bg-gray-700 rounded-full peer-checked:bg-blue-600 transition">
+                          <span className="relative inline-block w-9 h-5 bg-gray-300 dark:bg-gray-700 rounded-full peer-checked:bg-primary transition">
                             <span className="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition peer-checked:translate-x-4" />
                           </span>
                         </label>
@@ -1080,7 +1080,7 @@ function EditAccessModal({
                                   <span
                                     className={`text-xs ${
                                       lOn
-                                        ? "text-blue-600 dark:text-blue-400"
+                                        ? "text-primary"
                                         : "text-gray-500"
                                     }`}
                                   >
@@ -1098,7 +1098,7 @@ function EditAccessModal({
                                       )
                                     }
                                   />
-                                  <span className="relative inline-block w-9 h-5 bg-gray-300 dark:bg-gray-700 rounded-full peer-checked:bg-blue-600 transition">
+                                  <span className="relative inline-block w-9 h-5 bg-gray-300 dark:bg-gray-700 rounded-full peer-checked:bg-primary transition">
                                     <span className="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition peer-checked:translate-x-4" />
                                   </span>
                                 </label>
@@ -1227,7 +1227,7 @@ function AccessSuccessModal({
           <button
             type="button"
             onClick={() => copy(fullText, "all")}
-            className="flex-1 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg"
+            className="flex-1 px-4 py-2.5 bg-primary hover:bg-primary-hover text-white text-sm font-medium rounded-lg"
           >
             {copied === "all" ? "Copiado!" : "Copiar tudo"}
           </button>
@@ -1268,7 +1268,7 @@ function CredentialRow({
           readOnly
           value={value}
           onFocus={(e) => e.currentTarget.select()}
-          className={`flex-1 min-w-0 px-3 py-2 text-xs ${mono ? "font-mono" : ""} bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500`}
+          className={`flex-1 min-w-0 px-3 py-2 text-xs ${mono ? "font-mono" : ""} bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-primary`}
         />
         <button
           type="button"
@@ -1359,7 +1359,7 @@ function SendAccessModal({
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full px-4 py-2.5 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2.5 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary"
               placeholder="aluno@email.com"
             />
           </div>
@@ -1371,7 +1371,7 @@ function SendAccessModal({
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full px-4 py-2.5 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2.5 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary"
               placeholder="Nome do aluno"
             />
           </div>
@@ -1383,7 +1383,7 @@ function SendAccessModal({
               type="tel"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              className="w-full px-4 py-2.5 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2.5 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary"
               placeholder="(31) 98426-6117"
             />
             <p className="text-[10px] text-gray-500 mt-1">Número com DDD para contato via WhatsApp</p>
@@ -1400,7 +1400,7 @@ function SendAccessModal({
                   onClick={() => setDurationIdx(i)}
                   className={`px-3 py-2 rounded-lg text-xs font-medium border transition ${
                     durationIdx === i
-                      ? "bg-blue-600 text-white border-blue-600"
+                      ? "bg-primary text-white border-primary"
                       : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
                   }`}
                 >
@@ -1418,7 +1418,7 @@ function SendAccessModal({
                   onChange={(e) =>
                     setCustomDays(Math.max(1, Number(e.target.value) || 1))
                   }
-                  className="w-28 px-3 py-2 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-28 px-3 py-2 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                 />
                 <span className="text-sm text-gray-600 dark:text-gray-400">
                   dias
@@ -1438,7 +1438,7 @@ function SendAccessModal({
             <button
               type="submit"
               disabled={loading}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-sm font-medium rounded-lg"
+              className="px-4 py-2 bg-primary hover:bg-primary-hover disabled:opacity-50 text-white text-sm font-medium rounded-lg"
             >
               {loading ? "Enviando..." : "Enviar acesso"}
             </button>

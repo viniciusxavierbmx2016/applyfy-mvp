@@ -395,7 +395,7 @@ export default function ProducerLivesPage() {
   const scheduledCount = lives.filter((l) => l.status === "SCHEDULED").length;
 
   const inputCls =
-    "w-full bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-lg px-3 py-2.5 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-blue-500/50 transition-colors text-sm";
+    "w-full bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-lg px-3 py-2.5 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-primary/50 transition-colors text-sm";
   const labelCls = "block text-xs text-gray-400 mb-1.5";
 
   return (
@@ -429,7 +429,7 @@ export default function ProducerLivesPage() {
         <div className="flex items-center gap-0">
           <button
             onClick={openCreate}
-            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg transition text-sm font-medium"
+            className="flex items-center gap-2 bg-primary hover:bg-primary text-white px-4 py-2 rounded-lg transition text-sm font-medium"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -448,7 +448,7 @@ export default function ProducerLivesPage() {
             onClick={() => setFilter(s)}
             className={`px-3 py-1.5 rounded-lg text-sm font-medium transition ${
               filter === s
-                ? "bg-blue-600 text-white"
+                ? "bg-primary text-white"
                 : "bg-gray-100 dark:bg-white/5 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-white/10"
             }`}
           >
@@ -467,8 +467,8 @@ export default function ProducerLivesPage() {
         </div>
       ) : filtered.length === 0 ? (
         <div className="bg-white dark:bg-white/5 border border-gray-200 dark:border-white/5 rounded-xl p-10 text-center">
-          <div className="w-14 h-14 mx-auto rounded-full bg-blue-500/10 flex items-center justify-center mb-4">
-            <svg className="w-7 h-7 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className="w-14 h-14 mx-auto rounded-full bg-primary/10 flex items-center justify-center mb-4">
+            <svg className="w-7 h-7 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
             </svg>
           </div>
@@ -481,7 +481,7 @@ export default function ProducerLivesPage() {
           {filter === "ALL" && (
             <button
               onClick={openCreate}
-              className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg transition text-sm mt-4"
+              className="bg-primary hover:bg-primary text-white px-4 py-2 rounded-lg transition text-sm mt-4"
             >
               Criar Live
             </button>
@@ -538,7 +538,7 @@ export default function ProducerLivesPage() {
                           : `Agendada para ${formatDate(live.scheduledAt)}`}
                     </span>
                     {live.course && (
-                      <span className="text-blue-400">{live.course.title}</span>
+                      <span className="text-primary">{live.course.title}</span>
                     )}
                     {live._count.messages > 0 && (
                       <span>{live._count.messages} mensagens</span>
@@ -563,7 +563,7 @@ export default function ProducerLivesPage() {
                     <>
                       <button
                         onClick={() => router.push(`/producer/lives/${live.id}`)}
-                        className="flex items-center gap-1 bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition"
+                        className="flex items-center gap-1 bg-primary hover:bg-primary text-white px-3 py-1.5 rounded-lg text-xs font-medium transition"
                       >
                         <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
@@ -724,7 +724,7 @@ export default function ProducerLivesPage() {
                       value="PUBLIC"
                       checked={form.visibility === "PUBLIC"}
                       onChange={() => setForm((f) => ({ ...f, visibility: "PUBLIC" }))}
-                      className="mt-0.5 accent-blue-500"
+                      className="mt-0.5 accent-primary"
                     />
                     <div>
                       <span className="text-sm text-white">Pública</span>
@@ -738,7 +738,7 @@ export default function ProducerLivesPage() {
                       value="COURSE_ONLY"
                       checked={form.visibility === "COURSE_ONLY"}
                       onChange={() => setForm((f) => ({ ...f, visibility: "COURSE_ONLY" }))}
-                      className="mt-0.5 accent-blue-500"
+                      className="mt-0.5 accent-primary"
                     />
                     <div>
                       <span className="text-sm text-white">Restrita ao curso</span>
@@ -776,7 +776,7 @@ export default function ProducerLivesPage() {
                     >
                       Remover
                     </button>
-                    <label className="text-xs text-blue-400 hover:text-blue-300 transition cursor-pointer">
+                    <label className="text-xs text-primary hover:text-primary transition cursor-pointer">
                       Trocar
                       <input
                         type="file"
@@ -839,7 +839,7 @@ export default function ProducerLivesPage() {
                 <button
                   onClick={handleSave}
                   disabled={saving || !form.title.trim() || !form.externalUrl.trim() || !form.scheduledAt || (form.visibility === "COURSE_ONLY" && !form.courseId)}
-                  className="bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white px-4 py-2 rounded-lg text-sm font-medium transition"
+                  className="bg-primary hover:bg-primary disabled:opacity-50 text-white px-4 py-2 rounded-lg text-sm font-medium transition"
                 >
                   {saving ? "Salvando..." : editingLive ? "Salvar" : "Criar Live"}
                 </button>

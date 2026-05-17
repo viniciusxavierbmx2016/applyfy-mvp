@@ -61,7 +61,7 @@ const typeLabels: Record<AdminPost["type"], { label: string; color: string }> =
     QUESTION: { label: "Dúvida", color: "bg-yellow-500/20 text-yellow-400" },
     RESULT: { label: "Resultado", color: "bg-green-500/20 text-green-400" },
     FEEDBACK: { label: "Feedback", color: "bg-purple-500/20 text-purple-400" },
-    FREE: { label: "Livre", color: "bg-blue-500/20 text-blue-400" },
+    FREE: { label: "Livre", color: "bg-primary/20 text-primary" },
   };
 
 export default function AdminCommunityPage() {
@@ -320,7 +320,7 @@ export default function AdminCommunityPage() {
         <button
           className={`px-4 py-2 text-sm border-b-2 transition ${
             subTab === "posts"
-              ? "border-blue-500 text-blue-500"
+              ? "border-primary text-primary"
               : "border-transparent text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
           }`}
           onClick={() => setSubTab("posts")}
@@ -331,7 +331,7 @@ export default function AdminCommunityPage() {
         <button
           className={`px-4 py-2 text-sm border-b-2 transition ${
             subTab === "groups"
-              ? "border-blue-500 text-blue-500"
+              ? "border-primary text-primary"
               : "border-transparent text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
           }`}
           onClick={() => setSubTab("groups")}
@@ -342,7 +342,7 @@ export default function AdminCommunityPage() {
         <button
           className={`px-4 py-2 text-sm border-b-2 transition flex items-center gap-1.5 ${
             subTab === "pending"
-              ? "border-blue-500 text-blue-500"
+              ? "border-primary text-primary"
               : "border-transparent text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
           }`}
           onClick={() => setSubTab("pending")}
@@ -400,9 +400,9 @@ export default function AdminCommunityPage() {
             </div>
           ) : posts.length === 0 ? (
             <div className="bg-white dark:bg-white/5 border border-gray-200 dark:border-white/5 rounded-xl p-10 text-center">
-              <div className="w-14 h-14 mx-auto rounded-full bg-blue-500/10 flex items-center justify-center mb-4">
+              <div className="w-14 h-14 mx-auto rounded-full bg-primary/10 flex items-center justify-center mb-4">
                 <svg
-                  className="w-7 h-7 text-blue-500"
+                  className="w-7 h-7 text-primary"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -446,7 +446,7 @@ export default function AdminCommunityPage() {
                             {post.user.name}
                           </span>
                           {post.user.role === "ADMIN" && (
-                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-600/30 text-blue-300">
+                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-primary/30 text-primary">
                               ADMIN
                             </span>
                           )}
@@ -542,7 +542,7 @@ export default function AdminCommunityPage() {
                       </span>
                       <Link
                         href={`/course/${post.course.slug}/community`}
-                        className="text-blue-400 hover:text-blue-300 ml-auto"
+                        className="text-primary hover:text-primary ml-auto"
                       >
                         Responder
                       </Link>
@@ -623,7 +623,7 @@ export default function AdminCommunityPage() {
                     type="checkbox"
                     checked={selected.size === pendingItems.length}
                     onChange={toggleSelectAll}
-                    className="accent-blue-500 rounded"
+                    className="accent-primary rounded"
                   />
                   Selecionar todos
                 </label>
@@ -638,7 +638,7 @@ export default function AdminCommunityPage() {
                     type="checkbox"
                     checked={selected.has(item.id)}
                     onChange={() => toggleSelected(item.id)}
-                    className="mt-1 accent-blue-500 rounded"
+                    className="mt-1 accent-primary rounded"
                   />
                   <Avatar
                     src={item.user.avatarUrl}
@@ -652,7 +652,7 @@ export default function AdminCommunityPage() {
                       </span>
                       <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
                         item.type === "community_post"
-                          ? "bg-blue-500/20 text-blue-400"
+                          ? "bg-primary/20 text-primary"
                           : "bg-purple-500/20 text-purple-400"
                       }`}>
                         {item.type === "community_post" ? "Post" : "Comentário"}
@@ -815,7 +815,7 @@ function GroupsTab({
       <div className="flex justify-end">
         <button
           onClick={onCreate}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-xl transition"
+          className="inline-flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary-hover text-white text-sm font-medium rounded-xl transition"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -853,7 +853,7 @@ function GroupsTab({
                     {g.name}
                   </h3>
                   {g.isDefault && (
-                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-500/15 text-blue-500 font-medium">
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-primary/15 text-primary font-medium">
                       Padrão
                     </span>
                   )}
@@ -881,7 +881,7 @@ function GroupsTab({
                 <button
                   onClick={() => onEdit(g)}
                   title="Editar"
-                  className="p-1.5 text-gray-500 hover:text-blue-500 hover:bg-gray-100 dark:hover:bg-white/5 rounded transition"
+                  className="p-1.5 text-gray-500 hover:text-primary hover:bg-gray-100 dark:hover:bg-white/5 rounded transition"
                 >
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -990,7 +990,7 @@ function GroupModal({
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 maxLength={60}
-                className="w-full px-3 py-2 bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 rounded-xl text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                className="w-full px-3 py-2 bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 rounded-xl text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
                 placeholder="Ex: Networking"
                 autoFocus
               />
@@ -1005,7 +1005,7 @@ function GroupModal({
                 onChange={(e) => setDescription(e.target.value)}
                 maxLength={200}
                 rows={2}
-                className="w-full px-3 py-2 bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 rounded-xl text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none"
+                className="w-full px-3 py-2 bg-white dark:bg-white/5 border border-gray-300 dark:border-white/10 rounded-xl text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none resize-none"
                 placeholder="Breve descrição do grupo"
               />
             </div>
@@ -1022,7 +1022,7 @@ function GroupModal({
                     value="READ_WRITE"
                     checked={permission === "READ_WRITE"}
                     onChange={() => setPermission("READ_WRITE")}
-                    className="mt-0.5 accent-blue-500"
+                    className="mt-0.5 accent-primary"
                   />
                   <div>
                     <span className="text-sm font-medium text-gray-900 dark:text-white">
@@ -1040,7 +1040,7 @@ function GroupModal({
                     value="READ_ONLY"
                     checked={permission === "READ_ONLY"}
                     onChange={() => setPermission("READ_ONLY")}
-                    className="mt-0.5 accent-blue-500"
+                    className="mt-0.5 accent-primary"
                   />
                   <div>
                     <span className="text-sm font-medium text-gray-900 dark:text-white">
@@ -1067,7 +1067,7 @@ function GroupModal({
             <button
               type="submit"
               disabled={saving}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-xl transition disabled:opacity-60"
+              className="px-4 py-2 bg-primary hover:bg-primary-hover text-white text-sm font-medium rounded-xl transition disabled:opacity-60"
             >
               {saving ? "Salvando..." : "Salvar"}
             </button>

@@ -270,12 +270,12 @@ export default function CourseCustomizePage() {
                     onClick={() => updateField("memberLayoutStyle", layout.value)}
                     className={`relative flex-1 text-left p-4 rounded-xl transition-colors ${
                       selected
-                        ? "border-2 border-blue-500 bg-blue-500/5"
+                        ? "border-2 border-primary bg-primary/5"
                         : "border border-gray-200 dark:border-white/10 hover:border-gray-400 dark:hover:border-white/20"
                     }`}
                   >
                     {isSaved && (
-                      <span className="absolute top-2 right-2 px-1.5 py-0.5 text-[10px] font-semibold bg-blue-600 text-white rounded">
+                      <span className="absolute top-2 right-2 px-1.5 py-0.5 text-[10px] font-semibold bg-primary text-white rounded">
                         Atual
                       </span>
                     )}
@@ -366,7 +366,7 @@ export default function CourseCustomizePage() {
               placeholder="Bem-vindo à nossa comunidade!"
               rows={3}
               maxLength={500}
-              className="w-full px-3 py-2.5 bg-white dark:bg-gray-900/50 border border-gray-200 dark:border-white/10 rounded-lg text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-blue-500/50 transition-colors resize-y min-h-[80px]"
+              className="w-full px-3 py-2.5 bg-white dark:bg-gray-900/50 border border-gray-200 dark:border-white/10 rounded-lg text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-primary/50 transition-colors resize-y min-h-[80px]"
             />
             <p className="text-xs text-gray-400 mt-1 text-right">
               {(custom.memberWelcomeText || "").length}/500
@@ -405,7 +405,7 @@ export default function CourseCustomizePage() {
                         disabled={isSaving}
                         onClick={() => toggleFlag(item.key)}
                         className={`relative shrink-0 inline-flex h-5 w-9 items-center rounded-full transition-colors ${
-                          enabled ? "bg-blue-600" : "bg-gray-300 dark:bg-gray-700"
+                          enabled ? "bg-primary" : "bg-gray-300 dark:bg-gray-700"
                         } ${isSaving ? "opacity-60 cursor-not-allowed" : "cursor-pointer"}`}
                       >
                         <span
@@ -452,7 +452,7 @@ export default function CourseCustomizePage() {
                 type="button"
                 onClick={handleSave}
                 disabled={saving}
-                className="px-6 py-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white text-sm font-medium rounded-lg transition-colors"
+                className="px-6 py-2 bg-primary hover:bg-primary disabled:opacity-50 text-white text-sm font-medium rounded-lg transition-colors"
               >
                 {saving ? "Salvando..." : "Salvar personalização"}
               </button>
