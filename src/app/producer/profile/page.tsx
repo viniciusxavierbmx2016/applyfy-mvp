@@ -21,7 +21,7 @@ export default function ProducerProfilePage() {
         Meu Perfil
       </h1>
 
-      <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-6 mb-6 space-y-5">
+      <div className="bg-white dark:bg-card border border-gray-200 dark:border-gray-800 rounded-xl p-6 mb-6 space-y-5">
         <div>
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
             {user.name}

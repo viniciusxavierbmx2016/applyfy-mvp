@@ -5,7 +5,7 @@ import type { ReactNode } from "react";
 /* ─────────────────────────────────────────────────────────────
    Shared visual primitives for the analytics redesign.
    Light/dark switchable to match the rest of the producer
-   dashboard (bg-white dark:bg-gray-900 etc.). Icons are passed
+   dashboard (bg-white dark:bg-card etc.). Icons are passed
    as ReactNode — codebase convention is inline SVGs.
 ───────────────────────────────────────────────────────────── */
 
@@ -114,7 +114,7 @@ export function Section({
   exportLabel = "Exportar CSV",
 }: SectionProps) {
   return (
-    <section className="rounded-2xl border bg-white dark:bg-gray-900 border-gray-200 dark:border-white/[0.06] p-6 sm:p-7">
+    <section className="rounded-2xl border bg-white dark:bg-card border-gray-200 dark:border-white/[0.06] p-6 sm:p-7">
       <header className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-6">
         <div className="flex items-start gap-3 min-w-0">
           {icon ? (
@@ -173,7 +173,7 @@ export function KpiCard({
   valueColor,
 }: KpiCardProps) {
   return (
-    <div className="rounded-xl border bg-white dark:bg-gray-900 border-gray-200 dark:border-white/[0.06] p-5">
+    <div className="rounded-xl border bg-white dark:bg-card border-gray-200 dark:border-white/[0.06] p-5">
       <div className="flex items-center gap-2 mb-3">
         {icon ? (
           <span className="w-5 h-5 inline-flex items-center justify-center text-gray-600 dark:text-gray-400">

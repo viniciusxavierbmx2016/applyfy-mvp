@@ -279,7 +279,7 @@ export default function CourseStudentsPage(
             setQ(e.target.value);
             setPage(1);
           }}
-          className="w-full sm:max-w-sm px-3 py-2.5 bg-white dark:bg-gray-900/50 border border-gray-200 dark:border-white/10 rounded-lg text-gray-900 dark:text-white text-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-primary/50 transition-colors"
+          className="w-full sm:max-w-sm px-3 py-2.5 bg-white dark:bg-card/50 border border-gray-200 dark:border-white/10 rounded-lg text-gray-900 dark:text-white text-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-primary/50 transition-colors"
         />
       </div>
       {loading && !data ? (
@@ -840,7 +840,7 @@ function EditAccessModal({
   return (
     <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
       <div
-        className={`bg-white dark:bg-gray-900 rounded-2xl w-full ${
+        className={`bg-white dark:bg-card rounded-2xl w-full ${
           tab === "release" ? "max-w-2xl" : "max-w-md"
         } p-6 border border-gray-200 dark:border-gray-800 max-h-[90vh] overflow-y-auto`}
       >
@@ -883,7 +883,7 @@ function EditAccessModal({
             onClick={() => setTab("access")}
             className={`flex-1 px-3 py-2 text-xs font-medium rounded-md transition ${
               tab === "access"
-                ? "bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-sm"
+                ? "bg-white dark:bg-card text-gray-900 dark:text-white shadow-sm"
                 : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
             }`}
           >
@@ -894,7 +894,7 @@ function EditAccessModal({
             onClick={() => setTab("release")}
             className={`flex-1 px-3 py-2 text-xs font-medium rounded-md transition ${
               tab === "release"
-                ? "bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-sm"
+                ? "bg-white dark:bg-card text-gray-900 dark:text-white shadow-sm"
                 : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
             }`}
           >
@@ -1154,7 +1154,7 @@ function AccessSuccessModal({
 
   return (
     <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-gray-900 rounded-2xl w-full max-w-md p-6 border border-gray-200 dark:border-gray-800">
+      <div className="bg-white dark:bg-card rounded-2xl w-full max-w-md p-6 border border-gray-200 dark:border-gray-800">
         <div className="flex items-start gap-3 mb-4">
           <div className="w-10 h-10 rounded-full bg-green-500/15 flex items-center justify-center flex-shrink-0">
             <svg
@@ -1328,7 +1328,7 @@ function SendAccessModal({
 
   return (
     <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-gray-900 rounded-2xl w-full max-w-md p-6 border border-gray-200 dark:border-gray-800">
+      <div className="bg-white dark:bg-card rounded-2xl w-full max-w-md p-6 border border-gray-200 dark:border-gray-800">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
             Enviar acesso

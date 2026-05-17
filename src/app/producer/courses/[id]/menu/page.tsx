@@ -262,7 +262,7 @@ function IconSelect({
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="pl-10 pr-8 py-2 bg-white dark:bg-gray-900/50 border border-gray-200 dark:border-white/10 rounded-lg text-sm text-gray-900 dark:text-white appearance-none focus:outline-none focus:border-primary/50 transition-colors"
+        className="pl-10 pr-8 py-2 bg-white dark:bg-card/50 border border-gray-200 dark:border-white/10 rounded-lg text-sm text-gray-900 dark:text-white appearance-none focus:outline-none focus:border-primary/50 transition-colors"
       >
         {MENU_ICON_KEYS.map((k) => (
           <option key={k} value={k}>

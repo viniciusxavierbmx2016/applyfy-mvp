@@ -17,6 +17,9 @@ const config: Config = {
       colors: {
         background: "var(--background)",
         foreground: "var(--foreground)",
+        card: {
+          DEFAULT: "var(--producer-card, rgb(17 24 39))",
+        },
         primary: {
           DEFAULT: "var(--producer-primary, #3b82f6)",
           hover: "var(--producer-primary-hover, #2563eb)",

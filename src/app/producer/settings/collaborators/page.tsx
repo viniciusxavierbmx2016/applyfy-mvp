@@ -256,7 +256,7 @@ export default function AdminCollaboratorsPage() {
       )}
 
       {inviteLink && (
-        <div className="fixed bottom-6 right-6 z-50 max-w-md bg-white dark:bg-gray-900 border border-gray-200 dark:border-white/10 rounded-xl shadow-2xl p-4">
+        <div className="fixed bottom-6 right-6 z-50 max-w-md bg-white dark:bg-card border border-gray-200 dark:border-white/10 rounded-xl shadow-2xl p-4">
           <div className="flex items-start justify-between gap-3 mb-2">
             <p className="text-sm font-semibold text-gray-900 dark:text-white">
               Link do convite
