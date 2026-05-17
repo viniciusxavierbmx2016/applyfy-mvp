@@ -245,11 +245,20 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
     }
 
     const baseUrl = new URL(request.url).origin;
-    const accessLink = await sendWorkspaceAccessEmail(
-      user.email,
-      course.workspace.slug,
-      baseUrl
-    );
+    // Only generate a Supabase recovery link (which auto-emails "Reset
+    // password") for genuinely new STUDENT enrollments. Skipping it for
+    // staff avoids the confusing reset-password email landing in their
+    // inbox alongside the Brevo staffAccessGranted template, and skipping
+    // it for re-enrollments of ACTIVE students avoids surprising the
+    // student with an unsolicited password-reset request.
+    let accessLink: string | null = null;
+    if (!wasActive && !isStaff) {
+      accessLink = await sendWorkspaceAccessEmail(
+        user.email,
+        course.workspace.slug,
+        baseUrl
+      ).catch(() => null);
+    }
 
     // Build a shareable credential block for the producer to hand to the
     // student. Rules:
