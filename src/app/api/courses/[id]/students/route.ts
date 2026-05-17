@@ -5,26 +5,17 @@ import {
   ensureUserByEmail,
   sendWorkspaceAccessEmail,
 } from "@/lib/webhook-helpers";
-import { createAdminClient } from "@/lib/supabase-admin";
 import { createNotification } from "@/lib/notifications";
 import { processAutomations } from "@/lib/automation-engine";
 import { sendEmail } from "@/lib/email";
-import { studentAccessGranted } from "@/lib/email-templates";
+import { staffAccessGranted, studentAccessGranted } from "@/lib/email-templates";
+import { logger } from "@/lib/logger";
 import { enrollCourseStudentSchema, validateBody } from "@/lib/validations";
 import {
   generateSalt,
   generateTempPassword,
   hashPassword,
 } from "@/lib/workspace-auth";
-
-function randomTempPassword(len = 8) {
-  const alphabet = "abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-  let out = "";
-  for (let i = 0; i < len; i++) {
-    out += alphabet[Math.floor(Math.random() * alphabet.length)];
-  }
-  return out;
-}
 
 const PAGE_SIZE = 20;
 
@@ -260,55 +251,53 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
       baseUrl
     );
 
-    // Build a shareable credential block so the producer can hand the access
-    // directly to the student. ALWAYS generate a unique password per student
-    // — never email the workspace's master password (security: a leaked email
-    // would expose the credential shared by every other student).
-    //
-    // For pure STUDENTs: reuse the mc-XXXXXX that ensureUserByEmail just
-    // generated when this is a fresh credential, otherwise rotate the
-    // existing one. Master password (if set) is preserved on the workspace
-    // for the producer's own use (magic-link entry as student) but never
-    // leaves the server.
-    //
-    // For staff (PRODUCER/ADMIN/COLLAB): rotate the global Supabase Auth
-    // password since staff authenticates platform-wide, not per-workspace.
+    // Build a shareable credential block for the producer to hand to the
+    // student. Rules:
+    //  - Staff buyers (PRODUCER/ADMIN/COLLAB) keep their existing global
+    //    Members Club password — we NEVER rotate it (would lock them out
+    //    of their own account). Email uses the staff template that points
+    //    them at their existing credential.
+    //  - Pure STUDENTs only get a fresh password on a new/reactivated
+    //    enrollment. On a re-enrollment of an already-ACTIVE student we
+    //    leave the WorkspaceCredential intact (rotating it without sending
+    //    a new email would silently lock them out).
+    //  - Master password (if configured) is preserved on the workspace for
+    //    the producer's own use but never leaves the server.
     let sharedPassword: string | null = null;
-    try {
-      if (isStaff) {
-        sharedPassword = randomTempPassword(8);
-        const admin = createAdminClient();
-        await admin.auth.admin.updateUserById(user.id, {
-          password: sharedPassword,
-        });
-      } else if (tempPassword) {
-        // ensureUserByEmail already created the WorkspaceCredential with
-        // this mc-XXXXXX — reuse it instead of rotating again.
-        sharedPassword = tempPassword;
-      } else {
-        // Existing credential — rotate it with a fresh mc-XXXXXX.
-        sharedPassword = generateTempPassword();
-        const salt = generateSalt();
-        const passwordHash = hashPassword(sharedPassword, salt);
-        await prisma.workspaceCredential.upsert({
-          where: {
-            userId_workspaceId: {
+    if (!wasActive && !isStaff) {
+      try {
+        if (tempPassword) {
+          // ensureUserByEmail just created the WorkspaceCredential with
+          // this mc-XXXXXX — reuse it instead of rotating again.
+          sharedPassword = tempPassword;
+        } else {
+          // Existing credential — rotate it with a fresh mc-XXXXXX.
+          sharedPassword = generateTempPassword();
+          const salt = generateSalt();
+          const passwordHash = hashPassword(sharedPassword, salt);
+          await prisma.workspaceCredential.upsert({
+            where: {
+              userId_workspaceId: {
+                userId: user.id,
+                workspaceId: course.workspace.id,
+              },
+            },
+            create: {
               userId: user.id,
               workspaceId: course.workspace.id,
+              passwordHash,
+              salt,
             },
-          },
-          create: {
-            userId: user.id,
-            workspaceId: course.workspace.id,
-            passwordHash,
-            salt,
-          },
-          update: { passwordHash, salt },
+            update: { passwordHash, salt },
+          });
+        }
+      } catch (e) {
+        logger.error("ENROLL", "rotate temp password failed", {
+          email,
+          error: e instanceof Error ? e.message : String(e),
         });
+        sharedPassword = null;
       }
-    } catch (e) {
-      console.error("rotate temp password error:", e);
-      sharedPassword = null;
     }
 
     const workspaceUrl = `${baseUrl}/w/${course.workspace.slug}`;
@@ -316,14 +305,30 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
     if (!wasActive) {
       const appUrl = process.env.NEXT_PUBLIC_APP_URL || baseUrl;
       const loginUrl = `${appUrl}/w/${course.workspace.slug}/login`;
-      const template = studentAccessGranted(
-        name || email,
-        course.title,
-        course.workspace.name,
-        loginUrl,
-        sharedPassword || undefined
+      const template = isStaff
+        ? staffAccessGranted(
+            user.name || email,
+            course.title,
+            course.workspace.name,
+            loginUrl
+          )
+        : studentAccessGranted(
+            user.name || email,
+            course.title,
+            course.workspace.name,
+            loginUrl,
+            sharedPassword || undefined
+          );
+      sendEmail({
+        to: { email, name: user.name || undefined },
+        ...template,
+        senderName: course.workspace.name,
+      }).catch((err) =>
+        logger.error("ENROLL", "email failed", {
+          email,
+          error: err instanceof Error ? err.message : String(err),
+        })
       );
-      sendEmail({ to: { email: user.email, name: name || undefined }, ...template, senderName: course.workspace.name }).catch((err) => console.error("[EMAIL_ERROR] studentAccessGranted to:", user.email, err?.message || err));
     }
 
     return NextResponse.json({
