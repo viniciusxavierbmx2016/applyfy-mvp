@@ -18,7 +18,7 @@ const config: Config = {
         background: "var(--background)",
         foreground: "var(--foreground)",
         card: {
-          DEFAULT: "var(--producer-card, rgb(17 24 39))",
+          DEFAULT: "var(--producer-card, #0a0e19)",
         },
         primary: {
           DEFAULT: "var(--producer-primary, #3b82f6)",
