@@ -8,6 +8,7 @@ import { sanitizeHtml } from "@/lib/sanitize-html";
 import { useConfirm } from "@/hooks/use-confirm";
 import { CustomSelect } from "@/components/custom-select";
 import { HelpTooltip } from "@/components/help-tooltip";
+import { ImageLightbox } from "@/components/image-lightbox";
 
 interface AdminPost {
   id: string;
@@ -70,6 +71,7 @@ export default function AdminCommunityPage() {
   const [groupFilter, setGroupFilter] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [subTab, setSubTab] = useState<"posts" | "groups" | "pending">("posts");
+  const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
   const { confirm, ConfirmDialog } = useConfirm();
 
   // Pending moderation state
@@ -521,6 +523,13 @@ export default function AdminCommunityPage() {
                       dangerouslySetInnerHTML={{
                         __html: sanitizeHtml(post.content),
                       }}
+                      onClick={(e) => {
+                        const target = e.target as HTMLElement;
+                        if (target.tagName === "IMG") {
+                          e.preventDefault();
+                          setLightboxSrc((target as HTMLImageElement).src);
+                        }
+                      }}
                     />
                     <div className="flex items-center gap-4 mt-3 text-xs text-gray-500">
                       <span>
@@ -717,6 +726,9 @@ export default function AdminCommunityPage() {
         </div>
       )}
       <ConfirmDialog />
+      {lightboxSrc && (
+        <ImageLightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />
+      )}
     </div>
   );
 }

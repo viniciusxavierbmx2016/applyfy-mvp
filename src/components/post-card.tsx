@@ -6,6 +6,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { formatRelativeTime } from "@/lib/utils";
 import { sanitizeHtml } from "@/lib/sanitize-html";
 import { useConfirm } from "@/hooks/use-confirm";
+import { ImageLightbox } from "@/components/image-lightbox";
 
 const RichTextEditor = dynamic(
   () => import("@/components/rich-text-editor"),
@@ -98,6 +99,7 @@ export function PostCard({
   const [editing, setEditing] = useState(false);
   const [editContent, setEditContent] = useState(post.content);
   const [savingEdit, setSavingEdit] = useState(false);
+  const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
 
   async function toggleComments() {
     const next = !showComments;
@@ -373,6 +375,13 @@ export function PostCard({
         <div
           className="post-content text-gray-800 dark:text-gray-200 text-sm break-words mb-3"
           dangerouslySetInnerHTML={{ __html: sanitizeHtml(post.content) }}
+          onClick={(e) => {
+            const target = e.target as HTMLElement;
+            if (target.tagName === "IMG") {
+              e.preventDefault();
+              setLightboxSrc((target as HTMLImageElement).src);
+            }
+          }}
         />
       )}
 
@@ -516,6 +525,9 @@ export function PostCard({
         </div>
       )}
       <ConfirmDialog />
+      {lightboxSrc && (
+        <ImageLightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />
+      )}
     </div>
   );
 }
