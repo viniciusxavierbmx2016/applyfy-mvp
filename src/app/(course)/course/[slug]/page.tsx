@@ -588,7 +588,7 @@ export default function CourseHomePage() {
           groups={groups.map((group) => ({
             title:
               group.section?.title ??
-              (groups.length > 1 ? "Módulos" : undefined),
+              undefined,
             modules: group.modules.map((m) =>
               toListModule(
                 m,
@@ -608,7 +608,7 @@ export default function CourseHomePage() {
             key={group.section?.id || `group-${idx}`}
             title={
               group.section?.title ??
-              (groups.length > 1 ? "Módulos" : undefined)
+              undefined
             }
             modules={group.modules.map((m) =>
               toCarouselModule(
