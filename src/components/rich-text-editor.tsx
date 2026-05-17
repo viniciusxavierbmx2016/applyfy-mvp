@@ -101,11 +101,11 @@ export default function RichTextEditor({
         onImageClick={() => setImageModal(true)}
       />
       <div
-        className="bg-white dark:bg-[#0f1320] px-4 py-3 text-sm text-gray-900 dark:text-white"
+        className="relative bg-white dark:bg-[#0f1320] px-4 py-3 text-sm text-gray-900 dark:text-white"
         onClick={handleEditorClick}
       >
         {editor.isEmpty && (
-          <p className="absolute text-gray-400 dark:text-gray-500 pointer-events-none select-none">
+          <p className="absolute top-3 left-4 text-gray-400 dark:text-gray-500 pointer-events-none select-none">
             {placeholder}
           </p>
         )}
