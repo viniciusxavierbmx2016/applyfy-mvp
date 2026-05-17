@@ -42,7 +42,7 @@ export async function GET(request: Request) {
         },
       }),
       prisma.subscription.findMany({
-        where: { userId: { in: producerIds }, status: "ACTIVE" },
+        where: { userId: { in: producerIds } },
         orderBy: { createdAt: "desc" },
         select: {
           userId: true,
@@ -92,14 +92,22 @@ export async function GET(request: Request) {
 
     const subByProducer = new Map<
       string,
-      { plan: string; amount: number; exempt: boolean }
+      {
+        plan: string;
+        amount: number;
+        exempt: boolean;
+        subscriptionStatus: string;
+      }
     >();
+    // Subscriptions are ordered createdAt desc, so the first match per
+    // producer is their most recent (PENDING/ACTIVE/PAST_DUE/etc.).
     for (const s of subs) {
       if (!subByProducer.has(s.userId))
         subByProducer.set(s.userId, {
           plan: s.plan.name,
           amount: s.exempt ? 0 : s.plan.price,
           exempt: s.exempt,
+          subscriptionStatus: s.status,
         });
     }
 
@@ -110,13 +118,27 @@ export async function GET(request: Request) {
       const wss = producerWorkspaces.get(p.id) || [];
       let totalCourses = 0;
       const studentIds = new Set<string>();
-      let anyActive = wss.length === 0;
       for (const w of wss) {
-        if (w.isActive) anyActive = true;
         totalCourses += courseCountByWs.get(w.id) || 0;
         const set = studentsByWs.get(w.id);
         if (set) set.forEach((uid) => studentIds.add(uid));
       }
+
+      // Producer status is derived from the most-recent subscription —
+      // not from workspace.isActive (which only reflects whether the admin
+      // manually toggled the workspace off). Exempt wins so cortesia
+      // accounts read as EXEMPT instead of ACTIVE.
+      const sub = subByProducer.get(p.id);
+      let producerStatus = "FREE";
+      if (sub) {
+        if (sub.exempt) producerStatus = "EXEMPT";
+        else if (sub.subscriptionStatus === "ACTIVE") producerStatus = "ACTIVE";
+        else if (sub.subscriptionStatus === "PAST_DUE") producerStatus = "PAST_DUE";
+        else if (sub.subscriptionStatus === "SUSPENDED") producerStatus = "SUSPENDED";
+        else if (sub.subscriptionStatus === "CANCELLED") producerStatus = "CANCELLED";
+        else producerStatus = sub.subscriptionStatus || "PENDING";
+      }
+
       return {
         id: p.id,
         name: p.name,
@@ -126,8 +148,10 @@ export async function GET(request: Request) {
         workspaceCount: wss.length,
         courseCount: totalCourses,
         studentCount: studentIds.size,
-        status: wss.length > 0 && !anyActive ? "SUSPENDED" : "ACTIVE",
-        subscription: subByProducer.get(p.id) || null,
+        status: producerStatus,
+        subscription: sub
+          ? { plan: sub.plan, amount: sub.amount, exempt: sub.exempt }
+          : null,
       };
     });
 

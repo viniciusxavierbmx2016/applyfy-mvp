@@ -16,7 +16,14 @@ interface Producer {
   workspaceCount: number;
   courseCount: number;
   studentCount: number;
-  status: "ACTIVE" | "SUSPENDED";
+  status:
+    | "ACTIVE"
+    | "EXEMPT"
+    | "PAST_DUE"
+    | "SUSPENDED"
+    | "CANCELLED"
+    | "PENDING"
+    | "FREE";
   subscription: { plan: string; amount: number; exempt: boolean } | null;
 }
 
@@ -222,6 +229,7 @@ export default function AdminProducersPage() {
                         >
                           Detalhes
                         </Link>
+                        {(p.status === "ACTIVE" || p.status === "SUSPENDED") && (
                         <button
                           type="button"
                           disabled={busy === p.id}
@@ -238,6 +246,7 @@ export default function AdminProducersPage() {
                               ? "Suspender"
                               : "Ativar"}
                         </button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -277,16 +286,54 @@ function MetricCard({
   );
 }
 
-function StatusPill({ status }: { status: "ACTIVE" | "SUSPENDED" }) {
+const STATUS_CONFIG: Record<
+  Producer["status"],
+  { label: string; className: string }
+> = {
+  ACTIVE: {
+    label: "Ativo",
+    className:
+      "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20",
+  },
+  EXEMPT: {
+    label: "Isento",
+    className:
+      "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20",
+  },
+  PAST_DUE: {
+    label: "Inadimplente",
+    className:
+      "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20",
+  },
+  SUSPENDED: {
+    label: "Suspenso",
+    className:
+      "bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20",
+  },
+  CANCELLED: {
+    label: "Cancelado",
+    className:
+      "bg-gray-500/10 text-gray-600 dark:text-gray-400 border-gray-500/20",
+  },
+  PENDING: {
+    label: "Pendente",
+    className:
+      "bg-gray-500/10 text-gray-600 dark:text-gray-400 border-gray-500/20",
+  },
+  FREE: {
+    label: "Free",
+    className:
+      "bg-gray-500/10 text-gray-600 dark:text-gray-400 border-gray-500/20",
+  },
+};
+
+function StatusPill({ status }: { status: Producer["status"] }) {
+  const cfg = STATUS_CONFIG[status] ?? STATUS_CONFIG.FREE;
   return (
     <span
-      className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium border ${
-        status === "ACTIVE"
-          ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
-          : "bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20"
-      }`}
+      className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium border ${cfg.className}`}
     >
-      {status === "ACTIVE" ? "Ativo" : "Suspenso"}
+      {cfg.label}
     </span>
   );
 }
