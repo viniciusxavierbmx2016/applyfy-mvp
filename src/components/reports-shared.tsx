@@ -9,7 +9,9 @@ import type { ReactNode } from "react";
    as ReactNode — codebase convention is inline SVGs.
 ───────────────────────────────────────────────────────────── */
 
-const ACCENT = "#3b82f6";
+// Respect producer theme. Components inside the producer dashboard inherit
+// --producer-primary; the hex fallback covers anywhere the var isn't set.
+const ACCENT = "var(--producer-primary, #3b82f6)";
 
 // ─── Helpers ───
 
@@ -119,7 +121,7 @@ export function Section({
             <div
               className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
               style={{
-                backgroundColor: `${iconColor}1a`,
+                backgroundColor: `color-mix(in oklab, ${iconColor} 10%, transparent)`,
                 color: iconColor,
               }}
             >
@@ -386,9 +388,9 @@ export function LessonRow({
       <span
         className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-bold tabular-nums shrink-0 border"
         style={{
-          backgroundColor: `${barColor}1a`,
+          backgroundColor: `color-mix(in oklab, ${barColor} 10%, transparent)`,
           color: barColor,
-          borderColor: `${barColor}33`,
+          borderColor: `color-mix(in oklab, ${barColor} 20%, transparent)`,
         }}
       >
         {pct}%

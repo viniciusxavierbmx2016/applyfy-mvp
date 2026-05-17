@@ -879,8 +879,8 @@ function SidePanel({
                       return tag ? (
                         <div className="mt-2 flex items-center gap-2 px-3 py-2 rounded-lg bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-500/20">
                           <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: tag.color }} />
-                          <span className="text-sm text-purple-700 dark:text-purple-300 font-medium">{tag.name}</span>
-                          <span className="text-xs text-purple-500 dark:text-purple-400 ml-auto">{tag.studentCount} alunos</span>
+                          <span className="text-sm text-gray-700 dark:text-gray-300 font-medium">{tag.name}</span>
+                          <span className="text-xs text-gray-500 dark:text-gray-400 ml-auto">{tag.studentCount} alunos</span>
                         </div>
                       ) : null;
                     })()}

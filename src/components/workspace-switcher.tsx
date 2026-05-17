@@ -82,7 +82,7 @@ export function WorkspaceSwitcher({
         <Link
           href={`${routePrefix}/workspaces/new`}
           title="Criar workspace"
-          className="group relative flex items-center justify-center w-8 h-8 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-500/20 transition"
+          className="group relative flex items-center justify-center w-8 h-8 rounded-lg bg-blue-500/10 text-[var(--producer-primary,#3b82f6)] hover:bg-blue-500/20 transition"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -94,16 +94,17 @@ export function WorkspaceSwitcher({
       );
     }
     return (
-      <div className="mb-2 rounded-lg bg-blue-500/10 border border-blue-500/30 p-3 text-xs">
-        <p className="text-blue-700 dark:text-blue-300 font-medium">
+      <div className="mb-2 rounded-lg bg-blue-500/10 border border-[var(--producer-primary,#3b82f6)]/30 p-3 text-xs">
+        <p className="text-[var(--producer-primary,#3b82f6)] font-medium">
           Sem workspace
         </p>
-        <p className="text-blue-700/80 dark:text-blue-300/80 mt-0.5 mb-2">
+        <p className="text-[var(--producer-primary,#3b82f6)]/80 mt-0.5 mb-2">
           Crie seu primeiro para receber alunos.
         </p>
         <Link
           href={`${routePrefix}/workspaces/new`}
-          className="inline-block text-[11px] font-medium px-2.5 py-1 rounded bg-blue-600 hover:bg-blue-700 text-white"
+          className="inline-block text-[11px] font-medium px-2.5 py-1 rounded text-white hover:opacity-90"
+          style={{ backgroundColor: "var(--producer-primary, #3b82f6)" }}
         >
           Criar workspace
         </Link>
