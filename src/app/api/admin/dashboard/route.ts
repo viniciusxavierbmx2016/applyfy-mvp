@@ -58,6 +58,7 @@ export async function GET(req: NextRequest) {
         },
         select: {
           userId: true,
+          exempt: true,
           plan: { select: { id: true, name: true, price: true } },
           user: { select: { id: true, name: true, email: true, avatarUrl: true } },
         },
@@ -108,13 +109,17 @@ export async function GET(req: NextRequest) {
       }),
     ]);
 
+    // Exempt subscriptions count as "active producers" (engagement) but
+    // contribute R$ 0 to MRR and the average ticket (no real revenue).
+    const payingSubs = activeSubs.filter((s) => !s.exempt);
     const activeProducers = new Set(activeSubs.map((s) => s.userId)).size;
-    const mrr = activeSubs.reduce((sum, s) => sum + (s.plan?.price || 0), 0);
-    const avgTicket = activeProducers > 0 ? mrr / activeProducers : 0;
+    const payingProducers = new Set(payingSubs.map((s) => s.userId)).size;
+    const mrr = payingSubs.reduce((sum, s) => sum + (s.plan?.price || 0), 0);
+    const avgTicket = payingProducers > 0 ? mrr / payingProducers : 0;
 
-    // Top 7 producers by plan price
+    // Top 7 producers by plan price (exclude exempt — they have R$ 0 revenue)
     const producerRevMap = new Map<string, { user: typeof activeSubs[0]["user"]; revenue: number }>();
-    for (const s of activeSubs) {
+    for (const s of payingSubs) {
       const price = s.plan?.price || 0;
       const existing = producerRevMap.get(s.userId);
       if (existing) {

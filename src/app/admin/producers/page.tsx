@@ -17,7 +17,7 @@ interface Producer {
   courseCount: number;
   studentCount: number;
   status: "ACTIVE" | "SUSPENDED";
-  subscription: { plan: string; amount: number } | null;
+  subscription: { plan: string; amount: number; exempt: boolean } | null;
 }
 
 interface Response {
@@ -197,11 +197,15 @@ export default function AdminProducersPage() {
                           <span className="text-xs font-medium">
                             {p.subscription.plan}
                           </span>
-                          {p.subscription.amount > 0 && (
+                          {p.subscription.exempt ? (
+                            <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">
+                              Isento
+                            </span>
+                          ) : p.subscription.amount > 0 ? (
                             <span className="text-xs text-gray-500">
                               {formatMoney(p.subscription.amount)}
                             </span>
-                          )}
+                          ) : null}
                         </span>
                       ) : (
                         <span className="text-xs text-gray-500">Free</span>
