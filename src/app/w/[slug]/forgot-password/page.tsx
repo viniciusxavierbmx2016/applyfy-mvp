@@ -1,107 +1,49 @@
-"use client";
-
-import { useEffect, useState } from "react";
-import Link from "next/link";
-import { useParams } from "next/navigation";
-import {
-  WorkspaceAuthShell,
+import { notFound } from "next/navigation";
+import { prisma } from "@/lib/prisma";
+import { WorkspaceForgotForm } from "@/components/workspace-forgot-form";
+import type {
+  LoginLayout,
   WorkspaceAuthInfo,
-  getLoginTheme,
-  authInputCls,
-  authLabelCls,
-  authErrorCls,
-  authSubmitCls,
 } from "@/components/workspace-auth-shell";
 
-export default function WorkspaceForgotPasswordPage() {
-  const params = useParams<{ slug: string }>();
-  const slug = params.slug;
-  const [ws, setWs] = useState<WorkspaceAuthInfo | null>(null);
-  const [email, setEmail] = useState("");
-  const [error, setError] = useState("");
-  const [sent, setSent] = useState(false);
-  const [loading, setLoading] = useState(false);
+export default async function WorkspaceForgotPasswordPage({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
+  const { slug } = await params;
 
-  useEffect(() => {
-    fetch(`/api/w/${slug}`, { cache: "no-store" })
-      .then((r) => (r.ok ? r.json() : null))
-      .then((d) => d && setWs(d.workspace));
-  }, [slug]);
+  const workspace = await prisma.workspace.findUnique({
+    where: { slug },
+    select: {
+      id: true,
+      slug: true,
+      name: true,
+      logoUrl: true,
+      isActive: true,
+      loginLayout: true,
+      loginBgImageUrl: true,
+      loginBgColor: true,
+      loginPrimaryColor: true,
+      loginLogoUrl: true,
+      loginTitle: true,
+      loginSubtitle: true,
+      loginBoxColor: true,
+      loginBoxOpacity: true,
+      loginSideColor: true,
+      loginLinkColor: true,
+      accentColor: true,
+    },
+  });
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setError("");
-    setLoading(true);
-    try {
-      const res = await fetch(`/api/w/${slug}/forgot-password`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        setError(data.error || `Erro ao enviar email (${res.status})`);
-        setLoading(false);
-        return;
-      }
-      // Staff buyers are redirected to the platform-wide flow.
-      if (data.redirectTo) {
-        window.location.href = data.redirectTo;
-        return;
-      }
-      setSent(true);
-    } catch {
-      setError("Erro ao conectar com o servidor");
-    } finally {
-      setLoading(false);
-    }
+  if (!workspace || !workspace.isActive) {
+    notFound();
   }
 
-  const theme = getLoginTheme(ws);
+  const workspaceForForm: WorkspaceAuthInfo = {
+    ...workspace,
+    loginLayout: workspace.loginLayout as LoginLayout | null,
+  };
 
-  return (
-    <WorkspaceAuthShell
-      ws={ws}
-      title={ws?.loginTitle ? `${ws.loginTitle} · Recuperar senha` : "Recuperar senha"}
-      subtitle="Enviaremos um link para redefinir sua senha"
-      footer={
-        <p className="mt-6 text-center text-sm text-white/70">
-          <Link
-            href={`/w/${slug}/login`}
-            className="hover:underline font-medium transition-colors"
-            style={{ color: theme.linkColor }}
-          >
-            Voltar para o login
-          </Link>
-        </p>
-      }
-    >
-      {error && <div className={authErrorCls}>{error}</div>}
-
-      {sent ? (
-        <div className="text-center text-sm text-white/80">
-          <p className="mb-2">Se o email estiver cadastrado nesta área, enviaremos um link em alguns minutos.</p>
-          <p className="text-white/60">Verifique também sua pasta de spam.</p>
-        </div>
-      ) : (
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className={authLabelCls}>Email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              autoComplete="email"
-              className={authInputCls}
-              placeholder="seu@email.com"
-            />
-          </div>
-          <button type="submit" disabled={loading} className={authSubmitCls}>
-            {loading ? "Enviando..." : "Enviar link"}
-          </button>
-        </form>
-      )}
-    </WorkspaceAuthShell>
-  );
+  return <WorkspaceForgotForm workspace={workspaceForForm} slug={slug} />;
 }
