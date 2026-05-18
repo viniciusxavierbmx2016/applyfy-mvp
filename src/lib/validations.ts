@@ -251,6 +251,17 @@ export const courseCustomizeSchema = z
   })
   .passthrough();
 
+export const vitrineCustomizeSchema = z.object({
+  vitrineBgColor: z.string().regex(/^#[0-9a-fA-F]{6}$/, "Cor inválida").nullable().optional(),
+  vitrineSidebarColor: z.string().regex(/^#[0-9a-fA-F]{6}$/, "Cor inválida").nullable().optional(),
+  vitrineHeaderColor: z.string().regex(/^#[0-9a-fA-F]{6}$/, "Cor inválida").nullable().optional(),
+  vitrineCardColor: z.string().regex(/^#[0-9a-fA-F]{6}$/, "Cor inválida").nullable().optional(),
+  vitrineTextColor: z.string().regex(/^#[0-9a-fA-F]{6}$/, "Cor inválida").nullable().optional(),
+  accentColor: z.string().regex(/^#[0-9a-fA-F]{6}$/, "Cor inválida").nullable().optional(),
+  vitrineWelcomeText: z.string().max(200).nullable().optional(),
+  vitrineLayoutStyle: z.enum(["netflix", "list", "grid"]).nullable().optional(),
+});
+
 // ─── Producer — automations ────────────────────────────────────────
 
 export const createAutomationSchema = z.object({

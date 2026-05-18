@@ -32,8 +32,29 @@ export default async function WorkspaceLayout(
 
   const ws = await getWorkspaceMeta(params.slug);
   if (!ws || !ws.isActive) notFound();
+
+  // Monta CSS vars da vitrine (reutiliza namespace --producer-*)
+  // só inclui vars que o producer customizou — fallbacks do Tailwind cobrem o resto
+  const vitrineVars = [
+    ws.accentColor && `--producer-primary: ${ws.accentColor}`,
+    ws.vitrineBgColor && `--producer-bg: ${ws.vitrineBgColor}`,
+    ws.vitrineSidebarColor && `--producer-sidebar: ${ws.vitrineSidebarColor}`,
+    ws.vitrineHeaderColor && `--producer-header: ${ws.vitrineHeaderColor}`,
+    ws.vitrineCardColor && `--producer-card: ${ws.vitrineCardColor}`,
+    ws.vitrineTextColor && `--producer-button-text: ${ws.vitrineTextColor}`,
+  ]
+    .filter(Boolean)
+    .join("; ");
+
   return (
     <WorkspaceThemeLock forceTheme={ws.forceTheme}>
+      {vitrineVars && (
+        <style
+          dangerouslySetInnerHTML={{
+            __html: `:root{${vitrineVars}}`,
+          }}
+        />
+      )}
       <WorkspaceShell slug={params.slug}>{children}</WorkspaceShell>
     </WorkspaceThemeLock>
   );

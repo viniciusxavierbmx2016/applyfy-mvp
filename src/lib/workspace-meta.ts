@@ -10,6 +10,13 @@ export const getWorkspaceMeta = cache(async (slug: string) =>
       faviconUrl: true,
       forceTheme: true,
       accentColor: true,
+      vitrineBgColor: true,
+      vitrineSidebarColor: true,
+      vitrineHeaderColor: true,
+      vitrineCardColor: true,
+      vitrineTextColor: true,
+      vitrineWelcomeText: true,
+      vitrineLayoutStyle: true,
     },
   })
 );

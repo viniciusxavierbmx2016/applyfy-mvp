@@ -176,6 +176,14 @@ export default function EditWorkspacePage() {
   const [wsBannerPos, setWsBannerPos] = useState<ImagePosition>({ x: 50, y: 50 });
   const [wsBannerMode, setWsBannerMode] = useState<"view" | "reposition">("view");
 
+  const [vitrineBgColor, setVitrineBgColor] = useState<string | null>(null);
+  const [vitrineSidebarColor, setVitrineSidebarColor] = useState<string | null>(null);
+  const [vitrineHeaderColor, setVitrineHeaderColor] = useState<string | null>(null);
+  const [vitrineCardColor, setVitrineCardColor] = useState<string | null>(null);
+  const [vitrineTextColor, setVitrineTextColor] = useState<string | null>(null);
+  const [vitrineWelcomeText, setVitrineWelcomeText] = useState<string | null>(null);
+  const [vitrineLayoutStyle, setVitrineLayoutStyle] = useState<string>("netflix");
+
   const faviconFileRef = useRef<HTMLInputElement>(null);
 
   const [saving, setSaving] = useState(false);
@@ -236,6 +244,21 @@ export default function EditWorkspacePage() {
         }
       })
       .finally(() => setLoading(false));
+
+    fetch(`/api/producer/workspaces/${id}/vitrine`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (!d?.customization) return;
+        const c = d.customization;
+        setVitrineBgColor(c.vitrineBgColor ?? null);
+        setVitrineSidebarColor(c.vitrineSidebarColor ?? null);
+        setVitrineHeaderColor(c.vitrineHeaderColor ?? null);
+        setVitrineCardColor(c.vitrineCardColor ?? null);
+        setVitrineTextColor(c.vitrineTextColor ?? null);
+        setVitrineWelcomeText(c.vitrineWelcomeText ?? null);
+        setVitrineLayoutStyle(c.vitrineLayoutStyle ?? "netflix");
+      })
+      .catch(() => {});
   }, [id]);
 
   function showToast(msg: string) {
@@ -389,14 +412,38 @@ export default function EditWorkspacePage() {
       payload.loginSideColor = loginSideColor || null;
       payload.loginLinkColor = loginLinkColor || null;
 
-      const res = await fetch(`/api/workspaces/${id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      const body = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        setError(body?.error || "Erro ao salvar");
+      const vitrinePayload = {
+        accentColor: accentColor && HEX_RE.test(accentColor) ? accentColor : null,
+        vitrineBgColor: vitrineBgColor && HEX_RE.test(vitrineBgColor) ? vitrineBgColor : null,
+        vitrineSidebarColor: vitrineSidebarColor && HEX_RE.test(vitrineSidebarColor) ? vitrineSidebarColor : null,
+        vitrineHeaderColor: vitrineHeaderColor && HEX_RE.test(vitrineHeaderColor) ? vitrineHeaderColor : null,
+        vitrineCardColor: vitrineCardColor && HEX_RE.test(vitrineCardColor) ? vitrineCardColor : null,
+        vitrineTextColor: vitrineTextColor && HEX_RE.test(vitrineTextColor) ? vitrineTextColor : null,
+        vitrineWelcomeText: vitrineWelcomeText || null,
+        vitrineLayoutStyle,
+      };
+
+      const [resWorkspace, resVitrine] = await Promise.all([
+        fetch(`/api/workspaces/${id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        }),
+        fetch(`/api/producer/workspaces/${id}/vitrine`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(vitrinePayload),
+        }),
+      ]);
+
+      if (!resWorkspace.ok) {
+        const b = await resWorkspace.json().catch(() => ({}));
+        setError(b?.error || "Erro ao salvar workspace");
+        return;
+      }
+      if (!resVitrine.ok) {
+        const b = await resVitrine.json().catch(() => ({}));
+        setError(b?.error || "Erro ao salvar vitrine");
         return;
       }
       showToast("Workspace atualizado");
@@ -842,41 +889,121 @@ export default function EditWorkspacePage() {
 
         {tab === "appearance" && (
           <div>
-            {/* Cor primária */}
+            {/* Cores da vitrine */}
             <div className="mb-8">
               <h2 className="text-sm font-medium text-gray-900 dark:text-white mb-0.5">
-                Cor primária
-                <HelpTooltip text="Cor principal da sua vitrine e área de membros. Usada em botões, links e destaques." />
+                Cores da vitrine
+                <HelpTooltip text="Personalize as cores da vitrine (dashboard) que o aluno vê após o login. Deixe em branco para usar os padrões." />
               </h2>
-              <p className="text-xs text-gray-500 mb-4">Usada em botões, links e destaques na vitrine e área do aluno</p>
-              <div className="flex items-center gap-3">
-                <label
-                  className="w-7 h-7 rounded-md shrink-0 border border-gray-200 dark:border-white/10 relative overflow-hidden cursor-pointer"
-                  style={{ backgroundColor: HEX_RE.test(accentColor) ? accentColor : "#3b82f6" }}
-                >
-                  <input
-                    type="color"
-                    value={HEX_RE.test(accentColor) ? accentColor : "#3b82f6"}
-                    onChange={(e) => setAccentColor(e.target.value)}
-                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                  />
-                </label>
-                <input
-                  type="text"
-                  value={accentColor}
-                  onChange={(e) => setAccentColor(e.target.value)}
-                  placeholder="#3b82f6 (padrão)"
-                  className={`${inputClass} !font-mono`}
-                />
-                {accentColor && (
-                  <button
-                    type="button"
-                    onClick={() => setAccentColor("")}
-                    className="px-3 py-2 text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 rounded-lg transition-colors shrink-0"
+              <p className="text-xs text-gray-500 mb-4">
+                Cores usadas na dashboard do aluno
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {[
+                  { key: "accentColor", label: "Cor primária", desc: "Botões, links e destaques", value: accentColor || null, setter: (v: string | null) => setAccentColor(v ?? "") },
+                  { key: "vitrineBgColor", label: "Cor de fundo", desc: "Background principal", value: vitrineBgColor, setter: setVitrineBgColor },
+                  { key: "vitrineHeaderColor", label: "Cabeçalho", desc: "Background do header", value: vitrineHeaderColor, setter: setVitrineHeaderColor },
+                  { key: "vitrineSidebarColor", label: "Barra lateral", desc: "Background da sidebar", value: vitrineSidebarColor, setter: setVitrineSidebarColor },
+                  { key: "vitrineCardColor", label: "Cards", desc: "Background dos cards de curso", value: vitrineCardColor, setter: setVitrineCardColor },
+                  { key: "vitrineTextColor", label: "Texto", desc: "Cor do texto principal", value: vitrineTextColor, setter: setVitrineTextColor },
+                ].map((c) => (
+                  <div
+                    key={c.key}
+                    className="bg-white dark:bg-white/5 border border-gray-200 dark:border-white/5 rounded-xl p-4"
                   >
-                    Restaurar
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      {c.label}
+                    </label>
+                    <p className="text-xs text-gray-500 mb-3">{c.desc}</p>
+                    <div className="flex items-center gap-3">
+                      <label
+                        className="w-9 h-9 rounded-lg shrink-0 border border-gray-200 dark:border-white/10 relative overflow-hidden cursor-pointer"
+                        style={{ backgroundColor: c.value && HEX_RE.test(c.value) ? c.value : "#3b82f6" }}
+                      >
+                        <input
+                          type="color"
+                          value={c.value && HEX_RE.test(c.value) ? c.value : "#3b82f6"}
+                          onChange={(e) => c.setter(e.target.value)}
+                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                        />
+                      </label>
+                      <input
+                        type="text"
+                        value={c.value || ""}
+                        onChange={(e) => c.setter(e.target.value || null)}
+                        placeholder="#000000"
+                        className={`${inputClass} !font-mono flex-1`}
+                      />
+                      {c.value && (
+                        <button
+                          type="button"
+                          onClick={() => c.setter(null)}
+                          className="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white px-2 py-1 shrink-0"
+                        >
+                          Restaurar
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Mensagem de boas-vindas */}
+            <div className="mb-8 pt-8 border-t border-gray-200 dark:border-white/5">
+              <h2 className="text-sm font-medium text-gray-900 dark:text-white mb-0.5">
+                Mensagem de boas-vindas
+                <HelpTooltip text="Mensagem exibida no topo da vitrine quando o aluno acessa a área de membros." />
+              </h2>
+              <p className="text-xs text-gray-500 mb-4">
+                Texto exibido no topo da vitrine para o aluno
+              </p>
+              <textarea
+                value={vitrineWelcomeText || ""}
+                onChange={(e) =>
+                  setVitrineWelcomeText(e.target.value.slice(0, 200) || null)
+                }
+                placeholder="Seja bem-vindo à sua área de membros!"
+                rows={3}
+                maxLength={200}
+                className="w-full px-3 py-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-white/10 rounded-lg text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-primary/50 transition-colors resize-y min-h-[80px]"
+              />
+              <p className="text-xs text-gray-400 mt-1 text-right">
+                {(vitrineWelcomeText || "").length}/200
+              </p>
+            </div>
+
+            {/* Layout da vitrine */}
+            <div className="mb-8 pt-8 border-t border-gray-200 dark:border-white/5">
+              <h2 className="text-sm font-medium text-gray-900 dark:text-white mb-0.5">
+                Layout da vitrine
+                <HelpTooltip text="Estilo de exibição dos cursos na vitrine do aluno." />
+              </h2>
+              <p className="text-xs text-gray-500 mb-4">
+                Como os cursos são organizados na vitrine
+              </p>
+              <div className="grid grid-cols-2 gap-3">
+                {[
+                  { key: "netflix", label: "Carrossel", desc: "Cursos em carrossel horizontal" },
+                  { key: "list", label: "Lista", desc: "Cursos em lista vertical" },
+                ].map((opt) => (
+                  <button
+                    key={opt.key}
+                    type="button"
+                    onClick={() => setVitrineLayoutStyle(opt.key)}
+                    className={cn(
+                      "p-4 rounded-xl border-2 text-left transition-colors",
+                      vitrineLayoutStyle === opt.key
+                        ? "border-primary bg-primary/5"
+                        : "border-gray-200 dark:border-white/10 hover:border-primary/30"
+                    )}
+                  >
+                    <p className="font-medium text-sm text-gray-900 dark:text-white">
+                      {opt.label}
+                    </p>
+                    <p className="text-xs text-gray-500 mt-0.5">{opt.desc}</p>
                   </button>
-                )}
+                ))}
               </div>
             </div>
 
@@ -974,6 +1101,35 @@ export default function EditWorkspacePage() {
                 <option value="light">Sempre claro</option>
                 <option value="dark">Sempre escuro</option>
               </select>
+            </div>
+
+            {/* Restaurar padrão da vitrine */}
+            <div className="pt-8 border-t border-gray-200 dark:border-white/5">
+              <button
+                type="button"
+                onClick={async () => {
+                  if (!window.confirm("Restaurar cores padrão da vitrine?")) return;
+                  const res = await fetch(`/api/producer/workspaces/${id}/vitrine`, {
+                    method: "DELETE",
+                  });
+                  if (!res.ok) {
+                    showToast("Erro ao restaurar");
+                    return;
+                  }
+                  setAccentColor("");
+                  setVitrineBgColor(null);
+                  setVitrineSidebarColor(null);
+                  setVitrineHeaderColor(null);
+                  setVitrineCardColor(null);
+                  setVitrineTextColor(null);
+                  setVitrineWelcomeText(null);
+                  setVitrineLayoutStyle("netflix");
+                  showToast("Vitrine restaurada para o padrão");
+                }}
+                className="text-xs text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white underline-offset-4 hover:underline"
+              >
+                Restaurar padrão da vitrine
+              </button>
             </div>
           </div>
         )}

@@ -88,6 +88,14 @@ model Workspace {
   accentColor       String?
   bannerUrl         String?
   bannerPosition    String?  @default("{\"x\":50,\"y\":50}")
+  // Vitrine (dashboard do aluno)
+  vitrineBgColor      String?
+  vitrineSidebarColor String?
+  vitrineHeaderColor  String?
+  vitrineCardColor    String?
+  vitrineTextColor    String?
+  vitrineWelcomeText  String?
+  vitrineLayoutStyle  String?  @default("netflix")
   faviconUrl        String?
   forceTheme        String?
   customDomain      String?  @unique
