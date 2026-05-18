@@ -194,7 +194,7 @@ export function CourseCard({
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={(e) => e.stopPropagation()}
-                className="inline-flex items-center justify-center w-full px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg transition"
+                className="inline-flex items-center justify-center w-full px-3 py-2 bg-primary hover:bg-primary-hover text-white text-xs font-semibold rounded-lg transition"
               >
                 Renovar acesso
               </a>
@@ -203,7 +203,7 @@ export function CourseCard({
         )}
 
         {locked && !expired && !manageHref && (
-          <p className="text-xs text-blue-400 font-medium flex items-center gap-1">
+          <p className="text-xs text-primary font-medium flex items-center gap-1">
             Ver detalhes
             <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -224,7 +224,7 @@ export function CourseCard({
         <div className="px-4 pb-4 -mt-1 grid grid-cols-2 gap-2">
           <Link
             href={`/course/${slug}`}
-            className="inline-flex items-center justify-center px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg transition"
+            className="inline-flex items-center justify-center px-3 py-2 bg-primary hover:bg-primary-hover text-white text-xs font-semibold rounded-lg transition"
           >
             Acessar
           </Link>
