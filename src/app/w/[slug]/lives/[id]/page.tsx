@@ -565,7 +565,7 @@ export default function LiveRoomPage() {
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-3">{live.description}</p>
           )}
         </div>
-        <div className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.06] rounded-xl overflow-hidden flex flex-col">
+        <div className="bg-white dark:bg-card border border-gray-200 dark:border-white/[0.06] rounded-xl overflow-hidden flex flex-col">
           {renderChat()}
         </div>
       </div>
@@ -576,7 +576,7 @@ export default function LiveRoomPage() {
         {live.description && (
           <p className="text-sm text-gray-500 dark:text-gray-400">{live.description}</p>
         )}
-        <div className="bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.06] rounded-xl overflow-hidden h-[400px] flex flex-col">
+        <div className="bg-white dark:bg-card border border-gray-200 dark:border-white/[0.06] rounded-xl overflow-hidden h-[400px] flex flex-col">
           {renderChat()}
         </div>
       </div>
