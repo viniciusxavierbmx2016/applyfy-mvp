@@ -258,21 +258,21 @@ body {
 /* ─── Course member area customization ──────────────────────── */
 
 /* Cards & surfaces */
-.course-customized .bg-white { background-color: var(--member-card, #ffffff) !important; }
+:not(.dark) .course-customized .bg-white { background-color: var(--member-card, #ffffff) !important; }
 .dark .course-customized .dark\:bg-gray-900 { background-color: var(--member-card, rgb(17 24 39)) !important; }
 .dark .course-customized .dark\:bg-gray-900\/60 { background-color: var(--member-card, rgb(17 24 39 / 0.6)) !important; }
 .dark .course-customized .dark\:bg-gray-900\/40 { background-color: var(--member-card, rgb(17 24 39 / 0.4)) !important; }
 .dark .course-customized .dark\:bg-gray-950 { background-color: var(--member-bg, rgb(3 7 18)) !important; }
-.course-customized .bg-gray-50 { background-color: var(--member-card, rgb(249 250 251)) !important; }
-.course-customized .bg-gray-100 { background-color: var(--member-card, rgb(243 244 246)) !important; }
+:not(.dark) .course-customized .bg-gray-50 { background-color: var(--member-card, rgb(249 250 251)) !important; }
+:not(.dark) .course-customized .bg-gray-100 { background-color: var(--member-card, rgb(243 244 246)) !important; }
 .dark .course-customized .dark\:bg-gray-800 { background-color: var(--member-card, rgb(31 41 55)) !important; }
 .dark .course-customized .dark\:bg-white\/5 { background-color: var(--member-card, rgb(255 255 255 / 0.05)) !important; }
 .dark .course-customized .dark\:bg-white\/\[0\.06\] { background-color: var(--member-card, rgb(255 255 255 / 0.06)) !important; }
 .dark .course-customized .dark\:bg-white\/\[0\.04\] { background-color: var(--member-card, rgb(255 255 255 / 0.04)) !important; }
 .dark .course-customized .dark\:bg-white\/\[0\.02\] { background-color: var(--member-card, rgb(255 255 255 / 0.02)) !important; }
-.course-customized .bg-white\/80 { background-color: var(--member-card, rgb(255 255 255 / 0.8)) !important; }
-.course-customized .hover\:bg-gray-50:hover { background-color: var(--member-card, rgb(249 250 251)) !important; }
-.course-customized .hover\:bg-gray-100:hover { background-color: var(--member-card, rgb(243 244 246)) !important; }
+:not(.dark) .course-customized .bg-white\/80 { background-color: var(--member-card, rgb(255 255 255 / 0.8)) !important; }
+:not(.dark) .course-customized .hover\:bg-gray-50:hover { background-color: var(--member-card, rgb(249 250 251)) !important; }
+:not(.dark) .course-customized .hover\:bg-gray-100:hover { background-color: var(--member-card, rgb(243 244 246)) !important; }
 .dark .course-customized .dark\:hover\:bg-white\/5:hover { background-color: var(--member-card, rgb(255 255 255 / 0.05)) !important; }
 
 /* Primary color — buttons, links, progress bars, accents */
