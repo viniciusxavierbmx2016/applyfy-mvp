@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { getWorkspaceMeta } from "@/lib/workspace-meta";
+import { darkenHex } from "@/lib/color-utils";
 import { WorkspaceShell } from "@/components/workspace-shell";
 import { WorkspaceThemeLock } from "@/components/workspace-theme-lock";
 
@@ -37,6 +38,7 @@ export default async function WorkspaceLayout(
   // só inclui vars que o producer customizou — fallbacks do Tailwind cobrem o resto
   const vitrineVars = [
     ws.accentColor && `--producer-primary: ${ws.accentColor}`,
+    ws.accentColor && `--producer-primary-hover: ${darkenHex(ws.accentColor, 0.15)}`,
     ws.vitrineBgColor && `--producer-bg: ${ws.vitrineBgColor}`,
     ws.vitrineSidebarColor && `--producer-sidebar: ${ws.vitrineSidebarColor}`,
     ws.vitrineHeaderColor && `--producer-header: ${ws.vitrineHeaderColor}`,
