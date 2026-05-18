@@ -225,7 +225,7 @@ export function WorkspaceShell({
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen dark:bg-[var(--producer-bg,#030712)]">
       {/* Header */}
       <header className="sticky top-0 z-30 bg-white dark:bg-[var(--producer-header,#111827)] border-b border-gray-200 dark:border-white/5">
         <div className="px-4 sm:px-6 h-14 flex items-center justify-between gap-3">
