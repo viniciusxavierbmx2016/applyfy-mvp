@@ -227,7 +227,7 @@ export function WorkspaceShell({
   return (
     <div className="min-h-screen">
       {/* Header */}
-      <header className="sticky top-0 z-30 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-white/5">
+      <header className="sticky top-0 z-30 bg-white dark:bg-[var(--producer-header,#111827)] border-b border-gray-200 dark:border-white/5">
         <div className="px-4 sm:px-6 h-14 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
             <button
@@ -317,7 +317,7 @@ export function WorkspaceShell({
             "fixed lg:fixed top-14 lg:top-14 left-0 z-40 lg:z-20 flex flex-col",
             "h-[calc(100vh-3.5rem)]",
             "border-r border-gray-200 dark:border-white/5",
-            "bg-white dark:bg-gray-900",
+            "bg-white dark:bg-[var(--producer-sidebar,#111827)]",
             "transform transition-transform duration-200 ease-in-out",
             "lg:translate-x-0",
             "w-64",
