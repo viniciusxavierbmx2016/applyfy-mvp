@@ -20,8 +20,13 @@ export default async function ProducerLayout({
 }) {
   const user = await getCurrentUser();
 
+  // Sem user = página de auth (login/register) → sem shell
+  if (!user) {
+    return <>{children}</>;
+  }
+
   let initialTheme = THEME_DEFAULTS;
-  if (user?.themeConfig) {
+  if (user.themeConfig) {
     try {
       const parsed = JSON.parse(user.themeConfig);
       initialTheme = { ...THEME_DEFAULTS, ...parsed };
