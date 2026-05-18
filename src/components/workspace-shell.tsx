@@ -227,7 +227,7 @@ export function WorkspaceShell({
   return (
     <div className="min-h-screen dark:bg-[var(--producer-bg,#030712)]">
       {/* Header */}
-      <header className="sticky top-0 z-30 bg-white dark:bg-[var(--producer-header,#111827)] border-b border-gray-200 dark:border-white/5">
+      <header className="fixed top-0 left-0 right-0 z-30 bg-white dark:bg-[var(--producer-header,#111827)] border-b border-gray-200 dark:border-white/5">
         <div className="px-4 sm:px-6 h-14 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
             <button
@@ -417,7 +417,7 @@ export function WorkspaceShell({
           </nav>
         </aside>
 
-        <main className={cn("flex-1 min-w-0", collapsed ? "lg:ml-16" : "lg:ml-56")}>
+        <main className={cn("flex-1 min-w-0 mt-14", collapsed ? "lg:ml-16" : "lg:ml-56")}>
           <PushOptIn />
           {user?.role === "STUDENT" && <StudentTour />}
           {children}
