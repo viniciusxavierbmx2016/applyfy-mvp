@@ -1,207 +1,49 @@
-"use client";
-
-import { useEffect, useState } from "react";
-import Link from "next/link";
-import { useParams } from "next/navigation";
-import {
-  WorkspaceAuthShell,
+import { notFound } from "next/navigation";
+import { prisma } from "@/lib/prisma";
+import { WorkspaceLoginForm } from "@/components/workspace-login-form";
+import type {
+  LoginLayout,
   WorkspaceAuthInfo,
-  getLoginTheme,
-  authInputCls,
-  authLabelCls,
-  authErrorCls,
-  authSubmitCls,
 } from "@/components/workspace-auth-shell";
 
-export default function WorkspaceLoginPage() {
-  const params = useParams<{ slug: string }>();
-  const slug = params.slug;
-  const [ws, setWs] = useState<WorkspaceAuthInfo | null>(null);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [requiresMfa, setRequiresMfa] = useState(false);
-  const [factorId, setFactorId] = useState("");
-  const [mfaCode, setMfaCode] = useState("");
-  const [mfaLoading, setMfaLoading] = useState(false);
+export default async function WorkspaceLoginPage({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
+  const { slug } = await params;
 
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const err = new URL(window.location.href).searchParams.get("error");
-    if (err) setError(err);
-  }, []);
+  const workspace = await prisma.workspace.findUnique({
+    where: { slug },
+    select: {
+      id: true,
+      slug: true,
+      name: true,
+      logoUrl: true,
+      isActive: true,
+      loginLayout: true,
+      loginBgImageUrl: true,
+      loginBgColor: true,
+      loginPrimaryColor: true,
+      loginLogoUrl: true,
+      loginTitle: true,
+      loginSubtitle: true,
+      loginBoxColor: true,
+      loginBoxOpacity: true,
+      loginSideColor: true,
+      loginLinkColor: true,
+      accentColor: true,
+    },
+  });
 
-  useEffect(() => {
-    fetch(`/api/w/${slug}`, { cache: "no-store" })
-      .then((r) => (r.ok ? r.json() : null))
-      .then((d) => d && setWs(d.workspace));
-  }, [slug]);
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (
-      typeof window !== "undefined" &&
-      new URL(window.location.href).searchParams.get("preview")
-    ) {
-      return;
-    }
-    setError("");
-    setLoading(true);
-    try {
-      const res = await fetch(`/api/w/${slug}/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ email, password }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        setError(data.error || `Erro ao entrar (${res.status})`);
-        setLoading(false);
-        return;
-      }
-      // Staff with verified TOTP factor: API returns { requiresMfa, factorId }
-      // and the AAL1 cookies are already in place. Switch UI to the MFA
-      // form; /api/auth/mfa/challenge will upgrade to AAL2.
-      if (data.requiresMfa && data.factorId) {
-        setRequiresMfa(true);
-        setFactorId(data.factorId);
-        setLoading(false);
-        return;
-      }
-      window.location.href = `/w/${slug}`;
-    } catch {
-      setError("Erro ao conectar com o servidor");
-      setLoading(false);
-    }
+  if (!workspace || !workspace.isActive) {
+    notFound();
   }
 
-  async function handleMfa(e: React.FormEvent) {
-    e.preventDefault();
-    setError("");
-    setMfaLoading(true);
-    try {
-      const res = await fetch("/api/auth/mfa/challenge", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ factorId, code: mfaCode }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        setError(data.error || "Código inválido");
-        setMfaLoading(false);
-        return;
-      }
-      window.location.href = `/w/${slug}`;
-    } catch {
-      setError("Erro na verificação. Tente novamente.");
-      setMfaLoading(false);
-    }
-  }
+  const workspaceForForm: WorkspaceAuthInfo = {
+    ...workspace,
+    loginLayout: workspace.loginLayout as LoginLayout | null,
+  };
 
-  function backToPassword() {
-    setRequiresMfa(false);
-    setFactorId("");
-    setMfaCode("");
-    setError("");
-  }
-
-  const theme = getLoginTheme(ws);
-
-  return (
-    <WorkspaceAuthShell
-      ws={ws}
-      title={requiresMfa ? "Verificação em duas etapas" : undefined}
-      subtitle={
-        requiresMfa
-          ? "Digite o código de 6 dígitos do seu app autenticador"
-          : undefined
-      }
-      footer={
-        <div className="mt-6 text-center text-sm">
-          {requiresMfa ? (
-            <button
-              type="button"
-              onClick={backToPassword}
-              className="hover:underline transition-colors"
-              style={{ color: theme.linkColor }}
-            >
-              Voltar
-            </button>
-          ) : (
-            <Link
-              href={`/w/${slug}/forgot-password`}
-              className="hover:underline transition-colors"
-              style={{ color: theme.linkColor }}
-            >
-              Esqueci minha senha
-            </Link>
-          )}
-        </div>
-      }
-    >
-      {error && <div className={authErrorCls}>{error}</div>}
-
-      {requiresMfa ? (
-        <form onSubmit={handleMfa} className="space-y-4">
-          <div>
-            <label className={authLabelCls}>Código de verificação</label>
-            <input
-              type="text"
-              inputMode="numeric"
-              pattern="[0-9]*"
-              value={mfaCode}
-              onChange={(e) => setMfaCode(e.target.value.replace(/\D/g, ""))}
-              required
-              minLength={6}
-              maxLength={6}
-              autoFocus
-              autoComplete="one-time-code"
-              className={authInputCls}
-              placeholder="000000"
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={mfaLoading || mfaCode.length < 6}
-            className={authSubmitCls}
-          >
-            {mfaLoading ? "Verificando..." : "Verificar"}
-          </button>
-        </form>
-      ) : (
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className={authLabelCls}>Email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              autoComplete="email"
-              className={authInputCls}
-              placeholder="seu@email.com"
-            />
-          </div>
-          <div>
-            <label className={authLabelCls}>Senha</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              autoComplete="current-password"
-              className={authInputCls}
-              placeholder="••••••••"
-            />
-          </div>
-          <button type="submit" disabled={loading} className={authSubmitCls}>
-            {loading ? "Entrando..." : "Entrar"}
-          </button>
-        </form>
-      )}
-    </WorkspaceAuthShell>
-  );
+  return <WorkspaceLoginForm workspace={workspaceForForm} slug={slug} />;
 }
