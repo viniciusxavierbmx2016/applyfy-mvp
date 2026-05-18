@@ -18,10 +18,10 @@ const DEFAULTS: ThemeConfig = {
   mode: "dark",
   primaryColor: "#3b82f6",
   secondaryColor: "#1a1e2e",
-  bgColor: "#030712",
+  bgColor: "#0a0a1a",
   headerColor: "#0a0a1a",
   sidebarColor: "#0a0a1a",
-  cardColor: "#111827",
+  cardColor: "#0a0e19",
   buttonTextColor: "#ffffff",
 };
 
