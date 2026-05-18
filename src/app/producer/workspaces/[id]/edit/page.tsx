@@ -8,6 +8,47 @@ import { cn } from "@/lib/utils";
 import { BannerUpload } from "@/components/banner-upload";
 import { HelpTooltip } from "@/components/help-tooltip";
 
+async function compressImage(file: File, maxSizeMB: number = 4, maxWidth: number = 1920): Promise<File> {
+  if (file.size <= maxSizeMB * 1024 * 1024) return file;
+
+  return new Promise((resolve, reject) => {
+    const img = new window.Image();
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      let { width, height } = img;
+      if (width > maxWidth) {
+        height = Math.round((height * maxWidth) / width);
+        width = maxWidth;
+      }
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return reject(new Error("Canvas não suportado"));
+      ctx.drawImage(img, 0, 0, width, height);
+
+      let quality = 0.85;
+      const tryCompress = () => {
+        canvas.toBlob(
+          (blob) => {
+            if (!blob) return reject(new Error("Falha na compressão"));
+            if (blob.size > maxSizeMB * 1024 * 1024 && quality > 0.3) {
+              quality -= 0.1;
+              tryCompress();
+            } else {
+              resolve(new File([blob], file.name.replace(/\.\w+$/, ".jpg"), { type: "image/jpeg" }));
+            }
+          },
+          "image/jpeg",
+          quality
+        );
+      };
+      tryCompress();
+    };
+    img.onerror = () => reject(new Error("Erro ao carregar imagem"));
+    img.src = URL.createObjectURL(file);
+  });
+}
+
 type LoginLayout = "central" | "lateral-left" | "lateral-right";
 
 interface Workspace {
@@ -257,8 +298,14 @@ export default function EditWorkspacePage() {
     setter(true);
     setError(null);
     try {
+      let processedFile = file;
+      try {
+        processedFile = await compressImage(file, 4);
+      } catch {
+        // Se compressão falhar, tenta com o original
+      }
       const fd = new FormData();
-      fd.append("file", file);
+      fd.append("file", processedFile);
       fd.append("kind", kind);
       const res = await fetch(`/api/workspaces/${id}/login-images`, {
         method: "POST",
@@ -266,7 +313,13 @@ export default function EditWorkspacePage() {
       });
       const body = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setError(body?.error || "Erro no upload");
+        if (res.status === 413) {
+          setError("Imagem muito grande. Tente uma imagem menor que 4MB ou com menor resolução.");
+        } else if (res.status === 400) {
+          setError(body?.error || "Formato inválido. Use PNG ou JPG.");
+        } else {
+          setError(body?.error || "Erro ao enviar imagem. Tente novamente.");
+        }
         return;
       }
       if (kind === "bgImage") setLoginBgImageUrl(body.url);
