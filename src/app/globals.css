@@ -275,6 +275,15 @@ html:not(.dark) .course-customized .hover\:bg-gray-50:hover { background-color: 
 html:not(.dark) .course-customized .hover\:bg-gray-100:hover { background-color: var(--member-card, rgb(243 244 246)) !important; }
 .dark .course-customized .dark\:hover\:bg-white\/5:hover { background-color: var(--member-card, rgb(255 255 255 / 0.05)) !important; }
 
+/* Tailwind tokens migrados — precisam override pra curso */
+.dark .course-customized .dark\:bg-card { background-color: var(--member-card, rgb(17 24 39)) !important; }
+.dark .course-customized .bg-primary { background-color: var(--member-primary, #3b82f6) !important; }
+.dark .course-customized .hover\:bg-primary-hover:hover { background-color: var(--member-primary, #2563eb) !important; }
+.dark .course-customized .text-primary { color: var(--member-primary, #3b82f6) !important; }
+html:not(.dark) .course-customized .bg-card { background-color: var(--member-card, #ffffff) !important; }
+html:not(.dark) .course-customized .bg-primary { background-color: var(--member-primary, #3b82f6) !important; }
+html:not(.dark) .course-customized .text-primary { color: var(--member-primary, #3b82f6) !important; }
+
 /* Primary color — buttons, links, progress bars, accents */
 .course-customized .bg-blue-600 { background-color: var(--member-primary, #2563eb) !important; }
 .course-customized .bg-blue-500 { background-color: var(--member-primary, #3b82f6) !important; }
