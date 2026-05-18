@@ -54,7 +54,7 @@ export default function ProfilePage() {
       <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Meu Perfil</h1>
 
       {/* Profile card */}
-      <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-6 mb-6 space-y-5">
+      <div className="bg-white dark:bg-card border border-gray-200 dark:border-gray-800 rounded-xl p-6 mb-6 space-y-5">
         <div>
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white">{user.name}</h2>
           <p className="text-gray-600 dark:text-gray-400 text-sm">{user.email}</p>
@@ -67,7 +67,7 @@ export default function ProfilePage() {
       </div>
 
       {/* Gamification card */}
-      <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-6 mb-6">
+      <div className="bg-white dark:bg-card border border-gray-200 dark:border-gray-800 rounded-xl p-6 mb-6">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Gamificação</h3>
         <div className="flex items-center gap-4 mb-4">
           <div className="flex items-center gap-2">
@@ -111,7 +111,7 @@ export default function ProfilePage() {
         );
         if (completed.length === 0) return null;
         return (
-          <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-6 mb-6">
+          <div className="bg-white dark:bg-card border border-gray-200 dark:border-gray-800 rounded-xl p-6 mb-6">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">
               Certificados
             </h3>
@@ -159,13 +159,13 @@ export default function ProfilePage() {
       })()}
 
       {/* Push notifications */}
-      <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-6 mb-6">
+      <div className="bg-white dark:bg-card border border-gray-200 dark:border-gray-800 rounded-xl p-6 mb-6">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Notificações</h3>
         <PushToggle />
       </div>
 
       {/* Courses progress */}
-      <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-6">
+      <div className="bg-white dark:bg-card border border-gray-200 dark:border-gray-800 rounded-xl p-6">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Meus Cursos</h3>
         {loadingCourses ? (
           <p className="text-gray-500 text-sm">Carregando...</p>
