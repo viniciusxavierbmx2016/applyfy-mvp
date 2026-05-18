@@ -23,7 +23,7 @@ const DEFAULTS: ThemeConfig = {
   bgColor: "#0a0a1a",
   headerColor: "#0a0a1a",
   sidebarColor: "#0a0a1a",
-  cardColor: "#0a0e19",
+  cardColor: "#111827",
   buttonTextColor: "#ffffff",
 };
 
