@@ -973,40 +973,6 @@ export default function EditWorkspacePage() {
               </p>
             </div>
 
-            {/* Layout da vitrine */}
-            <div className="mb-8 pt-8 border-t border-gray-200 dark:border-white/5">
-              <h2 className="text-sm font-medium text-gray-900 dark:text-white mb-0.5">
-                Layout da vitrine
-                <HelpTooltip text="Estilo de exibição dos cursos na vitrine do aluno." />
-              </h2>
-              <p className="text-xs text-gray-500 mb-4">
-                Como os cursos são organizados na vitrine
-              </p>
-              <div className="grid grid-cols-2 gap-3">
-                {[
-                  { key: "netflix", label: "Carrossel", desc: "Cursos em carrossel horizontal" },
-                  { key: "list", label: "Lista", desc: "Cursos em lista vertical" },
-                ].map((opt) => (
-                  <button
-                    key={opt.key}
-                    type="button"
-                    onClick={() => setVitrineLayoutStyle(opt.key)}
-                    className={cn(
-                      "p-4 rounded-xl border-2 text-left transition-colors",
-                      vitrineLayoutStyle === opt.key
-                        ? "border-primary bg-primary/5"
-                        : "border-gray-200 dark:border-white/10 hover:border-primary/30"
-                    )}
-                  >
-                    <p className="font-medium text-sm text-gray-900 dark:text-white">
-                      {opt.label}
-                    </p>
-                    <p className="text-xs text-gray-500 mt-0.5">{opt.desc}</p>
-                  </button>
-                ))}
-              </div>
-            </div>
-
             {/* Banner */}
             <div className="mb-8 pt-8 border-t border-gray-200 dark:border-white/5">
               <h2 className="text-sm font-medium text-gray-900 dark:text-white mb-0.5">
