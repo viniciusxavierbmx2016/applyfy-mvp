@@ -1,62 +1,38 @@
-"use client";
-
-import { useState } from "react";
-import dynamic from "next/dynamic";
-import { usePathname } from "next/navigation";
-import { Sidebar } from "@/components/sidebar";
-import { Header } from "@/components/header";
-import { SubscriptionGate } from "@/components/subscription-gate";
+import { getCurrentUser } from "@/lib/auth";
 import { ProducerThemeProvider } from "@/components/producer-theme-provider";
+import { ProducerShell } from "@/components/producer-shell";
 
-const ProducerTour = dynamic(
-  () =>
-    import("@/components/producer-tour").then((m) => ({
-      default: m.ProducerTour,
-    })),
-  { ssr: false }
-);
+const THEME_DEFAULTS = {
+  mode: "dark",
+  primaryColor: "#3b82f6",
+  secondaryColor: "#1a1e2e",
+  bgColor: "#0a0a1a",
+  headerColor: "#0a0a1a",
+  sidebarColor: "#0a0a1a",
+  cardColor: "#111827",
+  buttonTextColor: "#ffffff",
+};
 
-const SupportChatWidget = dynamic(
-  () =>
-    import("@/components/support-chat-widget").then((m) => ({
-      default: m.SupportChatWidget,
-    })),
-  { ssr: false }
-);
-
-export default function ProducerLayout({
+export default async function ProducerLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const pathname = usePathname();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const user = await getCurrentUser();
 
-  if (
-    pathname === "/producer/login" ||
-    pathname === "/producer/register"
-  ) {
-    return <>{children}</>;
+  let initialTheme = THEME_DEFAULTS;
+  if (user?.themeConfig) {
+    try {
+      const parsed = JSON.parse(user.themeConfig);
+      initialTheme = { ...THEME_DEFAULTS, ...parsed };
+    } catch {
+      // themeConfig inválido — usa defaults
+    }
   }
 
   return (
-    <ProducerThemeProvider>
-      <div className="producer-layout min-h-screen bg-white dark:bg-[var(--producer-bg,#0a0a1a)] flex">
-        <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-
-        <div className="flex-1 flex flex-col min-w-0">
-          <Header onMenuToggle={() => setSidebarOpen(!sidebarOpen)} />
-
-          <main className="flex-1 p-4 lg:p-6">
-            <SubscriptionGate>
-              <ProducerTour />
-              {children}
-            </SubscriptionGate>
-          </main>
-        </div>
-
-        <SupportChatWidget />
-      </div>
+    <ProducerThemeProvider initialTheme={initialTheme}>
+      <ProducerShell>{children}</ProducerShell>
     </ProducerThemeProvider>
   );
 }

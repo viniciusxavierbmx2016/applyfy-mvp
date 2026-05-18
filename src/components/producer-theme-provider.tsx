@@ -67,8 +67,14 @@ function applyTheme(t: ThemeConfig) {
   root.style.setProperty("--producer-button-text", t.buttonTextColor);
 }
 
-export function ProducerThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<ThemeConfig>(DEFAULTS);
+export function ProducerThemeProvider({
+  children,
+  initialTheme,
+}: {
+  children: React.ReactNode;
+  initialTheme?: ThemeConfig;
+}) {
+  const [theme, setTheme] = useState<ThemeConfig>(initialTheme || DEFAULTS);
   const fetched = useRef(false);
   const { setTheme: setNextTheme } = useTheme();
 
@@ -89,11 +95,18 @@ export function ProducerThemeProvider({ children }: { children: React.ReactNode 
   useEffect(() => {
     if (fetched.current) return;
     fetched.current = true;
+    // Se já recebeu tema do server, não precisa buscar de novo
+    if (initialTheme && Object.keys(initialTheme).length > 2) return;
     refresh();
-  }, [refresh]);
+  }, [refresh, initialTheme]);
 
   return (
     <ThemeContext.Provider value={{ theme, refresh }}>
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `:root{--producer-primary:${theme.primaryColor};--producer-primary-hover:${darkenHex(theme.primaryColor, 0.15)};--producer-secondary:${theme.secondaryColor};--producer-bg:${theme.bgColor};--producer-header:${theme.headerColor};--producer-sidebar:${theme.sidebarColor};--producer-card:${theme.cardColor};--producer-button-text:${theme.buttonTextColor};}`,
+        }}
+      />
       {children}
     </ThemeContext.Provider>
   );
