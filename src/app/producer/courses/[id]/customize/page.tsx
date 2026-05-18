@@ -366,7 +366,7 @@ export default function CourseCustomizePage() {
               placeholder="Bem-vindo à nossa comunidade!"
               rows={3}
               maxLength={500}
-              className="w-full px-3 py-2.5 bg-white dark:bg-card/50 border border-gray-200 dark:border-white/10 rounded-lg text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-primary/50 transition-colors resize-y min-h-[80px]"
+              className="w-full px-3 py-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-white/10 rounded-lg text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-primary/50 transition-colors resize-y min-h-[80px]"
             />
             <p className="text-xs text-gray-400 mt-1 text-right">
               {(custom.memberWelcomeText || "").length}/500

@@ -257,7 +257,7 @@ export default function AdminUsersPage() {
             type="button"
             onClick={handleExportCsv}
             disabled={exporting || loading}
-            className="inline-flex items-center justify-center gap-2 px-3.5 py-2.5 text-sm font-medium rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-card/50 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white transition disabled:opacity-60 disabled:cursor-not-allowed"
+            className="inline-flex items-center justify-center gap-2 px-3.5 py-2.5 text-sm font-medium rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white transition disabled:opacity-60 disabled:cursor-not-allowed"
           >
             {exporting ? (
               <svg
@@ -320,7 +320,7 @@ export default function AdminUsersPage() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Buscar por nome ou e-mail..."
-            className="w-full bg-white dark:bg-card/50 border border-gray-200 dark:border-white/10 rounded-lg pl-9 pr-9 py-2.5 text-sm text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:border-primary/50 transition-colors"
+            className="w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-white/10 rounded-lg pl-9 pr-9 py-2.5 text-sm text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:border-primary/50 transition-colors"
           />
           {query && (
             <button
@@ -494,7 +494,7 @@ export default function AdminUsersPage() {
                         {u.enrollments.map((e) => (
                           <li
                             key={e.id}
-                            className="flex items-center justify-between gap-2 bg-white dark:bg-card/50 border border-gray-200 dark:border-white/10 rounded-lg px-3 py-2"
+                            className="flex items-center justify-between gap-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-white/10 rounded-lg px-3 py-2"
                           >
                             <div className="flex items-center gap-2 min-w-0 flex-1">
                               <span

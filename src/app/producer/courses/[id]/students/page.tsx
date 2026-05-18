@@ -279,7 +279,7 @@ export default function CourseStudentsPage(
             setQ(e.target.value);
             setPage(1);
           }}
-          className="w-full sm:max-w-sm px-3 py-2.5 bg-white dark:bg-card/50 border border-gray-200 dark:border-white/10 rounded-lg text-gray-900 dark:text-white text-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-primary/50 transition-colors"
+          className="w-full sm:max-w-sm px-3 py-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-white/10 rounded-lg text-gray-900 dark:text-white text-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-primary/50 transition-colors"
         />
       </div>
       {loading && !data ? (

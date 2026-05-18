@@ -417,7 +417,7 @@ export default function CourseCommentsPage(
                         onChange={(e) => setReplyText(e.target.value)}
                         onKeyDown={(e) => e.key === "Enter" && handleReply(c.id, c.lesson.id)}
                         placeholder="Escreva sua resposta..."
-                        className="flex-1 min-w-0 px-3 py-2.5 bg-white dark:bg-card/50 border border-gray-200 dark:border-white/10 rounded-lg text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-primary/50 transition-colors"
+                        className="flex-1 min-w-0 px-3 py-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-white/10 rounded-lg text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-primary/50 transition-colors"
                         autoFocus
                       />
                       <button

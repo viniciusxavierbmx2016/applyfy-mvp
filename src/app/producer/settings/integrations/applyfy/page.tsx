@@ -291,7 +291,7 @@ export default function AdminIntegrationsPage() {
                 data-lpignore="true"
                 data-bwignore="true"
                 data-form-type="other"
-                className="flex-1 px-4 py-2.5 bg-white dark:bg-card/50 border border-gray-200 dark:border-white/10 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-primary/50"
+                className="flex-1 px-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-white/10 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-primary/50"
               />
               <button
                 type="button"
@@ -366,7 +366,7 @@ export default function AdminIntegrationsPage() {
                           }))
                         }
                         placeholder="ex: KSA912"
-                        className="flex-1 px-3 py-2 bg-white dark:bg-card/50 border border-gray-200 dark:border-white/10 rounded-lg text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-primary/50"
+                        className="flex-1 px-3 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-white/10 rounded-lg text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-primary/50"
                       />
                       <button
                         type="button"
