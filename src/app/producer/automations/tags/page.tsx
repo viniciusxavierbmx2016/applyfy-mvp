@@ -124,7 +124,7 @@ export default function TagsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="bg-white dark:bg-card border border-gray-200 dark:border-gray-800 rounded-xl p-4">
+      <div className="bg-white dark:bg-white/5 border border-gray-200 dark:border-white/5 rounded-xl p-4">
         <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">
           Nova tag
         </p>
@@ -163,11 +163,11 @@ export default function TagsPage() {
           <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
         </div>
       ) : tags.length === 0 ? (
-        <div className="bg-white dark:bg-card border border-gray-200 dark:border-gray-800 rounded-xl p-10 text-center">
+        <div className="bg-white dark:bg-white/5 border border-gray-200 dark:border-white/5 rounded-xl p-10 text-center">
           <p className="text-gray-500 text-sm">Nenhuma tag criada ainda.</p>
         </div>
       ) : (
-        <div className="bg-white dark:bg-card border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden">
+        <div className="bg-white dark:bg-white/5 border border-gray-200 dark:border-white/5 rounded-xl overflow-hidden">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-200 dark:border-gray-800">
