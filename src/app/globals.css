@@ -250,8 +250,8 @@ body {
 .producer-layout .focus\:ring-blue-500\/20:focus { --tw-ring-color: var(--producer-primary, #3b82f6) !important; }
 
 /* Override hardcoded dark-mode card/bg colors with producer variables */
-.producer-layout .dark\:bg-\[\#0a0e19\] { background-color: var(--producer-card, #0a0e19) !important; }
-.producer-layout .dark\:bg-\[\#0a0a1a\] { background-color: var(--producer-bg, #0a0a1a) !important; }
+.producer-layout .dark\:bg-\[\#0a0e19\] { background-color: var(--producer-card, #111827) !important; }
+.producer-layout .dark\:bg-\[\#0a0a1a\] { background-color: var(--producer-bg, #030712) !important; }
 .producer-layout .dark\:bg-\[\#0f1320\] { background-color: var(--producer-card, #0f1320) !important; }
 .producer-layout .dark\:bg-\[\#1a1e2e\] { background-color: var(--producer-secondary, #1a1e2e) !important; }
 
