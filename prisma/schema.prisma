@@ -501,6 +501,7 @@ enum NotificationType {
   LIVE_STARTED
   TICKET_NEW
   TICKET_REPLY
+  AUTOMATION
 }
 
 model Certificate {

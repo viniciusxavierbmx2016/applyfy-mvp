@@ -4,6 +4,7 @@ import { sendEmail } from "@/lib/email";
 import { automationEmail } from "@/lib/email-templates";
 import { sendPushToUser } from "@/lib/push-send";
 import { autoTagStudent } from "@/lib/automation-constants";
+import { createNotification } from "@/lib/notifications";
 
 export interface AutomationTrigger {
   type: string;
@@ -135,17 +136,36 @@ export async function executeAction(
         (config.pushBody as string) || "",
         userId, effectiveCourseId, automation.triggerConfig
       );
-      const pushUrl = (config.pushUrl as string) || "/";
+      let pushUrl = (config.pushUrl as string) || "";
+      if (!pushUrl && effectiveCourseId) {
+        const course = await prisma.course.findUnique({
+          where: { id: effectiveCourseId },
+          select: { slug: true },
+        });
+        if (course?.slug) pushUrl = `/course/${course.slug}`;
+      }
+      if (!pushUrl) pushUrl = "/";
+
+      await createNotification({
+        userId,
+        type: "AUTOMATION",
+        message: pushBody || pushTitle,
+        link: pushUrl,
+      });
+
       try {
-        await sendPushToUser(userId, {
+        const sent = await sendPushToUser(userId, {
           title: pushTitle,
           body: pushBody,
           url: pushUrl,
           tag: `automation-${automation.id}`,
         });
-        return { status: "SUCCESS", details: `Push enviado` };
+        if (sent && sent > 0) {
+          return { status: "SUCCESS", details: `Notificação enviada + push entregue (${sent})` };
+        }
+        return { status: "SUCCESS", details: `Notificação enviada (push: sem subscription ativa)` };
       } catch (err) {
-        return { status: "FAILED", details: err instanceof Error ? err.message : "Erro ao enviar push" };
+        return { status: "SUCCESS", details: `Notificação enviada (push falhou: ${err instanceof Error ? err.message : "erro"})` };
       }
     }
 

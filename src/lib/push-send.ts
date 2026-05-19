@@ -22,7 +22,7 @@ export async function sendPushToUser(userId: string, payload: PushPayload) {
     where: { userId },
   });
 
-  if (subscriptions.length === 0) return;
+  if (subscriptions.length === 0) return 0;
 
   const results = await Promise.allSettled(
     subscriptions.map((sub) =>
@@ -48,7 +48,7 @@ export async function sendPushToUser(userId: string, payload: PushPayload) {
     )
   );
 
-  return results;
+  return results.filter((r) => r.status === "fulfilled").length;
 }
 
 export async function sendPushToUsers(userIds: string[], payload: PushPayload) {
