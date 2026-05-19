@@ -80,7 +80,7 @@ export function CourseShell({
   // Preview mode: no sidebar
   if (!hasAccess) {
     return (
-      <div className="min-h-screen bg-white dark:bg-gray-950">{children}</div>
+      <div className="min-h-screen bg-[var(--member-bg,rgb(255_255_255))] dark:bg-[var(--member-bg,rgb(3_7_18))]">{children}</div>
     );
   }
 
@@ -95,7 +95,7 @@ export function CourseShell({
 
   return (
     <div
-      className={`h-screen bg-white dark:bg-gray-950 ${hasCustomization ? "course-customized" : ""}`}
+      className={`h-screen bg-[var(--member-bg,rgb(255_255_255))] dark:bg-[var(--member-bg,rgb(3_7_18))] ${hasCustomization ? "course-customized" : ""}`}
     >
       <CourseSidebar
         course={sidebarCourse}
