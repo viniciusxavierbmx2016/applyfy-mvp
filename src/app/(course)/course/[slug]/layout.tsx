@@ -1,29 +1,85 @@
-import { cache } from "react";
+import { notFound } from "next/navigation";
+import { getCourseMeta } from "@/lib/course-meta";
+import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { CourseShell } from "@/components/course-shell";
 import { WorkspaceThemeLock } from "@/components/workspace-theme-lock";
 
-const getCourseForceTheme = cache(async (slug: string) => {
-  const row = await prisma.course.findUnique({
-    where: { slug },
-    select: { workspace: { select: { forceTheme: true } } },
-  });
-  return row?.workspace?.forceTheme ?? null;
-});
+export default async function CourseSlugLayout(props: {
+  children: React.ReactNode;
+  params: Promise<{ slug: string }>;
+}) {
+  const { slug } = await props.params;
+  const { children } = props;
 
-export default async function CourseSlugLayout(
-  props: {
-    children: React.ReactNode;
-    params: Promise<{ slug: string }>;
+  const course = await getCourseMeta(slug);
+  if (!course) {
+    notFound();
   }
-) {
-  const params = await props.params;
 
-  const {
-    children
-  } = props;
+  // Buscar forceTheme do workspace para WorkspaceThemeLock
+  const workspaceForceTheme = await prisma.workspace.findUnique({
+    where: { id: course.workspace!.id },
+    select: { forceTheme: true },
+  });
+  const forceTheme = workspaceForceTheme?.forceTheme ?? null;
 
-  const forceTheme = await getCourseForceTheme(params.slug);
+  // Verificar acesso do aluno
+  let hasAccess = false;
+  const user = await getCurrentUser();
+  if (user) {
+    const enrollment = await prisma.enrollment.findFirst({
+      where: { userId: user.id, courseId: course.id },
+      select: { id: true },
+    });
+    hasAccess = !!enrollment;
+  }
+
+  const hasCustomization = !!(
+    course.memberBgColor ||
+    course.memberSidebarColor ||
+    course.memberHeaderColor ||
+    course.memberCardColor ||
+    course.memberPrimaryColor ||
+    course.memberTextColor
+  );
+
+  // CSS vars SSR — só inclui campos customizados (fallbacks cobrem o resto)
+  const memberVars = [
+    course.memberBgColor && `--member-bg: ${course.memberBgColor}`,
+    course.memberSidebarColor && `--member-sidebar: ${course.memberSidebarColor}`,
+    course.memberHeaderColor && `--member-header: ${course.memberHeaderColor}`,
+    course.memberCardColor && `--member-card: ${course.memberCardColor}`,
+    course.memberPrimaryColor && `--member-primary: ${course.memberPrimaryColor}`,
+    course.memberTextColor && `--member-text: ${course.memberTextColor}`,
+  ]
+    .filter(Boolean)
+    .join("; ");
+
   return (
-    <WorkspaceThemeLock forceTheme={forceTheme}>{children}</WorkspaceThemeLock>
+    <WorkspaceThemeLock forceTheme={forceTheme}>
+      {memberVars && (
+        <style
+          dangerouslySetInnerHTML={{
+            __html: `:root{${memberVars}}`,
+          }}
+        />
+      )}
+      <CourseShell
+        course={{
+          id: course.id,
+          slug: course.slug,
+          title: course.title,
+          bannerUrl: course.bannerUrl,
+          workspace: course.workspace!,
+          termsContent: course.termsContent,
+          termsFileUrl: course.termsFileUrl,
+        }}
+        hasAccess={hasAccess}
+        hasCustomization={hasCustomization}
+      >
+        {children}
+      </CourseShell>
+    </WorkspaceThemeLock>
   );
 }

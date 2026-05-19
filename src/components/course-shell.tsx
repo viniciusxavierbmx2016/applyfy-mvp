@@ -9,6 +9,7 @@ interface CourseShellProps {
     id: string;
     slug: string;
     title: string;
+    bannerUrl?: string | null;
     workspace: {
       id: string;
       name: string;
@@ -16,6 +17,8 @@ interface CourseShellProps {
       slug: string;
       ownerId: string;
     };
+    termsContent?: string | null;
+    termsFileUrl?: string | null;
   };
   hasAccess: boolean;
   hasCustomization: boolean;
