@@ -129,7 +129,7 @@ export function ModuleCarousel({ title, modules }: Props) {
         }
         style={
           isMd
-            ? { paddingBlock: "16px", marginBlock: "-16px" }
+            ? { paddingBlock: "16px", marginBlock: "-16px", paddingInline: "16px", marginInline: "-16px" }
             : undefined
         }
       >
