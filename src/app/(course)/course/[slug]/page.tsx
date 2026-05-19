@@ -424,8 +424,7 @@ export default function CourseHomePage() {
       {/* Banner */}
       {course.bannerUrl && (
         <div
-          className="relative w-full mb-0 -mx-4 sm:-mx-6 lg:-mx-10 overflow-hidden bg-gray-100 dark:bg-gray-900"
-          style={{ aspectRatio: "45/16" }}
+          className="relative w-full mb-0 -mx-4 sm:-mx-6 lg:-mx-10 overflow-hidden bg-gray-100 dark:bg-gray-900 aspect-[16/9] sm:aspect-[2/1] lg:aspect-[45/16]"
         >
           <Image
             src={course.bannerUrl}
