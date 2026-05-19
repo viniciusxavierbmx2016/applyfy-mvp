@@ -274,6 +274,32 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
       }
     }
 
+    if (commentStatus === "APPROVED" && !staff) {
+      try {
+        const workspace = await prisma.workspace.findFirst({
+          where: { id: lesson.module.course.workspaceId },
+          select: { ownerId: true },
+        });
+        if (workspace?.ownerId && workspace.ownerId !== user.id) {
+          const courseSlug = lesson.module.course.slug;
+          const link = `/course/${courseSlug}/lesson/${lesson.id}`;
+          await createNotification({
+            userId: workspace.ownerId,
+            type: "COMMENT",
+            message: `${user.name || "Um aluno"} comentou na aula "${lesson.title}"`,
+            link,
+            actorId: user.id,
+          });
+          sendPushToUser(workspace.ownerId, {
+            title: "Novo comentário",
+            body: `${user.name || "Um aluno"} comentou na aula "${lesson.title}"`,
+            url: link,
+            tag: "comment",
+          }).catch(() => {});
+        }
+      } catch {}
+    }
+
     return NextResponse.json({ comment }, { status: 201 });
   } catch (error) {
     console.error("POST lesson comments error:", error);
