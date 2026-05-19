@@ -218,8 +218,7 @@ export default function WorkspaceVitrinePage() {
     <div className="animate-fade-in-up">
       {ws?.bannerUrl ? (
         <div
-          className="relative w-full overflow-hidden bg-gray-100 dark:bg-card"
-          style={{ aspectRatio: "24/5" }}
+          className="relative w-full overflow-hidden bg-gray-100 dark:bg-card aspect-[3/2] sm:aspect-[16/7] lg:aspect-[24/5]"
           data-tour="student-banner"
         >
           <Image
