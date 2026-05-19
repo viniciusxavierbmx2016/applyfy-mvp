@@ -36,6 +36,15 @@ export function WorkspaceLoginForm({
     if (err) setError(err);
   }, []);
 
+  useEffect(() => {
+    const link = document.querySelector('link[rel="manifest"]');
+    if (link) link.setAttribute("href", `/api/manifest/${slug}`);
+    return () => {
+      const link = document.querySelector('link[rel="manifest"]');
+      if (link) link.setAttribute("href", "/manifest.json");
+    };
+  }, [slug]);
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (

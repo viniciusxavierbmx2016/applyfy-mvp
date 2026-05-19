@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
   WorkspaceAuthShell,
@@ -25,6 +25,15 @@ export function WorkspaceForgotForm({
   const [error, setError] = useState("");
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const link = document.querySelector('link[rel="manifest"]');
+    if (link) link.setAttribute("href", `/api/manifest/${slug}`);
+    return () => {
+      const link = document.querySelector('link[rel="manifest"]');
+      if (link) link.setAttribute("href", "/manifest.json");
+    };
+  }, [slug]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();

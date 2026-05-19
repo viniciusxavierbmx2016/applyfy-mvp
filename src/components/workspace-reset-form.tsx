@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import {
@@ -26,6 +26,15 @@ function ResetFormInner({ workspace, slug }: WorkspaceResetFormProps) {
   const [error, setError] = useState("");
   const [done, setDone] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const link = document.querySelector('link[rel="manifest"]');
+    if (link) link.setAttribute("href", `/api/manifest/${slug}`);
+    return () => {
+      const link = document.querySelector('link[rel="manifest"]');
+      if (link) link.setAttribute("href", "/manifest.json");
+    };
+  }, [slug]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();

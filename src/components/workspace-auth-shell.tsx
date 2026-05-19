@@ -333,6 +333,9 @@ function FormCard({
               src={logoUrl}
               alt={name}
               className="w-full h-full object-cover"
+              fetchPriority="high"
+              loading="eager"
+              decoding="async"
             />
           </div>
         ) : (
