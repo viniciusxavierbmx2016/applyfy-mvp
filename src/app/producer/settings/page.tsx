@@ -5,6 +5,7 @@ import { useTheme } from "next-themes";
 import { useProducerTheme } from "@/components/producer-theme-provider";
 import { useConfirm } from "@/hooks/use-confirm";
 import { darkenHex } from "@/lib/color-utils";
+import { PushToggle } from "@/components/push-toggle";
 
 interface ThemeConfig {
   mode: string;
@@ -291,6 +292,15 @@ export default function SettingsPage() {
             {resettingTour ? "Reiniciando..." : "Refazer tour"}
           </button>
         </div>
+      </section>
+
+      {/* Notificações Push */}
+      <section className="bg-white dark:bg-white/5 border border-gray-200 dark:border-white/5 rounded-xl p-6 mt-6">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">Notificações Push</h3>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+          Receba notificações quando alunos comentarem, postarem ou interagirem com seus cursos.
+        </p>
+        <PushToggle />
       </section>
 
       {toast && (
