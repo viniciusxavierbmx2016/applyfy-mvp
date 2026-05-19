@@ -311,8 +311,30 @@ export default function AutomationsPage() {
     const res = await fetch(`/api/producer/automations/${auto.id}/execute`, { method: "POST" });
     if (res.ok) {
       const data = await res.json();
-      showToast(`Executado: ${data.executed} | Ignorado: ${data.skipped}`);
+      showToast(`Enviado: ${data.executed} | Ignorado: ${data.skipped} (já processados)`);
       load();
+    }
+  }
+
+  async function handleResendAll(auto: AutomationItem) {
+    try {
+      const cfg = JSON.parse(auto.triggerConfig);
+      const tag = tags.find((t) => t.id === cfg.tagId);
+      const tagName = tag?.name || "selecionada";
+      const count = tag?.studentCount || 0;
+      if (!(await confirm({
+        title: "Re-enviar para todos",
+        message: `Re-enviar para TODOS os ${count} aluno${count !== 1 ? "s" : ""} com tag "${tagName}", incluindo os já processados?\n\nIsso pode duplicar emails e notificações.`,
+        confirmText: "Re-enviar todos",
+      }))) return;
+    } catch { return; }
+    const res = await fetch(`/api/producer/automations/${auto.id}/execute?force=true`, { method: "POST" });
+    if (res.ok) {
+      const data = await res.json();
+      showToast(`Enviado: ${data.executed} | Re-enviado: ${data.reExecuted} | Ignorado: ${data.skipped}`);
+      load();
+    } else {
+      showToast("Erro ao re-enviar");
     }
   }
 
@@ -423,14 +445,26 @@ export default function AutomationsPage() {
                     {auto.lastExecutedAt && <span>· {new Date(auto.lastExecutedAt).toLocaleDateString("pt-BR")}</span>}
                   </div>
                   {auto.triggerType === "HAS_TAG" && auto.active && (
-                    <button
-                      type="button"
-                      onClick={(e) => { e.stopPropagation(); handleExecuteNow(auto); }}
-                      className="flex items-center gap-1 text-[10px] font-medium px-2 py-1 rounded-lg bg-purple-500/10 text-purple-400 hover:bg-purple-500/20 border border-purple-500/20 transition"
-                    >
-                      <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
-                      Executar agora
-                    </button>
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); handleExecuteNow(auto); }}
+                        className="flex items-center gap-1 text-[10px] font-medium px-2 py-1 rounded-lg bg-purple-500/10 text-purple-400 hover:bg-purple-500/20 border border-purple-500/20 transition"
+                        title="Executa apenas para alunos que ainda não receberam"
+                      >
+                        <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
+                        Executar novos
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); handleResendAll(auto); }}
+                        className="flex items-center gap-1 text-[10px] font-medium px-2 py-1 rounded-lg bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 border border-amber-500/20 transition"
+                        title="Re-envia para TODOS com a tag, incluindo já processados"
+                      >
+                        <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M17.65 6.35A7.958 7.958 0 0012 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0112 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+                        Re-enviar todos
+                      </button>
+                    </div>
                   )}
                 </div>
               </div>
