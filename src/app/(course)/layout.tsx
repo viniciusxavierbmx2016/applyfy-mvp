@@ -137,7 +137,6 @@ export default function CourseGroupLayout({
   }
 
   const bgStyle = course.memberBgColor ? { backgroundColor: course.memberBgColor } : undefined;
-  const headerStyle = course.memberHeaderColor ? { backgroundColor: course.memberHeaderColor } : undefined;
   const textStyle = course.memberTextColor ? { color: course.memberTextColor } : undefined;
   const hasCustomization = !!(
     course.memberBgColor ||
@@ -158,7 +157,7 @@ export default function CourseGroupLayout({
         onToggleCollapsed={toggleCollapsed}
       />
       <div className={`h-full flex flex-col min-w-0 ${collapsed ? "lg:pl-16" : "lg:pl-60"}`}>
-        <header className="lg:hidden sticky top-0 z-30 h-14 px-4 flex items-center gap-3 bg-white dark:bg-gray-950 border-b border-gray-200 dark:border-gray-800" style={headerStyle}>
+        <header className="lg:hidden sticky top-0 z-30 h-14 px-4 flex items-center gap-3 bg-[var(--member-header,rgb(255_255_255))] dark:bg-[var(--member-header,rgb(3_7_18))] border-b border-gray-200 dark:border-gray-800">
           <button
             onClick={() => setMobileOpen(true)}
             className="p-2 -ml-2 text-gray-700 dark:text-gray-300"
