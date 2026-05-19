@@ -4,8 +4,10 @@ import { requireStaff } from "@/lib/auth";
 import { resolveStaffWorkspace } from "@/lib/workspace";
 import { executeAction } from "@/lib/automation-engine";
 
-export async function POST(_request: Request, props: { params: Promise<{ id: string }> }) {
+export async function POST(request: Request, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
+  const { searchParams } = new URL(request.url);
+  const force = searchParams.get("force") === "true";
   try {
     const staff = await requireStaff();
     const { workspace } = await resolveStaffWorkspace(staff);
@@ -41,14 +43,18 @@ export async function POST(_request: Request, props: { params: Promise<{ id: str
 
     let executed = 0;
     let skipped = 0;
+    let reExecuted = 0;
 
     for (const student of students) {
       const alreadyExecuted = await prisma.automationLog.findFirst({
         where: { automationId: automation.id, userId: student.id },
       });
-      if (alreadyExecuted) {
+      if (alreadyExecuted && !force) {
         skipped++;
         continue;
+      }
+      if (alreadyExecuted && force) {
+        reExecuted++;
       }
 
       try {
@@ -85,7 +91,7 @@ export async function POST(_request: Request, props: { params: Promise<{ id: str
       }
     }
 
-    return NextResponse.json({ executed, skipped, total: students.length });
+    return NextResponse.json({ executed, skipped, reExecuted, total: students.length, forced: force });
   } catch (error) {
     console.error("POST execute automation error:", error);
     const msg = error instanceof Error ? error.message : "";
