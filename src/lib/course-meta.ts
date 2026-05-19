@@ -7,6 +7,7 @@ export const getCourseMeta = cache(async (slug: string) => {
     select: {
       id: true,
       slug: true,
+      ownerId: true,
       title: true,
       bannerUrl: true,
       memberBgColor: true,

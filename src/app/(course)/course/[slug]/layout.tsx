@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { getCourseMeta } from "@/lib/course-meta";
-import { getCurrentUser } from "@/lib/auth";
+import { getCurrentUser, isEnrollmentActive } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { CourseShell } from "@/components/course-shell";
 import { WorkspaceThemeLock } from "@/components/workspace-theme-lock";
@@ -24,15 +24,24 @@ export default async function CourseSlugLayout(props: {
   });
   const forceTheme = workspaceForceTheme?.forceTheme ?? null;
 
-  // Verificar acesso do aluno
+  // Verificar acesso (ADMIN | PRODUCER dono do curso/workspace | enrollment ativo)
   let hasAccess = false;
   const user = await getCurrentUser();
   if (user) {
-    const enrollment = await prisma.enrollment.findFirst({
-      where: { userId: user.id, courseId: course.id },
-      select: { id: true },
-    });
-    hasAccess = !!enrollment;
+    const isCourseOwner =
+      user.role === "PRODUCER" &&
+      (course.ownerId === user.id || course.workspace!.ownerId === user.id);
+    const isStaffViewer = user.role === "ADMIN" || isCourseOwner;
+
+    if (isStaffViewer) {
+      hasAccess = true;
+    } else {
+      const enrollment = await prisma.enrollment.findFirst({
+        where: { userId: user.id, courseId: course.id },
+        select: { status: true, expiresAt: true },
+      });
+      hasAccess = isEnrollmentActive(enrollment);
+    }
   }
 
   const hasCustomization = !!(
