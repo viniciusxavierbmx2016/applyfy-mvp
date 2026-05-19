@@ -16,6 +16,7 @@ export async function generateMetadata(
   return {
     title: ws.name,
     icons: ws.faviconUrl ? { icon: ws.faviconUrl } : undefined,
+    manifest: `/api/manifest/${params.slug}`,
   };
 }
 

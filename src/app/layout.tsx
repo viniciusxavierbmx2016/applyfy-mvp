@@ -37,6 +37,7 @@ export const metadata: Metadata = {
     process.env.NEXT_PUBLIC_APP_URL || "https://app.mymembersclub.com.br"
   ),
   icons: { icon: "/logo.png" },
+  manifest: "/manifest.json",
   openGraph: {
     type: "website",
     locale: "pt_BR",
@@ -66,7 +67,6 @@ export default function RootLayout({
     <html lang="pt-BR" suppressHydrationWarning>
       <head>
         <DynamicFavicon />
-        <link rel="manifest" href="/manifest.json" />
         <meta name="theme-color" content="#0a0a1a" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
