@@ -39,6 +39,9 @@ async function sendToSubscriptions(
           {
             TTL: 3600,
             urgency: "high",
+            // Abort hanging endpoints (notably Apple) so a stuck request can't
+            // freeze the serverless function past its maxDuration.
+            timeout: 10000,
             // RFC 8030: Topic header must be <= 32 url-safe chars. Omit when the
             // tag is longer (automation/lives use long ids) — the SW still uses
             // payload.tag to collapse notifications on the device.
