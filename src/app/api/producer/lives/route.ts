@@ -158,15 +158,6 @@ async function notifyStudents(
 
     const link = `/w/${slug}/lives/${liveId}`;
 
-    if (opts.pushTitle) {
-      await sendPushToUsers(studentIds, {
-        title: opts.pushTitle,
-        body: opts.pushBody || opts.message,
-        url: link,
-        tag: `live-${opts.liveNotificationType.toLowerCase()}-${liveId}`,
-      });
-    }
-
     await prisma.$transaction([
       prisma.liveNotification.createMany({
         data: studentIds.map((userId) => ({
@@ -184,6 +175,15 @@ async function notifyStudents(
         })),
       }),
     ]);
+
+    if (opts.pushTitle) {
+      await sendPushToUsers(studentIds, {
+        title: opts.pushTitle,
+        body: opts.pushBody || opts.message,
+        url: link,
+        tag: `live-${opts.liveNotificationType.toLowerCase()}-${liveId}`,
+      });
+    }
   } catch (err) {
     console.error("notifyStudents error:", err);
   }
