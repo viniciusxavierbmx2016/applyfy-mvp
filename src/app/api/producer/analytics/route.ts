@@ -97,10 +97,11 @@ export async function GET(request: Request) {
           : "overview";
     const sectionParam = (searchParams.get("section") || "").toLowerCase();
 
-    const { workspace, scoped } = await resolveStaffWorkspace(staff);
+    const [{ workspace, scoped }, collabScope] = await Promise.all([
+      resolveStaffWorkspace(staff),
+      getStaffCourseIds(staff),
+    ]);
     const workspaceId = scoped && workspace ? workspace.id : null;
-
-    const collabScope = await getStaffCourseIds(staff);
     const workspaceCourses = workspaceId
       ? await prisma.course.findMany({
           where: { workspaceId },
