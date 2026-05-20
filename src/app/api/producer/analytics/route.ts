@@ -516,16 +516,45 @@ export async function GET(request: Request) {
         });
       }
 
-      const coursesS = await prisma.course.findMany({
-        where: { id: { in: courseIds } },
-        select: {
-          id: true,
-          title: true,
-          modules: {
-            select: { id: true, lessons: { select: { id: true } } },
+      const [coursesS, enrollmentsS] = await Promise.all([
+        prisma.course.findMany({
+          where: { id: { in: courseIds } },
+          select: {
+            id: true,
+            title: true,
+            modules: {
+              select: { id: true, lessons: { select: { id: true } } },
+            },
           },
-        },
-      });
+        }),
+        prisma.enrollment.findMany({
+          where: { courseId: { in: courseIds } },
+          select: {
+            id: true,
+            userId: true,
+            courseId: true,
+            status: true,
+            createdAt: true,
+            expiresAt: true,
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                avatarUrl: true,
+                points: true,
+                phone: true,
+                document: true,
+                level: true,
+                userTags: {
+                  select: { tag: { select: { name: true } } },
+                  orderBy: { createdAt: "desc" as const },
+                },
+              },
+            },
+          },
+        }),
+      ]);
       const courseTitleS = new Map(coursesS.map((c) => [c.id, c.title]));
       const courseLessonsS = new Map<string, string[]>();
       const allLessonIdsS: string[] = [];
@@ -535,34 +564,6 @@ export async function GET(request: Request) {
         courseLessonsS.set(c.id, ids);
         allLessonIdsS.push(...ids);
       }
-
-      const enrollmentsS = await prisma.enrollment.findMany({
-        where: { courseId: { in: courseIds } },
-        select: {
-          id: true,
-          userId: true,
-          courseId: true,
-          status: true,
-          createdAt: true,
-          expiresAt: true,
-          user: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-              avatarUrl: true,
-              points: true,
-              phone: true,
-              document: true,
-              level: true,
-              userTags: {
-                select: { tag: { select: { name: true } } },
-                orderBy: { createdAt: "desc" as const },
-              },
-            },
-          },
-        },
-      });
 
       const activeEnrollments = enrollmentsS.filter(
         (e) => e.status === "ACTIVE"
