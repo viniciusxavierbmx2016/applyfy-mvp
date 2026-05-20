@@ -971,24 +971,49 @@ export async function GET(request: Request) {
       return NextResponse.json(emptyBody);
     }
 
-    // Course structure
-    const courses = await prisma.course.findMany({
-      where: { id: { in: courseIds } },
-      select: {
-        id: true,
-        title: true,
-        modules: {
-          select: {
-            id: true,
-            title: true,
-            order: true,
-            courseId: true,
-            lessons: { select: { id: true, title: true } },
+    // Parallel fetch: course structure + enrollments + reviews + posts.
+    // All depend only on courseIds; expiredCount stays below (CSV early-return).
+    const [courses, enrollments, reviews, postsByTypeRaw] = await Promise.all([
+      prisma.course.findMany({
+        where: { id: { in: courseIds } },
+        select: {
+          id: true,
+          title: true,
+          modules: {
+            select: {
+              id: true,
+              title: true,
+              order: true,
+              courseId: true,
+              lessons: { select: { id: true, title: true } },
+            },
+            orderBy: { order: "asc" },
           },
-          orderBy: { order: "asc" },
         },
-      },
-    });
+      }),
+      prisma.enrollment.findMany({
+        where: { courseId: { in: courseIds }, status: "ACTIVE" },
+        select: {
+          id: true,
+          userId: true,
+          courseId: true,
+          createdAt: true,
+          user: {
+            select: { id: true, name: true, email: true, points: true },
+          },
+        },
+      }),
+      prisma.review.aggregate({
+        where: { courseId: { in: courseIds } },
+        _avg: { rating: true },
+        _count: { rating: true },
+      }),
+      prisma.post.groupBy({
+        by: ["type"],
+        where: { courseId: { in: courseIds } },
+        _count: { _all: true },
+      }),
+    ]);
 
     const allLessonIds: string[] = [];
     const lessonTitle = new Map<string, string>();
@@ -1012,19 +1037,6 @@ export async function GET(request: Request) {
     }
     void workspaceCourseIds;
 
-    // Enrollments (all statuses captured separately; primary analysis uses ACTIVE)
-    const enrollments = await prisma.enrollment.findMany({
-      where: { courseId: { in: courseIds }, status: "ACTIVE" },
-      select: {
-        id: true,
-        userId: true,
-        courseId: true,
-        createdAt: true,
-        user: {
-          select: { id: true, name: true, email: true, points: true },
-        },
-      },
-    });
     const enrollmentUserIds = Array.from(
       new Set(enrollments.map((e) => e.userId))
     );
@@ -1155,12 +1167,6 @@ export async function GET(request: Request) {
     const avgCompletion =
       completionCount > 0 ? (completionSum / completionCount) * 100 : 0;
 
-    // Reviews
-    const reviews = await prisma.review.aggregate({
-      where: { courseId: { in: courseIds } },
-      _avg: { rating: true },
-      _count: { rating: true },
-    });
     const avgRating = reviews._avg.rating ?? 0;
     const ratingCount = reviews._count.rating;
 
@@ -1215,12 +1221,6 @@ export async function GET(request: Request) {
       .sort((a, b) => b.views - a.views)
       .slice(0, 10);
 
-    // Posts by type
-    const postsByTypeRaw = await prisma.post.groupBy({
-      by: ["type"],
-      where: { courseId: { in: courseIds } },
-      _count: { _all: true },
-    });
     const typeLabels: Record<string, string> = {
       QUESTION: "Dúvida",
       RESULT: "Resultado",
