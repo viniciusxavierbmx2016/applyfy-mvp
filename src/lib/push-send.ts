@@ -1,5 +1,6 @@
 import webpush from "web-push";
 import { prisma } from "@/lib/prisma";
+import type { PushSubscription } from "@prisma/client";
 
 webpush.setVapidDetails(
   process.env.VAPID_EMAIL!,
@@ -17,15 +18,17 @@ interface PushPayload {
   image?: string;
 }
 
-export async function sendPushToUser(userId: string, payload: PushPayload) {
-  const subscriptions = await prisma.pushSubscription.findMany({
-    where: { userId },
-  });
-
-  if (subscriptions.length === 0) return 0;
+// Shared delivery: send to already-fetched subscriptions. Both single- and
+// multi-user entry points funnel through here so the topic/cleanup/logging
+// logic lives in one place. Returns the count of successful deliveries.
+async function sendToSubscriptions(
+  subs: PushSubscription[],
+  payload: PushPayload
+) {
+  if (subs.length === 0) return 0;
 
   const results = await Promise.allSettled(
-    subscriptions.map((sub) =>
+    subs.map((sub) =>
       webpush
         .sendNotification(
           {
@@ -53,25 +56,33 @@ export async function sendPushToUser(userId: string, payload: PushPayload) {
     )
   );
 
-  const rejected = results.filter((r) => r.status === "rejected");
-  if (rejected.length > 0) {
-    rejected.forEach((r) => {
+  results.forEach((r, i) => {
+    if (r.status === "rejected") {
       const err = (r as PromiseRejectedResult).reason;
       console.error("[push] delivery failed", {
-        userId,
+        userId: subs[i].userId,
         statusCode: err?.statusCode,
         message: err?.message,
         body: err?.body,
       });
-    });
-  }
+    }
+  });
 
   return results.filter((r) => r.status === "fulfilled").length;
 }
 
+export async function sendPushToUser(userId: string, payload: PushPayload) {
+  const subscriptions = await prisma.pushSubscription.findMany({
+    where: { userId },
+  });
+  return sendToSubscriptions(subscriptions, payload);
+}
+
 export async function sendPushToUsers(userIds: string[], payload: PushPayload) {
-  if (userIds.length === 0) return;
-  await Promise.allSettled(
-    userIds.map((id) => sendPushToUser(id, payload))
-  );
+  if (userIds.length === 0) return 0;
+  // Single query for all recipients (was one findMany per user — N+1).
+  const subscriptions = await prisma.pushSubscription.findMany({
+    where: { userId: { in: userIds } },
+  });
+  return sendToSubscriptions(subscriptions, payload);
 }
