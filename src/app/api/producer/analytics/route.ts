@@ -176,30 +176,31 @@ export async function GET(request: Request) {
         });
       }
 
-      const coursesC = await prisma.course.findMany({
-        where: { id: { in: courseIds } },
-        select: {
-          id: true,
-          title: true,
-          modules: {
-            select: {
-              id: true,
-              title: true,
-              order: true,
-              lessons: {
-                select: { id: true, title: true, order: true },
-                orderBy: { order: "asc" },
+      const [coursesC, enrollmentsC] = await Promise.all([
+        prisma.course.findMany({
+          where: { id: { in: courseIds } },
+          select: {
+            id: true,
+            title: true,
+            modules: {
+              select: {
+                id: true,
+                title: true,
+                order: true,
+                lessons: {
+                  select: { id: true, title: true, order: true },
+                  orderBy: { order: "asc" },
+                },
               },
+              orderBy: { order: "asc" },
             },
-            orderBy: { order: "asc" },
           },
-        },
-      });
-
-      const enrollmentsC = await prisma.enrollment.findMany({
-        where: { courseId: { in: courseIds }, status: "ACTIVE" },
-        select: { userId: true, courseId: true },
-      });
+        }),
+        prisma.enrollment.findMany({
+          where: { courseId: { in: courseIds }, status: "ACTIVE" },
+          select: { userId: true, courseId: true },
+        }),
+      ]);
       const enrolledByCourse = new Map<string, Set<string>>();
       for (const e of enrollmentsC) {
         if (!enrolledByCourse.has(e.courseId))
@@ -245,24 +246,33 @@ export async function GET(request: Request) {
       }
       const allLessonIds = Array.from(lessonMeta.keys());
 
-      const progressC = allLessonIds.length
-        ? await prisma.lessonProgress.findMany({
-            where: {
-              lessonId: { in: allLessonIds },
-              OR: [
-                { lastAccessedAt: { gte: windowStart, lte: windowEnd } },
-                { completedAt: { gte: windowStart, lte: windowEnd } },
-              ],
-            },
-            select: {
-              userId: true,
-              lessonId: true,
-              completed: true,
-              completedAt: true,
-              lastAccessedAt: true,
-            },
-          })
-        : [];
+      const [progressC, reactionCounts] = await Promise.all([
+        allLessonIds.length
+          ? prisma.lessonProgress.findMany({
+              where: {
+                lessonId: { in: allLessonIds },
+                OR: [
+                  { lastAccessedAt: { gte: windowStart, lte: windowEnd } },
+                  { completedAt: { gte: windowStart, lte: windowEnd } },
+                ],
+              },
+              select: {
+                userId: true,
+                lessonId: true,
+                completed: true,
+                completedAt: true,
+                lastAccessedAt: true,
+              },
+            })
+          : [],
+        allLessonIds.length
+          ? prisma.lessonReaction.groupBy({
+              by: ["lessonId", "type"],
+              _count: true,
+              where: { lessonId: { in: allLessonIds } },
+            })
+          : [],
+      ]);
 
       const viewersByLesson = new Map<string, Set<string>>();
       const completersByLesson = new Map<string, Set<string>>();
@@ -294,13 +304,6 @@ export async function GET(request: Request) {
         }
       }
 
-      const reactionCounts = allLessonIds.length
-        ? await prisma.lessonReaction.groupBy({
-            by: ["lessonId", "type"],
-            _count: true,
-            where: { lessonId: { in: allLessonIds } },
-          })
-        : [];
       const likesByLesson = new Map<string, number>();
       const dislikesByLesson = new Map<string, number>();
       for (const r of reactionCounts) {
