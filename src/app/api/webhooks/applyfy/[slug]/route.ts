@@ -113,11 +113,23 @@ export async function POST(request: Request, props: { params: Promise<{ slug: st
     workspaceId = workspace.id;
 
     const storedToken =
-      (await getSetting(`applyfy_token:${workspace.id}`)) ||
-      (await getSetting("applyfy_token")) ||
-      "";
+      (await getSetting(`applyfy_token:${workspace.id}`)) || "";
+    if (!storedToken) {
+      await logWebhook({
+        event,
+        email: body?.client?.email,
+        workspaceId,
+        status: "IGNORED",
+        errorMessage: "Workspace sem token Applyfy configurado",
+        rawPayload: body,
+      });
+      return NextResponse.json(
+        { ok: false, error: "Integration not configured" },
+        { status: 200 }
+      );
+    }
     const providedToken = body?.token || "";
-    if (!storedToken || !safeCompare(providedToken, storedToken)) {
+    if (!safeCompare(providedToken, storedToken)) {
       await logWebhook({
         event,
         email: body?.client?.email,
