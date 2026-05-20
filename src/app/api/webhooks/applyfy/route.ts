@@ -141,22 +141,18 @@ export async function POST(request: Request) {
       }
     }
     if (!matchedToken) {
-      const legacyToken =
-        (await getSetting("applyfy_token")) || process.env.APPLYFY_TOKEN || "";
-      if (!legacyToken || !safeCompare(providedToken, legacyToken)) {
-        console.warn("[applyfy webhook] invalid token", { event });
-        await logWebhook({
-          event,
-          email: body?.client?.email,
-          status: "ERROR",
-          errorMessage: "Invalid token",
-          rawPayload: body,
-        });
-        return NextResponse.json(
-          { ok: false, error: "Invalid token" },
-          { status: 200 }
-        );
-      }
+      console.warn("[applyfy webhook] no per-workspace token matched", { event });
+      await logWebhook({
+        event,
+        email: body?.client?.email,
+        status: "ERROR",
+        errorMessage: "No per-workspace token matched",
+        rawPayload: body,
+      });
+      return NextResponse.json(
+        { ok: false, error: "Invalid token" },
+        { status: 200 }
+      );
     }
 
     if (IGNORED_EVENTS.has(event)) {
