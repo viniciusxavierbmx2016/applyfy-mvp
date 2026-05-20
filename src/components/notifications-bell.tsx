@@ -13,7 +13,7 @@ interface Notification {
   createdAt: string;
 }
 
-const POLL_MS = 60_000;
+const POLL_MS = 15_000;
 
 const ICON: Record<Notification["type"], string> = {
   LIKE: "♥",
