@@ -36,7 +36,12 @@ export async function sendPushToUser(userId: string, payload: PushPayload) {
           {
             TTL: 3600,
             urgency: "high",
-            topic: payload.tag || "default",
+            // RFC 8030: Topic header must be <= 32 url-safe chars. Omit when the
+            // tag is longer (automation/lives use long ids) — the SW still uses
+            // payload.tag to collapse notifications on the device.
+            ...(payload.tag && payload.tag.length <= 32
+              ? { topic: payload.tag }
+              : {}),
           }
         )
         .catch(async (err) => {
