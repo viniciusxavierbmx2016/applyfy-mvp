@@ -84,7 +84,12 @@ export async function PUT(request: Request) {
       const value = updates[key];
 
       if (WORKSPACE_KEYS.has(key)) {
-        if (!workspace) continue; // no workspace scope → cannot persist
+        if (!workspace) {
+          return NextResponse.json(
+            { error: "Nenhum workspace ativo. Selecione um workspace antes de salvar o token." },
+            { status: 400 }
+          );
+        }
         const storeKey = workspaceKey(key, workspace.id);
         if (value === null || value === "") {
           await prisma.settings.deleteMany({ where: { key: storeKey } });

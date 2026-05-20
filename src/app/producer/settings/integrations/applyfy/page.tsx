@@ -139,7 +139,8 @@ export default function AdminIntegrationsPage() {
         body: JSON.stringify({ settings: { applyfy_token: value } }),
       });
       if (!res.ok) {
-        showToast("Erro ao salvar");
+        const data = await res.json().catch(() => ({}));
+        showToast(data.error || "Erro ao salvar");
         return;
       }
       const reload = await fetch("/api/producer/settings");
