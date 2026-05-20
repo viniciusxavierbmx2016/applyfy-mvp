@@ -644,6 +644,11 @@ export async function GET(request: Request) {
         courseTitle: string;
       };
 
+      // CPF/CNPJ only appears in the CSV export, never in JSON. Decrypt lazily to
+      // avoid N crypto ops per JSON request and to keep PII out of the payload.
+      const isCsv = format === "csv";
+      const decryptDoc = (d: string | null) => (isCsv && d ? decrypt(d) : null);
+
       const perUser = new Map<string, UserRow>();
       for (const e of activeEnrollments) {
         const completed =
@@ -658,7 +663,7 @@ export async function GET(request: Request) {
             avatarUrl: e.user.avatarUrl,
             points: e.user.points,
             phone: e.user.phone ?? null,
-            document: e.user.document ? decrypt(e.user.document) : null,
+            document: decryptDoc(e.user.document),
             level: e.user.level ?? 1,
             tags: e.user.userTags?.map((ut) => ut.tag.name).join("; ") || "",
             lessonsCompleted: completed,
@@ -727,7 +732,7 @@ export async function GET(request: Request) {
           avatarUrl: e.user.avatarUrl,
           points: e.user.points,
           phone: e.user.phone ?? null,
-          document: e.user.document ? decrypt(e.user.document) : null,
+          document: decryptDoc(e.user.document),
           level: e.user.level ?? 1,
           tags: e.user.userTags?.map((ut) => ut.tag.name).join("; ") || "",
           lessonsCompleted: 0,
@@ -765,7 +770,7 @@ export async function GET(request: Request) {
             email: e.user.email,
             avatarUrl: e.user.avatarUrl,
             phone: e.user.phone ?? null,
-            document: e.user.document ? decrypt(e.user.document) : null,
+            document: decryptDoc(e.user.document),
             level: e.user.level ?? 1,
             tags: e.user.userTags?.map((ut) => ut.tag.name).join("; ") || "",
             expiresAt: e.expiresAt!.toISOString(),
