@@ -159,7 +159,7 @@ async function notifyStudents(
     const link = `/w/${slug}/lives/${liveId}`;
 
     if (opts.pushTitle) {
-      sendPushToUsers(studentIds, {
+      await sendPushToUsers(studentIds, {
         title: opts.pushTitle,
         body: opts.pushBody || opts.message,
         url: link,
