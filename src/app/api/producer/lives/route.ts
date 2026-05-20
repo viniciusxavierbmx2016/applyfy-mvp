@@ -107,7 +107,7 @@ export async function POST(request: Request) {
       minute: "2-digit",
     });
 
-    notifyStudents(workspaceId, courseId || null, live.id, workspace?.slug || "", {
+    await notifyStudents(workspaceId, courseId || null, live.id, workspace?.slug || "", {
       type: "LIVE_SCHEDULED",
       liveNotificationType: "SCHEDULED",
       message: `Nova live agendada! ${title.trim()} — ${scheduledDate}`,

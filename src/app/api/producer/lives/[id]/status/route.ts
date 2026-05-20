@@ -64,7 +64,7 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
         where: { id: workspaceId },
         select: { slug: true },
       });
-      notifyStudents(workspaceId, existing.courseId, live.id, workspace?.slug || "", {
+      await notifyStudents(workspaceId, existing.courseId, live.id, workspace?.slug || "", {
         type: "LIVE_STARTED",
         liveNotificationType: "STARTED",
         message: `Live começou! ${existing.title} está ao vivo agora`,
