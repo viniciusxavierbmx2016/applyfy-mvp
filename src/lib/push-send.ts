@@ -48,6 +48,19 @@ export async function sendPushToUser(userId: string, payload: PushPayload) {
     )
   );
 
+  const rejected = results.filter((r) => r.status === "rejected");
+  if (rejected.length > 0) {
+    rejected.forEach((r) => {
+      const err = (r as PromiseRejectedResult).reason;
+      console.error("[push] delivery failed", {
+        userId,
+        statusCode: err?.statusCode,
+        message: err?.message,
+        body: err?.body,
+      });
+    });
+  }
+
   return results.filter((r) => r.status === "fulfilled").length;
 }
 
