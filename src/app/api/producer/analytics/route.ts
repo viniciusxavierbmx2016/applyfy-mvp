@@ -868,6 +868,18 @@ export async function GET(request: Request) {
         });
       }
 
+      // Uncapped aggregates over the full active-student set (userList), so the
+      // overview tab never derives totals from the capped topEngaged leaderboard.
+      const sevenAgoS = new Date(refDayS);
+      sevenAgoS.setDate(sevenAgoS.getDate() - 7);
+      const totalActiveStudents = userList.length;
+      const accessedStudents = userList.length - neverAccessedRows.length;
+      const activeLast7 = userList.filter(
+        (u) => u.lastAccessedAt && new Date(u.lastAccessedAt) >= sevenAgoS
+      ).length;
+      const halfDone = userList.filter((u) => u.progressPercent >= 50).length;
+      const certified = userList.filter((u) => u.progressPercent >= 100).length;
+
       return NextResponse.json({
         tab,
         window: legacyWindow,
@@ -882,6 +894,11 @@ export async function GET(request: Request) {
         neverAccessed: neverAccessedRows,
         expiredStudents: expiredRows,
         expiredCount: expiredRows.length,
+        totalActiveStudents,
+        accessedStudents,
+        activeLast7,
+        halfDone,
+        certified,
       });
     }
 
