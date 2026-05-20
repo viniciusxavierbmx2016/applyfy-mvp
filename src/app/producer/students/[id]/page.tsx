@@ -51,12 +51,6 @@ interface ActivityData {
   description: string;
   date: string;
 }
-interface AccessLogData {
-  ip: string;
-  userAgent: string | null;
-  path: string | null;
-  createdAt: string;
-}
 interface TransactionData {
   id: string;
   amount: number;
@@ -74,7 +68,6 @@ interface DetailResponse {
   stats: StatsData;
   certificates: CertData[];
   recentActivity: ActivityData[];
-  accessLogs: AccessLogData[];
   transactions: TransactionData[];
 }
 
@@ -247,7 +240,7 @@ export default function StudentDetailPage(
       {activeTab === "info" && <TabInfo user={user} tags={tags} />}
       {activeTab === "courses" && <TabCourses enrollments={data.enrollments} />}
       {activeTab === "sales" && <TabSales transactions={data.transactions} />}
-      {activeTab === "activity" && <TabActivity activity={data.recentActivity} accessLogs={data.accessLogs} />}
+      {activeTab === "activity" && <TabActivity activity={data.recentActivity} />}
       {activeTab === "engagement" && (
         <TabEngagement stats={stats} certificates={data.certificates} />
       )}
@@ -374,7 +367,7 @@ function TabCourses({ enrollments }: { enrollments: EnrollmentData[] }) {
 }
 
 /* ── Tab: Atividade ── */
-function TabActivity({ activity, accessLogs }: { activity: ActivityData[]; accessLogs: AccessLogData[] }) {
+function TabActivity({ activity }: { activity: ActivityData[] }) {
   const icons: Record<string, string> = {
     lesson_completed: "✅",
     like: "👍",
@@ -411,28 +404,6 @@ function TabActivity({ activity, accessLogs }: { activity: ActivityData[]; acces
       ) : (
         <EmptyState text="Nenhuma atividade recente." />
       )}
-
-      <Section title="Histórico de acessos">
-        {accessLogs.length > 0 ? (
-          <div className="space-y-2">
-            {accessLogs.map((log, i) => (
-              <div key={i} className="flex items-center justify-between py-2 px-3 bg-gray-50 dark:bg-white/[0.02] rounded-lg">
-                <div className="flex items-center gap-3 min-w-0">
-                  <span className="text-xs font-mono text-primary flex-shrink-0">{log.ip}</span>
-                  <span className="text-[10px] text-gray-400 dark:text-gray-600 truncate max-w-[200px]">
-                    {log.userAgent?.split("(")[0] || ""}
-                  </span>
-                </div>
-                <span className="text-xs text-gray-500 flex-shrink-0 ml-2">
-                  {formatDateTime(log.createdAt)}
-                </span>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p className="text-sm text-gray-500">Nenhum acesso registrado</p>
-        )}
-      </Section>
     </div>
   );
 }

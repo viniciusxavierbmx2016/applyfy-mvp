@@ -86,10 +86,23 @@ export async function GET(_request: Request, props: { params: Promise<{ id: stri
 
     const courseIds = enrollments.map((e) => e.course.id);
 
+    // Scope per-user aggregates to this workspace's courses (ADMIN sees all).
+    // Without this, a producer would see the student's lessons/reactions/posts/
+    // comments/activity from OTHER producers' workspaces.
+    const lessonScope = workspaceCourseIds
+      ? { lesson: { module: { courseId: { in: courseIds } } } }
+      : {};
+    const courseScope = workspaceCourseIds
+      ? { courseId: { in: courseIds } }
+      : {};
+    const postScope = workspaceCourseIds
+      ? { post: { courseId: { in: courseIds } } }
+      : {};
+
     const [progress, certificates, reactionCounts, postCount, commentCount, lessonCommentCount, recentProgress, recentReactions] =
       await Promise.all([
         prisma.lessonProgress.findMany({
-          where: { userId: user.id, completed: true },
+          where: { userId: user.id, completed: true, ...lessonScope },
           select: { lessonId: true, lesson: { select: { module: { select: { courseId: true } } } } },
         }),
         prisma.certificate.findMany({
@@ -98,14 +111,14 @@ export async function GET(_request: Request, props: { params: Promise<{ id: stri
         }),
         prisma.lessonReaction.groupBy({
           by: ["type"],
-          where: { userId: user.id },
+          where: { userId: user.id, ...lessonScope },
           _count: { _all: true },
         }),
-        prisma.post.count({ where: { userId: user.id } }),
-        prisma.comment.count({ where: { userId: user.id } }),
-        prisma.lessonComment.count({ where: { userId: user.id } }),
+        prisma.post.count({ where: { userId: user.id, ...courseScope } }),
+        prisma.comment.count({ where: { userId: user.id, ...postScope } }),
+        prisma.lessonComment.count({ where: { userId: user.id, ...lessonScope } }),
         prisma.lessonProgress.findMany({
-          where: { userId: user.id, completed: true },
+          where: { userId: user.id, completed: true, ...lessonScope },
           orderBy: { completedAt: "desc" },
           take: 10,
           select: {
@@ -114,7 +127,7 @@ export async function GET(_request: Request, props: { params: Promise<{ id: stri
           },
         }),
         prisma.lessonReaction.findMany({
-          where: { userId: user.id },
+          where: { userId: user.id, ...lessonScope },
           orderBy: { createdAt: "desc" },
           take: 5,
           select: {
@@ -124,13 +137,6 @@ export async function GET(_request: Request, props: { params: Promise<{ id: stri
           },
         }),
       ]);
-
-    const accessLogs = await prisma.accessLog.findMany({
-      where: { userId: user.id },
-      orderBy: { createdAt: "desc" },
-      take: 10,
-      select: { ip: true, userAgent: true, path: true, createdAt: true },
-    });
 
     const transactions = await prisma.producerTransaction.findMany({
       where: workspaceId
@@ -258,7 +264,6 @@ export async function GET(_request: Request, props: { params: Promise<{ id: stri
         issuedAt: c.issuedAt,
       })),
       recentActivity: recentActivity.slice(0, 15),
-      accessLogs,
       transactions: transactionsOut,
     });
   } catch (error) {
