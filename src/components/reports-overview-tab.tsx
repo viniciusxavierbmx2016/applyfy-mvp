@@ -42,6 +42,11 @@ interface StudentsData {
   };
   neverAccessed: OverviewUser[];
   expiredCount: number;
+  totalActiveStudents: number;
+  accessedStudents: number;
+  activeLast7: number;
+  halfDone: number;
+  certified: number;
 }
 
 interface Props {
@@ -174,6 +179,8 @@ export function ReportsOverviewTab({ courseId, startDate, endDate }: Props) {
   }
 
   // ─── Compute KPIs ───
+  // Totals come from uncapped backend aggregates (totalActiveStudents, etc.),
+  // never from topEngaged — which is a top-10 leaderboard, not a full count.
   const engagedCount = students.topEngaged.length;
   const inactiveCount =
     (students.inactiveGrouped["30-60"]?.length ?? 0) +
@@ -181,12 +188,14 @@ export function ReportsOverviewTab({ courseId, startDate, endDate }: Props) {
     (students.inactiveGrouped["90+"]?.length ?? 0);
   const neverAccessedCount = students.neverAccessed.length;
   const expiredCount = students.expiredCount;
-  const totalStudents = engagedCount + inactiveCount + neverAccessedCount;
+  const totalStudents = students.totalActiveStudents;
 
-  const accessedCount = engagedCount + inactiveCount;
+  const accessedCount = students.accessedStudents;
   const accessRate =
     totalStudents > 0 ? Math.round((accessedCount / totalStudents) * 100) : 0;
 
+  // "Conclusão média" is intentionally the average over the top-engagement
+  // leaderboard (see KpiCard sub), not the whole base.
   const avgProgress =
     engagedCount > 0
       ? Math.round(
@@ -195,27 +204,14 @@ export function ReportsOverviewTab({ courseId, startDate, endDate }: Props) {
         )
       : 0;
 
-  // Date.now() during render is intentional here — the "7-day return" metric
-  // is read against wall-clock time and re-derives on every fetch via useEffect.
-  // eslint-disable-next-line react-hooks/purity
-  const nowMs = Date.now();
-  const sevenDaysAgo = nowMs - 7 * 86400000;
-  const recentlyActive = students.topEngaged.filter((s) => {
-    if (!s.lastAccessedAt) return false;
-    const t = new Date(s.lastAccessedAt).getTime();
-    return !Number.isNaN(t) && t >= sevenDaysAgo;
-  }).length;
+  const recentlyActive = students.activeLast7;
   const returnRate =
-    engagedCount > 0 ? Math.round((recentlyActive / engagedCount) * 100) : 0;
+    totalStudents > 0 ? Math.round((recentlyActive / totalStudents) * 100) : 0;
 
   // ─── Funnel ───
   const startedCount = accessedCount;
-  const halfDoneCount = students.topEngaged.filter(
-    (s) => (s.progressPercent ?? 0) >= 50
-  ).length;
-  const certifiedCount = students.topEngaged.filter(
-    (s) => (s.progressPercent ?? 0) >= 100
-  ).length;
+  const halfDoneCount = students.halfDone;
+  const certifiedCount = students.certified;
 
   const modules = content.modulesLeastCompleted.slice(0, 5);
 
