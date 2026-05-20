@@ -6,7 +6,7 @@ import { formatRelativeTime } from "@/lib/utils";
 
 interface Notification {
   id: string;
-  type: "LIKE" | "COMMENT" | "REPLY" | "ENROLLMENT" | "LEVEL_UP" | "LIVE_SCHEDULED" | "LIVE_STARTED";
+  type: "LIKE" | "COMMENT" | "REPLY" | "ENROLLMENT" | "LEVEL_UP" | "LIVE_SCHEDULED" | "LIVE_STARTED" | "TICKET_NEW" | "TICKET_REPLY" | "AUTOMATION";
   message: string;
   link: string | null;
   read: boolean;
@@ -23,6 +23,9 @@ const ICON: Record<Notification["type"], string> = {
   LEVEL_UP: "★",
   LIVE_SCHEDULED: "📅",
   LIVE_STARTED: "🔴",
+  TICKET_NEW: "🎫",
+  TICKET_REPLY: "🎫",
+  AUTOMATION: "⚙️",
 };
 
 export function NotificationsBell() {
@@ -149,7 +152,7 @@ export function NotificationsBell() {
                       }`}
                     >
                       <span className="mt-0.5 w-8 h-8 shrink-0 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-sm">
-                        {ICON[n.type]}
+                        {ICON[n.type] ?? "🔔"}
                       </span>
                       <div className="flex-1 min-w-0">
                         <p
