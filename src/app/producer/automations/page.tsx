@@ -620,8 +620,12 @@ function FlowEditor({ editing, template, courses, tags, onBack }: { editing: Aut
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     if (dragging.current) {
+      // Snapshot the ref: the setNodes updater runs async (and twice under
+      // StrictMode); reading dragging.current inside it crashes if mouseup
+      // nulled it first ("Cannot read properties of null (reading 'nodeId')").
+      const drag = dragging.current;
       const pos = screenToCanvas(e.clientX, e.clientY);
-      setNodes((prev) => prev.map((n) => n.id === dragging.current!.nodeId ? { ...n, x: pos.x - dragging.current!.offsetX, y: pos.y - dragging.current!.offsetY } : n));
+      setNodes((prev) => prev.map((n) => n.id === drag.nodeId ? { ...n, x: pos.x - drag.offsetX, y: pos.y - drag.offsetY } : n));
       return;
     }
     if (panning.current) {
