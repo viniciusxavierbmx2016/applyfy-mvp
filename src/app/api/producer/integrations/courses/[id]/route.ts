@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireStaff } from "@/lib/auth";
+import { canAccessWorkspace } from "@/lib/workspace";
 import { updateCourseExternalIdSchema, validateBody } from "@/lib/validations";
 
 export async function PATCH(request: Request, props: { params: Promise<{ id: string }> }) {
@@ -10,7 +11,7 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
 
     const course = await prisma.course.findUnique({
       where: { id: params.id },
-      select: { id: true, ownerId: true, title: true },
+      select: { id: true, title: true, workspaceId: true },
     });
     if (!course) {
       return NextResponse.json(
@@ -18,7 +19,7 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
         { status: 404 }
       );
     }
-    if (staff.role === "PRODUCER" && course.ownerId !== staff.id) {
+    if (!(await canAccessWorkspace(staff, course.workspaceId))) {
       return NextResponse.json({ error: "Sem permissão" }, { status: 403 });
     }
 
@@ -31,17 +32,20 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
       typeof raw === "string" && raw.trim().length > 0 ? raw.trim() : null;
 
     if (externalProductId) {
+      // Uniqueness is per-workspace (two workspaces may reuse the same id).
+      // Do NOT expose the conflicting course's title (cross-tenant leak).
       const conflict = await prisma.course.findFirst({
         where: {
           externalProductId,
+          workspaceId: course.workspaceId,
           NOT: { id: params.id },
         },
-        select: { id: true, title: true },
+        select: { id: true },
       });
       if (conflict) {
         return NextResponse.json(
           {
-            error: `externalProductId já usado pelo curso "${conflict.title}"`,
+            error: "externalProductId já usado por outro curso neste workspace",
           },
           { status: 409 }
         );
