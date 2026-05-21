@@ -28,6 +28,10 @@ export default function EmailEditor({
         codeBlock: false,
         code: false,
         horizontalRule: false,
+        // StarterKit v3 bundles link/underline; disable so the standalone
+        // configured extensions below win (no "Duplicate extension" warning).
+        link: false,
+        underline: false,
       }),
       Link.configure({
         openOnClick: false,
