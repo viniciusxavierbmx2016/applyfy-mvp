@@ -4,6 +4,9 @@ import { requireStaff } from "@/lib/auth";
 import { resolveStaffWorkspace } from "@/lib/workspace";
 import { executeAction } from "@/lib/automation-engine";
 
+// Sequential per-student executeAction (each awaits its push); needs more room.
+export const maxDuration = 60;
+
 export async function POST(request: Request, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
   const { searchParams } = new URL(request.url);

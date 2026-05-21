@@ -6,6 +6,9 @@ import { NotificationType } from "@prisma/client";
 import { sendPushToUsers } from "@/lib/push-send";
 import { liveStatusSchema, validateBody } from "@/lib/validations";
 
+// Notification (await notifyStudents → push) runs in-request; give headroom.
+export const maxDuration = 30;
+
 const VALID_TRANSITIONS: Record<string, string[]> = {
   SCHEDULED: ["LIVE"],
   LIVE: ["ENDED"],

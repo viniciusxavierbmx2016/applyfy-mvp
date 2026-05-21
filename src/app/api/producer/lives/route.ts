@@ -6,6 +6,9 @@ import { NotificationType } from "@prisma/client";
 import { sendPushToUsers } from "@/lib/push-send";
 import { createLiveSchema, validateBody } from "@/lib/validations";
 
+// Notification (await notifyStudents → push) runs in-request; give headroom.
+export const maxDuration = 30;
+
 const VALID_PLATFORMS = ["GOOGLE_MEET", "ZOOM", "YOUTUBE_LIVE", "CUSTOM"];
 const MAX_LIVES = 50;
 
