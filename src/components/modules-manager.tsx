@@ -148,20 +148,22 @@ export function ModulesManager({
     });
     if (res.ok) {
       const data = await res.json();
-      setModules([
-        ...modules,
-        {
-          ...data.module,
-          daysToRelease: data.module.daysToRelease ?? 0,
-          releaseAt: data.module.releaseAt ?? null,
-          thumbnailUrl: data.module.thumbnailUrl ?? null,
-          hideTitle: data.module.hideTitle ?? false,
-          sectionId: data.module.sectionId ?? null,
-          lessons: [],
-        },
-      ]);
+      const newModule: ModuleData = {
+        ...data.module,
+        daysToRelease: data.module.daysToRelease ?? 0,
+        releaseAt: data.module.releaseAt ?? null,
+        thumbnailUrl: data.module.thumbnailUrl ?? null,
+        hideTitle: data.module.hideTitle ?? false,
+        sectionId: data.module.sectionId ?? null,
+        lessons: [],
+      };
+      const nextModules = [...modules, newModule];
+      setModules(nextModules);
       setNewModuleTitle("");
       setCreatingModule(false);
+      // Persist order so the new module inherits the section it lands under (the
+      // last one). Without this it stays sectionId=null until a manual drag.
+      await persistOrder(buildOrderedList(nextModules, sections));
     }
   }
 
