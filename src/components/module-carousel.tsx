@@ -111,12 +111,17 @@ export function ModuleCarousel({ title, modules }: Props) {
 
   return (
     <section className="mb-12">
-      {title && (
+      {(title || (isMd && maxOffset > 0)) && (
         <div className="flex items-center gap-4 mb-5 px-1">
-          <h2 className="text-lg font-semibold tracking-tight text-gray-900 dark:text-white whitespace-nowrap">
-            {title}
-          </h2>
-          <div className="flex-1 h-px bg-gradient-to-r from-gray-200 via-gray-200 to-transparent dark:from-white/10 dark:via-white/10" />
+          {title && (
+            <>
+              <h2 className="text-lg font-semibold tracking-tight text-gray-900 dark:text-white whitespace-nowrap">
+                {title}
+              </h2>
+              <div className="flex-1 h-px bg-gradient-to-r from-gray-200 via-gray-200 to-transparent dark:from-white/10 dark:via-white/10" />
+            </>
+          )}
+          {!title && <div className="flex-1" />}
           <div className="hidden md:flex gap-2">
             <button
               onClick={() => scrollByDir(-1)}
