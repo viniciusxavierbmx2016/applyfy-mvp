@@ -441,6 +441,10 @@ Context: Apple endpoint hung indefinitely. sendNotification without timeout froz
 ### L16 — Bell-first pattern for notifications
 Context: Push before bell meant both lost when push hung. Reorder: bell (fast DB write) first, push (slow network) second. Bell always arrives even if push fails.
 
+### L17 — DATA BEFORE CODE
+When a bug shows up in a UI component, ALWAYS verify the data reaching it before touching the component. A diagnostic script in the browser console (element counts, prop values, DOM content) is mandatory before the first fix. If 2 fix attempts fail, the hypothesis is wrong — stop and investigate the data.
+Context: carousel FASE 3 bug — 4h lost editing CSS/JS when the real problem was sectionId=null in the database.
+
 ---
 
 ## PART 9 — COMMIT AND POST-IMPLEMENTATION
