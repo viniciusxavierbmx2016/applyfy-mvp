@@ -50,10 +50,17 @@ export function ModuleCarousel({ title, modules }: Props) {
 
   useEffect(() => {
     measure();
+    // Re-measure after paint: the last carousel (bottom of page) can measure
+    // before layout settles, leaving maxOffset stale (0) and the right arrow
+    // wrongly disabled.
+    const raf = requestAnimationFrame(measure);
     const ro = new ResizeObserver(measure);
     if (containerRef.current) ro.observe(containerRef.current);
     if (trackRef.current) ro.observe(trackRef.current);
-    return () => ro.disconnect();
+    return () => {
+      cancelAnimationFrame(raf);
+      ro.disconnect();
+    };
   }, [modules.length, measure]);
 
   function scrollByDir(dir: 1 | -1) {
@@ -61,10 +68,16 @@ export function ModuleCarousel({ title, modules }: Props) {
     if (!container) return;
 
     if (isMd) {
+      // Measure live: don't trust a possibly-stale maxOffset state.
+      const track = trackRef.current;
+      const liveMax = track
+        ? Math.max(0, track.scrollWidth - container.clientWidth)
+        : maxOffset;
+      if (liveMax !== maxOffset) setMaxOffset(liveMax);
       const step = container.clientWidth * 0.85;
       setOffset((prev) => {
         const next = prev + step * dir;
-        return Math.max(0, Math.min(maxOffset, next));
+        return Math.max(0, Math.min(liveMax, next));
       });
     } else {
       container.scrollBy({ left: container.clientWidth * 0.85 * dir, behavior: "smooth" });
