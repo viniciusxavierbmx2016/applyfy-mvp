@@ -3,15 +3,31 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { calculateCourseProgress } from "@/lib/utils";
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
     const user = await getCurrentUser();
     if (!user) {
       return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
     }
 
+    // Scope to a workspace when accessed via /w/[slug]/profile (prevents
+    // cross-workspace course/certificate leak). No param = global profile.
+    const { searchParams } = new URL(req.url);
+    const workspaceSlug = searchParams.get("workspace");
+    let workspaceFilter = {};
+    if (workspaceSlug) {
+      const workspace = await prisma.workspace.findUnique({
+        where: { slug: workspaceSlug },
+        select: { id: true, isActive: true },
+      });
+      if (!workspace || !workspace.isActive) {
+        return NextResponse.json({ error: "Workspace not found" }, { status: 404 });
+      }
+      workspaceFilter = { course: { workspaceId: workspace.id } };
+    }
+
     const enrollments = await prisma.enrollment.findMany({
-      where: { userId: user.id, status: "ACTIVE" },
+      where: { userId: user.id, status: "ACTIVE", ...workspaceFilter },
       include: {
         course: {
           include: {
