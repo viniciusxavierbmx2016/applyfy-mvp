@@ -120,9 +120,9 @@ export function ModuleCarousel({ title, modules }: Props) {
           <div className="hidden md:flex gap-2">
             <button
               onClick={() => scrollByDir(-1)}
-              disabled={!canLeft}
+              aria-disabled={!canLeft}
               aria-label="Anterior"
-              className="p-2 rounded-full bg-gray-100 dark:bg-white/10 backdrop-blur text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-white/20 disabled:opacity-30 disabled:cursor-not-allowed transition-colors duration-200"
+              className="p-2 rounded-full bg-gray-100 dark:bg-white/10 backdrop-blur text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-white/20 aria-disabled:opacity-30 aria-disabled:cursor-not-allowed transition-colors duration-200"
             >
               <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
@@ -130,9 +130,9 @@ export function ModuleCarousel({ title, modules }: Props) {
             </button>
             <button
               onClick={() => scrollByDir(1)}
-              disabled={!canRight}
+              aria-disabled={!canRight}
               aria-label="Próximo"
-              className="p-2 rounded-full bg-gray-100 dark:bg-white/10 backdrop-blur text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-white/20 disabled:opacity-30 disabled:cursor-not-allowed transition-colors duration-200"
+              className="p-2 rounded-full bg-gray-100 dark:bg-white/10 backdrop-blur text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-white/20 aria-disabled:opacity-30 aria-disabled:cursor-not-allowed transition-colors duration-200"
             >
               <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
