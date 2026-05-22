@@ -57,9 +57,19 @@ export function ModuleCarousel({ title, modules }: Props) {
     const ro = new ResizeObserver(measure);
     if (containerRef.current) ro.observe(containerRef.current);
     if (trackRef.current) ro.observe(trackRef.current);
+    // Re-measure when the carousel scrolls into view: a below-the-fold carousel
+    // may have laid out with stale dimensions before it was visible.
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) measure();
+      },
+      { threshold: 0.1 }
+    );
+    if (containerRef.current) io.observe(containerRef.current);
     return () => {
       cancelAnimationFrame(raf);
       ro.disconnect();
+      io.disconnect();
     };
   }, [modules.length, measure]);
 
