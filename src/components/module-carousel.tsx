@@ -74,6 +74,7 @@ export function ModuleCarousel({ title, modules }: Props) {
   }, [modules.length, measure]);
 
   function scrollByDir(dir: 1 | -1) {
+    console.log("[CAROUSEL] scrollByDir called", { dir, isMd, hasContainer: !!containerRef.current, hasTrack: !!trackRef.current });
     const container = containerRef.current;
     if (!container) return;
 
@@ -87,6 +88,7 @@ export function ModuleCarousel({ title, modules }: Props) {
       const step = container.clientWidth * 0.85;
       setOffset((prev) => {
         const next = prev + step * dir;
+        console.log("[CAROUSEL] setOffset", { prev, next, liveMax, step });
         return Math.max(0, Math.min(liveMax, next));
       });
     } else {
