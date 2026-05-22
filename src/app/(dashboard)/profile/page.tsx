@@ -21,17 +21,20 @@ interface ProfileCourse {
   completedLessons: number;
 }
 
-export default function ProfilePage() {
+export default function ProfilePage({ workspaceSlug }: { workspaceSlug?: string } = {}) {
   const { user, isLoading } = useUserStore();
   const [courses, setCourses] = useState<ProfileCourse[]>([]);
   const [loadingCourses, setLoadingCourses] = useState(true);
 
   useEffect(() => {
-    fetch("/api/profile/stats")
+    const url = workspaceSlug
+      ? `/api/profile/stats?workspace=${encodeURIComponent(workspaceSlug)}`
+      : `/api/profile/stats`;
+    fetch(url)
       .then((r) => (r.ok ? r.json() : { courses: [] }))
       .then((d) => setCourses(d.courses || []))
       .finally(() => setLoadingCourses(false));
-  }, []);
+  }, [workspaceSlug]);
 
   if (isLoading || !user) {
     return (
