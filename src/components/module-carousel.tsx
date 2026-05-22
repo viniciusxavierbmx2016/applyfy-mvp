@@ -43,7 +43,7 @@ export function ModuleCarousel({ title, modules }: Props) {
     const container = containerRef.current;
     const track = trackRef.current;
     if (!container || !track) return;
-    const max = Math.max(0, track.scrollWidth - container.clientWidth);
+    const max = Math.max(0, track.scrollWidth - (container.clientWidth - (parseFloat(getComputedStyle(container).paddingLeft) || 0) - (parseFloat(getComputedStyle(container).paddingRight) || 0)));
     setMaxOffset(max);
     setOffset((prev) => Math.min(prev, max));
   }, []);
@@ -74,7 +74,6 @@ export function ModuleCarousel({ title, modules }: Props) {
   }, [modules.length, measure]);
 
   function scrollByDir(dir: 1 | -1) {
-    console.log("[CAROUSEL] scrollByDir called", { dir, isMd, hasContainer: !!containerRef.current, hasTrack: !!trackRef.current });
     const container = containerRef.current;
     if (!container) return;
 
@@ -82,13 +81,12 @@ export function ModuleCarousel({ title, modules }: Props) {
       // Measure live: don't trust a possibly-stale maxOffset state.
       const track = trackRef.current;
       const liveMax = track
-        ? Math.max(0, track.scrollWidth - container.clientWidth)
+        ? Math.max(0, track.scrollWidth - (container.clientWidth - (parseFloat(getComputedStyle(container).paddingLeft) || 0) - (parseFloat(getComputedStyle(container).paddingRight) || 0)))
         : maxOffset;
       if (liveMax !== maxOffset) setMaxOffset(liveMax);
-      const step = container.clientWidth * 0.85;
+      const step = (container.clientWidth - (parseFloat(getComputedStyle(container).paddingLeft) || 0) - (parseFloat(getComputedStyle(container).paddingRight) || 0)) * 0.85;
       setOffset((prev) => {
         const next = prev + step * dir;
-        console.log("[CAROUSEL] setOffset", { prev, next, liveMax, step });
         return Math.max(0, Math.min(liveMax, next));
       });
     } else {
