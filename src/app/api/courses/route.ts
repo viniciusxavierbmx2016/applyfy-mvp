@@ -94,9 +94,12 @@ export async function GET(request: Request) {
     } else if (user.workspaceId) {
       scopedWorkspaceId = user.workspaceId;
     }
-    const workspaceFilter = scopedWorkspaceId
-      ? { workspaceId: scopedWorkspaceId }
-      : {};
+    // Security: without a resolved workspace, return empty to prevent cross-workspace data leak.
+    // Mirrors the staff bail-out at L64-69.
+    if (!scopedWorkspaceId) {
+      return NextResponse.json({ enrolled: [], store: [] });
+    }
+    const workspaceFilter = { workspaceId: scopedWorkspaceId };
 
     const enrollments = await prisma.enrollment.findMany({
       where: { userId: user.id, status: "ACTIVE" },
