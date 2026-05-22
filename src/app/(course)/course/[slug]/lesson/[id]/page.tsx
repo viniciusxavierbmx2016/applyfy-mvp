@@ -408,18 +408,30 @@ export default function LessonPage(
       <div className="flex flex-1 min-h-0">
         {/* Content */}
         <div className="flex-1 overflow-y-auto">
-          <div className="relative bg-black w-full">
-            <div className="aspect-video w-full">
-              <VideoPlayer video={data.lesson.video} onEnded={handleEnded} />
+          {data.lesson.video.videoId ? (
+            <div className="relative bg-black w-full">
+              <div className="aspect-video w-full">
+                <VideoPlayer video={data.lesson.video} onEnded={handleEnded} />
+              </div>
+              {showCountdown && data.next && (
+                <AutoplayCountdown
+                  nextLessonTitle={data.next.title}
+                  onComplete={goToNext}
+                  onCancel={() => setShowCountdown(false)}
+                />
+              )}
             </div>
-            {showCountdown && data.next && (
-              <AutoplayCountdown
-                nextLessonTitle={data.next.title}
-                onComplete={goToNext}
-                onCancel={() => setShowCountdown(false)}
-              />
-            )}
-          </div>
+          ) : (
+            <div className="px-4 pt-4 sm:px-6 lg:px-8 max-w-[960px]">
+              <div className="w-full bg-gray-50 dark:bg-white/5 border border-gray-200/50 dark:border-white/10 rounded-2xl p-8 text-center">
+                <svg className="w-12 h-12 mx-auto text-gray-400 dark:text-gray-500 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                </svg>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Aula de leitura e materiais</p>
+                <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Confira a descrição e os materiais abaixo</p>
+              </div>
+            </div>
+          )}
 
           <div className="px-4 py-4 sm:px-6 sm:py-5 lg:px-8 max-w-[960px]">
             {(() => {

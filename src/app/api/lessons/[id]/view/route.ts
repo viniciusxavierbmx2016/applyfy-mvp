@@ -158,7 +158,7 @@ export async function GET(_request: Request, props: { params: Promise<{ id: stri
       }),
     ]);
 
-    const video = parseVideoUrl(lesson.videoUrl);
+    const video = parseVideoUrl(lesson.videoUrl ?? "");
 
     // Derive viewer workspace from the lesson's course, not User.workspaceId,
     // so multi-workspace students see the correct "Voltar à vitrine" target.

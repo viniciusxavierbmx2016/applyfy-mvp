@@ -662,7 +662,7 @@ export const reorderLessonsSchema = z.object({
 export const createLessonSchema = z.object({
   title: z.string().min(1, "Título obrigatório").max(255),
   description: z.string().max(50000).optional().nullable(),
-  videoUrl: z.string().min(1, "videoUrl obrigatório").max(2000),
+  videoUrl: z.string().max(2000).optional().nullable(),
   duration: z.union([z.number(), z.null()]).optional(),
   daysToRelease: z.number().int().min(0).optional(),
 });

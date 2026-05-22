@@ -91,6 +91,9 @@ export function LessonsManager({
       const payload = await res.json();
       syncState([...lessons, payload.lesson]);
       setCreating(false);
+      // Auto-open edit so materials/quiz (which need a lessonId) are reachable
+      // right after creating a no-video lesson.
+      setEditingId(payload.lesson.id);
     }
   }
 
@@ -306,7 +309,7 @@ function LessonForm({
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!title.trim() || !videoUrl.trim()) return;
+    if (!title.trim()) return;
     onSubmit({
       title: title.trim(),
       description: description.trim() || null,
@@ -331,8 +334,7 @@ function LessonForm({
         type="url"
         value={videoUrl}
         onChange={(e) => setVideoUrl(e.target.value)}
-        placeholder="URL do vídeo (YouTube, Vimeo, Panda Video...)"
-        required
+        placeholder="Cole a URL do vídeo (opcional)"
         className="w-full px-3 py-2 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
       />
       <RichTextEditor
