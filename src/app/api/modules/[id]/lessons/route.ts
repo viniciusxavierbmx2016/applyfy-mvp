@@ -25,7 +25,7 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
       data: {
         title,
         description: description || null,
-        videoUrl,
+        videoUrl: videoUrl ?? null,
         duration: duration ? Number(duration) : null,
         moduleId: params.id,
         order: (lastLesson?.order ?? -1) + 1,
