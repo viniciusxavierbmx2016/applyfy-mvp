@@ -1,3 +1,12 @@
+export const DURATION_OPTIONS = [
+  { label: "Vitalício", days: null as number | null },
+  { label: "30 dias", days: 30 },
+  { label: "90 dias", days: 90 },
+  { label: "180 dias", days: 180 },
+  { label: "365 dias", days: 365 },
+  { label: "Personalizado", days: -1 }, // sentinel
+];
+
 export function formatDate(iso: string | null) {
   if (!iso) return "—";
   return new Date(iso).toLocaleDateString("pt-BR", {
