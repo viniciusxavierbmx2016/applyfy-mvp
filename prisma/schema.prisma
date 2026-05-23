@@ -364,6 +364,8 @@ model LessonProgress {
   @@unique([userId, lessonId])
   @@index([userId, lastAccessedAt])
   @@index([lessonId])
+  @@index([lessonId, completed])
+  @@index([lessonId, completedAt])
 }
 
 enum GroupPermission {
