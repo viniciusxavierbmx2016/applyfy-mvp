@@ -341,7 +341,7 @@ export async function POST(request: Request, props: { params: Promise<{ slug: st
                 loginUrl,
                 tempPassword
               );
-          sendEmail({ to: { email, name: name || undefined }, ...template, senderName: workspace.name }).catch((err) => console.error("[EMAIL_ERROR] access email to:", email, err?.message || err));
+          await sendEmail({ to: { email, name: name || undefined }, ...template, senderName: workspace.name }).catch((err) => console.error("[EMAIL_ERROR] access email to:", email, err?.message || err));
         }
 
         await logWebhook({
