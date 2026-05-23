@@ -66,36 +66,64 @@ export async function ensureUserByEmail(
       : existing;
   } else {
     const admin = createAdminClient();
-    const { data: list } = await admin.auth.admin.listUsers();
-    const existingAuth = list?.users.find(
-      (u) => u.email?.toLowerCase() === normalizedEmail
-    );
-    let authId = existingAuth?.id;
-    if (!authId) {
-      const globalPassword = generateTempPassword();
-      const { data, error } = await admin.auth.admin.createUser({
-        email: normalizedEmail,
-        password: globalPassword,
-        email_confirm: true,
-        user_metadata: { name: name || normalizedEmail.split("@")[0] },
-      });
-      if (error || !data.user) {
+    let authId: string | undefined;
+
+    // Happy path: create the global auth identity (random password — student
+    // auth is via WorkspaceCredential, this is legacy fallback only).
+    const globalPassword = generateTempPassword();
+    const { data, error } = await admin.auth.admin.createUser({
+      email: normalizedEmail,
+      password: globalPassword,
+      email_confirm: true,
+      user_metadata: { name: name || normalizedEmail.split("@")[0] },
+    });
+    if (data?.user) {
+      authId = data.user.id;
+    } else {
+      // Email already in Supabase Auth (often from another workspace, or an
+      // orphaned identity). createUser fails with "already registered" or the
+      // generic "Database error creating new user". Recover the existing auth
+      // id — listUsers is paginated, so search across pages (page 1 alone
+      // misses users once Auth grows past one page).
+      const msg = error?.message || "";
+      const recoverable =
+        /already.*registered|already been registered|database error/i.test(msg);
+      if (!recoverable) {
+        throw new Error(`Failed to create supabase auth user: ${msg || "unknown"}`);
+      }
+      for (let page = 1; page <= 20 && !authId; page++) {
+        const { data: list } = await admin.auth.admin.listUsers({
+          page,
+          perPage: 200,
+        });
+        const match = list?.users?.find(
+          (u) => u.email?.toLowerCase() === normalizedEmail
+        );
+        if (match) authId = match.id;
+        if (!list?.users || list.users.length < 200) break;
+      }
+      if (!authId) {
         throw new Error(
-          `Failed to create supabase auth user: ${error?.message || "unknown"}`
+          `Auth user exists but could not be located by email: ${normalizedEmail}`
         );
       }
-      authId = data.user.id;
     }
-    user = await prisma.user.create({
-      data: {
-        id: authId,
-        email: normalizedEmail,
-        name: name || normalizedEmail.split("@")[0],
-        workspaceId: workspaceId ?? null,
-        phone: phone || null,
-        document: document ? encrypt(document) : null,
-      },
-    });
+
+    // PK guard: a recovered auth id may already map to a Prisma user (orphaned
+    // identity). Reuse it instead of attempting a duplicate-PK create.
+    const byId = await prisma.user.findUnique({ where: { id: authId } });
+    user =
+      byId ??
+      (await prisma.user.create({
+        data: {
+          id: authId,
+          email: normalizedEmail,
+          name: name || normalizedEmail.split("@")[0],
+          workspaceId: workspaceId ?? null,
+          phone: phone || null,
+          document: document ? encrypt(document) : null,
+        },
+      }));
   }
 
   // 2) Determine whether this account uses platform-wide auth (staff or
