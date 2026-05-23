@@ -36,7 +36,12 @@ export async function processPendingExecutions(): Promise<{ processed: number; e
         continue;
       }
 
-      const triggerData = JSON.parse(item.triggerData || "{}") as Record<string, unknown>;
+      let triggerData: Record<string, unknown> = {};
+      try {
+        triggerData = JSON.parse(item.triggerData || "{}") as Record<string, unknown>;
+      } catch {
+        /* malformed triggerData — fall back to {} */
+      }
       const courseId = (triggerData.courseId as string) || item.automation.courseId || undefined;
 
       const result = await executeAction(item.automation, item.userId, courseId);

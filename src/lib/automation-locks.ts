@@ -76,7 +76,12 @@ export async function getAutomationLocks(
   Array.from(targetMap.entries()).forEach(([moduleId, auto]) => {
     if (releasedSet.has(moduleId)) return;
 
-    const cfg = JSON.parse(auto.triggerConfig as string);
+    let cfg: Record<string, unknown> = {};
+    try {
+      cfg = JSON.parse(auto.triggerConfig as string);
+    } catch {
+      /* malformed triggerConfig — keep default reason, don't break lock calc */
+    }
     let reason = "Complete a atividade anterior para desbloquear";
 
     switch (auto.triggerType) {

@@ -79,7 +79,12 @@ export async function executeAction(
   userId: string,
   courseId?: string
 ): Promise<{ status: string; details?: string }> {
-  const config = JSON.parse(automation.actionConfig) as Record<string, unknown>;
+  let config: Record<string, unknown> = {};
+  try {
+    config = JSON.parse(automation.actionConfig) as Record<string, unknown>;
+  } catch {
+    return { status: "FAILED", details: "actionConfig inválido (JSON malformado)" };
+  }
   const effectiveCourseId = courseId || automation.courseId || undefined;
 
   switch (automation.actionType) {

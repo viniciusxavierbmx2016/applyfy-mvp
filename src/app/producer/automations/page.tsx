@@ -340,9 +340,13 @@ export default function AutomationsPage() {
 
   async function duplicateAutomation(auto: AutomationItem) {
     setMenuOpen(null);
+    let triggerConfig: unknown = {};
+    let actionConfig: unknown = {};
+    try { triggerConfig = JSON.parse(auto.triggerConfig); } catch { /* keep {} */ }
+    try { actionConfig = JSON.parse(auto.actionConfig); } catch { /* keep {} */ }
     const res = await fetch("/api/producer/automations", {
       method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: `${auto.name} (cópia)`, courseId: auto.courseId, triggerType: auto.triggerType, triggerConfig: JSON.parse(auto.triggerConfig), actionType: auto.actionType, actionConfig: JSON.parse(auto.actionConfig) }),
+      body: JSON.stringify({ name: `${auto.name} (cópia)`, courseId: auto.courseId, triggerType: auto.triggerType, triggerConfig, actionType: auto.actionType, actionConfig }),
     });
     if (res.ok) load();
   }
