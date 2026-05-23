@@ -81,7 +81,6 @@ export async function GET(request: Request) {
     }
 
     const { searchParams } = new URL(request.url);
-    const _t0 = Date.now();
     const courseIdParam = (searchParams.get("courseId") || "").trim();
     const startDateParam = (searchParams.get("startDate") || "").trim();
     const endDateParam = (searchParams.get("endDate") || "").trim();
@@ -472,7 +471,6 @@ export async function GET(request: Request) {
         });
       }
 
-      console.log(`[ANALYTICS] ${tab} completed in ${Date.now() - _t0}ms`);
       return NextResponse.json({
         tab,
         window: legacyWindow,
@@ -891,7 +889,6 @@ export async function GET(request: Request) {
       const halfDone = userList.filter((u) => u.progressPercent >= 50).length;
       const certified = userList.filter((u) => u.progressPercent >= 100).length;
 
-      console.log(`[ANALYTICS] ${tab} completed in ${Date.now() - _t0}ms`);
       return NextResponse.json({
         tab,
         window: legacyWindow,
@@ -1437,7 +1434,6 @@ export async function GET(request: Request) {
       monetizationOpportunity,
     };
 
-    console.log(`[ANALYTICS] ${tab} completed in ${Date.now() - _t0}ms`);
     return NextResponse.json({
       courses: scopedCourses,
       selectedCourseId,
