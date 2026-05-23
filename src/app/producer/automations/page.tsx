@@ -6,250 +6,38 @@ import dynamic from "next/dynamic";
 import { useConfirm } from "@/hooks/use-confirm";
 import { CustomSelect } from "@/components/custom-select";
 import { HelpTooltip } from "@/components/help-tooltip";
+import {
+  AutomationItem,
+  CourseOption,
+  TagOption,
+  CanvasNode,
+  TemplateData,
+} from "./_types";
+import {
+  TRIGGER_META,
+  ACTION_META,
+  GLOBAL_TRIGGERS,
+  EVENT_TRIGGERS,
+  NODE_W,
+  NODE_H,
+  START_R,
+} from "./_lib/meta";
+import {
+  getValidActions,
+  formatDelay,
+  parseDelayMinutes,
+  toDelayMinutes,
+  getTriggerDetail,
+  getActionDetail,
+  validateFrontend,
+  defaultNodes,
+} from "./_lib/helpers";
+import { TEMPLATES } from "./_data/templates";
 
 const EmailEditor = dynamic(() => import("@/components/email-editor"), {
   ssr: false,
   loading: () => <div className="h-[200px] bg-gray-900/50 border border-white/10 rounded-lg animate-pulse" />,
 });
-
-interface AutomationItem {
-  id: string;
-  name: string;
-  active: boolean;
-  triggerType: string;
-  triggerConfig: string;
-  actionType: string;
-  actionConfig: string;
-  courseId: string | null;
-  executionCount: number;
-  lastExecutedAt: string | null;
-  createdAt: string;
-}
-
-interface LessonOption {
-  id: string;
-  title: string;
-  quiz: { id: string } | null;
-}
-
-interface ModuleOption {
-  id: string;
-  title: string;
-  daysToRelease: number;
-  lessons: LessonOption[];
-}
-
-interface CourseOption {
-  id: string;
-  title: string;
-  modules: ModuleOption[];
-}
-
-interface TagOption {
-  id: string;
-  name: string;
-  color: string;
-  studentCount: number;
-}
-
-interface CanvasNode {
-  id: string;
-  type: "start" | "trigger" | "action";
-  x: number;
-  y: number;
-}
-
-interface TemplateData {
-  name: string;
-  emoji: string;
-  description: string;
-  triggerType: string;
-  triggerConfig: Record<string, unknown>;
-  actionType: string;
-  actionConfig: Record<string, unknown>;
-  needsCourse: boolean;
-}
-
-const TRIGGER_META: Record<string, { short: string; icon: string; desc: string; behavioral?: boolean }> = {
-  LESSON_COMPLETED: { short: "Completar aula", desc: "Quando um aluno finalizar uma aula", icon: "M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664zM21 12a9 9 0 11-18 0 9 9 0 0118 0z" },
-  MODULE_COMPLETED: { short: "Completar módulo", desc: "Quando todas as aulas do módulo forem concluídas", icon: "M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" },
-  COURSE_COMPLETED: { short: "Completar curso", desc: "Quando o aluno finalizar todas as aulas", icon: "M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" },
-  QUIZ_PASSED: { short: "Passar no quiz", desc: "Quando o aluno atingir a nota mínima", icon: "M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" },
-  STUDENT_ENROLLED: { short: "Se matricular", desc: "Quando um aluno for matriculado", icon: "M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" },
-  STUDENT_INACTIVE: { short: "Aluno inativo", desc: "Aluno não acessa há X dias", icon: "M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z", behavioral: true },
-  STUDENT_NEVER_ACCESSED: { short: "Nunca acessou", desc: "Matriculado mas sem acesso", icon: "M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21", behavioral: true },
-  PROGRESS_BELOW: { short: "Baixo progresso", desc: "Aluno com progresso abaixo de X%", icon: "M13 17h8m0 0V9m0 8l-8-8-4 4-6-6", behavioral: true },
-  PROGRESS_ABOVE: { short: "Alto progresso", desc: "Aluno atingiu X% de progresso", icon: "M13 7h8m0 0v8m0-8l-8 8-4-4-6 6", behavioral: true },
-  MODULE_NOT_STARTED: { short: "Módulo parado", desc: "Aluno não começou módulo após X dias", icon: "M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636", behavioral: true },
-  HAS_TAG: { short: "Alunos com tag", desc: "Execute ação para alunos com uma tag específica", icon: "M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z", behavioral: true },
-};
-
-const ACTION_META: Record<string, { short: string; icon: string; desc: string }> = {
-  UNLOCK_MODULE: { short: "Liberar módulo", desc: "Desbloqueia um módulo para o aluno", icon: "M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z" },
-  SEND_EMAIL: { short: "Enviar email", desc: "Envia um email ao aluno", icon: "M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" },
-  ENROLL_COURSE: { short: "Matricular curso", desc: "Matricula em outro curso", icon: "M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" },
-  SEND_PUSH: { short: "Enviar push", desc: "Envia notificação push ao aluno", icon: "M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" },
-  ADD_TAG: { short: "Adicionar tag", desc: "Atribui uma tag ao aluno", icon: "M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" },
-};
-
-const VALID_ACTIONS_FOR_TRIGGER: Record<string, string[]> = {
-  MODULE_COMPLETED: ["UNLOCK_MODULE", "SEND_EMAIL", "ENROLL_COURSE", "SEND_PUSH", "ADD_TAG"],
-  COURSE_COMPLETED: ["SEND_EMAIL", "ENROLL_COURSE", "SEND_PUSH", "ADD_TAG"],
-  LESSON_COMPLETED: ["SEND_EMAIL", "UNLOCK_MODULE", "ENROLL_COURSE", "SEND_PUSH", "ADD_TAG"],
-  QUIZ_PASSED: ["SEND_EMAIL", "UNLOCK_MODULE", "ENROLL_COURSE", "SEND_PUSH", "ADD_TAG"],
-  STUDENT_ENROLLED: ["SEND_EMAIL", "ENROLL_COURSE", "SEND_PUSH", "ADD_TAG"],
-  STUDENT_INACTIVE: ["SEND_EMAIL", "SEND_PUSH", "ADD_TAG"],
-  STUDENT_NEVER_ACCESSED: ["SEND_EMAIL", "SEND_PUSH", "ADD_TAG"],
-  PROGRESS_BELOW: ["SEND_EMAIL", "SEND_PUSH", "ADD_TAG"],
-  PROGRESS_ABOVE: ["SEND_EMAIL", "SEND_PUSH", "ADD_TAG"],
-  MODULE_NOT_STARTED: ["SEND_EMAIL", "SEND_PUSH", "ADD_TAG"],
-  HAS_TAG: ["SEND_EMAIL", "ENROLL_COURSE", "UNLOCK_MODULE", "SEND_PUSH", "ADD_TAG"],
-};
-
-const GLOBAL_TRIGGERS = ["STUDENT_INACTIVE", "STUDENT_NEVER_ACCESSED", "HAS_TAG"];
-const EVENT_TRIGGERS = ["STUDENT_ENROLLED", "LESSON_COMPLETED", "MODULE_COMPLETED", "COURSE_COMPLETED", "QUIZ_PASSED"];
-
-function getValidActions(triggerType: string): string[] {
-  return VALID_ACTIONS_FOR_TRIGGER[triggerType] || [];
-}
-
-function formatDelay(minutes: number): string {
-  if (minutes >= 1440 && minutes % 1440 === 0) return `${minutes / 1440} dia(s)`;
-  if (minutes >= 60 && minutes % 60 === 0) return `${minutes / 60} hora(s)`;
-  return `${minutes} min`;
-}
-
-function parseDelayMinutes(minutes: number): { value: string; unit: string } {
-  if (!minutes || minutes <= 0) return { value: "", unit: "minutes" };
-  if (minutes >= 1440 && minutes % 1440 === 0) return { value: String(minutes / 1440), unit: "days" };
-  if (minutes >= 60 && minutes % 60 === 0) return { value: String(minutes / 60), unit: "hours" };
-  return { value: String(minutes), unit: "minutes" };
-}
-
-function toDelayMinutes(value: string, unit: string): number {
-  const n = Number(value) || 0;
-  if (n <= 0) return 0;
-  if (unit === "hours") return n * 60;
-  if (unit === "days") return n * 1440;
-  return n;
-}
-
-const TEMPLATES: TemplateData[] = [
-  { emoji: "🔔", name: "Reengajar alunos inativos", description: "Email para alunos inativos há 7 dias", triggerType: "STUDENT_INACTIVE", triggerConfig: { inactiveDays: 7 }, actionType: "SEND_EMAIL", actionConfig: { subject: "Sentimos sua falta!", body: "Olá! Notamos que você não acessa há alguns dias.\n\nVolte e continue de onde parou!" }, needsCourse: false },
-  { emoji: "👋", name: "Ativar quem nunca entrou", description: "Email para quem nunca acessou", triggerType: "STUDENT_NEVER_ACCESSED", triggerConfig: { afterDays: 3 }, actionType: "SEND_EMAIL", actionConfig: { subject: "Seu acesso está esperando!", body: "Olá! Você foi matriculado mas ainda não acessou.\n\nComece agora!" }, needsCourse: false },
-  { emoji: "🔓", name: "Liberar módulo após conclusão", description: "Desbloqueia próximo módulo ao concluir", triggerType: "MODULE_COMPLETED", triggerConfig: {}, actionType: "UNLOCK_MODULE", actionConfig: {}, needsCourse: true },
-  { emoji: "📧", name: "Email de parabéns no quiz", description: "Parabéns quando passa no quiz", triggerType: "QUIZ_PASSED", triggerConfig: {}, actionType: "SEND_EMAIL", actionConfig: { subject: "Parabéns! Você passou no quiz!", body: "Excelente resultado! Continue avançando." }, needsCourse: true },
-  { emoji: "📊", name: "Alertar baixo progresso", description: "Email para quem está abaixo de 25%", triggerType: "PROGRESS_BELOW", triggerConfig: { progressPercent: 25, afterDays: 14 }, actionType: "SEND_EMAIL", actionConfig: { subject: "Precisa de ajuda?", body: "Vimos que você está no início. Estamos aqui para ajudar!" }, needsCourse: true },
-  { emoji: "🎉", name: "Parabenizar 50% de progresso", description: "Comemora ao atingir metade do curso", triggerType: "PROGRESS_ABOVE", triggerConfig: { progressPercent: 50 }, actionType: "SEND_EMAIL", actionConfig: { subject: "Você já está na metade!", body: "Parabéns! Continue assim!" }, needsCourse: true },
-  { emoji: "📚", name: "Matricular em curso bônus", description: "Matricula em outro curso ao concluir", triggerType: "COURSE_COMPLETED", triggerConfig: {}, actionType: "ENROLL_COURSE", actionConfig: {}, needsCourse: true },
-  { emoji: "🏷️", name: "Ação em massa por tag", description: "Envie email para todos os alunos com uma tag", triggerType: "HAS_TAG", triggerConfig: {}, actionType: "SEND_EMAIL", actionConfig: { subject: "Mensagem importante", body: "Olá! Temos uma novidade para você." }, needsCourse: false },
-  { emoji: "🔔", name: "Push de conteúdo novo", description: "Notificação push ao se matricular", triggerType: "STUDENT_ENROLLED", triggerConfig: {}, actionType: "SEND_PUSH", actionConfig: { pushTitle: "Novidade no {curso}!", pushBody: "Olá {nome}, tem conteúdo novo te esperando!", pushUrl: "/" }, needsCourse: true },
-  { emoji: "📲", name: "Reengajar via push", description: "Push para alunos inativos há 7 dias", triggerType: "STUDENT_INACTIVE", triggerConfig: { inactiveDays: 7 }, actionType: "SEND_PUSH", actionConfig: { pushTitle: "Sentimos sua falta, {nome}!", pushBody: "Faz dias que você não aparece. Volte e continue de onde parou!", pushUrl: "/" }, needsCourse: false },
-];
-
-function getTriggerDetail(auto: AutomationItem, courses: CourseOption[], tags?: TagOption[]): string | null {
-  try {
-    const cfg = JSON.parse(auto.triggerConfig);
-    if (auto.triggerType === "HAS_TAG" && cfg.tagId && tags) {
-      const tag = tags.find((t) => t.id === cfg.tagId);
-      return tag ? `${tag.name} (${tag.studentCount})` : null;
-    }
-    if (cfg.inactiveDays) return `${cfg.inactiveDays} dias`;
-    if (cfg.afterDays && auto.triggerType === "STUDENT_NEVER_ACCESSED") return `após ${cfg.afterDays}d`;
-    if (cfg.progressPercent != null) {
-      const extra = cfg.afterDays ? ` após ${cfg.afterDays}d` : "";
-      return `${cfg.progressPercent}%${extra}`;
-    }
-    const course = courses.find((c) => c.id === auto.courseId);
-    if (cfg.moduleId && course) {
-      const mod = course.modules.find((m) => m.id === cfg.moduleId);
-      return mod?.title || null;
-    }
-    if (cfg.lessonId && course) {
-      for (const m of course.modules) {
-        const l = m.lessons.find((les) => les.id === cfg.lessonId);
-        if (l) return l.title;
-      }
-    }
-  } catch { /* ignore */ }
-  return null;
-}
-
-function getActionDetail(auto: AutomationItem, courses: CourseOption[]): string | null {
-  try {
-    const cfg = JSON.parse(auto.actionConfig);
-    if (cfg.moduleId) {
-      const course = courses.find((c) => c.id === auto.courseId);
-      const mod = course?.modules.find((m) => m.id === cfg.moduleId);
-      return mod?.title || null;
-    }
-    if (cfg.subject) return `"${cfg.subject}"`;
-    if (cfg.pushTitle) return `"${cfg.pushTitle}"`;
-    if (cfg.tagName) return `"${cfg.tagName}"`;
-    if (cfg.courseId) {
-      const c = courses.find((cr) => cr.id === cfg.courseId);
-      return c?.title || null;
-    }
-  } catch { /* ignore */ }
-  return null;
-}
-
-function validateFrontend(
-  name: string, courseId: string, triggerType: string, triggerConfig: Record<string, string>,
-  actionType: string, actionConfig: Record<string, string>
-): string | null {
-  if (!name.trim()) return "Nome é obrigatório";
-  if (!GLOBAL_TRIGGERS.includes(triggerType) && !courseId) return "Selecione um curso";
-  if (!triggerType) return "Selecione o gatilho (clique no nó azul)";
-  if (!actionType) return "Selecione a ação (clique no nó verde)";
-
-  const validActions = getValidActions(triggerType);
-  if (!validActions.includes(actionType)) return "Ação incompatível com o gatilho selecionado";
-
-  if (triggerType === "STUDENT_INACTIVE" && (!triggerConfig.inactiveDays || Number(triggerConfig.inactiveDays) < 1)) return "Informe dias de inatividade";
-  if (triggerType === "STUDENT_NEVER_ACCESSED" && (!triggerConfig.afterDays || Number(triggerConfig.afterDays) < 1)) return "Informe dias após matrícula";
-  if (triggerType === "PROGRESS_BELOW") {
-    if (!triggerConfig.progressPercent || Number(triggerConfig.progressPercent) < 1) return "Informe a porcentagem";
-    if (!triggerConfig.afterDays || Number(triggerConfig.afterDays) < 1) return "Informe dias mínimos";
-  }
-  if (triggerType === "PROGRESS_ABOVE" && (!triggerConfig.progressPercent || Number(triggerConfig.progressPercent) < 1)) return "Informe a porcentagem";
-  if (triggerType === "MODULE_NOT_STARTED") {
-    if (!triggerConfig.moduleId) return "Selecione o módulo no trigger";
-    if (!triggerConfig.afterDays || Number(triggerConfig.afterDays) < 1) return "Informe dias mínimos";
-  }
-  if (triggerType === "HAS_TAG") {
-    if (!triggerConfig.tagId) return "Selecione uma tag";
-  }
-
-  if (actionType === "UNLOCK_MODULE") {
-    if (!actionConfig.moduleId) return "Selecione o módulo para liberar";
-    if (triggerType === "MODULE_COMPLETED" && triggerConfig.moduleId === actionConfig.moduleId) return "O módulo do trigger deve ser diferente do módulo da ação";
-  }
-  if (actionType === "SEND_EMAIL") {
-    if (!actionConfig.subject?.trim()) return "Informe o assunto do email";
-    if (!actionConfig.body?.trim()) return "Informe o corpo do email";
-  }
-  if (actionType === "ENROLL_COURSE" && !actionConfig.courseId) return "Selecione o curso destino";
-  if (actionType === "SEND_PUSH") {
-    if (!actionConfig.pushTitle?.trim()) return "Informe o título da notificação";
-    if (!actionConfig.pushBody?.trim()) return "Informe a mensagem da notificação";
-  }
-  if (actionType === "ADD_TAG" && !actionConfig.tagName?.trim()) return "Informe o nome da tag";
-
-  return null;
-}
-
-const NODE_W = 240;
-const NODE_H = 120;
-const START_R = 24;
-
-function defaultNodes(): CanvasNode[] {
-  return [
-    { id: "start", type: "start", x: 80, y: 250 },
-    { id: "trigger", type: "trigger", x: 220, y: 220 },
-    { id: "action", type: "action", x: 540, y: 220 },
-  ];
-}
 
 export default function AutomationsPage() {
   const [automations, setAutomations] = useState<AutomationItem[]>([]);
