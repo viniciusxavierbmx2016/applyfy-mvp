@@ -32,7 +32,8 @@ import {
   validateFrontend,
   defaultNodes,
 } from "./_lib/helpers";
-import { TEMPLATES } from "./_data/templates";
+import { NewAutomationModal } from "./_components/new-automation-modal";
+import { CardMenu } from "./_components/card-menu";
 
 const EmailEditor = dynamic(() => import("@/components/email-editor"), {
   ssr: false,
@@ -272,77 +273,6 @@ export default function AutomationsPage() {
           {toast}
         </div>
       )}
-    </div>
-  );
-}
-
-function NewAutomationModal({ onClose, onScratch, onTemplate }: { onClose: () => void; onScratch: () => void; onTemplate: (t: TemplateData) => void }) {
-  const [showTemplates, setShowTemplates] = useState(false);
-  return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center pt-[5vh] sm:pt-[8vh] overflow-y-auto" onClick={onClose}>
-      <div className="absolute inset-0 bg-black/60" />
-      <div className="relative bg-white dark:bg-gray-950 border border-gray-200 dark:border-white/10 rounded-2xl p-6 max-w-2xl w-full mx-4 shadow-2xl mb-10" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Nova automação</h3>
-          <button type="button" onClick={onClose} className="p-1 text-gray-500 hover:text-white transition rounded-lg hover:bg-white/5">
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
-          </button>
-        </div>
-        {!showTemplates ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <button type="button" onClick={onScratch} className="flex flex-col items-center gap-3 p-6 rounded-xl border-2 border-gray-200 dark:border-white/10 hover:border-primary/50 hover:bg-primary/5 transition text-center group">
-              <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition">
-                <svg className="w-6 h-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
-              </div>
-              <div><p className="text-sm font-semibold text-gray-900 dark:text-white">Criar do zero</p><p className="text-xs text-gray-500 mt-1">Monte seu fluxo personalizado</p></div>
-            </button>
-            <button type="button" onClick={() => setShowTemplates(true)} className="flex flex-col items-center gap-3 p-6 rounded-xl border-2 border-gray-200 dark:border-white/10 hover:border-primary/50 hover:bg-primary/5 transition text-center group">
-              <div className="w-12 h-12 rounded-xl bg-amber-500/10 flex items-center justify-center group-hover:bg-amber-500/20 transition">
-                <svg className="w-6 h-6 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-              </div>
-              <div><p className="text-sm font-semibold text-gray-900 dark:text-white">Usar template</p><p className="text-xs text-gray-500 mt-1">Comece com um modelo pronto</p></div>
-            </button>
-          </div>
-        ) : (
-          <div>
-            <button type="button" onClick={() => setShowTemplates(false)} className="flex items-center gap-1 text-sm text-gray-400 hover:text-white transition mb-4">
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
-              Voltar
-            </button>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              {TEMPLATES.map((t, i) => {
-                const trigger = TRIGGER_META[t.triggerType];
-                return (
-                  <button key={i} type="button" onClick={() => onTemplate(t)} className="flex flex-col items-start gap-2 p-4 rounded-xl border border-gray-200 dark:border-white/10 hover:border-primary/50 hover:bg-primary/5 transition text-left">
-                    <span className="text-2xl">{t.emoji}</span>
-                    <p className="text-sm font-semibold text-gray-900 dark:text-white leading-tight">{t.name}</p>
-                    <p className="text-xs text-gray-500 leading-relaxed">{t.description}</p>
-                    <span className={`text-[10px] uppercase tracking-wider font-medium px-2 py-0.5 rounded-full ${trigger?.behavioral ? "bg-amber-500/10 text-amber-400" : "bg-blue-500/10 text-blue-400"}`}>{trigger?.short || t.triggerType}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function CardMenu({ onEdit, onDuplicate, onDelete, onClose }: { onEdit: () => void; onDuplicate: () => void; onDelete: () => void; onClose: () => void }) {
-  const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    function handle(e: MouseEvent) { if (ref.current && !ref.current.contains(e.target as Node)) onClose(); }
-    document.addEventListener("mousedown", handle);
-    return () => document.removeEventListener("mousedown", handle);
-  }, [onClose]);
-  const item = "w-full text-left px-3 py-2 text-sm hover:bg-white/5 transition rounded-lg flex items-center gap-2";
-  return (
-    <div ref={ref} className="absolute right-0 top-7 z-20 w-40 bg-white dark:bg-gray-950 border border-gray-200 dark:border-white/10 rounded-xl shadow-xl p-1" onClick={(e) => e.stopPropagation()}>
-      <button type="button" onClick={onEdit} className={`${item} text-gray-700 dark:text-gray-300`}><svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>Editar</button>
-      <button type="button" onClick={onDuplicate} className={`${item} text-gray-700 dark:text-gray-300`}><svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>Duplicar</button>
-      <div className="h-px bg-gray-200 dark:bg-white/10 my-1" />
-      <button type="button" onClick={onDelete} className={`${item} text-red-400`}><svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>Excluir</button>
     </div>
   );
 }
