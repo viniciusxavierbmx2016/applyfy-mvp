@@ -320,6 +320,7 @@ export function CreateEditLiveModal({
                 />
               </label>
             )}
+            <p className="text-xs text-gray-500 mt-2">Tamanho ideal: 1280×720px (16:9). PNG, JPG ou WebP, máx. 5MB.</p>
           </div>
 
           {editingLive?.status === "ENDED" && (
