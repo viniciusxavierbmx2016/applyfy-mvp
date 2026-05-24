@@ -1,14 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { HelpTooltip } from "@/components/help-tooltip";
 import type { LoginLayout, Workspace, TabKey, ImagePosition } from "./_types";
 import {
   compressImage,
-  hexToRgba,
   parsePosition,
   DEFAULT_BG,
   DEFAULT_PRIMARY,
@@ -17,16 +15,12 @@ import {
   DEFAULT_SIDE,
   DEFAULT_LINK,
   HEX_RE,
-  inputClass,
-  labelClass,
 } from "./_lib/helpers";
 import { TABS } from "./_lib/tabs";
-import { ColorField } from "./_components/color-field";
-import { ImageDropzone } from "./_components/image-dropzone";
-import { LayoutIllustration } from "./_components/layout-illustration";
 import { PreviewIframe } from "./_components/preview-iframe";
 import { InfoTab } from "./_components/info-tab";
 import { AppearanceTab } from "./_components/appearance-tab";
+import { LoginTab } from "./_components/login-tab";
 
 export default function EditWorkspacePage() {
   const params = useParams<{ id: string }>();
@@ -79,8 +73,6 @@ export default function EditWorkspacePage() {
   const [error, setError] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
 
-  const bgFileRef = useRef<HTMLInputElement>(null);
-  const loginLogoFileRef = useRef<HTMLInputElement>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewKey, setPreviewKey] = useState(() => Date.now());
 
@@ -457,221 +449,36 @@ export default function EditWorkspacePage() {
         )}
 
         {tab === "login" && (
-          <div>
-            {/* Layout */}
-            <div className="mb-8">
-              <h2 className="text-sm font-medium text-gray-900 dark:text-white mb-0.5">
-                Layout
-                <HelpTooltip text="Escolha como o formulário de login aparece: centralizado na tela ou alinhado à esquerda com imagem de fundo." />
-              </h2>
-              <p className="text-xs text-gray-500 mb-4">Escolha como o formulário aparece na tela</p>
-              <div className="grid grid-cols-3 gap-3">
-                {(
-                  [
-                    { key: "central", label: "Central" },
-                    { key: "lateral-left", label: "Lateral esquerda" },
-                    { key: "lateral-right", label: "Lateral direita" },
-                  ] as const
-                ).map((opt) => (
-                  <button
-                    key={opt.key}
-                    type="button"
-                    onClick={() => setLoginLayout(opt.key)}
-                    className={cn(
-                      "group rounded-xl p-3 transition flex flex-col items-center gap-2",
-                      loginLayout === opt.key
-                        ? "border-2 border-primary bg-primary/5"
-                        : "border border-gray-200 dark:border-white/10 hover:border-gray-400 dark:hover:border-white/20"
-                    )}
-                  >
-                    <div className="w-full h-[70px]">
-                      <LayoutIllustration kind={opt.key} />
-                    </div>
-                    <span className="text-xs font-medium text-gray-900 dark:text-white">
-                      {opt.label}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Cores */}
-            <div className="mb-8 pt-8 border-t border-gray-200 dark:border-white/5">
-              <h2 className="text-sm font-medium text-gray-900 dark:text-white mb-0.5">
-                Cores
-                <HelpTooltip text="Personalize as cores do fundo e do botão principal da página de login." />
-              </h2>
-              <p className="text-xs text-gray-500 mb-4">Personalize as cores da tela de login</p>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                <ColorField
-                  label="Cor dos botões"
-                  description="Cor do botão 'Entrar'"
-                  value={loginPrimaryColor}
-                  fallback={DEFAULT_PRIMARY}
-                  onChange={setLoginPrimaryColor}
-                />
-                <ColorField
-                  label="Cor dos links"
-                  description="'Esqueci senha' e 'Criar conta'"
-                  value={loginLinkColor}
-                  fallback={DEFAULT_LINK}
-                  onChange={setLoginLinkColor}
-                />
-                <ColorField
-                  label="Cor de fundo"
-                  description="Fundo quando não há imagem"
-                  value={loginBgColor}
-                  fallback={DEFAULT_BG}
-                  onChange={setLoginBgColor}
-                />
-                <div className="bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-lg p-3">
-                  <p className="text-[11px] text-gray-600 dark:text-gray-400">
-                    Cor do box
-                  </p>
-                  <div className="mt-2 flex items-center gap-2">
-                    <label className="w-7 h-7 rounded-md shrink-0 border border-gray-200 dark:border-white/10 relative overflow-hidden cursor-pointer" style={{ backgroundColor: HEX_RE.test(loginBoxColor) ? loginBoxColor : DEFAULT_BOX }}>
-                      <input
-                        type="color"
-                        value={HEX_RE.test(loginBoxColor) ? loginBoxColor : DEFAULT_BOX}
-                        onChange={(e) => setLoginBoxColor(e.target.value)}
-                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                      />
-                    </label>
-                    <span className="text-xs font-mono text-gray-400 dark:text-gray-500">
-                      {HEX_RE.test(loginBoxColor) ? loginBoxColor : "padrão"}
-                    </span>
-                  </div>
-                  <div className="mt-3">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-[11px] text-gray-500">Opacidade</span>
-                      <span className="text-[11px] font-mono text-gray-500">
-                        {Math.round(loginBoxOpacity * 100)}%
-                      </span>
-                    </div>
-                    <input
-                      type="range"
-                      min={0}
-                      max={100}
-                      step={1}
-                      value={Math.round(loginBoxOpacity * 100)}
-                      onChange={(e) => setLoginBoxOpacity(Number(e.target.value) / 100)}
-                      className="w-full h-1 accent-primary"
-                    />
-                  </div>
-                  <div
-                    className="mt-2 w-full h-6 rounded"
-                    style={{
-                      backgroundColor: hexToRgba(
-                        HEX_RE.test(loginBoxColor) ? loginBoxColor : DEFAULT_BOX,
-                        loginBoxOpacity
-                      ),
-                      backgroundImage:
-                        "linear-gradient(45deg, rgba(127,127,127,0.15) 25%, transparent 25%, transparent 75%, rgba(127,127,127,0.15) 75%), linear-gradient(45deg, rgba(127,127,127,0.15) 25%, transparent 25%, transparent 75%, rgba(127,127,127,0.15) 75%)",
-                      backgroundSize: "12px 12px",
-                      backgroundPosition: "0 0, 6px 6px",
-                    }}
-                  />
-                </div>
-                {(loginLayout === "lateral-left" || loginLayout === "lateral-right") && (
-                  <ColorField
-                    label="Fundo lateral"
-                    description="Cor ao lado da imagem"
-                    value={loginSideColor}
-                    fallback={DEFAULT_SIDE}
-                    onChange={setLoginSideColor}
-                  />
-                )}
-              </div>
-            </div>
-
-            {/* Imagens */}
-            <div className="mb-8 pt-8 border-t border-gray-200 dark:border-white/5">
-              <h2 className="text-sm font-medium text-gray-900 dark:text-white mb-0.5">
-                Imagens
-                <HelpTooltip text="Adicione uma imagem de fundo e seu logo na página de login. Formatos aceitos: JPG, PNG, WebP." />
-              </h2>
-              <p className="text-xs text-gray-500 mb-4">Imagem de fundo e logo para a tela de login</p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <ImageDropzone
-                  label="Imagem de fundo"
-                  dimensions="1920×1080"
-                  imageUrl={loginBgImageUrl}
-                  uploading={uploadingBg}
-                  fallbackColor={HEX_RE.test(loginBgColor) ? loginBgColor : null}
-                  onPick={() => bgFileRef.current?.click()}
-                  onRemove={() => setLoginBgImageUrl(null)}
-                />
-                <ImageDropzone
-                  label="Logo do login"
-                  dimensions="200×200"
-                  imageUrl={loginLogoUrl || logoUrl || null}
-                  imageIsFallback={!loginLogoUrl && !!logoUrl}
-                  uploading={uploadingLoginLogo}
-                  onPick={() => loginLogoFileRef.current?.click()}
-                  onRemove={loginLogoUrl ? () => setLoginLogoUrl(null) : undefined}
-                  initial={name.charAt(0).toUpperCase() || "W"}
-                />
-              </div>
-              <input
-                ref={bgFileRef}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={(e) => {
-                  const f = e.target.files?.[0];
-                  e.target.value = "";
-                  if (f) uploadLoginImage(f, "bgImage");
-                }}
-              />
-              <input
-                ref={loginLogoFileRef}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={(e) => {
-                  const f = e.target.files?.[0];
-                  e.target.value = "";
-                  if (f) uploadLoginImage(f, "loginLogo");
-                }}
-              />
-            </div>
-
-            {/* Textos */}
-            <div className="pt-8 border-t border-gray-200 dark:border-white/5">
-              <h2 className="text-sm font-medium text-gray-900 dark:text-white mb-0.5">
-                Textos
-                <HelpTooltip text="Personalize o título e subtítulo que aparecem na página de login dos seus alunos." />
-              </h2>
-              <p className="text-xs text-gray-500 mb-4">Mensagens que aparecem na tela de login</p>
-              <div className="grid sm:grid-cols-2 gap-4">
-                <div>
-                  <label className={labelClass}>Título de boas-vindas</label>
-                  <input
-                    type="text"
-                    value={loginTitle}
-                    onChange={(e) => setLoginTitle(e.target.value)}
-                    placeholder={`Bem-vindo a ${name || "..."}`}
-                    maxLength={80}
-                    className={inputClass}
-                  />
-                  <p className="text-[11px] text-gray-500 mt-1">
-                    Aparece acima do formulário
-                  </p>
-                </div>
-                <div>
-                  <label className={labelClass}>Subtítulo</label>
-                  <input
-                    type="text"
-                    value={loginSubtitle}
-                    onChange={(e) => setLoginSubtitle(e.target.value)}
-                    placeholder="Acesse sua conta para continuar"
-                    maxLength={120}
-                    className={inputClass}
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
+          <LoginTab
+            loginLayout={loginLayout}
+            setLoginLayout={setLoginLayout}
+            loginPrimaryColor={loginPrimaryColor}
+            setLoginPrimaryColor={setLoginPrimaryColor}
+            loginLinkColor={loginLinkColor}
+            setLoginLinkColor={setLoginLinkColor}
+            loginBgColor={loginBgColor}
+            setLoginBgColor={setLoginBgColor}
+            loginBoxColor={loginBoxColor}
+            setLoginBoxColor={setLoginBoxColor}
+            loginBoxOpacity={loginBoxOpacity}
+            setLoginBoxOpacity={setLoginBoxOpacity}
+            loginSideColor={loginSideColor}
+            setLoginSideColor={setLoginSideColor}
+            loginBgImageUrl={loginBgImageUrl}
+            setLoginBgImageUrl={setLoginBgImageUrl}
+            uploadingBg={uploadingBg}
+            onUploadBg={(f) => uploadLoginImage(f, "bgImage")}
+            loginLogoUrl={loginLogoUrl}
+            setLoginLogoUrl={setLoginLogoUrl}
+            uploadingLoginLogo={uploadingLoginLogo}
+            onUploadLoginLogo={(f) => uploadLoginImage(f, "loginLogo")}
+            logoUrl={logoUrl}
+            name={name}
+            loginTitle={loginTitle}
+            setLoginTitle={setLoginTitle}
+            loginSubtitle={loginSubtitle}
+            setLoginSubtitle={setLoginSubtitle}
+          />
         )}
 
         {tab === "appearance" && (
