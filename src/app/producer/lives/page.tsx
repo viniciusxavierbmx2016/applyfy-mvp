@@ -19,6 +19,7 @@ import {
   extractYouTubeEmbedUrl,
   toLocalDatetimeValue,
 } from "./_lib/helpers";
+import { ConfirmModal } from "./_components/confirm-modal";
 
 export default function ProducerLivesPage() {
   const router = useRouter();
@@ -785,58 +786,12 @@ export default function ProducerLivesPage() {
 
       {/* Confirm Modal */}
       {confirmAction && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/60" onClick={() => setConfirmAction(null)} />
-          <div className="relative bg-white dark:bg-gray-950 border border-gray-200 dark:border-white/10 rounded-xl w-full max-w-sm p-6">
-            <h3 className="text-lg font-bold text-white mb-2">
-              {confirmAction.type === "start"
-                ? "Iniciar Live?"
-                : confirmAction.type === "end"
-                  ? "Encerrar Live?"
-                  : "Excluir Live?"}
-            </h3>
-            <p className="text-gray-400 text-sm mb-4">
-              {confirmAction.type === "start"
-                ? `"${confirmAction.live.title}" será marcada como ao vivo. O chat será liberado para os alunos.`
-                : confirmAction.type === "end"
-                  ? `"${confirmAction.live.title}" será encerrada. O chat será desabilitado.`
-                  : `"${confirmAction.live.title}" será excluída permanentemente com todas as mensagens.`}
-            </p>
-            <div className="flex justify-end gap-3">
-              <button
-                onClick={() => setConfirmAction(null)}
-                className="px-4 py-2 text-sm text-gray-400 hover:text-white transition"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={() => {
-                  if (confirmAction.type === "delete") {
-                    handleDelete(confirmAction.live);
-                  } else {
-                    handleStatusChange(
-                      confirmAction.live,
-                      confirmAction.type === "start" ? "LIVE" : "ENDED"
-                    );
-                  }
-                }}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
-                  confirmAction.type === "delete"
-                    ? "bg-red-600 hover:bg-red-700 text-white"
-                    : confirmAction.type === "start"
-                      ? "bg-red-600 hover:bg-red-700 text-white"
-                      : "bg-gray-600 hover:bg-gray-700 text-white"
-                }`}
-              >
-                {confirmAction.type === "start"
-                  ? "Iniciar"
-                  : confirmAction.type === "end"
-                    ? "Encerrar"
-                    : "Excluir"}
-              </button>
-            </div>
-          </div>
-        </div>
+        <ConfirmModal
+          action={confirmAction}
+          onCancel={() => setConfirmAction(null)}
+          onDelete={handleDelete}
+          onStatusChange={handleStatusChange}
+        />
       )}
 
       {/* Save as Lesson Modal */}
