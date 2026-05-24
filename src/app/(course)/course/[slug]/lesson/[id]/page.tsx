@@ -25,6 +25,7 @@ import {
 import { useUserStore } from "@/stores/user-store";
 import type { ParsedVideo } from "@/lib/video";
 import { formatPhoneDisplay, formatWhatsappLink } from "@/lib/utils";
+import { CongratulationsModal } from "./_components/congratulations-modal";
 
 interface MaterialData {
   id: string;
@@ -52,6 +53,7 @@ interface ViewData {
     supportEmail?: string | null;
     supportWhatsapp?: string | null;
     showLessonSupport?: boolean;
+    certificateEnabled?: boolean;
     modules: SidebarModule[];
   };
   prev: { id: string; title: string } | null;
@@ -75,6 +77,7 @@ export default function LessonPage(
   } | null>(null);
   const [marking, setMarking] = useState(false);
   const [showCountdown, setShowCountdown] = useState(false);
+  const [showCongrats, setShowCongrats] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
@@ -251,6 +254,10 @@ export default function LessonPage(
               level: body.user.level,
             });
           }
+        }
+
+        if (completed && body.courseCompleted) {
+          setShowCongrats(true);
         }
 
         return body;
@@ -744,6 +751,15 @@ export default function LessonPage(
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-5 py-3 bg-blue-600 text-white rounded-lg shadow-xl text-sm font-medium animate-in fade-in slide-in-from-bottom-4">
           {toast}
         </div>
+      )}
+
+      {showCongrats && (
+        <CongratulationsModal
+          courseTitle={data.course.title}
+          courseId={data.course.id}
+          certificateEnabled={data.course.certificateEnabled !== false}
+          onClose={() => setShowCongrats(false)}
+        />
       )}
     </div>
   );
