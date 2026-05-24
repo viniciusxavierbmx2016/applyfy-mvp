@@ -7,136 +7,22 @@ import { useParams, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { BannerUpload } from "@/components/banner-upload";
 import { HelpTooltip } from "@/components/help-tooltip";
-
-async function compressImage(file: File, maxSizeMB: number = 4, maxWidth: number = 1920): Promise<File> {
-  if (file.size <= maxSizeMB * 1024 * 1024) return file;
-
-  return new Promise((resolve, reject) => {
-    const img = new window.Image();
-    img.onload = () => {
-      const canvas = document.createElement("canvas");
-      let { width, height } = img;
-      if (width > maxWidth) {
-        height = Math.round((height * maxWidth) / width);
-        width = maxWidth;
-      }
-      canvas.width = width;
-      canvas.height = height;
-      const ctx = canvas.getContext("2d");
-      if (!ctx) return reject(new Error("Canvas não suportado"));
-      ctx.drawImage(img, 0, 0, width, height);
-
-      let quality = 0.85;
-      const tryCompress = () => {
-        canvas.toBlob(
-          (blob) => {
-            if (!blob) return reject(new Error("Falha na compressão"));
-            if (blob.size > maxSizeMB * 1024 * 1024 && quality > 0.3) {
-              quality -= 0.1;
-              tryCompress();
-            } else {
-              resolve(new File([blob], file.name.replace(/\.\w+$/, ".jpg"), { type: "image/jpeg" }));
-            }
-          },
-          "image/jpeg",
-          quality
-        );
-      };
-      tryCompress();
-    };
-    img.onerror = () => reject(new Error("Erro ao carregar imagem"));
-    img.src = URL.createObjectURL(file);
-  });
-}
-
-type LoginLayout = "central" | "lateral-left" | "lateral-right";
-
-interface Workspace {
-  id: string;
-  slug: string;
-  name: string;
-  logoUrl: string | null;
-  loginLayout: LoginLayout;
-  loginBgImageUrl: string | null;
-  loginBgColor: string | null;
-  loginPrimaryColor: string | null;
-  loginLogoUrl: string | null;
-  loginTitle: string | null;
-  loginSubtitle: string | null;
-  loginBoxColor: string | null;
-  loginBoxOpacity: number | null;
-  loginSideColor: string | null;
-  loginLinkColor: string | null;
-  masterPassword: string | null;
-  accentColor: string | null;
-  bannerUrl: string | null;
-  bannerPosition: string | null;
-  faviconUrl: string | null;
-  forceTheme: string | null;
-  customDomain: string | null;
-  isActive: boolean;
-}
-
-const DEFAULT_BG = "#0f172a";
-const DEFAULT_PRIMARY = "#3b82f6";
-const DEFAULT_BOX = "#1e293b";
-const DEFAULT_BOX_OPACITY = 0.8;
-const DEFAULT_SIDE = "#0f172a";
-const DEFAULT_LINK = "#3b82f6";
-const HEX_RE = /^#[0-9a-fA-F]{6}$/;
-
-const inputClass =
-  "w-full px-3 py-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-white/10 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-primary/50 transition-colors text-sm";
-
-const labelClass = "block text-xs text-gray-500 dark:text-gray-400 mb-1.5";
-
-function hexToRgba(hex: string, alpha: number): string {
-  if (!HEX_RE.test(hex)) return `rgba(30, 41, 59, ${alpha})`;
-  const n = parseInt(hex.slice(1), 16);
-  const r = (n >> 16) & 0xff;
-  const g = (n >> 8) & 0xff;
-  const b = n & 0xff;
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-}
-
-type TabKey = "info" | "login" | "appearance";
-
-const TABS: Array<{ key: TabKey; label: string; icon: React.ReactNode }> = [
-  {
-    key: "info",
-    label: "Informações",
-    icon: (
-      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-      </svg>
-    ),
-  },
-  {
-    key: "login",
-    label: "Personalizar Login",
-    icon: (
-      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-      </svg>
-    ),
-  },
-  {
-    key: "appearance",
-    label: "Personalizar Vitrine",
-    icon: (
-      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
-      </svg>
-    ),
-  },
-];
-
-interface ImagePosition { x: number; y: number }
-
-function parsePosition(json: string | null | undefined): ImagePosition {
-  if (!json) return { x: 50, y: 50 };
-  try { const p = JSON.parse(json); return { x: p.x ?? 50, y: p.y ?? 50 }; } catch { return { x: 50, y: 50 }; }
-}
+import type { LoginLayout, Workspace, TabKey, ImagePosition } from "./_types";
+import {
+  compressImage,
+  hexToRgba,
+  parsePosition,
+  DEFAULT_BG,
+  DEFAULT_PRIMARY,
+  DEFAULT_BOX,
+  DEFAULT_BOX_OPACITY,
+  DEFAULT_SIDE,
+  DEFAULT_LINK,
+  HEX_RE,
+  inputClass,
+  labelClass,
+} from "./_lib/helpers";
+import { TABS } from "./_lib/tabs";
 
 export default function EditWorkspacePage() {
   const params = useParams<{ id: string }>();
