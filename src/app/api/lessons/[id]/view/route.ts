@@ -186,6 +186,7 @@ export async function GET(_request: Request, props: { params: Promise<{ id: stri
         supportEmail: course.supportEmail,
         supportWhatsapp: course.supportWhatsapp,
         showLessonSupport: course.showLessonSupport,
+        certificateEnabled: course.certificateEnabled,
         modules: course.modules.map((m) => {
           const modRelease = computeModuleReleaseWithOverride(
             enrollmentCreatedAt,
