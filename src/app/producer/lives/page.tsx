@@ -5,86 +5,20 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { SkeletonLiveCard } from "@/components/ui/skeleton";
 import { HelpTooltip } from "@/components/help-tooltip";
-
-interface LiveItem {
-  id: string;
-  title: string;
-  description: string | null;
-  platform: string;
-  externalUrl: string;
-  embedUrl: string | null;
-  status: string;
-  scheduledAt: string;
-  startedAt: string | null;
-  endedAt: string | null;
-  recordingUrl: string | null;
-  thumbnailUrl: string | null;
-  courseId: string | null;
-  savedAsLessonId: string | null;
-  visibility: string;
-  course: { id: string; title: string } | null;
-  _count: { messages: number };
-  createdAt: string;
-}
-
-interface CourseOption {
-  id: string;
-  title: string;
-}
-
-interface ModuleOption {
-  id: string;
-  title: string;
-}
-
-type StatusFilter = "ALL" | "SCHEDULED" | "LIVE" | "ENDED";
-
-const PLATFORMS = [
-  { value: "YOUTUBE_LIVE", label: "YouTube Live" },
-  { value: "GOOGLE_MEET", label: "Google Meet" },
-  { value: "ZOOM", label: "Zoom" },
-  { value: "CUSTOM", label: "Outro link" },
-];
-
-const STATUS_LABELS: Record<string, string> = {
-  SCHEDULED: "Agendada",
-  LIVE: "Ao Vivo",
-  ENDED: "Encerrada",
-};
-
-const STATUS_COLORS: Record<string, string> = {
-  SCHEDULED: "bg-yellow-500/20 text-yellow-400",
-  LIVE: "bg-red-500/20 text-red-400 animate-pulse",
-  ENDED: "bg-gray-500/20 text-gray-400",
-};
-
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString("pt-BR", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
-
-function extractYouTubeEmbedUrl(url: string): string | null {
-  const patterns = [
-    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/live\/)([a-zA-Z0-9_-]+)/,
-    /youtube\.com\/embed\/([a-zA-Z0-9_-]+)/,
-  ];
-  for (const p of patterns) {
-    const m = url.match(p);
-    if (m) return `https://www.youtube.com/embed/${m[1]}`;
-  }
-  return null;
-}
-
-function toLocalDatetimeValue(iso: string): string {
-  const d = new Date(iso);
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-}
+import type {
+  LiveItem,
+  CourseOption,
+  ModuleOption,
+  StatusFilter,
+} from "./_types";
+import {
+  PLATFORMS,
+  STATUS_LABELS,
+  STATUS_COLORS,
+  formatDate,
+  extractYouTubeEmbedUrl,
+  toLocalDatetimeValue,
+} from "./_lib/helpers";
 
 export default function ProducerLivesPage() {
   const router = useRouter();
