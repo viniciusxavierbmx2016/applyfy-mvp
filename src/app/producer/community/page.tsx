@@ -9,60 +9,13 @@ import { useConfirm } from "@/hooks/use-confirm";
 import { CustomSelect } from "@/components/custom-select";
 import { HelpTooltip } from "@/components/help-tooltip";
 import { ImageLightbox } from "@/components/image-lightbox";
-
-interface AdminPost {
-  id: string;
-  content: string;
-  type: "QUESTION" | "RESULT" | "FEEDBACK" | "FREE";
-  pinned: boolean;
-  status?: string;
-  createdAt: string;
-  user: {
-    id: string;
-    name: string;
-    avatarUrl: string | null;
-    role: "STUDENT" | "ADMIN";
-  };
-  course: { id: string; title: string; slug: string };
-  group?: { id: string; name: string } | null;
-  _count: { likes: number; comments: number };
-}
-
-interface PendingItem {
-  id: string;
-  type: "community_post" | "community_comment" | "lesson_comment";
-  content: string;
-  createdAt: string;
-  user: { id: string; name: string; email: string; avatarUrl: string | null };
-  course: { id: string; title: string; slug: string };
-  group?: { id: string; name: string } | null;
-  post?: { id: string; content: string } | null;
-}
-
-interface CourseOption {
-  id: string;
-  title: string;
-  slug: string;
-}
-
-interface CommunityGroup {
-  id: string;
-  name: string;
-  slug: string;
-  description: string | null;
-  isDefault: boolean;
-  permission: "READ_WRITE" | "READ_ONLY";
-  order: number;
-  _count: { posts: number };
-}
-
-const typeLabels: Record<AdminPost["type"], { label: string; color: string }> =
-  {
-    QUESTION: { label: "Dúvida", color: "bg-yellow-500/20 text-yellow-400" },
-    RESULT: { label: "Resultado", color: "bg-green-500/20 text-green-400" },
-    FEEDBACK: { label: "Feedback", color: "bg-purple-500/20 text-purple-400" },
-    FREE: { label: "Livre", color: "bg-primary/20 text-primary" },
-  };
+import type {
+  AdminPost,
+  PendingItem,
+  CourseOption,
+  CommunityGroup,
+} from "./_types";
+import { typeLabels } from "./_lib/helpers";
 
 export default function AdminCommunityPage() {
   const [posts, setPosts] = useState<AdminPost[]>([]);
