@@ -1,11 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { BannerUpload } from "@/components/banner-upload";
 import { HelpTooltip } from "@/components/help-tooltip";
 import type { LoginLayout, Workspace, TabKey, ImagePosition } from "./_types";
 import {
@@ -28,6 +26,7 @@ import { ImageDropzone } from "./_components/image-dropzone";
 import { LayoutIllustration } from "./_components/layout-illustration";
 import { PreviewIframe } from "./_components/preview-iframe";
 import { InfoTab } from "./_components/info-tab";
+import { AppearanceTab } from "./_components/appearance-tab";
 
 export default function EditWorkspacePage() {
   const params = useParams<{ id: string }>();
@@ -74,8 +73,6 @@ export default function EditWorkspacePage() {
   const [vitrineTextColor, setVitrineTextColor] = useState<string | null>(null);
   const [vitrineWelcomeText, setVitrineWelcomeText] = useState<string | null>(null);
   const [vitrineLayoutStyle, setVitrineLayoutStyle] = useState<string>("netflix");
-
-  const faviconFileRef = useRef<HTMLInputElement>(null);
 
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -248,6 +245,26 @@ export default function EditWorkspacePage() {
     } finally {
       setter(false);
     }
+  }
+
+  async function restoreVitrine() {
+    if (!window.confirm("Restaurar cores padrão da vitrine?")) return;
+    const res = await fetch(`/api/producer/workspaces/${id}/vitrine`, {
+      method: "DELETE",
+    });
+    if (!res.ok) {
+      showToast("Erro ao restaurar");
+      return;
+    }
+    setAccentColor("");
+    setVitrineBgColor(null);
+    setVitrineSidebarColor(null);
+    setVitrineHeaderColor(null);
+    setVitrineCardColor(null);
+    setVitrineTextColor(null);
+    setVitrineWelcomeText(null);
+    setVitrineLayoutStyle("netflix");
+    showToast("Vitrine restaurada para o padrão");
   }
 
   async function save(e?: React.FormEvent) {
@@ -658,216 +675,36 @@ export default function EditWorkspacePage() {
         )}
 
         {tab === "appearance" && (
-          <div>
-            {/* Cores da vitrine */}
-            <div className="mb-8">
-              <h2 className="text-sm font-medium text-gray-900 dark:text-white mb-0.5">
-                Cores da vitrine
-                <HelpTooltip text="Personalize as cores da vitrine (dashboard) que o aluno vê após o login. Deixe em branco para usar os padrões." />
-              </h2>
-              <p className="text-xs text-gray-500 mb-4">
-                Cores usadas na dashboard do aluno
-              </p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {[
-                  { key: "accentColor", label: "Cor primária", desc: "Botões, links e destaques", value: accentColor || null, setter: (v: string | null) => setAccentColor(v ?? "") },
-                  { key: "vitrineBgColor", label: "Cor de fundo", desc: "Background principal", value: vitrineBgColor, setter: setVitrineBgColor },
-                  { key: "vitrineHeaderColor", label: "Cabeçalho", desc: "Background do header", value: vitrineHeaderColor, setter: setVitrineHeaderColor },
-                  { key: "vitrineSidebarColor", label: "Barra lateral", desc: "Background da sidebar", value: vitrineSidebarColor, setter: setVitrineSidebarColor },
-                  { key: "vitrineCardColor", label: "Cards", desc: "Background dos cards de curso", value: vitrineCardColor, setter: setVitrineCardColor },
-                  { key: "vitrineTextColor", label: "Texto", desc: "Cor do texto principal", value: vitrineTextColor, setter: setVitrineTextColor },
-                ].map((c) => (
-                  <div
-                    key={c.key}
-                    className="bg-white dark:bg-white/5 border border-gray-200 dark:border-white/5 rounded-xl p-4"
-                  >
-                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                      {c.label}
-                    </label>
-                    <p className="text-xs text-gray-500 mb-3">{c.desc}</p>
-                    <div className="flex items-center gap-3">
-                      <label
-                        className="w-9 h-9 rounded-lg shrink-0 border border-gray-200 dark:border-white/10 relative overflow-hidden cursor-pointer"
-                        style={{ backgroundColor: c.value && HEX_RE.test(c.value) ? c.value : "#3b82f6" }}
-                      >
-                        <input
-                          type="color"
-                          value={c.value && HEX_RE.test(c.value) ? c.value : "#3b82f6"}
-                          onChange={(e) => c.setter(e.target.value)}
-                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                        />
-                      </label>
-                      <input
-                        type="text"
-                        value={c.value || ""}
-                        onChange={(e) => c.setter(e.target.value || null)}
-                        placeholder="#000000"
-                        className={`${inputClass} !font-mono flex-1`}
-                      />
-                      {c.value && (
-                        <button
-                          type="button"
-                          onClick={() => c.setter(null)}
-                          className="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white px-2 py-1 shrink-0"
-                        >
-                          Restaurar
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Mensagem de boas-vindas */}
-            <div className="mb-8 pt-8 border-t border-gray-200 dark:border-white/5">
-              <h2 className="text-sm font-medium text-gray-900 dark:text-white mb-0.5">
-                Mensagem de boas-vindas
-                <HelpTooltip text="Mensagem exibida no topo da vitrine quando o aluno acessa a área de membros." />
-              </h2>
-              <p className="text-xs text-gray-500 mb-4">
-                Texto exibido no topo da vitrine para o aluno
-              </p>
-              <textarea
-                value={vitrineWelcomeText || ""}
-                onChange={(e) =>
-                  setVitrineWelcomeText(e.target.value.slice(0, 200) || null)
-                }
-                placeholder="Seja bem-vindo à sua área de membros!"
-                rows={3}
-                maxLength={200}
-                className="w-full px-3 py-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-white/10 rounded-lg text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-primary/50 transition-colors resize-y min-h-[80px]"
-              />
-              <p className="text-xs text-gray-400 mt-1 text-right">
-                {(vitrineWelcomeText || "").length}/200
-              </p>
-            </div>
-
-            {/* Banner */}
-            <div className="mb-8 pt-8 border-t border-gray-200 dark:border-white/5">
-              <h2 className="text-sm font-medium text-gray-900 dark:text-white mb-0.5">
-                Banner da vitrine
-                <HelpTooltip text="Imagem de banner que aparece no topo da vitrine. Tamanho recomendado: 1920x400px." />
-              </h2>
-              <p className="text-xs text-gray-500 mb-4">Imagem exibida no topo da vitrine para seus alunos</p>
-              <BannerUpload
-                value={wsBannerUrl}
-                onChange={(url) => {
-                  setWsBannerUrl(url);
-                  if (url) { setWsBannerPos({ x: 50, y: 50 }); setWsBannerMode("reposition"); }
-                  else { setWsBannerPos({ x: 50, y: 50 }); setWsBannerMode("view"); }
-                }}
-                uploadPath={`workspace-banners/${id}`}
-                position={wsBannerPos}
-                onPositionChange={setWsBannerPos}
-                mode={wsBannerMode}
-                onModeChange={setWsBannerMode}
-                aspectRatio="24/5"
-                label="Banner da vitrine"
-                hint="Tamanho ideal: 1920x400px. PNG, JPG ou WebP, máx. 5MB."
-              />
-            </div>
-
-            {/* Favicon */}
-            <div className="mb-8 pt-8 border-t border-gray-200 dark:border-white/5">
-              <h2 className="text-sm font-medium text-gray-900 dark:text-white mb-0.5">
-                Favicon
-                <HelpTooltip text="Ícone pequeno que aparece na aba do navegador. Tamanho recomendado: 32x32px ou 64x64px." />
-              </h2>
-              <p className="text-xs text-gray-500 mb-4">Ícone que aparece na aba do navegador</p>
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center overflow-hidden border border-gray-200 dark:border-white/10">
-                  {faviconUrl ? (
-                    <Image src={faviconUrl} alt="favicon" width={32} height={32} className="w-8 h-8 object-contain" />
-                  ) : (
-                    <span className="text-xs text-gray-400">32×32</span>
-                  )}
-                </div>
-                <div className="flex-1 flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => faviconFileRef.current?.click()}
-                    disabled={uploadingFavicon}
-                    className="px-3.5 py-2 text-xs font-medium bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 text-gray-700 dark:text-gray-200 rounded-lg disabled:opacity-50 transition-colors"
-                  >
-                    {uploadingFavicon ? "Enviando..." : faviconUrl ? "Trocar favicon" : "Enviar favicon"}
-                  </button>
-                  {faviconUrl && (
-                    <button
-                      type="button"
-                      onClick={() => setFaviconUrl(null)}
-                      className="px-3 py-2 text-xs font-medium text-red-600 hover:text-red-700 dark:text-red-400"
-                    >
-                      Remover
-                    </button>
-                  )}
-                  <input
-                    ref={faviconFileRef}
-                    type="file"
-                    accept="image/x-icon,image/png,image/svg+xml,image/*"
-                    className="hidden"
-                    onChange={(e) => {
-                      const f = e.target.files?.[0];
-                      e.target.value = "";
-                      if (f) uploadLoginImage(f, "favicon");
-                    }}
-                  />
-                </div>
-              </div>
-              <p className="text-[11px] text-gray-500 mt-2">
-                Recomendado: 32×32px. PNG, ICO ou SVG.
-              </p>
-            </div>
-
-            {/* Tema */}
-            <div className="pt-8 border-t border-gray-200 dark:border-white/5">
-              <h2 className="text-sm font-medium text-gray-900 dark:text-white mb-0.5">
-                Tema para alunos
-                <HelpTooltip text="Escolha entre tema escuro ou claro para a área de membros dos seus alunos." />
-              </h2>
-              <p className="text-xs text-gray-500 mb-4">Force um tema específico para todos os alunos</p>
-              <select
-                value={forceTheme}
-                onChange={(e) =>
-                  setForceTheme(e.target.value as "" | "light" | "dark")
-                }
-                className={inputClass}
-              >
-                <option value="">Padrão do sistema (aluno escolhe)</option>
-                <option value="light">Sempre claro</option>
-                <option value="dark">Sempre escuro</option>
-              </select>
-            </div>
-
-            {/* Restaurar padrão da vitrine */}
-            <div className="pt-8 border-t border-gray-200 dark:border-white/5">
-              <button
-                type="button"
-                onClick={async () => {
-                  if (!window.confirm("Restaurar cores padrão da vitrine?")) return;
-                  const res = await fetch(`/api/producer/workspaces/${id}/vitrine`, {
-                    method: "DELETE",
-                  });
-                  if (!res.ok) {
-                    showToast("Erro ao restaurar");
-                    return;
-                  }
-                  setAccentColor("");
-                  setVitrineBgColor(null);
-                  setVitrineSidebarColor(null);
-                  setVitrineHeaderColor(null);
-                  setVitrineCardColor(null);
-                  setVitrineTextColor(null);
-                  setVitrineWelcomeText(null);
-                  setVitrineLayoutStyle("netflix");
-                  showToast("Vitrine restaurada para o padrão");
-                }}
-                className="text-xs text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white underline-offset-4 hover:underline"
-              >
-                Restaurar padrão da vitrine
-              </button>
-            </div>
-          </div>
+          <AppearanceTab
+            id={id}
+            accentColor={accentColor}
+            setAccentColor={setAccentColor}
+            vitrineBgColor={vitrineBgColor}
+            setVitrineBgColor={setVitrineBgColor}
+            vitrineHeaderColor={vitrineHeaderColor}
+            setVitrineHeaderColor={setVitrineHeaderColor}
+            vitrineSidebarColor={vitrineSidebarColor}
+            setVitrineSidebarColor={setVitrineSidebarColor}
+            vitrineCardColor={vitrineCardColor}
+            setVitrineCardColor={setVitrineCardColor}
+            vitrineTextColor={vitrineTextColor}
+            setVitrineTextColor={setVitrineTextColor}
+            vitrineWelcomeText={vitrineWelcomeText}
+            setVitrineWelcomeText={setVitrineWelcomeText}
+            wsBannerUrl={wsBannerUrl}
+            setWsBannerUrl={setWsBannerUrl}
+            wsBannerPos={wsBannerPos}
+            setWsBannerPos={setWsBannerPos}
+            wsBannerMode={wsBannerMode}
+            setWsBannerMode={setWsBannerMode}
+            faviconUrl={faviconUrl}
+            setFaviconUrl={setFaviconUrl}
+            uploadingFavicon={uploadingFavicon}
+            onUploadFavicon={(f) => uploadLoginImage(f, "favicon")}
+            forceTheme={forceTheme}
+            setForceTheme={setForceTheme}
+            onRestoreVitrine={restoreVitrine}
+          />
         )}
       </form>
 
