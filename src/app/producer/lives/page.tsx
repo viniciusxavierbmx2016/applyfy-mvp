@@ -5,86 +5,20 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { SkeletonLiveCard } from "@/components/ui/skeleton";
 import { HelpTooltip } from "@/components/help-tooltip";
-
-interface LiveItem {
-  id: string;
-  title: string;
-  description: string | null;
-  platform: string;
-  externalUrl: string;
-  embedUrl: string | null;
-  status: string;
-  scheduledAt: string;
-  startedAt: string | null;
-  endedAt: string | null;
-  recordingUrl: string | null;
-  thumbnailUrl: string | null;
-  courseId: string | null;
-  savedAsLessonId: string | null;
-  visibility: string;
-  course: { id: string; title: string } | null;
-  _count: { messages: number };
-  createdAt: string;
-}
-
-interface CourseOption {
-  id: string;
-  title: string;
-}
-
-interface ModuleOption {
-  id: string;
-  title: string;
-}
-
-type StatusFilter = "ALL" | "SCHEDULED" | "LIVE" | "ENDED";
-
-const PLATFORMS = [
-  { value: "YOUTUBE_LIVE", label: "YouTube Live" },
-  { value: "GOOGLE_MEET", label: "Google Meet" },
-  { value: "ZOOM", label: "Zoom" },
-  { value: "CUSTOM", label: "Outro link" },
-];
-
-const STATUS_LABELS: Record<string, string> = {
-  SCHEDULED: "Agendada",
-  LIVE: "Ao Vivo",
-  ENDED: "Encerrada",
-};
-
-const STATUS_COLORS: Record<string, string> = {
-  SCHEDULED: "bg-yellow-500/20 text-yellow-400",
-  LIVE: "bg-red-500/20 text-red-400 animate-pulse",
-  ENDED: "bg-gray-500/20 text-gray-400",
-};
-
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString("pt-BR", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
-
-function extractYouTubeEmbedUrl(url: string): string | null {
-  const patterns = [
-    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/live\/)([a-zA-Z0-9_-]+)/,
-    /youtube\.com\/embed\/([a-zA-Z0-9_-]+)/,
-  ];
-  for (const p of patterns) {
-    const m = url.match(p);
-    if (m) return `https://www.youtube.com/embed/${m[1]}`;
-  }
-  return null;
-}
-
-function toLocalDatetimeValue(iso: string): string {
-  const d = new Date(iso);
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-}
+import type {
+  LiveItem,
+  CourseOption,
+  StatusFilter,
+} from "./_types";
+import {
+  PLATFORMS,
+  STATUS_LABELS,
+  STATUS_COLORS,
+  formatDate,
+} from "./_lib/helpers";
+import { ConfirmModal } from "./_components/confirm-modal";
+import { SaveAsLessonModal } from "./_components/save-as-lesson-modal";
+import { CreateEditLiveModal } from "./_components/create-edit-live-modal";
 
 export default function ProducerLivesPage() {
   const router = useRouter();
@@ -94,38 +28,14 @@ export default function ProducerLivesPage() {
   const [filter, setFilter] = useState<StatusFilter>("ALL");
   const [showModal, setShowModal] = useState(false);
   const [editingLive, setEditingLive] = useState<LiveItem | null>(null);
-  const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState("");
   const [confirmAction, setConfirmAction] = useState<{
     type: "start" | "end" | "delete";
     live: LiveItem;
   } | null>(null);
 
-  const [form, setForm] = useState({
-    title: "",
-    description: "",
-    platform: "YOUTUBE_LIVE",
-    externalUrl: "",
-    embedUrl: "",
-    scheduledAt: "",
-    courseId: "",
-    thumbnailUrl: "",
-    recordingUrl: "",
-    visibility: "PUBLIC",
-  });
-
   // Save as lesson modal
   const [lessonModal, setLessonModal] = useState<LiveItem | null>(null);
-  const [modules, setModules] = useState<ModuleOption[]>([]);
-  const [lessonForm, setLessonForm] = useState({
-    courseId: "",
-    moduleId: "",
-    title: "",
-    description: "",
-    videoUrl: "",
-  });
-  const [savingLesson, setSavingLesson] = useState(false);
-  const [uploadingThumb, setUploadingThumb] = useState(false);
 
   const fetchLives = useCallback(async () => {
     try {
@@ -173,114 +83,12 @@ export default function ProducerLivesPage() {
 
   function openCreate() {
     setEditingLive(null);
-    setForm({
-      title: "",
-      description: "",
-      platform: "YOUTUBE_LIVE",
-      externalUrl: "",
-      embedUrl: "",
-      scheduledAt: "",
-      courseId: "",
-      thumbnailUrl: "",
-      recordingUrl: "",
-      visibility: "PUBLIC",
-    });
     setShowModal(true);
   }
 
   function openEdit(live: LiveItem) {
     setEditingLive(live);
-    setForm({
-      title: live.title,
-      description: live.description || "",
-      platform: live.platform,
-      externalUrl: live.externalUrl,
-      embedUrl: live.embedUrl || "",
-      scheduledAt: live.scheduledAt ? toLocalDatetimeValue(live.scheduledAt) : "",
-      courseId: live.courseId || "",
-      thumbnailUrl: live.thumbnailUrl || "",
-      recordingUrl: live.recordingUrl || "",
-      visibility: live.visibility || "PUBLIC",
-    });
     setShowModal(true);
-  }
-
-  async function handleThumbnailUpload(file: File) {
-    setUploadingThumb(true);
-    try {
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("path", `lives/${Date.now()}`);
-      const res = await fetch("/api/upload", { method: "POST", body: formData });
-      if (res.ok) {
-        const data = await res.json();
-        setForm((f) => ({ ...f, thumbnailUrl: data.url }));
-      } else {
-        const data = await res.json();
-        alert(data.error || "Erro ao enviar imagem");
-      }
-    } catch {
-      alert("Erro ao enviar imagem");
-    } finally {
-      setUploadingThumb(false);
-    }
-  }
-
-  function handleUrlChange(url: string) {
-    setForm((f) => {
-      const embed = f.platform === "YOUTUBE_LIVE" ? extractYouTubeEmbedUrl(url) : null;
-      return { ...f, externalUrl: url, ...(embed ? { embedUrl: embed } : {}) };
-    });
-  }
-
-  function handlePlatformChange(platform: string) {
-    setForm((f) => {
-      const embed = platform === "YOUTUBE_LIVE" ? extractYouTubeEmbedUrl(f.externalUrl) : "";
-      return { ...f, platform, embedUrl: embed || "" };
-    });
-  }
-
-  async function handleSave() {
-    if (!form.title.trim() || !form.externalUrl.trim() || !form.scheduledAt) return;
-    setSaving(true);
-    try {
-      const payload: Record<string, unknown> = {
-        title: form.title,
-        description: form.description || null,
-        platform: form.platform,
-        externalUrl: form.externalUrl,
-        embedUrl: form.embedUrl || null,
-        scheduledAt: new Date(form.scheduledAt).toISOString(),
-        courseId: form.courseId || null,
-        thumbnailUrl: form.thumbnailUrl || null,
-        visibility: form.visibility,
-      };
-
-      if (editingLive) {
-        payload.recordingUrl = form.recordingUrl || null;
-      }
-
-      const url = editingLive
-        ? `/api/producer/lives/${editingLive.id}`
-        : "/api/producer/lives";
-      const method = editingLive ? "PUT" : "POST";
-
-      const res = await fetch(url, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      if (res.ok) {
-        setShowModal(false);
-        fetchLives();
-      } else {
-        const data = await res.json();
-        alert(data.error || "Erro ao salvar");
-      }
-    } finally {
-      setSaving(false);
-    }
   }
 
   async function handleStatusChange(live: LiveItem, newStatus: string) {
@@ -321,82 +129,12 @@ export default function ProducerLivesPage() {
     navigator.clipboard.writeText(url);
   }
 
-  async function openLessonModal(live: LiveItem) {
+  function openLessonModal(live: LiveItem) {
     setLessonModal(live);
-    setModules([]);
-    setLessonForm({
-      courseId: "",
-      moduleId: "",
-      title: live.title,
-      description: live.description || "",
-      videoUrl: live.recordingUrl || "",
-    });
-  }
-
-  async function handleLessonCourseChange(courseId: string) {
-    setLessonForm((f) => ({ ...f, courseId, moduleId: "" }));
-    setModules([]);
-    if (!courseId) return;
-    try {
-      const res = await fetch(`/api/courses/${courseId}`);
-      if (res.ok) {
-        const data = await res.json();
-        setModules(
-          (data.course?.modules || []).map((m: ModuleOption) => ({
-            id: m.id,
-            title: m.title,
-          }))
-        );
-      }
-    } catch {
-      // ignore
-    }
-  }
-
-  async function handleSaveAsLesson() {
-    if (!lessonForm.courseId || !lessonForm.moduleId || !lessonForm.title.trim() || !lessonForm.videoUrl.trim()) return;
-    if (!lessonModal) return;
-    setSavingLesson(true);
-    try {
-      const res = await fetch(`/api/modules/${lessonForm.moduleId}/lessons`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title: lessonForm.title.trim(),
-          description: lessonForm.description?.trim() || null,
-          videoUrl: lessonForm.videoUrl.trim(),
-        }),
-      });
-      if (!res.ok) {
-        const data = await res.json();
-        alert(data.error || "Erro ao criar aula");
-        return;
-      }
-      const data = await res.json();
-      const lessonId = data.lesson?.id;
-
-      if (lessonId) {
-        await fetch(`/api/producer/lives/${lessonModal.id}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ savedAsLessonId: lessonId }),
-        });
-      }
-
-      setLessonModal(null);
-      setToast("Aula criada com sucesso!");
-      fetchLives();
-    } finally {
-      setSavingLesson(false);
-    }
   }
 
   const liveCount = lives.filter((l) => l.status === "LIVE").length;
   const scheduledCount = lives.filter((l) => l.status === "SCHEDULED").length;
-
-  const inputCls =
-    "w-full bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-lg px-3 py-2.5 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-primary/50 transition-colors text-sm";
-  const labelCls = "block text-xs text-gray-400 mb-1.5";
 
   return (
     <div className="space-y-6">
@@ -628,384 +366,37 @@ export default function ProducerLivesPage() {
 
       {/* Create/Edit Modal */}
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/60" onClick={() => setShowModal(false)} />
-          <div className="relative bg-white dark:bg-gray-950 border border-gray-200 dark:border-white/10 rounded-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-            <div className="p-6 space-y-4">
-              <h2 className="text-lg font-bold text-white">
-                {editingLive ? "Editar Live" : "Nova Live"}
-              </h2>
-
-              <div>
-                <label className={labelCls}>Título *</label>
-                <input
-                  className={inputCls}
-                  value={form.title}
-                  onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
-                  placeholder="Nome da transmissão"
-                />
-              </div>
-
-              <div>
-                <label className={labelCls}>Descrição</label>
-                <textarea
-                  className={`${inputCls} resize-none`}
-                  rows={3}
-                  value={form.description}
-                  onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-                  placeholder="Descrição opcional"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className={labelCls}>Plataforma *</label>
-                  <select
-                    className={inputCls}
-                    value={form.platform}
-                    onChange={(e) => handlePlatformChange(e.target.value)}
-                  >
-                    {PLATFORMS.map((p) => (
-                      <option key={p.value} value={p.value}>{p.label}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className={labelCls}>Data e Hora *</label>
-                  <input
-                    type="datetime-local"
-                    className={inputCls}
-                    value={form.scheduledAt}
-                    onChange={(e) => setForm((f) => ({ ...f, scheduledAt: e.target.value }))}
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className={labelCls}>Link da Live *</label>
-                <input
-                  className={inputCls}
-                  value={form.externalUrl}
-                  onChange={(e) => handleUrlChange(e.target.value)}
-                  placeholder="https://youtube.com/live/..."
-                />
-              </div>
-
-              {form.platform === "YOUTUBE_LIVE" && form.embedUrl && (
-                <div>
-                  <label className={labelCls}>Embed URL (auto-detectado)</label>
-                  <input
-                    className={`${inputCls} text-gray-500`}
-                    value={form.embedUrl}
-                    onChange={(e) => setForm((f) => ({ ...f, embedUrl: e.target.value }))}
-                  />
-                </div>
-              )}
-
-              {form.platform !== "YOUTUBE_LIVE" && (
-                <div>
-                  <label className={labelCls}>Embed URL (opcional)</label>
-                  <input
-                    className={inputCls}
-                    value={form.embedUrl}
-                    onChange={(e) => setForm((f) => ({ ...f, embedUrl: e.target.value }))}
-                    placeholder="URL para embed (iframe)"
-                  />
-                </div>
-              )}
-
-              <div>
-                <label className={labelCls}>Visibilidade</label>
-                <div className="space-y-2">
-                  <label className="flex items-start gap-2 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="visibility"
-                      value="PUBLIC"
-                      checked={form.visibility === "PUBLIC"}
-                      onChange={() => setForm((f) => ({ ...f, visibility: "PUBLIC" }))}
-                      className="mt-0.5 accent-primary"
-                    />
-                    <div>
-                      <span className="text-sm text-white">Pública</span>
-                      <p className="text-xs text-gray-500">Todos os alunos do workspace</p>
-                    </div>
-                  </label>
-                  <label className="flex items-start gap-2 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="visibility"
-                      value="COURSE_ONLY"
-                      checked={form.visibility === "COURSE_ONLY"}
-                      onChange={() => setForm((f) => ({ ...f, visibility: "COURSE_ONLY" }))}
-                      className="mt-0.5 accent-primary"
-                    />
-                    <div>
-                      <span className="text-sm text-white">Restrita ao curso</span>
-                      <p className="text-xs text-gray-500">Apenas alunos matriculados no curso</p>
-                    </div>
-                  </label>
-                </div>
-              </div>
-
-              <div>
-                <label className={labelCls}>
-                  Curso vinculado {form.visibility === "COURSE_ONLY" ? "*" : ""}
-                </label>
-                <select
-                  className={inputCls}
-                  value={form.courseId}
-                  onChange={(e) => setForm((f) => ({ ...f, courseId: e.target.value }))}
-                >
-                  <option value="">{form.visibility === "COURSE_ONLY" ? "Selecione um curso" : "Nenhum"}</option>
-                  {courses.map((c) => (
-                    <option key={c.id} value={c.id}>{c.title}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className={labelCls}>Thumbnail</label>
-                {form.thumbnailUrl ? (
-                  <div className="flex items-center gap-3">
-                    <Image src={form.thumbnailUrl} alt="" width={96} height={56} className="w-24 h-14 object-cover rounded-lg border border-white/10" />
-                    <button
-                      type="button"
-                      onClick={() => setForm((f) => ({ ...f, thumbnailUrl: "" }))}
-                      className="text-xs text-red-400 hover:text-red-300 transition"
-                    >
-                      Remover
-                    </button>
-                    <label className="text-xs text-primary hover:text-primary transition cursor-pointer">
-                      Trocar
-                      <input
-                        type="file"
-                        accept="image/png,image/jpeg,image/webp"
-                        className="hidden"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (file) handleThumbnailUpload(file);
-                          e.target.value = "";
-                        }}
-                      />
-                    </label>
-                  </div>
-                ) : (
-                  <label className={`${inputCls} flex items-center justify-center gap-2 cursor-pointer border-dashed`}>
-                    {uploadingThumb ? (
-                      <span className="text-gray-400 text-sm">Enviando...</span>
-                    ) : (
-                      <>
-                        <svg className="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
-                        <span className="text-gray-500 text-sm">Clique para enviar imagem</span>
-                      </>
-                    )}
-                    <input
-                      type="file"
-                      accept="image/png,image/jpeg,image/webp"
-                      className="hidden"
-                      disabled={uploadingThumb}
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) handleThumbnailUpload(file);
-                        e.target.value = "";
-                      }}
-                    />
-                  </label>
-                )}
-              </div>
-
-              {editingLive?.status === "ENDED" && (
-                <div>
-                  <label className={labelCls}>URL da Gravação</label>
-                  <input
-                    className={inputCls}
-                    value={form.recordingUrl}
-                    onChange={(e) => setForm((f) => ({ ...f, recordingUrl: e.target.value }))}
-                    placeholder="Cole o link do YouTube, Vimeo, Google Drive..."
-                  />
-                </div>
-              )}
-
-              <div className="flex justify-end gap-3 pt-2">
-                <button
-                  onClick={() => setShowModal(false)}
-                  className="px-4 py-2 text-sm text-gray-400 hover:text-white transition"
-                >
-                  Cancelar
-                </button>
-                <button
-                  onClick={handleSave}
-                  disabled={saving || !form.title.trim() || !form.externalUrl.trim() || !form.scheduledAt || (form.visibility === "COURSE_ONLY" && !form.courseId)}
-                  className="bg-primary hover:bg-primary disabled:opacity-50 text-white px-4 py-2 rounded-lg text-sm font-medium transition"
-                >
-                  {saving ? "Salvando..." : editingLive ? "Salvar" : "Criar Live"}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+        <CreateEditLiveModal
+          key={editingLive?.id ?? "new"}
+          editingLive={editingLive}
+          courses={courses}
+          onClose={() => setShowModal(false)}
+          onSaved={fetchLives}
+        />
       )}
 
       {/* Confirm Modal */}
       {confirmAction && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/60" onClick={() => setConfirmAction(null)} />
-          <div className="relative bg-white dark:bg-gray-950 border border-gray-200 dark:border-white/10 rounded-xl w-full max-w-sm p-6">
-            <h3 className="text-lg font-bold text-white mb-2">
-              {confirmAction.type === "start"
-                ? "Iniciar Live?"
-                : confirmAction.type === "end"
-                  ? "Encerrar Live?"
-                  : "Excluir Live?"}
-            </h3>
-            <p className="text-gray-400 text-sm mb-4">
-              {confirmAction.type === "start"
-                ? `"${confirmAction.live.title}" será marcada como ao vivo. O chat será liberado para os alunos.`
-                : confirmAction.type === "end"
-                  ? `"${confirmAction.live.title}" será encerrada. O chat será desabilitado.`
-                  : `"${confirmAction.live.title}" será excluída permanentemente com todas as mensagens.`}
-            </p>
-            <div className="flex justify-end gap-3">
-              <button
-                onClick={() => setConfirmAction(null)}
-                className="px-4 py-2 text-sm text-gray-400 hover:text-white transition"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={() => {
-                  if (confirmAction.type === "delete") {
-                    handleDelete(confirmAction.live);
-                  } else {
-                    handleStatusChange(
-                      confirmAction.live,
-                      confirmAction.type === "start" ? "LIVE" : "ENDED"
-                    );
-                  }
-                }}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
-                  confirmAction.type === "delete"
-                    ? "bg-red-600 hover:bg-red-700 text-white"
-                    : confirmAction.type === "start"
-                      ? "bg-red-600 hover:bg-red-700 text-white"
-                      : "bg-gray-600 hover:bg-gray-700 text-white"
-                }`}
-              >
-                {confirmAction.type === "start"
-                  ? "Iniciar"
-                  : confirmAction.type === "end"
-                    ? "Encerrar"
-                    : "Excluir"}
-              </button>
-            </div>
-          </div>
-        </div>
+        <ConfirmModal
+          action={confirmAction}
+          onCancel={() => setConfirmAction(null)}
+          onDelete={handleDelete}
+          onStatusChange={handleStatusChange}
+        />
       )}
 
       {/* Save as Lesson Modal */}
       {lessonModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/60" onClick={() => setLessonModal(null)} />
-          <div className="relative bg-white dark:bg-gray-950 border border-gray-200 dark:border-white/10 rounded-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-            <div className="p-6 space-y-4">
-              <h2 className="text-lg font-bold text-white">Salvar como aula</h2>
-              <p className="text-gray-400 text-sm">
-                Crie uma aula a partir da live &quot;{lessonModal.title}&quot;
-              </p>
-
-              <div>
-                <label className={labelCls}>Curso *</label>
-                <select
-                  className={inputCls}
-                  value={lessonForm.courseId}
-                  onChange={(e) => handleLessonCourseChange(e.target.value)}
-                >
-                  <option value="">Selecione um curso</option>
-                  {courses.map((c) => (
-                    <option key={c.id} value={c.id}>{c.title}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className={labelCls}>Módulo *</label>
-                <select
-                  className={inputCls}
-                  value={lessonForm.moduleId}
-                  onChange={(e) => setLessonForm((f) => ({ ...f, moduleId: e.target.value }))}
-                  disabled={!lessonForm.courseId || modules.length === 0}
-                >
-                  <option value="">
-                    {!lessonForm.courseId
-                      ? "Selecione um curso primeiro"
-                      : modules.length === 0
-                        ? "Nenhum módulo encontrado"
-                        : "Selecione um módulo"}
-                  </option>
-                  {modules.map((m) => (
-                    <option key={m.id} value={m.id}>{m.title}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className={labelCls}>Título da aula *</label>
-                <input
-                  className={inputCls}
-                  value={lessonForm.title}
-                  onChange={(e) => setLessonForm((f) => ({ ...f, title: e.target.value }))}
-                  placeholder="Título da aula"
-                />
-              </div>
-
-              <div>
-                <label className={labelCls}>Descrição</label>
-                <textarea
-                  className={`${inputCls} resize-none`}
-                  rows={3}
-                  value={lessonForm.description}
-                  onChange={(e) => setLessonForm((f) => ({ ...f, description: e.target.value }))}
-                  placeholder="Descrição da aula"
-                />
-              </div>
-
-              <div>
-                <label className={labelCls}>URL do vídeo *</label>
-                <input
-                  className={inputCls}
-                  value={lessonForm.videoUrl}
-                  onChange={(e) => setLessonForm((f) => ({ ...f, videoUrl: e.target.value }))}
-                  placeholder="Cole o link do YouTube, Vimeo, Google Drive..."
-                />
-              </div>
-
-              <div className="flex justify-end gap-3 pt-2">
-                <button
-                  onClick={() => setLessonModal(null)}
-                  className="px-4 py-2 text-sm text-gray-400 hover:text-white transition"
-                >
-                  Cancelar
-                </button>
-                <button
-                  onClick={handleSaveAsLesson}
-                  disabled={
-                    savingLesson ||
-                    !lessonForm.courseId ||
-                    !lessonForm.moduleId ||
-                    !lessonForm.title.trim() ||
-                    !lessonForm.videoUrl.trim()
-                  }
-                  className="bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white px-4 py-2 rounded-lg text-sm font-medium transition"
-                >
-                  {savingLesson ? "Criando..." : "Criar aula"}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+        <SaveAsLessonModal
+          key={lessonModal.id}
+          live={lessonModal}
+          courses={courses}
+          onClose={() => setLessonModal(null)}
+          onSaved={() => {
+            setToast("Aula criada com sucesso!");
+            fetchLives();
+          }}
+        />
       )}
     </div>
   );
