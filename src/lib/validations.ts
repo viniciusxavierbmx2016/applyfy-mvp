@@ -157,6 +157,15 @@ export const applyfyWebhookSchema = z
       )
       .nullable()
       .optional(),
+    trackProps: z
+      .object({
+        ip: z.string().max(100).nullable().optional(),
+        user_agent: z.string().max(500).nullable().optional(),
+        affiliate_code: z.string().max(200).nullable().optional(),
+      })
+      .passthrough()
+      .nullable()
+      .optional(),
   })
   .passthrough();
 

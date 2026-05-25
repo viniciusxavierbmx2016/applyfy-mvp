@@ -151,6 +151,9 @@ export async function GET(_request: Request, props: { params: Promise<{ id: stri
         externalId: true,
         courseId: true,
         createdAt: true,
+        purchaseIp: true,
+        purchaseDevice: true,
+        affiliateCode: true,
       },
       orderBy: { createdAt: "desc" },
       take: 50,
@@ -180,6 +183,9 @@ export async function GET(_request: Request, props: { params: Promise<{ id: stri
       externalId: t.externalId,
       createdAt: t.createdAt,
       courseTitle: t.courseId ? courseTitleById.get(t.courseId) ?? null : null,
+      purchaseIp: t.purchaseIp,
+      purchaseDevice: t.purchaseDevice,
+      affiliateCode: t.affiliateCode,
     }));
 
     const progressByCourse = new Map<string, number>();

@@ -300,6 +300,9 @@ export async function POST(request: Request, props: { params: Promise<{ slug: st
                 externalId: txExternalId,
                 customerEmail: email,
                 customerName: name ?? null,
+                purchaseIp: body?.trackProps?.ip || null,
+                purchaseDevice: body?.trackProps?.user_agent || null,
+                affiliateCode: body?.trackProps?.affiliate_code || null,
               },
             });
           }
