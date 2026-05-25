@@ -407,3 +407,23 @@ export function automationEmail(name: string, subjectText: string, body: string,
     htmlContent: html,
   };
 }
+
+export function studentWorkspacesList(
+  workspaces: { name: string; loginUrl: string }[]
+) {
+  const blocks = workspaces
+    .map(
+      (w) =>
+        `${paragraph(`<strong style="color:#ffffff;">${w.name}</strong>`)}${ctaButton("Acessar " + w.name, w.loginUrl)}`
+    )
+    .join(divider());
+  const html = baseTemplate(`
+    ${heading("Suas áreas de membros")}
+    ${paragraph("Encontramos as seguintes áreas vinculadas ao seu email. Clique no botão para acessar:")}
+    ${blocks}
+  `);
+  return {
+    subject: "Suas áreas de membros — Members Club",
+    htmlContent: html,
+  };
+}
