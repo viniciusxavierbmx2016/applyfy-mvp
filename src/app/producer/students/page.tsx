@@ -10,6 +10,8 @@ import { ImportStudentsModal } from "@/components/import-students-modal";
 import { useConfirm } from "@/hooks/use-confirm";
 import { CustomSelect } from "@/components/custom-select";
 import { HelpTooltip } from "@/components/help-tooltip";
+import { DateRangeSelector, computeRange } from "@/components/date-range-selector";
+import type { DateRangeValue } from "@/components/date-range-selector";
 
 type EnrollmentStatus = "ACTIVE" | "EXPIRED" | "CANCELLED";
 
@@ -64,6 +66,7 @@ export default function AdminUsersPage() {
   const [debounced, setDebounced] = useState("");
   const [courseFilter, setCourseFilter] = useState<string>("");
   const [tagFilter, setTagFilter] = useState<string>("");
+  const [range, setRange] = useState<DateRangeValue>(() => computeRange("total"));
   const [exporting, setExporting] = useState(false);
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState<string | null>(null);
@@ -87,6 +90,12 @@ export default function AdminUsersPage() {
     if (debounced) params.set("q", debounced);
     if (courseFilter) params.set("courseId", courseFilter);
     if (tagFilter) params.set("tagId", tagFilter);
+    // "total" means no date narrowing — keep the full list (incl. students
+    // without enrollments). Only send dates for an actual range.
+    if (range.option !== "total") {
+      if (range.startDate) params.set("startDate", range.startDate);
+      if (range.endDate) params.set("endDate", range.endDate);
+    }
     const qs = params.toString();
     const url = qs
       ? `/api/producer/students?${qs}`
@@ -107,7 +116,7 @@ export default function AdminUsersPage() {
     return () => {
       cancelled = true;
     };
-  }, [debounced, courseFilter, tagFilter]);
+  }, [debounced, courseFilter, tagFilter, range]);
 
   function showToast(msg: string) {
     setToast(msg);
@@ -357,6 +366,7 @@ export default function AdminUsersPage() {
             ]}
           />
         )}
+        <DateRangeSelector value={range} onChange={setRange} />
       </div>
 
       {loading ? (
