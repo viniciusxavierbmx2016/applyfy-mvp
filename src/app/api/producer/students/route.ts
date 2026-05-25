@@ -19,6 +19,21 @@ export async function GET(request: Request) {
 
     const tagFilter = searchParams.get("tagId")?.trim() || null;
 
+    const startDate = searchParams.get("startDate");
+    const endDate = searchParams.get("endDate");
+    const hasDate = !!(startDate || endDate);
+    // Filter on Enrollment.createdAt — merged into the enrollments.some clause
+    // so course + date match the same enrollment. Empty object when no date,
+    // so spreading it is a no-op and default behavior is preserved.
+    const enrollmentDateFilter = hasDate
+      ? {
+          createdAt: {
+            ...(startDate && { gte: new Date(startDate) }),
+            ...(endDate && { lte: new Date(endDate + "T23:59:59.999Z") }),
+          },
+        }
+      : {};
+
     const searchClause = q
       ? {
           OR: [
@@ -77,6 +92,7 @@ export async function GET(request: Request) {
             some: {
               courseId: { in: effectiveCourseIds || [] },
               status: { in: VISIBLE_STATUSES },
+              ...enrollmentDateFilter,
             },
           },
         }
@@ -88,6 +104,7 @@ export async function GET(request: Request) {
               enrollments: {
                 some: {
                   courseId: { in: scopedCourseIds || [] },
+                  ...enrollmentDateFilter,
                 },
               },
             }
@@ -95,25 +112,43 @@ export async function GET(request: Request) {
               AND: [
                 searchClause,
                 tagClause,
-                {
-                  OR: [
-                    { workspaceId },
-                    {
+                // With a date filter, only students with an enrollment in range
+                // qualify — drop the workspaceId-only arm (those have no
+                // enrollment date). Without it, keep the original OR behavior.
+                hasDate
+                  ? {
                       enrollments: {
                         some: {
                           courseId: { in: scopedCourseIds || [] },
+                          ...enrollmentDateFilter,
                         },
                       },
+                    }
+                  : {
+                      OR: [
+                        { workspaceId },
+                        {
+                          enrollments: {
+                            some: {
+                              courseId: { in: scopedCourseIds || [] },
+                            },
+                          },
+                        },
+                      ],
                     },
-                  ],
-                },
               ],
             }
-        : { ...searchClause, ...tagClause };
+        : hasDate
+          ? {
+              ...searchClause,
+              ...tagClause,
+              enrollments: { some: { ...enrollmentDateFilter } },
+            }
+          : { ...searchClause, ...tagClause };
 
     const users = await prisma.user.findMany({
       where,
-      orderBy: { createdAt: "desc" },
+      orderBy: { createdAt: "asc" },
       select: {
         id: true,
         name: true,
