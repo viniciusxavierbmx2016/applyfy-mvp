@@ -504,6 +504,7 @@ enum NotificationType {
   TICKET_NEW
   TICKET_REPLY
   AUTOMATION
+  LESSON_FEEDBACK
 }
 
 model Certificate {

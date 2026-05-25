@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import type { ReactionType } from "@prisma/client";
 import { lessonReactionSchema, validateBody } from "@/lib/validations";
+import { createNotification } from "@/lib/notifications";
 
 export async function GET(_request: Request, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
@@ -92,6 +93,7 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
       where: { id: params.id },
       select: {
         id: true,
+        title: true,
         module: {
           select: {
             course: {
@@ -164,6 +166,29 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
         where: { userId_lessonId: { userId: user.id, lessonId: params.id } },
       }),
     ]);
+
+    // Notify producer when a lesson reaches exactly 5 dislikes in the last 7 days.
+    if (type === "DISLIKE" && (!existing || existing.type !== "DISLIKE")) {
+      const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+      const recentDislikeCount = await prisma.lessonReaction.count({
+        where: {
+          lessonId: params.id,
+          type: "DISLIKE",
+          createdAt: { gte: sevenDaysAgo },
+        },
+      });
+      if (recentDislikeCount === 5) {
+        const ownerId = course.ownerId ?? course.workspace.ownerId;
+        if (ownerId) {
+          await createNotification({
+            userId: ownerId,
+            type: "LESSON_FEEDBACK",
+            message: `A aula "${lesson.title}" recebeu 5 avaliações negativas nos últimos 7 dias. Veja os motivos.`,
+            link: "/producer/analytics?tab=feedback",
+          });
+        }
+      }
+    }
 
     return NextResponse.json({
       likeCount,
