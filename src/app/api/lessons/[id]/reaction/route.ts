@@ -65,7 +65,7 @@ export async function GET(_request: Request, props: { params: Promise<{ id: stri
     return NextResponse.json({
       enabled: true,
       likeCount,
-      dislikeCount,
+      dislikeCount: isStaff ? dislikeCount : 0,
       userReaction: existing?.type ?? null,
     });
   } catch (error) {
@@ -156,7 +156,7 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
 
     return NextResponse.json({
       likeCount,
-      dislikeCount,
+      dislikeCount: isStaff ? dislikeCount : 0,
       userReaction: updated?.type ?? null,
     });
   } catch (error) {
