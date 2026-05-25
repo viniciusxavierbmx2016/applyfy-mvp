@@ -49,12 +49,26 @@ const ReportsStudentsTab = dynamic(
   }
 );
 
-type TabId = "overview" | "lessons" | "students";
+const ReportsFeedbackTab = dynamic(
+  () =>
+    import("@/components/reports-feedback-tab").then(
+      (m) => m.ReportsFeedbackTab
+    ),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-64 bg-gray-100 dark:bg-gray-900/50 rounded-xl animate-pulse" />
+    ),
+  }
+);
+
+type TabId = "overview" | "lessons" | "students" | "feedback";
 
 const TABS: Array<{ id: TabId; label: string }> = [
   { id: "overview", label: "Visão geral" },
   { id: "lessons", label: "Aulas" },
   { id: "students", label: "Alunos" },
+  { id: "feedback", label: "Feedback" },
 ];
 
 function DownloadIcon({ className = "" }: { className?: string }) {
@@ -203,6 +217,13 @@ function AdminAnalyticsPageInner() {
       )}
       {tab === "students" && (
         <ReportsStudentsTab
+          courseId={courseId}
+          startDate={range.startDate}
+          endDate={range.endDate}
+        />
+      )}
+      {tab === "feedback" && (
+        <ReportsFeedbackTab
           courseId={courseId}
           startDate={range.startDate}
           endDate={range.endDate}
