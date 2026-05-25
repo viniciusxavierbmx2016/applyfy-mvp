@@ -256,8 +256,6 @@ export default function LessonPage(
           }
         }
 
-        console.log('[F12] markCompleted result:', { completed, courseCompleted: body.courseCompleted, showCongrats: completed && body.courseCompleted });
-
         if (completed && body.courseCompleted) {
           setShowCongrats(true);
         }

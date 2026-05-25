@@ -31,7 +31,7 @@ export function CongratulationsModal({
       aria-modal="true"
     >
       <div
-        className="bg-gray-900 rounded-2xl p-8 max-w-md mx-4 text-center shadow-2xl border border-white/10 animate-in zoom-in-95"
+        className="bg-gray-900 dark:bg-card rounded-2xl p-8 max-w-md mx-4 text-center shadow-2xl border border-white/10 animate-in zoom-in-95"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex justify-center">
