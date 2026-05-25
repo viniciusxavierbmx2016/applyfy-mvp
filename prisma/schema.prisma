@@ -546,6 +546,8 @@ model LessonReaction {
   userId    String
   lessonId  String
   type      ReactionType
+  reason    String?      // Motivo predefinido do dislike (ex: "content_confusing", "audio_video_bad", etc)
+  comment   String?      // Comentário livre do aluno (max 200 chars no frontend)
   createdAt DateTime     @default(now())
 
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
