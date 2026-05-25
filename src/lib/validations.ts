@@ -436,6 +436,8 @@ export const pushSubscribeSchema = z.object({
 
 export const lessonReactionSchema = z.object({
   type: z.enum(["LIKE", "DISLIKE"]),
+  reason: z.string().optional(),
+  comment: z.string().max(200).optional(),
 });
 
 export const quizAttemptSchema = z.object({

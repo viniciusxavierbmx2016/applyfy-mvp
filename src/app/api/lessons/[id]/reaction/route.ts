@@ -86,6 +86,7 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
     const v = validateBody(lessonReactionSchema, raw);
     if (!v.success) return v.error;
     const type = v.data.type as ReactionType;
+    const { reason, comment } = v.data;
 
     const lesson = await prisma.lesson.findUnique({
       where: { id: params.id },
@@ -135,14 +136,24 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
 
     if (!existing) {
       await prisma.lessonReaction.create({
-        data: { userId: user.id, lessonId: params.id, type },
+        data: {
+          userId: user.id,
+          lessonId: params.id,
+          type,
+          reason: type === "DISLIKE" ? reason : null,
+          comment: type === "DISLIKE" ? comment : null,
+        },
       });
     } else if (existing.type === type) {
       await prisma.lessonReaction.delete({ where: { id: existing.id } });
     } else {
       await prisma.lessonReaction.update({
         where: { id: existing.id },
-        data: { type },
+        data: {
+          type,
+          reason: type === "DISLIKE" ? reason : null,
+          comment: type === "DISLIKE" ? comment : null,
+        },
       });
     }
 

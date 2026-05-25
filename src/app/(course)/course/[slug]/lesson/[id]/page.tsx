@@ -26,6 +26,7 @@ import { useUserStore } from "@/stores/user-store";
 import type { ParsedVideo } from "@/lib/video";
 import { formatPhoneDisplay, formatWhatsappLink } from "@/lib/utils";
 import { CongratulationsModal } from "./_components/congratulations-modal";
+import { DislikeFeedbackModal } from "./_components/dislike-feedback-modal";
 
 interface MaterialData {
   id: string;
@@ -78,6 +79,7 @@ export default function LessonPage(
   const [marking, setMarking] = useState(false);
   const [showCountdown, setShowCountdown] = useState(false);
   const [showCongrats, setShowCongrats] = useState(false);
+  const [showDislikeModal, setShowDislikeModal] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
@@ -174,7 +176,7 @@ export default function LessonPage(
     toastTimerRef.current = setTimeout(() => setToast(null), 3500);
   };
 
-  async function handleReaction(type: "LIKE" | "DISLIKE") {
+  async function handleReaction(type: "LIKE" | "DISLIKE", reason?: string, comment?: string) {
     if (!reactionData?.enabled || !data) return;
     const prev = { ...reactionData };
     const isRemoving = reactionData.userReaction === type;
@@ -195,7 +197,7 @@ export default function LessonPage(
       const res = await fetch(`/api/lessons/${data.lesson.id}/reaction`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ type }),
+        body: JSON.stringify({ type, ...(reason && { reason }), ...(comment && { comment }) }),
       });
       if (res.ok) {
         const d = await res.json();
@@ -498,7 +500,13 @@ export default function LessonPage(
                         </button>
                         <button
                           type="button"
-                          onClick={() => handleReaction("DISLIKE")}
+                          onClick={() => {
+                            if (reactionData.userReaction === "DISLIKE") {
+                              handleReaction("DISLIKE");
+                            } else {
+                              setShowDislikeModal(true);
+                            }
+                          }}
                           className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-full text-sm transition-colors ${
                             reactionData.userReaction === "DISLIKE"
                               ? "bg-red-500/15 text-red-600 dark:text-red-400"
@@ -748,6 +756,16 @@ export default function LessonPage(
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-5 py-3 bg-blue-600 text-white rounded-lg shadow-xl text-sm font-medium animate-in fade-in slide-in-from-bottom-4">
           {toast}
         </div>
+      )}
+
+      {showDislikeModal && (
+        <DislikeFeedbackModal
+          onSubmit={(reason, comment) => {
+            setShowDislikeModal(false);
+            handleReaction("DISLIKE", reason, comment);
+          }}
+          onClose={() => setShowDislikeModal(false)}
+        />
       )}
 
       {showCongrats && (
