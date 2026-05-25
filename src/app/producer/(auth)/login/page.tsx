@@ -20,6 +20,10 @@ function ProducerLoginForm() {
   const [factorId, setFactorId] = useState("");
   const [mfaCode, setMfaCode] = useState("");
   const [mfaError, setMfaError] = useState("");
+  const [showStudentLookup, setShowStudentLookup] = useState(false);
+  const [lookupEmail, setLookupEmail] = useState("");
+  const [lookupSent, setLookupSent] = useState(false);
+  const [lookupLoading, setLookupLoading] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -56,6 +60,20 @@ function ProducerLoginForm() {
       setError("Erro ao conectar com o servidor");
       setLoading(false);
     }
+  }
+
+  async function handleStudentLookup() {
+    if (!lookupEmail.trim()) return;
+    setLookupLoading(true);
+    try {
+      await fetch("/api/auth/student-workspaces", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: lookupEmail.trim() }),
+      });
+    } catch {}
+    setLookupLoading(false);
+    setLookupSent(true);
   }
 
   async function handleMfaVerify(e: React.FormEvent) {
@@ -236,6 +254,48 @@ function ProducerLoginForm() {
                   Criar conta
                 </Link>
               </div>
+
+              <div className="mt-4 text-center">
+                <button
+                  type="button"
+                  onClick={() => setShowStudentLookup(!showStudentLookup)}
+                  className="text-sm text-primary hover:underline"
+                >
+                  É aluno? Encontre seu curso
+                </button>
+              </div>
+
+              {showStudentLookup && (
+                <div className="mt-4 p-4 rounded-xl bg-white/5 border border-white/10">
+                  {lookupSent ? (
+                    <p className="text-sm text-gray-400 text-center">
+                      Se este email estiver cadastrado, você receberá os links de acesso no seu email.
+                    </p>
+                  ) : (
+                    <>
+                      <p className="text-sm text-gray-400 mb-3">
+                        Digite seu email para receber os links de acesso dos seus cursos.
+                      </p>
+                      <input
+                        type="email"
+                        placeholder="seu@email.com"
+                        value={lookupEmail}
+                        onChange={(e) => setLookupEmail(e.target.value)}
+                        className="w-full px-4 py-2.5 rounded-lg bg-white/5 border border-white/10 text-white placeholder-gray-500 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                        onKeyDown={(e) => e.key === "Enter" && handleStudentLookup()}
+                      />
+                      <button
+                        type="button"
+                        onClick={handleStudentLookup}
+                        disabled={lookupLoading || !lookupEmail.trim()}
+                        className="mt-3 w-full py-2.5 rounded-lg bg-primary text-white text-sm font-medium hover:opacity-90 disabled:opacity-50 transition-opacity"
+                      >
+                        {lookupLoading ? "Enviando..." : "Enviar links de acesso"}
+                      </button>
+                    </>
+                  )}
+                </div>
+              )}
             </>
           )}
         </div>
