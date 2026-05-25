@@ -595,6 +595,9 @@ model ProducerTransaction {
   externalId    String?  @unique
   customerEmail String?
   customerName  String?
+  purchaseIp      String?    // IP da compra (trackProps.ip)
+  purchaseDevice  String?    // User-agent da compra (trackProps.user_agent)
+  affiliateCode   String?    // Código do afiliado (trackProps.affiliate_code)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
