@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, use } from "react";
+import { useEffect, useState, use, Fragment } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -60,6 +60,9 @@ interface TransactionData {
   externalId: string | null;
   createdAt: string;
   courseTitle: string | null;
+  purchaseIp: string | null;
+  purchaseDevice: string | null;
+  affiliateCode: string | null;
 }
 interface DetailResponse {
   user: UserData;
@@ -583,26 +586,54 @@ function TabSales({ transactions }: { transactions: TransactionData[] }) {
           </thead>
           <tbody>
             {transactions.map((t) => (
-              <tr
-                key={t.id}
-                className="border-t border-gray-100 dark:border-white/[0.06]"
-              >
-                <td className="py-3 pr-4 text-gray-700 dark:text-gray-300 whitespace-nowrap">
-                  {formatDate(t.createdAt)}
-                </td>
-                <td className="py-3 pr-4 text-gray-900 dark:text-white">
-                  {t.courseTitle || "—"}
-                </td>
-                <td className="py-3 pr-4 text-right text-gray-900 dark:text-white tabular-nums whitespace-nowrap">
-                  {formatCurrency(t.amount, t.currency)}
-                </td>
-                <td className="py-3 pr-4 text-gray-700 dark:text-gray-300 whitespace-nowrap">
-                  {formatPaymentMethod(t.paymentMethod)}
-                </td>
-                <td className="py-3">
-                  <TransactionStatusBadge status={t.status} />
-                </td>
-              </tr>
+              <Fragment key={t.id}>
+                <tr className="border-t border-gray-100 dark:border-white/[0.06]">
+                  <td className="py-3 pr-4 text-gray-700 dark:text-gray-300 whitespace-nowrap">
+                    {formatDate(t.createdAt)}
+                  </td>
+                  <td className="py-3 pr-4 text-gray-900 dark:text-white">
+                    {t.courseTitle || "—"}
+                  </td>
+                  <td className="py-3 pr-4 text-right text-gray-900 dark:text-white tabular-nums whitespace-nowrap">
+                    {formatCurrency(t.amount, t.currency)}
+                  </td>
+                  <td className="py-3 pr-4 text-gray-700 dark:text-gray-300 whitespace-nowrap">
+                    {formatPaymentMethod(t.paymentMethod)}
+                  </td>
+                  <td className="py-3">
+                    <TransactionStatusBadge status={t.status} />
+                  </td>
+                </tr>
+                {(t.purchaseIp || t.purchaseDevice || t.affiliateCode) && (
+                  <tr>
+                    <td colSpan={5} className="pb-3 pr-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs text-gray-400 bg-gray-50 dark:bg-white/[0.02] rounded-lg px-3 py-2">
+                        {t.purchaseIp && (
+                          <div>
+                            <span className="text-gray-500">IP da compra:</span>{" "}
+                            <span className="font-mono">{t.purchaseIp}</span>
+                          </div>
+                        )}
+                        {t.affiliateCode && (
+                          <div>
+                            <span className="text-gray-500">Afiliado:</span>{" "}
+                            {t.affiliateCode}
+                          </div>
+                        )}
+                        {t.purchaseDevice && (
+                          <div
+                            className="sm:col-span-3 truncate"
+                            title={t.purchaseDevice}
+                          >
+                            <span className="text-gray-500">Dispositivo:</span>{" "}
+                            {t.purchaseDevice}
+                          </div>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                )}
+              </Fragment>
             ))}
           </tbody>
         </table>
