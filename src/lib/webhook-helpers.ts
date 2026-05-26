@@ -204,11 +204,12 @@ export async function activateEnrollment(userId: string, courseId: string) {
   if (!wasActive) {
     const course = await prisma.course.findUnique({
       where: { id: courseId },
-      select: { title: true, slug: true },
+      select: { title: true, slug: true, workspaceId: true },
     });
     if (course) {
       await createNotification({
         userId,
+        workspaceId: course.workspaceId,
         type: "ENROLLMENT",
         message: `Você foi matriculado no curso ${course.title}`,
         link: `/course/${course.slug}`,

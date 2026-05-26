@@ -116,6 +116,7 @@ model Workspace {
   lives                Live[]
   workspaceCredentials WorkspaceCredential[]
   externalProducts     CourseExternalProduct[]
+  notifications        Notification[]
 
   @@index([ownerId])
 }
@@ -480,19 +481,22 @@ model LessonComment {
 }
 
 model Notification {
-  id        String           @id @default(uuid())
-  userId    String
-  type      NotificationType
-  message   String
-  link      String?
-  read      Boolean          @default(false)
-  createdAt DateTime         @default(now())
+  id          String           @id @default(uuid())
+  userId      String
+  workspaceId String?
+  type        NotificationType
+  message     String
+  link        String?
+  read        Boolean          @default(false)
+  createdAt   DateTime         @default(now())
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspace Workspace? @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 
   @@index([userId, read])
   @@index([userId, createdAt])
   @@index([userId, read, createdAt])
+  @@index([userId, workspaceId])
 }
 
 enum NotificationType {

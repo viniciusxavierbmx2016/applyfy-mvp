@@ -309,6 +309,7 @@ export async function POST(request: Request) {
       const link = `/producer/community`;
       await createNotification({
         userId: course.workspace.ownerId,
+        workspaceId: course.workspaceId,
         type: "COMMENT",
         message: `Novo post aguardando aprovação na comunidade`,
         link,

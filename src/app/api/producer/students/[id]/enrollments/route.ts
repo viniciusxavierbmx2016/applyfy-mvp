@@ -58,6 +58,7 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
     if (!wasActive) {
       await createNotification({
         userId: params.id,
+        workspaceId: enrollment.course.workspace.id,
         type: "ENROLLMENT",
         message: `Você foi matriculado no curso ${enrollment.course.title}`,
         link: `/course/${enrollment.course.slug}`,

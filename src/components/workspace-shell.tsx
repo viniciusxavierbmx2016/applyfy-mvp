@@ -261,7 +261,7 @@ export function WorkspaceShell({
 
           <div className="flex items-center gap-2">
             <ThemeToggle />
-            <NotificationsBell />
+            <NotificationsBell workspaceSlug={slug} />
             <Link
               href={profileHref}
               className="hidden sm:flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white max-w-[180px]"

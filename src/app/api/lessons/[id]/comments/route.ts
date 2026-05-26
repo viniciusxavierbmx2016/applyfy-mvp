@@ -242,6 +242,7 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
         previousCommenters.map((c) =>
           createNotification({
             userId: c.userId,
+            workspaceId: lesson.module.course.workspaceId,
             type: "REPLY",
             message: `${user.name} comentou na aula ${lesson.title}`,
             link,
@@ -260,6 +261,7 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
         const link = `/producer/courses/${lesson.module.courseId}/comments`;
         await createNotification({
           userId: workspace.ownerId,
+          workspaceId: lesson.module.course.workspaceId,
           type: "COMMENT",
           message: `Novo comentário aguardando aprovação na aula ${lesson.title}`,
           link,
@@ -285,6 +287,7 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
           const link = `/course/${courseSlug}/lesson/${lesson.id}`;
           await createNotification({
             userId: workspace.ownerId,
+            workspaceId: lesson.module.course.workspaceId,
             type: "COMMENT",
             message: `${user.name || "Um aluno"} comentou na aula "${lesson.title}"`,
             link,

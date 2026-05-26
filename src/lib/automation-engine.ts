@@ -162,6 +162,7 @@ export async function executeAction(
 
       await createNotification({
         userId,
+        workspaceId: automation.workspaceId ?? null,
         type: "AUTOMATION",
         message: pushBody || pushTitle,
         link: pushUrl,
