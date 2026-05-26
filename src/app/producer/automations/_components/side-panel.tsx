@@ -143,6 +143,22 @@ export function SidePanel({
                     <p className="text-[10px] text-gray-500 mt-2">Executada via cron (6h) ou botão &quot;Executar agora&quot;</p>
                   </div>
                 )}
+                {triggerType === "POINTS_REACHED" && (
+                  <div className="mb-4">
+                    <label className={labelCls}>Mínimo de pontos</label>
+                    <input
+                      type="number"
+                      min={1}
+                      placeholder="Ex: 500"
+                      value={triggerConfig.minPoints || ""}
+                      onChange={(e) => setTriggerConfig({ ...triggerConfig, minPoints: e.target.value })}
+                      className={inputCls}
+                    />
+                    <p className="text-[10px] text-gray-500 mt-1">
+                      Quando o aluno atingir essa pontuação, a ação é executada automaticamente. Considera pontos totais do aluno, ganhos em qualquer área.
+                    </p>
+                  </div>
+                )}
                 {(triggerType === "COURSE_COMPLETED" || triggerType === "STUDENT_ENROLLED" || triggerType === "QUIZ_PASSED") && !selectedCourse && !GLOBAL_TRIGGERS.includes(triggerType) && (
                   <p className="text-xs text-gray-500">Selecione um curso acima</p>
                 )}
