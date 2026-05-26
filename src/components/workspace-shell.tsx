@@ -418,7 +418,7 @@ export function WorkspaceShell({
         </aside>
 
         <main className={cn("flex-1 min-w-0 mt-14", collapsed ? "lg:ml-16" : "lg:ml-56")}>
-          <PushOptIn />
+          <PushOptIn workspaceSlug={slug} />
           {user?.role === "STUDENT" && <StudentTour />}
           {children}
         </main>

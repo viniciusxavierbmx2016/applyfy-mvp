@@ -13,7 +13,7 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array {
   return outputArray;
 }
 
-export function usePushNotifications() {
+export function usePushNotifications(workspaceSlug?: string) {
   const [permission, setPermission] = useState<NotificationPermission>("default");
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -60,6 +60,7 @@ export function usePushNotifications() {
           endpoint: json.endpoint,
           p256dh: json.keys?.p256dh || "",
           auth: json.keys?.auth || "",
+          ...(workspaceSlug ? { workspaceSlug } : {}),
         }),
       });
 
