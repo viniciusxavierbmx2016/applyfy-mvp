@@ -19,9 +19,29 @@ export async function GET(request: Request) {
     const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
     const skip = (page - 1) * PAGE_SIZE;
 
+    // Workspace isolation: when the caller passes ?workspace=<slug> (the
+    // student shell does), return only notifications scoped to that workspace
+    // plus globals (workspaceId IS NULL). Without the param (producer/admin
+    // header) return everything for the user — current behavior preserved.
+    const workspaceSlug = searchParams.get("workspace")?.trim() || null;
+    let workspaceFilter: { OR: Array<{ workspaceId: string | null }> } | object = {};
+    if (workspaceSlug) {
+      const ws = await prisma.workspace.findUnique({
+        where: { slug: workspaceSlug },
+        select: { id: true },
+      });
+      if (ws) {
+        workspaceFilter = {
+          OR: [{ workspaceId: ws.id }, { workspaceId: null }],
+        };
+      }
+      // Unknown slug → fall through to user-only (no leak: still filtered by userId).
+    }
+    const where = { userId: user.id, ...workspaceFilter };
+
     const [items, total, unread] = await Promise.all([
       prisma.notification.findMany({
-        where: { userId: user.id },
+        where,
         orderBy: { createdAt: "desc" },
         skip,
         take: PAGE_SIZE,
@@ -34,9 +54,9 @@ export async function GET(request: Request) {
           createdAt: true,
         },
       }),
-      prisma.notification.count({ where: { userId: user.id } }),
+      prisma.notification.count({ where }),
       prisma.notification.count({
-        where: { userId: user.id, read: false },
+        where: { ...where, read: false },
       }),
     ]);
 

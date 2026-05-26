@@ -29,7 +29,7 @@ const ICON: Record<Notification["type"], string> = {
   LESSON_FEEDBACK: "👎",
 };
 
-export function NotificationsBell() {
+export function NotificationsBell({ workspaceSlug }: { workspaceSlug?: string } = {}) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState<Notification[]>([]);
@@ -40,7 +40,10 @@ export function NotificationsBell() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/notifications?page=1", {
+      const qs = workspaceSlug
+        ? `?page=1&workspace=${encodeURIComponent(workspaceSlug)}`
+        : "?page=1";
+      const res = await fetch(`/api/notifications${qs}`, {
         cache: "no-store",
       });
       if (res.ok) {
@@ -51,7 +54,7 @@ export function NotificationsBell() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [workspaceSlug]);
 
   useEffect(() => {
     load();
