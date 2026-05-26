@@ -52,6 +52,7 @@ export async function POST(request: Request) {
         if (newStatus === "APPROVED") {
           await createNotification({
             userId: comment.userId,
+            workspaceId: comment.lesson.module.course.workspaceId,
             type: "COMMENT",
             message: "Seu comentário foi aprovado",
             link: `/course/${comment.lesson.module.course.slug}/lesson/${comment.lessonId}`,
@@ -59,6 +60,7 @@ export async function POST(request: Request) {
         } else {
           await createNotification({
             userId: comment.userId,
+            workspaceId: comment.lesson.module.course.workspaceId,
             type: "COMMENT",
             message: "Seu comentário não foi aprovado",
           });
@@ -88,6 +90,7 @@ export async function POST(request: Request) {
         if (newStatus === "APPROVED") {
           await createNotification({
             userId: comment.userId,
+            workspaceId: comment.post.course.workspaceId,
             type: "COMMENT",
             message: "Seu comentário na comunidade foi aprovado",
             link: `/course/${comment.post.course.slug}/community`,
@@ -95,6 +98,7 @@ export async function POST(request: Request) {
         } else {
           await createNotification({
             userId: comment.userId,
+            workspaceId: comment.post.course.workspaceId,
             type: "COMMENT",
             message: "Seu comentário na comunidade não foi aprovado",
           });
@@ -129,6 +133,7 @@ export async function POST(request: Request) {
           }
           await createNotification({
             userId: post.userId,
+            workspaceId: post.course.workspaceId,
             type: "COMMENT",
             message: "Seu post na comunidade foi aprovado",
             link: `/course/${post.course.slug}/community`,
@@ -136,6 +141,7 @@ export async function POST(request: Request) {
         } else {
           await createNotification({
             userId: post.userId,
+            workspaceId: post.course.workspaceId,
             type: "COMMENT",
             message: "Seu post na comunidade não foi aprovado",
           });

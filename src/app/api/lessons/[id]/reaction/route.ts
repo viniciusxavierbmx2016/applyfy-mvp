@@ -99,6 +99,7 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
             course: {
               select: {
                 id: true,
+                workspaceId: true,
                 lessonReactionsEnabled: true,
                 ownerId: true,
                 workspace: { select: { ownerId: true } },
@@ -182,6 +183,7 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
         if (ownerId) {
           await createNotification({
             userId: ownerId,
+            workspaceId: course.workspaceId,
             type: "LESSON_FEEDBACK",
             message: `A aula "${lesson.title}" recebeu 5 avaliações negativas nos últimos 7 dias. Veja os motivos.`,
             link: "/producer/analytics?tab=feedback",

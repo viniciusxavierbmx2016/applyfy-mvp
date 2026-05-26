@@ -241,6 +241,7 @@ export async function POST(request: Request) {
             const course = courseMap.get(courseId)!;
             await createNotification({
               userId: user.id,
+              workspaceId,
               type: "ENROLLMENT",
               message: `Você foi matriculado no curso ${course.title}`,
               link: `/course/${course.slug}`,

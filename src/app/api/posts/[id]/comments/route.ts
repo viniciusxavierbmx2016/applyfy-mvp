@@ -164,6 +164,7 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
       if (post.userId !== user.id) {
         await createNotification({
           userId: post.userId,
+          workspaceId: post.course.workspaceId,
           type: "COMMENT",
           message: `${user.name} comentou no seu post`,
           link: `/course/${post.course.slug}/community`,
@@ -178,6 +179,7 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
         if (parentComment && parentComment.userId !== user.id && parentComment.userId !== post.userId) {
           await createNotification({
             userId: parentComment.userId,
+            workspaceId: post.course.workspaceId,
             type: "REPLY",
             message: `${user.name} respondeu ao seu comentário`,
             link: `/course/${post.course.slug}/community`,
@@ -191,6 +193,7 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
       const moderationLink = `/producer/community`;
       await createNotification({
         userId: post.course.workspace.ownerId,
+        workspaceId: post.course.workspaceId,
         type: "COMMENT",
         message: `Novo comentário aguardando aprovação na comunidade`,
         link: moderationLink,

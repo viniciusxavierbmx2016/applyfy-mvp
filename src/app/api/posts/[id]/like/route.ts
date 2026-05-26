@@ -74,6 +74,7 @@ export async function POST(_request: Request, props: { params: Promise<{ id: str
         pointsDelta = GAMIFICATION.POINTS.RECEIVE_LIKE;
         await createNotification({
           userId: post.userId,
+          workspaceId: post.course.workspaceId,
           type: "LIKE",
           message: `${user.name} curtiu seu post`,
           link: `/course/${post.course.slug}/community`,
