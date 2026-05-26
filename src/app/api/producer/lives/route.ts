@@ -172,6 +172,7 @@ async function notifyStudents(
       prisma.notification.createMany({
         data: studentIds.map((userId) => ({
           userId,
+          workspaceId,
           type: opts.type,
           message: opts.message,
           link,
