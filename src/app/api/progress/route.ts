@@ -202,6 +202,15 @@ export async function POST(request: Request) {
           link: "/profile",
         });
       }
+
+      // F18: dispatch POINTS_REACHED trigger so automations with a points
+      // threshold can fire (matchesTrigger only passes on the crossing).
+      processAutomations({
+        type: "POINTS_REACHED",
+        workspaceId: course.workspaceId,
+        userId: user.id,
+        data: { prevPoints: user.points, newPoints },
+      }).catch(() => {});
     }
 
     return NextResponse.json({

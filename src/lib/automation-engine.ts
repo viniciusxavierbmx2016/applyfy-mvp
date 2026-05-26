@@ -42,6 +42,15 @@ function matchesTrigger(
       return !config.quizId || config.quizId === trigger.data?.quizId;
     case "STUDENT_ENROLLED":
       return true;
+    case "POINTS_REACHED": {
+      // Fires only on the transition (crossing the threshold). prev/new are
+      // the user's GLOBAL total before/after the points award that triggered
+      // this dispatch.
+      const minPoints = Number(config.minPoints) || 0;
+      const prevPoints = Number(trigger.data?.prevPoints) || 0;
+      const newPoints = Number(trigger.data?.newPoints) || 0;
+      return prevPoints < minPoints && newPoints >= minPoints;
+    }
     default:
       return false;
   }
