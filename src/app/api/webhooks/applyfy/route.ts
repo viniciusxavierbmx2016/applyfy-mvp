@@ -62,6 +62,18 @@ async function logWebhook(entry: {
   }
 }
 
+// F11: resolve a course by external product id — prefers the new
+// CourseExternalProduct table, falling back to the legacy Course field so the
+// webhook keeps working for ids that were never migrated to the new table.
+async function findCourseByExternalId(externalProductId: string) {
+  const mapping = await prisma.courseExternalProduct.findFirst({
+    where: { externalProductId },
+    select: { course: true },
+  });
+  if (mapping?.course) return mapping.course;
+  return prisma.course.findFirst({ where: { externalProductId } });
+}
+
 export async function POST(request: Request) {
   let body: ApplyfyPayload = {};
   try {
@@ -125,12 +137,20 @@ export async function POST(request: Request) {
     );
     let matchedToken = false;
     if (providedToken && candidateExternalIds.length > 0) {
-      const candidateCourses = await prisma.course.findMany({
-        where: { externalProductId: { in: candidateExternalIds } },
-        select: { workspaceId: true },
-      });
+      const [legacyCourses, mappingCourses] = await Promise.all([
+        prisma.course.findMany({
+          where: { externalProductId: { in: candidateExternalIds } },
+          select: { workspaceId: true },
+        }),
+        prisma.courseExternalProduct.findMany({
+          where: { externalProductId: { in: candidateExternalIds } },
+          select: { workspaceId: true },
+        }),
+      ]);
       const workspaceIds = Array.from(
-        new Set(candidateCourses.map((c) => c.workspaceId))
+        new Set(
+          [...legacyCourses, ...mappingCourses].map((c) => c.workspaceId)
+        )
       );
       for (const wsId of workspaceIds) {
         const wsToken = await getSetting(`applyfy_token:${wsId}`);
@@ -235,14 +255,10 @@ export async function POST(request: Request) {
         // Try externalId first (configured per-product when available),
         // fall back to product.id (Applyfy's stable internal id).
         let course = externalId
-          ? await prisma.course.findFirst({
-              where: { externalProductId: externalId },
-            })
+          ? await findCourseByExternalId(externalId)
           : null;
         if (!course && productId) {
-          course = await prisma.course.findFirst({
-            where: { externalProductId: productId },
-          });
+          course = await findCourseByExternalId(productId);
         }
 
         if (!course) {
@@ -422,14 +438,10 @@ export async function POST(request: Request) {
         if (!externalId && !productId) continue;
 
         let course = externalId
-          ? await prisma.course.findFirst({
-              where: { externalProductId: externalId },
-            })
+          ? await findCourseByExternalId(externalId)
           : null;
         if (!course && productId) {
-          course = await prisma.course.findFirst({
-            where: { externalProductId: productId },
-          });
+          course = await findCourseByExternalId(productId);
         }
         if (!course) {
           await logWebhook({
