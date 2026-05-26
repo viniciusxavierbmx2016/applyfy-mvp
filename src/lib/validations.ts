@@ -442,6 +442,7 @@ export const pushSubscribeSchema = z.object({
   p256dh: z.string().min(1).max(500),
   auth: z.string().min(1).max(500),
   device: z.string().max(500).optional().nullable(),
+  workspaceSlug: z.string().max(200).optional().nullable(),
 });
 
 export const lessonReactionSchema = z.object({

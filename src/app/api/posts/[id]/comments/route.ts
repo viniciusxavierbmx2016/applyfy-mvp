@@ -199,12 +199,16 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
         link: moderationLink,
         actorId: user.id,
       });
-      sendPushToUser(post.course.workspace.ownerId, {
-        title: "Novo conteúdo para moderar",
-        body: `Comentário de ${user.name} na comunidade aguarda aprovação`,
-        url: moderationLink,
-        tag: "moderation",
-      }).catch(() => {});
+      sendPushToUser(
+        post.course.workspace.ownerId,
+        {
+          title: "Novo conteúdo para moderar",
+          body: `Comentário de ${user.name} na comunidade aguarda aprovação`,
+          url: moderationLink,
+          tag: "moderation",
+        },
+        post.course.workspaceId
+      ).catch(() => {});
     }
 
     return NextResponse.json({ comment }, { status: 201 });

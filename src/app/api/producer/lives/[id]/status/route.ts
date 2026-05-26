@@ -139,12 +139,16 @@ async function notifyStudents(
     ]);
 
     if (opts.pushTitle) {
-      await sendPushToUsers(studentIds, {
-        title: opts.pushTitle,
-        body: opts.pushBody || opts.message,
-        url: link,
-        tag: `live-${opts.liveNotificationType.toLowerCase()}-${liveId}`,
-      });
+      await sendPushToUsers(
+        studentIds,
+        {
+          title: opts.pushTitle,
+          body: opts.pushBody || opts.message,
+          url: link,
+          tag: `live-${opts.liveNotificationType.toLowerCase()}-${liveId}`,
+        },
+        workspaceId
+      );
     }
   } catch (err) {
     console.error("notifyStudents error:", err);

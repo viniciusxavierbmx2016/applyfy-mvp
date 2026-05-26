@@ -169,12 +169,16 @@ export async function executeAction(
       });
 
       try {
-        const sent = await sendPushToUser(userId, {
-          title: pushTitle,
-          body: pushBody,
-          url: pushUrl,
-          tag: `automation-${automation.id}`,
-        });
+        const sent = await sendPushToUser(
+          userId,
+          {
+            title: pushTitle,
+            body: pushBody,
+            url: pushUrl,
+            tag: `automation-${automation.id}`,
+          },
+          automation.workspaceId ?? null
+        );
         if (sent && sent > 0) {
           return { status: "SUCCESS", details: `Notificação enviada + push entregue (${sent})` };
         }

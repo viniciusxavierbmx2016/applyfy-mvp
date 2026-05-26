@@ -117,6 +117,7 @@ model Workspace {
   workspaceCredentials WorkspaceCredential[]
   externalProducts     CourseExternalProduct[]
   notifications        Notification[]
+  pushSubscriptions    PushSubscription[]
 
   @@index([ownerId])
 }
@@ -973,18 +974,21 @@ model LiveNotification {
 }
 
 model PushSubscription {
-  id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  endpoint  String   @db.Text
-  p256dh    String
-  auth      String
-  device    String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspaceId String?
+  workspace   Workspace? @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  endpoint    String   @db.Text
+  p256dh      String
+  auth        String
+  device      String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   @@unique([userId, endpoint])
   @@index([userId])
+  @@index([userId, workspaceId])
 }
 
 model LiveModerator {

@@ -5,9 +5,9 @@ import { usePushNotifications } from "@/hooks/use-push-notifications";
 
 const DISMISSED_KEY = "push-opt-in-dismissed";
 
-export function PushOptIn() {
+export function PushOptIn({ workspaceSlug }: { workspaceSlug?: string } = {}) {
   const { permission, isSubscribed, isLoading, subscribe } =
-    usePushNotifications();
+    usePushNotifications(workspaceSlug);
   const [dismissed, setDismissed] = useState(true);
   const [toast, setToast] = useState("");
 

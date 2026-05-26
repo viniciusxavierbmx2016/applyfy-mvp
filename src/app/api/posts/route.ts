@@ -315,12 +315,16 @@ export async function POST(request: Request) {
         link,
         actorId: user.id,
       });
-      sendPushToUser(course.workspace.ownerId, {
-        title: "Novo conteúdo para moderar",
-        body: `Post de ${user.name} na comunidade aguarda aprovação`,
-        url: link,
-        tag: "moderation",
-      }).catch(() => {});
+      sendPushToUser(
+        course.workspace.ownerId,
+        {
+          title: "Novo conteúdo para moderar",
+          body: `Post de ${user.name} na comunidade aguarda aprovação`,
+          url: link,
+          tag: "moderation",
+        },
+        course.workspaceId
+      ).catch(() => {});
     }
 
     return NextResponse.json(
