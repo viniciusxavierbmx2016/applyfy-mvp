@@ -28,10 +28,22 @@ export async function GET() {
         slug: true,
         externalProductId: true,
         isPublished: true,
+        externalProducts: { select: { externalProductId: true } },
       },
     });
 
-    return NextResponse.json({ courses });
+    // F11: expose the full list from the new table; keep the legacy single
+    // field in the payload for retrocompat with the pre-step-5 UI.
+    const coursesOut = courses.map((c) => ({
+      id: c.id,
+      title: c.title,
+      slug: c.slug,
+      externalProductId: c.externalProductId,
+      externalProductIds: c.externalProducts.map((ep) => ep.externalProductId),
+      isPublished: c.isPublished,
+    }));
+
+    return NextResponse.json({ courses: coursesOut });
   } catch (error) {
     const msg = error instanceof Error ? error.message : "";
     const status =
