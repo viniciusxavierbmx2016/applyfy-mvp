@@ -3,6 +3,7 @@ import type { NotificationType } from "@prisma/client";
 
 interface CreateNotificationInput {
   userId: string;
+  workspaceId?: string | null;
   type: NotificationType;
   message: string;
   link?: string | null;
@@ -15,6 +16,7 @@ export async function createNotification(input: CreateNotificationInput) {
     return await prisma.notification.create({
       data: {
         userId: input.userId,
+        workspaceId: input.workspaceId ?? null,
         type: input.type,
         message: input.message,
         link: input.link ?? null,
