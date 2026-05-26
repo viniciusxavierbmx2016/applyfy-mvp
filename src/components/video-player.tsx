@@ -127,9 +127,12 @@ export function VideoPlayer({ video, onEnded }: Props) {
             height: "100%",
             playerVars: {
               enablejsapi: 1,
-              modestbranding: 1,
+              // modestbranding was deprecated in 2023 — YouTube ignores it now.
               rel: 0,
               playsinline: 1,
+              disablekb: 1,       // disable YouTube keyboard shortcuts
+              fs: 0,              // hide native fullscreen button (we have our own)
+              iv_load_policy: 3,  // hide video annotations
               ...(origin ? { origin } : {}),
             },
             events: {
@@ -247,6 +250,7 @@ export function VideoPlayer({ video, onEnded }: Props) {
     <div
       ref={containerRef}
       className="relative w-full bg-black overflow-hidden group"
+      onContextMenu={(e) => e.preventDefault()}
     >
       <div className="aspect-video w-full relative">
         {/* YouTube/Vimeo API replaces this element with the iframe */}
