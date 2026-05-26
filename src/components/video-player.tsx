@@ -211,6 +211,7 @@ export function VideoPlayer({ video, hideYoutubeChrome, onEnded }: Props) {
       const iframe = document.createElement("iframe");
       iframe.src = `https://${host}/embed/?v=${video.videoId}`;
       iframe.style.border = "none";
+      iframe.style.backgroundColor = "#000";
       iframe.style.position = "absolute";
       iframe.style.top = "0";
       iframe.style.left = "0";
