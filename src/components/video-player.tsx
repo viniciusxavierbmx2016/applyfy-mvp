@@ -2,9 +2,14 @@
 
 import { useEffect, useRef, useState, useCallback, useId } from "react";
 import type { ParsedVideo } from "@/lib/video";
+import {
+  YouTubeCustomControls,
+  type YTPlayerLike,
+} from "@/components/youtube-custom-controls";
 
 interface Props {
   video: ParsedVideo;
+  hideYoutubeChrome?: boolean;
   onEnded?: () => void;
 }
 
@@ -39,7 +44,7 @@ interface YTPlayerOptions {
   };
 }
 
-interface YTPlayer {
+interface YTPlayer extends YTPlayerLike {
   setPlaybackRate: (r: number) => void;
   getIframe: () => HTMLIFrameElement;
   destroy?: () => void;
@@ -88,7 +93,7 @@ function loadVimeoAPI(): Promise<void> {
   return vimeoScriptPromise;
 }
 
-export function VideoPlayer({ video, onEnded }: Props) {
+export function VideoPlayer({ video, hideYoutubeChrome, onEnded }: Props) {
   const reactId = useId();
   const playerElId = `player-${reactId.replace(/:/g, "")}`;
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -97,12 +102,22 @@ export function VideoPlayer({ video, onEnded }: Props) {
   const [speed, setSpeed] = useState(1);
   const [menuOpen, setMenuOpen] = useState(false);
   const [playerError, setPlayerError] = useState<string | null>(null);
+  // F3 phase 3: state-tracked YT.Player so the custom controls only mount
+  // after onReady (when playVideo/seekTo/etc. are safe to call).
+  const [ytPlayer, setYtPlayer] = useState<YTPlayer | null>(null);
 
   // Keep onEnded callback stable across renders without triggering player rebuild
   const onEndedRef = useRef(onEnded);
   useEffect(() => {
     onEndedRef.current = onEnded;
   }, [onEnded]);
+
+  // hideYoutubeChrome captured in a ref so onStateChange can skip the ENDED
+  // dispatch when custom controls own that signal (avoids double-fire).
+  const hideYoutubeChromeRef = useRef(!!hideYoutubeChrome);
+  useEffect(() => {
+    hideYoutubeChromeRef.current = !!hideYoutubeChrome;
+  }, [hideYoutubeChrome]);
 
   // Mount the appropriate player whenever the video changes
   useEffect(() => {
@@ -133,11 +148,22 @@ export function VideoPlayer({ video, onEnded }: Props) {
               disablekb: 1,       // disable YouTube keyboard shortcuts
               fs: 0,              // hide native fullscreen button (we have our own)
               iv_load_policy: 3,  // hide video annotations
+              // F3 phase 3: hide native controls when custom controls take over
+              ...(hideYoutubeChrome ? { controls: 0 } : {}),
               ...(origin ? { origin } : {}),
             },
             events: {
+              onReady: (e) => {
+                if (cancelled) return;
+                setYtPlayer(e.target as YTPlayer);
+              },
               onStateChange: (e) => {
-                if (e.data === window.YT!.PlayerState.ENDED) {
+                // Custom controls own the ENDED signal when hideYoutubeChrome
+                // is on — skip here so handleEnded isn't fired twice.
+                if (
+                  e.data === window.YT!.PlayerState.ENDED &&
+                  !hideYoutubeChromeRef.current
+                ) {
                   onEndedRef.current?.();
                 }
               },
@@ -210,10 +236,11 @@ export function VideoPlayer({ video, onEnded }: Props) {
       }
       ytPlayerRef.current = null;
       vimeoPlayerRef.current = null;
+      setYtPlayer(null);
       // Clear the mount node so a new player can be built
       if (mountEl) mountEl.innerHTML = "";
     };
-  }, [video.provider, video.videoId, video.embedHost, playerElId]);
+  }, [video.provider, video.videoId, video.embedHost, playerElId, hideYoutubeChrome]);
 
   const changeSpeed = useCallback((rate: number) => {
     setSpeed(rate);
@@ -255,6 +282,11 @@ export function VideoPlayer({ video, onEnded }: Props) {
       <div className="aspect-video w-full relative">
         {/* YouTube/Vimeo API replaces this element with the iframe */}
         <div id={playerElId} className="absolute inset-0 w-full h-full" />
+        {/* F3 phase 3: custom controls layered above the iframe when
+            hideYoutubeChrome is on. Vimeo/Panda are not affected. */}
+        {video.provider === "youtube" && hideYoutubeChrome && ytPlayer && (
+          <YouTubeCustomControls player={ytPlayer} onEnded={onEnded} />
+        )}
         {playerError && (
           <div className="absolute inset-0 bg-gray-950/90 flex items-center justify-center p-6 text-center">
             <p className="text-sm text-red-400">{playerError}</p>
