@@ -1,4 +1,6 @@
-import { getCurrentUser } from "@/lib/auth";
+import { getCurrentUser, hasAcceptedCollaborator } from "@/lib/auth";
+import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 import { ProducerThemeProvider } from "@/components/producer-theme-provider";
 import { ProducerShell } from "@/components/producer-shell";
 
@@ -23,6 +25,27 @@ export default async function ProducerLayout({
   // Sem user = página de auth (login/register) → sem shell
   if (!user) {
     return <>{children}</>;
+  }
+
+  // Security: only staff (ADMIN/PRODUCER/COLLABORATOR, or STUDENT with an
+  // accepted Collaborator row — same exception as requireStaff) may see the
+  // producer chrome. APIs are already protected by requireStaff; this closes
+  // the UI/SSR-data leak so authed STUDENTs can't reach /producer/* by URL.
+  const isStaff =
+    user.role === "ADMIN" ||
+    user.role === "PRODUCER" ||
+    user.role === "COLLABORATOR" ||
+    (user.role === "STUDENT" && (await hasAcceptedCollaborator(user.id)));
+
+  if (!isStaff) {
+    const slug = (await cookies()).get("active_workspace_slug")?.value;
+    if (slug && /^[a-z0-9-]+$/.test(slug)) {
+      redirect(`/w/${slug}`);
+    }
+    // Fallback: /producer/login would loop (middleware bounces authed users
+    // off it back to /producer). /landing is public and not in
+    // redirectIfAuthed, so it terminates cleanly.
+    redirect("/landing");
   }
 
   let initialTheme = THEME_DEFAULTS;
