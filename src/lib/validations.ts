@@ -357,7 +357,8 @@ export const integrationRequestSchema = z
 
 export const updateCourseExternalIdSchema = z
   .object({
-    externalProductId: z.union([z.string().max(200), z.null()]).optional(),
+    externalProductIds: z.array(z.string().max(200)).optional(),
+    externalProductId: z.union([z.string().max(200), z.null()]).optional(), // retrocompat
   })
   .passthrough();
 
