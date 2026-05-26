@@ -13,7 +13,7 @@ export async function PUT(request: Request, props: { params: Promise<{ id: strin
     const raw = await request.json().catch(() => ({}));
     const v = validateBody(updateLessonSchema, raw);
     if (!v.success) return v.error;
-    const { title, description, videoUrl, duration, daysToRelease } = v.data;
+    const { title, description, videoUrl, hideYoutubeChrome, duration, daysToRelease } = v.data;
 
     const lesson = await prisma.lesson.update({
       where: { id: params.id },
@@ -21,6 +21,7 @@ export async function PUT(request: Request, props: { params: Promise<{ id: strin
         ...(title !== undefined && { title }),
         ...(description !== undefined && { description }),
         ...(videoUrl !== undefined && { videoUrl }),
+        ...(hideYoutubeChrome !== undefined && { hideYoutubeChrome }),
         ...(duration !== undefined && {
           duration: duration ? Number(duration) : null,
         }),

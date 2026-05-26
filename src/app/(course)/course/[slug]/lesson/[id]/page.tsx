@@ -44,6 +44,7 @@ interface ViewData {
     description: string | null;
     moduleId: string;
     video: ParsedVideo;
+    hideYoutubeChrome: boolean;
     completed: boolean;
   };
   course: {
@@ -420,7 +421,11 @@ export default function LessonPage(
           {data.lesson.video.videoId ? (
             <div className="relative bg-black w-full">
               <div className="aspect-video w-full">
-                <VideoPlayer video={data.lesson.video} onEnded={handleEnded} />
+                <VideoPlayer
+                  video={data.lesson.video}
+                  hideYoutubeChrome={data.lesson.hideYoutubeChrome}
+                  onEnded={handleEnded}
+                />
               </div>
               {showCountdown && data.next && (
                 <AutoplayCountdown

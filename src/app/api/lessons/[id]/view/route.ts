@@ -176,6 +176,7 @@ export async function GET(_request: Request, props: { params: Promise<{ id: stri
         description: lesson.description,
         moduleId: lesson.moduleId,
         video,
+        hideYoutubeChrome: lesson.hideYoutubeChrome,
         completed: lesson.progress.some((p) => p.completed),
       },
       course: {

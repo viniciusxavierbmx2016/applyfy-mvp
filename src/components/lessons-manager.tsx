@@ -6,6 +6,7 @@ import { LessonMaterials } from "@/components/lesson-materials";
 import { QuizManager } from "@/components/quiz-manager";
 import { useConfirm } from "@/hooks/use-confirm";
 import { HelpTooltip } from "@/components/help-tooltip";
+import { parseVideoUrl } from "@/lib/video";
 
 const RichTextEditor = dynamic(() => import("@/components/rich-text-editor"), {
   ssr: false,
@@ -34,6 +35,7 @@ export interface LessonData {
   title: string;
   description: string | null;
   videoUrl: string;
+  hideYoutubeChrome: boolean;
   duration: number | null;
   order: number;
   daysToRelease: number;
@@ -291,6 +293,7 @@ function LessonForm({
     title: string;
     description: string | null;
     videoUrl: string;
+    hideYoutubeChrome: boolean;
     duration: number | null;
     daysToRelease: number;
   }) => void;
@@ -300,6 +303,9 @@ function LessonForm({
   const [title, setTitle] = useState(initial?.title || "");
   const [description, setDescription] = useState(initial?.description || "");
   const [videoUrl, setVideoUrl] = useState(initial?.videoUrl || "");
+  const [hideYoutubeChrome, setHideYoutubeChrome] = useState(
+    initial?.hideYoutubeChrome ?? false
+  );
   const [duration, setDuration] = useState<string>(
     initial?.duration ? String(initial.duration) : ""
   );
@@ -314,6 +320,7 @@ function LessonForm({
       title: title.trim(),
       description: description.trim() || null,
       videoUrl: videoUrl.trim(),
+      hideYoutubeChrome,
       duration: duration ? Number(duration) : null,
       daysToRelease: Math.max(0, Math.floor(Number(daysToRelease) || 0)),
     });
@@ -337,6 +344,21 @@ function LessonForm({
         placeholder="Cole a URL do vídeo (opcional)"
         className="w-full px-3 py-2 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
       />
+      {parseVideoUrl(videoUrl).provider === "youtube" && (
+        <label className="flex items-start gap-2 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={hideYoutubeChrome}
+            onChange={(e) => setHideYoutubeChrome(e.target.checked)}
+            className="mt-0.5 rounded border-gray-600 bg-white/5 text-blue-600 focus:ring-blue-500/30"
+          />
+          <span className="text-xs text-gray-400">
+            Esconder marcas do YouTube — remove controles e logo do YouTube. O player terá controles próprios.
+            <br />
+            <span className="text-gray-500">⚠️ Confirme se está em conformidade com os termos da plataforma de vídeo.</span>
+          </span>
+        </label>
+      )}
       <RichTextEditor
         value={description}
         onChange={setDescription}

@@ -14,7 +14,7 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
     const raw = await request.json().catch(() => ({}));
     const v = validateBody(createLessonSchema, raw);
     if (!v.success) return v.error;
-    const { title, description, videoUrl, duration, daysToRelease } = v.data;
+    const { title, description, videoUrl, hideYoutubeChrome, duration, daysToRelease } = v.data;
 
     const lastLesson = await prisma.lesson.findFirst({
       where: { moduleId: params.id },
@@ -26,6 +26,7 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
         title,
         description: description || null,
         videoUrl: videoUrl ?? null,
+        hideYoutubeChrome: hideYoutubeChrome ?? false,
         duration: duration ? Number(duration) : null,
         moduleId: params.id,
         order: (lastLesson?.order ?? -1) + 1,
