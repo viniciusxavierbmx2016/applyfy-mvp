@@ -74,18 +74,37 @@ async function sendToSubscriptions(
   return results.filter((r) => r.status === "fulfilled").length;
 }
 
-export async function sendPushToUser(userId: string, payload: PushPayload) {
+// Workspace isolation: when the caller passes a workspaceId, deliver only to
+// subscriptions registered under that workspace plus legacy/unscoped ones
+// (workspaceId IS NULL). Without it, deliver to every subscription of the
+// user(s) — current behavior preserved for callers without workspace context.
+export async function sendPushToUser(
+  userId: string,
+  payload: PushPayload,
+  workspaceId?: string | null
+) {
   const subscriptions = await prisma.pushSubscription.findMany({
-    where: { userId },
+    where: workspaceId
+      ? { userId, OR: [{ workspaceId }, { workspaceId: null }] }
+      : { userId },
   });
   return sendToSubscriptions(subscriptions, payload);
 }
 
-export async function sendPushToUsers(userIds: string[], payload: PushPayload) {
+export async function sendPushToUsers(
+  userIds: string[],
+  payload: PushPayload,
+  workspaceId?: string | null
+) {
   if (userIds.length === 0) return 0;
   // Single query for all recipients (was one findMany per user — N+1).
   const subscriptions = await prisma.pushSubscription.findMany({
-    where: { userId: { in: userIds } },
+    where: workspaceId
+      ? {
+          userId: { in: userIds },
+          OR: [{ workspaceId }, { workspaceId: null }],
+        }
+      : { userId: { in: userIds } },
   });
   return sendToSubscriptions(subscriptions, payload);
 }

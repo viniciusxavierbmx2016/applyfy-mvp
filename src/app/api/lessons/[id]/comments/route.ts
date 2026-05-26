@@ -267,12 +267,16 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
           link,
           actorId: user.id,
         });
-        sendPushToUser(workspace.ownerId, {
-          title: "Novo conteúdo para moderar",
-          body: `Comentário de ${user.name} em ${lesson.title} aguarda aprovação`,
-          url: link,
-          tag: "moderation",
-        }).catch(() => {});
+        sendPushToUser(
+          workspace.ownerId,
+          {
+            title: "Novo conteúdo para moderar",
+            body: `Comentário de ${user.name} em ${lesson.title} aguarda aprovação`,
+            url: link,
+            tag: "moderation",
+          },
+          lesson.module.course.workspaceId
+        ).catch(() => {});
       }
     }
 
@@ -293,12 +297,16 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
             link,
             actorId: user.id,
           });
-          sendPushToUser(workspace.ownerId, {
-            title: "Novo comentário",
-            body: `${user.name || "Um aluno"} comentou na aula "${lesson.title}"`,
-            url: link,
-            tag: "comment",
-          }).catch(() => {});
+          sendPushToUser(
+            workspace.ownerId,
+            {
+              title: "Novo comentário",
+              body: `${user.name || "Um aluno"} comentou na aula "${lesson.title}"`,
+              url: link,
+              tag: "comment",
+            },
+            lesson.module.course.workspaceId
+          ).catch(() => {});
         }
       } catch {}
     }
