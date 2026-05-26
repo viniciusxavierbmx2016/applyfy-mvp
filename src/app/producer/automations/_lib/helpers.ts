@@ -33,6 +33,9 @@ export function getTriggerDetail(auto: AutomationItem, courses: CourseOption[], 
       const tag = tags.find((t) => t.id === cfg.tagId);
       return tag ? `${tag.name} (${tag.studentCount})` : null;
     }
+    if (auto.triggerType === "POINTS_REACHED" && cfg.minPoints != null) {
+      return `≥ ${cfg.minPoints} pontos`;
+    }
     if (cfg.inactiveDays) return `${cfg.inactiveDays} dias`;
     if (cfg.afterDays && auto.triggerType === "STUDENT_NEVER_ACCESSED") return `após ${cfg.afterDays}d`;
     if (cfg.progressPercent != null) {
