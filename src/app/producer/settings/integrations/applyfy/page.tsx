@@ -14,6 +14,7 @@ interface CourseRow {
   title: string;
   slug: string;
   externalProductId: string | null;
+  externalProductIds: string[];
   isPublished: boolean;
 }
 
@@ -107,7 +108,16 @@ export default function AdminIntegrationsPage() {
     ])
       .then(([settings, coursesData, statusData]) => {
         setTokenStatus(settings.settings?.applyfy_token ?? null);
-        setCourses(coursesData.courses || []);
+        setCourses(
+          (coursesData.courses || []).map(
+            (c: CourseRow & { externalProductIds?: string[] }) => ({
+              ...c,
+              externalProductIds:
+                c.externalProductIds ??
+                (c.externalProductId ? [c.externalProductId] : []),
+            })
+          )
+        );
         const saved = statusData?.gateways?.applyfy?.logoUrl;
         if (saved) setLogoUrl(saved);
       })
@@ -155,35 +165,67 @@ export default function AdminIntegrationsPage() {
     }
   }
 
-  async function saveCourseExternalId(courseId: string) {
+  async function saveCourseExternalIds(courseId: string, ids: string[]) {
     setSavingCourseId(courseId);
     try {
-      const next = courseEdits[courseId] ?? "";
       const res = await fetch(
-        `/api/admin/integrations/courses/${courseId}`,
+        `/api/producer/integrations/courses/${courseId}`,
         {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ externalProductId: next }),
+          body: JSON.stringify({ externalProductIds: ids }),
         }
       );
       const body = await res.json().catch(() => ({}));
       if (!res.ok) {
         showToast(body?.error || "Erro ao salvar");
-        return;
+        return false;
       }
       setCourses((prev) =>
-        prev.map((c) => (c.id === courseId ? { ...c, ...body.course } : c))
+        prev.map((c) =>
+          c.id === courseId
+            ? {
+                ...c,
+                externalProductIds: body.externalProductIds ?? ids,
+                externalProductId:
+                  body.course?.externalProductId ?? ids[0] ?? null,
+              }
+            : c
+        )
       );
+      showToast("Atualizado");
+      return true;
+    } finally {
+      setSavingCourseId(null);
+    }
+  }
+
+  async function addExternalId(courseId: string) {
+    const draft = (courseEdits[courseId] ?? "").trim();
+    if (!draft) return;
+    const course = courses.find((c) => c.id === courseId);
+    const current = course?.externalProductIds ?? [];
+    if (current.includes(draft)) {
+      showToast("Esse ID já está na lista");
+      return;
+    }
+    const ok = await saveCourseExternalIds(courseId, [...current, draft]);
+    if (ok) {
       setCourseEdits((prev) => {
         const rest = { ...prev };
         delete rest[courseId];
         return rest;
       });
-      showToast("Atualizado");
-    } finally {
-      setSavingCourseId(null);
     }
+  }
+
+  async function removeExternalId(courseId: string, id: string) {
+    const course = courses.find((c) => c.id === courseId);
+    const current = course?.externalProductIds ?? [];
+    await saveCourseExternalIds(
+      courseId,
+      current.filter((x) => x !== id)
+    );
   }
 
   const groupedLogsCount = useMemo(() => {
@@ -334,15 +376,11 @@ export default function AdminIntegrationsPage() {
             ) : (
               <div className="space-y-2">
                 {courses.map((c) => {
-                  const editing = courseEdits[c.id];
-                  const currentValue = editing ?? (c.externalProductId || "");
-                  const dirty =
-                    editing !== undefined &&
-                    editing !== (c.externalProductId || "");
+                  const draft = courseEdits[c.id] ?? "";
                   return (
                     <div
                       key={c.id}
-                      className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-gray-950/40"
+                      className="flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-3 p-3 rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-gray-950/40"
                     >
                       <div className="min-w-0 sm:w-56 flex-shrink-0">
                         <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
@@ -357,28 +395,59 @@ export default function AdminIntegrationsPage() {
                           )}
                         </p>
                       </div>
-                      <input
-                        type="text"
-                        value={currentValue}
-                        onChange={(e) =>
-                          setCourseEdits((prev) => ({
-                            ...prev,
-                            [c.id]: e.target.value,
-                          }))
-                        }
-                        placeholder="ex: KSA912"
-                        className="flex-1 px-3 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-white/10 rounded-lg text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-primary/50"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => saveCourseExternalId(c.id)}
-                        disabled={
-                          !dirty || savingCourseId === c.id
-                        }
-                        className="px-3 py-2 bg-primary hover:bg-primary-hover disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-medium rounded-lg whitespace-nowrap"
-                      >
-                        {savingCourseId === c.id ? "Salvando..." : "Salvar"}
-                      </button>
+                      <div className="flex-1 min-w-0">
+                        {c.externalProductIds.length > 0 && (
+                          <div className="flex flex-wrap gap-2 mb-2">
+                            {c.externalProductIds.map((id) => (
+                              <span
+                                key={id}
+                                className="bg-white/5 border border-white/10 rounded-lg px-3 py-1 text-sm inline-flex items-center gap-2 text-gray-800 dark:text-gray-200"
+                              >
+                                <span className="font-mono">{id}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => removeExternalId(c.id, id)}
+                                  disabled={savingCourseId === c.id}
+                                  className="text-gray-500 hover:text-red-400 disabled:opacity-40"
+                                  aria-label={`Remover ${id}`}
+                                >
+                                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+                                  </svg>
+                                </button>
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            value={draft}
+                            onChange={(e) =>
+                              setCourseEdits((prev) => ({
+                                ...prev,
+                                [c.id]: e.target.value,
+                              }))
+                            }
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                e.preventDefault();
+                                addExternalId(c.id);
+                              }
+                            }}
+                            placeholder="ex: KSA912"
+                            className="flex-1 px-3 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-white/10 rounded-lg text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-primary/50"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => addExternalId(c.id)}
+                            disabled={!draft.trim() || savingCourseId === c.id}
+                            className="px-3 py-2 bg-primary hover:bg-primary-hover disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-medium rounded-lg whitespace-nowrap"
+                          >
+                            {savingCourseId === c.id ? "Salvando..." : "+ Adicionar"}
+                          </button>
+                        </div>
+                      </div>
                     </div>
                   );
                 })}

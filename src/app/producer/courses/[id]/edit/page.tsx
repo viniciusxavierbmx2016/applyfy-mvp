@@ -103,7 +103,6 @@ function EditCoursePageInner(
         checkoutUrl: course.checkoutUrl || "",
         price: course.price != null ? String(course.price) : "",
         priceCurrency: course.priceCurrency || "BRL",
-        externalProductId: course.externalProductId || "",
         isPublished: course.isPublished,
         showInStore: course.showInStore,
         supportEmail: course.supportEmail || "",
