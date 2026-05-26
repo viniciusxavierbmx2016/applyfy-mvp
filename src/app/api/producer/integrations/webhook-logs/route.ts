@@ -16,12 +16,25 @@ export async function GET(request: Request) {
     if (staff.role === "PRODUCER") {
       const owned = await prisma.course.findMany({
         where: { ownerId: staff.id },
-        select: { id: true, externalProductId: true },
+        select: {
+          id: true,
+          externalProductId: true,
+          externalProducts: { select: { externalProductId: true } },
+        },
       });
       const ownedIds = owned.map((c) => c.id);
-      const ownedExternal = owned
-        .map((c) => c.externalProductId)
-        .filter((v): v is string => !!v);
+      // F11: union the legacy single field with all ids from the new table so
+      // logs for newer ids (not mirrored to the legacy field) still match.
+      const ownedExternal = Array.from(
+        new Set(
+          owned
+            .flatMap((c) => [
+              c.externalProductId,
+              ...c.externalProducts.map((ep) => ep.externalProductId),
+            ])
+            .filter((v): v is string => !!v)
+        )
+      );
 
       if (ownedIds.length === 0 && ownedExternal.length === 0) {
         return NextResponse.json({ logs: [] });

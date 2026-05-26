@@ -115,6 +115,7 @@ model Workspace {
   tags                 Tag[]
   lives                Live[]
   workspaceCredentials WorkspaceCredential[]
+  externalProducts     CourseExternalProduct[]
 
   @@index([ownerId])
 }
@@ -229,6 +230,7 @@ model Course {
   menuItems       MenuItem[]
   lives           Live[]
   communityGroups CommunityGroup[]
+  externalProducts CourseExternalProduct[]
 
   @@index([ownerId])
   @@index([workspaceId])
@@ -1123,4 +1125,19 @@ model TicketMessage {
 
   @@index([ticketId, createdAt])
   @@index([senderId])
+}
+
+model CourseExternalProduct {
+  id                String   @id @default(cuid())
+  courseId          String
+  externalProductId String
+  workspaceId       String
+  createdAt         DateTime @default(now())
+
+  course    Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, externalProductId])
+  @@index([externalProductId, workspaceId])
+  @@index([courseId])
 }

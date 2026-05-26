@@ -27,18 +27,30 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
     const v = validateBody(updateCourseExternalIdSchema, rawBody);
     if (!v.success) return v.error;
     const body = v.data;
-    const raw = body?.externalProductId;
-    const externalProductId =
-      typeof raw === "string" && raw.trim().length > 0 ? raw.trim() : null;
 
-    if (externalProductId) {
-      // Uniqueness is per-workspace (two workspaces may reuse the same id).
-      // Do NOT expose the conflicting course's title (cross-tenant leak).
-      const conflict = await prisma.course.findFirst({
+    // F11: accept the new array shape. Fall back to the legacy single field so
+    // the pre-step-5 UI keeps working. Normalize: trim, drop empties, dedupe.
+    const rawList = Array.isArray(body.externalProductIds)
+      ? body.externalProductIds
+      : body.externalProductId
+        ? [body.externalProductId]
+        : [];
+    const ids = Array.from(
+      new Set(
+        rawList
+          .map((s) => (typeof s === "string" ? s.trim() : ""))
+          .filter((s) => s.length > 0)
+      )
+    );
+
+    // Uniqueness is per-workspace: reject any id already used by ANOTHER course
+    // in this workspace. Do NOT expose the conflicting course (cross-tenant leak).
+    if (ids.length > 0) {
+      const conflict = await prisma.courseExternalProduct.findFirst({
         where: {
-          externalProductId,
           workspaceId: course.workspaceId,
-          NOT: { id: params.id },
+          externalProductId: { in: ids },
+          courseId: { not: params.id },
         },
         select: { id: true },
       });
@@ -52,19 +64,33 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
       }
     }
 
-    const updated = await prisma.course.update({
-      where: { id: params.id },
-      data: { externalProductId },
-      select: {
-        id: true,
-        title: true,
-        slug: true,
-        externalProductId: true,
-        isPublished: true,
-      },
-    });
+    // Replace-set in a transaction + keep the legacy field synced to ids[0]
+    // (the webhook fallback). createMany with [] is a no-op (clears all).
+    const [, , updated] = await prisma.$transaction([
+      prisma.courseExternalProduct.deleteMany({
+        where: { courseId: params.id },
+      }),
+      prisma.courseExternalProduct.createMany({
+        data: ids.map((externalProductId) => ({
+          courseId: params.id,
+          externalProductId,
+          workspaceId: course.workspaceId,
+        })),
+      }),
+      prisma.course.update({
+        where: { id: params.id },
+        data: { externalProductId: ids[0] ?? null },
+        select: {
+          id: true,
+          title: true,
+          slug: true,
+          externalProductId: true,
+          isPublished: true,
+        },
+      }),
+    ]);
 
-    return NextResponse.json({ course: updated });
+    return NextResponse.json({ course: updated, externalProductIds: ids });
   } catch (error) {
     const msg = error instanceof Error ? error.message : "";
     const status =

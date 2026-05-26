@@ -78,7 +78,6 @@ export async function PUT(request: Request, props: { params: Promise<{ id: strin
       checkoutUrl,
       price,
       priceCurrency,
-      externalProductId,
       isPublished,
       showInStore,
       certificateEnabled,
@@ -170,9 +169,6 @@ export async function PUT(request: Request, props: { params: Promise<{ id: strin
         }),
         ...(priceCurrency !== undefined && {
           priceCurrency: priceCurrency || "BRL",
-        }),
-        ...(externalProductId !== undefined && {
-          externalProductId: externalProductId?.trim() || null,
         }),
         ...(isPublished !== undefined && { isPublished: Boolean(isPublished) }),
         ...(showInStore !== undefined && { showInStore: Boolean(showInStore) }),

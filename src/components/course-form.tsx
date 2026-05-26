@@ -26,7 +26,6 @@ interface CourseFormData {
   checkoutUrl: string;
   price: string;
   priceCurrency: string;
-  externalProductId: string;
   isPublished: boolean;
   showInStore: boolean;
   featured: boolean;
@@ -104,9 +103,6 @@ export function CourseForm({ initial, mode }: CourseFormProps) {
   const [price, setPrice] = useState(initial?.price ?? "");
   const [priceCurrency, setPriceCurrency] = useState(
     initial?.priceCurrency || "BRL"
-  );
-  const [externalProductId, setExternalProductId] = useState(
-    initial?.externalProductId || ""
   );
   const [isPublished, setIsPublished] = useState(initial?.isPublished ?? false);
   const [showInStore, setShowInStore] = useState(initial?.showInStore ?? true);
@@ -194,7 +190,6 @@ export function CourseForm({ initial, mode }: CourseFormProps) {
       checkoutUrl: checkoutUrl || null,
       price: price === "" ? null : Number(price),
       priceCurrency: priceCurrency || "BRL",
-      externalProductId: externalProductId.trim() || null,
       isPublished,
       showInStore,
       featured,
@@ -405,19 +400,6 @@ export function CourseForm({ initial, mode }: CourseFormProps) {
           </div>
         </div>
 
-        <div>
-          <label className={labelClass}>ID externo do produto (Applyfy / Stripe)</label>
-          <input
-            type="text"
-            value={externalProductId}
-            onChange={(e) => setExternalProductId(e.target.value)}
-            className={inputClass}
-            placeholder="ex: 1234567 (Applyfy) ou prod_XXXX (Stripe)"
-          />
-          <p className="text-xs text-gray-500 mt-1">
-            Usado pelos webhooks para liberar acesso automaticamente após uma compra aprovada.
-          </p>
-        </div>
       </div>
 
       {/* SEÇÃO 3 — Vitrine */}
