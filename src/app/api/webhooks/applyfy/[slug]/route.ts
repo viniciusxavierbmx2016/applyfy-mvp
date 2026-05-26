@@ -410,14 +410,10 @@ export async function POST(request: Request, props: { params: Promise<{ slug: st
         if (!externalId && !productId) continue;
 
         let course = externalId
-          ? await prisma.course.findFirst({
-              where: { externalProductId: externalId, workspaceId },
-            })
+          ? await findCourseByExternalId(externalId, workspaceId)
           : null;
         if (!course && productId) {
-          course = await prisma.course.findFirst({
-            where: { externalProductId: productId, workspaceId },
-          });
+          course = await findCourseByExternalId(productId, workspaceId);
         }
         if (!course) {
           await logWebhook({
