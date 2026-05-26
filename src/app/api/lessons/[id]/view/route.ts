@@ -184,6 +184,7 @@ export async function GET(_request: Request, props: { params: Promise<{ id: stri
         slug: course.slug,
         title: course.title,
         lessonCommentsEnabled: course.lessonCommentsEnabled,
+        lessonReactionsEnabled: course.lessonReactionsEnabled,
         supportEmail: course.supportEmail,
         supportWhatsapp: course.supportWhatsapp,
         showLessonSupport: course.showLessonSupport,

@@ -52,6 +52,7 @@ interface ViewData {
     slug: string;
     title: string;
     lessonCommentsEnabled?: boolean;
+    lessonReactionsEnabled?: boolean;
     supportEmail?: string | null;
     supportWhatsapp?: string | null;
     showLessonSupport?: boolean;
@@ -485,40 +486,40 @@ export default function LessonPage(
                       {data.lesson.completed ? "Concluída" : "Concluir aula"}
                     </button>
 
-                    {reactionData?.enabled && (
+                    {data.course.lessonReactionsEnabled && (
                       <>
                         <button
                           type="button"
                           onClick={() => handleReaction("LIKE")}
                           className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-full text-sm transition-colors ${
-                            reactionData.userReaction === "LIKE"
+                            reactionData?.userReaction === "LIKE"
                               ? "bg-blue-500/15 text-blue-600 dark:text-blue-400"
                               : "bg-gray-100 dark:bg-white/5 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-white/10"
                           }`}
                         >
-                          <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill={reactionData.userReaction === "LIKE" ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill={reactionData?.userReaction === "LIKE" ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" />
                           </svg>
-                          {reactionData.likeCount > 0 && (
-                            <span className="text-xs tabular-nums">{reactionData.likeCount}</span>
+                          {(reactionData?.likeCount ?? 0) > 0 && (
+                            <span className="text-xs tabular-nums">{reactionData?.likeCount}</span>
                           )}
                         </button>
                         <button
                           type="button"
                           onClick={() => {
-                            if (reactionData.userReaction === "DISLIKE") {
+                            if (reactionData?.userReaction === "DISLIKE") {
                               handleReaction("DISLIKE");
                             } else {
                               setShowDislikeModal(true);
                             }
                           }}
                           className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-full text-sm transition-colors ${
-                            reactionData.userReaction === "DISLIKE"
+                            reactionData?.userReaction === "DISLIKE"
                               ? "bg-red-500/15 text-red-600 dark:text-red-400"
                               : "bg-gray-100 dark:bg-white/5 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-white/10"
                           }`}
                         >
-                          <svg className="w-3.5 h-3.5 rotate-180" viewBox="0 0 24 24" fill={reactionData.userReaction === "DISLIKE" ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <svg className="w-3.5 h-3.5 rotate-180" viewBox="0 0 24 24" fill={reactionData?.userReaction === "DISLIKE" ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" />
                           </svg>
                         </button>
