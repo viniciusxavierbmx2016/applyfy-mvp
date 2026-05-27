@@ -226,11 +226,21 @@ export async function POST(request: Request) {
 
       // F18: dispatch POINTS_REACHED trigger so automations with a points
       // threshold can fire (matchesTrigger only passes on the crossing).
+      // Per-workspace gating: sum the ledger for this (user, workspace) so
+      // points earned in OTHER workspaces never unlock automations here.
+      // Aggregate runs AFTER the ledger.create above, so wsNewPoints already
+      // includes the delta just awarded.
+      const wsPointsResult = await prisma.pointsLedger.aggregate({
+        where: { userId: user.id, workspaceId: course.workspaceId },
+        _sum: { delta: true },
+      });
+      const wsNewPoints = wsPointsResult._sum.delta ?? 0;
+      const wsPrevPoints = wsNewPoints - pointsAwarded;
       processAutomations({
         type: "POINTS_REACHED",
         workspaceId: course.workspaceId,
         userId: user.id,
-        data: { prevPoints: user.points, newPoints },
+        data: { prevPoints: wsPrevPoints, newPoints: wsNewPoints },
       }).catch(() => {});
     }
 

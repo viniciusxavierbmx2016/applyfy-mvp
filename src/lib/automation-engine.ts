@@ -44,8 +44,9 @@ function matchesTrigger(
       return true;
     case "POINTS_REACHED": {
       // Fires only on the transition (crossing the threshold). prev/new are
-      // the user's GLOBAL total before/after the points award that triggered
-      // this dispatch.
+      // the user's PER-WORKSPACE total (sum of PointsLedger entries for this
+      // user+workspace) before/after the points award that triggered this
+      // dispatch — points earned in other workspaces are excluded.
       const minPoints = Number(config.minPoints) || 0;
       const prevPoints = Number(trigger.data?.prevPoints) || 0;
       const newPoints = Number(trigger.data?.newPoints) || 0;
