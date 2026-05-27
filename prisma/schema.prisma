@@ -118,6 +118,7 @@ model Workspace {
   externalProducts     CourseExternalProduct[]
   notifications        Notification[]
   pushSubscriptions    PushSubscription[]
+  applyfyTokens        WorkspaceApplyfyToken[]
 
   @@index([ownerId])
 }
@@ -1149,4 +1150,17 @@ model CourseExternalProduct {
   @@unique([workspaceId, externalProductId])
   @@index([externalProductId, workspaceId])
   @@index([courseId])
+}
+
+model WorkspaceApplyfyToken {
+  id          String    @id @default(cuid())
+  workspaceId String
+  label       String    @default("Token principal")
+  value       String
+  createdAt   DateTime  @default(now())
+  lastUsedAt  DateTime?
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId])
 }
