@@ -95,6 +95,15 @@ export async function POST(_request: Request, props: { params: Promise<{ id: str
           where: { id: authorUser.id },
           data: { points: newPoints, level: newLevel },
         });
+        await prisma.pointsLedger.create({
+          data: {
+            userId: post.userId,
+            workspaceId: post.course.workspaceId,
+            delta: pointsDelta,
+            source: "RECEIVE_LIKE",
+            sourceId: post.id,
+          },
+        });
       }
     }
 

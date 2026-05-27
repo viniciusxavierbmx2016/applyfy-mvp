@@ -303,6 +303,15 @@ export async function POST(request: Request) {
       pointsAwarded = GAMIFICATION.POINTS.CREATE_POST;
       finalPoints = updated.points;
       finalLevel = updated.level;
+      await prisma.pointsLedger.create({
+        data: {
+          userId: user.id,
+          workspaceId: course.workspaceId,
+          delta: GAMIFICATION.POINTS.CREATE_POST,
+          source: "CREATE_POST",
+          sourceId: post.id,
+        },
+      });
     }
 
     if (postStatus === "PENDING") {

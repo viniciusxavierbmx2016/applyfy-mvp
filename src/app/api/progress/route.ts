@@ -193,6 +193,27 @@ export async function POST(request: Request) {
         data: { points: newPoints, level: newLevel },
       });
 
+      // Per-workspace ledger entry: single row with the total delta (sum of
+      // lesson + module + course bonuses). Source reflects the highest tier
+      // completion so audits read naturally.
+      await prisma.pointsLedger.create({
+        data: {
+          userId: user.id,
+          workspaceId: course.workspaceId,
+          delta: pointsAwarded,
+          source: courseCompleted
+            ? "COMPLETE_COURSE"
+            : moduleCompleted
+              ? "COMPLETE_MODULE"
+              : "COMPLETE_LESSON",
+          sourceId: courseCompleted
+            ? course.id
+            : moduleCompleted
+              ? lesson.moduleId
+              : lesson.id,
+        },
+      });
+
       if (leveledUp) {
         const levelInfo = getLevelForPoints(newPoints);
         await createNotification({
