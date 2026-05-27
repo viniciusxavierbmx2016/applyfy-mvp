@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireStaff, requirePermission, getStaffCourseIds } from "@/lib/auth";
 import { resolveStaffWorkspace } from "@/lib/workspace";
+import { getWorkspacePointsByUser } from "@/lib/points";
+import { getLevelForPoints } from "@/lib/utils";
 import { decrypt } from "@/lib/encryption";
 
 function startOfDay(d: Date) {
@@ -575,6 +577,22 @@ export async function GET(request: Request) {
         new Set(activeEnrollments.map((e) => e.userId))
       );
 
+      // Per-workspace points override: User.points/level remain global. In this
+      // producer section we display points earned WITHIN this workspace. ADMIN
+      // with no workspace context (workspaceId === null) falls back to global.
+      const allUserIdsS = Array.from(
+        new Set(enrollmentsS.map((e) => e.userId))
+      );
+      const wsPointsMapS = workspaceId
+        ? await getWorkspacePointsByUser(allUserIdsS, workspaceId)
+        : null;
+      const pickPointsS = (userId: string, globalFallback: number) =>
+        wsPointsMapS ? (wsPointsMapS.get(userId) ?? 0) : globalFallback;
+      const pickLevelS = (userId: string, globalFallback: number) =>
+        wsPointsMapS
+          ? getLevelForPoints(wsPointsMapS.get(userId) ?? 0).level
+          : globalFallback;
+
       const progressS =
         allLessonIdsS.length && activeUserIds.length
           ? await prisma.lessonProgress.findMany({
@@ -661,10 +679,10 @@ export async function GET(request: Request) {
             name: e.user.name,
             email: e.user.email,
             avatarUrl: e.user.avatarUrl,
-            points: e.user.points,
+            points: pickPointsS(e.userId, e.user.points),
             phone: e.user.phone ?? null,
             document: decryptDoc(e.user.document),
-            level: e.user.level ?? 1,
+            level: pickLevelS(e.userId, e.user.level ?? 1),
             tags: e.user.userTags?.map((ut) => ut.tag.name).join("; ") || "",
             lessonsCompleted: completed,
             totalLessons: total,
@@ -730,10 +748,10 @@ export async function GET(request: Request) {
           name: e.user.name,
           email: e.user.email,
           avatarUrl: e.user.avatarUrl,
-          points: e.user.points,
+          points: pickPointsS(e.userId, e.user.points),
           phone: e.user.phone ?? null,
           document: decryptDoc(e.user.document),
-          level: e.user.level ?? 1,
+          level: pickLevelS(e.userId, e.user.level ?? 1),
           tags: e.user.userTags?.map((ut) => ut.tag.name).join("; ") || "",
           lessonsCompleted: 0,
           totalLessons: total,
@@ -771,7 +789,7 @@ export async function GET(request: Request) {
             avatarUrl: e.user.avatarUrl,
             phone: e.user.phone ?? null,
             document: decryptDoc(e.user.document),
-            level: e.user.level ?? 1,
+            level: pickLevelS(e.userId, e.user.level ?? 1),
             tags: e.user.userTags?.map((ut) => ut.tag.name).join("; ") || "",
             expiresAt: e.expiresAt!.toISOString(),
             lessonsCompleted: completed,
@@ -1067,6 +1085,14 @@ export async function GET(request: Request) {
       new Set(enrollments.map((e) => e.userId))
     );
 
+    // Per-workspace points override for the main analytics block (topStudents
+    // ranking + other rollups). Same fallback rule as the section block above.
+    const wsPointsMap = workspaceId
+      ? await getWorkspacePointsByUser(enrollmentUserIds, workspaceId)
+      : null;
+    const pickPoints = (userId: string, globalFallback: number) =>
+      wsPointsMap ? (wsPointsMap.get(userId) ?? 0) : globalFallback;
+
     // Progress
     const progress =
       allLessonIds.length && enrollmentUserIds.length
@@ -1276,7 +1302,7 @@ export async function GET(request: Request) {
         userId: e.userId,
         name: e.user.name,
         email: e.user.email,
-        points: e.user.points,
+        points: pickPoints(e.userId, e.user.points),
         completed: 0,
         total: 0,
         lastActive: userLastActive.get(e.userId) || null,

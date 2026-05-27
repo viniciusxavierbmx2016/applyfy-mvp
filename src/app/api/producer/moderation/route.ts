@@ -130,6 +130,15 @@ export async function POST(request: Request) {
               where: { id: post.user.id },
               data: { points: newPoints, level: newLevel },
             });
+            await prisma.pointsLedger.create({
+              data: {
+                userId: post.user.id,
+                workspaceId: post.course.workspaceId,
+                delta: GAMIFICATION.POINTS.CREATE_POST,
+                source: "CREATE_POST",
+                sourceId: post.id,
+              },
+            });
           }
           await createNotification({
             userId: post.userId,

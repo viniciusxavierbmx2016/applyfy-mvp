@@ -65,6 +65,7 @@ model User {
   assignedTickets      SupportTicket[]       @relation("AssignedTickets")
   ticketMessages       TicketMessage[]       @relation("TicketMessages")
   workspaceCredentials WorkspaceCredential[]
+  pointsLedger         PointsLedger[]
 
   @@index([workspaceId])
 }
@@ -119,6 +120,7 @@ model Workspace {
   notifications        Notification[]
   pushSubscriptions    PushSubscription[]
   applyfyTokens        WorkspaceApplyfyToken[]
+  pointsLedger         PointsLedger[]
 
   @@index([ownerId])
 }
@@ -1162,5 +1164,24 @@ model WorkspaceApplyfyToken {
 
   workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 
+  @@index([workspaceId])
+}
+
+// Per-workspace points audit trail. User.points/User.level remain global (profile),
+// but spend/scoring per workspace (e.g. POINTS_REACHED automation) reads from here.
+// No backfill — ledger starts at zero from rollout date.
+model PointsLedger {
+  id          String   @id @default(cuid())
+  userId      String
+  workspaceId String
+  delta       Int
+  source      String // "COMPLETE_LESSON", "COMPLETE_MODULE", "COMPLETE_COURSE", "CREATE_POST", "RECEIVE_LIKE"
+  sourceId    String? // lessonId, moduleId, courseId, postId (for dedup/audit)
+  createdAt   DateTime @default(now())
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([userId, workspaceId])
   @@index([workspaceId])
 }
