@@ -793,6 +793,20 @@ export const ticketUpdateSchema = z
     { message: "Nada para atualizar" }
   );
 
+// ─── Course support (F2 — student↔producer per course) ────────────
+
+export const createCourseSupportTicketSchema = z.object({
+  courseId: idString,
+  subject: z.string().min(1, "Assunto obrigatório").max(200),
+  body: z.string().min(1, "Mensagem obrigatória").max(20000),
+  attachments: z.array(attachmentPath).max(5).optional(),
+});
+
+export const courseSupportMessageSchema = z.object({
+  body: z.string().min(1, "Mensagem obrigatória").max(20000),
+  attachments: z.array(attachmentPath).max(5).optional(),
+});
+
 // ─── Moderation ────────────────────────────────────────────────────
 
 export const moderateSchema = z.object({
