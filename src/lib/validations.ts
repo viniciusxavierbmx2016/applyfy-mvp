@@ -807,6 +807,10 @@ export const courseSupportMessageSchema = z.object({
   attachments: z.array(attachmentPath).max(5).optional(),
 });
 
+export const courseSupportStatusSchema = z.object({
+  status: z.enum(["OPEN", "IN_PROGRESS", "RESOLVED", "CLOSED"]),
+});
+
 // ─── Moderation ────────────────────────────────────────────────────
 
 export const moderateSchema = z.object({
