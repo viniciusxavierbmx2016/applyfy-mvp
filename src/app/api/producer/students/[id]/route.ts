@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireStaff, requirePermission } from "@/lib/auth";
 import { resolveStaffWorkspace } from "@/lib/workspace";
+import { getWorkspacePoints } from "@/lib/points";
+import { getLevelForPoints } from "@/lib/utils";
 import { decrypt } from "@/lib/encryption";
 
 export async function GET(_request: Request, props: { params: Promise<{ id: string }> }) {
@@ -239,6 +241,16 @@ export async function GET(_request: Request, props: { params: Promise<{ id: stri
     }
     recentActivity.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
+    // Per-workspace points override: global User.points/level kept on User;
+    // here we show what this student earned WITHIN this workspace. ADMIN with
+    // no workspace context falls back to global.
+    const wsPoints = workspaceId
+      ? await getWorkspacePoints(user.id, workspaceId)
+      : null;
+    const displayPoints = wsPoints !== null ? wsPoints : user.points;
+    const displayLevel =
+      wsPoints !== null ? getLevelForPoints(wsPoints).level : user.level;
+
     return NextResponse.json({
       user: {
         id: user.id,
@@ -247,8 +259,8 @@ export async function GET(_request: Request, props: { params: Promise<{ id: stri
         phone: user.phone,
         document: user.document ? decrypt(user.document) : null,
         avatarUrl: user.avatarUrl,
-        points: user.points,
-        level: user.level,
+        points: displayPoints,
+        level: displayLevel,
         createdAt: user.createdAt,
         lastAccessAt: user.lastAccessAt,
         lastIpAddress: user.lastIpAddress,

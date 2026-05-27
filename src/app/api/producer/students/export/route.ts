@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireStaff, requirePermission, getStaffCourseIds } from "@/lib/auth";
 import { resolveStaffWorkspace } from "@/lib/workspace";
+import { getWorkspacePointsByUser } from "@/lib/points";
+import { getLevelForPoints } from "@/lib/utils";
 import { decrypt } from "@/lib/encryption";
 
 function csvEscape(v: string | number | null | undefined): string {
@@ -194,6 +196,19 @@ export async function GET(request: Request) {
     }
     const userIds = users.map((u) => u.id);
 
+    // Per-workspace points override for the CSV export: User.points/level
+    // remain global, but in a workspace-scoped CSV we export what was earned
+    // WITHIN this workspace. ADMIN with no workspace falls back to global.
+    const wsPointsMap = workspaceId
+      ? await getWorkspacePointsByUser(userIds, workspaceId)
+      : null;
+    const exportPoints = (userId: string, globalFallback: number) =>
+      wsPointsMap ? (wsPointsMap.get(userId) ?? 0) : globalFallback;
+    const exportLevel = (userId: string, globalFallback: number) =>
+      wsPointsMap
+        ? getLevelForPoints(wsPointsMap.get(userId) ?? 0).level
+        : globalFallback;
+
     const reactionsByUser = userIds.length > 0
       ? await prisma.lessonReaction.groupBy({
           by: ["userId", "type"],
@@ -381,8 +396,8 @@ export async function GET(request: Request) {
           csvEscape(u.phone),
           csvEscape(u.document ? decrypt(u.document) : ""),
           csvEscape(tagNames),
-          csvEscape(u.points),
-          csvEscape(u.level),
+          csvEscape(exportPoints(u.id, u.points)),
+          csvEscape(exportLevel(u.id, u.level)),
           csvEscape(formatDate(u.createdAt)),
           csvEscape(activeTitles),
           csvEscape(expiredTitles),

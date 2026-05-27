@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireStaff, requirePermission, getStaffCourseIds } from "@/lib/auth";
 import { resolveStaffWorkspace } from "@/lib/workspace";
+import { getWorkspacePointsByUser } from "@/lib/points";
+import { getLevelForPoints } from "@/lib/utils";
 import type { EnrollmentStatus } from "@prisma/client";
 
 const VISIBLE_STATUSES: EnrollmentStatus[] = ["ACTIVE", "EXPIRED"];
@@ -181,11 +183,30 @@ export async function GET(request: Request) {
       take: 200,
     });
 
-    const mappedUsers = users.map((u) => ({
-      ...u,
-      tags: u.userTags.map((ut) => ut.tag),
-      userTags: undefined,
-    }));
+    // Per-workspace points override: User.points/level remain global, but in
+    // this producer-scoped view we display points earned WITHIN this workspace
+    // (via PointsLedger). For ADMIN without a workspace context, fall back to
+    // the global values stored on User.
+    const wsPointsMap = workspaceId
+      ? await getWorkspacePointsByUser(
+          users.map((u) => u.id),
+          workspaceId
+        )
+      : null;
+
+    const mappedUsers = users.map((u) => {
+      const wsPoints = wsPointsMap?.get(u.id) ?? null;
+      const points = wsPoints !== null ? wsPoints : u.points;
+      const level =
+        wsPoints !== null ? getLevelForPoints(wsPoints).level : u.level;
+      return {
+        ...u,
+        points,
+        level,
+        tags: u.userTags.map((ut) => ut.tag),
+        userTags: undefined,
+      };
+    });
 
     const allTags = workspaceId
       ? await prisma.tag.findMany({
