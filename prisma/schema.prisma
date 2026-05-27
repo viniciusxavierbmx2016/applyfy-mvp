@@ -61,9 +61,11 @@ model User {
   auditLogs            AuditLog[]            @relation("auditLogs")
   adminCollaborator    AdminCollaborator?    @relation("AdminCollabUser")
   adminCollabsInvited  AdminCollaborator[]   @relation("AdminCollabInviter")
-  supportTickets       SupportTicket[]       @relation("ProducerTickets")
-  assignedTickets      SupportTicket[]       @relation("AssignedTickets")
-  ticketMessages       TicketMessage[]       @relation("TicketMessages")
+  supportTickets        SupportTicket[]        @relation("ProducerTickets")
+  assignedTickets       SupportTicket[]        @relation("AssignedTickets")
+  ticketMessages        TicketMessage[]        @relation("TicketMessages")
+  studentSupportTickets CourseSupportTicket[]  @relation("StudentSupportTickets")
+  courseSupportMessages CourseSupportMessage[] @relation("CourseSupportMessages")
   workspaceCredentials WorkspaceCredential[]
   pointsLedger         PointsLedger[]
 
@@ -121,6 +123,7 @@ model Workspace {
   pushSubscriptions    PushSubscription[]
   applyfyTokens        WorkspaceApplyfyToken[]
   pointsLedger         PointsLedger[]
+  courseSupportTickets CourseSupportTicket[]
 
   @@index([ownerId])
 }
@@ -208,6 +211,8 @@ model Course {
   supportEmail                    String?
   supportWhatsapp                 String?
   showLessonSupport               Boolean   @default(true)
+  supportButtonColor              String?
+  supportButtonImage              String?
   memberBgColor                   String?
   memberSidebarColor              String?
   memberHeaderColor               String?
@@ -236,6 +241,7 @@ model Course {
   lives           Live[]
   communityGroups CommunityGroup[]
   externalProducts CourseExternalProduct[]
+  supportTickets   CourseSupportTicket[]
 
   @@index([ownerId])
   @@index([workspaceId])
@@ -1184,4 +1190,55 @@ model PointsLedger {
 
   @@index([userId, workspaceId])
   @@index([workspaceId])
+}
+
+// F2 — per-course student↔producer support tickets. Distinct from the
+// platform's existing SupportTicket (producer↔admin) so that flow is
+// untouched. Scoped by workspaceId + courseId; student opens, producer
+// (or workspace COLLABORATOR with permission) responds.
+enum CourseSupportStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+model CourseSupportTicket {
+  id          String              @id @default(cuid())
+  subject     String
+  status      CourseSupportStatus @default(OPEN)
+  courseId    String
+  workspaceId String
+  studentId   String
+
+  lastMessageAt        DateTime  @default(now())
+  lastReadByStudentAt  DateTime?
+  lastReadByProducerAt DateTime?
+  closedAt             DateTime?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  course    Course                 @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  workspace Workspace              @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  student   User                   @relation("StudentSupportTickets", fields: [studentId], references: [id], onDelete: Cascade)
+  messages  CourseSupportMessage[]
+
+  @@index([courseId, status])
+  @@index([workspaceId, status])
+  @@index([studentId])
+}
+
+model CourseSupportMessage {
+  id          String   @id @default(cuid())
+  body        String   @db.Text
+  attachments String[]
+  ticketId    String
+  senderId    String
+  senderRole  String // "STUDENT" or "PRODUCER"
+  createdAt   DateTime @default(now())
+
+  ticket CourseSupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  sender User                @relation("CourseSupportMessages", fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([ticketId, createdAt])
 }
