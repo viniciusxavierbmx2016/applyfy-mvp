@@ -134,24 +134,50 @@ export async function POST(request: Request, props: { params: Promise<{ slug: st
     }
     workspaceId = workspace.id;
 
-    const storedToken =
-      (await getSetting(`applyfy_token:${workspace.id}`)) || "";
-    if (!storedToken) {
-      await logWebhook({
-        event,
-        email: body?.client?.email,
-        workspaceId,
-        status: "IGNORED",
-        errorMessage: "Workspace sem token Applyfy configurado",
-        rawPayload: body,
-      });
-      return NextResponse.json(
-        { ok: false, error: "Integration not configured" },
-        { status: 200 }
-      );
-    }
     const providedToken = body?.token || "";
-    if (!safeCompare(providedToken, storedToken)) {
+
+    // Multiple-tokens: validate against WorkspaceApplyfyToken rows first; fall
+    // back to the legacy Settings key during the transition so any workspace
+    // not yet migrated to the new table keeps working.
+    const wsTokens = await prisma.workspaceApplyfyToken.findMany({
+      where: { workspaceId: workspace.id },
+      select: { id: true, value: true },
+    });
+
+    let tokenValid = false;
+    let matchedTokenId: string | null = null;
+
+    if (wsTokens.length > 0) {
+      for (const t of wsTokens) {
+        if (safeCompare(providedToken, t.value)) {
+          tokenValid = true;
+          matchedTokenId = t.id;
+          break;
+        }
+      }
+    } else {
+      const legacyToken =
+        (await getSetting(`applyfy_token:${workspace.id}`)) || "";
+      if (!legacyToken) {
+        await logWebhook({
+          event,
+          email: body?.client?.email,
+          workspaceId,
+          status: "IGNORED",
+          errorMessage: "Workspace sem token Applyfy configurado",
+          rawPayload: body,
+        });
+        return NextResponse.json(
+          { ok: false, error: "Integration not configured" },
+          { status: 200 }
+        );
+      }
+      if (safeCompare(providedToken, legacyToken)) {
+        tokenValid = true;
+      }
+    }
+
+    if (!tokenValid) {
       await logWebhook({
         event,
         email: body?.client?.email,
@@ -164,6 +190,16 @@ export async function POST(request: Request, props: { params: Promise<{ slug: st
         { ok: false, error: "Invalid token" },
         { status: 200 }
       );
+    }
+
+    // Fire-and-forget: track last use so the producer can spot stale tokens.
+    if (matchedTokenId) {
+      prisma.workspaceApplyfyToken
+        .update({
+          where: { id: matchedTokenId },
+          data: { lastUsedAt: new Date() },
+        })
+        .catch(() => {});
     }
 
     if (IGNORED_EVENTS.has(event)) {

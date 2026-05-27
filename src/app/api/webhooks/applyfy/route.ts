@@ -136,6 +136,7 @@ export async function POST(request: Request) {
       )
     );
     let matchedToken = false;
+    let matchedTokenId: string | null = null;
     if (providedToken && candidateExternalIds.length > 0) {
       const [legacyCourses, mappingCourses] = await Promise.all([
         prisma.course.findMany({
@@ -153,12 +154,38 @@ export async function POST(request: Request) {
         )
       );
       for (const wsId of workspaceIds) {
-        const wsToken = await getSetting(`applyfy_token:${wsId}`);
-        if (wsToken && safeCompare(providedToken, wsToken)) {
-          matchedToken = true;
-          break;
+        // Multiple-tokens: prefer the new table, fall back to Settings during
+        // the transition window.
+        const wsTokens = await prisma.workspaceApplyfyToken.findMany({
+          where: { workspaceId: wsId },
+          select: { id: true, value: true },
+        });
+        if (wsTokens.length > 0) {
+          for (const t of wsTokens) {
+            if (safeCompare(providedToken, t.value)) {
+              matchedToken = true;
+              matchedTokenId = t.id;
+              break;
+            }
+          }
+          if (matchedToken) break;
+        } else {
+          const wsToken = await getSetting(`applyfy_token:${wsId}`);
+          if (wsToken && safeCompare(providedToken, wsToken)) {
+            matchedToken = true;
+            break;
+          }
         }
       }
+    }
+    // Fire-and-forget: track last use so the producer can spot stale tokens.
+    if (matchedTokenId) {
+      prisma.workspaceApplyfyToken
+        .update({
+          where: { id: matchedTokenId },
+          data: { lastUsedAt: new Date() },
+        })
+        .catch(() => {});
     }
     if (!matchedToken) {
       console.warn("[applyfy webhook] no per-workspace token matched", { event });
