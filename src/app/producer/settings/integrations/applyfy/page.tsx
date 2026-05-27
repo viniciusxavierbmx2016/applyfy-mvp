@@ -29,9 +29,24 @@ interface WebhookLog {
   createdAt: string;
 }
 
-interface SettingStatus {
-  set: boolean;
-  preview: string;
+interface ApplyfyToken {
+  id: string;
+  label: string;
+  maskedValue: string;
+  createdAt: string;
+  lastUsedAt: string | null;
+}
+
+function formatLastUsed(iso: string | null): string {
+  if (!iso) return "Nunca usado";
+  const days = Math.floor((Date.now() - new Date(iso).getTime()) / 86400000);
+  if (days <= 0) return "Último uso: hoje";
+  if (days === 1) return "Último uso: ontem";
+  if (days < 30) return `Último uso: há ${days} dias`;
+  const months = Math.floor(days / 30);
+  if (months < 12) return `Último uso: há ${months} ${months === 1 ? "mês" : "meses"}`;
+  const years = Math.floor(days / 365);
+  return `Último uso: há ${years} ${years === 1 ? "ano" : "anos"}`;
 }
 
 const EVENT_FILTERS = [
@@ -48,8 +63,9 @@ type EventFilter = (typeof EVENT_FILTERS)[number];
 export default function AdminIntegrationsPage() {
   const activeWorkspace = useActiveWorkspace();
   const [origin, setOrigin] = useState("");
-  const [tokenStatus, setTokenStatus] = useState<SettingStatus | null>(null);
-  const [tokenInput, setTokenInput] = useState("");
+  const [tokens, setTokens] = useState<ApplyfyToken[]>([]);
+  const [newToken, setNewToken] = useState("");
+  const [newLabel, setNewLabel] = useState("");
   const [savingToken, setSavingToken] = useState(false);
 
   const [courses, setCourses] = useState<CourseRow[]>([]);
@@ -72,7 +88,7 @@ export default function AdminIntegrationsPage() {
     ? `${baseUrl}/api/webhooks/applyfy/${activeWorkspace.slug}`
     : `${baseUrl}/api/webhooks/applyfy`;
 
-  const isActive = !!tokenStatus?.set;
+  const isActive = tokens.length > 0;
 
   function showToast(msg: string) {
     setToast(msg);
@@ -96,8 +112,8 @@ export default function AdminIntegrationsPage() {
   useEffect(() => {
     setOrigin(window.location.origin);
     Promise.all([
-      fetch("/api/producer/settings").then((r) =>
-        r.ok ? r.json() : { settings: {} }
+      fetch("/api/producer/integrations/applyfy-tokens").then((r) =>
+        r.ok ? r.json() : { tokens: [] }
       ),
       fetch("/api/producer/integrations/courses").then((r) =>
         r.ok ? r.json() : { courses: [] }
@@ -106,8 +122,8 @@ export default function AdminIntegrationsPage() {
         r.ok ? r.json() : null
       ),
     ])
-      .then(([settings, coursesData, statusData]) => {
-        setTokenStatus(settings.settings?.applyfy_token ?? null);
+      .then(([tokensData, coursesData, statusData]) => {
+        setTokens(tokensData.tokens || []);
         setCourses(
           (coursesData.courses || []).map(
             (c: CourseRow & { externalProductIds?: string[] }) => ({
@@ -140,26 +156,52 @@ export default function AdminIntegrationsPage() {
     }
   }
 
-  async function saveToken(value: string) {
+  async function loadTokens() {
+    const res = await fetch("/api/producer/integrations/applyfy-tokens");
+    if (res.ok) {
+      const d = await res.json();
+      setTokens(d.tokens || []);
+    }
+  }
+
+  async function addToken() {
+    const value = newToken.trim();
+    if (!value) return;
     setSavingToken(true);
     try {
-      const res = await fetch("/api/producer/settings", {
-        method: "PUT",
+      const res = await fetch("/api/producer/integrations/applyfy-tokens", {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ settings: { applyfy_token: value } }),
+        body: JSON.stringify({ value, label: newLabel.trim() || undefined }),
       });
+      const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        showToast(data.error || "Erro ao salvar");
+        showToast(data.error || "Erro ao adicionar token");
         return;
       }
-      const reload = await fetch("/api/producer/settings");
-      if (reload.ok) {
-        const d = await reload.json();
-        setTokenStatus(d.settings?.applyfy_token ?? null);
+      await loadTokens();
+      setNewToken("");
+      setNewLabel("");
+      showToast("Token adicionado");
+    } finally {
+      setSavingToken(false);
+    }
+  }
+
+  async function removeToken(id: string) {
+    setSavingToken(true);
+    try {
+      const res = await fetch(
+        `/api/producer/integrations/applyfy-tokens?id=${encodeURIComponent(id)}`,
+        { method: "DELETE" }
+      );
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        showToast(data.error || "Erro ao remover");
+        return;
       }
-      setTokenInput("");
-      showToast(value ? "Token salvo" : "Token removido");
+      await loadTokens();
+      showToast("Token removido");
     } finally {
       setSavingToken(false);
     }
@@ -305,60 +347,89 @@ export default function AdminIntegrationsPage() {
             </div>
 
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-              Token de validação
+              Tokens de validação
             </label>
-            {tokenStatus?.set && (
-              <p className="text-xs text-green-600 dark:text-green-400 mb-2">
-                ✓ Configurado (termina em {tokenStatus.preview})
-              </p>
+            <p className="text-xs text-gray-500 mb-3">
+              O Applyfy envia o token no campo <code>token</code> do payload. O
+              webhook aceita qualquer um dos tokens cadastrados (máx. 5).
+            </p>
+
+            {tokens.length > 0 && (
+              <ul className="space-y-2 mb-3">
+                {tokens.map((t) => (
+                  <li
+                    key={t.id}
+                    className="flex items-center gap-3 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-gray-800 dark:text-gray-200 font-medium truncate">{t.label}</span>
+                        <span className="font-mono text-xs text-gray-400">{t.maskedValue}</span>
+                      </div>
+                      <p className="text-[10px] text-gray-500 mt-0.5">{formatLastUsed(t.lastUsedAt)}</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => removeToken(t.id)}
+                      disabled={savingToken}
+                      className="text-gray-500 hover:text-red-400 disabled:opacity-40"
+                      aria-label={`Remover ${t.label}`}
+                    >
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </li>
+                ))}
+              </ul>
             )}
-            <div className="flex flex-col sm:flex-row gap-2">
-              <input
-                // text quando não há token configurado: evita que o browser /
-                // gerenciadores de senha preencham este campo com senha salva
-                // do domínio. Vira password quando já há token (substituição).
-                type={tokenStatus?.set ? "password" : "text"}
-                value={tokenInput}
-                onChange={(e) => setTokenInput(e.target.value)}
-                placeholder={
-                  tokenStatus?.set
-                    ? "Digite um novo valor para substituir"
-                    : "Cole o token gerado pelo Applyfy"
-                }
-                name="applyfy-integration-token"
-                autoComplete="off"
-                autoCorrect="off"
-                autoCapitalize="off"
-                spellCheck={false}
-                data-1p-ignore
-                data-lpignore="true"
-                data-bwignore="true"
-                data-form-type="other"
-                className="flex-1 px-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-white/10 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-primary/50"
-              />
-              <button
-                type="button"
-                onClick={() => saveToken(tokenInput.trim())}
-                disabled={!tokenInput.trim() || savingToken}
-                className="px-4 py-2.5 bg-primary hover:bg-primary-hover disabled:opacity-50 text-white text-sm font-medium rounded-lg"
-              >
-                {savingToken ? "Salvando..." : "Salvar"}
-              </button>
-              {tokenStatus?.set && (
+
+            {tokens.length >= 5 ? (
+              <p className="text-xs text-amber-500 dark:text-amber-400">
+                Máximo de 5 tokens atingido. Remova um existente para adicionar outro.
+              </p>
+            ) : (
+              <div className="flex flex-col sm:flex-row gap-2">
+                <input
+                  type="text"
+                  value={newLabel}
+                  onChange={(e) => setNewLabel(e.target.value)}
+                  placeholder="Rótulo (opcional)"
+                  maxLength={100}
+                  className="sm:w-48 px-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-white/10 rounded-lg text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-primary/50"
+                />
+                <input
+                  type="text"
+                  value={newToken}
+                  onChange={(e) => setNewToken(e.target.value)}
+                  placeholder="Cole o token gerado pelo Applyfy"
+                  name="applyfy-integration-token"
+                  autoComplete="off"
+                  autoCorrect="off"
+                  autoCapitalize="off"
+                  spellCheck={false}
+                  data-1p-ignore
+                  data-lpignore="true"
+                  data-bwignore="true"
+                  data-form-type="other"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      addToken();
+                    }
+                  }}
+                  className="flex-1 px-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-white/10 rounded-lg text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-primary/50"
+                />
                 <button
                   type="button"
-                  onClick={() => saveToken("")}
-                  disabled={savingToken}
-                  className="px-4 py-2.5 bg-gray-100 dark:bg-gray-900/50 hover:bg-gray-200 dark:hover:bg-white/10 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-lg"
+                  onClick={addToken}
+                  disabled={!newToken.trim() || savingToken}
+                  className="px-4 py-2.5 bg-primary hover:bg-primary-hover disabled:opacity-50 text-white text-sm font-medium rounded-lg whitespace-nowrap"
                 >
-                  Remover
+                  {savingToken ? "Salvando..." : "+ Adicionar"}
                 </button>
-              )}
-            </div>
-            <p className="text-xs text-gray-500 mt-2">
-              O Applyfy envia esse token no campo <code>token</code> do payload.
-              O webhook só aceita requisições que batam com este valor.
-            </p>
+              </div>
+            )}
           </section>
 
           {/* Mapeamento de Produtos */}
