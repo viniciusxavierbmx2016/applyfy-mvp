@@ -24,6 +24,8 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
     if (body?.logoUrl === null || typeof body?.logoUrl === "string")
       data.logoUrl = body.logoUrl || null;
     if (typeof body?.isActive === "boolean") data.isActive = body.isActive;
+    if (typeof body?.emailUseCustomHtml === "boolean")
+      data.emailUseCustomHtml = body.emailUseCustomHtml;
     if (body?.masterPassword === null || typeof body?.masterPassword === "string")
       data.masterPassword = body.masterPassword
         ? String(body.masterPassword).trim() || null
@@ -46,6 +48,8 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
       "loginSideColor",
       "loginLinkColor",
       "accentColor",
+      "emailPrimaryColor",
+      "emailBgColor",
     ] as const) {
       if (body?.[key] === null) {
         data[key] = null;
@@ -83,6 +87,11 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
       "customDomain",
       "bannerUrl",
       "bannerPosition",
+      "emailLogoUrl",
+      "emailTitle",
+      "emailBody",
+      "emailFooter",
+      "emailCustomHtml",
     ] as const) {
       if (body?.[key] === null) {
         data[key] = null;

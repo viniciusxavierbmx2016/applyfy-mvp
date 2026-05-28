@@ -557,6 +557,16 @@ export const updateWorkspaceSchema = z
     masterPassword: z.string().max(255).optional().nullable(),
     loginLayout: z.string().max(50).optional(),
     loginBoxOpacity: z.union([z.number(), z.string()]).optional(),
+    // Access-email customization. Length caps here; hex/shape validated in
+    // the route. emailCustomHtml is raw HTML the producer is responsible for.
+    emailLogoUrl: z.string().max(500).optional().nullable(),
+    emailPrimaryColor: z.string().max(20).optional().nullable(),
+    emailBgColor: z.string().max(20).optional().nullable(),
+    emailTitle: z.string().max(200).optional().nullable(),
+    emailBody: z.string().max(10000).optional().nullable(),
+    emailFooter: z.string().max(500).optional().nullable(),
+    emailCustomHtml: z.string().max(50000).optional().nullable(),
+    emailUseCustomHtml: z.boolean().optional(),
   })
   .passthrough();
 
