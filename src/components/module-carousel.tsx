@@ -30,11 +30,20 @@ export function ModuleCarousel({ title, modules }: Props) {
   const [offset, setOffset] = useState(0);
   const [maxOffset, setMaxOffset] = useState(0);
   const [isMd, setIsMd] = useState(false);
-  // Mobile gesture-direction detector (iOS PWA): track where the touch began
-  // and which axis it locked into, so a vertical swipe can hand control back
-  // to the page scroller (<main>) instead of being trapped by overflow-x.
-  const touchStartRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
-  const scrollAxisRef = useRef<"x" | "y" | null>(null);
+  // Mobile: touch-driven transform (same mechanic as desktop) instead of a
+  // native overflow-x scroller. iOS PWA captures any touch that starts on a
+  // native horizontal scroller and locks it to the x-axis, blocking the
+  // page's vertical scroll. With overflow-hidden + translateX there is no
+  // native scroll container to capture, so vertical gestures bubble to <main>.
+  const [mobileOffset, setMobileOffset] = useState(0);
+  const [mobileMaxOffset, setMobileMaxOffset] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const touchRef = useRef<{
+    startX: number;
+    startY: number;
+    startOffset: number;
+    axis: "x" | "y" | null;
+  }>({ startX: 0, startY: 0, startOffset: 0, axis: null });
 
   useEffect(() => {
     const mq = window.matchMedia("(min-width: 768px)");
@@ -51,6 +60,12 @@ export function ModuleCarousel({ title, modules }: Props) {
     const max = Math.max(0, track.scrollWidth - (container.clientWidth - (parseFloat(getComputedStyle(container).paddingLeft) || 0) - (parseFloat(getComputedStyle(container).paddingRight) || 0)));
     setMaxOffset(max);
     setOffset((prev) => Math.min(prev, max));
+    // Mobile uses the same transform mechanic; its frame is the full
+    // container width (the -mx-4 / px-4 cancel out horizontally). Computed
+    // unconditionally so we don't need isMd as a measure() dependency.
+    const mMax = Math.max(0, track.scrollWidth - container.clientWidth);
+    setMobileMaxOffset(mMax);
+    setMobileOffset((prev) => Math.min(prev, mMax));
   }, []);
 
   useEffect(() => {
@@ -111,34 +126,52 @@ export function ModuleCarousel({ title, modules }: Props) {
     [isMd, maxOffset]
   );
 
-  // ── Mobile touch handlers (Instagram-style axis lock) ──
-  // Decide the gesture axis after a 5px threshold. If it's vertical, drop
-  // overflow-x so the swipe bubbles up to <main>; restore it when the touch
-  // ends. Only wired up in the mobile branch (see the spread on the container).
-  const onTouchStart = useCallback((e: React.TouchEvent) => {
-    touchStartRef.current = {
-      x: e.touches[0].clientX,
-      y: e.touches[0].clientY,
-    };
-    scrollAxisRef.current = null;
-  }, []);
+  // ── Mobile touch handlers (touch-driven transform, no native scroller) ──
+  // Lock the axis within the first 8px. Vertical → do nothing, so the gesture
+  // bubbles to <main>. Horizontal → move the carousel via transform.
+  const onMobileTouchStart = useCallback(
+    (e: React.TouchEvent) => {
+      const t = e.touches[0];
+      touchRef.current = {
+        startX: t.clientX,
+        startY: t.clientY,
+        startOffset: mobileOffset,
+        axis: null,
+      };
+      setIsDragging(false);
+    },
+    [mobileOffset]
+  );
 
-  const onTouchMove = useCallback((e: React.TouchEvent) => {
-    if (scrollAxisRef.current) return; // axis already locked for this gesture
-    const dx = Math.abs(e.touches[0].clientX - touchStartRef.current.x);
-    const dy = Math.abs(e.touches[0].clientY - touchStartRef.current.y);
-    if (dx < 5 && dy < 5) return; // wait until the gesture clears 5px
-    scrollAxisRef.current = dx > dy ? "x" : "y";
-    if (scrollAxisRef.current === "y" && containerRef.current) {
-      containerRef.current.style.overflowX = "hidden";
-    }
-  }, []);
+  const onMobileTouchMove = useCallback(
+    (e: React.TouchEvent) => {
+      const t = e.touches[0];
+      const dx = t.clientX - touchRef.current.startX;
+      const dy = t.clientY - touchRef.current.startY;
 
-  const onTouchEnd = useCallback(() => {
-    scrollAxisRef.current = null;
-    if (containerRef.current) {
-      containerRef.current.style.overflowX = "auto";
-    }
+      // Decide the axis once, after 8px of movement.
+      if (!touchRef.current.axis) {
+        if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
+        touchRef.current.axis = Math.abs(dx) > Math.abs(dy) ? "x" : "y";
+      }
+
+      // Vertical → let the page (<main>) scroll.
+      if (touchRef.current.axis === "y") return;
+
+      // Horizontal → drive the carousel. preventDefault only matters when the
+      // listener is non-passive (see note); overflow-hidden already prevents a
+      // native scroll, so this is defensive.
+      if (e.cancelable) e.preventDefault();
+      setIsDragging(true);
+      const newOffset = touchRef.current.startOffset - dx;
+      setMobileOffset(Math.max(0, Math.min(mobileMaxOffset, newOffset)));
+    },
+    [mobileMaxOffset]
+  );
+
+  const onMobileTouchEnd = useCallback(() => {
+    setIsDragging(false);
+    touchRef.current.axis = null;
   }, []);
 
   const canLeft = isMd ? offset > 0 : false;
@@ -186,17 +219,15 @@ export function ModuleCarousel({ title, modules }: Props) {
         ref={containerRef}
         onWheel={handleWheel}
         {...(!isMd && {
-          onTouchStart,
-          onTouchMove,
-          onTouchEnd,
-          // iOS may fire touchcancel (system takes over the gesture) instead
-          // of touchend; reuse the same reset so overflow-x can't get stuck.
-          onTouchCancel: onTouchEnd,
+          onTouchStart: onMobileTouchStart,
+          onTouchMove: onMobileTouchMove,
+          onTouchEnd: onMobileTouchEnd,
+          onTouchCancel: onMobileTouchEnd,
         })}
         className={
           isMd
             ? "overflow-hidden"
-            : "touch-pan-x overflow-x-auto pb-2 -mx-4 px-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+            : "overflow-hidden pb-2 -mx-4 px-4"
         }
         style={
           isMd
@@ -210,7 +241,12 @@ export function ModuleCarousel({ title, modules }: Props) {
           style={
             isMd
               ? { transform: `translateX(-${offset}px)`, transition: "transform 300ms ease" }
-              : undefined
+              : {
+                  transform: `translateX(-${mobileOffset}px)`,
+                  // No transition while the finger drives it (follow the
+                  // finger), smooth settle on release.
+                  transition: isDragging ? "none" : "transform 300ms ease",
+                }
           }
         >
           {modules.map((m) => (
@@ -314,7 +350,7 @@ function ModuleCard({ mod }: { mod: CarouselModule }) {
     </div>
   );
 
-  const className = `group shrink-0 snap-start basis-[75%] sm:basis-[45%] md:basis-[35%] lg:basis-[28%] xl:basis-[22%] rounded-xl overflow-hidden isolate will-change-transform transition-[transform,box-shadow] duration-300 ease-out ${
+  const className = `group shrink-0 basis-[75%] sm:basis-[45%] md:basis-[35%] lg:basis-[28%] xl:basis-[22%] rounded-xl overflow-hidden isolate will-change-transform transition-[transform,box-shadow] duration-300 ease-out ${
     mod.clickable ? "hover:scale-[1.05] hover:shadow-2xl hover:shadow-black/30 hover:z-10" : "cursor-not-allowed"
   }`;
 
