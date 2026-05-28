@@ -20,6 +20,9 @@ export const getCourseMeta = cache(async (slug: string) => {
       memberLayoutStyle: true,
       termsContent: true,
       termsFileUrl: true,
+      showLessonSupport: true,
+      supportButtonColor: true,
+      supportButtonImage: true,
       workspace: {
         select: {
           id: true,

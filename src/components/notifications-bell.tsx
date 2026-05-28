@@ -6,7 +6,7 @@ import { formatRelativeTime } from "@/lib/utils";
 
 interface Notification {
   id: string;
-  type: "LIKE" | "COMMENT" | "REPLY" | "ENROLLMENT" | "LEVEL_UP" | "LIVE_SCHEDULED" | "LIVE_STARTED" | "TICKET_NEW" | "TICKET_REPLY" | "AUTOMATION" | "LESSON_FEEDBACK";
+  type: "LIKE" | "COMMENT" | "REPLY" | "ENROLLMENT" | "LEVEL_UP" | "LIVE_SCHEDULED" | "LIVE_STARTED" | "TICKET_NEW" | "TICKET_REPLY" | "AUTOMATION" | "LESSON_FEEDBACK" | "COURSE_SUPPORT";
   message: string;
   link: string | null;
   read: boolean;
@@ -27,6 +27,7 @@ const ICON: Record<Notification["type"], string> = {
   TICKET_REPLY: "🎫",
   AUTOMATION: "⚙️",
   LESSON_FEEDBACK: "👎",
+  COURSE_SUPPORT: "🎧",
 };
 
 export function NotificationsBell({ workspaceSlug }: { workspaceSlug?: string } = {}) {

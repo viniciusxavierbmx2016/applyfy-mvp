@@ -3,6 +3,7 @@ import { getCourseMeta } from "@/lib/course-meta";
 import { getCurrentUser, isEnrollmentActive } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { CourseShell } from "@/components/course-shell";
+import { CourseSupportWidget } from "@/components/course-support-widget";
 import { WorkspaceThemeLock } from "@/components/workspace-theme-lock";
 
 export default async function CourseSlugLayout(props: {
@@ -26,6 +27,7 @@ export default async function CourseSlugLayout(props: {
 
   // Verificar acesso (ADMIN | PRODUCER dono do curso/workspace | enrollment ativo)
   let hasAccess = false;
+  let isStudentAccess = false; // F2: only enrolled students get the support widget
   const user = await getCurrentUser();
   if (user) {
     const isCourseOwner =
@@ -41,6 +43,7 @@ export default async function CourseSlugLayout(props: {
         select: { status: true, expiresAt: true },
       });
       hasAccess = isEnrollmentActive(enrollment);
+      isStudentAccess = hasAccess;
     }
   }
 
@@ -89,6 +92,17 @@ export default async function CourseSlugLayout(props: {
       >
         {children}
       </CourseShell>
+      {/* F2 — Per-course support widget. Only for enrolled students (the API
+          would 403 staff anyway) and only when the producer hasn't disabled
+          showLessonSupport for this course. */}
+      {isStudentAccess && course.showLessonSupport && (
+        <CourseSupportWidget
+          courseId={course.id}
+          courseTitle={course.title}
+          buttonColor={course.supportButtonColor}
+          buttonImage={course.supportButtonImage}
+        />
+      )}
     </WorkspaceThemeLock>
   );
 }

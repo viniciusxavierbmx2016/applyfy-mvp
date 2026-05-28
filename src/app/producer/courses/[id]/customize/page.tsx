@@ -60,6 +60,14 @@ interface CourseFlags {
   showLessonSupport: boolean;
 }
 
+// F2 — Support button customization (color + image). Saved through the
+// generic /api/courses/[id] PATCH (no new endpoint), independent from the
+// /customize endpoint which only handles member-area colors.
+interface SupportButton {
+  color: string | null;
+  image: string | null;
+}
+
 type FlagKey = keyof CourseFlags;
 
 const FEATURE_ITEMS: Array<{
@@ -92,6 +100,17 @@ export default function CourseCustomizePage() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [flags, setFlags] = useState<CourseFlags | null>(null);
   const [savingFlag, setSavingFlag] = useState<FlagKey | null>(null);
+  // F2 — support button section (independent save).
+  const [supportBtn, setSupportBtn] = useState<SupportButton>({
+    color: null,
+    image: null,
+  });
+  const [supportBtnSaved, setSupportBtnSaved] = useState<SupportButton>({
+    color: null,
+    image: null,
+  });
+  const [savingSupportBtn, setSavingSupportBtn] = useState(false);
+  const [uploadingSupportImg, setUploadingSupportImg] = useState(false);
   const { confirm, ConfirmDialog } = useConfirm();
 
   function showToast(msg: string, error = false) {
@@ -121,6 +140,12 @@ export default function CourseCustomizePage() {
             showStudentCount: Boolean(c.showStudentCount),
             showLessonSupport: c.showLessonSupport !== false,
           });
+          const loaded: SupportButton = {
+            color: typeof c.supportButtonColor === "string" ? c.supportButtonColor : null,
+            image: typeof c.supportButtonImage === "string" ? c.supportButtonImage : null,
+          };
+          setSupportBtn(loaded);
+          setSupportBtnSaved(loaded);
         }
         const customRes = await fetch(`/api/producer/courses/${courseId}/customize`);
 
@@ -226,6 +251,65 @@ export default function CourseCustomizePage() {
       setSavingFlag(null);
     }
   }
+
+  async function uploadSupportImage(file: File) {
+    setUploadingSupportImg(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      fd.append("path", `courses/${courseId}/support-button`);
+      const res = await fetch("/api/upload", { method: "POST", body: fd });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        showToast(body?.error || "Erro no upload", true);
+        return;
+      }
+      setSupportBtn((s) => ({ ...s, image: body.url }));
+    } finally {
+      setUploadingSupportImg(false);
+    }
+  }
+
+  async function saveSupportButton() {
+    setSavingSupportBtn(true);
+    try {
+      const color =
+        supportBtn.color && HEX_RE.test(supportBtn.color)
+          ? supportBtn.color
+          : null;
+      const image =
+        supportBtn.image && supportBtn.image.trim() ? supportBtn.image : null;
+      const res = await fetch(`/api/courses/${courseId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          supportButtonColor: color,
+          supportButtonImage: image,
+        }),
+      });
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        showToast(d?.error || "Erro ao salvar", true);
+        return;
+      }
+      setSupportBtnSaved({ color, image });
+      showToast("Botão de suporte salvo");
+    } catch {
+      showToast("Erro de rede", true);
+    } finally {
+      setSavingSupportBtn(false);
+    }
+  }
+
+  const supportBtnDirty =
+    supportBtn.color !== supportBtnSaved.color ||
+    supportBtn.image !== supportBtnSaved.image;
+
+  // Same fallback ladder as the widget itself, so the preview matches reality.
+  const previewColor =
+    supportBtn.color && HEX_RE.test(supportBtn.color)
+      ? supportBtn.color
+      : "var(--member-primary, #3b82f6)";
 
   const currentLayout = custom.memberLayoutStyle || "netflix";
 
@@ -425,6 +509,146 @@ export default function CourseCustomizePage() {
                 ))}
               </div>
             )}
+          </div>
+
+          {/* SEÇÃO 4.5 — Botão de Suporte (F2) */}
+          <div className="mb-8 pt-8 border-t border-gray-200 dark:border-white/5">
+            <h2 className="text-sm font-medium text-gray-900 dark:text-white mb-0.5">
+              Botão de Suporte
+              <HelpTooltip text="Personalize o botão flutuante de suporte que aparece para os alunos dentro do curso. Eles podem abrir chamados que chegam no seu painel de Suporte." />
+            </h2>
+            <p className="text-xs text-gray-500 mb-4">
+              Aparece para alunos dentro do curso quando &quot;Suporte nas aulas&quot; está ativo.
+            </p>
+
+            <div className="bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl p-4 flex flex-col sm:flex-row gap-4">
+              {/* Preview */}
+              <div className="flex flex-col items-center justify-center gap-2 sm:w-32 flex-shrink-0">
+                <div
+                  className="w-16 h-16 rounded-full shadow-lg flex items-center justify-center text-white overflow-hidden"
+                  style={{ background: previewColor }}
+                >
+                  {supportBtn.image ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={supportBtn.image}
+                      alt=""
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="w-7 h-7"
+                    >
+                      <path d="M3 18v-6a9 9 0 0 1 18 0v6" />
+                      <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z" />
+                    </svg>
+                  )}
+                </div>
+                <p className="text-[10px] text-gray-500">Preview</p>
+              </div>
+
+              {/* Controls */}
+              <div className="flex-1 space-y-3">
+                <div>
+                  <label className="block text-[11px] font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Cor (hex)
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <span
+                      className="w-9 h-9 rounded-md border border-gray-200 dark:border-white/10 relative overflow-hidden flex-shrink-0"
+                      style={{
+                        backgroundColor: HEX_RE.test(supportBtn.color || "")
+                          ? supportBtn.color!
+                          : "#3b82f6",
+                      }}
+                    >
+                      <input
+                        type="color"
+                        value={
+                          HEX_RE.test(supportBtn.color || "")
+                            ? supportBtn.color!
+                            : "#3b82f6"
+                        }
+                        onChange={(e) =>
+                          setSupportBtn((s) => ({ ...s, color: e.target.value }))
+                        }
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                      />
+                    </span>
+                    <input
+                      type="text"
+                      value={supportBtn.color || ""}
+                      onChange={(e) =>
+                        setSupportBtn((s) => ({
+                          ...s,
+                          color: e.target.value || null,
+                        }))
+                      }
+                      placeholder="#3b82f6 (padrão do tema)"
+                      maxLength={7}
+                      className="flex-1 px-3 py-2 text-sm font-mono bg-white dark:bg-gray-800 border border-gray-200 dark:border-white/10 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:border-primary/50"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Imagem do botão
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <label className="cursor-pointer text-xs font-medium text-white bg-gray-900 dark:bg-white/10 hover:opacity-90 px-3 py-2 rounded-lg whitespace-nowrap disabled:opacity-50">
+                      {uploadingSupportImg
+                        ? "Enviando…"
+                        : supportBtn.image
+                          ? "Trocar imagem"
+                          : "Enviar imagem"}
+                      <input
+                        type="file"
+                        accept="image/png,image/jpeg,image/jpg,image/webp,image/svg+xml"
+                        onChange={(e) => {
+                          const f = e.target.files?.[0];
+                          e.target.value = "";
+                          if (f) uploadSupportImage(f);
+                        }}
+                        disabled={uploadingSupportImg}
+                        className="hidden"
+                      />
+                    </label>
+                    {supportBtn.image && (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setSupportBtn((s) => ({ ...s, image: null }))
+                        }
+                        className="text-xs text-red-600 dark:text-red-400 hover:underline"
+                      >
+                        Remover
+                      </button>
+                    )}
+                  </div>
+                  <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-1">
+                    PNG/JPG/WebP/SVG. Imagem cobre a bolinha (sem ícone).
+                  </p>
+                </div>
+
+                <div className="flex justify-end">
+                  <button
+                    type="button"
+                    onClick={saveSupportButton}
+                    disabled={savingSupportBtn || !supportBtnDirty}
+                    className="px-4 py-2 bg-primary hover:bg-primary disabled:opacity-50 text-white text-sm font-medium rounded-lg transition-colors"
+                  >
+                    {savingSupportBtn ? "Salvando…" : "Salvar botão"}
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* SEÇÃO 5 — Menu lateral */}
