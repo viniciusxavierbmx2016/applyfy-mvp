@@ -30,6 +30,11 @@ export function ModuleCarousel({ title, modules }: Props) {
   const [offset, setOffset] = useState(0);
   const [maxOffset, setMaxOffset] = useState(0);
   const [isMd, setIsMd] = useState(false);
+  // Mobile gesture-direction detector (iOS PWA): track where the touch began
+  // and which axis it locked into, so a vertical swipe can hand control back
+  // to the page scroller (<main>) instead of being trapped by overflow-x.
+  const touchStartRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+  const scrollAxisRef = useRef<"x" | "y" | null>(null);
 
   useEffect(() => {
     const mq = window.matchMedia("(min-width: 768px)");
@@ -106,6 +111,36 @@ export function ModuleCarousel({ title, modules }: Props) {
     [isMd, maxOffset]
   );
 
+  // ── Mobile touch handlers (Instagram-style axis lock) ──
+  // Decide the gesture axis after a 5px threshold. If it's vertical, drop
+  // overflow-x so the swipe bubbles up to <main>; restore it when the touch
+  // ends. Only wired up in the mobile branch (see the spread on the container).
+  const onTouchStart = useCallback((e: React.TouchEvent) => {
+    touchStartRef.current = {
+      x: e.touches[0].clientX,
+      y: e.touches[0].clientY,
+    };
+    scrollAxisRef.current = null;
+  }, []);
+
+  const onTouchMove = useCallback((e: React.TouchEvent) => {
+    if (scrollAxisRef.current) return; // axis already locked for this gesture
+    const dx = Math.abs(e.touches[0].clientX - touchStartRef.current.x);
+    const dy = Math.abs(e.touches[0].clientY - touchStartRef.current.y);
+    if (dx < 5 && dy < 5) return; // wait until the gesture clears 5px
+    scrollAxisRef.current = dx > dy ? "x" : "y";
+    if (scrollAxisRef.current === "y" && containerRef.current) {
+      containerRef.current.style.overflowX = "hidden";
+    }
+  }, []);
+
+  const onTouchEnd = useCallback(() => {
+    scrollAxisRef.current = null;
+    if (containerRef.current) {
+      containerRef.current.style.overflowX = "auto";
+    }
+  }, []);
+
   const canLeft = isMd ? offset > 0 : false;
   const canRight = isMd ? offset < maxOffset - 4 : false;
 
@@ -150,6 +185,14 @@ export function ModuleCarousel({ title, modules }: Props) {
       <div
         ref={containerRef}
         onWheel={handleWheel}
+        {...(!isMd && {
+          onTouchStart,
+          onTouchMove,
+          onTouchEnd,
+          // iOS may fire touchcancel (system takes over the gesture) instead
+          // of touchend; reuse the same reset so overflow-x can't get stuck.
+          onTouchCancel: onTouchEnd,
+        })}
         className={
           isMd
             ? "overflow-hidden"
