@@ -469,7 +469,7 @@ export default function LessonPage(
                     </h1>
                   </div>
 
-                  <div className="flex items-center gap-2 flex-shrink-0 overflow-x-auto pb-1 sm:pb-0 sm:pt-3">
+                  <div className="flex items-center gap-2 flex-shrink-0 touch-pan-x overflow-x-auto pb-1 sm:pb-0 sm:pt-3">
                     <button
                       type="button"
                       onClick={() => markCompleted(!data.lesson.completed)}
