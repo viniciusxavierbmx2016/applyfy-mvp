@@ -7,7 +7,7 @@ import {
   getSetting,
 } from "@/lib/webhook-helpers";
 import { sendEmail } from "@/lib/email";
-import { staffAccessGranted, studentAccessGranted } from "@/lib/email-templates";
+import { staffAccessGranted, sendCustomAccessEmail } from "@/lib/email-templates";
 import { processAutomations } from "@/lib/automation-engine";
 import { safeCompare } from "@/lib/safe-compare";
 import { logger } from "@/lib/logger";
@@ -387,16 +387,19 @@ export async function POST(request: Request, props: { params: Promise<{ slug: st
         } else {
           const appUrl = process.env.NEXT_PUBLIC_APP_URL || "";
           const loginUrl = `${appUrl}/w/${workspace.slug}/login`;
-          const template = isStaff
-            ? staffAccessGranted(name || email, course.title, workspace.name, loginUrl)
-            : studentAccessGranted(
-                name || email,
-                course.title,
-                workspace.name,
-                loginUrl,
-                tempPassword
-              );
-          await sendEmail({ to: { email, name: name || undefined }, ...template, senderName: workspace.name }).catch((err) => console.error("[EMAIL_ERROR] access email to:", email, err?.message || err));
+          if (isStaff) {
+            const template = staffAccessGranted(name || email, course.title, workspace.name, loginUrl);
+            await sendEmail({ to: { email, name: name || undefined }, ...template, senderName: workspace.name }).catch((err) => console.error("[EMAIL_ERROR] access email to:", email, err?.message || err));
+          } else {
+            await sendCustomAccessEmail({
+              workspaceId: workspace.id,
+              studentName: name || email,
+              studentEmail: email,
+              courseName: course.title,
+              tempPassword,
+              loginUrl,
+            }).catch((err) => console.error("[EMAIL_ERROR] access email to:", email, err?.message || err));
+          }
         }
 
         await logWebhook({

@@ -2,8 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { canEditCourse, requireStaff } from "@/lib/auth";
 import { sendWorkspaceAccessEmail } from "@/lib/webhook-helpers";
-import { sendEmail } from "@/lib/email";
-import { studentAccessGranted } from "@/lib/email-templates";
+import { sendCustomAccessEmail } from "@/lib/email-templates";
 
 export async function POST(
   request: Request,
@@ -24,7 +23,7 @@ export async function POST(
           select: {
             id: true,
             title: true,
-            workspace: { select: { slug: true, name: true } },
+            workspace: { select: { id: true, slug: true, name: true } },
           },
         },
       },
@@ -45,16 +44,12 @@ export async function POST(
 
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || baseUrl;
     const loginUrl = `${appUrl}/w/${enrollment.course.workspace.slug}/login`;
-    const template = studentAccessGranted(
-      enrollment.user.name || enrollment.user.email,
-      enrollment.course.title,
-      enrollment.course.workspace.name,
-      loginUrl
-    );
-    await sendEmail({
-      to: { email: enrollment.user.email, name: enrollment.user.name || undefined },
-      ...template,
-      senderName: enrollment.course.workspace.name,
+    await sendCustomAccessEmail({
+      workspaceId: enrollment.course.workspace.id,
+      studentName: enrollment.user.name || enrollment.user.email,
+      studentEmail: enrollment.user.email,
+      courseName: enrollment.course.title,
+      loginUrl,
     });
 
     return NextResponse.json({ success: true, accessLink });

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
-import type { LoginLayout, Workspace, TabKey, ImagePosition } from "./_types";
+import type { LoginLayout, Workspace, TabKey, ImagePosition, EmailConfig } from "./_types";
 import {
   compressImage,
   parsePosition,
@@ -20,7 +20,19 @@ import { TABS } from "./_lib/tabs";
 import { InfoTab } from "./_components/info-tab";
 import { AppearanceTab } from "./_components/appearance-tab";
 import { LoginTab } from "./_components/login-tab";
+import { EmailTab } from "./_components/email-tab";
 import { PreviewModal } from "./_components/preview-modal";
+
+const EMPTY_EMAIL_CONFIG: EmailConfig = {
+  emailLogoUrl: "",
+  emailPrimaryColor: "",
+  emailBgColor: "",
+  emailTitle: "",
+  emailBody: "",
+  emailFooter: "",
+  emailCustomHtml: "",
+  emailUseCustomHtml: false,
+};
 
 export default function EditWorkspacePage() {
   const params = useParams<{ id: string }>();
@@ -67,6 +79,13 @@ export default function EditWorkspacePage() {
   const [vitrineTextColor, setVitrineTextColor] = useState<string | null>(null);
   const [vitrineWelcomeText, setVitrineWelcomeText] = useState<string | null>(null);
   const [vitrineLayoutStyle, setVitrineLayoutStyle] = useState<string>("netflix");
+
+  const [emailConfig, setEmailConfig] = useState<EmailConfig>(EMPTY_EMAIL_CONFIG);
+  const [uploadingEmailLogo, setUploadingEmailLogo] = useState(false);
+  const setEmailField = <K extends keyof EmailConfig>(
+    key: K,
+    value: EmailConfig[K]
+  ) => setEmailConfig((prev) => ({ ...prev, [key]: value }));
 
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -120,6 +139,16 @@ export default function EditWorkspacePage() {
               : ""
           );
           setCustomDomain(found.customDomain || "");
+          setEmailConfig({
+            emailLogoUrl: found.emailLogoUrl || "",
+            emailPrimaryColor: found.emailPrimaryColor || "",
+            emailBgColor: found.emailBgColor || "",
+            emailTitle: found.emailTitle || "",
+            emailBody: found.emailBody || "",
+            emailFooter: found.emailFooter || "",
+            emailCustomHtml: found.emailCustomHtml || "",
+            emailUseCustomHtml: !!found.emailUseCustomHtml,
+          });
         }
       })
       .finally(() => setLoading(false));
@@ -184,6 +213,25 @@ export default function EditWorkspacePage() {
       showToast("Logo atualizada");
     } finally {
       setUploadingLogo(false);
+    }
+  }
+
+  async function onPickEmailLogo(file: File) {
+    setUploadingEmailLogo(true);
+    setError(null);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      fd.append("path", `workspaces/${id}/email-logo`);
+      const res = await fetch("/api/upload", { method: "POST", body: fd });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(body?.error || "Erro no upload");
+        return;
+      }
+      setEmailField("emailLogoUrl", body.url);
+    } finally {
+      setUploadingEmailLogo(false);
     }
   }
 
@@ -310,6 +358,23 @@ export default function EditWorkspacePage() {
       payload.loginBoxOpacity = loginBoxOpacity;
       payload.loginSideColor = loginSideColor || null;
       payload.loginLinkColor = loginLinkColor || null;
+
+      // Access-email customization. Colors only when valid hex (server rejects
+      // malformed); text trimmed → null when empty. Defaults restore on empty.
+      payload.emailLogoUrl = emailConfig.emailLogoUrl.trim() || null;
+      payload.emailPrimaryColor =
+        emailConfig.emailPrimaryColor && HEX_RE.test(emailConfig.emailPrimaryColor)
+          ? emailConfig.emailPrimaryColor
+          : null;
+      payload.emailBgColor =
+        emailConfig.emailBgColor && HEX_RE.test(emailConfig.emailBgColor)
+          ? emailConfig.emailBgColor
+          : null;
+      payload.emailTitle = emailConfig.emailTitle.trim() || null;
+      payload.emailBody = emailConfig.emailBody.trim() || null;
+      payload.emailFooter = emailConfig.emailFooter.trim() || null;
+      payload.emailCustomHtml = emailConfig.emailCustomHtml.trim() || null;
+      payload.emailUseCustomHtml = emailConfig.emailUseCustomHtml;
 
       const vitrinePayload = {
         accentColor: accentColor && HEX_RE.test(accentColor) ? accentColor : null,
@@ -511,6 +576,16 @@ export default function EditWorkspacePage() {
             forceTheme={forceTheme}
             setForceTheme={setForceTheme}
             onRestoreVitrine={restoreVitrine}
+          />
+        )}
+
+        {tab === "email" && (
+          <EmailTab
+            config={emailConfig}
+            setField={setEmailField}
+            onPickLogo={onPickEmailLogo}
+            uploadingLogo={uploadingEmailLogo}
+            workspaceName={name}
           />
         )}
       </form>

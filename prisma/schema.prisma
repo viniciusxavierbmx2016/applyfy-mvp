@@ -99,6 +99,16 @@ model Workspace {
   vitrineTextColor    String?
   vitrineWelcomeText  String?
   vitrineLayoutStyle  String?  @default("netflix")
+  // Access-email customization (all optional → falls back to the default
+  // template when empty; emailUseCustomHtml lets a producer supply raw HTML).
+  emailLogoUrl       String?
+  emailPrimaryColor  String?
+  emailBgColor       String?
+  emailTitle         String?
+  emailBody          String?  @db.Text
+  emailFooter        String?
+  emailCustomHtml    String?  @db.Text
+  emailUseCustomHtml Boolean  @default(false)
   faviconUrl        String?
   forceTheme        String?
   customDomain      String?  @unique

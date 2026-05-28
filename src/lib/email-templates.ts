@@ -1,3 +1,5 @@
+import { prisma } from "@/lib/prisma";
+
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://app.mymembersclub.com.br";
 
 function baseTemplate(content: string, brandName?: string): string {
@@ -159,6 +161,199 @@ export function staffAccessGranted(
     subject: `Acesso liberado: ${courseName}`,
     htmlContent: html,
   };
+}
+
+// ---------------------------------------------------------------------------
+// Customizable access email (step 3). Renders one of three ways:
+//   1. emailUseCustomHtml + emailCustomHtml → producer's raw HTML (vars
+//      substituted), returned as-is.
+//   2. No visual customization at all → delegates to studentAccessGranted so
+//      the output is IDENTICAL to today's default template (full retrocompat).
+//   3. Any visual field set → themed template using the workspace's fields,
+//      with fallbacks matching the default palette.
+// The existing studentAccessGranted/staffAccessGranted signatures are not
+// touched; integration (who calls this) is step 4.
+// ---------------------------------------------------------------------------
+
+export interface WorkspaceEmailConfig {
+  emailLogoUrl?: string | null;
+  emailPrimaryColor?: string | null;
+  emailBgColor?: string | null;
+  emailTitle?: string | null;
+  emailBody?: string | null;
+  emailFooter?: string | null;
+  emailCustomHtml?: string | null;
+  emailUseCustomHtml?: boolean;
+}
+
+export interface EmailVariables {
+  nome: string;
+  email: string;
+  curso: string;
+  senha: string;
+  link: string;
+  workspace: string;
+}
+
+function applyVars(text: string, vars: EmailVariables): string {
+  return text
+    .replace(/\{nome\}/g, vars.nome)
+    .replace(/\{email\}/g, vars.email)
+    .replace(/\{curso\}/g, vars.curso)
+    .replace(/\{senha\}/g, vars.senha)
+    .replace(/\{link\}/g, vars.link)
+    .replace(/\{workspace\}/g, vars.workspace);
+}
+
+export function buildAccessEmail(
+  config: WorkspaceEmailConfig,
+  vars: EmailVariables
+): { subject: string; html: string } {
+  const subjectFor = (fallback: string) =>
+    config.emailTitle ? applyVars(config.emailTitle, vars) : fallback;
+
+  // 1. Raw HTML supplied by the producer.
+  if (config.emailUseCustomHtml && config.emailCustomHtml) {
+    return {
+      subject: subjectFor(`Seu acesso ao curso ${vars.curso}`),
+      html: applyVars(config.emailCustomHtml, vars),
+    };
+  }
+
+  // 2. No visual customization → reproduce today's template exactly.
+  const hasVisualCustom = !!(
+    config.emailLogoUrl ||
+    config.emailPrimaryColor ||
+    config.emailBgColor ||
+    config.emailTitle ||
+    config.emailBody ||
+    config.emailFooter
+  );
+  if (!hasVisualCustom) {
+    const t = studentAccessGranted(
+      vars.nome,
+      vars.curso,
+      vars.workspace,
+      vars.link,
+      vars.senha || undefined
+    );
+    return { subject: t.subject, html: t.htmlContent };
+  }
+
+  // 3. Themed template using the workspace's custom fields.
+  const bgColor = config.emailBgColor || "#0a0a1a";
+  const primaryColor = config.emailPrimaryColor || "#3b82f6";
+  const logoUrl = config.emailLogoUrl || null;
+  const footerText = config.emailFooter
+    ? applyVars(config.emailFooter, vars)
+    : vars.workspace;
+  const title = config.emailTitle
+    ? applyVars(config.emailTitle, vars)
+    : `Bem-vindo(a) ao ${vars.curso}!`;
+  const bodyHtml = config.emailBody
+    ? applyVars(config.emailBody, vars).replace(/\n/g, "<br>")
+    : `
+      <p style="margin:0 0 14px;">Olá <strong>${vars.nome}</strong>,</p>
+      <p style="margin:0 0 14px;">Seu acesso ao curso <strong>${vars.curso}</strong> foi liberado!</p>
+      ${
+        vars.senha
+          ? `<p style="margin:0 0 6px;">Seus dados de acesso:</p>
+             <p style="margin:0 0 4px;"><strong>Email:</strong> ${vars.email}</p>
+             <p style="margin:0 0 14px;"><strong>Senha:</strong> ${vars.senha}</p>`
+          : ""
+      }
+    `;
+
+  const html = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>${vars.workspace}</title></head>
+<body style="margin:0;padding:0;background-color:${bgColor};font-family:Arial,Helvetica,sans-serif;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:${bgColor};">
+    <tr>
+      <td align="center" style="padding:40px 16px;">
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;">
+          <tr>
+            <td align="center" style="padding-bottom:32px;">
+              ${
+                logoUrl
+                  ? `<img src="${logoUrl}" alt="${vars.workspace}" style="max-height:60px;max-width:200px;" />`
+                  : `<span style="font-size:24px;font-weight:bold;color:#ffffff;letter-spacing:-0.5px;">${vars.workspace}</span>`
+              }
+            </td>
+          </tr>
+          <tr>
+            <td style="background-color:#1a1a2e;border-radius:16px;padding:40px 32px;">
+              <h1 style="margin:0 0 24px;font-size:22px;font-weight:bold;color:#ffffff;line-height:1.3;text-align:center;">${title}</h1>
+              <div style="font-size:15px;color:#d1d5db;line-height:1.6;">${bodyHtml}</div>
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:28px;">
+                <tr>
+                  <td align="center">
+                    <a href="${vars.link}" target="_blank" style="display:inline-block;background-color:${primaryColor};border-radius:10px;padding:14px 32px;font-size:15px;font-weight:600;color:#ffffff;text-decoration:none;">Acessar agora</a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td align="center" style="padding-top:32px;">
+              <p style="margin:0;font-size:13px;color:#6b7280;">${footerText}</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+
+  return { subject: subjectFor(`Seu acesso ao curso ${vars.curso}`), html };
+}
+
+// Sends the student access email using the workspace's customization (or the
+// default template when none is set — buildAccessEmail handles that fallback).
+// Self-contained: fetches the 8 email fields by workspaceId so callers only
+// pass the data they already have. sendEmail is imported lazily to keep the
+// Brevo SDK out of the module graph of everything that imports templates.
+export async function sendCustomAccessEmail(params: {
+  workspaceId: string;
+  studentName: string;
+  studentEmail: string;
+  courseName: string;
+  tempPassword?: string;
+  loginUrl: string;
+}) {
+  const ws = await prisma.workspace.findUnique({
+    where: { id: params.workspaceId },
+    select: {
+      name: true,
+      emailLogoUrl: true,
+      emailPrimaryColor: true,
+      emailBgColor: true,
+      emailTitle: true,
+      emailBody: true,
+      emailFooter: true,
+      emailCustomHtml: true,
+      emailUseCustomHtml: true,
+    },
+  });
+  if (!ws) return;
+
+  const { subject, html } = buildAccessEmail(ws, {
+    nome: params.studentName,
+    email: params.studentEmail,
+    curso: params.courseName,
+    senha: params.tempPassword || "",
+    link: params.loginUrl,
+    workspace: ws.name,
+  });
+
+  const { sendEmail } = await import("@/lib/email");
+  return sendEmail({
+    to: { email: params.studentEmail, name: params.studentName },
+    subject,
+    htmlContent: html, // sendEmail expects htmlContent, not html
+    senderName: ws.name,
+  });
 }
 
 export function passwordReset(name: string, resetUrl: string) {
