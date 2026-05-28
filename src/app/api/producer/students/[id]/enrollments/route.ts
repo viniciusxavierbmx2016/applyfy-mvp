@@ -3,8 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireStaff, canManageStudentsOfCourse } from "@/lib/auth";
 import type { Role } from "@prisma/client";
 import { createNotification } from "@/lib/notifications";
-import { sendEmail } from "@/lib/email";
-import { studentAccessGranted } from "@/lib/email-templates";
+import { sendCustomAccessEmail } from "@/lib/email-templates";
 import { processAutomations } from "@/lib/automation-engine";
 import { enrollStudentSchema, validateBody } from "@/lib/validations";
 
@@ -66,13 +65,13 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
 
       const appUrl = process.env.NEXT_PUBLIC_APP_URL || "";
       const loginUrl = `${appUrl}/w/${enrollment.course.workspace.slug}/login`;
-      const template = studentAccessGranted(
-        enrollment.user.name || enrollment.user.email,
-        enrollment.course.title,
-        enrollment.course.workspace.name,
-        loginUrl
-      );
-      sendEmail({ to: { email: enrollment.user.email, name: enrollment.user.name || undefined }, ...template, senderName: enrollment.course.workspace.name }).catch((err) => console.error("[EMAIL_ERROR] studentAccessGranted to:", enrollment.user.email, err?.message || err));
+      sendCustomAccessEmail({
+        workspaceId: enrollment.course.workspace.id,
+        studentName: enrollment.user.name || enrollment.user.email,
+        studentEmail: enrollment.user.email,
+        courseName: enrollment.course.title,
+        loginUrl,
+      }).catch((err) => console.error("[EMAIL_ERROR] access email to:", enrollment.user.email, err?.message || err));
 
       processAutomations({
         type: "STUDENT_ENROLLED",

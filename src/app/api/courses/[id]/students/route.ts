@@ -8,7 +8,7 @@ import {
 import { createNotification } from "@/lib/notifications";
 import { processAutomations } from "@/lib/automation-engine";
 import { sendEmail } from "@/lib/email";
-import { staffAccessGranted, studentAccessGranted } from "@/lib/email-templates";
+import { staffAccessGranted, sendCustomAccessEmail } from "@/lib/email-templates";
 import { logger } from "@/lib/logger";
 import { enrollCourseStudentSchema, validateBody } from "@/lib/validations";
 import {
@@ -315,30 +315,38 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
     if (!wasActive) {
       const appUrl = process.env.NEXT_PUBLIC_APP_URL || baseUrl;
       const loginUrl = `${appUrl}/w/${course.workspace.slug}/login`;
-      const template = isStaff
-        ? staffAccessGranted(
-            user.name || email,
-            course.title,
-            course.workspace.name,
-            loginUrl
-          )
-        : studentAccessGranted(
-            user.name || email,
-            course.title,
-            course.workspace.name,
-            loginUrl,
-            sharedPassword || undefined
-          );
-      sendEmail({
-        to: { email, name: user.name || undefined },
-        ...template,
-        senderName: course.workspace.name,
-      }).catch((err) =>
-        logger.error("ENROLL", "email failed", {
-          email,
-          error: err instanceof Error ? err.message : String(err),
-        })
-      );
+      if (isStaff) {
+        const template = staffAccessGranted(
+          user.name || email,
+          course.title,
+          course.workspace.name,
+          loginUrl
+        );
+        sendEmail({
+          to: { email, name: user.name || undefined },
+          ...template,
+          senderName: course.workspace.name,
+        }).catch((err) =>
+          logger.error("ENROLL", "email failed", {
+            email,
+            error: err instanceof Error ? err.message : String(err),
+          })
+        );
+      } else {
+        sendCustomAccessEmail({
+          workspaceId: course.workspace.id,
+          studentName: user.name || email,
+          studentEmail: email,
+          courseName: course.title,
+          tempPassword: sharedPassword || undefined,
+          loginUrl,
+        }).catch((err) =>
+          logger.error("ENROLL", "email failed", {
+            email,
+            error: err instanceof Error ? err.message : String(err),
+          })
+        );
+      }
     }
 
     return NextResponse.json({

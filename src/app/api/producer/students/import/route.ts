@@ -6,7 +6,7 @@ import { createNotification } from "@/lib/notifications";
 import { processAutomations } from "@/lib/automation-engine";
 import { resolveStaffWorkspace } from "@/lib/workspace";
 import { sendEmail } from "@/lib/email";
-import { staffAccessGranted, studentAccessGranted } from "@/lib/email-templates";
+import { staffAccessGranted, sendCustomAccessEmail } from "@/lib/email-templates";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 const MAX_ROWS = 500;
@@ -267,16 +267,19 @@ export async function POST(request: Request) {
 
         if (enrolledCourseNames.length > 0) {
           const courseName = enrolledCourseNames.join(", ");
-          const template = isStaff
-            ? staffAccessGranted(name, courseName, workspace.name, loginUrl)
-            : studentAccessGranted(
-                name,
-                courseName,
-                workspace.name,
-                loginUrl,
-                isNewUser ? tempPassword || undefined : undefined
-              );
-          sendEmail({ to: { email, name }, ...template, senderName: workspace.name }).catch((err) => console.error("[EMAIL_ERROR] access email to:", email, err?.message || err));
+          if (isStaff) {
+            const template = staffAccessGranted(name, courseName, workspace.name, loginUrl);
+            sendEmail({ to: { email, name }, ...template, senderName: workspace.name }).catch((err) => console.error("[EMAIL_ERROR] access email to:", email, err?.message || err));
+          } else {
+            sendCustomAccessEmail({
+              workspaceId,
+              studentName: name,
+              studentEmail: email,
+              courseName,
+              tempPassword: isNewUser ? tempPassword || undefined : undefined,
+              loginUrl,
+            }).catch((err) => console.error("[EMAIL_ERROR] access email to:", email, err?.message || err));
+          }
         }
 
         csvResultRows.push([

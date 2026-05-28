@@ -1,3 +1,5 @@
+import { prisma } from "@/lib/prisma";
+
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://app.mymembersclub.com.br";
 
 function baseTemplate(content: string, brandName?: string): string {
@@ -305,6 +307,53 @@ export function buildAccessEmail(
 </html>`;
 
   return { subject: subjectFor(`Seu acesso ao curso ${vars.curso}`), html };
+}
+
+// Sends the student access email using the workspace's customization (or the
+// default template when none is set — buildAccessEmail handles that fallback).
+// Self-contained: fetches the 8 email fields by workspaceId so callers only
+// pass the data they already have. sendEmail is imported lazily to keep the
+// Brevo SDK out of the module graph of everything that imports templates.
+export async function sendCustomAccessEmail(params: {
+  workspaceId: string;
+  studentName: string;
+  studentEmail: string;
+  courseName: string;
+  tempPassword?: string;
+  loginUrl: string;
+}) {
+  const ws = await prisma.workspace.findUnique({
+    where: { id: params.workspaceId },
+    select: {
+      name: true,
+      emailLogoUrl: true,
+      emailPrimaryColor: true,
+      emailBgColor: true,
+      emailTitle: true,
+      emailBody: true,
+      emailFooter: true,
+      emailCustomHtml: true,
+      emailUseCustomHtml: true,
+    },
+  });
+  if (!ws) return;
+
+  const { subject, html } = buildAccessEmail(ws, {
+    nome: params.studentName,
+    email: params.studentEmail,
+    curso: params.courseName,
+    senha: params.tempPassword || "",
+    link: params.loginUrl,
+    workspace: ws.name,
+  });
+
+  const { sendEmail } = await import("@/lib/email");
+  return sendEmail({
+    to: { email: params.studentEmail, name: params.studentName },
+    subject,
+    htmlContent: html, // sendEmail expects htmlContent, not html
+    senderName: ws.name,
+  });
 }
 
 export function passwordReset(name: string, resetUrl: string) {
