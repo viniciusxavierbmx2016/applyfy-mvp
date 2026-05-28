@@ -110,6 +110,13 @@ const iconSupport = (
   </svg>
 );
 
+const iconHeadphones = (
+  <svg className={iconCls} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+    <path d="M3 18v-6a9 9 0 0 1 18 0v6" />
+    <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z" />
+  </svg>
+);
+
 const studentLinks: NavLink[] = [
   { href: "/", label: "Vitrine", icon: iconHome },
   { href: "/profile", label: "Meu Perfil", icon: iconProfile },
@@ -124,6 +131,7 @@ const producerLinks: NavLink[] = [
   { href: "/producer/analytics", label: "Relatórios", icon: iconAnalytics, tourId: "nav-reports" },
   { href: "/producer/automations", label: "Automações", icon: iconAutomations, tourId: "nav-automations" },
   { href: "/producer/lives", label: "Lives", icon: iconLives, tourId: "nav-lives" },
+  { href: "/producer/course-support", label: "Suporte", icon: iconHeadphones, tourId: "nav-course-support" },
   { href: "/producer/settings", label: "Configurações", icon: iconSettings, tourId: "nav-settings" },
 ];
 
@@ -152,6 +160,12 @@ const collaboratorLinks: NavLink[] = [
     label: "Relatórios",
     icon: iconAnalytics,
     requires: "VIEW_ANALYTICS",
+  },
+  {
+    href: "/producer/course-support",
+    label: "Suporte",
+    icon: iconHeadphones,
+    requires: "MANAGE_STUDENTS",
   },
 ];
 
@@ -192,6 +206,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
   const activeWorkspace = useActiveWorkspace();
   const showVitrine = (isProducer || isCollaborator) && !!activeWorkspace;
   const [supportUnread, setSupportUnread] = useState(0);
+  const [courseSupportUnread, setCourseSupportUnread] = useState(0);
 
   const canSeeSupport =
     isAdmin ||
@@ -217,6 +232,32 @@ export function Sidebar({ open, onClose }: SidebarProps) {
       clearInterval(i);
     };
   }, [canSeeSupport]);
+
+  // F2 — Per-course support badge for producer + collaborator-MANAGE_STUDENTS.
+  // Mirrors the admin pattern above but hits the producer-scoped endpoint.
+  const canSeeCourseSupport =
+    isProducer ||
+    (isCollaborator &&
+      (collaborator?.permissions ?? []).includes("MANAGE_STUDENTS"));
+
+  useEffect(() => {
+    if (!canSeeCourseSupport) return;
+    let cancelled = false;
+    async function fetchCount() {
+      try {
+        const r = await fetch("/api/producer/course-support/unread-count");
+        if (!r.ok) return;
+        const d = await r.json();
+        if (!cancelled) setCourseSupportUnread(d.count ?? 0);
+      } catch {}
+    }
+    fetchCount();
+    const i = setInterval(fetchCount, 60000);
+    return () => {
+      cancelled = true;
+      clearInterval(i);
+    };
+  }, [canSeeCourseSupport, collaborator]);
 
   const [collapsed, setCollapsed] = useState(false);
   useEffect(() => {
@@ -505,6 +546,14 @@ export function Sidebar({ open, onClose }: SidebarProps) {
                 const active = isActive(link.href);
                 const showSupportBadge =
                   link.href === "/admin/support" && supportUnread > 0;
+                const showCourseSupportBadge =
+                  link.href === "/producer/course-support" &&
+                  courseSupportUnread > 0;
+                const badgeCount = showSupportBadge
+                  ? supportUnread
+                  : showCourseSupportBadge
+                    ? courseSupportUnread
+                    : 0;
                 return (
                   <Link
                     key={link.href}
@@ -518,9 +567,9 @@ export function Sidebar({ open, onClose }: SidebarProps) {
                     <span className={cn("truncate flex-1", collapsed && "lg:hidden")}>
                       {link.label}
                     </span>
-                    {showSupportBadge && (
+                    {badgeCount > 0 && (
                       <span className={cn("ml-auto min-w-[20px] h-5 px-1.5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center", collapsed && "lg:hidden")}>
-                        {supportUnread > 9 ? "9+" : supportUnread}
+                        {badgeCount > 9 ? "9+" : badgeCount}
                       </span>
                     )}
                     {collapsed && <span className={tooltipCls}>{link.label}</span>}
