@@ -2,9 +2,13 @@
 
 import { usePushNotifications } from "@/hooks/use-push-notifications";
 
-export function PushToggle() {
+// workspaceSlug is forwarded to the hook so the resulting subscription row
+// is tagged with that workspace id. Without it (legacy/global call sites)
+// the subscription saves as workspaceId=NULL — those subscriptions no
+// longer receive scoped pushes after the "no null fallback" fix.
+export function PushToggle({ workspaceSlug }: { workspaceSlug?: string } = {}) {
   const { permission, isSubscribed, isLoading, subscribe, unsubscribe } =
-    usePushNotifications();
+    usePushNotifications(workspaceSlug);
 
   if (typeof window === "undefined" || !("Notification" in window)) {
     return (

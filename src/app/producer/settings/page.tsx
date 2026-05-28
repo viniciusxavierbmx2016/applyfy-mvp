@@ -6,6 +6,7 @@ import { useProducerTheme } from "@/components/producer-theme-provider";
 import { useConfirm } from "@/hooks/use-confirm";
 import { darkenHex } from "@/lib/color-utils";
 import { PushToggle } from "@/components/push-toggle";
+import { useActiveWorkspace } from "@/hooks/use-active-workspace";
 
 interface ThemeConfig {
   mode: string;
@@ -39,6 +40,7 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const [resettingTour, setResettingTour] = useState(false);
+  const activeWorkspace = useActiveWorkspace();
   const { confirm, ConfirmDialog } = useConfirm();
 
   function showToast(msg: string) {
@@ -300,7 +302,14 @@ export default function SettingsPage() {
         <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
           Receba notificações quando alunos comentarem, postarem ou interagirem com seus cursos.
         </p>
-        <PushToggle />
+        {/* Wait for the active workspace before mounting PushToggle — without
+            a slug the subscription would save as workspaceId=NULL and miss
+            every scoped push (post no-null-fallback fix). */}
+        {activeWorkspace ? (
+          <PushToggle workspaceSlug={activeWorkspace.slug} />
+        ) : (
+          <p className="text-sm text-gray-500">Carregando workspace…</p>
+        )}
       </section>
 
       {toast && (
