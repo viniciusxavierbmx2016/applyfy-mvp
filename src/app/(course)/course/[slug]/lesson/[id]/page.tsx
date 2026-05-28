@@ -567,7 +567,7 @@ export default function LessonPage(
                   : activeTab;
               return (
                 <div className="bg-gray-50 dark:bg-white/5 border border-gray-200/50 dark:border-white/5 rounded-xl overflow-hidden">
-                  <div className="flex border-b border-gray-200/50 dark:border-white/5 px-1 overflow-x-auto">
+                  <div className="flex border-b border-gray-200/50 dark:border-white/5 px-1 touch-pan-x overflow-x-auto">
                     <button
                       type="button"
                       onClick={() => setActiveTab("description")}
