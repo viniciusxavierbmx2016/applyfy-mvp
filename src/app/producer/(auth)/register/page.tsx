@@ -125,6 +125,13 @@ export default function ProducerRegisterPage() {
         setLoading(false);
         return;
       }
+      // Student → producer upgrade: the email was already confirmed by the
+      // webhook, so skip /verify-email and send them straight to login with
+      // the password they just set.
+      if (data.upgraded) {
+        router.push("/producer/login?upgraded=true");
+        return;
+      }
       router.push(`/verify-email?email=${encodeURIComponent(email.trim())}&next=/producer/billing`);
     } catch {
       setError("Erro ao conectar com o servidor");

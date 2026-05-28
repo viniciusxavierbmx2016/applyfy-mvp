@@ -9,6 +9,7 @@ import { PlatformLogo } from "@/components/platform-logo";
 function ProducerLoginForm() {
   const searchParams = useSearchParams();
   const resetSuccess = searchParams.get("reset") === "success";
+  const upgraded = searchParams.get("upgraded") === "true";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -121,6 +122,11 @@ function ProducerLoginForm() {
           {resetSuccess && !error && (
             <div className="mb-4 p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-sm">
               Senha redefinida com sucesso! Faça login.
+            </div>
+          )}
+          {upgraded && !error && (
+            <div className="mb-4 p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-sm">
+              Conta convertida para produtor com sucesso! Faça login com a senha que você definiu. Seu acesso aos cursos como aluno foi mantido.
             </div>
           )}
           {error && (
