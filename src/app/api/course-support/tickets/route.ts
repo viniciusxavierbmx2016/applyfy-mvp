@@ -5,6 +5,8 @@ import {
   createCourseSupportTicketSchema,
   validateBody,
 } from "@/lib/validations";
+import { createNotification } from "@/lib/notifications";
+import { sendPushToUser } from "@/lib/push-send";
 
 // F2 — Per-course student↔producer support tickets.
 //
@@ -79,10 +81,18 @@ export async function POST(request: Request) {
     if (!v.success) return v.error;
     const { courseId, subject, body, attachments = [] } = v.data;
 
-    // Course must exist and we need workspaceId for the row.
+    // Course must exist and we need workspaceId for the row + owner for
+    // the notification target (course.ownerId is nullable, so fall back to
+    // workspace.ownerId — that one is NOT NULL in the schema).
     const course = await prisma.course.findUnique({
       where: { id: courseId },
-      select: { id: true, workspaceId: true },
+      select: {
+        id: true,
+        workspaceId: true,
+        ownerId: true,
+        title: true,
+        workspace: { select: { ownerId: true } },
+      },
     });
     if (!course) {
       return NextResponse.json(
@@ -124,6 +134,29 @@ export async function POST(request: Request) {
         messages: { orderBy: { createdAt: "asc" } },
       },
     });
+
+    // F2 — notify the course owner (producer). Bell row awaited; push is
+    // redundant and fire-and-forget so we don't slow the student's request.
+    const ownerId = course.ownerId ?? course.workspace.ownerId;
+    if (ownerId) {
+      await createNotification({
+        userId: ownerId,
+        workspaceId: course.workspaceId,
+        type: "COURSE_SUPPORT",
+        message: `Novo chamado de suporte: "${subject.trim()}" — ${course.title}`,
+        link: "/producer/course-support",
+        actorId: user.id,
+      });
+      sendPushToUser(
+        ownerId,
+        {
+          title: "Novo chamado de suporte",
+          body: `${subject.trim()} — ${course.title}`,
+          url: "/producer/course-support",
+        },
+        course.workspaceId
+      ).catch(() => {});
+    }
 
     return NextResponse.json({ ticket }, { status: 201 });
   } catch (error) {

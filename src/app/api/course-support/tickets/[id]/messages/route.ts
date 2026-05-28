@@ -5,6 +5,8 @@ import {
   courseSupportMessageSchema,
   validateBody,
 } from "@/lib/validations";
+import { createNotification } from "@/lib/notifications";
+import { sendPushToUser } from "@/lib/push-send";
 
 // F2 — Per-course support: student-side message thread.
 //
@@ -76,7 +78,20 @@ export async function POST(
 
     const ticket = await prisma.courseSupportTicket.findUnique({
       where: { id: params.id },
-      select: { id: true, studentId: true, status: true },
+      select: {
+        id: true,
+        studentId: true,
+        status: true,
+        subject: true,
+        workspaceId: true,
+        course: {
+          select: {
+            title: true,
+            ownerId: true,
+            workspace: { select: { ownerId: true } },
+          },
+        },
+      },
     });
     if (!ticket || ticket.studentId !== user.id) {
       return NextResponse.json(
@@ -115,6 +130,29 @@ export async function POST(
         },
       }),
     ]);
+
+    // F2 — notify the course owner (producer) of the student reply.
+    const ownerId =
+      ticket.course.ownerId ?? ticket.course.workspace.ownerId;
+    if (ownerId) {
+      await createNotification({
+        userId: ownerId,
+        workspaceId: ticket.workspaceId,
+        type: "COURSE_SUPPORT",
+        message: `Nova mensagem em "${ticket.subject}" — ${ticket.course.title}`,
+        link: "/producer/course-support",
+        actorId: user.id,
+      });
+      sendPushToUser(
+        ownerId,
+        {
+          title: "Nova mensagem no suporte",
+          body: `${ticket.subject} — ${ticket.course.title}`,
+          url: "/producer/course-support",
+        },
+        ticket.workspaceId
+      ).catch(() => {});
+    }
 
     return NextResponse.json({ message }, { status: 201 });
   } catch (error) {

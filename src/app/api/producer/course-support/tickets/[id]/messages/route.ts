@@ -5,6 +5,8 @@ import {
   courseSupportMessageSchema,
   validateBody,
 } from "@/lib/validations";
+import { createNotification } from "@/lib/notifications";
+import { sendPushToUser } from "@/lib/push-send";
 
 // F2 — Producer-side message thread for a course-support ticket.
 //
@@ -129,6 +131,39 @@ export async function POST(
         },
       }),
     ]);
+
+    // F2 — notify the student. loadOwnedTicket keeps a lean projection for
+    // the ownership check (reused in GET); pull the notification fields
+    // separately here (single PK lookup).
+    const notif = await prisma.courseSupportTicket.findUnique({
+      where: { id: owned.id },
+      select: {
+        studentId: true,
+        subject: true,
+        workspaceId: true,
+        course: { select: { slug: true, title: true } },
+      },
+    });
+    if (notif) {
+      const link = `/course/${notif.course.slug}`;
+      await createNotification({
+        userId: notif.studentId,
+        workspaceId: notif.workspaceId,
+        type: "COURSE_SUPPORT",
+        message: `Resposta no seu chamado: "${notif.subject}"`,
+        link,
+        actorId: staff.id,
+      });
+      sendPushToUser(
+        notif.studentId,
+        {
+          title: "Resposta no seu chamado",
+          body: `${notif.subject} — ${notif.course.title}`,
+          url: link,
+        },
+        notif.workspaceId
+      ).catch(() => {});
+    }
 
     return NextResponse.json({ message }, { status: 201 });
   } catch (error) {
