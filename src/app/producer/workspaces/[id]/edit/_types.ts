@@ -24,11 +24,31 @@ export interface Workspace {
   forceTheme: string | null;
   customDomain: string | null;
   isActive: boolean;
+  // Access-email customization (step 5)
+  emailLogoUrl: string | null;
+  emailPrimaryColor: string | null;
+  emailBgColor: string | null;
+  emailTitle: string | null;
+  emailBody: string | null;
+  emailFooter: string | null;
+  emailCustomHtml: string | null;
+  emailUseCustomHtml: boolean;
 }
 
-export type TabKey = "info" | "login" | "appearance";
+export type TabKey = "info" | "login" | "appearance" | "email";
 
 export interface ImagePosition {
   x: number;
   y: number;
+}
+
+export interface EmailConfig {
+  emailLogoUrl: string;
+  emailPrimaryColor: string;
+  emailBgColor: string;
+  emailTitle: string;
+  emailBody: string;
+  emailFooter: string;
+  emailCustomHtml: string;
+  emailUseCustomHtml: boolean;
 }
