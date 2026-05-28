@@ -188,7 +188,7 @@ export default function CourseStudentsPage(
       ) : (
         <>
           {/* Desktop table */}
-          <div className="hidden md:block bg-white dark:bg-white/5 border border-gray-200 dark:border-white/5 rounded-xl overflow-hidden">
+          <div className="hidden md:block bg-white dark:bg-white/5 border border-gray-200 dark:border-white/5 rounded-xl overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-200 dark:border-white/5">
