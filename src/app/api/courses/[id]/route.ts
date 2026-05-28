@@ -92,6 +92,8 @@ export async function PUT(request: Request, props: { params: Promise<{ id: strin
       supportEmail,
       supportWhatsapp,
       showLessonSupport,
+      supportButtonColor,
+      supportButtonImage,
       featured,
       category,
       termsContent,
@@ -106,6 +108,32 @@ export async function PUT(request: Request, props: { params: Promise<{ id: strin
           { status: 400 }
         );
       }
+    }
+
+    // F2 — Support button customization. Color must be #rrggbb or
+    // null/empty; image is a free-form URL up to 500 chars.
+    if (
+      supportButtonColor !== undefined &&
+      supportButtonColor !== null &&
+      supportButtonColor !== ""
+    ) {
+      if (!/^#[0-9a-fA-F]{6}$/.test(String(supportButtonColor))) {
+        return NextResponse.json(
+          { error: "Cor do botão de suporte inválida" },
+          { status: 400 }
+        );
+      }
+    }
+    if (
+      supportButtonImage !== undefined &&
+      supportButtonImage !== null &&
+      typeof supportButtonImage === "string" &&
+      supportButtonImage.length > 500
+    ) {
+      return NextResponse.json(
+        { error: "URL da imagem do botão muito longa" },
+        { status: 400 }
+      );
     }
 
     if (slug) {
@@ -213,6 +241,20 @@ export async function PUT(request: Request, props: { params: Promise<{ id: strin
         }),
         ...(showLessonSupport !== undefined && {
           showLessonSupport: Boolean(showLessonSupport),
+        }),
+        ...(supportButtonColor !== undefined && {
+          supportButtonColor:
+            typeof supportButtonColor === "string" &&
+            supportButtonColor.trim()
+              ? supportButtonColor.trim()
+              : null,
+        }),
+        ...(supportButtonImage !== undefined && {
+          supportButtonImage:
+            typeof supportButtonImage === "string" &&
+            supportButtonImage.trim()
+              ? supportButtonImage.trim()
+              : null,
         }),
         ...(category !== undefined && {
           category: typeof category === "string" && category.trim() ? category.trim() : null,
