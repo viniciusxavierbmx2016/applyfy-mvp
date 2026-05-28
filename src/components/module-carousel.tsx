@@ -153,7 +153,7 @@ export function ModuleCarousel({ title, modules }: Props) {
         className={
           isMd
             ? "overflow-hidden"
-            : "overflow-x-auto pb-2 -mx-4 px-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+            : "touch-pan-x overflow-x-auto pb-2 -mx-4 px-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
         }
         style={
           isMd
