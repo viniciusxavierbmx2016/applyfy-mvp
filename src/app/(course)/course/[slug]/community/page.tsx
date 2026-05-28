@@ -327,7 +327,7 @@ export default function CommunityPage() {
 
       {/* Group tabs */}
       {groups.length > 1 && (
-        <div className="flex gap-1 overflow-x-auto pb-2 mb-4 scrollbar-hide">
+        <div className="flex gap-1 touch-pan-x overflow-x-auto pb-2 mb-4 scrollbar-hide">
           {groups.map((group) => (
             <button
               key={group.id}
