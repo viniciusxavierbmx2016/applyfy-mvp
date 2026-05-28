@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { PlatformLogo } from "@/components/platform-logo";
+import { createClient } from "@/lib/supabase";
 
 const STEPS = ["Conta", "Negócio", "Nicho", "Final"];
 
@@ -127,8 +128,10 @@ export default function ProducerRegisterPage() {
       }
       // Student → producer upgrade: the email was already confirmed by the
       // webhook, so skip /verify-email and send them straight to login with
-      // the password they just set.
+      // the password they just set. Clear the stale STUDENT browser session
+      // first — otherwise /producer/login reuses the old cookies and 401s.
       if (data.upgraded) {
+        await createClient().auth.signOut();
         router.push("/producer/login?upgraded=true");
         return;
       }
