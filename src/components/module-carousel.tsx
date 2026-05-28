@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useEffect, useCallback } from "react";
+import React, { useRef, useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
 
@@ -37,13 +37,27 @@ export function ModuleCarousel({ title, modules }: Props) {
   // native scroll container to capture, so vertical gestures bubble to <main>.
   const [mobileOffset, setMobileOffset] = useState(0);
   const [mobileMaxOffset, setMobileMaxOffset] = useState(0);
-  const [isDragging, setIsDragging] = useState(false);
+  // currentOffset mirrors the live (DOM-driven) position; lastX/lastTime feed
+  // the release-velocity (momentum) calc. The track's transition is toggled
+  // directly on the DOM during a drag — there is no isDragging state, since a
+  // setState per touchmove would re-render every card and defeat the purpose.
   const touchRef = useRef<{
     startX: number;
     startY: number;
     startOffset: number;
     axis: "x" | "y" | null;
-  }>({ startX: 0, startY: 0, startOffset: 0, axis: null });
+    currentOffset: number;
+    lastX: number;
+    lastTime: number;
+  }>({
+    startX: 0,
+    startY: 0,
+    startOffset: 0,
+    axis: null,
+    currentOffset: 0,
+    lastX: 0,
+    lastTime: 0,
+  });
 
   useEffect(() => {
     const mq = window.matchMedia("(min-width: 768px)");
@@ -127,8 +141,11 @@ export function ModuleCarousel({ title, modules }: Props) {
   );
 
   // ── Mobile touch handlers (touch-driven transform, no native scroller) ──
-  // Lock the axis within the first 8px. Vertical → do nothing, so the gesture
-  // bubbles to <main>. Horizontal → move the carousel via transform.
+  // Direct-DOM drag: transform/transition are written straight to the track
+  // during the gesture (no setState per frame → cards don't re-render). React
+  // state (mobileOffset) is committed once on release so the next gesture and
+  // any future render stay in sync. touchmove itself lives in a non-passive
+  // listener below (preventDefault needs it).
   const onMobileTouchStart = useCallback(
     (e: React.TouchEvent) => {
       const t = e.touches[0];
@@ -137,42 +154,92 @@ export function ModuleCarousel({ title, modules }: Props) {
         startY: t.clientY,
         startOffset: mobileOffset,
         axis: null,
+        currentOffset: mobileOffset,
+        lastX: t.clientX,
+        lastTime: Date.now(),
       };
-      setIsDragging(false);
     },
     [mobileOffset]
   );
 
-  const onMobileTouchMove = useCallback(
+  const onMobileTouchEnd = useCallback(
     (e: React.TouchEvent) => {
-      const t = e.touches[0];
-      const dx = t.clientX - touchRef.current.startX;
-      const dy = t.clientY - touchRef.current.startY;
+      const draggedX = touchRef.current.axis === "x";
+      touchRef.current.axis = null;
+      if (!draggedX) return; // vertical gesture or tap — nothing to settle
 
-      // Decide the axis once, after 8px of movement.
-      if (!touchRef.current.axis) {
-        if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
-        touchRef.current.axis = Math.abs(dx) > Math.abs(dy) ? "x" : "y";
+      // Release velocity (px/ms): only counts when the finger was still moving
+      // at lift-off (dt < 100ms). Carried into the final offset as inertia.
+      const dt = Date.now() - touchRef.current.lastTime;
+      const releaseX = e.changedTouches[0].clientX;
+      const velocity =
+        dt > 0 && dt < 100 ? (touchRef.current.lastX - releaseX) / dt : 0;
+      let finalOffset = touchRef.current.currentOffset + velocity * 150;
+      finalOffset = Math.max(0, Math.min(mobileMaxOffset, finalOffset));
+
+      // Snap to the nearest card. Measure the real card stride (width + gap-3
+      // = 12px); fall back to the 75%-width approximation if not measurable.
+      const firstCard = trackRef.current
+        ?.firstElementChild as HTMLElement | null;
+      const stride = firstCard
+        ? firstCard.offsetWidth + 12
+        : containerRef.current
+          ? containerRef.current.clientWidth * 0.75 + 12
+          : 200;
+      if (stride > 0) {
+        finalOffset = Math.round(finalOffset / stride) * stride;
+        finalOffset = Math.max(0, Math.min(mobileMaxOffset, finalOffset));
       }
 
-      // Vertical → let the page (<main>) scroll.
-      if (touchRef.current.axis === "y") return;
-
-      // Horizontal → drive the carousel. preventDefault only matters when the
-      // listener is non-passive (see note); overflow-hidden already prevents a
-      // native scroll, so this is defensive.
-      if (e.cancelable) e.preventDefault();
-      setIsDragging(true);
-      const newOffset = touchRef.current.startOffset - dx;
-      setMobileOffset(Math.max(0, Math.min(mobileMaxOffset, newOffset)));
+      // Animate to the snap target directly (fires immediately), then commit
+      // to state so React's next render matches.
+      if (trackRef.current) {
+        trackRef.current.style.transition = "transform 300ms ease";
+        trackRef.current.style.transform = `translateX(-${finalOffset}px)`;
+      }
+      touchRef.current.currentOffset = finalOffset;
+      setMobileOffset(finalOffset);
     },
     [mobileMaxOffset]
   );
 
-  const onMobileTouchEnd = useCallback(() => {
-    setIsDragging(false);
-    touchRef.current.axis = null;
-  }, []);
+  // touchmove runs in a NON-PASSIVE listener so preventDefault genuinely stops
+  // the page from also scrolling vertically during a horizontal swipe. (React
+  // registers onTouchMove passively at the root, where preventDefault no-ops.)
+  // Mobile only — desktop never registers this.
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el || isMd) return;
+    const onMove = (e: TouchEvent) => {
+      const t = e.touches[0];
+      const dx = t.clientX - touchRef.current.startX;
+      const dy = t.clientY - touchRef.current.startY;
+      // Lock the axis once, after 8px.
+      if (!touchRef.current.axis) {
+        if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
+        touchRef.current.axis = Math.abs(dx) > Math.abs(dy) ? "x" : "y";
+        // Horizontal → kill the settle transition so the track tracks the
+        // finger 1:1 (otherwise the 300ms ease lags every frame).
+        if (touchRef.current.axis === "x" && trackRef.current) {
+          trackRef.current.style.transition = "none";
+        }
+      }
+      if (touchRef.current.axis === "y") return; // let <main> scroll
+      e.preventDefault();
+      const newOffset = Math.max(
+        0,
+        Math.min(mobileMaxOffset, touchRef.current.startOffset - dx)
+      );
+      touchRef.current.currentOffset = newOffset;
+      touchRef.current.lastX = t.clientX;
+      touchRef.current.lastTime = Date.now();
+      if (trackRef.current) {
+        trackRef.current.style.transform = `translateX(-${newOffset}px)`;
+      }
+    };
+    el.addEventListener("touchmove", onMove, { passive: false });
+    return () => el.removeEventListener("touchmove", onMove);
+  }, [isMd, mobileMaxOffset]);
 
   const canLeft = isMd ? offset > 0 : false;
   const canRight = isMd ? offset < maxOffset - 4 : false;
@@ -220,7 +287,6 @@ export function ModuleCarousel({ title, modules }: Props) {
         onWheel={handleWheel}
         {...(!isMd && {
           onTouchStart: onMobileTouchStart,
-          onTouchMove: onMobileTouchMove,
           onTouchEnd: onMobileTouchEnd,
           onTouchCancel: onMobileTouchEnd,
         })}
@@ -243,9 +309,11 @@ export function ModuleCarousel({ title, modules }: Props) {
               ? { transform: `translateX(-${offset}px)`, transition: "transform 300ms ease" }
               : {
                   transform: `translateX(-${mobileOffset}px)`,
-                  // No transition while the finger drives it (follow the
-                  // finger), smooth settle on release.
-                  transition: isDragging ? "none" : "transform 300ms ease",
+                  // Transition is toggled directly on the DOM during a drag
+                  // (none while dragging, 300ms on release/snap). This static
+                  // value is what applies between gestures + after a re-render.
+                  transition: "transform 300ms ease",
+                  willChange: "transform",
                 }
           }
         >
@@ -258,7 +326,11 @@ export function ModuleCarousel({ title, modules }: Props) {
   );
 }
 
-function ModuleCard({ mod }: { mod: CarouselModule }) {
+const ModuleCard = React.memo(function ModuleCard({
+  mod,
+}: {
+  mod: CarouselModule;
+}) {
   const content = (
     <div className="relative w-full aspect-[9/16] rounded-xl overflow-hidden bg-gray-900 shadow-md shadow-black/10 dark:shadow-black/40 ring-1 ring-black/5 dark:ring-white/5 group-hover:shadow-xl group-hover:shadow-black/20 dark:group-hover:shadow-black/60 transition-[transform,box-shadow] duration-300">
       {mod.thumbnailUrl ? (
@@ -362,4 +434,4 @@ function ModuleCard({ mod }: { mod: CarouselModule }) {
       {content}
     </Link>
   );
-}
+});
