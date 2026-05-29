@@ -50,6 +50,7 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
       "accentColor",
       "emailPrimaryColor",
       "emailBgColor",
+      "emailBoxColor",
     ] as const) {
       if (body?.[key] === null) {
         data[key] = null;

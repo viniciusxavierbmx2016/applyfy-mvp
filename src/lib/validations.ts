@@ -562,6 +562,7 @@ export const updateWorkspaceSchema = z
     emailLogoUrl: z.string().max(500).optional().nullable(),
     emailPrimaryColor: z.string().max(20).optional().nullable(),
     emailBgColor: z.string().max(20).optional().nullable(),
+    emailBoxColor: z.string().max(20).optional().nullable(),
     emailTitle: z.string().max(200).optional().nullable(),
     emailBody: z.string().max(10000).optional().nullable(),
     emailFooter: z.string().max(500).optional().nullable(),
