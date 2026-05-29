@@ -154,25 +154,44 @@ export default function CourseSupportInboxPage() {
     }
   }, [courseFilter]);
 
-  const fetchTicket = useCallback(async (id: string) => {
-    setLoadingChat(true);
-    try {
-      const r = await fetch(`/api/producer/course-support/tickets/${id}`, {
-        cache: "no-store",
-      });
-      const json = await r.json();
-      if (!r.ok) throw new Error(json.error || "Erro");
-      setActive(json.ticket);
-      // Mark thread read (server-side fire-and-forget happens on /messages GET).
-      fetch(`/api/producer/course-support/tickets/${id}/messages`, {
-        cache: "no-store",
-      }).catch(() => {});
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Erro");
-    } finally {
-      setLoadingChat(false);
-    }
-  }, []);
+  const fetchTicket = useCallback(
+    async (id: string, opts?: { silent?: boolean }) => {
+      // silent = background refresh (polling / post-action). Don't toggle the
+      // loading state so the chat panel never blanks out (no flicker).
+      if (!opts?.silent) setLoadingChat(true);
+      try {
+        const r = await fetch(`/api/producer/course-support/tickets/${id}`, {
+          cache: "no-store",
+        });
+        const json = await r.json();
+        if (!r.ok) throw new Error(json.error || "Erro");
+        // Keep the previous object reference when nothing changed, so a poll
+        // that returns identical data triggers no re-render of the thread.
+        setActive((prev) => {
+          const next: FullTicket = json.ticket;
+          if (
+            prev &&
+            prev.id === next.id &&
+            prev.lastMessageAt === next.lastMessageAt &&
+            (prev.messages?.length ?? 0) === (next.messages?.length ?? 0) &&
+            prev.status === next.status
+          ) {
+            return prev;
+          }
+          return next;
+        });
+        // Mark thread read (server-side fire-and-forget happens on /messages GET).
+        fetch(`/api/producer/course-support/tickets/${id}/messages`, {
+          cache: "no-store",
+        }).catch(() => {});
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Erro");
+      } finally {
+        if (!opts?.silent) setLoadingChat(false);
+      }
+    },
+    []
+  );
 
   // Initial + filter-change list reload + 30s background refresh.
   useEffect(() => {
@@ -188,7 +207,10 @@ export default function CourseSupportInboxPage() {
       return;
     }
     fetchTicket(activeId);
-    const i = setInterval(() => fetchTicket(activeId), POLL_CHAT_MS);
+    const i = setInterval(
+      () => fetchTicket(activeId, { silent: true }),
+      POLL_CHAT_MS
+    );
     return () => clearInterval(i);
   }, [activeId, fetchTicket]);
 
@@ -215,7 +237,10 @@ export default function CourseSupportInboxPage() {
       const json = await r.json();
       if (!r.ok) throw new Error(json.error || "Erro ao enviar");
       setReply("");
-      await Promise.all([fetchTicket(activeId), fetchTickets()]);
+      await Promise.all([
+        fetchTicket(activeId, { silent: true }),
+        fetchTickets(),
+      ]);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Erro");
     } finally {
@@ -235,7 +260,10 @@ export default function CourseSupportInboxPage() {
       const json = await r.json();
       if (!r.ok) throw new Error(json.error || "Erro");
       // Refresh both panels so the badge color + sidebar list reflect it.
-      await Promise.all([fetchTicket(activeId), fetchTickets()]);
+      await Promise.all([
+        fetchTicket(activeId, { silent: true }),
+        fetchTickets(),
+      ]);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Erro");
     }
@@ -355,7 +383,7 @@ export default function CourseSupportInboxPage() {
             <div className="flex-1 flex items-center justify-center px-6 text-center text-sm text-gray-500">
               Selecione um chamado para ver a conversa.
             </div>
-          ) : !active || loadingChat ? (
+          ) : !active ? (
             <div className="flex-1 flex items-center justify-center text-xs text-gray-500">
               Carregando…
             </div>
@@ -404,41 +432,50 @@ export default function CourseSupportInboxPage() {
                 </div>
               </div>
 
-              <div
-                ref={scrollRef}
-                className="flex-1 min-h-0 overflow-y-auto px-4 py-3 space-y-2 bg-gray-50/50 dark:bg-black/20"
-              >
-                {active.messages.map((m) => {
-                  const isProducer = m.senderRole === "PRODUCER";
-                  return (
-                    <div
-                      key={m.id}
-                      className={`flex ${isProducer ? "justify-end" : "justify-start"}`}
-                    >
+              {/* Messages-only loading gate: shows "Carregando…" solely on a
+                  first load with no messages yet; silent refetches never hit
+                  this, so the thread + input stay mounted (no flicker). */}
+              {loadingChat && active.messages.length === 0 ? (
+                <div className="flex-1 flex items-center justify-center text-xs text-gray-500">
+                  Carregando…
+                </div>
+              ) : (
+                <div
+                  ref={scrollRef}
+                  className="flex-1 min-h-0 overflow-y-auto px-4 py-3 space-y-2 bg-gray-50/50 dark:bg-black/20"
+                >
+                  {active.messages.map((m) => {
+                    const isProducer = m.senderRole === "PRODUCER";
+                    return (
                       <div
-                        className={`max-w-[80%] rounded-2xl px-3 py-2 text-sm shadow-sm ${
-                          isProducer
-                            ? "bg-blue-600 text-white rounded-br-sm"
-                            : "bg-white dark:bg-white/10 text-gray-900 dark:text-white border border-gray-200 dark:border-white/5 rounded-bl-sm"
-                        }`}
+                        key={m.id}
+                        className={`flex ${isProducer ? "justify-end" : "justify-start"}`}
                       >
-                        <p className="whitespace-pre-wrap break-words">
-                          {m.body}
-                        </p>
-                        <p
-                          className={`text-[10px] mt-1 ${
+                        <div
+                          className={`max-w-[80%] rounded-2xl px-3 py-2 text-sm shadow-sm ${
                             isProducer
-                              ? "text-blue-100/80"
-                              : "text-gray-400 dark:text-gray-500"
+                              ? "bg-blue-600 text-white rounded-br-sm"
+                              : "bg-white dark:bg-white/10 text-gray-900 dark:text-white border border-gray-200 dark:border-white/5 rounded-bl-sm"
                           }`}
                         >
-                          {formatTime(m.createdAt)}
-                        </p>
+                          <p className="whitespace-pre-wrap break-words">
+                            {m.body}
+                          </p>
+                          <p
+                            className={`text-[10px] mt-1 ${
+                              isProducer
+                                ? "text-blue-100/80"
+                                : "text-gray-400 dark:text-gray-500"
+                            }`}
+                          >
+                            {formatTime(m.createdAt)}
+                          </p>
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
+                    );
+                  })}
+                </div>
+              )}
 
               {active.status === "CLOSED" ? (
                 <div className="px-4 py-3 border-t border-gray-200 dark:border-white/10 text-center text-xs text-gray-500">
