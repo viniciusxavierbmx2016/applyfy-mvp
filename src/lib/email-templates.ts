@@ -276,7 +276,7 @@ export function buildAccessEmail(
             <td align="center" style="padding-bottom:32px;">
               ${
                 logoUrl
-                  ? `<img src="${logoUrl}" alt="${vars.workspace}" style="max-height:60px;max-width:200px;" />`
+                  ? `<img src="${logoUrl}" alt="${vars.workspace}" width="200" height="60" style="display:block;margin:0 auto;max-width:200px;max-height:60px;object-fit:contain;border:0;outline:none;" />`
                   : `<span style="font-size:24px;font-weight:bold;color:#ffffff;letter-spacing:-0.5px;">${vars.workspace}</span>`
               }
             </td>
