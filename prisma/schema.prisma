@@ -104,6 +104,7 @@ model Workspace {
   emailLogoUrl       String?
   emailPrimaryColor  String?
   emailBgColor       String?
+  emailBoxColor      String?
   emailTitle         String?
   emailBody          String?  @db.Text
   emailFooter        String?
