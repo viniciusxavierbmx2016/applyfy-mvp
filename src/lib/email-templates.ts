@@ -179,6 +179,7 @@ export interface WorkspaceEmailConfig {
   emailLogoUrl?: string | null;
   emailPrimaryColor?: string | null;
   emailBgColor?: string | null;
+  emailBoxColor?: string | null;
   emailTitle?: string | null;
   emailBody?: string | null;
   emailFooter?: string | null;
@@ -225,6 +226,7 @@ export function buildAccessEmail(
     config.emailLogoUrl ||
     config.emailPrimaryColor ||
     config.emailBgColor ||
+    config.emailBoxColor ||
     config.emailTitle ||
     config.emailBody ||
     config.emailFooter
@@ -242,6 +244,7 @@ export function buildAccessEmail(
 
   // 3. Themed template using the workspace's custom fields.
   const bgColor = config.emailBgColor || "#0a0a1a";
+  const boxColor = config.emailBoxColor || "#1a1a2e";
   const primaryColor = config.emailPrimaryColor || "#3b82f6";
   const logoUrl = config.emailLogoUrl || null;
   const footerText = config.emailFooter
@@ -282,7 +285,7 @@ export function buildAccessEmail(
             </td>
           </tr>
           <tr>
-            <td style="background-color:#1a1a2e;border-radius:16px;padding:40px 32px;">
+            <td style="background-color:${boxColor};border-radius:16px;padding:40px 32px;">
               <h1 style="margin:0 0 24px;font-size:22px;font-weight:bold;color:#ffffff;line-height:1.3;text-align:center;">${title}</h1>
               <div style="font-size:15px;color:#d1d5db;line-height:1.6;">${bodyHtml}</div>
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:28px;">
@@ -329,6 +332,7 @@ export async function sendCustomAccessEmail(params: {
       emailLogoUrl: true,
       emailPrimaryColor: true,
       emailBgColor: true,
+      emailBoxColor: true,
       emailTitle: true,
       emailBody: true,
       emailFooter: true,
