@@ -27,6 +27,7 @@ const EMPTY_EMAIL_CONFIG: EmailConfig = {
   emailLogoUrl: "",
   emailPrimaryColor: "",
   emailBgColor: "",
+  emailBoxColor: "",
   emailTitle: "",
   emailBody: "",
   emailFooter: "",
@@ -143,6 +144,7 @@ export default function EditWorkspacePage() {
             emailLogoUrl: found.emailLogoUrl || "",
             emailPrimaryColor: found.emailPrimaryColor || "",
             emailBgColor: found.emailBgColor || "",
+            emailBoxColor: found.emailBoxColor || "",
             emailTitle: found.emailTitle || "",
             emailBody: found.emailBody || "",
             emailFooter: found.emailFooter || "",
@@ -369,6 +371,10 @@ export default function EditWorkspacePage() {
       payload.emailBgColor =
         emailConfig.emailBgColor && HEX_RE.test(emailConfig.emailBgColor)
           ? emailConfig.emailBgColor
+          : null;
+      payload.emailBoxColor =
+        emailConfig.emailBoxColor && HEX_RE.test(emailConfig.emailBoxColor)
+          ? emailConfig.emailBoxColor
           : null;
       payload.emailTitle = emailConfig.emailTitle.trim() || null;
       payload.emailBody = emailConfig.emailBody.trim() || null;

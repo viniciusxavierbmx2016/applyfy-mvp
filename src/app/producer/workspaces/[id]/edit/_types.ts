@@ -28,6 +28,7 @@ export interface Workspace {
   emailLogoUrl: string | null;
   emailPrimaryColor: string | null;
   emailBgColor: string | null;
+  emailBoxColor: string | null;
   emailTitle: string | null;
   emailBody: string | null;
   emailFooter: string | null;
@@ -46,6 +47,7 @@ export interface EmailConfig {
   emailLogoUrl: string;
   emailPrimaryColor: string;
   emailBgColor: string;
+  emailBoxColor: string;
   emailTitle: string;
   emailBody: string;
   emailFooter: string;

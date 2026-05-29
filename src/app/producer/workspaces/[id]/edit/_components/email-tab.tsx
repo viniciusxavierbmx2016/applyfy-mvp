@@ -37,6 +37,7 @@ function buildPreviewHtml(config: EmailConfig, workspace: string): string {
     config.emailLogoUrl ||
     config.emailPrimaryColor ||
     config.emailBgColor ||
+    config.emailBoxColor ||
     config.emailTitle ||
     config.emailBody ||
     config.emailFooter
@@ -49,6 +50,7 @@ function buildPreviewHtml(config: EmailConfig, workspace: string): string {
 
   // Path 3 — themed template with the producer's fields (default fallbacks).
   const bg = config.emailBgColor || "#0a0a1a";
+  const box = config.emailBoxColor || "#1a1a2e";
   const primary = config.emailPrimaryColor || "#3b82f6";
   const logo = config.emailLogoUrl || null;
   const footer = config.emailFooter
@@ -72,7 +74,7 @@ function buildPreviewHtml(config: EmailConfig, workspace: string): string {
       <tr><td align="center" style="padding-bottom:32px;">
         ${logo ? `<img src="${logo}" alt="${workspace}" style="max-height:60px;max-width:200px;" />` : `<span style="font-size:24px;font-weight:bold;color:#ffffff;">${workspace}</span>`}
       </td></tr>
-      <tr><td style="background-color:#1a1a2e;border-radius:16px;padding:40px 32px;">
+      <tr><td style="background-color:${box};border-radius:16px;padding:40px 32px;">
         <h1 style="margin:0 0 24px;font-size:22px;font-weight:bold;color:#ffffff;text-align:center;">${title}</h1>
         <div style="font-size:15px;color:#d1d5db;line-height:1.6;">${body}</div>
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:28px;"><tr><td align="center">
@@ -250,6 +252,13 @@ export function EmailTab({
                 value={config.emailBgColor}
                 fallback="#0a0a1a"
                 onChange={(v) => setField("emailBgColor", v)}
+              />
+              <ColorField
+                label="Cor do box"
+                description="Card interno"
+                value={config.emailBoxColor}
+                fallback="#1a1a2e"
+                onChange={(v) => setField("emailBoxColor", v)}
               />
             </div>
 
