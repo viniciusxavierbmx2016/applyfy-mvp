@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
+import { hasWorkspaceAccess } from "@/lib/workspace-access";
 import { liveMessageSchema, validateBody } from "@/lib/validations";
 
 const MAX_MESSAGE_LENGTH = 500;
@@ -16,10 +17,44 @@ export async function GET(request: Request, props: { params: Promise<{ id: strin
 
     const live = await prisma.live.findUnique({
       where: { id: params.id },
-      select: { id: true, status: true },
+      select: {
+        id: true,
+        status: true,
+        workspaceId: true,
+        visibility: true,
+        courseId: true,
+        roomOpen: true,
+      },
     });
     if (!live) {
       return NextResponse.json({ error: "Live não encontrada" }, { status: 404 });
+    }
+
+    // Tenant gate: mirror GET /api/lives/[id]. STUDENT must have workspace
+    // access; COURSE_ONLY lives also require an ACTIVE enrollment; and a
+    // closed room is off-limits even for past messages. Staff (ADMIN /
+    // PRODUCER / COLLABORATOR) follow the same role-based pattern as the
+    // detail endpoint — no additional gate here.
+    if (user.role === "STUDENT") {
+      const allowed = await hasWorkspaceAccess(user.id, live.workspaceId);
+      if (!allowed) {
+        return NextResponse.json({ error: "Sem acesso" }, { status: 403 });
+      }
+      if (live.visibility === "COURSE_ONLY" && live.courseId) {
+        const enrollment = await prisma.enrollment.findFirst({
+          where: { userId: user.id, courseId: live.courseId, status: "ACTIVE" },
+          select: { id: true },
+        });
+        if (!enrollment) {
+          return NextResponse.json(
+            { error: "Você não tem acesso a esta live" },
+            { status: 403 }
+          );
+        }
+      }
+      if (!live.roomOpen) {
+        return NextResponse.json({ error: "Sala fechada" }, { status: 403 });
+      }
     }
 
     const { searchParams } = new URL(request.url);
@@ -54,11 +89,43 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
 
     const live = await prisma.live.findUnique({
       where: { id: params.id },
-      select: { id: true, status: true, chatEnabled: true },
+      select: {
+        id: true,
+        status: true,
+        chatEnabled: true,
+        workspaceId: true,
+        visibility: true,
+        courseId: true,
+        roomOpen: true,
+      },
     });
     if (!live) {
       return NextResponse.json({ error: "Live não encontrada" }, { status: 404 });
     }
+
+    // Tenant gate (same as GET above and the detail endpoint).
+    if (user.role === "STUDENT") {
+      const allowed = await hasWorkspaceAccess(user.id, live.workspaceId);
+      if (!allowed) {
+        return NextResponse.json({ error: "Sem acesso" }, { status: 403 });
+      }
+      if (live.visibility === "COURSE_ONLY" && live.courseId) {
+        const enrollment = await prisma.enrollment.findFirst({
+          where: { userId: user.id, courseId: live.courseId, status: "ACTIVE" },
+          select: { id: true },
+        });
+        if (!enrollment) {
+          return NextResponse.json(
+            { error: "Você não tem acesso a esta live" },
+            { status: 403 }
+          );
+        }
+      }
+      if (!live.roomOpen) {
+        return NextResponse.json({ error: "Sala fechada" }, { status: 403 });
+      }
+    }
+
     if (live.status !== "LIVE") {
       return NextResponse.json({ error: "O chat está disponível apenas durante a live" }, { status: 400 });
     }
