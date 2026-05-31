@@ -264,7 +264,22 @@ export async function POST(request: Request) {
       }
       finalGroupId = group.id;
     } else {
+      // Defense-in-depth: when the client omits groupId we still must
+      // honor the default group's READ_ONLY flag. Mirror the gate from
+      // the `if (groupId)` branch above (same variables: isStaffOwner,
+      // collabAllowed) so staff can keep posting and the wording is
+      // identical to what the front already surfaces.
       const defaultGroup = await ensureDefaultGroup(course.id);
+      if (
+        defaultGroup.permission === "READ_ONLY" &&
+        !isStaffOwner &&
+        !collabAllowed
+      ) {
+        return NextResponse.json(
+          { error: "Este grupo é somente leitura" },
+          { status: 403 }
+        );
+      }
       finalGroupId = defaultGroup.id;
     }
 
