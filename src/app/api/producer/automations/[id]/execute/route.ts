@@ -44,14 +44,29 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
       select: { id: true },
     });
 
+    // ── Dedup batch (was N findFirst inside the loop). The original
+    // code only used the `alreadyExecuted` row as a boolean ("any prior
+    // log row, regardless of status"), so a Set<userId> is semantically
+    // identical. `distinct` keeps the payload small when a user has
+    // multiple prior logs.
+    const prevLogs = students.length
+      ? await prisma.automationLog.findMany({
+          where: {
+            automationId: automation.id,
+            userId: { in: students.map((s) => s.id) },
+          },
+          select: { userId: true },
+          distinct: ["userId"],
+        })
+      : [];
+    const executedSet = new Set(prevLogs.map((l) => l.userId));
+
     let executed = 0;
     let skipped = 0;
     let reExecuted = 0;
 
     for (const student of students) {
-      const alreadyExecuted = await prisma.automationLog.findFirst({
-        where: { automationId: automation.id, userId: student.id },
-      });
+      const alreadyExecuted = executedSet.has(student.id);
       if (alreadyExecuted && !force) {
         skipped++;
         continue;
@@ -74,10 +89,6 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
 
         if (result.status === "SUCCESS") {
           executed++;
-          await prisma.automation.update({
-            where: { id: automation.id },
-            data: { executionCount: { increment: 1 }, lastExecutedAt: new Date() },
-          });
         } else {
           skipped++;
         }
@@ -92,6 +103,20 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
         }).catch(() => {});
         skipped++;
       }
+    }
+
+    // ── Single counter update at the end (was N updates, one per
+    // SUCCESS). `lastExecutedAt` becomes the batch-end timestamp
+    // instead of the last-success instant — diff is bounded by the
+    // sequential loop's runtime (≤ maxDuration = 60s).
+    if (executed > 0) {
+      await prisma.automation.update({
+        where: { id: automation.id },
+        data: {
+          executionCount: { increment: executed },
+          lastExecutedAt: new Date(),
+        },
+      });
     }
 
     return NextResponse.json({ executed, skipped, reExecuted, total: students.length, forced: force });
