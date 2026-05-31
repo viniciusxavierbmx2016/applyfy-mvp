@@ -208,12 +208,14 @@ function applyVars(text: string, vars: EmailVariables): string {
 
 export function buildAccessEmail(
   config: WorkspaceEmailConfig,
-  vars: EmailVariables
+  vars: EmailVariables,
+  opts?: { isStaff?: boolean }
 ): { subject: string; html: string } {
   const subjectFor = (fallback: string) =>
     config.emailTitle ? applyVars(config.emailTitle, vars) : fallback;
 
-  // 1. Raw HTML supplied by the producer.
+  // 1. Raw HTML supplied by the producer (applies to staff and student
+  //    alike — the producer chose to override everything).
   if (config.emailUseCustomHtml && config.emailCustomHtml) {
     return {
       subject: subjectFor(`Seu acesso ao curso ${vars.curso}`),
@@ -221,7 +223,9 @@ export function buildAccessEmail(
     };
   }
 
-  // 2. No visual customization → reproduce today's template exactly.
+  // 2. No visual customization → fall back to today's default templates,
+  //    picking the right one per recipient so the empty-config behaviour
+  //    stays byte-identical for both staff and student.
   const hasVisualCustom = !!(
     config.emailLogoUrl ||
     config.emailPrimaryColor ||
@@ -232,6 +236,15 @@ export function buildAccessEmail(
     config.emailFooter
   );
   if (!hasVisualCustom) {
+    if (opts?.isStaff) {
+      const t = staffAccessGranted(
+        vars.nome,
+        vars.curso,
+        vars.workspace,
+        vars.link
+      );
+      return { subject: t.subject, html: t.htmlContent };
+    }
     const t = studentAccessGranted(
       vars.nome,
       vars.curso,
@@ -324,6 +337,9 @@ export async function sendCustomAccessEmail(params: {
   courseName: string;
   tempPassword?: string;
   loginUrl: string;
+  // Staff buyers get the staff default template when no customization is set
+  // (and skip the password block in the themed path — vars.senha stays empty).
+  isStaff?: boolean;
 }) {
   const ws = await prisma.workspace.findUnique({
     where: { id: params.workspaceId },
@@ -342,14 +358,18 @@ export async function sendCustomAccessEmail(params: {
   });
   if (!ws) return;
 
-  const { subject, html } = buildAccessEmail(ws, {
-    nome: params.studentName,
-    email: params.studentEmail,
-    curso: params.courseName,
-    senha: params.tempPassword || "",
-    link: params.loginUrl,
-    workspace: ws.name,
-  });
+  const { subject, html } = buildAccessEmail(
+    ws,
+    {
+      nome: params.studentName,
+      email: params.studentEmail,
+      curso: params.courseName,
+      senha: params.tempPassword || "",
+      link: params.loginUrl,
+      workspace: ws.name,
+    },
+    { isStaff: params.isStaff }
+  );
 
   const { sendEmail } = await import("@/lib/email");
   return sendEmail({
