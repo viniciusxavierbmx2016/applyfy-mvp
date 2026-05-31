@@ -6,8 +6,7 @@ import {
   ensureUserByEmail,
   getSetting,
 } from "@/lib/webhook-helpers";
-import { sendEmail } from "@/lib/email";
-import { staffAccessGranted, sendCustomAccessEmail } from "@/lib/email-templates";
+import { sendCustomAccessEmail } from "@/lib/email-templates";
 import { processAutomations } from "@/lib/automation-engine";
 import { safeCompare } from "@/lib/safe-compare";
 import { logger } from "@/lib/logger";
@@ -387,19 +386,19 @@ export async function POST(request: Request, props: { params: Promise<{ slug: st
         } else {
           const appUrl = process.env.NEXT_PUBLIC_APP_URL || "";
           const loginUrl = `${appUrl}/w/${workspace.slug}/login`;
-          if (isStaff) {
-            const template = staffAccessGranted(name || email, course.title, workspace.name, loginUrl);
-            await sendEmail({ to: { email, name: name || undefined }, ...template, senderName: workspace.name }).catch((err) => console.error("[EMAIL_ERROR] access email to:", email, err?.message || err));
-          } else {
-            await sendCustomAccessEmail({
-              workspaceId: workspace.id,
-              studentName: name || email,
-              studentEmail: email,
-              courseName: course.title,
-              tempPassword,
-              loginUrl,
-            }).catch((err) => console.error("[EMAIL_ERROR] access email to:", email, err?.message || err));
-          }
+          // Single path for staff + student. sendCustomAccessEmail forwards
+          // isStaff to buildAccessEmail, which picks the right default
+          // template when the workspace hasn't customized (so behaviour
+          // stays identical for the empty-config case).
+          await sendCustomAccessEmail({
+            workspaceId: workspace.id,
+            studentName: name || email,
+            studentEmail: email,
+            courseName: course.title,
+            tempPassword,
+            loginUrl,
+            isStaff,
+          }).catch((err) => console.error("[EMAIL_ERROR] access email to:", email, err?.message || err));
         }
 
         await logWebhook({
