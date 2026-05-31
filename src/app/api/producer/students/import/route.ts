@@ -165,6 +165,37 @@ export async function POST(request: Request) {
       ["Nome", "Email", "Status", "Senha", "Link de Login", "Cursos Matriculados", "Erro"],
     ];
 
+    // ── BATCH-PROCESS THE CSV (was N×M queries via nested loops) ──
+    // Phase 1 provisions users sequentially because Supabase Auth has no
+    // batch API and one bad row must not abort the import (per-row
+    // try/catch preserved). Phases 2–7 collapse the enrollment N+1 into
+    // 1 findMany + 1 createMany + 1 updateMany while keeping every
+    // observable side effect: counts, notifications, automations, emails
+    // (1/aluno), and CSV output (original line order).
+    type ValidRow = {
+      kind: "valid";
+      lineNum: number;
+      name: string;
+      email: string;
+      userId: string;
+      isNewUser: boolean;
+      isStaff: boolean;
+      tempPassword: string;
+      enrolledCourseNames: string[];
+    };
+    type FailedRow = {
+      kind: "invalid" | "error";
+      lineNum: number;
+      name: string;
+      email: string; // for "invalid" this is the raw value (matches today)
+      reason: string;
+    };
+    type ProcessedRow = ValidRow | FailedRow;
+    const processedRows: ProcessedRow[] = [];
+
+    // Phase 1 — per-row user provisioning, sequential. Same try/catch
+    // granularity as today so a single Supabase Auth failure is attributed
+    // to the right line and the rest of the import proceeds.
     for (let i = 0; i < dataRows.length; i++) {
       const row = dataRows[i];
       const rawEmail = row[emailIdx] || "";
@@ -181,7 +212,13 @@ export async function POST(request: Request) {
           email: rawEmail,
           reason: "Email inválido",
         });
-        csvResultRows.push([name, rawEmail, "Erro", "", "", "", "Email inválido"]);
+        processedRows.push({
+          kind: "invalid",
+          lineNum,
+          name,
+          email: rawEmail,
+          reason: "Email inválido",
+        });
         continue;
       }
 
@@ -192,22 +229,15 @@ export async function POST(request: Request) {
         });
         const isNewUser = !preExisting;
 
-        // Provision the user + per-workspace credential. ensureUserByEmail
-        // returns:
-        //   - tempPassword: the freshly-generated mc-XXXXXX (or undefined
-        //     when a WorkspaceCredential already exists for this pair)
-        //   - isStaff: true for staff or accepted-Collaborator buyers, who
-        //     authenticate against global Supabase Auth and should be
-        //     pointed at their existing Members Club credentials.
+        // ensureUserByEmail returns tempPassword (mc-XXXXXX) for newly
+        // issued credentials and isStaff=true for staff / accepted-Collab
+        // buyers (they auth via global Supabase, not WorkspaceCredential).
         const ensured = await ensureUserByEmail(email, name, workspaceId);
         const user = ensured.user;
         const scopedTemp = ensured.tempPassword;
         const isStaff = ensured.isStaff;
-
-        // Master password (when configured) wins for the displayed
-        // credential because /w/<slug>/login validates master first via
-        // magic link. Otherwise show the scoped password if we just
-        // issued one.
+        // Master password (when set) wins because /w/<slug>/login checks
+        // it first via magic link. Otherwise show the scoped password.
         const tempPassword = workspace.masterPassword || scopedTemp || "";
 
         if (isNewUser) {
@@ -222,78 +252,173 @@ export async function POST(request: Request) {
           summary.alreadyExisted++;
         }
 
-        const enrolledCourseNames: string[] = [];
-        for (const courseId of courseIds) {
-          const existing = await prisma.enrollment.findUnique({
-            where: {
-              userId_courseId: { userId: user.id, courseId },
-            },
-          });
-
-          if (!existing) {
-            await prisma.enrollment.create({
-              data: { userId: user.id, courseId, status: "ACTIVE" },
-            });
-            summary.enrollmentsCreated++;
-            enrolledCourseNames.push(courseMap.get(courseId)!.title);
-
-            const course = courseMap.get(courseId)!;
-            await createNotification({
-              userId: user.id,
-              workspaceId,
-              type: "ENROLLMENT",
-              message: `Você foi matriculado no curso ${course.title}`,
-              link: `/course/${course.slug}`,
-            }).catch(() => {});
-            processAutomations({
-              type: "STUDENT_ENROLLED",
-              workspaceId,
-              courseId,
-              userId: user.id,
-            }).catch(() => {});
-          } else if (existing.status === "CANCELLED") {
-            await prisma.enrollment.update({
-              where: { id: existing.id },
-              data: { status: "ACTIVE" },
-            });
-            summary.reactivated++;
-            summary.enrollmentsCreated++;
-            enrolledCourseNames.push(courseMap.get(courseId)!.title);
-          } else {
-            summary.enrollmentsSkipped++;
-          }
-        }
-
-        if (enrolledCourseNames.length > 0) {
-          const courseName = enrolledCourseNames.join(", ");
-          // Single path for staff + student. buildAccessEmail picks the
-          // correct default template per recipient when nothing is
-          // customized, so empty-config behaviour stays identical.
-          sendCustomAccessEmail({
-            workspaceId,
-            studentName: name,
-            studentEmail: email,
-            courseName,
-            tempPassword: isNewUser ? tempPassword || undefined : undefined,
-            loginUrl,
-            isStaff,
-          }).catch((err) => console.error("[EMAIL_ERROR] access email to:", email, err?.message || err));
-        }
-
-        csvResultRows.push([
+        processedRows.push({
+          kind: "valid",
+          lineNum,
           name,
           email,
-          isNewUser ? "Criado" : "Já existia",
-          isNewUser && !isStaff ? tempPassword : "",
-          isNewUser ? loginUrl : "",
-          enrolledCourseNames.join(", ") || "Já matriculado",
-          "",
-        ]);
+          userId: user.id,
+          isNewUser,
+          isStaff,
+          tempPassword,
+          enrolledCourseNames: [],
+        });
       } catch (err) {
         const reason =
           err instanceof Error ? err.message : "Erro desconhecido";
         summary.errors.push({ line: lineNum, email, reason });
-        csvResultRows.push([name, email, "Erro", "", "", "", reason]);
+        processedRows.push({
+          kind: "error",
+          lineNum,
+          name,
+          email,
+          reason,
+        });
+      }
+    }
+
+    // Phase 2 — single batch query for every existing enrollment across
+    // all (userId, courseId) pairs (was N×M findUnique calls).
+    const validRows = processedRows.filter(
+      (r): r is ValidRow => r.kind === "valid"
+    );
+    const userIds = validRows.map((r) => r.userId);
+    const existingEnrollments =
+      userIds.length > 0
+        ? await prisma.enrollment.findMany({
+            where: {
+              userId: { in: userIds },
+              courseId: { in: courseIds },
+            },
+            select: {
+              id: true,
+              userId: true,
+              courseId: true,
+              status: true,
+            },
+          })
+        : [];
+    const enrollMap = new Map<string, { id: string; status: string }>();
+    for (const e of existingEnrollments) {
+      enrollMap.set(`${e.userId}:${e.courseId}`, {
+        id: e.id,
+        status: e.status,
+      });
+    }
+
+    // Phase 3 — in-memory decision per (row, course). Mirrors today's
+    // branches exactly: missing → create + emit event; CANCELLED →
+    // reactivate + emit event; ACTIVE → skip. Counters increment in the
+    // same places.
+    const toCreate: Array<{
+      userId: string;
+      courseId: string;
+      status: "ACTIVE";
+    }> = [];
+    const toReactivate: string[] = [];
+    const newEvents: Array<{ userId: string; courseId: string }> = [];
+    for (const row of validRows) {
+      for (const courseId of courseIds) {
+        const existing = enrollMap.get(`${row.userId}:${courseId}`);
+        if (!existing) {
+          toCreate.push({ userId: row.userId, courseId, status: "ACTIVE" });
+          newEvents.push({ userId: row.userId, courseId });
+          row.enrolledCourseNames.push(courseMap.get(courseId)!.title);
+          summary.enrollmentsCreated++;
+        } else if (existing.status === "CANCELLED") {
+          toReactivate.push(existing.id);
+          newEvents.push({ userId: row.userId, courseId });
+          row.enrolledCourseNames.push(courseMap.get(courseId)!.title);
+          summary.reactivated++;
+          summary.enrollmentsCreated++;
+        } else {
+          summary.enrollmentsSkipped++;
+        }
+      }
+    }
+
+    // Phase 4 — batch writes. skipDuplicates is defensive against a
+    // concurrent retry inserting the same pair.
+    if (toCreate.length > 0) {
+      await prisma.enrollment.createMany({
+        data: toCreate,
+        skipDuplicates: true,
+      });
+    }
+    if (toReactivate.length > 0) {
+      await prisma.enrollment.updateMany({
+        where: { id: { in: toReactivate } },
+        data: { status: "ACTIVE" },
+      });
+    }
+
+    // Phase 5 — fire-and-forget side effects per new enrollment. Same
+    // count, same args, same .catch(() => {}) pattern as today; just
+    // moved out of the inner loop into a flat iteration.
+    for (const ev of newEvents) {
+      const course = courseMap.get(ev.courseId)!;
+      createNotification({
+        userId: ev.userId,
+        workspaceId,
+        type: "ENROLLMENT",
+        message: `Você foi matriculado no curso ${course.title}`,
+        link: `/course/${course.slug}`,
+      }).catch(() => {});
+      processAutomations({
+        type: "STUDENT_ENROLLED",
+        workspaceId,
+        courseId: ev.courseId,
+        userId: ev.userId,
+      }).catch(() => {});
+    }
+
+    // Phase 6 — one access email per valid row that got at least one new
+    // enrollment. buildAccessEmail (via sendCustomAccessEmail) picks the
+    // right default per recipient (staff vs student) when nothing is
+    // customized. Fire-and-forget exactly as before.
+    for (const row of validRows) {
+      if (row.enrolledCourseNames.length === 0) continue;
+      const courseName = row.enrolledCourseNames.join(", ");
+      sendCustomAccessEmail({
+        workspaceId,
+        studentName: row.name,
+        studentEmail: row.email,
+        courseName,
+        tempPassword: row.isNewUser ? row.tempPassword || undefined : undefined,
+        loginUrl,
+        isStaff: row.isStaff,
+      }).catch((err) =>
+        console.error(
+          "[EMAIL_ERROR] access email to:",
+          row.email,
+          err?.message || err
+        )
+      );
+    }
+
+    // Phase 7 — CSV result rows in the original CSV line order
+    // (processedRows was populated in iteration order during Phase 1).
+    for (const row of processedRows) {
+      if (row.kind !== "valid") {
+        csvResultRows.push([
+          row.name,
+          row.email,
+          "Erro",
+          "",
+          "",
+          "",
+          row.reason,
+        ]);
+      } else {
+        csvResultRows.push([
+          row.name,
+          row.email,
+          row.isNewUser ? "Criado" : "Já existia",
+          row.isNewUser && !row.isStaff ? row.tempPassword : "",
+          row.isNewUser ? loginUrl : "",
+          row.enrolledCourseNames.join(", ") || "Já matriculado",
+          "",
+        ]);
       }
     }
 
