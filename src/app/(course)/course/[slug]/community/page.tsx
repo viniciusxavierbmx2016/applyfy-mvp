@@ -32,6 +32,7 @@ interface CommunityGroup {
   id: string;
   name: string;
   slug: string;
+  description: string | null;
   isDefault: boolean;
   permission: string;
   _count: { posts: number };
@@ -359,6 +360,15 @@ export default function CommunityPage() {
             </button>
           ))}
         </div>
+      )}
+
+      {/* Active group description (rendered outside the tabs block so
+          it also shows when there's only the default group and the tabs
+          are hidden by `groups.length > 1`). */}
+      {activeGroupData?.description && (
+        <p className="text-sm text-gray-600 dark:text-gray-400 -mt-2 mb-4">
+          {activeGroupData.description}
+        </p>
       )}
 
       {/* Create post or read-only notice */}
