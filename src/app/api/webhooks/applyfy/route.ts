@@ -8,8 +8,7 @@ import {
 } from "@/lib/webhook-helpers";
 import { processAutomations } from "@/lib/automation-engine";
 import { safeCompare } from "@/lib/safe-compare";
-import { sendEmail } from "@/lib/email";
-import { staffAccessGranted, sendCustomAccessEmail } from "@/lib/email-templates";
+import { sendCustomAccessEmail } from "@/lib/email-templates";
 import { logger } from "@/lib/logger";
 import { applyfyWebhookSchema } from "@/lib/validations";
 import type { z } from "zod";
@@ -408,38 +407,25 @@ export async function POST(request: Request) {
               const ws = courseWithWorkspace.workspace;
               const appUrl = process.env.NEXT_PUBLIC_APP_URL || "";
               const loginUrl = `${appUrl}/w/${ws.slug}/login`;
-              if (isStaff) {
-                const template = staffAccessGranted(
-                  name || email.split("@")[0],
-                  course.title,
-                  ws.name,
-                  loginUrl
-                );
-                await sendEmail({
-                  to: { email, name: name || undefined },
-                  ...template,
-                  senderName: ws.name,
-                }).catch((err) =>
-                  logger.error("applyfy webhook", "email send failed", {
-                    email,
-                    error: String(err),
-                  })
-                );
-              } else {
-                await sendCustomAccessEmail({
-                  workspaceId: ws.id,
-                  studentName: name || email.split("@")[0],
-                  studentEmail: email,
-                  courseName: course.title,
-                  tempPassword,
-                  loginUrl,
-                }).catch((err) =>
-                  logger.error("applyfy webhook", "email send failed", {
-                    email,
-                    error: String(err),
-                  })
-                );
-              }
+              // Single path for staff + student. buildAccessEmail (via
+              // sendCustomAccessEmail) picks the right default per
+              // recipient when the workspace has no customization, so
+              // behaviour stays identical when the producer hasn't
+              // customized — and customization now reaches staff too.
+              await sendCustomAccessEmail({
+                workspaceId: ws.id,
+                studentName: name || email.split("@")[0],
+                studentEmail: email,
+                courseName: course.title,
+                tempPassword,
+                loginUrl,
+                isStaff,
+              }).catch((err) =>
+                logger.error("applyfy webhook", "email send failed", {
+                  email,
+                  error: String(err),
+                })
+              );
             }
           }
         } catch (emailErr) {
