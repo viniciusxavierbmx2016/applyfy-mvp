@@ -244,16 +244,23 @@ export default function CourseHomePage() {
   const router = useRouter();
   const user = useUserStore((s) => s.user);
   const workspace = useUserStore((s) => s.workspace);
+  // Local role-only check. Kept (still used by bypassRelease / groups.map
+  // below as a permissive default) — but DON'T use it to decide UX that
+  // depends on ownership (banner, backHref): a PRODUCER buying another
+  // producer's course would falsely qualify. serverStaffViewer (populated
+  // from /init, ownership-aware) is the right source for that.
   const isStaffViewer =
     user?.role === "ADMIN" || user?.role === "PRODUCER";
-  const backHref = isStaffViewer
+  const [course, setCourse] = useState<CourseDetail | null>(null);
+  const [hasAccess, setHasAccess] = useState(false);
+  const [serverStaffViewer, setServerStaffViewer] = useState(false);
+  // Declared AFTER serverStaffViewer to avoid TDZ. Uses the ownership-aware
+  // flag so a producer-as-buyer goes back to /w/<slug>, not /.
+  const backHref = serverStaffViewer
     ? "/"
     : workspace?.slug
       ? `/w/${workspace.slug}`
       : "/";
-  const [course, setCourse] = useState<CourseDetail | null>(null);
-  const [hasAccess, setHasAccess] = useState(false);
-  const [serverStaffViewer, setServerStaffViewer] = useState(false);
   const [enrollmentCreatedAt, setEnrollmentCreatedAt] = useState<Date | null>(null);
   const [myReview, setMyReview] = useState<MyReview | null>(null);
   const [overrides, setOverrides] = useState<{
@@ -404,7 +411,7 @@ export default function CourseHomePage() {
 
   return (
     <div className="px-4 sm:px-6 lg:px-10 py-4 lg:py-6 max-w-[1400px] mx-auto w-full animate-fade-in-up">
-      {isStaffViewer && (
+      {serverStaffViewer && (
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3 px-4 py-2.5 rounded-lg border border-amber-200 dark:border-amber-900/40 bg-amber-50 dark:bg-amber-950/30 text-sm">
           <span className="text-amber-800 dark:text-amber-200 flex items-center gap-2">
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
