@@ -103,7 +103,10 @@ export async function PUT(request: Request, props: { params: Promise<{ id: strin
       data.description = description?.trim() || null;
     }
 
-    if (permission !== undefined && !group.isDefault) {
+    // Default group (Geral) can also be READ_ONLY — before this fix the
+    // `&& !group.isDefault` guard silently dropped the permission field
+    // for the default group, returning 200 OK while persisting nothing.
+    if (permission !== undefined) {
       const validPermissions = ["READ_WRITE", "READ_ONLY"];
       if (validPermissions.includes(permission)) {
         data.permission = permission;
