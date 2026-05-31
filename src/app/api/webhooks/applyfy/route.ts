@@ -153,27 +153,39 @@ export async function POST(request: Request) {
           [...legacyCourses, ...mappingCourses].map((c) => c.workspaceId)
         )
       );
-      for (const wsId of workspaceIds) {
-        // Multiple-tokens: prefer the new table, fall back to Settings during
-        // the transition window.
-        const wsTokens = await prisma.workspaceApplyfyToken.findMany({
-          where: { workspaceId: wsId },
-          select: { id: true, value: true },
-        });
-        if (wsTokens.length > 0) {
-          for (const t of wsTokens) {
-            if (safeCompare(providedToken, t.value)) {
+      // 1) Single batch query — fetch every token for the candidate workspaces
+      //    in one round trip instead of N (N+1-4 hot-path fix).
+      const wsTokens = await prisma.workspaceApplyfyToken.findMany({
+        where: { workspaceId: { in: workspaceIds } },
+        select: { id: true, value: true, workspaceId: true },
+      });
+
+      // 2) Match against the new-table tokens (preferred). safeCompare is the
+      //    same call as before — only the lookup got batched, not the compare.
+      for (const t of wsTokens) {
+        if (safeCompare(providedToken, t.value)) {
+          matchedToken = true;
+          matchedTokenId = t.id;
+          break;
+        }
+      }
+
+      // 3) Legacy Settings fallback — ONLY for workspaces with zero rows in
+      //    the new table (transition window). Run in parallel.
+      if (!matchedToken) {
+        const wsWithToken = new Set(wsTokens.map((t) => t.workspaceId));
+        const legacyCandidates = workspaceIds.filter(
+          (id) => !wsWithToken.has(id)
+        );
+        if (legacyCandidates.length > 0) {
+          const legacyTokens = await Promise.all(
+            legacyCandidates.map((id) => getSetting(`applyfy_token:${id}`))
+          );
+          for (const tk of legacyTokens) {
+            if (tk && safeCompare(providedToken, tk)) {
               matchedToken = true;
-              matchedTokenId = t.id;
               break;
             }
-          }
-          if (matchedToken) break;
-        } else {
-          const wsToken = await getSetting(`applyfy_token:${wsId}`);
-          if (wsToken && safeCompare(providedToken, wsToken)) {
-            matchedToken = true;
-            break;
           }
         }
       }
