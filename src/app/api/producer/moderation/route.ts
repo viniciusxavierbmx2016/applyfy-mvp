@@ -2,10 +2,10 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireStaff } from "@/lib/auth";
 import { resolveStaffWorkspace } from "@/lib/workspace";
-import { createNotification } from "@/lib/notifications";
 import { GAMIFICATION, getLevelForPoints } from "@/lib/utils";
 import { moderateSchema, validateBody } from "@/lib/validations";
 import { logAudit, getRequestMeta } from "@/lib/audit";
+import type { NotificationType } from "@prisma/client";
 
 export async function POST(request: Request) {
   try {
@@ -20,144 +20,296 @@ export async function POST(request: Request) {
     const newStatus = action === "approve" ? "APPROVED" : "REJECTED";
     let updated = 0;
 
-    for (const item of items) {
-      const { type, id } = item as { type: string; id: string };
+    // ── BATCH-PROCESS THE MODERATION (was N findUnique + N update +
+    // N create per item). Preserves every observable side effect:
+    //   • `updated` only counts items that pass PENDING + tenant gate
+    //   • 6 notification variants (text/link) unchanged
+    //   • duplicate ids in `items[]` collapse to 1 effect (today the
+    //     2nd findUnique sees status !== PENDING and skips)
+    //   • gamification only for community_post APPROVED + course
+    //     `gamificationEnabled`
+    //   • per-user points aggregation (RACE-SAFE — see Phase 4d)
 
-      if (type === "lesson_comment") {
-        const comment = await prisma.lessonComment.findUnique({
-          where: { id },
-          include: {
-            lesson: {
-              include: {
-                module: {
-                  include: {
-                    course: {
-                      select: { workspaceId: true, slug: true, gamificationEnabled: true },
+    // ── FASE 1 — group ids by type
+    const byType: Record<
+      "lesson_comment" | "community_comment" | "community_post",
+      string[]
+    > = {
+      lesson_comment: [],
+      community_comment: [],
+      community_post: [],
+    };
+    for (const it of items) {
+      const t = it.type as keyof typeof byType;
+      if (byType[t]) byType[t].push(it.id);
+    }
+
+    // ── FASE 2 — 3 findMany in parallel (same includes as today, MINUS
+    // the dead read of `gamificationEnabled` on lesson_comment).
+    const [lessonComments, comComments, comPosts] = await Promise.all([
+      byType.lesson_comment.length
+        ? prisma.lessonComment.findMany({
+            where: { id: { in: byType.lesson_comment } },
+            include: {
+              lesson: {
+                include: {
+                  module: {
+                    include: {
+                      course: {
+                        select: { workspaceId: true, slug: true },
+                      },
                     },
                   },
                 },
               },
             },
-          },
-        });
-        if (!comment || comment.status !== "PENDING") continue;
-        if (workspace && comment.lesson.module.course.workspaceId !== workspace.id) continue;
-
-        await prisma.lessonComment.update({
-          where: { id },
-          data: { status: newStatus },
-        });
-        updated++;
-
-        if (newStatus === "APPROVED") {
-          await createNotification({
-            userId: comment.userId,
-            workspaceId: comment.lesson.module.course.workspaceId,
-            type: "COMMENT",
-            message: "Seu comentário foi aprovado",
-            link: `/course/${comment.lesson.module.course.slug}/lesson/${comment.lessonId}`,
-          });
-        } else {
-          await createNotification({
-            userId: comment.userId,
-            workspaceId: comment.lesson.module.course.workspaceId,
-            type: "COMMENT",
-            message: "Seu comentário não foi aprovado",
-          });
-        }
-      } else if (type === "community_comment") {
-        const comment = await prisma.comment.findUnique({
-          where: { id },
-          include: {
-            post: {
-              include: {
-                course: {
-                  select: { workspaceId: true, slug: true },
+          })
+        : Promise.resolve([]),
+      byType.community_comment.length
+        ? prisma.comment.findMany({
+            where: { id: { in: byType.community_comment } },
+            include: {
+              post: {
+                include: {
+                  course: {
+                    select: { workspaceId: true, slug: true },
+                  },
                 },
               },
             },
-          },
-        });
-        if (!comment || comment.status !== "PENDING") continue;
-        if (workspace && comment.post.course.workspaceId !== workspace.id) continue;
+          })
+        : Promise.resolve([]),
+      byType.community_post.length
+        ? prisma.post.findMany({
+            where: { id: { in: byType.community_post } },
+            include: {
+              course: {
+                select: {
+                  workspaceId: true,
+                  slug: true,
+                  gamificationEnabled: true,
+                },
+              },
+              user: { select: { id: true, points: true, level: true } },
+            },
+          })
+        : Promise.resolve([]),
+    ]);
 
-        await prisma.comment.update({
-          where: { id },
-          data: { status: newStatus },
-        });
+    const lessonMap = new Map(lessonComments.map((c) => [c.id, c]));
+    const comMap = new Map(comComments.map((c) => [c.id, c]));
+    const postMap = new Map(comPosts.map((p) => [p.id, p]));
+
+    // ── FASE 3 — filter (PENDING + tenant gate) + accumulate in memory.
+    // We iterate over the ORIGINAL `items[]` so semantics match today
+    // (including duplicate-id collapse via per-type `seen*` sets).
+    const toUpdateLesson: string[] = [];
+    const toUpdateComment: string[] = [];
+    const toUpdatePost: string[] = [];
+    const notifications: Array<{
+      userId: string;
+      workspaceId: string;
+      type: NotificationType;
+      message: string;
+      link: string | null;
+    }> = [];
+    const ledgerEntries: Array<{
+      userId: string;
+      workspaceId: string;
+      delta: number;
+      source: string;
+      sourceId: string;
+    }> = [];
+    // pointsByUser[userId] = number of APPROVED posts attributed to
+    // that user across this batch. Aggregating *here* (instead of per
+    // post in Phase 4) is the fix for the race: with a single Phase-2
+    // findMany, all posts of the same user see the same `user.points`
+    // snapshot, so summing the deltas once preserves the sequential
+    // result of today's nested loop.
+    const pointsByUser = new Map<string, number>();
+    const userBaseline = new Map<
+      string,
+      { points: number; level: number }
+    >();
+
+    const seenLesson = new Set<string>();
+    const seenComment = new Set<string>();
+    const seenPost = new Set<string>();
+
+    for (const item of items) {
+      const { type, id } = item as { type: string; id: string };
+
+      if (type === "lesson_comment") {
+        if (seenLesson.has(id)) continue;
+        const c = lessonMap.get(id);
+        if (!c || c.status !== "PENDING") continue;
+        if (
+          workspace &&
+          c.lesson.module.course.workspaceId !== workspace.id
+        )
+          continue;
+        seenLesson.add(id);
+        toUpdateLesson.push(id);
         updated++;
 
         if (newStatus === "APPROVED") {
-          await createNotification({
-            userId: comment.userId,
-            workspaceId: comment.post.course.workspaceId,
+          notifications.push({
+            userId: c.userId,
+            workspaceId: c.lesson.module.course.workspaceId,
             type: "COMMENT",
-            message: "Seu comentário na comunidade foi aprovado",
-            link: `/course/${comment.post.course.slug}/community`,
+            message: "Seu comentário foi aprovado",
+            link: `/course/${c.lesson.module.course.slug}/lesson/${c.lessonId}`,
           });
         } else {
-          await createNotification({
-            userId: comment.userId,
-            workspaceId: comment.post.course.workspaceId,
+          notifications.push({
+            userId: c.userId,
+            workspaceId: c.lesson.module.course.workspaceId,
+            type: "COMMENT",
+            message: "Seu comentário não foi aprovado",
+            link: null,
+          });
+        }
+      } else if (type === "community_comment") {
+        if (seenComment.has(id)) continue;
+        const c = comMap.get(id);
+        if (!c || c.status !== "PENDING") continue;
+        if (workspace && c.post.course.workspaceId !== workspace.id) continue;
+        seenComment.add(id);
+        toUpdateComment.push(id);
+        updated++;
+
+        if (newStatus === "APPROVED") {
+          notifications.push({
+            userId: c.userId,
+            workspaceId: c.post.course.workspaceId,
+            type: "COMMENT",
+            message: "Seu comentário na comunidade foi aprovado",
+            link: `/course/${c.post.course.slug}/community`,
+          });
+        } else {
+          notifications.push({
+            userId: c.userId,
+            workspaceId: c.post.course.workspaceId,
             type: "COMMENT",
             message: "Seu comentário na comunidade não foi aprovado",
+            link: null,
           });
         }
       } else if (type === "community_post") {
-        const post = await prisma.post.findUnique({
-          where: { id },
-          include: {
-            course: {
-              select: { workspaceId: true, slug: true, gamificationEnabled: true },
-            },
-            user: { select: { id: true, points: true, level: true } },
-          },
-        });
-        if (!post || post.status !== "PENDING") continue;
-        if (workspace && post.course.workspaceId !== workspace.id) continue;
-
-        await prisma.post.update({
-          where: { id },
-          data: { status: newStatus },
-        });
+        if (seenPost.has(id)) continue;
+        const p = postMap.get(id);
+        if (!p || p.status !== "PENDING") continue;
+        if (workspace && p.course.workspaceId !== workspace.id) continue;
+        seenPost.add(id);
+        toUpdatePost.push(id);
         updated++;
 
         if (newStatus === "APPROVED") {
-          if (post.course.gamificationEnabled) {
-            const newPoints = post.user.points + GAMIFICATION.POINTS.CREATE_POST;
-            const newLevel = getLevelForPoints(newPoints).level;
-            await prisma.user.update({
-              where: { id: post.user.id },
-              data: { points: newPoints, level: newLevel },
-            });
-            await prisma.pointsLedger.create({
-              data: {
-                userId: post.user.id,
-                workspaceId: post.course.workspaceId,
-                delta: GAMIFICATION.POINTS.CREATE_POST,
-                source: "CREATE_POST",
-                sourceId: post.id,
-              },
+          if (p.course.gamificationEnabled) {
+            pointsByUser.set(
+              p.user.id,
+              (pointsByUser.get(p.user.id) ?? 0) + 1
+            );
+            // Baseline is the loaded `points` snapshot — captured once
+            // per user. Multiple posts from the same user MUST share
+            // the same baseline (any other read would already include
+            // a partially-applied increment).
+            if (!userBaseline.has(p.user.id)) {
+              userBaseline.set(p.user.id, {
+                points: p.user.points,
+                level: p.user.level,
+              });
+            }
+            ledgerEntries.push({
+              userId: p.user.id,
+              workspaceId: p.course.workspaceId,
+              delta: GAMIFICATION.POINTS.CREATE_POST,
+              source: "CREATE_POST",
+              sourceId: p.id,
             });
           }
-          await createNotification({
-            userId: post.userId,
-            workspaceId: post.course.workspaceId,
+          notifications.push({
+            userId: p.userId,
+            workspaceId: p.course.workspaceId,
             type: "COMMENT",
             message: "Seu post na comunidade foi aprovado",
-            link: `/course/${post.course.slug}/community`,
+            link: `/course/${p.course.slug}/community`,
           });
         } else {
-          await createNotification({
-            userId: post.userId,
-            workspaceId: post.course.workspaceId,
+          notifications.push({
+            userId: p.userId,
+            workspaceId: p.course.workspaceId,
             type: "COMMENT",
             message: "Seu post na comunidade não foi aprovado",
+            link: null,
           });
         }
       }
     }
 
+    // ── FASE 4 — batched writes. Independent ops → Promise.all.
+    // `where: { status: "PENDING" }` is defensive against a concurrent
+    // moderator approving the same id between Phase 2 and Phase 4.
+    const writes: Promise<unknown>[] = [];
+
+    if (toUpdateLesson.length) {
+      writes.push(
+        prisma.lessonComment.updateMany({
+          where: { id: { in: toUpdateLesson }, status: "PENDING" },
+          data: { status: newStatus },
+        })
+      );
+    }
+    if (toUpdateComment.length) {
+      writes.push(
+        prisma.comment.updateMany({
+          where: { id: { in: toUpdateComment }, status: "PENDING" },
+          data: { status: newStatus },
+        })
+      );
+    }
+    if (toUpdatePost.length) {
+      writes.push(
+        prisma.post.updateMany({
+          where: { id: { in: toUpdatePost }, status: "PENDING" },
+          data: { status: newStatus },
+        })
+      );
+    }
+    if (notifications.length) {
+      writes.push(
+        prisma.notification.createMany({ data: notifications })
+      );
+    }
+    if (ledgerEntries.length) {
+      // sourceId (=post.id) is unique across approved posts in this
+      // batch, so no skipDuplicates needed.
+      writes.push(
+        prisma.pointsLedger.createMany({ data: ledgerEntries })
+      );
+    }
+
+    // Fase 4d — RACE-SAFE per-user points. ONE update per distinct
+    // user, with the final total = baseline + (count × CREATE_POST).
+    // Bit-identical to today's sequential loop where each post read
+    // the previous post's just-written value.
+    for (const [userId, count] of pointsByUser) {
+      const base = userBaseline.get(userId)!;
+      const newPoints =
+        base.points + count * GAMIFICATION.POINTS.CREATE_POST;
+      const newLevel = getLevelForPoints(newPoints).level;
+      writes.push(
+        prisma.user.update({
+          where: { id: userId },
+          data: { points: newPoints, level: newLevel },
+        })
+      );
+    }
+
+    await Promise.all(writes);
+
+    // ── FASE 5 — audit log (identical to today: target=first id,
+    // details={ count, action, updated }).
     await logAudit({
       userId: staff.id,
       action: `moderate_${action}`,
