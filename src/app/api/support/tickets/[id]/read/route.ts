@@ -11,34 +11,42 @@ export async function POST(
   _request: Request,
   props: { params: Promise<{ id: string }> }
 ) {
-  const params = await props.params;
-  const user = await getCurrentUser();
-  if (!user) {
-    return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
-  }
+  try {
+    const params = await props.params;
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
+    }
 
-  const ticket = await prisma.supportTicket.findUnique({
-    where: { id: params.id },
-    select: { id: true, producerId: true },
-  });
-  if (!ticket) {
+    const ticket = await prisma.supportTicket.findUnique({
+      where: { id: params.id },
+      select: { id: true, producerId: true },
+    });
+    if (!ticket) {
+      return NextResponse.json(
+        { error: "Ticket não encontrado" },
+        { status: 404 }
+      );
+    }
+
+    if (!(await canAccessTicket(user, ticket))) {
+      return NextResponse.json({ error: "Sem permissão" }, { status: 403 });
+    }
+
+    const isProducer = user.id === ticket.producerId;
+    await prisma.supportTicket.update({
+      where: { id: ticket.id },
+      data: isProducer
+        ? { lastReadByProducerAt: new Date() }
+        : { lastReadByAdminAt: new Date() },
+    });
+
+    return NextResponse.json({ ok: true });
+  } catch (error) {
+    console.error("[SUPPORT_TICKET_READ]", error);
     return NextResponse.json(
-      { error: "Ticket não encontrado" },
-      { status: 404 }
+      { error: "Erro interno do servidor" },
+      { status: 500 }
     );
   }
-
-  if (!(await canAccessTicket(user, ticket))) {
-    return NextResponse.json({ error: "Sem permissão" }, { status: 403 });
-  }
-
-  const isProducer = user.id === ticket.producerId;
-  await prisma.supportTicket.update({
-    where: { id: ticket.id },
-    data: isProducer
-      ? { lastReadByProducerAt: new Date() }
-      : { lastReadByAdminAt: new Date() },
-  });
-
-  return NextResponse.json({ ok: true });
 }

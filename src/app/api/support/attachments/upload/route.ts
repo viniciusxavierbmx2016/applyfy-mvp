@@ -27,56 +27,64 @@ export async function POST(request: Request) {
   const limited = rateLimit(request);
   if (limited) return limited;
 
-  const user = await getCurrentUser();
-  if (!user) {
-    return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
-  }
+  try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
+    }
 
-  const formData = await request.formData().catch(() => null);
-  const file = formData?.get("file") as File | null;
-  if (!file) {
-    return NextResponse.json({ error: "Arquivo obrigatório" }, { status: 400 });
-  }
-  if (!ALLOWED.has(file.type)) {
-    return NextResponse.json(
-      { error: "Tipo de arquivo não permitido (imagens e PDF apenas)" },
-      { status: 400 }
-    );
-  }
-  if (file.size > MAX_SIZE) {
-    return NextResponse.json(
-      { error: "Arquivo excede 10 MB" },
-      { status: 400 }
-    );
-  }
+    const formData = await request.formData().catch(() => null);
+    const file = formData?.get("file") as File | null;
+    if (!file) {
+      return NextResponse.json({ error: "Arquivo obrigatório" }, { status: 400 });
+    }
+    if (!ALLOWED.has(file.type)) {
+      return NextResponse.json(
+        { error: "Tipo de arquivo não permitido (imagens e PDF apenas)" },
+        { status: 400 }
+      );
+    }
+    if (file.size > MAX_SIZE) {
+      return NextResponse.json(
+        { error: "Arquivo excede 10 MB" },
+        { status: 400 }
+      );
+    }
 
-  const ext = (file.name.split(".").pop() || "bin")
-    .toLowerCase()
-    .replace(/[^a-z0-9]/g, "");
-  const ts = Date.now();
-  const rand = Math.random().toString(36).slice(2, 10);
-  const path = `tickets/${user.id}/${ts}-${rand}.${ext}`;
+    const ext = (file.name.split(".").pop() || "bin")
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, "");
+    const ts = Date.now();
+    const rand = Math.random().toString(36).slice(2, 10);
+    const path = `tickets/${user.id}/${ts}-${rand}.${ext}`;
 
-  const supabase = createAdminClient();
-  const buf = Buffer.from(await file.arrayBuffer());
-  const { error } = await supabase.storage
-    .from(TICKET_ATTACHMENTS_BUCKET)
-    .upload(path, buf, {
+    const supabase = createAdminClient();
+    const buf = Buffer.from(await file.arrayBuffer());
+    const { error } = await supabase.storage
+      .from(TICKET_ATTACHMENTS_BUCKET)
+      .upload(path, buf, {
+        contentType: file.type,
+        upsert: false,
+      });
+    if (error) {
+      console.error("[support upload] error:", error.message);
+      return NextResponse.json(
+        { error: "Falha no upload" },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({
+      path,
       contentType: file.type,
-      upsert: false,
+      name: file.name,
+      size: file.size,
     });
-  if (error) {
-    console.error("[support upload] error:", error.message);
+  } catch (error) {
+    console.error("[SUPPORT_ATTACHMENT_UPLOAD]", error);
     return NextResponse.json(
-      { error: "Falha no upload" },
+      { error: "Erro interno do servidor" },
       { status: 500 }
     );
   }
-
-  return NextResponse.json({
-    path,
-    contentType: file.type,
-    name: file.name,
-    size: file.size,
-  });
 }
