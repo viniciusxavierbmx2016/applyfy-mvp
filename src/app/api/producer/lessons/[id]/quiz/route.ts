@@ -6,6 +6,7 @@ import {
   updateQuizSchema,
   validateBody,
 } from "@/lib/validations";
+import { parseSafeInt } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -85,7 +86,7 @@ export async function PUT(request: Request, props: { params: Promise<{ id: strin
     const body = v.data;
     const data: Record<string, unknown> = {};
     if (body.title !== undefined) data.title = body.title || null;
-    if (body.passingScore !== undefined) data.passingScore = Math.max(0, Math.min(100, Number(body.passingScore)));
+    if (body.passingScore !== undefined) data.passingScore = parseSafeInt(body.passingScore, 70, { min: 0, max: 100 });
     if (body.showAnswers !== undefined) data.showAnswers = !!body.showAnswers;
 
     const quiz = await prisma.quiz.update({

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireStaff } from "@/lib/auth";
+import { parseSafeInt } from "@/lib/utils";
 
 export async function GET(request: Request) {
   try {
@@ -8,7 +9,7 @@ export async function GET(request: Request) {
 
     const { searchParams } = new URL(request.url);
     const event = searchParams.get("event")?.trim();
-    const take = Math.min(Number(searchParams.get("limit") || 50), 200);
+    const take = parseSafeInt(searchParams.get("limit"), 50, { min: 1, max: 200 });
 
     const where: Record<string, unknown> = {};
     if (event && event !== "ALL") where.event = event;

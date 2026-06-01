@@ -5,6 +5,27 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+/**
+ * Parse an integer safely. Returns `fallback` when the value is missing
+ * or non-numeric (NaN). Clamps to [min, max] when provided.
+ *
+ * Use over raw `Number(...)` / `parseInt(...)` whenever the value comes
+ * from a query param, body field, or any external source — the math
+ * helpers (`Math.max`, `Math.min`) propagate NaN instead of falling
+ * back to a default, which then poisons downstream queries.
+ */
+export function parseSafeInt(
+  value: unknown,
+  fallback: number,
+  opts?: { min?: number; max?: number }
+): number {
+  const n = typeof value === "number" ? value : parseInt(String(value ?? ""), 10);
+  if (Number.isNaN(n)) return fallback;
+  if (opts?.min !== undefined && n < opts.min) return opts.min;
+  if (opts?.max !== undefined && n > opts.max) return opts.max;
+  return n;
+}
+
 export function formatRelativeTime(date: Date): string {
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
