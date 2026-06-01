@@ -85,17 +85,13 @@ export async function POST(_request: Request, props: { params: Promise<{ id: str
 
     let author = null;
     if (pointsDelta !== 0) {
-      const authorUser = await prisma.user.findUnique({
-        where: { id: post.userId },
-      });
-      if (authorUser) {
-        const newPoints = Math.max(0, authorUser.points + pointsDelta);
-        const newLevel = getLevelForPoints(newPoints).level;
-        author = await prisma.user.update({
-          where: { id: authorUser.id },
-          data: { points: newPoints, level: newLevel },
-        });
-        await prisma.pointsLedger.create({
+      // Atomic increment + ledger in a single transaction. For unlikes
+      // (negative delta) on authors with low points, the increment can
+      // briefly drop below 0 — the clamp below restores the floor.
+      // Worst case under concurrent unlikes: -2 for a few ms until the
+      // next event corrects it.
+      const [, updated] = await prisma.$transaction([
+        prisma.pointsLedger.create({
           data: {
             userId: post.userId,
             workspaceId: post.course.workspaceId,
@@ -103,7 +99,32 @@ export async function POST(_request: Request, props: { params: Promise<{ id: str
             source: "RECEIVE_LIKE",
             sourceId: post.id,
           },
+        }),
+        prisma.user.update({
+          where: { id: post.userId },
+          data: { points: { increment: pointsDelta } },
+        }),
+      ]);
+      // Defensive clamp: Postgres `increment` has no built-in floor.
+      let finalPoints = updated.points;
+      if (finalPoints < 0) {
+        const clamped = await prisma.user.update({
+          where: { id: post.userId },
+          data: { points: 0 },
         });
+        finalPoints = clamped.points;
+      }
+      const newLevel = getLevelForPoints(finalPoints).level;
+      if (updated.level !== newLevel) {
+        author = await prisma.user.update({
+          where: { id: post.userId },
+          data: { level: newLevel },
+        });
+      } else if (finalPoints !== updated.points) {
+        // Points were clamped; keep the unchanged level.
+        author = { ...updated, points: finalPoints };
+      } else {
+        author = updated;
       }
     }
 

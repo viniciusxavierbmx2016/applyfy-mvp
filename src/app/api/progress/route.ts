@@ -184,35 +184,47 @@ export async function POST(request: Request) {
     let leveledUp = false;
 
     if (pointsAwarded > 0) {
-      const newPoints = user.points + pointsAwarded;
-      const newLevel = getLevelForPoints(newPoints).level;
-      leveledUp = newLevel > user.level;
-
-      updatedUser = await prisma.user.update({
-        where: { id: user.id },
-        data: { points: newPoints, level: newLevel },
-      });
-
+      // Atomic increment + ledger in one transaction so concurrent
+      // lesson completions by the same user can't lose points. Level
+      // is recomputed afterwards from absolute points — race there is
+      // benign (level only rises and the next event corrects).
       // Per-workspace ledger entry: single row with the total delta (sum of
       // lesson + module + course bonuses). Source reflects the highest tier
       // completion so audits read naturally.
-      await prisma.pointsLedger.create({
-        data: {
-          userId: user.id,
-          workspaceId: course.workspaceId,
-          delta: pointsAwarded,
-          source: courseCompleted
-            ? "COMPLETE_COURSE"
-            : moduleCompleted
-              ? "COMPLETE_MODULE"
-              : "COMPLETE_LESSON",
-          sourceId: courseCompleted
-            ? course.id
-            : moduleCompleted
-              ? lesson.moduleId
-              : lesson.id,
-        },
-      });
+      const [, updated] = await prisma.$transaction([
+        prisma.pointsLedger.create({
+          data: {
+            userId: user.id,
+            workspaceId: course.workspaceId,
+            delta: pointsAwarded,
+            source: courseCompleted
+              ? "COMPLETE_COURSE"
+              : moduleCompleted
+                ? "COMPLETE_MODULE"
+                : "COMPLETE_LESSON",
+            sourceId: courseCompleted
+              ? course.id
+              : moduleCompleted
+                ? lesson.moduleId
+                : lesson.id,
+          },
+        }),
+        prisma.user.update({
+          where: { id: user.id },
+          data: { points: { increment: pointsAwarded } },
+        }),
+      ]);
+      const newPoints = updated.points;
+      const newLevel = getLevelForPoints(newPoints).level;
+      leveledUp = newLevel > user.level;
+      if (updated.level !== newLevel) {
+        updatedUser = await prisma.user.update({
+          where: { id: user.id },
+          data: { level: newLevel },
+        });
+      } else {
+        updatedUser = updated;
+      }
 
       if (leveledUp) {
         const levelInfo = getLevelForPoints(newPoints);

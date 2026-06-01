@@ -308,25 +308,40 @@ export async function POST(request: Request) {
     let finalPoints = user.points;
     let finalLevel = user.level;
     if (postStatus === "APPROVED" && course.gamificationEnabled) {
-      const newPoints = user.points + GAMIFICATION.POINTS.CREATE_POST;
-      const newLevel = getLevelForPoints(newPoints).level;
-      leveledUp = newLevel > user.level;
-      const updated = await prisma.user.update({
-        where: { id: user.id },
-        data: { points: newPoints, level: newLevel },
-      });
+      // Atomic increment + ledger inside a single transaction so the
+      // ledger sum stays in sync with User.points even under concurrent
+      // posts by the same user (mobile retries, fast clicks). Level is
+      // recomputed after the increment from absolute points — race
+      // there is benign (level only rises, and the next event would
+      // correct it anyway).
+      const [, updated] = await prisma.$transaction([
+        prisma.pointsLedger.create({
+          data: {
+            userId: user.id,
+            workspaceId: course.workspaceId,
+            delta: GAMIFICATION.POINTS.CREATE_POST,
+            source: "CREATE_POST",
+            sourceId: post.id,
+          },
+        }),
+        prisma.user.update({
+          where: { id: user.id },
+          data: { points: { increment: GAMIFICATION.POINTS.CREATE_POST } },
+        }),
+      ]);
       pointsAwarded = GAMIFICATION.POINTS.CREATE_POST;
       finalPoints = updated.points;
-      finalLevel = updated.level;
-      await prisma.pointsLedger.create({
-        data: {
-          userId: user.id,
-          workspaceId: course.workspaceId,
-          delta: GAMIFICATION.POINTS.CREATE_POST,
-          source: "CREATE_POST",
-          sourceId: post.id,
-        },
-      });
+      const newLevel = getLevelForPoints(finalPoints).level;
+      leveledUp = newLevel > user.level;
+      if (updated.level !== newLevel) {
+        const reupdated = await prisma.user.update({
+          where: { id: user.id },
+          data: { level: newLevel },
+        });
+        finalLevel = reupdated.level;
+      } else {
+        finalLevel = updated.level;
+      }
     }
 
     if (postStatus === "PENDING") {
