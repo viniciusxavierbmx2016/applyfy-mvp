@@ -71,7 +71,18 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
     }
 
-    const event = JSON.parse(rawBody);
+    // 400 (not 500) on parse failure so Stripe treats this as a bad
+    // payload and stops retrying. A 500 would trigger Stripe's
+    // exponential-backoff retry loop (up to ~3 days), flooding logs.
+    let event;
+    try {
+      event = JSON.parse(rawBody);
+    } catch {
+      return NextResponse.json(
+        { error: "Invalid payload" },
+        { status: 400 }
+      );
+    }
 
     if (event.type !== "checkout.session.completed") {
       return NextResponse.json({ ok: true, ignored: event.type });

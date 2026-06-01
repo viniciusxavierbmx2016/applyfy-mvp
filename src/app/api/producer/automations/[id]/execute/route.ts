@@ -30,7 +30,18 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
       return NextResponse.json({ error: "Apenas automações HAS_TAG podem ser executadas manualmente" }, { status: 400 });
     }
 
-    const config = JSON.parse(automation.triggerConfig) as Record<string, unknown>;
+    let config: Record<string, unknown>;
+    try {
+      config = JSON.parse(automation.triggerConfig) as Record<string, unknown>;
+    } catch {
+      // triggerConfig is producer-managed, written through the UI. A
+      // corrupt blob here is a real data problem the producer must see
+      // (so they can re-save the automation), not a generic 500.
+      return NextResponse.json(
+        { error: "Configuração da automação inválida" },
+        { status: 400 }
+      );
+    }
     const tagId = config.tagId as string;
     if (!tagId) {
       return NextResponse.json({ error: "Tag não configurada" }, { status: 400 });

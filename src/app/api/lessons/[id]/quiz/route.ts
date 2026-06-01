@@ -34,6 +34,19 @@ export async function GET(_request: Request, props: { params: Promise<{ id: stri
       orderBy: { createdAt: "desc" },
     });
 
+    // Graceful fallback for a corrupt `answers` blob: keep score/passed
+    // (which drive the "already passed → show certificate" gate) and
+    // drop only the answer-review UI. Without this the entire quiz GET
+    // would 500 on a single bad row and the student would lose access.
+    let parsedAnswers: unknown = [];
+    if (lastAttempt) {
+      try {
+        parsedAnswers = JSON.parse(lastAttempt.answers);
+      } catch {
+        parsedAnswers = [];
+      }
+    }
+
     return NextResponse.json({
       quiz: {
         id: quiz.id,
@@ -43,7 +56,7 @@ export async function GET(_request: Request, props: { params: Promise<{ id: stri
         questions: quiz.questions,
       },
       lastAttempt: lastAttempt
-        ? { score: lastAttempt.score, passed: lastAttempt.passed, answers: JSON.parse(lastAttempt.answers) }
+        ? { score: lastAttempt.score, passed: lastAttempt.passed, answers: parsedAnswers }
         : null,
     });
   } catch (error) {
