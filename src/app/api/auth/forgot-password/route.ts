@@ -59,7 +59,14 @@ export async function POST(req: Request) {
 
     const template = passwordReset(user.name || "Usuário", data.properties.action_link);
 
-    await sendEmail({
+    // Fire-and-forget so the response time stays constant whether or
+    // not Brevo is healthy. If we awaited here, a slow/down Brevo would
+    // (a) hang the request and (b) leak whether the email exists via
+    // timing (fast = unknown user/early-return, slow = email sent).
+    // The recovery link is already minted on Supabase's side by the
+    // awaited `generateLink` above — if the email send fails, the user
+    // simply retries and gets a fresh link.
+    sendEmail({
       to: { email: user.email, name: user.name },
       subject: template.subject,
       htmlContent: template.htmlContent,
