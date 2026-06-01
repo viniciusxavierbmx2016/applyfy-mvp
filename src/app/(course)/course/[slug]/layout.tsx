@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { CourseShell } from "@/components/course-shell";
 import { CourseSupportWidget } from "@/components/course-support-widget";
 import { WorkspaceThemeLock } from "@/components/workspace-theme-lock";
+import type { EnrollmentStatus } from "@prisma/client";
 
 export default async function CourseSlugLayout(props: {
   children: React.ReactNode;
@@ -18,12 +19,20 @@ export default async function CourseSlugLayout(props: {
     notFound();
   }
 
-  // Buscar forceTheme do workspace para WorkspaceThemeLock
-  const workspaceForceTheme = await prisma.workspace.findUnique({
-    where: { id: course.workspace!.id },
-    select: { forceTheme: true },
-  });
-  const forceTheme = workspaceForceTheme?.forceTheme ?? null;
+  // Buscar forceTheme do workspace para WorkspaceThemeLock.
+  // Cosmetic-only query — on failure we fall back to no force (user's
+  // own theme wins) instead of crashing the whole course tree.
+  let forceTheme: string | null = null;
+  try {
+    const workspaceForceTheme = await prisma.workspace.findUnique({
+      where: { id: course.workspace!.id },
+      select: { forceTheme: true },
+    });
+    forceTheme = workspaceForceTheme?.forceTheme ?? null;
+  } catch (err) {
+    console.error("[COURSE_LAYOUT] forceTheme query failed", err);
+    forceTheme = null;
+  }
 
   // Verificar acesso (ADMIN | PRODUCER dono do curso/workspace | enrollment ativo)
   let hasAccess = false;
@@ -38,10 +47,23 @@ export default async function CourseSlugLayout(props: {
     if (isStaffViewer) {
       hasAccess = true;
     } else {
-      const enrollment = await prisma.enrollment.findFirst({
-        where: { userId: user.id, courseId: course.id },
-        select: { status: true, expiresAt: true },
-      });
+      // FAIL CLOSED: if the DB didn't confirm enrollment, we treat it as
+      // no access. A transient Prisma blip must NEVER grant a non-paying
+      // viewer the enrolled-student UI. isEnrollmentActive(null) is
+      // defined to return false, so the fallback chain is type-safe.
+      let enrollment: { status: EnrollmentStatus; expiresAt: Date | null } | null = null;
+      try {
+        enrollment = await prisma.enrollment.findFirst({
+          where: { userId: user.id, courseId: course.id },
+          select: { status: true, expiresAt: true },
+        });
+      } catch (err) {
+        console.error(
+          "[COURSE_LAYOUT] enrollment query failed — failing closed (no access)",
+          err
+        );
+        enrollment = null;
+      }
       hasAccess = isEnrollmentActive(enrollment);
       isStudentAccess = hasAccess;
     }
