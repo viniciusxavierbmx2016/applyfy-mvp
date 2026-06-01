@@ -954,7 +954,7 @@ model Live {
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 
-  course        Course?            @relation(fields: [courseId], references: [id])
+  course        Course?            @relation(fields: [courseId], references: [id], onDelete: SetNull)
   workspace     Workspace          @relation(fields: [workspaceId], references: [id])
   messages      LiveMessage[]
   notifications LiveNotification[]
