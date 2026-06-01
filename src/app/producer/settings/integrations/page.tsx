@@ -9,6 +9,13 @@ import { HelpTooltip } from "@/components/help-tooltip";
 
 const DEFAULT_APPLYFY_LOGO = "/images/applyfy-logo.png";
 
+// Stripe is the secondary, manually-configured gateway. Hidden by
+// default because Applyfy is the active path; the webhook and
+// /producer/settings/integrations/stripe instruction page remain
+// functional so the integration can be re-enabled by setting
+// NEXT_PUBLIC_STRIPE_ENABLED=true (no code change required).
+const STRIPE_ENABLED = process.env.NEXT_PUBLIC_STRIPE_ENABLED === "true";
+
 interface GatewayStatus {
   connected: boolean;
   logoUrl: string | null;
@@ -67,7 +74,7 @@ export default function ProducerIntegrationsPage() {
             connected={!!applyfy?.connected}
             logoUrl={applyfy?.logoUrl || DEFAULT_APPLYFY_LOGO}
           />
-          <StripeCard />
+          {STRIPE_ENABLED && <StripeCard />}
           <RequestIntegrationCard onOpen={() => setModalOpen(true)} />
         </div>
       )}
