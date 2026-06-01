@@ -1194,7 +1194,12 @@ model PointsLedger {
   workspaceId String
   delta       Int
   source      String // "COMPLETE_LESSON", "COMPLETE_MODULE", "COMPLETE_COURSE", "CREATE_POST", "RECEIVE_LIKE"
-  sourceId    String? // lessonId, moduleId, courseId, postId (for dedup/audit)
+  sourceId    String? // lessonId/moduleId/courseId/postId — best-effort backlink.
+  // May point to a deleted entity. The ledger is read by SUM only
+  // (getWorkspacePoints), so orphan sourceIds are harmless and points
+  // are NOT refunded when a source is deleted (matches standard
+  // gamification: points reflect past contribution). If a points-history
+  // UI is added later, treat missing sources as "removed".
   createdAt   DateTime @default(now())
 
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
