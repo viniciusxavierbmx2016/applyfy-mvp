@@ -359,7 +359,7 @@ export default function CourseHomePage() {
   if (loading) {
     return (
       <div className="animate-fade-in-up space-y-8 p-4 lg:p-8">
-        <div className="w-full rounded-xl bg-gray-200 dark:bg-gray-800/40 animate-pulse" style={{ aspectRatio: "45/16" }} />
+        <div className="w-full rounded-xl bg-gray-200 dark:bg-gray-800/40 animate-pulse aspect-[16/9] sm:aspect-[2/1] lg:aspect-[45/16]" />
         <div className="space-y-2">
           <div className="h-8 w-2/3 rounded bg-gray-200 dark:bg-gray-800/60 animate-pulse" />
           <div className="h-4 w-1/3 rounded bg-gray-200 dark:bg-gray-800/40 animate-pulse" />
@@ -448,6 +448,11 @@ export default function CourseHomePage() {
   }
 
   const groups = groupBySection(course.modules, course.sections || []);
+
+  // Aluno "novo" no curso: nunca abriu nenhuma aula (sem lastAccessedLesson) E não
+  // completou nenhuma. Só ele vê "Comece por aqui"/"Começar"; quem já tem QUALQUER
+  // progresso/acesso vê exatamente o de hoje ("Continuar assistindo"/"Continuar").
+  const isNewStudent = !lastAccessedLesson && totals.doneLessons === 0;
 
   return (
     <div className="px-4 sm:px-6 lg:px-10 py-4 lg:py-6 max-w-[1400px] mx-auto w-full animate-fade-in-up">
@@ -579,7 +584,7 @@ export default function CourseHomePage() {
       {hasAccess && continueWatching && (
         <section id="continue" className="mb-12 scroll-mt-20">
           <h2 className="text-lg font-semibold tracking-tight text-gray-900 dark:text-white mb-4 px-1">
-            Continuar assistindo
+            {isNewStudent ? "Comece por aqui" : "Continuar assistindo"}
           </h2>
           <Link
             href={`/course/${course.slug}/lesson/${continueWatching.lesson.id}`}
@@ -618,7 +623,7 @@ export default function CourseHomePage() {
                 </p>
               )}
               <span className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-blue-600 dark:text-blue-400 group-hover:gap-3 transition-[gap] duration-300">
-                Continuar
+                {isNewStudent ? "Começar" : "Continuar"}
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
                 </svg>
@@ -677,14 +682,16 @@ export default function CourseHomePage() {
         </div>
       )}
 
-      <section className="mb-12">
-        <h2 className="text-lg font-semibold tracking-tight text-gray-900 dark:text-white mb-4 px-1">
-          Sobre o curso
-        </h2>
-        <p className="text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">
-          {course.description}
-        </p>
-      </section>
+      {course.description?.trim() && (
+        <section className="mb-12">
+          <h2 className="text-lg font-semibold tracking-tight text-gray-900 dark:text-white mb-4 px-1">
+            Sobre o curso
+          </h2>
+          <p className="text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">
+            {course.description}
+          </p>
+        </section>
+      )}
 
       {course.reviewsEnabled !== false && (
         <ReviewsSection
