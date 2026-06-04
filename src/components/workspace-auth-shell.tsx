@@ -57,6 +57,21 @@ function lighten(hex: string, amount = 0.15): string {
   return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, "0")}`;
 }
 
+/**
+ * Returns true if a hex color is "light" (needs dark text on top).
+ * Uses perceived luminance (ITU-R BT.601). Defaults to false (dark box) on
+ * invalid input, so themed boxes keep white text exactly as before.
+ */
+function isLightColor(hex: string): boolean {
+  if (!HEX_RE.test(hex)) return false;
+  const n = parseInt(hex.slice(1), 16);
+  const r = (n >> 16) & 0xff;
+  const g = (n >> 8) & 0xff;
+  const b = n & 0xff;
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  return luminance > 0.6; // threshold: above this, text should be dark
+}
+
 export function getLoginTheme(ws: WorkspaceAuthInfo | null) {
   const layout: LoginLayout =
     (ws?.loginLayout as LoginLayout) || "central";
@@ -90,6 +105,19 @@ export function getLoginTheme(ws: WorkspaceAuthInfo | null) {
       ? ws.loginLinkColor
       : primaryColor;
   const boxBackground = hexToRgba(boxColor, boxOpacity);
+
+  // Derive text/input colors from the box luminance so a light custom box gets
+  // dark, legible text. Dark boxes (the default and the vast majority) keep the
+  // exact white values used before — zero visual change.
+  const boxIsLight = isLightColor(boxColor);
+  const textColor = boxIsLight ? "#0a0a0a" : "#ffffff";
+  const textColorMuted = boxIsLight ? "rgba(0,0,0,0.6)" : "rgba(255,255,255,0.6)";
+  const textColorLabel = boxIsLight ? "rgba(0,0,0,0.7)" : "rgba(255,255,255,0.75)";
+  const textColorFaint = boxIsLight ? "rgba(0,0,0,0.4)" : "rgba(255,255,255,0.35)";
+  const inputBg = boxIsLight ? "rgba(0,0,0,0.04)" : "rgba(255,255,255,0.06)";
+  const inputBgFocus = boxIsLight ? "rgba(0,0,0,0.06)" : "rgba(255,255,255,0.08)";
+  const inputBorder = boxIsLight ? "rgba(0,0,0,0.12)" : "rgba(255,255,255,0.1)";
+
   return {
     layout,
     bgColor,
@@ -100,6 +128,14 @@ export function getLoginTheme(ws: WorkspaceAuthInfo | null) {
     boxColor,
     boxOpacity,
     boxBackground,
+    boxIsLight,
+    textColor,
+    textColorMuted,
+    textColorLabel,
+    textColorFaint,
+    inputBg,
+    inputBgFocus,
+    inputBorder,
     sideColor,
     linkColor,
     bgImageUrl: ws?.loginBgImageUrl || null,
@@ -156,11 +192,7 @@ export function WorkspaceAuthShell({
 
   if (theme.layout === "central") {
     return (
-      <ThemedRoot
-        primary={theme.primaryColor}
-        hover={theme.primaryHover}
-        light={theme.primaryLight}
-      >
+      <ThemedRoot theme={theme}>
         <div
           className="relative min-h-screen flex items-center justify-center px-4 py-10"
           style={bgStyle}
@@ -210,11 +242,7 @@ export function WorkspaceAuthShell({
   );
 
   return (
-    <ThemedRoot
-      primary={theme.primaryColor}
-      hover={theme.primaryHover}
-      light={theme.primaryLight}
-    >
+    <ThemedRoot theme={theme}>
       <div className="min-h-screen flex flex-col lg:flex-row">
         {formOnLeft ? (
           <>
@@ -233,16 +261,15 @@ export function WorkspaceAuthShell({
 }
 
 function ThemedRoot({
-  primary,
-  hover,
-  light,
+  theme,
   children,
 }: {
-  primary: string;
-  hover: string;
-  light: string;
+  theme: ReturnType<typeof getLoginTheme>;
   children: ReactNode;
 }) {
+  const primary = theme.primaryColor;
+  const hover = theme.primaryHover;
+  const light = theme.primaryLight;
   return (
     <div
       style={
@@ -250,20 +277,26 @@ function ThemedRoot({
           ["--wa-primary" as string]: primary,
           ["--wa-primary-hover" as string]: hover,
           ["--wa-primary-light" as string]: light,
+          ["--wa-text" as string]: theme.textColor,
+          ["--wa-text-muted" as string]: theme.textColorMuted,
+          ["--wa-text-label" as string]: theme.textColorLabel,
+          ["--wa-text-faint" as string]: theme.textColorFaint,
         } as React.CSSProperties
       }
     >
       <style>{`
         .wa-input {
-          background-color: rgba(255,255,255,0.06);
-          border: 1px solid rgba(255,255,255,0.1);
+          background-color: ${theme.inputBg};
+          border: 1px solid ${theme.inputBorder};
+          color: var(--wa-text);
         }
-        .wa-input::placeholder { color: rgba(255,255,255,0.35); }
+        .wa-input::placeholder { color: var(--wa-text-faint); }
         .wa-input:focus {
           border-color: ${primary};
           box-shadow: 0 0 0 4px ${primary}33;
-          background-color: rgba(255,255,255,0.08);
+          background-color: ${theme.inputBgFocus};
         }
+        .wa-label { color: var(--wa-text-label); }
         .wa-submit {
           background-image: linear-gradient(135deg, ${light}, ${primary});
         }
@@ -312,8 +345,9 @@ function FormCard({
 }) {
   return (
     <div
-      className="text-white rounded-2xl p-8"
+      className="rounded-2xl p-8"
       style={{
+        color: "var(--wa-text)",
         backgroundColor: boxBackground,
         backdropFilter: "blur(20px)",
         WebkitBackdropFilter: "blur(20px)",
@@ -352,11 +386,14 @@ function FormCard({
           </div>
         )}
         <div className="flex flex-col gap-2">
-          <h1 className="text-2xl font-bold text-white leading-tight">
+          <h1
+            className="text-2xl font-bold leading-tight"
+            style={{ color: "var(--wa-text)" }}
+          >
             {title}
           </h1>
           {subtitle && (
-            <p className="text-sm" style={{ color: "rgba(255,255,255,0.6)" }}>
+            <p className="text-sm" style={{ color: "var(--wa-text-muted)" }}>
               {subtitle}
             </p>
           )}
@@ -368,12 +405,12 @@ function FormCard({
 }
 
 export const authInputCls =
-  "wa-input w-full h-12 px-4 rounded-xl text-white text-sm focus:outline-none transition";
+  "wa-input w-full h-12 px-4 rounded-xl text-sm focus:outline-none transition";
 
 export const authInputStyle: React.CSSProperties = {};
 
 export const authLabelCls =
-  "block text-sm font-medium text-white/75 mb-1.5";
+  "wa-label block text-sm font-medium mb-1.5";
 
 export const authErrorCls =
   "mb-4 p-3 rounded-xl bg-red-500/10 border border-red-400/25 text-red-200 text-sm";
