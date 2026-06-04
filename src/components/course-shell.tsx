@@ -105,7 +105,7 @@ export function CourseShell({
         onToggleCollapsed={toggleCollapsed}
       />
       <div
-        className={`h-full flex flex-col min-w-0 ${collapsed ? "lg:pl-16" : "lg:pl-60"}`}
+        className={`h-full flex flex-col min-w-0 transition-[padding] duration-200 ease-in-out ${collapsed ? "lg:pl-16" : "lg:pl-60"}`}
       >
         <header className="lg:hidden sticky top-0 z-30 h-14 px-4 flex items-center gap-3 bg-[var(--member-header,rgb(255_255_255))] dark:bg-[var(--member-header,rgb(3_7_18))] border-b border-gray-200 dark:border-gray-800">
           <button

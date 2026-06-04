@@ -99,7 +99,7 @@ export function CourseSidebar({
           "fixed top-0 left-0 z-50 h-screen w-60 flex flex-col",
           "bg-[var(--member-sidebar,rgb(249_250_251))] dark:bg-[var(--member-sidebar,rgb(3_7_18))]",
           "border-r border-gray-200 dark:border-white/5",
-          "transform transition-transform duration-300 ease-in-out",
+          "transform transition-[transform,width] duration-200 ease-in-out",
           "lg:translate-x-0 lg:fixed lg:top-0 lg:left-0 lg:z-20",
           widthClass,
           mobileOpen ? "translate-x-0" : "-translate-x-full"
@@ -108,7 +108,7 @@ export function CourseSidebar({
         {/* Header — logo do workspace */}
         <div
           className={cn(
-            "relative flex items-center border-b border-gray-200 dark:border-white/5 transition-[padding,gap,height] duration-300",
+            "relative flex items-center border-b border-gray-200 dark:border-white/5 transition-[padding,gap,height] duration-200 ease-in-out",
             collapsed
               ? "lg:justify-center lg:py-4 lg:px-2 p-5"
               : "p-5 justify-between"
@@ -160,45 +160,45 @@ export function CourseSidebar({
             </svg>
           </button>
 
-          {/* Botão de colapsar — canto direito quando aberta */}
-          {!collapsed && (
-            <button
-              onClick={onToggleCollapsed}
-              aria-label="Recolher menu"
-              className={cn(
-                "hidden lg:flex absolute top-1/2 -translate-y-1/2 right-3 items-center justify-center w-6 h-6 rounded-full",
-                "bg-gray-100 hover:bg-gray-200 dark:bg-white/5 dark:hover:bg-white/10",
-                "text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white",
-                "transition-colors duration-200"
-              )}
-            >
-              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
-          )}
         </div>
 
-        {/* Botão de expandir — visível apenas quando colapsada, abaixo da logo */}
-        {collapsed && (
-          <div className="hidden lg:flex justify-center py-2 border-b border-gray-200 dark:border-white/5">
-            <button
-              onClick={onToggleCollapsed}
-              aria-label="Expandir menu"
-              className={cn(
-                "group relative flex items-center justify-center w-7 h-7 rounded-full",
-                "bg-gray-100 hover:bg-gray-200 dark:bg-white/5 dark:hover:bg-white/10",
-                "text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white",
-                "transition-colors duration-200"
-              )}
-            >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
-              </svg>
-              <span className={tooltipCls}>Expandir menu</span>
-            </button>
-          </div>
-        )}
+        {/*
+          Strip dedicada do toggle (desktop only, SEMPRE presente nos 2 estados) — espelha o
+          workspace-shell: 1 botão ÚNICO persistente que desliza direita↔centro em sincronia com a
+          largura da sidebar, eliminando o teleporte. `transform` constante = translate(-50%,-50%);
+          só o `left` transiciona (200ms, mesma duração do aside/main).
+          - expandido: left = calc(100% - 26px) → centro do botão 26px da borda ⇒ borda direita a 12px (== right-3, w-7)
+          - recolhido: left = 50% → centralizado (sem sobrepor a logo, que fica no header acima)
+          - só o ícone/aria/tooltip mudam por estado; onClick (onToggleCollapsed) é o MESMO
+          - mobile (translate-x) intocado: a strip é `hidden lg:block`
+        */}
+        <div className="relative hidden lg:block h-11 border-b border-gray-200 dark:border-white/5">
+          <button
+            onClick={onToggleCollapsed}
+            aria-label={collapsed ? "Expandir menu" : "Recolher menu"}
+            style={{
+              top: "50%",
+              left: collapsed ? "50%" : "calc(100% - 26px)",
+              transform: "translate(-50%, -50%)",
+            }}
+            className={cn(
+              "group absolute flex items-center justify-center w-7 h-7 rounded-full",
+              "bg-gray-100 hover:bg-gray-200 dark:bg-white/5 dark:hover:bg-white/10",
+              "text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white",
+              "transition-[left,color,background-color] duration-200 ease-in-out"
+            )}
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2.5}
+                d={collapsed ? "M9 5l7 7-7 7" : "M15 19l-7-7 7-7"}
+              />
+            </svg>
+            {collapsed && <span className={tooltipCls}>Expandir menu</span>}
+          </button>
+        </div>
 
         {/* Voltar à vitrine/painel */}
         <div className="border-b border-gray-200 dark:border-white/5">

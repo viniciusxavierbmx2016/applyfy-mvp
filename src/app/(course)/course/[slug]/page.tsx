@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -272,35 +272,48 @@ export default function CourseHomePage() {
     null
   );
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/courses/by-slug/${params.slug}/init`);
+      if (res.ok) {
+        const data = await res.json();
+        setCourse(data.course);
+        setHasAccess(data.hasAccess);
+        setServerStaffViewer(!!data.isStaffViewer);
+        setEnrollmentCreatedAt(
+          data.enrollment?.createdAt ? new Date(data.enrollment.createdAt) : null
+        );
+        setMyReview(data.myReview ?? null);
+        setOverrides({
+          modules: new Set<string>(data.overrides?.modules ?? []),
+          lessons: new Set<string>(data.overrides?.lessons ?? []),
+        });
+        setLastAccessedLesson(data.lastAccessedLesson ?? null);
+        setAutomationLocks(data.automationLocks ?? {});
+        setLoadError(false);
+      } else if (res.status === 404) {
+        // Curso realmente não existe → redireciona (NÃO é erro técnico).
+        router.push(backHref);
+        return;
+      } else {
+        // 5xx ou qualquer outro não-ok: erro técnico real, em vez de cair no
+        // "Curso não encontrado" enganoso. Espelha o storefront (commit 4aeb733).
+        setLoadError(true);
+      }
+    } catch {
+      // Falha de rede/parse — mesmo tratamento de erro de servidor.
+      setLoadError(true);
+    } finally {
+      setLoading(false);
+    }
+  }, [params.slug, router, backHref]);
 
   useEffect(() => {
-    async function load() {
-      try {
-        const res = await fetch(`/api/courses/by-slug/${params.slug}/init`);
-        if (res.ok) {
-          const data = await res.json();
-          setCourse(data.course);
-          setHasAccess(data.hasAccess);
-          setServerStaffViewer(!!data.isStaffViewer);
-          setEnrollmentCreatedAt(
-            data.enrollment?.createdAt ? new Date(data.enrollment.createdAt) : null
-          );
-          setMyReview(data.myReview ?? null);
-          setOverrides({
-            modules: new Set<string>(data.overrides?.modules ?? []),
-            lessons: new Set<string>(data.overrides?.lessons ?? []),
-          });
-          setLastAccessedLesson(data.lastAccessedLesson ?? null);
-          setAutomationLocks(data.automationLocks ?? {});
-        } else if (res.status === 404) {
-          router.push(backHref);
-        }
-      } finally {
-        setLoading(false);
-      }
-    }
     load();
-  }, [params.slug, router, backHref]);
+  }, [load]);
 
   const totals = useMemo(() => {
     if (!course) return { totalLessons: 0, doneLessons: 0, pct: 0 };
@@ -354,6 +367,33 @@ export default function CourseHomePage() {
         </div>
         <SkeletonModuleCarousel />
         <SkeletonModuleCarousel />
+      </div>
+    );
+  }
+
+  // Erro TÉCNICO (5xx / rede) — tela de retry, distinta do "não encontrado" (404 redireciona).
+  if (loadError && !loading) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center px-4">
+        <div className="text-center max-w-md">
+          <div className="mx-auto w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center mb-6">
+            <svg className="w-8 h-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M5.07 19h13.86a2 2 0 001.74-2.99l-6.93-12a2 2 0 00-3.48 0l-6.93 12A2 2 0 005.07 19z" />
+            </svg>
+          </div>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+            Não foi possível carregar o curso
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400 mb-6">
+            Ocorreu um erro. Verifique sua conexão e tente novamente.
+          </p>
+          <button
+            onClick={() => load()}
+            className="inline-flex items-center justify-center px-5 py-2.5 bg-primary hover:bg-primary-hover text-white text-sm font-semibold rounded-lg transition"
+          >
+            Tentar novamente
+          </button>
+        </div>
       </div>
     );
   }
