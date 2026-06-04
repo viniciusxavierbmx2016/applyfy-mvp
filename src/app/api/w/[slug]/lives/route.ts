@@ -20,7 +20,12 @@ export async function GET(_request: Request, props: { params: Promise<{ slug: st
       return NextResponse.json({ error: "Workspace não encontrado" }, { status: 404 });
     }
 
-    if (user.role === "STUDENT") {
+    // Isolation gate: every role except ADMIN must prove workspace access.
+    // hasWorkspaceAccess covers enrollment + accepted collaborator + owner.
+    // NOTE: only the ACCESS gate changes here — the COURSE_ONLY content
+    // filter below stays STUDENT-scoped (owner/collaborator/admin see all
+    // lives, which is the existing, intended behavior).
+    if (user.role !== "ADMIN") {
       const allowed = await hasWorkspaceAccess(user.id, workspace.id);
       if (!allowed) {
         return NextResponse.json({ error: "Sem acesso" }, { status: 403 });

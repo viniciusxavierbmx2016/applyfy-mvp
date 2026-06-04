@@ -30,16 +30,19 @@ export async function GET(request: Request, props: { params: Promise<{ id: strin
       return NextResponse.json({ error: "Live não encontrada" }, { status: 404 });
     }
 
-    // Tenant gate: mirror GET /api/lives/[id]. STUDENT must have workspace
-    // access; COURSE_ONLY lives also require an ACTIVE enrollment; and a
-    // closed room is off-limits even for past messages. Staff (ADMIN /
-    // PRODUCER / COLLABORATOR) follow the same role-based pattern as the
-    // detail endpoint — no additional gate here.
-    if (user.role === "STUDENT") {
+    // Isolation gate: every role except ADMIN must prove workspace access.
+    // Mirrors GET /api/lives/[id] and the workspace login route.
+    if (user.role !== "ADMIN") {
       const allowed = await hasWorkspaceAccess(user.id, live.workspaceId);
       if (!allowed) {
         return NextResponse.json({ error: "Sem acesso" }, { status: 403 });
       }
+    }
+
+    // Student content restrictions: COURSE_ONLY needs an ACTIVE enrollment and
+    // a closed room is off-limits even for past messages. Staff (owner /
+    // collaborator / admin) are exempt.
+    if (user.role === "STUDENT") {
       if (live.visibility === "COURSE_ONLY" && live.courseId) {
         const enrollment = await prisma.enrollment.findFirst({
           where: { userId: user.id, courseId: live.courseId, status: "ACTIVE" },
@@ -103,12 +106,18 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
       return NextResponse.json({ error: "Live não encontrada" }, { status: 404 });
     }
 
-    // Tenant gate (same as GET above and the detail endpoint).
-    if (user.role === "STUDENT") {
+    // Isolation gate: every role except ADMIN must prove workspace access.
+    // This runs BEFORE any write to the chat below.
+    if (user.role !== "ADMIN") {
       const allowed = await hasWorkspaceAccess(user.id, live.workspaceId);
       if (!allowed) {
         return NextResponse.json({ error: "Sem acesso" }, { status: 403 });
       }
+    }
+
+    // Student content restrictions: COURSE_ONLY needs an ACTIVE enrollment and
+    // a closed room is off-limits. Staff (owner / collaborator / admin) exempt.
+    if (user.role === "STUDENT") {
       if (live.visibility === "COURSE_ONLY" && live.courseId) {
         const enrollment = await prisma.enrollment.findFirst({
           where: { userId: user.id, courseId: live.courseId, status: "ACTIVE" },
