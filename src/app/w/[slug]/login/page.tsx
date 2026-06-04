@@ -32,7 +32,6 @@ export default async function WorkspaceLoginPage({
       loginBoxOpacity: true,
       loginSideColor: true,
       loginLinkColor: true,
-      accentColor: true,
     },
   });
 

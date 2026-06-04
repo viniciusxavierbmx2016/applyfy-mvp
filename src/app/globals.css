@@ -535,3 +535,18 @@ html:not(.dark) .course-customized .text-primary { color: var(--member-primary, 
 .mc-tour-popover .driver-popover-arrow-side-bottom {
   border-color: #1a1a2e !important;
 }
+
+/* ─── Neutralize browser autofill yellow background ──────────────
+   The workspace auth inputs (.wa-input) own their background via theme
+   vars; the browser's default yellow autofill fill overrides it. The
+   transparent inset shadow masks the yellow, the long transition delays
+   the autofill repaint to avoid the initial yellow flash, and
+   text-fill-color: inherit keeps the themed (white/dark) text color. */
+.wa-input:-webkit-autofill,
+.wa-input:-webkit-autofill:hover,
+.wa-input:-webkit-autofill:focus {
+  -webkit-text-fill-color: inherit;
+  -webkit-box-shadow: 0 0 0 1000px transparent inset;
+  caret-color: inherit;
+  transition: background-color 9999s ease-in-out 0s;
+}
