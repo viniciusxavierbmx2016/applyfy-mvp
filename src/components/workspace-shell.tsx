@@ -332,41 +332,39 @@ export function WorkspaceShell({
               collapsed ? "lg:h-12 h-12" : "h-12"
             )}
           >
-            {!collapsed && (
-              <button
-                onClick={toggleCollapsed}
-                aria-label="Recolher menu"
-                className={cn(
-                  "hidden lg:flex absolute top-1/2 -translate-y-1/2 right-3 items-center justify-center w-7 h-7 rounded-full",
-                  "bg-gray-100 hover:bg-gray-200 dark:bg-white/5 dark:hover:bg-white/10",
-                  "text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white",
-                  "transition-colors duration-200"
-                )}
-              >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
-                </svg>
-              </button>
-            )}
-            {collapsed && (
-              <div className="hidden lg:flex items-center justify-center h-full">
-                <button
-                  onClick={toggleCollapsed}
-                  aria-label="Expandir menu"
-                  className={cn(
-                    "group relative flex items-center justify-center w-7 h-7 rounded-full",
-                    "bg-gray-100 hover:bg-gray-200 dark:bg-white/5 dark:hover:bg-white/10",
-                    "text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white",
-                    "transition-colors duration-200"
-                  )}
-                >
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
-                  </svg>
-                  <span className={tooltipCls}>Expandir menu</span>
-                </button>
-              </div>
-            )}
+            {/*
+              Botão ÚNICO persistente (não é trocado por `collapsed`): desliza direita↔centro
+              em sincronia com a largura da sidebar, eliminando o teleporte.
+              - posição via `left` (transicionado 200ms, mesma duração/easing da <aside>); `transform` constante = translate(-50%,-50%)
+              - expandido: left = calc(100% - 26px) → centro do botão 26px da borda direita ⇒ borda direita a 12px (== right-3)
+              - recolhido: left = 50% → centralizado
+              - só o ícone/aria/tooltip mudam por estado; o onClick (toggleCollapsed) é o MESMO
+            */}
+            <button
+              onClick={toggleCollapsed}
+              aria-label={collapsed ? "Expandir menu" : "Recolher menu"}
+              style={{
+                top: "50%",
+                left: collapsed ? "50%" : "calc(100% - 26px)",
+                transform: "translate(-50%, -50%)",
+              }}
+              className={cn(
+                "group hidden lg:flex absolute items-center justify-center w-7 h-7 rounded-full",
+                "bg-gray-100 hover:bg-gray-200 dark:bg-white/5 dark:hover:bg-white/10",
+                "text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white",
+                "transition-[left,color,background-color] duration-200 ease-in-out"
+              )}
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2.5}
+                  d={collapsed ? "M9 5l7 7-7 7" : "M15 19l-7-7 7-7"}
+                />
+              </svg>
+              {collapsed && <span className={tooltipCls}>Expandir menu</span>}
+            </button>
             <button
               onClick={() => setMenuOpen(false)}
               className="lg:hidden absolute top-1/2 -translate-y-1/2 right-3 text-gray-500 hover:text-gray-900 dark:hover:text-white"
