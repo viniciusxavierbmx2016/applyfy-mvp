@@ -42,7 +42,11 @@ export async function GET(_request: Request, props: { params: Promise<{ slug: st
       );
       return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
     }
-    if (user.role === "STUDENT") {
+    // Isolation gate: every role except ADMIN must prove workspace access.
+    // hasWorkspaceAccess covers enrollment + accepted collaborator + owner,
+    // so the workspace owner and legitimate members pass; staff from ANOTHER
+    // workspace is rejected. Mirrors the gate in the workspace login route.
+    if (user.role !== "ADMIN") {
       const allowed = await hasWorkspaceAccess(user.id, workspace.id);
       if (!allowed) {
         return NextResponse.json(
