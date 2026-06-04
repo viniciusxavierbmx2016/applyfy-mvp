@@ -318,7 +318,7 @@ export function WorkspaceShell({
             "h-[calc(100vh-3.5rem)]",
             "border-r border-gray-200 dark:border-white/5",
             "bg-white dark:bg-[var(--producer-sidebar,#111827)]",
-            "transform transition-transform duration-200 ease-in-out",
+            "transform transition-[transform,width] duration-200 ease-in-out",
             "lg:translate-x-0",
             "w-64",
             collapsed ? "lg:w-16" : "lg:w-56",
@@ -337,13 +337,13 @@ export function WorkspaceShell({
                 onClick={toggleCollapsed}
                 aria-label="Recolher menu"
                 className={cn(
-                  "hidden lg:flex absolute top-1/2 -translate-y-1/2 right-3 items-center justify-center w-6 h-6 rounded-full",
+                  "hidden lg:flex absolute top-1/2 -translate-y-1/2 right-3 items-center justify-center w-7 h-7 rounded-full",
                   "bg-gray-100 hover:bg-gray-200 dark:bg-white/5 dark:hover:bg-white/10",
                   "text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white",
                   "transition-colors duration-200"
                 )}
               >
-                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
                 </svg>
               </button>
@@ -417,7 +417,7 @@ export function WorkspaceShell({
           </nav>
         </aside>
 
-        <main className={cn("flex-1 min-w-0 mt-14", collapsed ? "lg:ml-16" : "lg:ml-56")}>
+        <main className={cn("flex-1 min-w-0 mt-14 transition-[margin] duration-200 ease-in-out", collapsed ? "lg:ml-16" : "lg:ml-56")}>
           <PushOptIn workspaceSlug={slug} />
           {user?.role === "STUDENT" && <StudentTour />}
           {children}

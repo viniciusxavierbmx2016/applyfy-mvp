@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import { CourseCard } from "@/components/course-card";
@@ -97,8 +97,47 @@ export default function WorkspaceVitrinePage() {
   const [categories, setCategories] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [suspended, setSuspended] = useState(false);
+  const [loadError, setLoadError] = useState(false);
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/w/${slug}/init`);
+      if (res.status === 403) {
+        await fetch("/api/auth/logout", { method: "POST" }).catch(() => {});
+        router.replace(
+          `/w/${slug}/login?error=${encodeURIComponent("Você não tem acesso a esta área de membros")}`
+        );
+        return;
+      }
+      if (res.status === 503) {
+        const data = await res.json().catch(() => ({}));
+        if (data.suspended) {
+          setSuspended(true);
+          return;
+        }
+      }
+      if (res.ok) {
+        const data = await res.json();
+        setWs(data.workspace);
+        setEnrolled(data.enrolled || []);
+        setStore(data.store || []);
+        setCategories(data.categories || []);
+        setLoadError(false);
+      } else if (res.status !== 403 && res.status !== 503) {
+        // 500 or any other non-ok response: surface a real error instead of
+        // falling through to the misleading empty state ("you have no courses").
+        setLoadError(true);
+      }
+    } catch {
+      // Network/parse failure — same treatment as a server error.
+      setLoadError(true);
+    } finally {
+      setLoading(false);
+    }
+  }, [slug, router]);
 
   useEffect(() => {
     if (userLoading) return;
@@ -106,43 +145,8 @@ export default function WorkspaceVitrinePage() {
       router.replace(`/w/${slug}/login`);
       return;
     }
-    async function load() {
-      try {
-        const res = await fetch(`/api/w/${slug}/init`);
-        if (res.status === 403) {
-          await fetch("/api/auth/logout", { method: "POST" }).catch(() => {});
-          router.replace(
-            `/w/${slug}/login?error=${encodeURIComponent("Você não tem acesso a esta área de membros")}`
-          );
-          return;
-        }
-        if (res.status === 503) {
-          const data = await res.json().catch(() => ({}));
-          if (data.suspended) {
-            setSuspended(true);
-            return;
-          }
-        }
-        if (res.ok) {
-          const data = await res.json();
-          setWs(data.workspace);
-          setEnrolled(data.enrolled || []);
-          setStore(data.store || []);
-          setCategories(data.categories || []);
-        }
-      } finally {
-        setLoading(false);
-      }
-    }
     load();
-  }, [user, userLoading, slug, router]);
-
-  useEffect(() => {
-    if (!ws?.accentColor) return;
-    const root = document.documentElement;
-    root.style.setProperty("--workspace-accent", ws.accentColor);
-    return () => { root.style.removeProperty("--workspace-accent"); };
-  }, [ws?.accentColor]);
+  }, [user, userLoading, slug, router, load]);
 
   const displayName = ws?.name || "Workspace";
 
@@ -166,6 +170,35 @@ export default function WorkspaceVitrinePage() {
           <p className="text-gray-600 dark:text-gray-400">
             O administrador desta área de membros está com o acesso suspenso. Por favor, entre em contato com o responsável.
           </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Technical failure (500 / network). Distinct from the legitimate empty
+  // state — a student WITH courses must not be told they have none. Only
+  // shown when not currently (re)loading, so retry shows the skeleton.
+  if (loadError && !loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white dark:bg-[var(--producer-bg,#030712)] px-4">
+        <div className="text-center max-w-md">
+          <div className="mx-auto w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center mb-6">
+            <svg className="w-8 h-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M5.07 19h13.86a2 2 0 001.74-2.99l-6.93-12a2 2 0 00-3.48 0l-6.93 12A2 2 0 005.07 19z" />
+            </svg>
+          </div>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+            Não foi possível carregar seus cursos
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400 mb-6">
+            Ocorreu um erro ao buscar a sua área de membros. Verifique sua conexão e tente novamente.
+          </p>
+          <button
+            onClick={() => load()}
+            className="inline-flex items-center justify-center px-5 py-2.5 bg-primary hover:bg-primary-hover text-white text-sm font-semibold rounded-lg transition"
+          >
+            Tentar novamente
+          </button>
         </div>
       </div>
     );
