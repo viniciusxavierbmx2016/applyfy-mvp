@@ -167,17 +167,24 @@ export function CourseCard({
         <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 mb-2 min-h-[2.5rem]">
           {truncateText(stripHtml(description), 120)}
         </p>
-        {showRating && (
-          <div className="flex items-center gap-1 text-xs text-amber-400 font-medium mb-2">
-            <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M12 17.27l6.18 3.73-1.64-7.03L22 9.24l-7.19-.62L12 2 9.19 8.62 2 9.24l5.46 4.73L5.82 21z" />
-            </svg>
-            <span>{ratingAverage!.toFixed(1)}</span>
-            <span className="text-gray-500 font-normal">
-              ({ratingCount})
-            </span>
-          </div>
-        )}
+        {/* Reserve the rating row height (min-h matches the text-xs line box,
+            1rem) so cards with and without a rating keep the progress bar and
+            everything below it vertically aligned across the grid. Same idea
+            as the description's min-h-[2.5rem]. The mb-2 lives on the wrapper
+            so it applies whether or not the rating renders. */}
+        <div className="min-h-[1rem] mb-2">
+          {showRating && (
+            <div className="flex items-center gap-1 text-xs text-amber-400 font-medium">
+              <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 17.27l6.18 3.73-1.64-7.03L22 9.24l-7.19-.62L12 2 9.19 8.62 2 9.24l5.46 4.73L5.82 21z" />
+              </svg>
+              <span>{ratingAverage!.toFixed(1)}</span>
+              <span className="text-gray-500 font-normal">
+                ({ratingCount})
+              </span>
+            </div>
+          )}
+        </div>
 
         {!locked && !expired && typeof progress === "number" && (
           <ProgressBar value={progress} showLabel />
