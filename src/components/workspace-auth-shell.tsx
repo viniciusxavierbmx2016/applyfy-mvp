@@ -118,6 +118,12 @@ export function getLoginTheme(ws: WorkspaceAuthInfo | null) {
   const inputBgFocus = boxIsLight ? "rgba(0,0,0,0.06)" : "rgba(255,255,255,0.08)";
   const inputBorder = boxIsLight ? "rgba(0,0,0,0.12)" : "rgba(255,255,255,0.1)";
 
+  // Keep footer links legible on a light box: if the producer's link color is
+  // itself light, darken it so it doesn't wash out. Dark boxes (or already-dark
+  // links) are untouched.
+  const linkColorOnBox =
+    boxIsLight && isLightColor(linkColor) ? darken(linkColor, 0.45) : linkColor;
+
   return {
     layout,
     bgColor,
@@ -137,7 +143,7 @@ export function getLoginTheme(ws: WorkspaceAuthInfo | null) {
     inputBgFocus,
     inputBorder,
     sideColor,
-    linkColor,
+    linkColor: linkColorOnBox,
     bgImageUrl: ws?.loginBgImageUrl || null,
     logoUrl: ws?.loginLogoUrl || ws?.logoUrl || null,
     name: ws?.name || "Workspace",

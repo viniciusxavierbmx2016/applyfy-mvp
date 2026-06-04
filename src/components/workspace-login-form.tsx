@@ -146,10 +146,21 @@ export function WorkspaceLoginForm({
         </div>
       }
     >
-      {error && <div className={authErrorCls}>{error}</div>}
+      {error && (
+        <div
+          className={`${authErrorCls} flex items-start gap-2 animate-in fade-in duration-200`}
+          role="alert"
+        >
+          <AlertIcon />
+          <span>{error}</span>
+        </div>
+      )}
 
       {requiresMfa ? (
-        <form onSubmit={handleMfa} className="space-y-4">
+        <form
+          onSubmit={handleMfa}
+          className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-200"
+        >
           <div>
             <label className={authLabelCls}>Código de verificação</label>
             <input
@@ -170,9 +181,15 @@ export function WorkspaceLoginForm({
           <button
             type="submit"
             disabled={mfaLoading || mfaCode.length < 6}
-            className={authSubmitCls}
+            className={`${authSubmitCls} inline-flex items-center justify-center gap-2`}
           >
-            {mfaLoading ? "Verificando..." : "Verificar"}
+            {mfaLoading ? (
+              <>
+                <Spinner /> Verificando...
+              </>
+            ) : (
+              "Verificar"
+            )}
           </button>
         </form>
       ) : (
@@ -201,11 +218,65 @@ export function WorkspaceLoginForm({
               placeholder="••••••••"
             />
           </div>
-          <button type="submit" disabled={loading} className={authSubmitCls}>
-            {loading ? "Entrando..." : "Entrar"}
+          <button
+            type="submit"
+            disabled={loading}
+            className={`${authSubmitCls} inline-flex items-center justify-center gap-2`}
+          >
+            {loading ? (
+              <>
+                <Spinner /> Entrando...
+              </>
+            ) : (
+              "Entrar"
+            )}
           </button>
         </form>
       )}
     </WorkspaceAuthShell>
+  );
+}
+
+function Spinner() {
+  return (
+    <svg
+      className="w-4 h-4 animate-spin"
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden="true"
+    >
+      <circle
+        className="opacity-25"
+        cx="12"
+        cy="12"
+        r="10"
+        stroke="currentColor"
+        strokeWidth="4"
+      />
+      <path
+        className="opacity-75"
+        fill="currentColor"
+        d="M4 12a8 8 0 0 1 8-8V0C5.373 0 0 5.373 0 12h4z"
+      />
+    </svg>
+  );
+}
+
+function AlertIcon() {
+  return (
+    <svg
+      className="w-4 h-4 shrink-0 mt-0.5"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <circle cx="12" cy="12" r="10" />
+      <line x1="12" y1="8" x2="12" y2="12" />
+      <line x1="12" y1="16" x2="12.01" y2="16" />
+    </svg>
   );
 }
