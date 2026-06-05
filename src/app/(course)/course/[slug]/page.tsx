@@ -244,7 +244,7 @@ export default function CourseHomePage() {
   const router = useRouter();
   const user = useUserStore((s) => s.user);
   const workspace = useUserStore((s) => s.workspace);
-  // Local role-only check. Kept (still used by bypassRelease / groups.map
+  // Local role-only check. Kept (still used by groups.map
   // below as a permissive default) — but DON'T use it to decide UX that
   // depends on ownership (banner, backHref): a PRODUCER buying another
   // producer's course would falsely qualify. serverStaffViewer (populated
@@ -268,9 +268,6 @@ export default function CourseHomePage() {
     lessons: Set<string>;
   }>({ modules: new Set(), lessons: new Set() });
   const [automationLocks, setAutomationLocks] = useState<Record<string, { reason: string }>>({});
-  const [lastAccessedLesson, setLastAccessedLesson] = useState<string | null>(
-    null
-  );
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
 
@@ -291,7 +288,6 @@ export default function CourseHomePage() {
           modules: new Set<string>(data.overrides?.modules ?? []),
           lessons: new Set<string>(data.overrides?.lessons ?? []),
         });
-        setLastAccessedLesson(data.lastAccessedLesson ?? null);
         setAutomationLocks(data.automationLocks ?? {});
         setLoadError(false);
       } else if (res.status === 404) {
@@ -328,33 +324,6 @@ export default function CourseHomePage() {
     const pct = totalLessons === 0 ? 0 : Math.round((doneLessons / totalLessons) * 100);
     return { totalLessons, doneLessons, pct };
   }, [course]);
-
-  const bypassRelease = serverStaffViewer || isStaffViewer;
-  const continueWatching = useMemo(() => {
-    if (!course) return null;
-    const all = course.modules
-      .flatMap((m) =>
-        m.lessons.map((l) => ({
-          lesson: l,
-          module: m,
-          released:
-            (bypassRelease ||
-            overrides.lessons.has(l.id) ||
-            overrides.modules.has(m.id) ||
-            releaseInfo(
-              enrollmentCreatedAt,
-              Math.max(m.daysToRelease ?? 0, l.daysToRelease ?? 0)
-            ).released) && !automationLocks[m.id],
-        }))
-      )
-      .filter((x) => x.released);
-    if (all.length === 0) return null;
-    if (lastAccessedLesson) {
-      const fromAccess = all.find((x) => x.lesson.id === lastAccessedLesson);
-      if (fromAccess) return fromAccess;
-    }
-    return all.find((x) => !x.lesson.progress?.some((p) => p.completed)) ?? all[0];
-  }, [course, enrollmentCreatedAt, overrides, lastAccessedLesson, bypassRelease, automationLocks]);
 
   if (loading) {
     return (
@@ -448,11 +417,6 @@ export default function CourseHomePage() {
   }
 
   const groups = groupBySection(course.modules, course.sections || []);
-
-  // Aluno "novo" no curso: nunca abriu nenhuma aula (sem lastAccessedLesson) E não
-  // completou nenhuma. Só ele vê "Comece por aqui"/"Começar"; quem já tem QUALQUER
-  // progresso/acesso vê exatamente o de hoje ("Continuar assistindo"/"Continuar").
-  const isNewStudent = !lastAccessedLesson && totals.doneLessons === 0;
 
   return (
     <div className="w-full animate-fade-in-up">
@@ -585,53 +549,6 @@ export default function CourseHomePage() {
         <p className="mb-6 text-gray-600 dark:text-gray-400 text-sm">
           {course.memberWelcomeText}
         </p>
-      )}
-
-      {hasAccess && continueWatching && (
-        <section id="continue" className="mb-6 scroll-mt-20">
-          <h2 className="text-lg font-semibold tracking-tight text-gray-900 dark:text-white mb-3 px-1">
-            {isNewStudent ? "Comece por aqui" : "Continuar assistindo"}
-          </h2>
-          <Link
-            href={`/course/${course.slug}/lesson/${continueWatching.lesson.id}`}
-            className="group relative flex flex-row items-center gap-4 p-4 bg-gradient-to-r from-gray-50 via-gray-50 to-white dark:from-white/[0.06] dark:via-white/[0.04] dark:to-white/[0.02] border border-gray-200/70 dark:border-white/5 rounded-2xl shadow-sm transition-[border-color,box-shadow] duration-300 hover:shadow-xl hover:shadow-black/10 dark:hover:shadow-black/40 hover:border-gray-300 dark:hover:border-white/10"
-          >
-            <div className="relative w-32 sm:w-48 aspect-video rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0 ring-1 ring-black/5 dark:ring-white/5">
-              {continueWatching.module.thumbnailUrl ? (
-                <Image
-                  src={continueWatching.module.thumbnailUrl}
-                  alt={continueWatching.module.title}
-                  fill
-                  sizes="(max-width: 640px) 128px, 192px"
-                  className="object-cover transition-transform duration-300 group-hover:scale-105"
-                />
-              ) : course.thumbnail ? (
-                <Image src={course.thumbnail} alt={course.title} fill sizes="(max-width: 640px) 128px, 192px" className="object-cover transition-transform duration-300 group-hover:scale-105" />
-              ) : null}
-              <div className="absolute inset-0 flex items-center justify-center bg-black/30 group-hover:bg-black/40 transition-colors duration-300">
-                <div className="w-9 h-9 sm:w-12 sm:h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center transition-transform duration-300 group-hover:scale-110 ring-2 ring-white/30">
-                  <svg className="w-4 h-4 sm:w-6 sm:h-6 text-white ml-0.5" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M8 5v14l11-7z" />
-                  </svg>
-                </div>
-              </div>
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-[11px] sm:text-xs uppercase tracking-widest text-blue-500 dark:text-blue-400 font-semibold truncate">
-                {continueWatching.module.title}
-              </p>
-              <p className="text-base sm:text-lg font-bold text-gray-900 dark:text-white mt-1 line-clamp-2">
-                {continueWatching.lesson.title}
-              </p>
-              <span className="mt-2 inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-blue-600 dark:text-blue-400 group-hover:gap-2.5 transition-[gap] duration-300">
-                {isNewStudent ? "Começar" : "Continuar"}
-                <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                </svg>
-              </span>
-            </div>
-          </Link>
-        </section>
       )}
 
       {course.memberLayoutStyle === "list" ? (
