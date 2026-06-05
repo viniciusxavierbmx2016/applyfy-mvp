@@ -290,14 +290,20 @@ export function ModuleCarousel({ title, modules }: Props) {
           onTouchEnd: onMobileTouchEnd,
           onTouchCancel: onMobileTouchEnd,
         })}
+        // Full-bleed (padrão Netflix): -mx cancela o px do sub-wrapper da page
+        // (4/6/10) → as capas sangram até a borda do conteúdo; px re-padda em
+        // (sub-wrapper px + 1) = posição do px-1 do título → a 1ª capa alinha SOB
+        // o título e a sombra do hover tem folga lateral. O vertical (paddingBlock/
+        // marginBlock 16) preserva a folga da sombra no desktop sem corte do overflow.
+        // measure() lê paddingLeft/Right via getComputedStyle → o scroll se adapta.
         className={
           isMd
-            ? "overflow-hidden"
-            : "overflow-hidden pb-2 -mx-4 px-4"
+            ? "overflow-hidden -mx-4 sm:-mx-6 lg:-mx-10 px-5 sm:px-7 lg:px-11"
+            : "overflow-hidden pb-2 -mx-4 sm:-mx-6 lg:-mx-10 px-5 sm:px-7 lg:px-11"
         }
         style={
           isMd
-            ? { paddingBlock: "16px", marginBlock: "-16px", paddingInline: "16px", marginInline: "-16px" }
+            ? { paddingBlock: "16px", marginBlock: "-16px" }
             : undefined
         }
       >
