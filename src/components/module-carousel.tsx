@@ -244,6 +244,14 @@ export function ModuleCarousel({ title, modules }: Props) {
   const canLeft = isMd ? offset > 0 : false;
   const canRight = isMd ? offset < maxOffset - 4 : false;
 
+  // Fade SÓ na direita (Netflix): a última capa some suave em vez de clipe seco.
+  // `to right` = eixo horizontal só → opaco em toda a altura na zona não-fade, então
+  // NÃO corta a sombra (vertical) do hover. Opaco até (100% - 44px); fade nos últimos
+  // 44px = px-11 (respiro lateral do track no lg) → última capa 100% nítida no fim do
+  // scroll desktop. Esquerda intocada (black 0) → 1ª capa nítida, alinhada com o título.
+  const fadeMask =
+    "linear-gradient(to right, black 0, black calc(100% - 44px), transparent 100%)";
+
   return (
     <section className="mb-12">
       {(title || (isMd && maxOffset > 0)) && (
@@ -303,8 +311,13 @@ export function ModuleCarousel({ title, modules }: Props) {
         }
         style={
           isMd
-            ? { paddingBlock: "16px", marginBlock: "-16px" }
-            : undefined
+            ? {
+                paddingBlock: "16px",
+                marginBlock: "-16px",
+                maskImage: fadeMask,
+                WebkitMaskImage: fadeMask,
+              }
+            : { maskImage: fadeMask, WebkitMaskImage: fadeMask }
         }
       >
         <div
