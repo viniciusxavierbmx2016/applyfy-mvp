@@ -359,7 +359,7 @@ export default function CourseHomePage() {
   if (loading) {
     return (
       <div className="animate-fade-in-up space-y-8 p-4 lg:p-8">
-        <div className="w-full rounded-xl bg-gray-200 dark:bg-gray-800/40 animate-pulse aspect-[16/9] sm:aspect-[2/1] lg:aspect-[45/16]" />
+        <div className="w-full rounded-xl bg-gray-200 dark:bg-gray-800/40 animate-pulse aspect-[16/9] sm:aspect-[10/3] lg:aspect-[75/16]" />
         <div className="space-y-2">
           <div className="h-8 w-2/3 rounded bg-gray-200 dark:bg-gray-800/60 animate-pulse" />
           <div className="h-4 w-1/3 rounded bg-gray-200 dark:bg-gray-800/40 animate-pulse" />
@@ -478,7 +478,7 @@ export default function CourseHomePage() {
       {/* Banner */}
       {course.bannerUrl && (
         <div
-          className="relative w-full overflow-hidden bg-gray-100 dark:bg-gray-900 aspect-[16/9] sm:aspect-[2/1] lg:aspect-[45/16]"
+          className="relative w-full overflow-hidden bg-gray-100 dark:bg-gray-900 aspect-[16/9] sm:aspect-[10/3] lg:aspect-[75/16]"
         >
           <Image
             src={course.bannerUrl}
@@ -499,7 +499,7 @@ export default function CourseHomePage() {
           o banner (sem pt aqui pro margin-top negativo colapsar através deste wrapper). */}
       <div className={`px-4 sm:px-6 lg:px-10 pb-4 lg:pb-6 max-w-[1400px] mx-auto w-full ${course.bannerUrl ? "" : "pt-4 lg:pt-6"}`}>
       {/* Course header row */}
-      <div className={`mb-10 flex flex-col lg:flex-row lg:items-center gap-5 lg:gap-6 bg-white/80 dark:bg-white/5 backdrop-blur-xl border border-gray-200/70 dark:border-white/5 rounded-2xl p-5 shadow-sm shadow-black/[0.02] dark:shadow-none relative z-10 ${course.bannerUrl ? "-mt-16 sm:-mt-20" : ""}`}>
+      <div className={`mb-10 flex flex-col lg:flex-row lg:items-center gap-5 lg:gap-6 bg-white/80 dark:bg-white/5 backdrop-blur-xl border border-gray-200/70 dark:border-white/5 rounded-2xl p-5 shadow-sm shadow-black/[0.02] dark:shadow-none relative z-10 ${course.bannerUrl ? "-mt-12 sm:-mt-14" : ""}`}>
         <div className="flex items-center gap-4 min-w-0 flex-1">
           {course.thumbnail ? (
             <div className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0 ring-1 ring-black/5 dark:ring-white/10">
