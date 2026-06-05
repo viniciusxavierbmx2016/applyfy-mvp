@@ -455,28 +455,30 @@ export default function CourseHomePage() {
   const isNewStudent = !lastAccessedLesson && totals.doneLessons === 0;
 
   return (
-    <div className="px-4 sm:px-6 lg:px-10 py-4 lg:py-6 max-w-[1400px] mx-auto w-full animate-fade-in-up">
+    <div className="w-full animate-fade-in-up">
       {serverStaffViewer && (
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-3 px-4 py-2.5 rounded-lg border border-amber-200 dark:border-amber-900/40 bg-amber-50 dark:bg-amber-950/30 text-sm">
-          <span className="text-amber-800 dark:text-amber-200 flex items-center gap-2">
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-            </svg>
-            Você está visualizando como produtor
-          </span>
-          <Link
-            href={`/producer/courses/${course.id}/edit`}
-            className="text-amber-900 dark:text-amber-100 font-medium hover:underline"
-          >
-            Voltar ao editor →
-          </Link>
+        <div className="px-4 sm:px-6 lg:px-10 max-w-[1400px] mx-auto w-full pt-4 lg:pt-6">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3 px-4 py-2.5 rounded-lg border border-amber-200 dark:border-amber-900/40 bg-amber-50 dark:bg-amber-950/30 text-sm">
+            <span className="text-amber-800 dark:text-amber-200 flex items-center gap-2">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              </svg>
+              Você está visualizando como produtor
+            </span>
+            <Link
+              href={`/producer/courses/${course.id}/edit`}
+              className="text-amber-900 dark:text-amber-100 font-medium hover:underline"
+            >
+              Voltar ao editor →
+            </Link>
+          </div>
         </div>
       )}
       {/* Banner */}
       {course.bannerUrl && (
         <div
-          className="relative w-full mb-0 -mx-4 sm:-mx-6 lg:-mx-10 overflow-hidden bg-gray-100 dark:bg-gray-900 aspect-[16/9] sm:aspect-[2/1] lg:aspect-[45/16]"
+          className="relative w-full overflow-hidden bg-gray-100 dark:bg-gray-900 aspect-[16/9] sm:aspect-[2/1] lg:aspect-[45/16]"
         >
           <Image
             src={course.bannerUrl}
@@ -492,6 +494,10 @@ export default function CourseHomePage() {
         </div>
       )}
 
+      {/* Resto do conteúdo: capado em 1400 + centralizado, com o padding lateral.
+          pt SÓ quando NÃO há banner — com banner, o box de info sobe via -mt e sobrepõe
+          o banner (sem pt aqui pro margin-top negativo colapsar através deste wrapper). */}
+      <div className={`px-4 sm:px-6 lg:px-10 pb-4 lg:pb-6 max-w-[1400px] mx-auto w-full ${course.bannerUrl ? "" : "pt-4 lg:pt-6"}`}>
       {/* Course header row */}
       <div className={`mb-10 flex flex-col lg:flex-row lg:items-center gap-5 lg:gap-6 bg-white/80 dark:bg-white/5 backdrop-blur-xl border border-gray-200/70 dark:border-white/5 rounded-2xl p-5 shadow-sm shadow-black/[0.02] dark:shadow-none relative z-10 ${course.bannerUrl ? "-mt-16 sm:-mt-20" : ""}`}>
         <div className="flex items-center gap-4 min-w-0 flex-1">
@@ -747,6 +753,7 @@ export default function CourseHomePage() {
           </div>
         </section>
       )}
+      </div>
     </div>
   );
 }
