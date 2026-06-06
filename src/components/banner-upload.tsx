@@ -184,25 +184,48 @@ export function BannerUpload({
                 // v1: assume the upload matches the widest aspect in the list.
                 // Each device shows a horizontal slice = (deviceAspect/imageAspect)
                 // of the image width, anchored by pos.x (object-cover): left edge
-                // at pos.x=0, centered at 50, right edge at 100. Slides live as the
-                // producer drags. Full-height bands (no vertical crop for a 75/16 img).
+                // at pos.x=0, centered at 50, right edge at 100. Slides live with
+                // the drag — NO transition so the guides track the image 1:1 (the
+                // image's objectPosition is instant; an eased guide would lag it).
+                // Full-height bands (no vertical crop for a 75/16 image).
                 const imageAspect = Math.max(...cropWindows.map((w) => w.aspect));
-                return cropWindows.map((w) => {
+                const windows = cropWindows.map((w) => {
                   const fraction = Math.min(1, w.aspect / imageAspect);
-                  const leftPct = (1 - fraction) * pos.x; // pos.x is 0–100 → percent
-                  const widthPct = fraction * 100;
-                  return (
-                    <div
-                      key={w.label}
-                      className="absolute top-0 bottom-0 border border-white/60 pointer-events-none"
-                      style={{ left: `${leftPct}%`, width: `${widthPct}%` }}
-                    >
-                      <span className="absolute top-1 left-1 text-[10px] leading-none text-white bg-black/50 px-1 py-0.5 rounded">
+                  return { ...w, fraction, left: (1 - fraction) * pos.x, width: fraction * 100 };
+                });
+                // Safe zone = the narrowest window (smallest fraction) — what every
+                // device shows. Outside it gets a light veil; the clear band = safe.
+                const safe = windows.reduce((a, b) => (b.fraction < a.fraction ? b : a));
+                const safeRight = safe.left + safe.width;
+                return (
+                  <>
+                    {/* Véu sutil fora da zona segura (lados da banda mais estreita) */}
+                    <div className="absolute inset-y-0 left-0 bg-black/45 pointer-events-none" style={{ width: `${safe.left}%` }} />
+                    <div className="absolute inset-y-0 right-0 bg-black/45 pointer-events-none" style={{ width: `${100 - safeRight}%` }} />
+                    {/* Linhas finas nas bordas das janelas que cortam (fraction < 1);
+                        a zona segura (celular) ganha linha mais nítida que as demais. */}
+                    {windows.map((w) =>
+                      w.fraction < 1 ? (
+                        <div
+                          key={`line-${w.label}`}
+                          className={`absolute inset-y-0 border-x pointer-events-none ${w === safe ? "border-white/70" : "border-white/25"}`}
+                          style={{ left: `${w.left}%`, width: `${w.width}%` }}
+                        />
+                      ) : null
+                    )}
+                    {/* Labels discretos na borda esquerda de cada janela; o celular
+                        (zona segura) em destaque (claro), os demais translúcidos. */}
+                    {windows.map((w) => (
+                      <span
+                        key={`lbl-${w.label}`}
+                        className={`absolute top-1.5 text-[10px] leading-none px-1.5 py-0.5 rounded pointer-events-none ${w === safe ? "bg-white/90 text-gray-900 font-medium" : "bg-black/50 text-white/90"}`}
+                        style={{ left: `calc(${w.left}% + 4px)` }}
+                      >
                         {w.label}
                       </span>
-                    </div>
-                  );
-                });
+                    ))}
+                  </>
+                );
               })()}
               <div className="absolute top-2 left-1/2 -translate-x-1/2 bg-black/70 text-white text-xs px-3 py-1 rounded-full pointer-events-none">
                 Arraste para reposicionar
