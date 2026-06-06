@@ -697,9 +697,7 @@ export default function LessonPage(
               );
             })()}
 
-            <div className="mt-4 bg-gray-50 dark:bg-white/5 border border-gray-200/50 dark:border-white/5 rounded-xl p-5">
-              <LessonQuiz lessonId={data.lesson.id} />
-            </div>
+            <LessonQuiz lessonId={data.lesson.id} />
           </div>
         </div>
 
