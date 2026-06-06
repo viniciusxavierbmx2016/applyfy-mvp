@@ -19,6 +19,14 @@ interface BannerUploadProps {
   aspectRatio?: string;
   label?: string;
   hint?: string;
+  /**
+   * Opt-in crop-window guides shown in reposition mode. Each entry is a device
+   * viewport the banner renders in. v1 assumes the uploaded image matches the
+   * WIDEST aspect (the largest in this list, e.g. 75/16 = desktop). Pass only
+   * where the banner is shown at multiple responsive aspects (course banner);
+   * omit for single-aspect banners (workspace) so no guides render.
+   */
+  cropWindows?: { label: string; aspect: number }[];
 }
 
 export function BannerUpload({
@@ -32,6 +40,7 @@ export function BannerUpload({
   aspectRatio = "1125/350",
   label = "Banner do curso",
   hint = "Tamanho ideal: 1125x350px. PNG, JPG ou WebP, máx. 5MB.",
+  cropWindows,
 }: BannerUploadProps) {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
@@ -171,6 +180,30 @@ export function BannerUpload({
 
           {mode === "reposition" && (
             <>
+              {cropWindows && cropWindows.length > 0 && (() => {
+                // v1: assume the upload matches the widest aspect in the list.
+                // Each device shows a horizontal slice = (deviceAspect/imageAspect)
+                // of the image width, anchored by pos.x (object-cover): left edge
+                // at pos.x=0, centered at 50, right edge at 100. Slides live as the
+                // producer drags. Full-height bands (no vertical crop for a 75/16 img).
+                const imageAspect = Math.max(...cropWindows.map((w) => w.aspect));
+                return cropWindows.map((w) => {
+                  const fraction = Math.min(1, w.aspect / imageAspect);
+                  const leftPct = (1 - fraction) * pos.x; // pos.x is 0–100 → percent
+                  const widthPct = fraction * 100;
+                  return (
+                    <div
+                      key={w.label}
+                      className="absolute top-0 bottom-0 border border-white/60 pointer-events-none"
+                      style={{ left: `${leftPct}%`, width: `${widthPct}%` }}
+                    >
+                      <span className="absolute top-1 left-1 text-[10px] leading-none text-white bg-black/50 px-1 py-0.5 rounded">
+                        {w.label}
+                      </span>
+                    </div>
+                  );
+                });
+              })()}
               <div className="absolute top-2 left-1/2 -translate-x-1/2 bg-black/70 text-white text-xs px-3 py-1 rounded-full pointer-events-none">
                 Arraste para reposicionar
               </div>
