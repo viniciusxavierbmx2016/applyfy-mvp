@@ -342,6 +342,11 @@ export function CourseForm({ initial, mode }: CourseFormProps) {
               onModeChange={setBannerMode}
               aspectRatio="75/16"
               hint="Tamanho ideal: 3000x640px. No celular as laterais são cortadas — mantenha o essencial no centro. PNG, JPG ou WebP, máx. 5MB."
+              cropWindows={[
+                { label: "Computador", aspect: 75 / 16 },
+                { label: "Tablet", aspect: 10 / 3 },
+                { label: "Celular", aspect: 16 / 9 },
+              ]}
             />
           </div>
         </div>
