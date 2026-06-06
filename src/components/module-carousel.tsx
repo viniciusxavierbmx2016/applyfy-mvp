@@ -74,10 +74,13 @@ export function ModuleCarousel({ title, modules }: Props) {
     const max = Math.max(0, track.scrollWidth - (container.clientWidth - (parseFloat(getComputedStyle(container).paddingLeft) || 0) - (parseFloat(getComputedStyle(container).paddingRight) || 0)));
     setMaxOffset(max);
     setOffset((prev) => Math.min(prev, max));
-    // Mobile uses the same transform mechanic; its frame is the full
-    // container width (the -mx-4 / px-4 cancel out horizontally). Computed
-    // unconditionally so we don't need isMd as a measure() dependency.
-    const mMax = Math.max(0, track.scrollWidth - container.clientWidth);
+    // Mobile uses the same transform mechanic — and the SAME max formula as
+    // desktop: subtract the container's lateral padding (px-5/7/11). The padding
+    // insets the track content inside the overflow-clip box, so it shrinks the
+    // visible content area and therefore the scroll range. Without subtracting
+    // it, mMax is ~40px too small and the last cover stops cut off past the edge.
+    // Computed unconditionally so we don't need isMd as a measure() dependency.
+    const mMax = Math.max(0, track.scrollWidth - (container.clientWidth - (parseFloat(getComputedStyle(container).paddingLeft) || 0) - (parseFloat(getComputedStyle(container).paddingRight) || 0)));
     setMobileMaxOffset(mMax);
     setMobileOffset((prev) => Math.min(prev, mMax));
   }, []);
