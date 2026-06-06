@@ -254,6 +254,13 @@ export function ModuleCarousel({ title, modules }: Props) {
   // scroll desktop. Esquerda intocada (black 0) → 1ª capa nítida, alinhada com o título.
   const fadeMask =
     "linear-gradient(to right, black 0, black calc(100% - 44px), transparent 100%)";
+  // Mobile: fade de 20px = gutter px-5. Pós-fix do scroll-range (714749a) a última
+  // capa assenta em W-20 (gutter de 20px à direita). Fade de 20px = [W-20, W] = só o
+  // respiro vazio → capa 100% opaca, fade nunca a cobre. Regra: fade ≤ gutter (mesma
+  // lógica do desktop lg: 44px = px-11). No sm (640-768, gutter 28px) o fade de 20px
+  // < gutter → também seguro. NÃO usar 44px aqui (cobriria a capa em 24px).
+  const fadeMaskMobile =
+    "linear-gradient(to right, black 0, black calc(100% - 20px), transparent 100%)";
 
   return (
     <section className="mb-12">
@@ -320,11 +327,9 @@ export function ModuleCarousel({ title, modules }: Props) {
                 maskImage: fadeMask,
                 WebkitMaskImage: fadeMask,
               }
-            : // Mobile: SEM fade. O fade é fixo em 44px (= px-11 do lg); no mobile
-              // o padding lateral é px-5 (20px) < 44px → não há respiro pra máscara
-              // dissolver e ela sangra sobre a última capa no fim do scroll. O peek
-              // da capa cortada (basis-[28%]) já comunica "tem mais" no mobile.
-              undefined
+            : // Mobile: fade de 20px (fadeMaskMobile), casado com o gutter px-5 → o
+              // respiro dissolve suave (acabamento Netflix) sem cobrir a última capa.
+              { maskImage: fadeMaskMobile, WebkitMaskImage: fadeMaskMobile }
         }
       >
         <div
