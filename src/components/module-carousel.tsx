@@ -178,13 +178,13 @@ export function ModuleCarousel({ title, modules }: Props) {
       finalOffset = Math.max(0, Math.min(mobileMaxOffset, finalOffset));
 
       // Snap to the nearest card. Measure the real card stride (width + gap-3
-      // = 12px); fall back to the 75%-width approximation if not measurable.
+      // = 12px); fall back to the 28%-width approximation if not measurable.
       const firstCard = trackRef.current
         ?.firstElementChild as HTMLElement | null;
       const stride = firstCard
         ? firstCard.offsetWidth + 12
         : containerRef.current
-          ? containerRef.current.clientWidth * 0.75 + 12
+          ? containerRef.current.clientWidth * 0.28 + 12
           : 200;
       if (stride > 0) {
         finalOffset = Math.round(finalOffset / stride) * stride;
@@ -357,7 +357,7 @@ const ModuleCard = React.memo(function ModuleCard({
           src={mod.thumbnailUrl}
           alt={mod.title}
           fill
-          sizes="(max-width: 640px) 65vw, (max-width: 1024px) 33vw, 20vw"
+          sizes="(max-width: 640px) 33vw, (max-width: 1024px) 33vw, 20vw"
           className="object-cover group-hover:scale-105 transition-transform duration-300"
         />
       ) : (
@@ -369,7 +369,7 @@ const ModuleCard = React.memo(function ModuleCard({
       )}
 
       {mod.progressPct >= 100 && !mod.locked && (
-        <div className="absolute top-3 right-3 w-7 h-7 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-lg ring-2 ring-white/30">
+        <div className="absolute top-3 right-3 w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-lg ring-2 ring-white/30">
           <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
           </svg>
@@ -419,8 +419,8 @@ const ModuleCard = React.memo(function ModuleCard({
           </div>
         ) : null
       ) : (
-        <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 via-black/40 to-transparent pt-20">
-          <p className="text-base font-bold tracking-tight text-white line-clamp-2 drop-shadow-lg">
+        <div className="absolute bottom-0 left-0 right-0 p-2 sm:p-4 bg-gradient-to-t from-black/80 via-black/40 to-transparent pt-10 sm:pt-20">
+          <p className="text-xs sm:text-base font-bold tracking-tight text-white line-clamp-2 drop-shadow-lg">
             {mod.title}
           </p>
           <p className="text-xs text-gray-300/90 mt-1">
@@ -441,7 +441,7 @@ const ModuleCard = React.memo(function ModuleCard({
     </div>
   );
 
-  const className = `group shrink-0 basis-[75%] sm:basis-[45%] md:basis-[35%] lg:basis-[28%] xl:basis-[22%] rounded-xl overflow-hidden isolate will-change-transform transition-[transform,box-shadow] duration-300 ease-out ${
+  const className = `group shrink-0 basis-[28%] sm:basis-[45%] md:basis-[35%] lg:basis-[28%] xl:basis-[22%] rounded-xl overflow-hidden isolate will-change-transform transition-[transform,box-shadow] duration-300 ease-out ${
     mod.clickable ? "hover:scale-[1.05] hover:shadow-2xl hover:shadow-black/30 hover:z-10" : "cursor-not-allowed"
   }`;
 
