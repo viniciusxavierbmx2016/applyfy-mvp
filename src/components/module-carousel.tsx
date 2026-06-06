@@ -317,7 +317,11 @@ export function ModuleCarousel({ title, modules }: Props) {
                 maskImage: fadeMask,
                 WebkitMaskImage: fadeMask,
               }
-            : { maskImage: fadeMask, WebkitMaskImage: fadeMask }
+            : // Mobile: SEM fade. O fade é fixo em 44px (= px-11 do lg); no mobile
+              // o padding lateral é px-5 (20px) < 44px → não há respiro pra máscara
+              // dissolver e ela sangra sobre a última capa no fim do scroll. O peek
+              // da capa cortada (basis-[28%]) já comunica "tem mais" no mobile.
+              undefined
         }
       >
         <div
