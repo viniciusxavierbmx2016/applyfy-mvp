@@ -463,10 +463,10 @@ export default function CourseHomePage() {
           o banner (sem pt aqui pro margin-top negativo colapsar através deste wrapper). */}
       <div className={`px-4 sm:px-6 lg:px-10 pb-4 lg:pb-6 max-w-[1400px] mx-auto w-full ${course.bannerUrl ? "" : "pt-4 lg:pt-6"}`}>
       {/* Course header row */}
-      <div className={`mb-10 flex flex-col lg:flex-row lg:items-center gap-5 lg:gap-6 bg-white/80 dark:bg-white/5 backdrop-blur-xl border border-gray-200/70 dark:border-white/5 rounded-2xl p-5 shadow-sm shadow-black/[0.02] dark:shadow-none relative z-10 ${course.bannerUrl ? "-mt-12 sm:-mt-14" : ""}`}>
-        <div className="flex items-center gap-4 min-w-0 flex-1">
+      <div className={`mb-5 lg:mb-10 flex flex-col lg:flex-row lg:items-center gap-3 lg:gap-6 bg-white/80 dark:bg-white/5 backdrop-blur-xl border border-gray-200/70 dark:border-white/5 rounded-2xl p-4 lg:p-5 shadow-sm shadow-black/[0.02] dark:shadow-none relative z-10 ${course.bannerUrl ? "-mt-12 sm:-mt-14" : ""}`}>
+        <div className="flex items-center gap-3 lg:gap-4 min-w-0 flex-1">
           {course.thumbnail ? (
-            <div className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0 ring-1 ring-black/5 dark:ring-white/10">
+            <div className="relative w-11 h-11 sm:w-16 sm:h-16 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0 ring-1 ring-black/5 dark:ring-white/10">
               <Image
                 src={course.thumbnail}
                 alt={course.title}
@@ -477,12 +477,12 @@ export default function CourseHomePage() {
               />
             </div>
           ) : (
-            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white font-semibold text-xl flex-shrink-0 shadow-sm">
+            <div className="w-11 h-11 sm:w-16 sm:h-16 rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-white font-semibold text-xl flex-shrink-0 shadow-sm">
               {course.title.charAt(0).toUpperCase()}
             </div>
           )}
           <div className="min-w-0">
-            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold tracking-tight text-gray-900 dark:text-white truncate">
+            <h1 className="text-lg sm:text-2xl lg:text-3xl font-bold tracking-tight text-gray-900 dark:text-white truncate">
               {course.title}
             </h1>
             <p className="text-xs sm:text-sm text-gray-500 mt-1">
