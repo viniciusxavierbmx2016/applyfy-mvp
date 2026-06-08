@@ -469,12 +469,12 @@ export default function LessonPage(
                     </h1>
                   </div>
 
-                  <div className="flex items-center gap-2 flex-shrink-0 touch-pan-x overflow-x-auto pb-1 sm:pb-0 sm:pt-3">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-2 flex-shrink-0 w-full sm:w-auto sm:pt-3">
                     <button
                       type="button"
                       onClick={() => markCompleted(!data.lesson.completed)}
                       disabled={marking}
-                      className={`inline-flex items-center justify-center min-w-36 gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-colors duration-300 disabled:opacity-50 ${
+                      className={`inline-flex items-center justify-center w-full sm:w-auto sm:min-w-36 gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-colors duration-300 disabled:opacity-50 ${
                         data.lesson.completed
                           ? "bg-emerald-500/12 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20"
                           : "bg-gradient-to-r from-emerald-600 to-emerald-500 text-white hover:brightness-110 border border-transparent"
@@ -486,8 +486,9 @@ export default function LessonPage(
                       {data.lesson.completed ? "Concluída" : "Concluir aula"}
                     </button>
 
+                    <div className="flex items-center justify-between gap-2 flex-wrap sm:flex-nowrap sm:justify-start">
                     {data.course.lessonReactionsEnabled && (
-                      <>
+                      <div className="flex items-center gap-2">
                         <button
                           type="button"
                           onClick={() => handleReaction("LIKE")}
@@ -523,12 +524,13 @@ export default function LessonPage(
                             <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" />
                           </svg>
                         </button>
-                      </>
+                      </div>
                     )}
 
                     {(data.prev || data.next) && (
                       <>
-                        <div className="w-px h-6 bg-gray-200 dark:bg-white/10 mx-1" />
+                        <div className="w-px h-6 bg-gray-200 dark:bg-white/10 mx-1 hidden sm:block" />
+                        <div className="flex items-center gap-2">
                         {data.prev && (
                           <Link
                             href={`/course/${data.course.slug}/lesson/${data.prev.id}`}
@@ -545,8 +547,10 @@ export default function LessonPage(
                             Próxima →
                           </Link>
                         )}
+                        </div>
                       </>
                     )}
+                    </div>
                   </div>
                 </div>
               );
