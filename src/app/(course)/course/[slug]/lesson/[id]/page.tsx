@@ -556,6 +556,43 @@ export default function LessonPage(
               );
             })()}
 
+            {materials.length > 0 && (
+              <div className="mt-6 mb-5">
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-500 mb-2.5">
+                  Materiais da aula
+                </p>
+                <div className="flex flex-col gap-2">
+                  {materials.map((mat) => {
+                    const icon = getMaterialIcon(mat.fileType);
+                    return (
+                      <a
+                        key={mat.id}
+                        href={mat.fileUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="group flex items-center gap-3 p-3 bg-gray-50 dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.06] rounded-xl hover:bg-gray-100 dark:hover:bg-white/[0.06] hover:border-gray-300 dark:hover:border-white/[0.12] transition-colors"
+                      >
+                        <span className={`w-10 h-10 rounded-lg flex items-center justify-center text-[10px] font-bold flex-shrink-0 ${icon.color}`}>
+                          {icon.label}
+                        </span>
+                        <span className="flex-1 min-w-0">
+                          <span className="block text-sm text-gray-800 dark:text-gray-100 truncate">
+                            {mat.name || mat.fileName}
+                          </span>
+                          <span className="block text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+                            {formatFileSize(mat.fileSize)}
+                          </span>
+                        </span>
+                        <svg className="w-5 h-5 text-gray-400 dark:text-gray-500 group-hover:text-gray-600 dark:group-hover:text-gray-300 flex-shrink-0 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-8-9v10m0 0l-4-4m4 4l4-4" />
+                        </svg>
+                      </a>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             <div className="h-px bg-gray-200 dark:bg-white/5 mb-5" />
 
             {(() => {
@@ -634,31 +671,6 @@ export default function LessonPage(
                             <p className="text-gray-400 dark:text-gray-500 text-sm italic">Sem descrição para esta aula.</p>
                           )}
                         </div>
-                        {materials.length > 0 && (
-                          <div className="mt-5 pt-4 border-t border-gray-200/30 dark:border-white/5">
-                            <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-500 mb-2.5">
-                              Materiais da aula
-                            </p>
-                            <div className="flex flex-wrap gap-2">
-                              {materials.map((mat) => {
-                                const icon = getMaterialIcon(mat.fileType);
-                                return (
-                                  <a
-                                    key={mat.id}
-                                    href={mat.fileUrl}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="flex items-center gap-2 px-3.5 py-2 bg-gray-50 dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.06] rounded-lg text-xs text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/[0.06] hover:border-gray-300 dark:hover:border-white/[0.12] hover:text-gray-900 dark:hover:text-white transition-colors"
-                                  >
-                                    <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: icon.dotColor }} />
-                                    {mat.name || mat.fileName}
-                                    <span className="text-[10px] text-gray-400 dark:text-gray-600 ml-1">{formatFileSize(mat.fileSize)}</span>
-                                  </a>
-                                );
-                              })}
-                            </div>
-                          </div>
-                        )}
                       </>
                     )}
                     {shownTab === "comments" && (
