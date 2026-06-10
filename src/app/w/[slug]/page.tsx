@@ -113,6 +113,7 @@ export default function WorkspaceVitrinePage() {
   const [loadError, setLoadError] = useState(false);
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  const [greeting, setGreeting] = useState(getGreeting);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -160,6 +161,21 @@ export default function WorkspaceVitrinePage() {
     }
     load();
   }, [user, userLoading, slug, router, load]);
+
+  useEffect(() => {
+    const update = () => setGreeting(getGreeting());
+    const onVisible = () => {
+      if (document.visibilityState === "visible") update();
+    };
+    const id = setInterval(update, 60_000);
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("focus", update);
+    return () => {
+      clearInterval(id);
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("focus", update);
+    };
+  }, []);
 
   const displayName = ws?.name || "Workspace";
 
@@ -257,7 +273,6 @@ export default function WorkspaceVitrinePage() {
       ? "grid grid-cols-1 sm:grid-cols-2 gap-4"
       : "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4";
 
-  const greeting = getGreeting();
   const firstName = user?.name?.split(" ")[0] || "aluno";
   const welcomeEnabled = ws?.vitrineWelcomeEnabled !== false;
   const welcomeTitle = ws?.vitrineWelcomeTitle?.trim() || `${greeting}, ${firstName}`;
