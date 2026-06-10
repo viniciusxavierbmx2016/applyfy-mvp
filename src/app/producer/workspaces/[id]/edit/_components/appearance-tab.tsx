@@ -29,6 +29,13 @@ interface AppearanceTabProps {
   setVitrineWelcomeTitle: Dispatch<SetStateAction<string | null>>;
   vitrineWelcomeEnabled: boolean;
   setVitrineWelcomeEnabled: Dispatch<SetStateAction<boolean>>;
+  // Fade do banner
+  vitrineBannerFadeEnabled: boolean;
+  setVitrineBannerFadeEnabled: Dispatch<SetStateAction<boolean>>;
+  vitrineBannerFadeColor: string | null;
+  setVitrineBannerFadeColor: Dispatch<SetStateAction<string | null>>;
+  vitrineBannerFadeOpacity: number;
+  setVitrineBannerFadeOpacity: Dispatch<SetStateAction<number>>;
   // Banner
   wsBannerUrl: string | null;
   setWsBannerUrl: Dispatch<SetStateAction<string | null>>;
@@ -68,6 +75,12 @@ export function AppearanceTab({
   setVitrineWelcomeTitle,
   vitrineWelcomeEnabled,
   setVitrineWelcomeEnabled,
+  vitrineBannerFadeEnabled,
+  setVitrineBannerFadeEnabled,
+  vitrineBannerFadeColor,
+  setVitrineBannerFadeColor,
+  vitrineBannerFadeOpacity,
+  setVitrineBannerFadeOpacity,
   wsBannerUrl,
   setWsBannerUrl,
   wsBannerPos,
@@ -253,6 +266,102 @@ export function AppearanceTab({
           label="Banner da vitrine"
           hint="Tamanho ideal: 1920x400px. PNG, JPG ou WebP, máx. 5MB."
         />
+      </div>
+
+      {/* Fade do banner */}
+      <div className="mb-8 pt-8 border-t border-gray-200 dark:border-white/5">
+        <div className="flex items-start justify-between gap-3 mb-4">
+          <div className="min-w-0">
+            <h2 className="text-sm font-medium text-gray-900 dark:text-white mb-0.5">
+              Fade do banner
+              <HelpTooltip text="Esmaecimento na base do banner, atrás da saudação." />
+            </h2>
+            <p className="text-xs text-gray-500">
+              Aplicado somente quando há um banner
+            </p>
+          </div>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={vitrineBannerFadeEnabled}
+            onClick={() => setVitrineBannerFadeEnabled(!vitrineBannerFadeEnabled)}
+            className={`relative shrink-0 inline-flex h-5 w-9 items-center rounded-full transition-colors ${
+              vitrineBannerFadeEnabled ? "bg-primary" : "bg-gray-300 dark:bg-gray-700"
+            }`}
+          >
+            <span
+              className={`inline-block h-4 w-4 rounded-full bg-white shadow transition-transform ${
+                vitrineBannerFadeEnabled ? "translate-x-[18px]" : "translate-x-0.5"
+              }`}
+            />
+          </button>
+        </div>
+
+        <div className={`space-y-4 ${vitrineBannerFadeEnabled ? "" : "opacity-50"}`}>
+          {/* Cor */}
+          <div>
+            <label className="block text-[11px] font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Cor
+            </label>
+            <div className="flex items-center gap-3">
+              <label
+                className="w-9 h-9 rounded-lg shrink-0 border border-gray-200 dark:border-white/10 relative overflow-hidden cursor-pointer"
+                style={{ backgroundColor: vitrineBannerFadeColor && HEX_RE.test(vitrineBannerFadeColor) ? vitrineBannerFadeColor : "#d1d5db" }}
+              >
+                <input
+                  type="color"
+                  value={vitrineBannerFadeColor && HEX_RE.test(vitrineBannerFadeColor) ? vitrineBannerFadeColor : "#3b82f6"}
+                  onChange={(e) => setVitrineBannerFadeColor(e.target.value)}
+                  disabled={!vitrineBannerFadeEnabled}
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                />
+              </label>
+              <input
+                type="text"
+                value={vitrineBannerFadeColor || ""}
+                onChange={(e) => setVitrineBannerFadeColor(e.target.value || null)}
+                disabled={!vitrineBannerFadeEnabled}
+                placeholder="Automático — claro/escuro pelo tema"
+                className={`${inputClass} !font-mono flex-1`}
+              />
+              {vitrineBannerFadeColor && (
+                <button
+                  type="button"
+                  onClick={() => setVitrineBannerFadeColor(null)}
+                  disabled={!vitrineBannerFadeEnabled}
+                  className="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white px-2 py-1 shrink-0"
+                >
+                  Restaurar
+                </button>
+              )}
+            </div>
+            <p className="text-[11px] text-gray-500 mt-1">
+              Em branco = automático. Escolha uma cor para usar nos dois temas
+            </p>
+          </div>
+
+          {/* Opacidade */}
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <label className="text-[11px] font-medium text-gray-700 dark:text-gray-300">
+                Opacidade
+              </label>
+              <span className="text-[11px] font-mono text-gray-500">
+                {Math.round(vitrineBannerFadeOpacity * 100)}%
+              </span>
+            </div>
+            <input
+              type="range"
+              min={0}
+              max={100}
+              step={1}
+              value={Math.round(vitrineBannerFadeOpacity * 100)}
+              onChange={(e) => setVitrineBannerFadeOpacity(Number(e.target.value) / 100)}
+              disabled={!vitrineBannerFadeEnabled}
+              className="w-full h-1 accent-primary"
+            />
+          </div>
+        </div>
       </div>
 
       {/* Favicon */}
