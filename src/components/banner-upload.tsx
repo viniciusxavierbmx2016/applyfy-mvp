@@ -22,9 +22,9 @@ interface BannerUploadProps {
   /**
    * Opt-in crop-window guides shown in reposition mode. Each entry is a device
    * viewport the banner renders in. v1 assumes the uploaded image matches the
-   * WIDEST aspect (the largest in this list, e.g. 75/16 = desktop). Pass only
-   * where the banner is shown at multiple responsive aspects (course banner);
-   * omit for single-aspect banners (workspace) so no guides render.
+   * WIDEST aspect (the largest in this list, e.g. 75/16 = desktop). Pass
+   * wherever the banner renders at multiple responsive aspects (course AND
+   * workspace banners); omit only for genuinely single-aspect banners.
    */
   cropWindows?: { label: string; aspect: number }[];
 }
