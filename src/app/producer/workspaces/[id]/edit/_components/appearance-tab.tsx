@@ -263,6 +263,11 @@ export function AppearanceTab({
           mode={wsBannerMode}
           onModeChange={setWsBannerMode}
           aspectRatio="24/5"
+          cropWindows={[
+            { label: "Computador", aspect: 24 / 5 },
+            { label: "Tablet", aspect: 16 / 7 },
+            { label: "Celular", aspect: 3 / 2 },
+          ]}
           label="Banner da vitrine"
           hint="Tamanho ideal: 1920x400px. PNG, JPG ou WebP, máx. 5MB."
         />
