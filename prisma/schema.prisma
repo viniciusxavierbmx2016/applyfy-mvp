@@ -98,6 +98,8 @@ model Workspace {
   vitrineCardColor    String?
   vitrineTextColor    String?
   vitrineWelcomeText  String?
+  vitrineWelcomeTitle   String?
+  vitrineWelcomeEnabled Boolean  @default(true)
   vitrineLayoutStyle  String?  @default("netflix")
   // Access-email customization (all optional → falls back to the default
   // template when empty; emailUseCustomHtml lets a producer supply raw HTML).

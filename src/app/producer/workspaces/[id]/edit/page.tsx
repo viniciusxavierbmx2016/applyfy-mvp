@@ -79,6 +79,8 @@ export default function EditWorkspacePage() {
   const [vitrineCardColor, setVitrineCardColor] = useState<string | null>(null);
   const [vitrineTextColor, setVitrineTextColor] = useState<string | null>(null);
   const [vitrineWelcomeText, setVitrineWelcomeText] = useState<string | null>(null);
+  const [vitrineWelcomeTitle, setVitrineWelcomeTitle] = useState<string | null>(null);
+  const [vitrineWelcomeEnabled, setVitrineWelcomeEnabled] = useState<boolean>(true);
   const [vitrineLayoutStyle, setVitrineLayoutStyle] = useState<string>("netflix");
 
   const [emailConfig, setEmailConfig] = useState<EmailConfig>(EMPTY_EMAIL_CONFIG);
@@ -166,6 +168,8 @@ export default function EditWorkspacePage() {
         setVitrineCardColor(c.vitrineCardColor ?? null);
         setVitrineTextColor(c.vitrineTextColor ?? null);
         setVitrineWelcomeText(c.vitrineWelcomeText ?? null);
+        setVitrineWelcomeTitle(c.vitrineWelcomeTitle ?? null);
+        setVitrineWelcomeEnabled(c.vitrineWelcomeEnabled ?? true);
         setVitrineLayoutStyle(c.vitrineLayoutStyle ?? "netflix");
       })
       .catch(() => {});
@@ -305,6 +309,8 @@ export default function EditWorkspacePage() {
     setVitrineCardColor(null);
     setVitrineTextColor(null);
     setVitrineWelcomeText(null);
+    setVitrineWelcomeTitle(null);
+    setVitrineWelcomeEnabled(true);
     setVitrineLayoutStyle("netflix");
     showToast("Vitrine restaurada para o padrão");
   }
@@ -390,6 +396,8 @@ export default function EditWorkspacePage() {
         vitrineCardColor: vitrineCardColor && HEX_RE.test(vitrineCardColor) ? vitrineCardColor : null,
         vitrineTextColor: vitrineTextColor && HEX_RE.test(vitrineTextColor) ? vitrineTextColor : null,
         vitrineWelcomeText: vitrineWelcomeText || null,
+        vitrineWelcomeTitle: vitrineWelcomeTitle || null,
+        vitrineWelcomeEnabled: vitrineWelcomeEnabled,
         vitrineLayoutStyle,
       };
 
@@ -569,6 +577,10 @@ export default function EditWorkspacePage() {
             setVitrineTextColor={setVitrineTextColor}
             vitrineWelcomeText={vitrineWelcomeText}
             setVitrineWelcomeText={setVitrineWelcomeText}
+            vitrineWelcomeTitle={vitrineWelcomeTitle}
+            setVitrineWelcomeTitle={setVitrineWelcomeTitle}
+            vitrineWelcomeEnabled={vitrineWelcomeEnabled}
+            setVitrineWelcomeEnabled={setVitrineWelcomeEnabled}
             wsBannerUrl={wsBannerUrl}
             setWsBannerUrl={setWsBannerUrl}
             wsBannerPos={wsBannerPos}
