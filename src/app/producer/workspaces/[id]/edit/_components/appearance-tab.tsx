@@ -22,9 +22,13 @@ interface AppearanceTabProps {
   setVitrineCardColor: Dispatch<SetStateAction<string | null>>;
   vitrineTextColor: string | null;
   setVitrineTextColor: Dispatch<SetStateAction<string | null>>;
-  // Mensagem de boas-vindas
+  // Saudação da vitrine
   vitrineWelcomeText: string | null;
   setVitrineWelcomeText: Dispatch<SetStateAction<string | null>>;
+  vitrineWelcomeTitle: string | null;
+  setVitrineWelcomeTitle: Dispatch<SetStateAction<string | null>>;
+  vitrineWelcomeEnabled: boolean;
+  setVitrineWelcomeEnabled: Dispatch<SetStateAction<boolean>>;
   // Banner
   wsBannerUrl: string | null;
   setWsBannerUrl: Dispatch<SetStateAction<string | null>>;
@@ -60,6 +64,10 @@ export function AppearanceTab({
   setVitrineTextColor,
   vitrineWelcomeText,
   setVitrineWelcomeText,
+  vitrineWelcomeTitle,
+  setVitrineWelcomeTitle,
+  vitrineWelcomeEnabled,
+  setVitrineWelcomeEnabled,
   wsBannerUrl,
   setWsBannerUrl,
   wsBannerPos,
@@ -138,28 +146,88 @@ export function AppearanceTab({
         </div>
       </div>
 
-      {/* Mensagem de boas-vindas */}
+      {/* Saudação da vitrine */}
       <div className="mb-8 pt-8 border-t border-gray-200 dark:border-white/5">
-        <h2 className="text-sm font-medium text-gray-900 dark:text-white mb-0.5">
-          Mensagem de boas-vindas
-          <HelpTooltip text="Mensagem exibida no topo da vitrine quando o aluno acessa a área de membros." />
-        </h2>
-        <p className="text-xs text-gray-500 mb-4">
-          Texto exibido no topo da vitrine para o aluno
-        </p>
-        <textarea
-          value={vitrineWelcomeText || ""}
-          onChange={(e) =>
-            setVitrineWelcomeText(e.target.value.slice(0, 200) || null)
-          }
-          placeholder="Seja bem-vindo à sua área de membros!"
-          rows={3}
-          maxLength={200}
-          className="w-full px-3 py-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-white/10 rounded-lg text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-primary/50 transition-colors resize-y min-h-[80px]"
-        />
-        <p className="text-xs text-gray-400 mt-1 text-right">
-          {(vitrineWelcomeText || "").length}/200
-        </p>
+        <div className="flex items-start justify-between gap-3 mb-4">
+          <div className="min-w-0">
+            <h2 className="text-sm font-medium text-gray-900 dark:text-white mb-0.5">
+              Saudação da vitrine
+              <HelpTooltip text="Título e subtítulo exibidos no topo da vitrine quando o aluno acessa a área de membros. Deixe os campos em branco para usar os textos automáticos." />
+            </h2>
+            <p className="text-xs text-gray-500">
+              Título e subtítulo exibidos no topo da vitrine para o aluno
+            </p>
+          </div>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={vitrineWelcomeEnabled}
+            onClick={() => setVitrineWelcomeEnabled(!vitrineWelcomeEnabled)}
+            className={`relative shrink-0 inline-flex h-5 w-9 items-center rounded-full transition-colors ${
+              vitrineWelcomeEnabled ? "bg-primary" : "bg-gray-300 dark:bg-gray-700"
+            }`}
+          >
+            <span
+              className={`inline-block h-4 w-4 rounded-full bg-white shadow transition-transform ${
+                vitrineWelcomeEnabled ? "translate-x-[18px]" : "translate-x-0.5"
+              }`}
+            />
+          </button>
+        </div>
+
+        <div className={`space-y-4 ${vitrineWelcomeEnabled ? "" : "opacity-50"}`}>
+          {/* Título */}
+          <div>
+            <label className="block text-[11px] font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Título
+            </label>
+            <input
+              type="text"
+              value={vitrineWelcomeTitle || ""}
+              onChange={(e) =>
+                setVitrineWelcomeTitle(e.target.value.slice(0, 100) || null)
+              }
+              disabled={!vitrineWelcomeEnabled}
+              placeholder="Bom dia, {nome do aluno} — automático"
+              maxLength={100}
+              className="w-full px-3 py-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-white/10 rounded-lg text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-primary/50 transition-colors disabled:cursor-not-allowed"
+            />
+            <div className="flex items-center justify-between mt-1">
+              <p className="text-[11px] text-gray-500">
+                Deixe em branco para usar a saudação automática por horário
+              </p>
+              <p className="text-xs text-gray-400 shrink-0 ml-2">
+                {(vitrineWelcomeTitle || "").length}/100
+              </p>
+            </div>
+          </div>
+
+          {/* Subtítulo */}
+          <div>
+            <label className="block text-[11px] font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Subtítulo
+            </label>
+            <textarea
+              value={vitrineWelcomeText || ""}
+              onChange={(e) =>
+                setVitrineWelcomeText(e.target.value.slice(0, 200) || null)
+              }
+              disabled={!vitrineWelcomeEnabled}
+              placeholder="Bem-vindo à área de membros de {nome do workspace} — automático"
+              rows={3}
+              maxLength={200}
+              className="w-full px-3 py-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-white/10 rounded-lg text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-primary/50 transition-colors resize-y min-h-[80px] disabled:cursor-not-allowed"
+            />
+            <div className="flex items-center justify-between mt-1">
+              <p className="text-[11px] text-gray-500">
+                Deixe em branco para usar o texto padrão
+              </p>
+              <p className="text-xs text-gray-400 shrink-0 ml-2">
+                {(vitrineWelcomeText || "").length}/200
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Banner */}

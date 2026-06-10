@@ -17,6 +17,9 @@ interface WorkspaceInfo {
   accentColor: string | null;
   bannerUrl: string | null;
   bannerPosition: string | null;
+  vitrineWelcomeText?: string | null;
+  vitrineWelcomeTitle?: string | null;
+  vitrineWelcomeEnabled?: boolean;
 }
 
 interface EnrolledCourse {
@@ -246,6 +249,9 @@ export default function WorkspaceVitrinePage() {
 
   const greeting = getGreeting();
   const firstName = user?.name?.split(" ")[0] || "aluno";
+  const welcomeEnabled = ws?.vitrineWelcomeEnabled !== false;
+  const welcomeTitle = ws?.vitrineWelcomeTitle?.trim() || `${greeting}, ${firstName}`;
+  const welcomeSubtitle = ws?.vitrineWelcomeText?.trim() || `Bem-vindo à área de membros de ${displayName}`;
 
   return (
     <div className="animate-fade-in-up">
@@ -264,26 +270,30 @@ export default function WorkspaceVitrinePage() {
             priority
           />
           <div className="absolute inset-0 bg-gradient-to-t from-white via-white/20 to-transparent dark:from-gray-950 dark:via-gray-950/40 dark:to-transparent" />
-          <div className="absolute bottom-0 left-0 w-full px-4 sm:px-6 lg:px-8 pb-6 lg:pb-8">
-            <div className="max-w-6xl mx-auto">
-              <h2 className="text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white mb-1">
-                {greeting}, {firstName}
-              </h2>
-              <p className="text-gray-600 dark:text-gray-400 text-sm">
-                {`Bem-vindo à área de membros de ${displayName}`}
-              </p>
+          {welcomeEnabled && (
+            <div className="absolute bottom-0 left-0 w-full px-4 sm:px-6 lg:px-8 pb-6 lg:pb-8">
+              <div className="max-w-6xl mx-auto">
+                <h2 className="text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white mb-1">
+                  {welcomeTitle}
+                </h2>
+                <p className="text-gray-600 dark:text-gray-400 text-sm">
+                  {welcomeSubtitle}
+                </p>
+              </div>
             </div>
-          </div>
+          )}
         </div>
       ) : (
-        <div className="px-4 sm:px-6 lg:px-8 pt-6 lg:pt-8 max-w-6xl mx-auto">
-          <h2 className="text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white mb-1">
-            {greeting}, {firstName}
-          </h2>
-          <p className="text-gray-600 dark:text-gray-400">
-            {`Bem-vindo à área de membros de ${displayName}`}
-          </p>
-        </div>
+        welcomeEnabled && (
+          <div className="px-4 sm:px-6 lg:px-8 pt-6 lg:pt-8 max-w-6xl mx-auto">
+            <h2 className="text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white mb-1">
+              {welcomeTitle}
+            </h2>
+            <p className="text-gray-600 dark:text-gray-400">
+              {welcomeSubtitle}
+            </p>
+          </div>
+        )
       )}
       <div className="px-4 sm:px-6 lg:px-8 py-6 lg:py-8 max-w-6xl mx-auto">
 
