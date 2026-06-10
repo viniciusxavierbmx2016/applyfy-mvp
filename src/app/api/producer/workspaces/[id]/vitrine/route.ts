@@ -15,6 +15,9 @@ const SELECT_FIELDS = {
   vitrineWelcomeText: true,
   vitrineWelcomeTitle: true,
   vitrineWelcomeEnabled: true,
+  vitrineBannerFadeEnabled: true,
+  vitrineBannerFadeColor: true,
+  vitrineBannerFadeOpacity: true,
   vitrineLayoutStyle: true,
   bannerUrl: true,
   bannerPosition: true,
@@ -30,6 +33,9 @@ const EDITABLE_FIELDS = [
   "vitrineWelcomeText",
   "vitrineWelcomeTitle",
   "vitrineWelcomeEnabled",
+  "vitrineBannerFadeEnabled",
+  "vitrineBannerFadeColor",
+  "vitrineBannerFadeOpacity",
   "vitrineLayoutStyle",
 ] as const;
 
@@ -94,7 +100,7 @@ export async function PUT(
     const v = validateBody(vitrineCustomizeSchema, raw);
     if (!v.success) return v.error;
 
-    const data: Record<string, string | boolean | null> = {};
+    const data: Record<string, string | boolean | number | null> = {};
     for (const key of EDITABLE_FIELDS) {
       if (key in v.data) {
         data[key] = v.data[key as keyof typeof v.data] ?? null;
@@ -145,6 +151,9 @@ export async function DELETE(
         vitrineWelcomeText: null,
         vitrineWelcomeTitle: null,
         vitrineWelcomeEnabled: true,
+        vitrineBannerFadeEnabled: true,
+        vitrineBannerFadeColor: null,
+        vitrineBannerFadeOpacity: 1,
         vitrineLayoutStyle: "netflix",
       },
       select: SELECT_FIELDS,

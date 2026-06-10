@@ -20,6 +20,9 @@ interface WorkspaceInfo {
   vitrineWelcomeText?: string | null;
   vitrineWelcomeTitle?: string | null;
   vitrineWelcomeEnabled?: boolean;
+  vitrineBannerFadeEnabled?: boolean;
+  vitrineBannerFadeColor?: string | null;
+  vitrineBannerFadeOpacity?: number | null;
 }
 
 interface EnrolledCourse {
@@ -69,6 +72,13 @@ function getGreeting() {
   if (h < 12) return "Bom dia";
   if (h < 18) return "Boa tarde";
   return "Boa noite";
+}
+
+function hexToRgba(hex: string, alpha: number): string {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
 function groupByCategory<T extends { category: string | null }>(
@@ -252,6 +262,12 @@ export default function WorkspaceVitrinePage() {
   const welcomeEnabled = ws?.vitrineWelcomeEnabled !== false;
   const welcomeTitle = ws?.vitrineWelcomeTitle?.trim() || `${greeting}, ${firstName}`;
   const welcomeSubtitle = ws?.vitrineWelcomeText?.trim() || `Bem-vindo à área de membros de ${displayName}`;
+  const fadeEnabled = ws?.vitrineBannerFadeEnabled !== false;
+  const fadeColor =
+    ws?.vitrineBannerFadeColor && /^#[0-9a-fA-F]{6}$/.test(ws.vitrineBannerFadeColor)
+      ? ws.vitrineBannerFadeColor
+      : null;
+  const fadeOpacity = ws?.vitrineBannerFadeOpacity ?? 1;
 
   return (
     <div className="animate-fade-in-up">
@@ -269,7 +285,22 @@ export default function WorkspaceVitrinePage() {
             style={bannerPos ? { objectPosition: `${bannerPos.x}% ${bannerPos.y}%` } : undefined}
             priority
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-white via-white/20 to-transparent dark:from-gray-950 dark:via-gray-950/40 dark:to-transparent" />
+          {fadeEnabled && (
+            fadeColor ? (
+              <div
+                className="absolute inset-0"
+                style={{
+                  background: `linear-gradient(to top, ${fadeColor} 0%, ${hexToRgba(fadeColor, 0.3)} 50%, transparent 100%)`,
+                  opacity: fadeOpacity,
+                }}
+              />
+            ) : (
+              <div
+                className="absolute inset-0 bg-gradient-to-t from-white via-white/20 to-transparent dark:from-gray-950 dark:via-gray-950/40 dark:to-transparent"
+                style={fadeOpacity !== 1 ? { opacity: fadeOpacity } : undefined}
+              />
+            )
+          )}
           {welcomeEnabled && (
             <div className="absolute bottom-0 left-0 w-full px-4 sm:px-6 lg:px-8 pb-6 lg:pb-8">
               <div className="max-w-6xl mx-auto">

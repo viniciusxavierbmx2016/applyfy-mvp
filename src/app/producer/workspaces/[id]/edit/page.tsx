@@ -81,6 +81,9 @@ export default function EditWorkspacePage() {
   const [vitrineWelcomeText, setVitrineWelcomeText] = useState<string | null>(null);
   const [vitrineWelcomeTitle, setVitrineWelcomeTitle] = useState<string | null>(null);
   const [vitrineWelcomeEnabled, setVitrineWelcomeEnabled] = useState<boolean>(true);
+  const [vitrineBannerFadeEnabled, setVitrineBannerFadeEnabled] = useState<boolean>(true);
+  const [vitrineBannerFadeColor, setVitrineBannerFadeColor] = useState<string | null>(null);
+  const [vitrineBannerFadeOpacity, setVitrineBannerFadeOpacity] = useState<number>(1);
   const [vitrineLayoutStyle, setVitrineLayoutStyle] = useState<string>("netflix");
 
   const [emailConfig, setEmailConfig] = useState<EmailConfig>(EMPTY_EMAIL_CONFIG);
@@ -170,6 +173,9 @@ export default function EditWorkspacePage() {
         setVitrineWelcomeText(c.vitrineWelcomeText ?? null);
         setVitrineWelcomeTitle(c.vitrineWelcomeTitle ?? null);
         setVitrineWelcomeEnabled(c.vitrineWelcomeEnabled ?? true);
+        setVitrineBannerFadeEnabled(c.vitrineBannerFadeEnabled ?? true);
+        setVitrineBannerFadeColor(c.vitrineBannerFadeColor ?? null);
+        setVitrineBannerFadeOpacity(c.vitrineBannerFadeOpacity ?? 1);
         setVitrineLayoutStyle(c.vitrineLayoutStyle ?? "netflix");
       })
       .catch(() => {});
@@ -311,6 +317,9 @@ export default function EditWorkspacePage() {
     setVitrineWelcomeText(null);
     setVitrineWelcomeTitle(null);
     setVitrineWelcomeEnabled(true);
+    setVitrineBannerFadeEnabled(true);
+    setVitrineBannerFadeColor(null);
+    setVitrineBannerFadeOpacity(1);
     setVitrineLayoutStyle("netflix");
     showToast("Vitrine restaurada para o padrão");
   }
@@ -398,6 +407,9 @@ export default function EditWorkspacePage() {
         vitrineWelcomeText: vitrineWelcomeText || null,
         vitrineWelcomeTitle: vitrineWelcomeTitle || null,
         vitrineWelcomeEnabled: vitrineWelcomeEnabled,
+        vitrineBannerFadeEnabled: vitrineBannerFadeEnabled,
+        vitrineBannerFadeColor: vitrineBannerFadeColor || null,
+        vitrineBannerFadeOpacity: vitrineBannerFadeOpacity,
         vitrineLayoutStyle,
       };
 
@@ -581,6 +593,12 @@ export default function EditWorkspacePage() {
             setVitrineWelcomeTitle={setVitrineWelcomeTitle}
             vitrineWelcomeEnabled={vitrineWelcomeEnabled}
             setVitrineWelcomeEnabled={setVitrineWelcomeEnabled}
+            vitrineBannerFadeEnabled={vitrineBannerFadeEnabled}
+            setVitrineBannerFadeEnabled={setVitrineBannerFadeEnabled}
+            vitrineBannerFadeColor={vitrineBannerFadeColor}
+            setVitrineBannerFadeColor={setVitrineBannerFadeColor}
+            vitrineBannerFadeOpacity={vitrineBannerFadeOpacity}
+            setVitrineBannerFadeOpacity={setVitrineBannerFadeOpacity}
             wsBannerUrl={wsBannerUrl}
             setWsBannerUrl={setWsBannerUrl}
             wsBannerPos={wsBannerPos}

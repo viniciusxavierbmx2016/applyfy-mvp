@@ -270,6 +270,9 @@ export const vitrineCustomizeSchema = z.object({
   vitrineWelcomeText: z.string().max(200).nullable().optional(),
   vitrineWelcomeTitle: z.string().max(100).nullable().optional(),
   vitrineWelcomeEnabled: z.boolean().optional(),
+  vitrineBannerFadeEnabled: z.boolean().optional(),
+  vitrineBannerFadeColor: z.string().regex(/^#[0-9a-fA-F]{6}$/, "Cor inválida").nullable().optional(),
+  vitrineBannerFadeOpacity: z.number().min(0).max(1).nullable().optional(),
   vitrineLayoutStyle: z.enum(["netflix", "list", "grid"]).nullable().optional(),
 });
 
