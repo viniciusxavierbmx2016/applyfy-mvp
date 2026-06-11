@@ -35,6 +35,10 @@ export default function RichTextEditor({
   const [editingLink, setEditingLink] = useState<LinkEditData | null>(null);
 
   const editor = useEditor({
+    // Tiptap v3 + Next.js: required so the editor doesn't try to render during
+    // SSR/hydration (incl. React StrictMode's dev double-render), which throws
+    // "SSR has been detected". See https://tiptap.dev/docs/editor/getting-started/install/nextjs
+    immediatelyRender: false,
     extensions: [
       StarterKit.configure({
         heading: { levels: [1, 2] },
