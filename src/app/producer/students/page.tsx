@@ -7,6 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { ImportStudentsModal } from "@/components/import-students-modal";
+import { EnrollStudentModal } from "./_components/enroll-student-modal";
 import { useConfirm } from "@/hooks/use-confirm";
 import { CustomSelect } from "@/components/custom-select";
 import { HelpTooltip } from "@/components/help-tooltip";
@@ -76,6 +77,8 @@ export default function AdminUsersPage() {
   const [selectedTagId, setSelectedTagId] = useState<Record<string, string>>({});
   const [toast, setToast] = useState<string | null>(null);
   const [importOpen, setImportOpen] = useState(false);
+  const [enrollOpen, setEnrollOpen] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
   const { confirm, ConfirmDialog } = useConfirm();
 
   useEffect(() => {
@@ -116,7 +119,7 @@ export default function AdminUsersPage() {
     return () => {
       cancelled = true;
     };
-  }, [debounced, courseFilter, tagFilter, range]);
+  }, [debounced, courseFilter, tagFilter, range, reloadKey]);
 
   function showToast(msg: string) {
     setToast(msg);
@@ -261,6 +264,18 @@ export default function AdminUsersPage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M16 8l-4-4-4 4M12 4v12" />
             </svg>
             <span>Importar CSV</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setEnrollOpen(true)}
+            disabled={courses.length === 0}
+            title={courses.length === 0 ? "Crie um curso primeiro" : undefined}
+            className="inline-flex items-center justify-center gap-2 px-3.5 py-2.5 text-sm font-medium rounded-lg bg-primary hover:bg-primary text-white transition disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            <span>Cadastrar aluno</span>
           </button>
           <button
             type="button"
@@ -656,6 +671,14 @@ export default function AdminUsersPage() {
         onClose={() => setImportOpen(false)}
         courses={courses}
       />
+
+      {enrollOpen && (
+        <EnrollStudentModal
+          courses={courses}
+          onClose={() => setEnrollOpen(false)}
+          onEnrolled={() => setReloadKey((k) => k + 1)}
+        />
+      )}
 
       {toast && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-5 py-3 bg-primary text-white rounded-lg shadow-xl text-sm font-medium">
