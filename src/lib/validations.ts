@@ -775,6 +775,19 @@ export const updateCourseSchema = z
       .min(8, "WhatsApp de suporte obrigatório")
       .max(50)
       .optional(),
+    bannerExtra: z
+      .array(
+        z.object({
+          url: z.string().min(1),
+          position: z.object({
+            x: z.number().min(0).max(100),
+            y: z.number().min(0).max(100),
+          }),
+        })
+      )
+      .max(4)
+      .optional()
+      .nullable(),
   })
   .passthrough();
 

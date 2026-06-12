@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireStaff, canEditCourse } from "@/lib/auth";
 import { updateCourseSchema, validateBody } from "@/lib/validations";
@@ -75,6 +76,7 @@ export async function PUT(request: Request, props: { params: Promise<{ id: strin
       thumbnailPosition,
       bannerUrl,
       bannerPosition,
+      bannerExtra,
       checkoutUrl,
       price,
       priceCurrency,
@@ -186,6 +188,9 @@ export async function PUT(request: Request, props: { params: Promise<{ id: strin
         ...(thumbnailPosition !== undefined && { thumbnailPosition }),
         ...(bannerUrl !== undefined && { bannerUrl }),
         ...(bannerPosition !== undefined && { bannerPosition }),
+        ...(bannerExtra !== undefined && {
+          bannerExtra: bannerExtra === null ? Prisma.DbNull : bannerExtra,
+        }),
         ...(checkoutUrl !== undefined && { checkoutUrl }),
         ...(price !== undefined && {
           price:
