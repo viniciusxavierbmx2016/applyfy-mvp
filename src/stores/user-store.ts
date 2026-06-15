@@ -19,6 +19,10 @@ interface UserState {
   workspace: UserWorkspaceInfo | null;
   adminPermissions: string[];
   isLoading: boolean;
+  // True only when /api/auth/me failed after exhausting retries (network/5xx).
+  // Distinct from "logged out" (user:null): a transient failure must NOT look
+  // like a logout — it surfaces a retry overlay instead of trapping in skeleton.
+  authError: boolean;
   setUser: (
     user: User | null,
     collaborator?: CollaboratorInfo | null,
@@ -26,6 +30,7 @@ interface UserState {
     adminPermissions?: string[]
   ) => void;
   setLoading: (loading: boolean) => void;
+  setAuthError: (v: boolean) => void;
   logout: () => void;
 }
 
@@ -35,6 +40,7 @@ export const useUserStore = create<UserState>((set) => ({
   workspace: null,
   adminPermissions: [],
   isLoading: true,
+  authError: false,
   setUser: (user, collaborator, workspace, adminPermissions) =>
     set((state) => ({
       user,
@@ -47,8 +53,11 @@ export const useUserStore = create<UserState>((set) => ({
           ? state.adminPermissions
           : adminPermissions,
       isLoading: false,
+      // A successful load clears any prior transient error.
+      authError: false,
     })),
   setLoading: (isLoading) => set({ isLoading }),
+  setAuthError: (authError) => set({ authError }),
   logout: () =>
     set({
       user: null,
@@ -56,5 +65,6 @@ export const useUserStore = create<UserState>((set) => ({
       workspace: null,
       adminPermissions: [],
       isLoading: false,
+      authError: false,
     }),
 }));
