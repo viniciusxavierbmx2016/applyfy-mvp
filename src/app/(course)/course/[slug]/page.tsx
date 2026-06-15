@@ -11,6 +11,7 @@ import {
   type CarouselModule,
 } from "@/components/module-carousel";
 import { CoursePreview } from "@/components/course-preview";
+import { CourseBannerCarousel, toBannerSlides, type BannerSlide } from "@/components/course-banner-carousel";
 import { ModuleListView, type ListModule } from "@/components/module-list-view";
 import { HeadphonesIcon } from "@/components/support-popover";
 import { SkeletonModuleCarousel } from "@/components/ui/skeleton";
@@ -55,6 +56,7 @@ interface CourseDetail {
   thumbnailPosition: string | null;
   bannerUrl: string | null;
   bannerPosition: string | null;
+  bannerExtra?: BannerSlide[] | null;
   checkoutUrl: string | null;
   price: number | null;
   priceCurrency: string | null;
@@ -386,6 +388,8 @@ export default function CourseHomePage() {
           description: course.description,
           thumbnail: course.thumbnail,
           bannerUrl: course.bannerUrl,
+          bannerPosition: course.bannerPosition,
+          bannerExtra: course.bannerExtra,
           checkoutUrl: course.checkoutUrl,
           price: course.price,
           priceCurrency: course.priceCurrency,
@@ -444,14 +448,10 @@ export default function CourseHomePage() {
         <div
           className="relative w-full overflow-hidden bg-gray-100 dark:bg-gray-900 aspect-[16/9] sm:aspect-[10/3] lg:aspect-[75/16]"
         >
-          <Image
-            src={course.bannerUrl}
+          <CourseBannerCarousel
+            slides={toBannerSlides(course.bannerUrl, course.bannerPosition, course.bannerExtra)}
             alt={course.title}
-            fill
             sizes="100vw"
-            className="object-cover"
-            style={course.bannerPosition ? (() => { try { const p = JSON.parse(course.bannerPosition); return { objectPosition: `${p.x}% ${p.y}%` }; } catch { return undefined; } })() : undefined}
-            priority
           />
           <div className="absolute inset-0 bg-gradient-to-t from-white via-white/0 to-transparent dark:from-gray-950 dark:via-gray-950/0 dark:to-transparent" />
           <div className="absolute inset-0 bg-gradient-to-r from-white/30 via-transparent to-white/30 dark:from-gray-950/40 dark:via-transparent dark:to-gray-950/40" />

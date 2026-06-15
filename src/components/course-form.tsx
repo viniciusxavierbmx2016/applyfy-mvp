@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { ThumbnailUpload } from "./thumbnail-upload";
 import { BannerUpload } from "./banner-upload";
+import { BannerCarouselUpload, type BannerImage } from "./banner-carousel-upload";
 import { slugify } from "@/lib/utils";
 import { HelpTooltip } from "@/components/help-tooltip";
 
@@ -23,6 +24,7 @@ interface CourseFormData {
   thumbnailPosition: string | null;
   bannerUrl: string | null;
   bannerPosition: string | null;
+  bannerExtra?: BannerImage[] | null;
   checkoutUrl: string;
   price: string;
   priceCurrency: string;
@@ -99,6 +101,13 @@ export function CourseForm({ initial, mode }: CourseFormProps) {
   const [bannerPos, setBannerPos] = useState<ImagePosition>(
     parsePosition(initial?.bannerPosition)
   );
+  const [bannerExtra, setBannerExtra] = useState<BannerImage[]>(
+    Array.isArray(initial?.bannerExtra)
+      ? initial!.bannerExtra.filter(
+          (e): e is BannerImage => !!e && typeof e.url === "string" && !!e.position
+        )
+      : []
+  );
   const [checkoutUrl, setCheckoutUrl] = useState(initial?.checkoutUrl || "");
   const [price, setPrice] = useState(initial?.price ?? "");
   const [priceCurrency, setPriceCurrency] = useState(
@@ -117,7 +126,6 @@ export function CourseForm({ initial, mode }: CourseFormProps) {
   const [termsFileUrl, setTermsFileUrl] = useState(initial?.termsFileUrl || "");
   const [uploadingTerms, setUploadingTerms] = useState(false);
   const [thumbMode, setThumbMode] = useState<"view" | "reposition">("view");
-  const [bannerMode, setBannerMode] = useState<"view" | "reposition">("view");
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -187,6 +195,7 @@ export function CourseForm({ initial, mode }: CourseFormProps) {
       thumbnailPosition: JSON.stringify(thumbPos),
       bannerUrl,
       bannerPosition: JSON.stringify(bannerPos),
+      bannerExtra,
       checkoutUrl: checkoutUrl || null,
       price: price === "" ? null : Number(price),
       priceCurrency: priceCurrency || "BRL",
@@ -328,25 +337,14 @@ export function CourseForm({ initial, mode }: CourseFormProps) {
             />
           </div>
           <div>
-            <BannerUpload
-              value={bannerUrl}
-              onChange={(url) => {
-                setBannerUrl(url);
-                if (url) { setBannerPos({ x: 50, y: 50 }); setBannerMode("reposition"); }
-                else { setBannerPos({ x: 50, y: 50 }); setBannerMode("view"); }
-              }}
-              uploadPath={initial?.id ? `banners/${initial.id}` : undefined}
-              position={bannerPos}
-              onPositionChange={setBannerPos}
-              mode={bannerMode}
-              onModeChange={setBannerMode}
-              aspectRatio="75/16"
-              hint="Tamanho ideal: 3000x640px. No celular as laterais são cortadas — mantenha o essencial no centro. PNG, JPG ou WebP, máx. 5MB."
-              cropWindows={[
-                { label: "Computador", aspect: 75 / 16 },
-                { label: "Tablet", aspect: 10 / 3 },
-                { label: "Celular", aspect: 16 / 9 },
-              ]}
+            <BannerCarouselUpload
+              courseId={initial?.id}
+              coverUrl={bannerUrl}
+              coverPosition={bannerPos}
+              setCoverUrl={setBannerUrl}
+              setCoverPosition={setBannerPos}
+              extras={bannerExtra}
+              setExtras={setBannerExtra}
             />
           </div>
         </div>
