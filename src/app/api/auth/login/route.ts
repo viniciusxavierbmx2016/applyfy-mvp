@@ -37,7 +37,7 @@ export async function POST(request: Request) {
 
     // Enforce max sessions limit
     const user = await prisma.user.findUnique({
-      where: { email },
+      where: { email: email.trim().toLowerCase() },
       include: {
         sessions: { orderBy: { createdAt: "asc" } },
       },

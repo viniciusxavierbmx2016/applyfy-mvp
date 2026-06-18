@@ -36,7 +36,9 @@ export async function POST(request: Request) {
       );
     }
 
-    const user = await prisma.user.findUnique({ where: { email } });
+    const user = await prisma.user.findUnique({
+      where: { email: email.trim().toLowerCase() },
+    });
 
     // Accept PRODUCER, COLLABORATOR, and STUDENT-with-accepted-Collaborator
     // (post-C5 Marcilene case: a student of a course who is also a workspace
