@@ -52,7 +52,7 @@ export async function POST(request: Request) {
       await prisma.user.create({
         data: {
           id: data.user.id,
-          email,
+          email: email.trim().toLowerCase(),
           name,
           role: "ADMIN",
         },
