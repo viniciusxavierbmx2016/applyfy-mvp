@@ -72,7 +72,7 @@ function DashboardSkeleton() {
 }
 
 function DashboardContent() {
-  const { user, collaborator } = useUserStore();
+  const { user, collaborator, isLoading, authError } = useUserStore();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [courseId, setCourseId] = useState<string>("all");
@@ -87,7 +87,17 @@ function DashboardContent() {
     user?.role !== "COLLABORATOR" || perms.includes("VIEW_ANALYTICS");
 
   useEffect(() => {
-    if (!user) return;
+    // Ainda resolvendo /api/auth/me, ou uma falha transitória de rede/5xx está
+    // em retry (o AuthProvider mostra o próprio overlay) — não roteie ainda.
+    if (isLoading || authError) return;
+    // Carregado, sem user, sem erro = deslogado legítimo. O middleware proxy.ts
+    // só redireciona em request real de servidor (refresh); quando chegamos aqui
+    // por nav client-side / store→null in-place (Voltar após logout, expiração
+    // de sessão) ele não roda e o skeleton ficaria permanente. Manda pro login.
+    if (!user) {
+      router.replace("/producer/login");
+      return;
+    }
     if (user.role === "ADMIN") {
       router.replace("/admin");
       return;
@@ -116,7 +126,7 @@ function DashboardContent() {
       .then((d) => d && Array.isArray(d.courses) && setCourses(d.courses))
       .catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally omitting collaborator: adding would re-fire fetches on store updates
-  }, [user, router, hasAnalytics]);
+  }, [user, isLoading, authError, router, hasAnalytics]);
 
   useEffect(() => {
     if (searchParams.get("welcome") === "true") {
