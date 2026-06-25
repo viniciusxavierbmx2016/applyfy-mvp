@@ -23,7 +23,8 @@ export type ProducerSupportScope = {
 };
 
 export async function resolveProducerSupportScope(): Promise<
-  { ok: true; scope: ProducerSupportScope } | { ok: false; response: NextResponse }
+  | { ok: true; scope: ProducerSupportScope }
+  | { ok: false; reason: "auth" | "no-workspace"; response: NextResponse }
 > {
   let staff: User;
   try {
@@ -33,6 +34,7 @@ export async function resolveProducerSupportScope(): Promise<
     const status = msg === "Não autorizado" ? 401 : 403;
     return {
       ok: false,
+      reason: "auth",
       response: NextResponse.json({ error: msg || "Erro" }, { status }),
     };
   }
@@ -41,6 +43,7 @@ export async function resolveProducerSupportScope(): Promise<
   if (!workspace) {
     return {
       ok: false,
+      reason: "no-workspace",
       response: NextResponse.json(
         { error: "Nenhum workspace ativo" },
         { status: 400 }

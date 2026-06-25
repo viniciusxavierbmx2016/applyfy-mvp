@@ -14,7 +14,14 @@ import { resolveProducerSupportScope } from "@/lib/course-support";
 // stays type-safe without raw IN-list interpolation.
 export async function GET() {
   const r = await resolveProducerSupportScope();
-  if (!r.ok) return r.response;
+  if (!r.ok) {
+    // Produtor recém-criado, ainda sem workspace (pré-onboarding) não tem
+    // tickets a contar. Estado vazio = 200 {count:0}, não 400. O sidebar
+    // faz polling disso a cada 60s e "sem workspace" não é erro de cliente.
+    // 401/403 continuam bailando com a resposta original.
+    if (r.reason === "no-workspace") return NextResponse.json({ count: 0 });
+    return r.response;
+  }
   const { workspaceId, courseIds } = r.scope;
 
   try {
