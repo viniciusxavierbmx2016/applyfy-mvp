@@ -1,11 +1,18 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireStaff, getStaffCourseIds } from "@/lib/auth";
+import { requireStaff, getStaffCourseIds, requirePermission } from "@/lib/auth";
 import { resolveStaffWorkspace } from "@/lib/workspace";
 
 export async function GET(request: Request) {
   try {
     const staff = await requireStaff();
+    if (staff.role === "COLLABORATOR") {
+      try {
+        await requirePermission(staff, "MANAGE_COMMUNITY");
+      } catch {
+        await requirePermission(staff, "REPLY_COMMENTS");
+      }
+    }
     const { workspace, scoped } = await resolveStaffWorkspace(staff);
     const workspaceId = scoped && workspace ? workspace.id : null;
 
