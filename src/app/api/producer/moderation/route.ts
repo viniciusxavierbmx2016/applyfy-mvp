@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireStaff } from "@/lib/auth";
+import { requireStaff, getStaffCourseIds, getCollaboratorContext } from "@/lib/auth";
 import { resolveStaffWorkspace } from "@/lib/workspace";
 import { GAMIFICATION, getLevelForPoints } from "@/lib/utils";
 import { moderateSchema, validateBody } from "@/lib/validations";
@@ -11,6 +11,29 @@ export async function POST(request: Request) {
   try {
     const staff = await requireStaff();
     const { workspace } = await resolveStaffWorkspace(staff);
+
+    // FURO#2 — colaborador precisa de permissão de comunidade + curso em escopo.
+    // PRODUCER/ADMIN bypassam (isCollab=false, collabScope=null).
+    const isCollab = staff.role === "COLLABORATOR";
+    const collabPerms = isCollab
+      ? (await getCollaboratorContext(staff.id))?.permissions ?? []
+      : [];
+    if (
+      isCollab &&
+      !collabPerms.includes("MANAGE_COMMUNITY") &&
+      !collabPerms.includes("REPLY_COMMENTS")
+    ) {
+      return NextResponse.json({ error: "Sem permissão" }, { status: 403 });
+    }
+    const collabScope = await getStaffCourseIds(staff); // null p/ PRODUCER/ADMIN
+    const canModerate = (type: string, courseId: string): boolean => {
+      if (!isCollab) return true; // PRODUCER/ADMIN
+      if (collabScope !== null && !collabScope.includes(courseId)) return false;
+      return type === "lesson_comment"
+        ? collabPerms.includes("REPLY_COMMENTS") ||
+            collabPerms.includes("MANAGE_COMMUNITY")
+        : collabPerms.includes("MANAGE_COMMUNITY");
+    };
 
     const body = await request.json();
     const v = validateBody(moderateSchema, body);
@@ -148,6 +171,7 @@ export async function POST(request: Request) {
           c.lesson.module.course.workspaceId !== workspace.id
         )
           continue;
+        if (!canModerate("lesson_comment", c.lesson.module.courseId)) continue;
         seenLesson.add(id);
         toUpdateLesson.push(id);
         updated++;
@@ -174,6 +198,7 @@ export async function POST(request: Request) {
         const c = comMap.get(id);
         if (!c || c.status !== "PENDING") continue;
         if (workspace && c.post.course.workspaceId !== workspace.id) continue;
+        if (!canModerate("community_comment", c.post.courseId)) continue;
         seenComment.add(id);
         toUpdateComment.push(id);
         updated++;
@@ -200,6 +225,7 @@ export async function POST(request: Request) {
         const p = postMap.get(id);
         if (!p || p.status !== "PENDING") continue;
         if (workspace && p.course.workspaceId !== workspace.id) continue;
+        if (!canModerate("community_post", p.courseId)) continue;
         seenPost.add(id);
         toUpdatePost.push(id);
         updated++;
