@@ -1,4 +1,5 @@
 import { cookies, headers } from "next/headers";
+import { NextResponse } from "next/server";
 import { prisma } from "./prisma";
 import type { User, Workspace } from "@prisma/client";
 import { getCollaboratorContext } from "./auth";
@@ -96,6 +97,32 @@ export async function canAccessWorkspace(
   }
   const ctx = await getCollaboratorContext(staff.id);
   return !!ctx && ctx.workspaceId === workspaceId;
+}
+
+/**
+ * Owner-only gate for workspace-administrative actions (e.g. managing
+ * collaborators). ADMIN passes (platform-global). Otherwise the staff must be
+ * the actual owner of THIS workspace — a COLLABORATOR (even one promoted
+ * in-memory by requireStaff) is never Workspace.ownerId, so they are rejected.
+ * Returns a discriminated result so callers can `if (!gate.ok) return gate.response`.
+ */
+export async function requireWorkspaceOwner(
+  staff: Pick<User, "id" | "role">,
+  workspaceId: string
+): Promise<{ ok: true } | { ok: false; response: NextResponse }> {
+  if (staff.role === "ADMIN") return { ok: true };
+  const ws = await prisma.workspace.findUnique({
+    where: { id: workspaceId },
+    select: { ownerId: true },
+  });
+  if (ws && ws.ownerId === staff.id) return { ok: true };
+  return {
+    ok: false,
+    response: NextResponse.json(
+      { error: "Apenas o dono do workspace pode gerenciar colaboradores" },
+      { status: 403 }
+    ),
+  };
 }
 
 /**

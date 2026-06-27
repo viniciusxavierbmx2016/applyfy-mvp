@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireStaff } from "@/lib/auth";
-import { resolveStaffWorkspace } from "@/lib/workspace";
+import { resolveStaffWorkspace, requireWorkspaceOwner } from "@/lib/workspace";
 import {
   COLLABORATOR_PERMISSIONS,
   type CollaboratorPermission,
@@ -15,6 +15,14 @@ export async function GET() {
     const staff = await requireStaff();
     const { workspace, scoped } = await resolveStaffWorkspace(staff);
     const workspaceId = scoped && workspace ? workspace.id : null;
+
+    // Owner-only: ADMIN global (workspaceId null) lists all; a collaborator of
+    // this workspace is NOT the owner → 403 (also denies them the list they'd
+    // otherwise use to find their own collaborator id for self-escalation).
+    if (workspaceId) {
+      const gate = await requireWorkspaceOwner(staff, workspaceId);
+      if (!gate.ok) return gate.response;
+    }
 
     if (staff.role === "PRODUCER" && !workspaceId) {
       return NextResponse.json({ collaborators: [], courses: [] });
@@ -59,6 +67,9 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
+
+    const gate = await requireWorkspaceOwner(staff, workspaceId);
+    if (!gate.ok) return gate.response;
 
     const raw = await request.json().catch(() => ({}));
     const v = validateBody(createCollaboratorSchema, raw);

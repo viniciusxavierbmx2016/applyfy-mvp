@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireStaff } from "@/lib/auth";
-import { canAccessWorkspace } from "@/lib/workspace";
+import { canAccessWorkspace, requireWorkspaceOwner } from "@/lib/workspace";
 import {
   COLLABORATOR_PERMISSIONS,
   type CollaboratorPermission,
@@ -26,6 +26,8 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
     if (!c) {
       return NextResponse.json({ error: "Não encontrado" }, { status: 404 });
     }
+    const gate = await requireWorkspaceOwner(staff, c.workspaceId);
+    if (!gate.ok) return gate.response;
     const raw = await request.json().catch(() => ({}));
     const v = validateBody(updateCollaboratorSchema, raw);
     if (!v.success) return v.error;
@@ -83,6 +85,8 @@ export async function DELETE(_request: Request, props: { params: Promise<{ id: s
     if (!c) {
       return NextResponse.json({ error: "Não encontrado" }, { status: 404 });
     }
+    const gate = await requireWorkspaceOwner(staff, c.workspaceId);
+    if (!gate.ok) return gate.response;
     await prisma.collaborator.delete({ where: { id: c.id } });
     return NextResponse.json({ ok: true });
   } catch (e) {
