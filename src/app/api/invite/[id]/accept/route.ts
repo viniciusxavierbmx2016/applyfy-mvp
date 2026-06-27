@@ -104,7 +104,7 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
         user_metadata: { name },
       });
 
-    const authUserId: string | null = created?.user?.id ?? null;
+    let authUserId: string | null = created?.user?.id ?? null;
 
     if (createErr || !authUserId) {
       const msg = createErr?.message || "";
@@ -153,6 +153,7 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
           { status: 400 }
         );
       }
+      authUserId = foundId;
     }
 
     // C5: same role-preservation rule as the sessionUser branch above.
