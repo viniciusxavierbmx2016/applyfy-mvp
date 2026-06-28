@@ -119,7 +119,7 @@ export async function requireWorkspaceOwner(
   return {
     ok: false,
     response: NextResponse.json(
-      { error: "Apenas o dono do workspace pode gerenciar colaboradores" },
+      { error: "Apenas o dono do workspace pode realizar esta ação" },
       { status: 403 }
     ),
   };

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireStaff } from "@/lib/auth";
-import { resolveStaffWorkspace } from "@/lib/workspace";
+import { resolveStaffWorkspace, requireWorkspaceOwner } from "@/lib/workspace";
 
 const MAX_TOKENS_PER_WORKSPACE = 5;
 
@@ -55,6 +55,8 @@ export async function GET() {
     if (!workspace) {
       return NextResponse.json({ tokens: [] });
     }
+    const gate = await requireWorkspaceOwner(staff, workspace.id);
+    if (!gate.ok) return gate.response;
     const rows = await prisma.workspaceApplyfyToken.findMany({
       where: { workspaceId: workspace.id },
       orderBy: { createdAt: "asc" },
@@ -93,6 +95,8 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
+    const gate = await requireWorkspaceOwner(staff, workspace.id);
+    if (!gate.ok) return gate.response;
 
     const raw = await request.json().catch(() => ({}));
     const parsed = createSchema.safeParse(raw);
@@ -157,6 +161,8 @@ export async function DELETE(request: Request) {
         { status: 400 }
       );
     }
+    const gate = await requireWorkspaceOwner(staff, workspace.id);
+    if (!gate.ok) return gate.response;
 
     const { searchParams } = new URL(request.url);
     const id = (searchParams.get("id") || "").trim();

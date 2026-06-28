@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireStaff } from "@/lib/auth";
-import { resolveStaffWorkspace } from "@/lib/workspace";
+import { resolveStaffWorkspace, requireWorkspaceOwner } from "@/lib/workspace";
 import { producerSettingsSchema, validateBody } from "@/lib/validations";
 
 // Admin-only globals (no per-workspace scoping)
@@ -79,6 +79,23 @@ export async function PUT(request: Request) {
     const v = validateBody(producerSettingsSchema, raw);
     if (!v.success) return v.error;
     const updates = v.data.settings;
+
+    // FURO#3 — applyfy_token é o segredo do webhook de pagamento. Escrevê-lo
+    // (setar OU limpar) é ação owner-only, igual às rotas applyfy-tokens. As
+    // demais chaves seguem o gate atual (colaborador mexe em settings não-pagamento).
+    const touchesWorkspaceSecret = Object.keys(updates).some((k) =>
+      WORKSPACE_KEYS.has(k)
+    );
+    if (touchesWorkspaceSecret) {
+      if (!workspace) {
+        return NextResponse.json(
+          { error: "Nenhum workspace ativo." },
+          { status: 400 }
+        );
+      }
+      const gate = await requireWorkspaceOwner(staff, workspace.id);
+      if (!gate.ok) return gate.response;
+    }
 
     for (const key of Object.keys(updates)) {
       const value = updates[key];
