@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireStaff } from "@/lib/auth";
+import { requireStaff, canManageStudentsOfCourse } from "@/lib/auth";
 import { ensureUserByEmail } from "@/lib/webhook-helpers";
 import { createNotification } from "@/lib/notifications";
 import { processAutomations } from "@/lib/automation-engine";
@@ -107,6 +107,20 @@ export async function POST(request: Request) {
         { status: 403 }
       );
     }
+
+    // FURO#4 — permissão MANAGE_STUDENTS + course-scope, POR CURSO. Mesma fonte
+    // de verdade da matrícula single (courses/[id]/students). PRODUCER/ADMIN
+    // bypassam dentro do helper. Barra ANTES de criar qualquer user/matrícula/email.
+    for (const cid of courseIds) {
+      if (!(await canManageStudentsOfCourse(staff, cid))) {
+        const title = courses.find((c) => c.id === cid)?.title ?? cid;
+        return NextResponse.json(
+          { error: `Sem permissão para gerenciar alunos do curso "${title}"` },
+          { status: 403 }
+        );
+      }
+    }
+
     const courseMap = new Map(courses.map((c) => [c.id, c]));
 
     const workspace = await prisma.workspace.findUnique({
