@@ -1,13 +1,24 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireStaff } from "@/lib/auth";
+import { requireStaff, requirePermission } from "@/lib/auth";
 import { resolveStaffWorkspace } from "@/lib/workspace";
+import { hasWorkspaceAccess } from "@/lib/workspace-access";
 import { studentTagSchema, validateBody } from "@/lib/validations";
 
 export async function GET(_request: Request, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
   try {
-    await requireStaff();
+    const staff = await requireStaff();
+    if (staff.role === "COLLABORATOR") {
+      await requirePermission(staff, "MANAGE_STUDENTS");
+    }
+    const { workspace } = await resolveStaffWorkspace(staff);
+    if (!workspace) {
+      return NextResponse.json({ error: "Workspace não encontrado" }, { status: 400 });
+    }
+    if (!(await hasWorkspaceAccess(params.id, workspace.id))) {
+      return NextResponse.json({ error: "Aluno não encontrado" }, { status: 404 });
+    }
     const userTags = await prisma.userTag.findMany({
       where: { userId: params.id },
       include: { tag: { select: { id: true, name: true, color: true } } },
@@ -26,9 +37,15 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
   const params = await props.params;
   try {
     const staff = await requireStaff();
+    if (staff.role === "COLLABORATOR") {
+      await requirePermission(staff, "MANAGE_STUDENTS");
+    }
     const { workspace } = await resolveStaffWorkspace(staff);
     if (!workspace) {
       return NextResponse.json({ error: "Workspace não encontrado" }, { status: 400 });
+    }
+    if (!(await hasWorkspaceAccess(params.id, workspace.id))) {
+      return NextResponse.json({ error: "Aluno não encontrado" }, { status: 404 });
     }
 
     const raw = await request.json().catch(() => ({}));
@@ -62,9 +79,15 @@ export async function DELETE(request: Request, props: { params: Promise<{ id: st
   const params = await props.params;
   try {
     const staff = await requireStaff();
+    if (staff.role === "COLLABORATOR") {
+      await requirePermission(staff, "MANAGE_STUDENTS");
+    }
     const { workspace } = await resolveStaffWorkspace(staff);
     if (!workspace) {
       return NextResponse.json({ error: "Workspace não encontrado" }, { status: 400 });
+    }
+    if (!(await hasWorkspaceAccess(params.id, workspace.id))) {
+      return NextResponse.json({ error: "Aluno não encontrado" }, { status: 404 });
     }
 
     const { searchParams } = new URL(request.url);
@@ -72,6 +95,11 @@ export async function DELETE(request: Request, props: { params: Promise<{ id: st
 
     if (!tagId) {
       return NextResponse.json({ error: "tagId obrigatório" }, { status: 400 });
+    }
+
+    const tag = await prisma.tag.findUnique({ where: { id: tagId } });
+    if (!tag || tag.workspaceId !== workspace.id) {
+      return NextResponse.json({ error: "Tag não encontrada" }, { status: 404 });
     }
 
     await prisma.userTag.deleteMany({
