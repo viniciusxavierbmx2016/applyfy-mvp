@@ -118,42 +118,19 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
         );
       }
 
-      // Recover: find existing auth user by email and reset its password.
-      // listUsers is paginated — search across pages until we find the email.
-      const targetEmail = invite.email.toLowerCase();
-      let foundId: string | null = null;
-      for (let page = 1; page <= 20 && !foundId; page++) {
-        const { data: list, error: listErr } =
-          await admin.auth.admin.listUsers({ page, perPage: 200 });
-        if (listErr) {
-          return NextResponse.json(
-            { error: listErr.message || "Falha ao localizar usuário" },
-            { status: 400 }
-          );
-        }
-        const match = list?.users?.find(
-          (u) => (u.email ?? "").toLowerCase() === targetEmail
-        );
-        if (match) foundId = match.id;
-        if (!list?.users || list.users.length < 200) break;
-      }
-      if (!foundId) {
-        return NextResponse.json(
-          { error: "Usuário não encontrado no Auth" },
-          { status: 400 }
-        );
-      }
-      const { error: updErr } = await admin.auth.admin.updateUserById(
-        foundId,
-        { password, email_confirm: true, user_metadata: { name } }
+      // Conta JÁ existe com este email. NUNCA resetar a senha a partir de um
+      // request não-autenticado (era vetor de account-takeover + cross-tenant:
+      // o listUsers casava globalmente e o updateUserById sobrescrevia a senha
+      // sem prova de posse). Roteia pro login — o fluxo "Já tenho conta" prova
+      // posse (senha real) e faz o bind seguro pelo ramo `if (sessionUser)` acima.
+      return NextResponse.json(
+        {
+          error:
+            'Você já tem uma conta com este e-mail. Use "Já tenho conta" para entrar.',
+          useLogin: true,
+        },
+        { status: 409 }
       );
-      if (updErr) {
-        return NextResponse.json(
-          { error: updErr.message || "Falha ao atualizar senha" },
-          { status: 400 }
-        );
-      }
-      authUserId = foundId;
     }
 
     // C5: same role-preservation rule as the sessionUser branch above.

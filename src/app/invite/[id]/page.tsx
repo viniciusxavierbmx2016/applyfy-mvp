@@ -65,6 +65,7 @@ export default function InviteAcceptPage() {
     });
     const d = await r.json().catch(() => ({}));
     if (!r.ok) {
+      if (d.useLogin) setMode("login");
       setError(d.error || "Erro ao aceitar convite");
       setSubmitting(false);
       return;
