@@ -29,7 +29,9 @@ export async function GET(_request: Request, props: { params: Promise<{ id: stri
     });
   } catch (error) {
     const msg = error instanceof Error ? error.message : "Erro";
-    return NextResponse.json({ error: msg }, { status: 500 });
+    const status =
+      msg === "Não autorizado" ? 401 : msg === "Sem permissão" ? 403 : 500;
+    return NextResponse.json({ error: msg }, { status });
   }
 }
 
@@ -71,7 +73,9 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
     return NextResponse.json({ ok: true }, { status: 201 });
   } catch (error) {
     const msg = error instanceof Error ? error.message : "Erro";
-    return NextResponse.json({ error: msg }, { status: 500 });
+    const status =
+      msg === "Não autorizado" ? 401 : msg === "Sem permissão" ? 403 : 500;
+    return NextResponse.json({ error: msg }, { status });
   }
 }
 
@@ -109,6 +113,8 @@ export async function DELETE(request: Request, props: { params: Promise<{ id: st
     return NextResponse.json({ ok: true });
   } catch (error) {
     const msg = error instanceof Error ? error.message : "Erro";
-    return NextResponse.json({ error: msg }, { status: 500 });
+    const status =
+      msg === "Não autorizado" ? 401 : msg === "Sem permissão" ? 403 : 500;
+    return NextResponse.json({ error: msg }, { status });
   }
 }
