@@ -192,6 +192,17 @@ export async function executeAction(
     case "ENROLL_COURSE": {
       const targetCourseId = config.courseId as string;
       if (!targetCourseId) return { status: "FAILED", details: "courseId ausente" };
+      // Defense-in-depth (cross-tenant): nunca matricular num curso fora do
+      // workspace da automação, mesmo se uma linha pré-fix gravou courseId
+      // estrangeiro. A validação de criação/edição já barra os rows novos;
+      // este guard protege retroativamente e o caminho por evento.
+      if (automation.workspaceId) {
+        const inWs = await prisma.course.findFirst({
+          where: { id: targetCourseId, workspaceId: automation.workspaceId },
+          select: { id: true },
+        });
+        if (!inWs) return { status: "FAILED", details: "Curso destino fora do workspace" };
+      }
       const existing = await prisma.enrollment.findUnique({
         where: { userId_courseId: { userId, courseId: targetCourseId } },
       });
@@ -216,7 +227,10 @@ export async function executeAction(
     case "ADD_TAG": {
       const tagName = config.tagName as string;
       if (!tagName) return { status: "FAILED", details: "tagName ausente" };
-      const workspaceId = (config.workspaceId as string) || automation.workspaceId;
+      // Sempre o ws da automação — nunca confiar em config.workspaceId (era
+      // vetor cross-tenant: actionConfig.workspaceId forjado escrevia tag em
+      // workspace alheio).
+      const workspaceId = automation.workspaceId;
       if (!workspaceId) return { status: "FAILED", details: "workspaceId ausente" };
       const tagColor = (config.tagColor as string) || "#3b82f6";
       const tag = await prisma.tag.upsert({
