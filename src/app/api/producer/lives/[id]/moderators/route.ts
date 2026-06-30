@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireStaff } from "@/lib/auth";
+import { requireStaff, requirePermission } from "@/lib/auth";
 import { resolveStaffWorkspace } from "@/lib/workspace";
 import { hasWorkspaceAccess } from "@/lib/workspace-access";
 import { liveModeratorSchema, validateBody } from "@/lib/validations";
@@ -9,6 +9,7 @@ async function verifyOwnership(params: { id: string }) {
   const staff = await requireStaff();
   const { workspace } = await resolveStaffWorkspace(staff);
   if (!workspace) throw new Error("Sem permissão");
+  await requirePermission(staff, "MANAGE_LIVES");
 
   const live = await prisma.live.findFirst({
     where: { id: params.id, workspaceId: workspace.id },

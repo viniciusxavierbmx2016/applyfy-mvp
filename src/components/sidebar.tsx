@@ -168,6 +168,12 @@ const collaboratorLinks: NavLink[] = [
     requires: "MANAGE_AUTOMATIONS",
   },
   {
+    href: "/producer/lives",
+    label: "Lives",
+    icon: iconLives,
+    requires: "MANAGE_LIVES",
+  },
+  {
     href: "/producer/course-support",
     label: "Suporte",
     icon: iconHeadphones,
