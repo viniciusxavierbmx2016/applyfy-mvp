@@ -43,17 +43,17 @@ O backlog parecia infinito porque ninguém tinha cruzado a lista com o que já e
 
 > **Por que primeiro:** risco em produção vem antes de tudo. São os furos que a auditoria mapeou e ainda não fecharam. Família dos 8 já resolvidos — mesmos padrões (`requireWorkspaceOwner`, `requirePermission` + `hasWorkspaceAccess`, nova permissão de colaborador).
 
-### 1.1 — `MANAGE_LIVES` + Lives writes ungated 🟡
+### 1.1 — `MANAGE_LIVES` + Lives writes ungated 🟡 ✅ FEITO (`78275d4`)
 **Problema:** `producer/lives/route.ts:53`, `[id]/route.ts:50,94`, `[id]/status/route.ts:27` são `requireStaff` puro — qualquer colaborador cria/edita/exclui live e dispara push em massa (status→push). Gravidade ALTA (blast outbound).
 **Abordagem:** mesmo molde do `MANAGE_AUTOMATIONS` (já documentado em `project_manage_automations_permission.md`). Nova permissão `MANAGE_LIVES`.
 **Etapas:**
-- [ ] Investigação read-only: confirmar gates atuais de cada rota de live + onde o nav lista "Lives" (espelhar a correção do `collaboratorLinks` aprendida no `MANAGE_AUTOMATIONS`).
-- [ ] As 7 Perguntas (a 7ª permissão espelha as 6 existentes).
-- [ ] Etapa 1 — catálogo: `+"MANAGE_LIVES"` no `COLLABORATOR_PERMISSIONS` + label parentético no `PERMISSION_LABELS`. Build verde. (catálogo só, não gateia ainda.)
-- [ ] Etapa 2 — gates: `requirePermission(staff, "MANAGE_LIVES")` em todas as rotas de write de live + entrada nova no `collaboratorLinks`. Conferir o catch (mapear "Sem permissão"→403). Contar os gates. Build verde.
-- [ ] Staging: colaborador SEM → 403 em todos; COM → passa; dono → passa; nav filtrado.
-- [ ] Merge `--no-ff` (as 2 etapas juntas — sem janela onde a perm aparece mas não gateia).
-**Dependência:** nenhuma. Reusa molde pronto.
+- [x] Investigação read-only: confirmar gates atuais de cada rota de live + onde o nav lista "Lives" (espelhar a correção do `collaboratorLinks` aprendida no `MANAGE_AUTOMATIONS`).
+- [x] As 7 Perguntas (a 7ª permissão espelha as 6 existentes).
+- [x] Etapa 1 — catálogo: `+"MANAGE_LIVES"` no `COLLABORATOR_PERMISSIONS` + label parentético no `PERMISSION_LABELS`. Build verde. (catálogo só, não gateia ainda.) — commit `0c96c6f`.
+- [x] Etapa 2 — gates: `requirePermission(staff, "MANAGE_LIVES")` em **10 métodos** (CRUD/status/moderate + moderators via `verifyOwnership`, 8 ocorrências) + entrada nova no `collaboratorLinks`. Catches já mapeavam "Sem permissão"→403. Build verde. — commit `b1df3dd`.
+- [x] Staging: colaborador SEM → 403 nos 10 (status→push barrado antes do notifyStudents; GETs 403 não 500); COM → passa nos 10; dono PRODUCER → passa; nav filtrado (perms via /api/auth/me). Provas de count (live intacta, count 1, LiveModerator 0).
+- [x] Merge `--no-ff` (as 2 etapas juntas) → `78275d4`.
+**Dependência:** nenhuma. Reusa molde pronto. **Status: concluído — o cross-tenant guard `hasWorkspaceAccess` do moderators permanece (camada independente).**
 
 ### 1.2 — Tags standalone ungated 🟡
 **Problema:** `tags/route.ts:9,40`, `[id]/route.ts:7-16` — CRUD de tags é `requireStaff` puro. Tags = segmentação + alvo de automação.
