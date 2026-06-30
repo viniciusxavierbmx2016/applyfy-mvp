@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireStaff } from "@/lib/auth";
+import { requireStaff, requirePermission } from "@/lib/auth";
 import { resolveStaffWorkspace } from "@/lib/workspace";
 import { updateAutomationSchema, validateBody } from "@/lib/validations";
 import { validateAutomation, validateAutomationResources } from "@/lib/automation-validate";
@@ -16,6 +16,7 @@ export async function GET(_request: Request, props: { params: Promise<{ id: stri
   try {
     const staff = await requireStaff();
     const workspaceId = await getWorkspaceId(staff);
+    await requirePermission(staff, "MANAGE_AUTOMATIONS");
 
     const automation = await prisma.automation.findFirst({
       where: { id: params.id, workspaceId },
@@ -45,6 +46,7 @@ export async function PUT(request: Request, props: { params: Promise<{ id: strin
   try {
     const staff = await requireStaff();
     const workspaceId = await getWorkspaceId(staff);
+    await requirePermission(staff, "MANAGE_AUTOMATIONS");
 
     const existing = await prisma.automation.findFirst({
       where: { id: params.id, workspaceId },
@@ -121,6 +123,7 @@ export async function DELETE(_request: Request, props: { params: Promise<{ id: s
   try {
     const staff = await requireStaff();
     const workspaceId = await getWorkspaceId(staff);
+    await requirePermission(staff, "MANAGE_AUTOMATIONS");
 
     const existing = await prisma.automation.findFirst({
       where: { id: params.id, workspaceId },

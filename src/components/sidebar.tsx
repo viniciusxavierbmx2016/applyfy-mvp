@@ -162,6 +162,12 @@ const collaboratorLinks: NavLink[] = [
     requires: "VIEW_ANALYTICS",
   },
   {
+    href: "/producer/automations",
+    label: "Automações",
+    icon: iconAutomations,
+    requires: "MANAGE_AUTOMATIONS",
+  },
+  {
     href: "/producer/course-support",
     label: "Suporte",
     icon: iconHeadphones,
