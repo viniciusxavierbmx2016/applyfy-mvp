@@ -8,6 +8,7 @@ export const COLLABORATOR_PERMISSIONS = [
   "VIEW_ANALYTICS",
   "MANAGE_LESSONS",
   "MANAGE_AUTOMATIONS",
+  "MANAGE_LIVES",
 ] as const;
 
 export type CollaboratorPermission = (typeof COLLABORATOR_PERMISSIONS)[number];
@@ -19,6 +20,7 @@ export const PERMISSION_LABELS: Record<CollaboratorPermission, string> = {
   VIEW_ANALYTICS: "Ver analytics",
   MANAGE_LESSONS: "Gerenciar módulos e aulas",
   MANAGE_AUTOMATIONS: "Gerenciar automações (criar/editar/executar)",
+  MANAGE_LIVES: "Gerenciar lives (criar/editar/transmitir/moderar)",
 };
 
 export interface CollaboratorContext {
