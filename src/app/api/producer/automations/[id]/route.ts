@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireStaff } from "@/lib/auth";
 import { resolveStaffWorkspace } from "@/lib/workspace";
 import { updateAutomationSchema, validateBody } from "@/lib/validations";
+import { validateAutomation, validateAutomationResources } from "@/lib/automation-validate";
 
 async function getWorkspaceId(staff: Parameters<typeof resolveStaffWorkspace>[0]) {
   const { workspace } = await resolveStaffWorkspace(staff);
@@ -56,6 +57,38 @@ export async function PUT(request: Request, props: { params: Promise<{ id: strin
     const v = validateBody(updateAutomationSchema, raw);
     if (!v.success) return v.error;
     const body = v.data;
+
+    // Validate the EFFECTIVE automation (patch ?? existing). The PUT used to
+    // skip validateAutomation entirely and never checked resource ownership —
+    // so it could store an incompatible trigger/action pair OR a foreign
+    // course/module/tag (cross-tenant, família do FURO#5).
+    const parseConfig = (s: string): Record<string, unknown> => {
+      try { return JSON.parse(s) as Record<string, unknown>; } catch { return {}; }
+    };
+    const effTriggerType = body.triggerType ?? existing.triggerType;
+    const effActionType = body.actionType ?? existing.actionType;
+    const effTriggerConfig = body.triggerConfig ?? parseConfig(existing.triggerConfig);
+    const effActionConfig = body.actionConfig ?? parseConfig(existing.actionConfig);
+    const effCourseId: string | null =
+      body.courseId !== undefined ? ((body.courseId as string | null) || null) : existing.courseId;
+
+    const validationError = validateAutomation(
+      effTriggerType, effActionType, effTriggerConfig, effActionConfig, effCourseId
+    );
+    if (validationError) {
+      return NextResponse.json({ error: validationError }, { status: 400 });
+    }
+
+    const resourceError = await validateAutomationResources(workspaceId, {
+      courseId: effCourseId,
+      actionType: effActionType,
+      actionConfig: effActionConfig,
+      triggerType: effTriggerType,
+      triggerConfig: effTriggerConfig,
+    });
+    if (resourceError) {
+      return NextResponse.json({ error: resourceError }, { status: 400 });
+    }
 
     const automation = await prisma.automation.update({
       where: { id: params.id },
