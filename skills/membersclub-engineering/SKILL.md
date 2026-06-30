@@ -147,7 +147,27 @@ Depth calibration:
 - Never assume "it works" from code analysis alone — test with real data
 ```
 
-### 2. Risk Assessment (answer ALL before proceeding)
+### 2. The 7 Questions Before Writing ANY Code (mandatory gate)
+
+Before writing a single line of NEW code, answer ALL seven — explicitly, out loud:
+
+1. **Does this code even need to exist?** (or can the goal be met without it?)
+2. **Does something already do this in the project?** (existing component / helper / util — search before building)
+3. **Does the language / framework / library already do this natively?** (don't reinvent platform features)
+4. **Can it be solved in 1 line?** (or by reusing an existing call?)
+5. **Is there a simpler abstraction?**
+6. **Am I adding complexity that will need future maintenance?**
+7. **What is the MINIMUM code that solves this?**
+
+Only if, after all seven, the code is still necessary — write it, and write the MINIMUM.
+**Priority order: reuse > native > 1 line > new code.** Removing code to fix a problem beats adding code.
+
+Worked examples from this project:
+- Magic-link is NOT built from scratch — Supabase has it natively (the answer to Q3).
+- The invite account-takeover fix (ITEM 1b) was −35/+13: the best fix DELETED the dangerous block and routed to the login flow that already existed (Q2 + Q4).
+- Every cross-tenant fix (#5, lives/moderators) reused the SAME `hasWorkspaceAccess` helper — zero new code (Q2).
+
+### 3. Risk Assessment (answer ALL before proceeding)
 
 ```
 - Is this change small, medium, or large?
@@ -162,7 +182,7 @@ Depth calibration:
 - What needs monitoring after implementation?
 ```
 
-### 3. Branch Decision
+### 4. Branch Decision
 
 | Change Size | Risk | Branch Required? |
 |-------------|------|-----------------|
