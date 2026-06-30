@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireStaff } from "@/lib/auth";
+import { requireStaff, requirePermission } from "@/lib/auth";
 import { resolveStaffWorkspace } from "@/lib/workspace";
 import { NotificationType } from "@prisma/client";
 import { sendPushToUsers } from "@/lib/push-send";
@@ -26,6 +26,7 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
   try {
     const staff = await requireStaff();
     const workspaceId = await getWorkspaceId(staff);
+    await requirePermission(staff, "MANAGE_LIVES");
 
     const existing = await prisma.live.findFirst({
       where: { id: params.id, workspaceId },

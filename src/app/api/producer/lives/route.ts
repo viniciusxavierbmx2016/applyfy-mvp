@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireStaff } from "@/lib/auth";
+import { requireStaff, requirePermission } from "@/lib/auth";
 import { resolveStaffWorkspace } from "@/lib/workspace";
 import { NotificationType } from "@prisma/client";
 import { sendPushToUsers } from "@/lib/push-send";
@@ -22,6 +22,7 @@ export async function GET(request: Request) {
   try {
     const staff = await requireStaff();
     const workspaceId = await getWorkspaceId(staff);
+    await requirePermission(staff, "MANAGE_LIVES");
 
     const { searchParams } = new URL(request.url);
     const status = searchParams.get("status");
@@ -53,6 +54,7 @@ export async function POST(request: Request) {
   try {
     const staff = await requireStaff();
     const workspaceId = await getWorkspaceId(staff);
+    await requirePermission(staff, "MANAGE_LIVES");
 
     const raw = await request.json().catch(() => ({}));
     const v = validateBody(createLiveSchema, raw);

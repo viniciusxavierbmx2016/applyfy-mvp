@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireStaff } from "@/lib/auth";
+import { requireStaff, requirePermission } from "@/lib/auth";
 import { resolveStaffWorkspace } from "@/lib/workspace";
 import { moderateLiveSchema, validateBody } from "@/lib/validations";
 
@@ -12,6 +12,7 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
     if (!workspace) {
       return NextResponse.json({ error: "Sem permissão" }, { status: 403 });
     }
+    await requirePermission(staff, "MANAGE_LIVES");
 
     const live = await prisma.live.findFirst({
       where: { id: params.id, workspaceId: workspace.id },
