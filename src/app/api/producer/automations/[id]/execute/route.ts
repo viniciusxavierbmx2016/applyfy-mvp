@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireStaff } from "@/lib/auth";
+import { requireStaff, requirePermission } from "@/lib/auth";
 import { resolveStaffWorkspace } from "@/lib/workspace";
 import { executeAction } from "@/lib/automation-engine";
 
@@ -17,6 +17,7 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
     if (!workspace) {
       return NextResponse.json({ error: "Sem permissão" }, { status: 403 });
     }
+    await requirePermission(staff, "MANAGE_AUTOMATIONS");
 
     const automation = await prisma.automation.findFirst({
       where: { id: params.id, workspaceId: workspace.id },

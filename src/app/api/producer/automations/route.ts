@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireStaff } from "@/lib/auth";
+import { requireStaff, requirePermission } from "@/lib/auth";
 import { resolveStaffWorkspace } from "@/lib/workspace";
 import { createAutomationSchema, validateBody } from "@/lib/validations";
 import { validateAutomation, validateAutomationResources } from "@/lib/automation-validate";
@@ -17,6 +17,7 @@ export async function GET() {
   try {
     const staff = await requireStaff();
     const workspaceId = await getWorkspaceId(staff);
+    await requirePermission(staff, "MANAGE_AUTOMATIONS");
 
     const [automations, courses, tags] = await Promise.all([
       prisma.automation.findMany({
@@ -71,6 +72,7 @@ export async function POST(request: Request) {
   try {
     const staff = await requireStaff();
     const workspaceId = await getWorkspaceId(staff);
+    await requirePermission(staff, "MANAGE_AUTOMATIONS");
 
     const count = await prisma.automation.count({ where: { workspaceId } });
     if (count >= MAX_AUTOMATIONS) {
