@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireStaff } from "@/lib/auth";
 import { resolveStaffWorkspace } from "@/lib/workspace";
+import { hasWorkspaceAccess } from "@/lib/workspace-access";
 import { liveModeratorSchema, validateBody } from "@/lib/validations";
 
 async function verifyOwnership(params: { id: string }) {
@@ -41,7 +42,7 @@ export async function GET(_request: Request, props: { params: Promise<{ id: stri
 export async function POST(request: Request, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
   try {
-    await verifyOwnership(params);
+    const { workspace } = await verifyOwnership(params);
 
     const raw = await request.json().catch(() => ({}));
     const v = validateBody(liveModeratorSchema, raw);
@@ -49,6 +50,17 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
     const { userId } = v.data;
     if (!userId) {
       return NextResponse.json({ error: "userId é obrigatório" }, { status: 400 });
+    }
+
+    // Cross-tenant guard (gêmeo do FURO#5): userId vem do body cru e não é
+    // amarrado ao workspace. Sem isto, staff do ws A planta uma conta de outro
+    // tenant como moderador da live do A (ganha poder de deletar mensagens do
+    // chat via lives/[id]/messages/[messageId]). 404 esconde existência.
+    if (!(await hasWorkspaceAccess(userId, workspace.id))) {
+      return NextResponse.json(
+        { error: "Usuário não encontrado neste workspace" },
+        { status: 404 }
+      );
     }
 
     const existing = await prisma.liveModerator.findUnique({
