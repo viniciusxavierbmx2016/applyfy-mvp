@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireStaff } from "@/lib/auth";
+import { requireStaff, requirePermission } from "@/lib/auth";
 import { resolveStaffWorkspace } from "@/lib/workspace";
 import { updateTagSchema, validateBody } from "@/lib/validations";
 
@@ -8,6 +8,7 @@ async function getOwnedTag(tagId: string) {
   const staff = await requireStaff();
   const { workspace } = await resolveStaffWorkspace(staff);
   if (!workspace) throw new Error("Workspace não encontrado");
+  await requirePermission(staff, "MANAGE_AUTOMATIONS");
 
   const tag = await prisma.tag.findUnique({ where: { id: tagId } });
   if (!tag || tag.workspaceId !== workspace.id) throw new Error("Tag não encontrada");
@@ -32,7 +33,7 @@ export async function GET(_request: Request, props: { params: Promise<{ id: stri
     });
   } catch (error) {
     const msg = error instanceof Error ? error.message : "Erro";
-    const status = msg === "Não autorizado" ? 401 : msg === "Tag não encontrada" ? 404 : 500;
+    const status = msg === "Não autorizado" ? 401 : msg === "Sem permissão" ? 403 : msg === "Tag não encontrada" ? 404 : 500;
     return NextResponse.json({ error: msg }, { status });
   }
 }
@@ -65,7 +66,7 @@ export async function PUT(request: Request, props: { params: Promise<{ id: strin
     return NextResponse.json({ tag: updated });
   } catch (error) {
     const msg = error instanceof Error ? error.message : "Erro";
-    const status = msg === "Não autorizado" ? 401 : msg === "Tag não encontrada" ? 404 : 500;
+    const status = msg === "Não autorizado" ? 401 : msg === "Sem permissão" ? 403 : msg === "Tag não encontrada" ? 404 : 500;
     return NextResponse.json({ error: msg }, { status });
   }
 }
@@ -78,7 +79,7 @@ export async function DELETE(_request: Request, props: { params: Promise<{ id: s
     return NextResponse.json({ ok: true });
   } catch (error) {
     const msg = error instanceof Error ? error.message : "Erro";
-    const status = msg === "Não autorizado" ? 401 : msg === "Tag não encontrada" ? 404 : 500;
+    const status = msg === "Não autorizado" ? 401 : msg === "Sem permissão" ? 403 : msg === "Tag não encontrada" ? 404 : 500;
     return NextResponse.json({ error: msg }, { status });
   }
 }
