@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireStaff } from "@/lib/auth";
+import { requireStaff, requirePermission } from "@/lib/auth";
 import { resolveStaffWorkspace } from "@/lib/workspace";
 import { createTagSchema, validateBody } from "@/lib/validations";
 
@@ -8,6 +8,7 @@ export async function GET() {
   try {
     const staff = await requireStaff();
     const { workspace } = await resolveStaffWorkspace(staff);
+    await requirePermission(staff, "MANAGE_AUTOMATIONS");
     if (!workspace) {
       return NextResponse.json({ tags: [] });
     }
@@ -39,6 +40,7 @@ export async function POST(request: Request) {
   try {
     const staff = await requireStaff();
     const { workspace } = await resolveStaffWorkspace(staff);
+    await requirePermission(staff, "MANAGE_AUTOMATIONS");
     if (!workspace) {
       return NextResponse.json({ error: "Workspace não encontrado" }, { status: 400 });
     }
