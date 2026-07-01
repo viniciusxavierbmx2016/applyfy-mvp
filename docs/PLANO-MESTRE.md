@@ -55,15 +55,15 @@ O backlog parecia infinito porque ninguém tinha cruzado a lista com o que já e
 - [x] Merge `--no-ff` (as 2 etapas juntas) → `78275d4`.
 **Dependência:** nenhuma. Reusa molde pronto. **Status: concluído — o cross-tenant guard `hasWorkspaceAccess` do moderators permanece (camada independente).**
 
-### 1.2 — Tags standalone ungated 🟡
+### 1.2 — Tags standalone ungated 🟡 ✅ FEITO (`8e8ceaa`)
 **Problema:** `tags/route.ts:9,40`, `[id]/route.ts:7-16` — CRUD de tags é `requireStaff` puro. Tags = segmentação + alvo de automação.
-**Abordagem:** `requirePermission(staff, "MANAGE_STUDENTS")` (tags pertencem ao domínio de gestão de alunos; não precisa permissão nova).
+**Abordagem:** `requirePermission(staff, "MANAGE_AUTOMATIONS")`. ⚠️ **Corrigido na investigação (a premissa do plano estava errada):** a gestão de tags vive sob a seção **Automações** (`/producer/automations/tags`, uma aba do `automations/layout.tsx`) e as tags são o alvo dos triggers/ações de automação (HAS_TAG/ADD_TAG) — `MANAGE_AUTOMATIONS` mantém coerência com o nav. `MANAGE_STUDENTS` (a proposta original) **quebraria o colaborador de automações**. Sinuca: só `automations/tags/page.tsx` consome `/api/producer/tags`; o filtro de alunos e o editor de automação têm fonte própria (não quebram). Não precisa permissão nova (reusa a 6ª). Inclui o ajuste do catch do `[id]` ("Sem permissão"→403, trap FURO#5 — os catches do `[id]` mapeavam só 401/404/500).
 **Etapas:**
-- [ ] Read-only: confirmar gates + se há caller que leria tags sem a permissão (sinuca).
-- [ ] Aplicar `requirePermission(MANAGE_STUDENTS)` nas rotas CRUD de tag + conferir o catch.
-- [ ] Staging: colaborador sem MANAGE_STUDENTS → 403; com → passa.
-- [ ] Merge `--no-ff`.
-**Dependência:** depois de 1.1 (mesma sequência de permissões).
+- [x] Read-only: confirmar gates + sinuca (só a aba de tags sob Automações consome as rotas; filtro de alunos e editor de automação têm fonte própria). **Achado: premissa MANAGE_STUDENTS errada → MANAGE_AUTOMATIONS.**
+- [x] Aplicar `requirePermission(MANAGE_AUTOMATIONS)` — 3 ocorrências/5 métodos (route.ts GET+POST via replace_all; `[id]` 1 linha no `getOwnedTag` cobre GET/PUT/DELETE) + ajuste dos 3 catches do `[id]` ("Sem permissão"→403). commit `4ccda53`.
+- [x] Staging: colab SEM (só MANAGE_STUDENTS) → **403 nos 5** (incl. `[id]` dando 403 não 500 — catch validado); COM (MANAGE_AUTOMATIONS) → passa; dono PRODUCER → passa. Provas de count (tag intacta, count 1).
+- [x] Merge `--no-ff` → `8e8ceaa`.
+**Dependência:** depois de 1.1 (mesma sequência de permissões). **Status: concluído. Isolamento de ws já existia (getOwnedTag valida a tag no workspace) — foi só permissão + o ajuste do catch.**
 
 ### 1.3 — `workspaces/[id]` PUT → owner-only 🟡
 **Problema:** PUT usa `canAccessWorkspace` (devia ser `requireWorkspaceOwner`) — colaborador edita config do workspace.
