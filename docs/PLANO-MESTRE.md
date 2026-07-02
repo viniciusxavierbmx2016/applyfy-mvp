@@ -118,14 +118,18 @@ O backlog parecia infinito porque ninguém tinha cruzado a lista com o que já e
 **Dependência:** relaciona com **D1 (migrations do zero)** — coordenar a migração.
 
 ### 1.7 — ITEM 3: `MANAGE_LESSONS` em criar/excluir curso 🟢
-**Problema:** o blanket-403 de colaborador é só em criar curso (`courses/route.ts:245`) e excluir curso (`courses/[id]/route.ts:286`). Módulos/seções JÁ honram MANAGE_LESSONS via `canEditCourse`.
+**Problema:** o blanket-403 de colaborador é só em criar curso (`courses/route.ts:245`) e excluir curso (`courses/[id]/route.ts:283`). Módulos/seções JÁ honram MANAGE_LESSONS via `canEditCourse`.
 **Decisão de produto (Vinicius):** colaborador pode **CRIAR e EDITAR** cursos. **NUNCA EXCLUIR** (ação destrutiva fica só com o dono).
 **Abordagem:** liberar o POST de criar curso para `MANAGE_LESSONS`; manter o DELETE como blanket-403 para colaborador.
+**Descobertas da investigação (2026-07-02) — premissas corrigidas:**
+- ❌ **"A UI já esconde Excluir do colaborador" era FALSO.** O botão Excluir em `producer/courses/page.tsx` usava `hasManageLessons` — colaborador COM a permissão via o botão (o clique dava 403 na API, mas a UI expunha). Fix: botão gated por `!isCollaborator`.
+- **Ownership errado no create:** `ownerId: staff.id` — colaborador criando curso viraria DONO do curso (curso fora do controle do dono do workspace, quebra `canEditCourse`/vitrine por ownerId). Fix: `ownerId` ancorado em `workspace.ownerId`.
+- **Plan-limits bypassável:** `checkPlanLimits` só rodava `if role===PRODUCER` contando por `staff.id` — colaborador criando curso não consumia (nem respeitava) a quota do plano do dono. Fix: roda para `!ADMIN`, contando pelo `workspace.ownerId` (a quota é sempre do produtor pagante). Mesma família do 1.8.
 **Etapas:**
-- [ ] Read-only: confirmar os 2 pontos exatos (create:245, delete:286) + o catch.
-- [ ] Liberar create para `requirePermission(MANAGE_LESSONS)`; estender o catch para não dar 500; confirmar que o gap de plan-limits só roda para PRODUCER.
-- [ ] Manter delete blanket-403 (colaborador nunca exclui).
-- [ ] Staging: colaborador com MANAGE_LESSONS → cria curso (201), tenta excluir → 403; dono → ambos.
+- [x] Read-only: confirmar os 2 pontos exatos (create:245, delete:283) + o catch. → Investigação a fundo derrubou a premissa da UI e achou ownership/plan-limits (acima) + 6 achados novos (1.9–1.12 + nota groups).
+- [x] Liberar create para `requirePermission(MANAGE_LESSONS)`; ancorar plan-limits + `ownerId` no `workspace.ownerId` (roda para `!ADMIN`); estender o catch (Não autorizado→401, Sem permissão/Forbidden→403, resto→500); esconder Excluir do colaborador na UI (`!isCollaborator`).
+- [x] Manter delete blanket-403 (colaborador nunca exclui) — DELETE e PUT intactos.
+- [ ] Staging: colaborador com MANAGE_LESSONS → cria curso (201, ownerId=dono, consome quota do dono), tenta excluir → 403; sem a perm → 403; dono → ambos.
 - [ ] Merge `--no-ff`.
 **Dependência:** nenhuma.
 
@@ -138,6 +142,45 @@ O backlog parecia infinito porque ninguém tinha cruzado a lista com o que já e
 - [ ] Aplicar + staging (colaborador tenta criar além do limite → bloqueado).
 - [ ] Merge `--no-ff`.
 **Dependência:** nenhuma.
+
+### 1.9 — GET `/api/courses/[id]` SEM AUTH (content leak anônimo) 🔴
+**Problema:** o GET de `courses/[id]/route.ts` não exige autenticação — qualquer anônimo com o id do curso baixa o curso COMPLETO (estrutura de módulos/aulas e conteúdo), inclusive curso pago/não publicado. Content leak direto do produto vendido. Achado durante a investigação do 1.7 (não estava no plano).
+**PRIORIZADO:** próximo item depois do fecho do 1.7.
+**Etapas:**
+- [ ] Read-only: confirmar o shape exato da resposta (o que vaza: URLs de vídeo? conteúdo das aulas?) + TODOS os consumidores do GET (player do aluno, edit do produtor, telas públicas) para não quebrar fluxo legítimo.
+- [ ] Gate: exigir auth + autorização (aluno matriculado/do workspace OU staff com acesso ao curso).
+- [ ] Staging: anônimo → 401; aluno de outro ws → bloqueado; aluno matriculado + dono + colaborador → fluxos intactos.
+- [ ] Merge `--no-ff`.
+**Dependência:** nenhuma.
+
+### 1.10 — Reads ungated: quiz GET (vaza `isCorrect`) + customize GET (branding) 🟡
+**Problema:** dois GETs sem gate adequado (achados na investigação do 1.7): o GET de quiz retorna as alternativas COM `isCorrect` — aluno lê o gabarito antes de responder; o GET de customize expõe a config de branding do curso sem gate.
+**Etapas:**
+- [ ] Read-only: confirmar as rotas exatas, o shape da resposta e os consumidores (o quiz do aluno precisa das alternativas SEM o gabarito).
+- [ ] Quiz: strip de `isCorrect` para não-staff (ou endpoint separado staff/aluno). Customize: gate mínimo coerente com quem consome.
+- [ ] Staging: aluno não vê `isCorrect`; correção do quiz continua funcionando; branding intacto para quem deve ver.
+- [ ] Merge `--no-ff`.
+**Dependência:** nenhuma.
+
+### 1.11 — menu/reorder PATCH não amarra `courseId` (cross-curso) 🟡
+**Problema:** o PATCH de menu/reorder não valida que os itens reordenados pertencem ao curso autorizado — staff com acesso a UM curso mexe na ordem/estrutura de OUTRO (cross-curso; se os ids não forem validados contra workspace, potencialmente cross-tenant). Achado na investigação do 1.7.
+**Etapas:**
+- [ ] Read-only: confirmar a rota exata + o que o PATCH aceita (ids soltos?) + se o furo alcança cross-tenant ou só cross-curso dentro do ws.
+- [ ] Amarrar cada item ao `courseId` autorizado (padrão dos fixes FURO#5/ITEM 2: validar recurso vs escopo, 404 para fora).
+- [ ] Staging: reorder legítimo intacto; item de outro curso → rejeitado.
+- [ ] Merge `--no-ff`.
+**Dependência:** nenhuma.
+
+### 1.12 — overrides/release-all/resend: `MANAGE_LESSONS` onde deveria `MANAGE_STUDENTS` 🟡
+**Problema:** as rotas de overrides, release-all e resend gateiam por `MANAGE_LESSONS`, mas são ações sobre ALUNOS (matrícula/liberação/reenvio de acesso) — a permissão correta é `MANAGE_STUDENTS`. Colaborador de conteúdo (só lessons) consegue operar acesso de alunos. Achado na investigação do 1.7.
+**Etapas:**
+- [ ] Read-only: confirmar as rotas exatas + o gate atual de cada uma + quem as consome na UI.
+- [ ] Trocar o gate para `MANAGE_STUDENTS` (decisão de produto se alguma ação for genuinamente híbrida).
+- [ ] Staging: colaborador só-lessons → 403; colaborador com MANAGE_STUDENTS → passa; dono intacto.
+- [ ] Merge `--no-ff`.
+**Dependência:** nenhuma.
+
+> **Nota menor (registrar, sem item próprio por ora):** o GET de groups trata COLLABORATOR como staff SEM aplicar course-scope — colaborador com escopo restrito a cursos específicos enxerga groups além do escopo. Reavaliar quando mexer nas rotas de groups.
 
 ---
 
@@ -420,7 +463,8 @@ Cada um: Dev Brabo completo (read-only → proposta → staging → merge `--no-
 A ordem dentro das fases, otimizada por dependência:
 
 ```
-SEGURANÇA       1.1 MANAGE_LIVES → 1.2 Tags → 1.3 workspaces-owner → 1.4 cluster → 1.8 plan-limit → 1.7 ITEM 3
+SEGURANÇA       1.1 MANAGE_LIVES → 1.2 Tags → 1.3 workspaces-owner → 1.4 cluster → 1.7 ITEM 3 → 1.9 GET-curso-anon 🔴
+                → 1.10-1.12 (quiz/customize, menu-reorder, overrides-perms) → 1.8 plan-limit-ws
                 (1.5 magic-link + 1.6 token DEPOIS da Fase 3)
 INFRA BARATA    2.1 HSTS → 2.2 npm audit → 2.3 XSS sanitize
 EMAIL           3.1 retry → 3.2 EmailLog   [desbloqueia 1.5]
