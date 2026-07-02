@@ -1,16 +1,15 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireStaff } from "@/lib/auth";
-import { canAccessWorkspace } from "@/lib/workspace";
+import { requireWorkspaceOwner } from "@/lib/workspace";
 import { createAdminClient, STORAGE_BUCKET } from "@/lib/supabase-admin";
 
 export async function POST(request: Request, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
   try {
     const staff = await requireStaff();
-    if (!(await canAccessWorkspace(staff, params.id))) {
-      return NextResponse.json({ error: "Sem permissão" }, { status: 403 });
-    }
+    const gate = await requireWorkspaceOwner(staff, params.id);
+    if (!gate.ok) return gate.response;
 
     if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
       return NextResponse.json(

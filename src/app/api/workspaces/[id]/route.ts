@@ -1,16 +1,15 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireStaff } from "@/lib/auth";
-import { canAccessWorkspace } from "@/lib/workspace";
+import { requireWorkspaceOwner } from "@/lib/workspace";
 import { updateWorkspaceSchema, validateBody } from "@/lib/validations";
 
 export async function PATCH(request: Request, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
   try {
     const staff = await requireStaff();
-    if (!(await canAccessWorkspace(staff, params.id))) {
-      return NextResponse.json({ error: "Sem permissão" }, { status: 403 });
-    }
+    const gate = await requireWorkspaceOwner(staff, params.id);
+    if (!gate.ok) return gate.response;
 
     const raw = await request.json().catch(() => ({}));
     const v = validateBody(updateWorkspaceSchema, raw);
@@ -136,9 +135,8 @@ export async function DELETE(_request: Request, props: { params: Promise<{ id: s
   const params = await props.params;
   try {
     const staff = await requireStaff();
-    if (!(await canAccessWorkspace(staff, params.id))) {
-      return NextResponse.json({ error: "Sem permissão" }, { status: 403 });
-    }
+    const gate = await requireWorkspaceOwner(staff, params.id);
+    if (!gate.ok) return gate.response;
     // Soft delete: just deactivate.
     const workspace = await prisma.workspace.update({
       where: { id: params.id },
