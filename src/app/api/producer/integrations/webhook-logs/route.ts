@@ -1,11 +1,17 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireStaff } from "@/lib/auth";
+import { resolveStaffWorkspace, requireWorkspaceOwner } from "@/lib/workspace";
 import { parseSafeInt } from "@/lib/utils";
 
 export async function GET(request: Request) {
   try {
     const staff = await requireStaff();
+    const { workspace } = await resolveStaffWorkspace(staff);
+    // Owner-only: mata o vazamento cross-tenant (COLLABORATOR caía em where={}).
+    // ADMIN passa no requireWorkspaceOwner; PRODUCER precisa ser dono do ws.
+    const gate = await requireWorkspaceOwner(staff, workspace?.id ?? "");
+    if (!gate.ok) return gate.response;
 
     const { searchParams } = new URL(request.url);
     const event = searchParams.get("event")?.trim();
@@ -42,6 +48,7 @@ export async function GET(request: Request) {
       }
 
       where.OR = [
+        ...(workspace ? [{ workspaceId: workspace.id }] : []),
         { courseId: { in: ownedIds } },
         { productExternalId: { in: ownedExternal } },
       ];

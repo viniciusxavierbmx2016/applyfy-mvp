@@ -1,11 +1,18 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireStaff } from "@/lib/auth";
+import { resolveStaffWorkspace, requireWorkspaceOwner } from "@/lib/workspace";
 import { integrationRequestSchema, validateBody } from "@/lib/validations";
 
 export async function POST(request: Request) {
   try {
-    await requireStaff();
+    const staff = await requireStaff();
+    const { workspace } = await resolveStaffWorkspace(staff);
+    if (!workspace) {
+      return NextResponse.json({ error: "Nenhum workspace ativo" }, { status: 400 });
+    }
+    const gate = await requireWorkspaceOwner(staff, workspace.id);
+    if (!gate.ok) return gate.response;
 
     const raw = await request.json().catch(() => ({}));
     const v = validateBody(integrationRequestSchema, raw);
