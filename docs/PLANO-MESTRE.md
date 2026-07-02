@@ -75,9 +75,9 @@ O backlog parecia infinito porque ninguém tinha cruzado a lista com o que já e
 **Abordagem:** trocar `canAccessWorkspace` por `requireWorkspaceOwner` nos 4 pontos (família FURO #1/#3); trocar o import nos 3 arquivos (canAccessWorkspace fica órfão). Catches já mapeiam 403 — não tocar. Sem migração.
 **Etapas:**
 - [x] Read-only: gate atual dos 4 + sinuca (nenhum fluxo legítimo de colaborador usa) + `requireWorkspaceOwner` cobre.
-- [ ] Aplicar os 4 gates + trocar os 3 imports.
-- [ ] Staging: colaborador → 403 nos 4 (não seta masterPassword, não desfigura, não desativa); dono → passa; ADMIN → passa.
-- [ ] Merge `--no-ff`.
+- [x] Aplicar os 4 gates + trocar os 3 imports. commit `ab68a6f`.
+- [x] Staging: colaborador → 403 nos 4 (não seta masterPassword, não desfigura, não desativa); dono → passa; ADMIN → passa. Prova: masterPassword AINDA null + isActive AINDA true após os exploits do colab (account-takeover + DoS mortos).
+- [x] Merge `--no-ff` → `65190bd`.
 **Dependência:** nenhuma. **Achados adjacentes derivados desta investigação → itens 1.8 e 2.6.**
 
 ### 1.4 — Cluster médio: integrations + course-support 🟡
