@@ -65,15 +65,20 @@ O backlog parecia infinito porque ninguém tinha cruzado a lista com o que já e
 - [x] Merge `--no-ff` → `8e8ceaa`.
 **Dependência:** depois de 1.1 (mesma sequência de permissões). **Status: concluído. Isolamento de ws já existia (getOwnedTag valida a tag no workspace) — foi só permissão + o ajuste do catch.**
 
-### 1.3 — `workspaces/[id]` PUT → owner-only 🟡
-**Problema:** PUT usa `canAccessWorkspace` (devia ser `requireWorkspaceOwner`) — colaborador edita config do workspace.
-**Abordagem:** trocar pelo helper `requireWorkspaceOwner` que já existe (família do FURO #1/#3).
+### 1.3 — `workspaces/[id]` PATCH+DELETE + uploads → owner-only 🔴
+**Problema:** o cluster de escrita de branding/config do ws usa `canAccessWorkspace` (dono OU colaborador) onde devia ser `requireWorkspaceOwner` (só dono). NÃO existe "PUT" — a rota é `PATCH`+`DELETE`. Gravidade ALTA, não média: um colaborador sem NENHUMA das 7 permissões consegue, via API crua, (a) setar `masterPassword` → senha universal → **account-takeover em massa de qualquer aluno** (login em `w/[slug]/login` compara plaintext e minta sessão via magic-link); (b) injetar `emailCustomHtml` → **phishing/exfiltração da senha temp `{senha}`** no email transacional de todo comprador; (c) `isActive=false` (ou o DELETE, soft-delete) → **DoS total** (derruba login de aluno E dropa webhook de pagamento).
+**Escopo (4 gates, mesmo cluster):**
+- `workspaces/[id]/route.ts` — PATCH (:11) e DELETE (:139).
+- `workspaces/[id]/logo/route.ts` — POST (:11) sobrescreve `logoUrl`.
+- `workspaces/[id]/login-images/route.ts` — POST (:13) troca bg/logo/favicon da tela de login PÚBLICA.
+**Fora do escopo:** `vitrine` já é owner-only (findFirst por ownerId→404); `workspaces/route.ts` fica de fora (GET owner-scoped, POST não toca ws alheio — mas ver 1.8).
+**Abordagem:** trocar `canAccessWorkspace` por `requireWorkspaceOwner` nos 4 pontos (família FURO #1/#3); trocar o import nos 3 arquivos (canAccessWorkspace fica órfão). Catches já mapeiam 403 — não tocar. Sem migração.
 **Etapas:**
-- [ ] Read-only: confirmar o gate atual + que `requireWorkspaceOwner` cobre o caso.
-- [ ] Aplicar + conferir catch.
-- [ ] Staging: colaborador → 403; dono → passa.
+- [x] Read-only: gate atual dos 4 + sinuca (nenhum fluxo legítimo de colaborador usa) + `requireWorkspaceOwner` cobre.
+- [ ] Aplicar os 4 gates + trocar os 3 imports.
+- [ ] Staging: colaborador → 403 nos 4 (não seta masterPassword, não desfigura, não desativa); dono → passa; ADMIN → passa.
 - [ ] Merge `--no-ff`.
-**Dependência:** nenhuma.
+**Dependência:** nenhuma. **Achados adjacentes derivados desta investigação → itens 1.8 e 2.6.**
 
 ### 1.4 — Cluster médio: integrations + course-support 🟡
 **Problema:** três rotas sem gate de permissão consistente:
@@ -119,6 +124,16 @@ O backlog parecia infinito porque ninguém tinha cruzado a lista com o que já e
 - [ ] Liberar create para `requirePermission(MANAGE_LESSONS)`; estender o catch para não dar 500; confirmar que o gap de plan-limits só roda para PRODUCER.
 - [ ] Manter delete blanket-403 (colaborador nunca exclui).
 - [ ] Staging: colaborador com MANAGE_LESSONS → cria curso (201), tenta excluir → 403; dono → ambos.
+- [ ] Merge `--no-ff`.
+**Dependência:** nenhuma.
+
+### 1.8 — `checkPlanLimits` bypass em criar workspace 🟡
+**Problema:** `workspaces/route.ts` POST (:31) roda `checkPlanLimits` só `if (staff.role === "PRODUCER")` (:33). Um colaborador (role COLLABORATOR/STUDENT-com-Collab) cai fora do check e **cria workspaces ilimitados**, virando dono deles, bypassando o limite do plano. Abuso de plano (não é vazamento de dados nem cross-tenant). Achado à parte durante a investigação do 1.3.
+**Abordagem:** aplicar o `checkPlanLimits` (ou o gate correto de criação) independente do role, ou bloquear criação de ws por colaborador. Decisão de produto: colaborador PODE criar workspace próprio?
+**Etapas:**
+- [ ] Read-only: confirmar o gate do POST + como `checkPlanLimits` conta e a quem se aplica.
+- [ ] Decisão de produto (Vinicius): colaborador cria ws? Se sim, sob qual limite?
+- [ ] Aplicar + staging (colaborador tenta criar além do limite → bloqueado).
 - [ ] Merge `--no-ff`.
 **Dependência:** nenhuma.
 
@@ -174,6 +189,17 @@ O backlog parecia infinito porque ninguém tinha cruzado a lista com o que já e
 - [ ] (se viável) implementar + staging extensivo (players, embeds, PWA).
 - [ ] Merge `--no-ff` OU registro de risco aceito.
 **Dependência:** nenhuma. Candidato a adiar se o custo/risco não compensar agora.
+
+### 2.6 — Sanitizar `emailCustomHtml` (defense-in-depth) 🟡
+**Problema:** `buildAccessEmail` (`email-templates.ts:219-224`) renderiza o HTML do produtor (`emailCustomHtml`, e `emailTitle`/`emailBody`/`emailFooter` inline em :263-303) SEM escapar, no email transacional de acesso enviado a TODO comprador novo (enrollment, import, add-students, resend, webhooks Applyfy). O template expõe as variáveis `{senha}` (senha temp em texto puro) e `{link}` → HTML malicioso pode exfiltrar a senha inicial do aluno (ex: `<img src>` para endpoint do atacante). Mais grave que o 2.3 (que é defacement; este vaza senha).
+**Mitigação já aplicada:** o 1.3 fecha quem pode SETAR o campo (só o dono agora), removendo o vetor via colaborador. Este item é a camada defense-in-depth (um dono comprometido, ou futura reabertura do gate, ainda injetaria).
+**Abordagem:** aplicar o `sanitizeHtml` server-side que já existe (reuso, mesma lib do 2.3), preservando os placeholders `{senha}`/`{link}`. Mesma família do 2.3.
+**Etapas:**
+- [ ] Read-only: confirmar o sink + o `sanitizeHtml` reusável + como não quebrar os placeholders de variável.
+- [ ] Aplicar a sanitização no render/persistência do email custom.
+- [ ] Staging: injetar `<script>`/`<img src=exfil>` no emailCustomHtml → neutralizado, email ainda renderiza.
+- [ ] Merge `--no-ff`.
+**Dependência:** relaciona com 2.3 (mesmo `sanitizeHtml`). Mitigado por 1.3.
 
 ---
 
@@ -392,7 +418,7 @@ Cada um: Dev Brabo completo (read-only → proposta → staging → merge `--no-
 A ordem dentro das fases, otimizada por dependência:
 
 ```
-SEGURANÇA       1.1 MANAGE_LIVES → 1.2 Tags → 1.3 workspaces-owner → 1.4 cluster → 1.7 ITEM 3
+SEGURANÇA       1.1 MANAGE_LIVES → 1.2 Tags → 1.3 workspaces-owner → 1.4 cluster → 1.8 plan-limit → 1.7 ITEM 3
                 (1.5 magic-link + 1.6 token DEPOIS da Fase 3)
 INFRA BARATA    2.1 HSTS → 2.2 npm audit → 2.3 XSS sanitize
 EMAIL           3.1 retry → 3.2 EmailLog   [desbloqueia 1.5]
