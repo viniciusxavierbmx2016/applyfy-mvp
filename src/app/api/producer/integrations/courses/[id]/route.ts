@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireStaff } from "@/lib/auth";
-import { canAccessWorkspace } from "@/lib/workspace";
+import { requireWorkspaceOwner } from "@/lib/workspace";
 import { updateCourseExternalIdSchema, validateBody } from "@/lib/validations";
 
 export async function PATCH(request: Request, props: { params: Promise<{ id: string }> }) {
@@ -19,9 +19,8 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
         { status: 404 }
       );
     }
-    if (!(await canAccessWorkspace(staff, course.workspaceId))) {
-      return NextResponse.json({ error: "Sem permissão" }, { status: 403 });
-    }
+    const gate = await requireWorkspaceOwner(staff, course.workspaceId);
+    if (!gate.ok) return gate.response;
 
     const rawBody = await request.json().catch(() => ({}));
     const v = validateBody(updateCourseExternalIdSchema, rawBody);

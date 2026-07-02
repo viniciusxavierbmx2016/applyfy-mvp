@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type { User } from "@prisma/client";
-import { requireStaff, getStaffCourseIds } from "@/lib/auth";
+import { requireStaff, getStaffCourseIds, requirePermission } from "@/lib/auth";
 import { resolveStaffWorkspace } from "@/lib/workspace";
 
 /**
@@ -29,6 +29,7 @@ export async function resolveProducerSupportScope(): Promise<
   let staff: User;
   try {
     staff = await requireStaff();
+    await requirePermission(staff, "MANAGE_STUDENTS");
   } catch (e) {
     const msg = e instanceof Error ? e.message : "";
     const status = msg === "Não autorizado" ? 401 : 403;

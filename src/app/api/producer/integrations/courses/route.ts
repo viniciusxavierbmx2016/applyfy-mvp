@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireStaff, getStaffCourseIds } from "@/lib/auth";
-import { resolveStaffWorkspace } from "@/lib/workspace";
+import { resolveStaffWorkspace, requireWorkspaceOwner } from "@/lib/workspace";
 
 export async function GET() {
   try {
@@ -10,6 +10,10 @@ export async function GET() {
     // Scope to the staff's workspace (COLLABORATOR → only their courses,
     // PRODUCER → workspace courses, ADMIN → global). Never expose every course.
     const { workspace, scoped } = await resolveStaffWorkspace(staff);
+    // Owner-only: integrations é território do dono (coerente com Fix 1/2/4 + FURO#3).
+    // ADMIN passa no requireWorkspaceOwner; PRODUCER precisa ser dono do ws.
+    const gate = await requireWorkspaceOwner(staff, workspace?.id ?? "");
+    if (!gate.ok) return gate.response;
     const workspaceId = scoped && workspace ? workspace.id : null;
     const collabScope = await getStaffCourseIds(staff);
     const where =
