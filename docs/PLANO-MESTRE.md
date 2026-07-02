@@ -129,8 +129,8 @@ O backlog parecia infinito porque ninguém tinha cruzado a lista com o que já e
 - [x] Read-only: confirmar os 2 pontos exatos (create:245, delete:283) + o catch. → Investigação a fundo derrubou a premissa da UI e achou ownership/plan-limits (acima) + 6 achados novos (1.9–1.12 + nota groups).
 - [x] Liberar create para `requirePermission(MANAGE_LESSONS)`; ancorar plan-limits + `ownerId` no `workspace.ownerId` (roda para `!ADMIN`); estender o catch (Não autorizado→401, Sem permissão/Forbidden→403, resto→500); esconder Excluir do colaborador na UI (`!isCollaborator`).
 - [x] Manter delete blanket-403 (colaborador nunca exclui) — DELETE e PUT intactos.
-- [ ] Staging: colaborador com MANAGE_LESSONS → cria curso (201, ownerId=dono, consome quota do dono), tenta excluir → 403; sem a perm → 403; dono → ambos.
-- [ ] Merge `--no-ff`.
+- [x] Staging: 17/17 PASS — colab COM cria (201, **ownerId=dono** provado por SQL ⭐⭐), edita (200), exclui → 403 ⭐; colab SEM → 403; dono → tudo intacto; cenário do plan-limit (sub temp + guard de runtime) → colab barrado no limite do DONO ("Limite de N cursos…", não "Assine um plano") ⭐⭐, cleanup revertido e provado (exempt 504d8495 vence de novo, dono cria 201).
+- [x] Merge `--no-ff` (12355d3, branch deletada).
 **Dependência:** nenhuma.
 
 ### 1.8 — `checkPlanLimits` bypass em criar workspace 🟡
