@@ -80,18 +80,20 @@ O backlog parecia infinito porque ninguém tinha cruzado a lista com o que já e
 - [x] Merge `--no-ff` → `65190bd`.
 **Dependência:** nenhuma. **Achados adjacentes derivados desta investigação → itens 1.8 e 2.6.**
 
-### 1.4 — Cluster médio: integrations + course-support 🟡
-**Problema:** três rotas sem gate de permissão consistente:
-- `integrations/courses/[id]` PATCH sem gate (padrão perm + course-scope).
-- `integrations/request` POST sem workspace scope.
-- `course-support/[id]` PATCH + messages sem gate (a UI exige MANAGE_STUDENTS, a API não).
-**Abordagem:** aplicar o padrão de permissão + course-scope coerente em cada (mesma família do FURO #4/#5).
+### 1.4 — Cluster integrations + course-support 🔴 (era "médio")
+**Problema:** o plano dizia "3 rotas médias sem gate". A investigação a fundo (7 agentes) achou **5 frentes reais, 2 delas 🔴**, incluindo uma irmã que NÃO estava no plano. Varredura completa = 10 rotas nos 2 diretórios (`producer/integrations/**` + `producer/course-support/**`); sem 6ª irmã; `applyfy-tokens` já era owner-only (FURO#3); `status` GET benigno (boolean+logo).
+**As 5 frentes (gate real aplicado):**
+- `integrations/courses/[id]` PATCH → **owner-only** (`requireWorkspaceOwner`). 🔴 Reescreve o binding `externalProductId↔curso` que o webhook Applyfy lê p/ matricular (`findCourseByExternalId`) — colaborador com zero perm sequestrava fulfillment de pagamento (acesso grátis / sabotagem de receita). Família FURO#3 (token de pagamento).
+- `integrations/webhook-logs` GET → **owner-only + união `{workspaceId}` no where.OR**. 🔴 **NÃO estava no plano** (achado na investigação): o scope só existia p/ `role==="PRODUCER"`; COLLABORATOR caía em `where={}` e lia `WebhookLog` de TODOS os tenants (email/CPF/valor do comprador). Vazamento cross-tenant de PII de pagamento (LGPD). A união cobre os logs do webhook per-slug (que carregam `workspaceId`); as vias legadas `courseId`/`productExternalId` cobrem os do webhook global.
+- `integrations/courses` GET → **owner-only** (5º fix, por coerência — seção integrations = território do dono). 🟡 read escopado dos externalProductIds.
+- `integrations/request` POST → **owner-only** (por coerência). 🟢 fila global "fale com o admin" (model sem workspaceId), sem cross-tenant — baixo, mas gated junto.
+- `course-support` (tickets, tickets/[id] PATCH, messages POST, unread-count) → **`requirePermission("MANAGE_STUDENTS")` no resolver `resolveProducerSupportScope` (1 linha, DRY, cobre as 4 rotas)**. 🟡 a UI já exigia MANAGE_STUDENTS (nav+badge), a API não; premissa do plano CORRETA aqui (≠ 1.2). Course-scope já existia via `getStaffCourseIds`. Sem cross-tenant (ws-isolation airtight).
 **Etapas:**
-- [ ] Read-only nas 3 rotas: gate atual + qual permissão/escopo cada uma exige.
-- [ ] Aplicar gate em cada (uma por vez, build entre elas) + conferir catch.
-- [ ] Staging: colaborador sem a perm → 403 em cada; com → passa.
-- [ ] Merge `--no-ff` (pode ser um por rota ou agrupado, decidir na investigação).
-**Dependência:** nenhuma.
+- [x] Read-only a fundo (7 agentes): 5 frentes + varredura completa (10 rotas, sem 6ª) + helpers p/ reuso.
+- [x] Aplicar os 5 gates (4 owner + 1 resolver) — commit `f30ee97`. Build verde, 0 `canAccessWorkspace` sobrando.
+- [x] Staging: colab-COM (MANAGE_STUDENTS) → 403 nas 4 de integrations, passa em course-support; colab-SEM (VIEW_ANALYTICS) → 403 até em course-support; **cross-tenant webhook-logs PROVADO** (dono A vê A1/A2 não B1/B2, simétrico; A2 via workspaceId = união load-bearing); dono grava binding (200→null revertido); nenhum 5xx.
+- [x] Merge `--no-ff` → `7d6c8b8`.
+**Dependência:** nenhuma. **Lição:** o "médio" do plano subestimou — a investigação a fundo (não assumir o rótulo) achou o vazamento de PII cross-tenant do webhook-logs, que era o pior do cluster.
 
 ### 1.5 — Magic-link no convite (ITEM 1a) 🟡
 **Problema:** `invite/[id]/accept` signup — convite pré-empta email sem conta; link vazado cria conta nova. Hardening do fluxo de convite.
