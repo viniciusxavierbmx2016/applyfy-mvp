@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import {
   getCurrentUser,
   requireStaff,
+  requirePermission,
   getStaffCourseIds,
   hasAcceptedCollaborator,
 } from "@/lib/auth";
@@ -243,9 +244,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const staff = await requireStaff();
-    if (staff.role === "COLLABORATOR") {
-      return NextResponse.json({ error: "Sem permissão" }, { status: 403 });
-    }
+    await requirePermission(staff, "MANAGE_LESSONS");
 
     const raw = await request.json().catch(() => ({}));
     const vb = validateBody(createCourseSchema, raw);
@@ -281,9 +280,21 @@ export async function POST(request: Request) {
       );
     }
 
-    if (staff.role === "PRODUCER") {
+    // Plan limits and course ownership anchor on the workspace owner (the
+    // paying producer), never on the acting staff — a collaborator creating
+    // a course must consume the owner's quota and must not own the course.
+    const targetWs = await prisma.workspace.findUnique({
+      where: { id: targetWorkspaceId },
+      select: { ownerId: true },
+    });
+    if (!targetWs) {
+      return NextResponse.json({ error: "Workspace inválido" }, { status: 400 });
+    }
+    const courseOwnerId = targetWs.ownerId;
+
+    if (staff.role !== "ADMIN") {
       try {
-        await checkPlanLimits(staff.id, "course", targetWorkspaceId);
+        await checkPlanLimits(courseOwnerId, "course", targetWorkspaceId);
       } catch (err) {
         if (err instanceof PlanLimitError) {
           return NextResponse.json({ error: err.message }, { status: 403 });
@@ -317,7 +328,7 @@ export async function POST(request: Request) {
         order: (lastCourse?.order ?? -1) + 1,
         featured: Boolean(featured),
         category: typeof category === "string" && category.trim() ? category.trim() : null,
-        ownerId: staff.id,
+        ownerId: courseOwnerId,
         workspaceId: targetWorkspaceId,
       },
     });
@@ -332,11 +343,14 @@ export async function POST(request: Request) {
     return NextResponse.json({ course }, { status: 201 });
   } catch (error) {
     console.error("POST /api/courses error:", error);
-    const message =
-      error instanceof Error && error.message === "Forbidden"
-        ? "Acesso negado"
-        : "Erro ao criar curso";
-    const status = message === "Acesso negado" ? 403 : 500;
-    return NextResponse.json({ error: message }, { status });
+    if (error instanceof Error) {
+      if (error.message === "Não autorizado") {
+        return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
+      }
+      if (error.message === "Sem permissão" || error.message === "Forbidden") {
+        return NextResponse.json({ error: "Sem permissão" }, { status: 403 });
+      }
+    }
+    return NextResponse.json({ error: "Erro ao criar curso" }, { status: 500 });
   }
 }

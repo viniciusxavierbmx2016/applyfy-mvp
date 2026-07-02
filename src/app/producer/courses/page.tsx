@@ -329,7 +329,7 @@ export default function AdminCoursesPage() {
                   >
                     {hasManageLessons ? "Editar" : "Comentários"}
                   </Button>
-                  {hasManageLessons && (
+                  {!isCollaborator && (
                     <Button
                       variant="danger"
                       size="sm"
