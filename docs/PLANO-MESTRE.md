@@ -195,6 +195,15 @@ O backlog parecia infinito porque ninguém tinha cruzado a lista com o que já e
 - [ ] Aplicar + staging (conforme a decisão) + merge `--no-ff`.
 **Dependência:** nenhuma. Achado adjacente do 1.10 (não corrigido no fix do customize).
 
+### 1.14 — groups/reorder cross-tenant (id cru sem escopo) 🟠
+**Problema:** `producer/community/groups/reorder/route.ts:27` faz `prisma.communityGroup.update({ where: { id: item.id } })` — **id cru do body, sem escopo**. Mesma CLASSE do 1.11 (cross-tenant reorder via id cru: `CommunityGroup → Course → Workspace`), achado na sinuca do 1.11. Um staff/colaborador (com `MANAGE_COMMUNITY`) de um workspace pode reordenar grupos de comunidade de curso de OUTRO tenant.
+**Abordagem (a confirmar na investigação):** amarrar o escopo no `where` espelhando o molde das rotas irmãs. ⚠️ A rota **não tem courseId/workspaceId na URL** (recebe `items:[{id,order}]`), então provavelmente precisa **pré-validar** que cada grupo pertence a um curso do workspace do staff (join `group→course→workspaceId` + filtro, como `producer/courses/reorder` faz), não um `where` composto simples. + confirmar `$transaction` + sub-decisão: colaborador `MANAGE_COMMUNITY` é course-scoped?
+**Etapas:**
+- [ ] Read-only: rota inteira + gate atual + o model CommunityGroup + o molde de pré-validação + confirmar cross-tenant.
+- [ ] Amarrar o escopo + staging (2-ws: staff do A não reordena grupos do B; legítimo intacto).
+- [ ] Merge `--no-ff`.
+**Dependência:** nenhuma. Achado adjacente do 1.11 (NÃO dobrado — domínio diferente: comunidade, não menu; merece read-only próprio).
+
 > **Nota menor (registrar, sem item próprio por ora):** o GET de groups trata COLLABORATOR como staff SEM aplicar course-scope — colaborador com escopo restrito a cursos específicos enxerga groups além do escopo. Reavaliar quando mexer nas rotas de groups.
 
 ---
