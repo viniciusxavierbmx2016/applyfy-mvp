@@ -65,7 +65,7 @@ O backlog parecia infinito porque ninguém tinha cruzado a lista com o que já e
 - [x] Merge `--no-ff` → `8e8ceaa`.
 **Dependência:** depois de 1.1 (mesma sequência de permissões). **Status: concluído. Isolamento de ws já existia (getOwnedTag valida a tag no workspace) — foi só permissão + o ajuste do catch.**
 
-### 1.3 — `workspaces/[id]` PATCH+DELETE + uploads → owner-only 🔴
+### 1.3 — `workspaces/[id]` PATCH+DELETE + uploads → owner-only 🔴 ✅ FEITO (`65190bd`)
 **Problema:** o cluster de escrita de branding/config do ws usa `canAccessWorkspace` (dono OU colaborador) onde devia ser `requireWorkspaceOwner` (só dono). NÃO existe "PUT" — a rota é `PATCH`+`DELETE`. Gravidade ALTA, não média: um colaborador sem NENHUMA das 7 permissões consegue, via API crua, (a) setar `masterPassword` → senha universal → **account-takeover em massa de qualquer aluno** (login em `w/[slug]/login` compara plaintext e minta sessão via magic-link); (b) injetar `emailCustomHtml` → **phishing/exfiltração da senha temp `{senha}`** no email transacional de todo comprador; (c) `isActive=false` (ou o DELETE, soft-delete) → **DoS total** (derruba login de aluno E dropa webhook de pagamento).
 **Escopo (4 gates, mesmo cluster):**
 - `workspaces/[id]/route.ts` — PATCH (:11) e DELETE (:139).
@@ -80,7 +80,7 @@ O backlog parecia infinito porque ninguém tinha cruzado a lista com o que já e
 - [x] Merge `--no-ff` → `65190bd`.
 **Dependência:** nenhuma. **Achados adjacentes derivados desta investigação → itens 1.8 e 2.6.**
 
-### 1.4 — Cluster integrations + course-support 🔴 (era "médio")
+### 1.4 — Cluster integrations + course-support 🔴 (era "médio") ✅ FEITO (`7d6c8b8`)
 **Problema:** o plano dizia "3 rotas médias sem gate". A investigação a fundo (7 agentes) achou **5 frentes reais, 2 delas 🔴**, incluindo uma irmã que NÃO estava no plano. Varredura completa = 10 rotas nos 2 diretórios (`producer/integrations/**` + `producer/course-support/**`); sem 6ª irmã; `applyfy-tokens` já era owner-only (FURO#3); `status` GET benigno (boolean+logo).
 **As 5 frentes (gate real aplicado):**
 - `integrations/courses/[id]` PATCH → **owner-only** (`requireWorkspaceOwner`). 🔴 Reescreve o binding `externalProductId↔curso` que o webhook Applyfy lê p/ matricular (`findCourseByExternalId`) — colaborador com zero perm sequestrava fulfillment de pagamento (acesso grátis / sabotagem de receita). Família FURO#3 (token de pagamento).
@@ -117,7 +117,7 @@ O backlog parecia infinito porque ninguém tinha cruzado a lista com o que já e
 - [ ] Merge `--no-ff`.
 **Dependência:** relaciona com **D1 (migrations do zero)** — coordenar a migração.
 
-### 1.7 — ITEM 3: `MANAGE_LESSONS` em criar/excluir curso 🟢
+### 1.7 — ITEM 3: `MANAGE_LESSONS` em criar/excluir curso 🟢 ✅ FEITO (`12355d3`)
 **Problema:** o blanket-403 de colaborador é só em criar curso (`courses/route.ts:245`) e excluir curso (`courses/[id]/route.ts:283`). Módulos/seções JÁ honram MANAGE_LESSONS via `canEditCourse`.
 **Decisão de produto (Vinicius):** colaborador pode **CRIAR e EDITAR** cursos. **NUNCA EXCLUIR** (ação destrutiva fica só com o dono).
 **Abordagem:** liberar o POST de criar curso para `MANAGE_LESSONS`; manter o DELETE como blanket-403 para colaborador.
