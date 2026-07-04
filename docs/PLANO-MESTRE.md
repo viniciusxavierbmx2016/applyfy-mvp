@@ -165,14 +165,15 @@ O backlog parecia infinito porque ninguém tinha cruzado a lista com o que já e
 - [x] Merge `--no-ff` (`05cc24b`, branch deletada local+remota).
 **Dependência:** nenhuma. **Achado adjacente:** o reviews GET (terceiro primo ungated) → item **1.13** (decisão de produto, NÃO corrigido aqui).
 
-### 1.11 — menu/reorder PATCH não amarra `courseId` (cross-curso) 🟡
-**Problema:** o PATCH de menu/reorder não valida que os itens reordenados pertencem ao curso autorizado — staff com acesso a UM curso mexe na ordem/estrutura de OUTRO (cross-curso; se os ids não forem validados contra workspace, potencialmente cross-tenant). Achado na investigação do 1.7.
+### 1.11 — menu/reorder PATCH não amarra `courseId` (cross-tenant) 🟡 ✅ FEITO (`82cb150`)
+**Problema:** o PATCH de `courses/[id]/menu/reorder/route.ts:21` fazia `prisma.menuItem.update({ where: { id }, data: { order } })` com os `itemIds` **crus do body** — sem `courseId`. O gate `canEditCourse(params.id)` prova acesso ao curso da URL, mas os itens no body podiam ser de OUTRO curso. **Cross-tenant confirmado** (`MenuItem → Course → Workspace`, sem guard; + o menu GET é auth-only, entregando os ids de qq curso): staff do ws X reordena o menu de um curso do ws Y. Dano = vandalismo de integridade (só o campo `order`). Achado na investigação do 1.7.
+**Abordagem (fix cirúrgico, espelha as irmãs):** (1) `where: { id, courseId: params.id }` (molde de `courses/[id]/reorder:61` e `modules/[id]/reorder:21` — id fora do curso → `P2025` → `$transaction` rollback atômico). (2) alinhar o catch ao molde das irmãs (`msg === "Não autorizado" ? 401 : "Sem permissão" ? 403 : 500`) — fecha o trap FURO#5 (o catch era 500 genérico → anônimo tomava 500 em vez de 401).
 **Etapas:**
-- [ ] Read-only: confirmar a rota exata + o que o PATCH aceita (ids soltos?) + se o furo alcança cross-tenant ou só cross-curso dentro do ws.
-- [ ] Amarrar cada item ao `courseId` autorizado (padrão dos fixes FURO#5/ITEM 2: validar recurso vs escopo, 404 para fora).
-- [ ] Staging: reorder legítimo intacto; item de outro curso → rejeitado.
-- [ ] Merge `--no-ff`.
-**Dependência:** nenhuma.
+- [x] Read-only: rota `menu/reorder:21` (`where: { id }` cru); gate MANAGE_LESSONS existe; cross-tenant confirmado; molde nas irmãs. Sinuca: `groups/reorder` tem o MESMO furo → item **1.14** (não dobrado).
+- [x] Fix: `where: { id, courseId: params.id }` (commit `8ebcbe7`) + alinhar catch 401/403 (commit `454c903`, após o staging revelar anônimo=500).
+- [x] Staging **5/5 PASS** ⭐: (1) colab reorder do próprio curso A → 200 (order invertida, provado por SQL); (2) **cross-tenant** (ids do B via rota do A) → **500 (P2025/rollback)** e **baseline do curso B `0/1/2` INTACTA** (provado por SQL — o colab do ws A não embaralhou o menu do ws B) ⭐⭐; (3) via rota do curso B (sem acesso) → 403 (gate inline); (4) anônimo → **401 pós-catch** (body `{"error":"Não autorizado"}`, era 500). Restart do dev:staging eliminou ambiguidade do código servido. Zero 5xx inesperado (o 500 do cenário 2 é o rollback; o P2025/"Não autorizado" no log são caminhos tratados).
+- [x] Merge `--no-ff` (`82cb150`, branch deletada local+remota).
+**Dependência:** nenhuma. **Achado adjacente → item 1.14** (`groups/reorder` cross-tenant, mesma classe, NÃO dobrado — domínio de comunidade).
 
 ### 1.12 — overrides/release-all/resend: `MANAGE_LESSONS` onde deveria `MANAGE_STUDENTS` 🟡
 **Problema:** as rotas de overrides, release-all e resend gateiam por `MANAGE_LESSONS`, mas são ações sobre ALUNOS (matrícula/liberação/reenvio de acesso) — a permissão correta é `MANAGE_STUDENTS`. Colaborador de conteúdo (só lessons) consegue operar acesso de alunos. Achado na investigação do 1.7.
@@ -488,7 +489,7 @@ A ordem dentro das fases, otimizada por dependência:
 
 ```
 SEGURANÇA       1.1 MANAGE_LIVES → 1.2 Tags → 1.3 workspaces-owner → 1.4 cluster → 1.7 ITEM 3 → 1.9 GET-curso-anon ✅
-                → 1.10 customize ✅ → 1.11 menu-reorder → 1.12 overrides-perms → 1.13 reviews-GET (decisão) → 1.8 plan-limit-ws
+                → 1.10 customize ✅ → 1.11 menu-reorder ✅ → 1.12 overrides-perms → 1.13 reviews-GET (decisão) → 1.14 groups-reorder → 1.8 plan-limit-ws
                 (1.5 magic-link + 1.6 token DEPOIS da Fase 3)
 INFRA BARATA    2.1 HSTS → 2.2 npm audit → 2.3 XSS sanitize
 EMAIL           3.1 retry → 3.2 EmailLog   [desbloqueia 1.5]
