@@ -143,22 +143,24 @@ O backlog parecia infinito porque ninguém tinha cruzado a lista com o que já e
 - [ ] Merge `--no-ff`.
 **Dependência:** nenhuma.
 
-### 1.9 — GET `/api/courses/[id]` SEM AUTH (content leak anônimo) 🔴
-**Problema:** o GET de `courses/[id]/route.ts` não exige autenticação — qualquer anônimo com o id do curso baixa o curso COMPLETO (estrutura de módulos/aulas e conteúdo), inclusive curso pago/não publicado. Content leak direto do produto vendido. Achado durante a investigação do 1.7 (não estava no plano).
-**PRIORIZADO:** próximo item depois do fecho do 1.7.
+### 1.9 — GET `/api/courses/[id]` SEM AUTH (content leak anônimo) 🔴 ✅ FEITO (`ca8a81b`)
+**Problema:** o GET de `courses/[id]/route.ts` não exige autenticação — qualquer anônimo com o id do curso baixa o curso COMPLETO (estrutura de módulos/aulas e conteúdo, **`videoUrl` de todas as aulas** + escalares do curso), inclusive curso pago/não publicado. Content leak direto do produto vendido. Achado durante a investigação do 1.7 (não estava no plano).
+**Abordagem:** novo `assertCanViewCourse` (read-gate, mais amplo que `assertCanEditCourse`): `getCurrentUser()` → 401; ADMIN ou PRODUCER dono (por `course.ownerId` **ou** `workspace.ownerId`) passam; senão `collaboratorCanActOnCourse(user.id, courseId, anyOf)`. O `anyOf` = as 5 permissões cujas sub-telas de editor legitimamente fazem esse fetch: `[MANAGE_LESSONS, MANAGE_STUDENTS, REPLY_COMMENTS, MANAGE_COMMUNITY, MANAGE_LIVES]`. O helper já embute o guard cross-tenant (`course.workspaceId !== rec.workspaceId → false`) + course-scope. PUT/DELETE seguem gateados por owner/`MANAGE_LESSONS` (inalterados). O `findUnique` interno do gate (ownerId + workspace.ownerId) nunca é retornado ao cliente.
+**Dilema `VIEW_ANALYTICS` — resolvido por evidência, não por decisão:** ficou FORA do `anyOf`. O analista de métricas não precisa do conteúdo — a tela de analytics tem endpoint próprio que não consome `videoUrl`. Provado no staging (colab só-`VIEW_ANALYTICS` → 403, sem quebrar analytics).
 **Etapas:**
-- [ ] Read-only: confirmar o shape exato da resposta (o que vaza: URLs de vídeo? conteúdo das aulas?) + TODOS os consumidores do GET (player do aluno, edit do produtor, telas públicas) para não quebrar fluxo legítimo.
-- [ ] Gate: exigir auth + autorização (aluno matriculado/do workspace OU staff com acesso ao curso).
-- [ ] Staging: anônimo → 401; aluno de outro ws → bloqueado; aluno matriculado + dono + colaborador → fluxos intactos.
-- [ ] Merge `--no-ff`.
+- [x] Read-only: confirmado que a resposta vaza `videoUrl` de todas as aulas + escalares; consumidores mapeados — o aluno usa `by-slug` (não o by-id de editor), então o gate por staff-role não quebra o player.
+- [x] Gate: `assertCanViewCourse` (auth + autorização por staff-role/ownership/colaborador com course-scope + cross-tenant).
+- [x] Staging **8/8 PASS** ⭐: (1) anônimo → **401** com body `{"error":"Não autorizado"}` (conteúdo NÃO vaza — provado pelo body) ⭐⭐; (2) dono A → 200; (3) colab `MANAGE_LESSONS` → 200; (4) colab `REPLY_COMMENTS` (o moderador do 1.7) → **200** (não regrediu o 1.7) ⭐; (5) colab `VIEW_ANALYTICS` → **403** (fora do anyOf) ⭐; (6) aluno-puro matriculado → **403** no by-id com body `{"error":"Sem permissão"}`; (8) o MESMO aluno → **200** no `by-slug` — o par 6+8 prova o fix cirúrgico (fechou o by-id de editor SEM tocar no caminho legítimo do aluno) ⭐⭐; (7) cross-tenant: colab do ws A → curso do ws B → **403**. Zero 5xx no monitor.
+- [x] Merge `--no-ff` (`ca8a81b`, branch deletada local+remota).
 **Dependência:** nenhuma.
 
-### 1.10 — Reads ungated: quiz GET (vaza `isCorrect`) + customize GET (branding) 🟡
-**Problema:** dois GETs sem gate adequado (achados na investigação do 1.7): o GET de quiz retorna as alternativas COM `isCorrect` — aluno lê o gabarito antes de responder; o GET de customize expõe a config de branding do curso sem gate.
+### 1.10 — Read ungated: customize GET (branding) 🟡 (metade quiz = FALSO-POSITIVO)
+**Correção da premissa (metade do quiz — investigação do 1.9, 2026-07-04):** ❌ **"o GET de quiz vaza `isCorrect`" era FALSO.** O student quiz GET (`lessons/[id]/quiz/route.ts`) JÁ é gated (`getCurrentUser()` → 401) e o `select` das options é `{ id, text, sortOrder }` — **sem `isCorrect`**. O gabarito nunca vai pro aluno no GET; `isCorrect` só existe no POST (correção server-side), que devolve `correctOptionId` apenas DEPOIS de submeter (comportamento correto). Nada a fazer nessa metade.
+**Problema (o que sobra):** o GET de customize expõe a config de branding do curso sem gate.
 **Etapas:**
-- [ ] Read-only: confirmar as rotas exatas, o shape da resposta e os consumidores (o quiz do aluno precisa das alternativas SEM o gabarito).
-- [ ] Quiz: strip de `isCorrect` para não-staff (ou endpoint separado staff/aluno). Customize: gate mínimo coerente com quem consome.
-- [ ] Staging: aluno não vê `isCorrect`; correção do quiz continua funcionando; branding intacto para quem deve ver.
+- [ ] Read-only: confirmar a rota exata do customize GET, o shape da resposta e os consumidores.
+- [ ] Customize: gate mínimo coerente com quem consome.
+- [ ] Staging: branding intacto para quem deve ver; anônimo/estranho bloqueado.
 - [ ] Merge `--no-ff`.
 **Dependência:** nenhuma.
 
@@ -463,8 +465,8 @@ Cada um: Dev Brabo completo (read-only → proposta → staging → merge `--no-
 A ordem dentro das fases, otimizada por dependência:
 
 ```
-SEGURANÇA       1.1 MANAGE_LIVES → 1.2 Tags → 1.3 workspaces-owner → 1.4 cluster → 1.7 ITEM 3 → 1.9 GET-curso-anon 🔴
-                → 1.10-1.12 (quiz/customize, menu-reorder, overrides-perms) → 1.8 plan-limit-ws
+SEGURANÇA       1.1 MANAGE_LIVES → 1.2 Tags → 1.3 workspaces-owner → 1.4 cluster → 1.7 ITEM 3 → 1.9 GET-curso-anon ✅
+                → 1.10-1.12 (1.10 só customize; quiz=falso-positivo, menu-reorder, overrides-perms) → 1.8 plan-limit-ws
                 (1.5 magic-link + 1.6 token DEPOIS da Fase 3)
 INFRA BARATA    2.1 HSTS → 2.2 npm audit → 2.3 XSS sanitize
 EMAIL           3.1 retry → 3.2 EmailLog   [desbloqueia 1.5]
