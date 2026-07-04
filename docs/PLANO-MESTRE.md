@@ -182,6 +182,18 @@ O backlog parecia infinito porque ninguém tinha cruzado a lista com o que já e
 - [ ] Merge `--no-ff`.
 **Dependência:** nenhuma.
 
+### 1.13 — reviews GET sem auth (courses/[id]/reviews) 🟡 — DECISÃO DE PRODUTO
+**Problema:** o GET de `courses/[id]/reviews/route.ts:6-53` não tem gate de auth (importa `getCurrentUser` mas só usa no POST). Anônimo com o id do curso lê **todas as reviews + identidade do autor** (`user.id/name/avatarUrl`) + média/contagem de **qualquer** curso, inclusive pago/não publicado. Achado na varredura de primos do 1.10.
+**⚠️ DECISÃO DE PRODUTO (Vinicius):** as reviews **são exibidas** na página de vendas/preview (`reviews-section` em `course-preview.tsx` + na página do curso do aluno) — podem ser **públicas de propósito** (prova social). NÃO é o mesmo caso do 1.10 (customize é claramente privado, sub-tela de edição; reviews têm caso de uso público legítimo).
+**Opções (decidir antes de fixar):**
+- (a) manter público mas **stripar `user.id`** (privacidade — nome/avatar pra prova social, sem o id interno);
+- (b) restringir a cursos **`isPublished`** (não vaza review de curso oculto/rascunho);
+- (c) exigir login (quebraria a prova social pública — provavelmente NÃO).
+**Etapas:**
+- [ ] Decisão de produto (Vinicius): qual das opções (a/b/c ou combinação).
+- [ ] Aplicar + staging (conforme a decisão) + merge `--no-ff`.
+**Dependência:** nenhuma. Achado adjacente do 1.10 (não corrigido no fix do customize).
+
 > **Nota menor (registrar, sem item próprio por ora):** o GET de groups trata COLLABORATOR como staff SEM aplicar course-scope — colaborador com escopo restrito a cursos específicos enxerga groups além do escopo. Reavaliar quando mexer nas rotas de groups.
 
 ---
