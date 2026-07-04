@@ -154,15 +154,16 @@ O backlog parecia infinito porque ninguém tinha cruzado a lista com o que já e
 - [x] Merge `--no-ff` (`ca8a81b`, branch deletada local+remota).
 **Dependência:** nenhuma.
 
-### 1.10 — Read ungated: customize GET (branding) 🟡 (metade quiz = FALSO-POSITIVO)
+### 1.10 — Read ungated: customize GET (branding) 🟡 ✅ FEITO (`05cc24b`) (metade quiz = FALSO-POSITIVO)
 **Correção da premissa (metade do quiz — investigação do 1.9, 2026-07-04):** ❌ **"o GET de quiz vaza `isCorrect`" era FALSO.** O student quiz GET (`lessons/[id]/quiz/route.ts`) JÁ é gated (`getCurrentUser()` → 401) e o `select` das options é `{ id, text, sortOrder }` — **sem `isCorrect`**. O gabarito nunca vai pro aluno no GET; `isCorrect` só existe no POST (correção server-side), que devolve `correctOptionId` apenas DEPOIS de submeter (comportamento correto). Nada a fazer nessa metade.
-**Problema (o que sobra):** o GET de customize expõe a config de branding do curso sem gate.
+**Problema (o que sobra):** o GET de customize (`producer/courses/[id]/customize/route.ts:31`) expunha a config de branding do curso (member* cores/welcomeText/layout) SEM gate — anônimo com o id do curso baixava.
+**Abordagem:** espelhar o gate do PUT/DELETE do MESMO arquivo no GET — `requireStaff()` + `canEditCourse(staff, id)`→403 (MANAGE_LESSONS/owner) + estender o catch do GET pra mapear `"Não autorizado"→401` e `"Sem permissão"→403` (trap FURO#5). `canEditCourse` = mais estreito que o anyOf do 1.9 (customize é sub-tela de EDIÇÃO, não de visualização geral). SELECT_FIELDS/retorno inalterado — a aba recebe o mesmo payload; só gateia QUEM acessa. Único consumidor = a aba "Personalizar" do editor; o **aluno pega branding server-side via `getCourseMeta`** (lê Course direto, independente do endpoint).
 **Etapas:**
-- [ ] Read-only: confirmar a rota exata do customize GET, o shape da resposta e os consumidores.
-- [ ] Customize: gate mínimo coerente com quem consome.
-- [ ] Staging: branding intacto para quem deve ver; anônimo/estranho bloqueado.
-- [ ] Merge `--no-ff`.
-**Dependência:** nenhuma.
+- [x] Read-only: rota `producer/courses/[id]/customize/route.ts:31`; retorna só branding; consumidor único = editor; aluno via getCourseMeta (independente).
+- [x] Gate: `requireStaff` + `canEditCourse` no GET + catch estendido (401/403), espelhando PUT/DELETE. 1 arquivo, 0 deleções, build verde.
+- [x] Staging **5/5 PASS** ⭐: (1) anônimo → **401** body `{"error":"Não autorizado"}` (branding NÃO vaza) ⭐; (2) dono → 200 com a config real; (3) colab `MANAGE_LESSONS` → 200; (4) colab `REPLY_COMMENTS` sem MANAGE_LESSONS → **403** body `{"error":"Sem permissão para editar este curso"}` ⭐; (5) **não-regressão da área de membros** — dupla prova: (código) `getCourseMeta` lê member* direto do Course; (runtime) login aluno → `/course/curso-teste` **200** com branding renderizado server-side (7× `--member*`, `style=`, título) ⭐⭐. Zero 5xx (o `console.error` do "Não autorizado" é o caminho tratado → 401, não 500).
+- [x] Merge `--no-ff` (`05cc24b`, branch deletada local+remota).
+**Dependência:** nenhuma. **Achado adjacente:** o reviews GET (terceiro primo ungated) → item **1.13** (decisão de produto, NÃO corrigido aqui).
 
 ### 1.11 — menu/reorder PATCH não amarra `courseId` (cross-curso) 🟡
 **Problema:** o PATCH de menu/reorder não valida que os itens reordenados pertencem ao curso autorizado — staff com acesso a UM curso mexe na ordem/estrutura de OUTRO (cross-curso; se os ids não forem validados contra workspace, potencialmente cross-tenant). Achado na investigação do 1.7.
@@ -478,7 +479,7 @@ A ordem dentro das fases, otimizada por dependência:
 
 ```
 SEGURANÇA       1.1 MANAGE_LIVES → 1.2 Tags → 1.3 workspaces-owner → 1.4 cluster → 1.7 ITEM 3 → 1.9 GET-curso-anon ✅
-                → 1.10-1.12 (1.10 só customize; quiz=falso-positivo, menu-reorder, overrides-perms) → 1.8 plan-limit-ws
+                → 1.10 customize ✅ → 1.11 menu-reorder → 1.12 overrides-perms → 1.13 reviews-GET (decisão) → 1.8 plan-limit-ws
                 (1.5 magic-link + 1.6 token DEPOIS da Fase 3)
 INFRA BARATA    2.1 HSTS → 2.2 npm audit → 2.3 XSS sanitize
 EMAIL           3.1 retry → 3.2 EmailLog   [desbloqueia 1.5]
