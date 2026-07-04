@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireStaff, canEditCourse } from "@/lib/auth";
+import { requireStaff, canEditCourse, getCurrentUser } from "@/lib/auth";
+import { collaboratorCanActOnCourse } from "@/lib/collaborator";
 import { updateCourseSchema, validateBody } from "@/lib/validations";
 
 async function assertCanEditCourse(courseId: string) {
@@ -21,9 +22,54 @@ async function assertCanEditCourse(courseId: string) {
   return { ok: true as const };
 }
 
+// Read-gate for the course editor endpoint. Broader than assertCanEditCourse:
+// any staff who legitimately opens a course sub-screen may READ it (content,
+// students, comments, lives), while PUT/DELETE stay owner/MANAGE_LESSONS-gated.
+// Mirrors the by-slug molde (getCurrentUser → 401) but authorizes by staff
+// role, not by student enrollment. Its own findUnique (ownerId + workspace
+// ownerId) is internal to the check and never returned to the client.
+async function assertCanViewCourse(courseId: string) {
+  const user = await getCurrentUser();
+  if (!user) return { error: "Não autorizado", status: 401 as const };
+  const course = await prisma.course.findUnique({
+    where: { id: courseId },
+    select: {
+      id: true,
+      ownerId: true,
+      workspace: { select: { ownerId: true } },
+    },
+  });
+  if (!course) return { error: "Curso não encontrado", status: 404 as const };
+  if (user.role === "ADMIN") return { ok: true as const };
+  if (
+    user.role === "PRODUCER" &&
+    (course.ownerId === user.id || course.workspace.ownerId === user.id)
+  ) {
+    return { ok: true as const };
+  }
+  // COLLABORATOR-by-role OR STUDENT with an accepted Collaborator row:
+  // collaboratorCanActOnCourse matches by userId and already embeds the
+  // cross-tenant workspace guard + course-scope. anyOf = every permission
+  // whose editor UI legitimately fetches this endpoint.
+  const canView = await collaboratorCanActOnCourse(user.id, courseId, [
+    "MANAGE_LESSONS",
+    "MANAGE_STUDENTS",
+    "REPLY_COMMENTS",
+    "MANAGE_COMMUNITY",
+    "MANAGE_LIVES",
+  ]);
+  if (canView) return { ok: true as const };
+  return { error: "Sem permissão", status: 403 as const };
+}
+
 export async function GET(_request: Request, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
   try {
+    const check = await assertCanViewCourse(params.id);
+    if ("error" in check) {
+      return NextResponse.json({ error: check.error }, { status: check.status });
+    }
+
     const course = await prisma.course.findUnique({
       where: { id: params.id },
       include: {
@@ -47,6 +93,14 @@ export async function GET(_request: Request, props: { params: Promise<{ id: stri
     return NextResponse.json({ course });
   } catch (error) {
     console.error("GET /api/courses/[id] error:", error);
+    if (error instanceof Error) {
+      if (error.message === "Não autorizado") {
+        return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
+      }
+      if (error.message === "Sem permissão" || error.message === "Forbidden") {
+        return NextResponse.json({ error: "Sem permissão" }, { status: 403 });
+      }
+    }
     return NextResponse.json(
       { error: "Erro ao buscar curso" },
       { status: 500 }
