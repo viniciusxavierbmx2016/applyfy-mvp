@@ -18,7 +18,7 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
     const ops: Prisma.PrismaPromise<unknown>[] = itemIds.map(
       (id: string, index: number) =>
         prisma.menuItem.update({
-          where: { id },
+          where: { id, courseId: params.id },
           data: { order: index },
         })
     );
