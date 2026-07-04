@@ -26,6 +26,9 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Reorder menu error:", error);
-    return NextResponse.json({ error: "Erro" }, { status: 500 });
+    const msg = error instanceof Error ? error.message : "";
+    const status =
+      msg === "Não autorizado" ? 401 : msg === "Sem permissão" ? 403 : 500;
+    return NextResponse.json({ error: msg || "Erro" }, { status });
   }
 }
