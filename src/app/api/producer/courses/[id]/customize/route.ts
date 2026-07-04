@@ -31,6 +31,11 @@ const ALLOWED_LAYOUTS = new Set(["netflix", "grid", "list"]);
 export async function GET(_request: Request, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
   try {
+    const staff = await requireStaff();
+    if (!(await canEditCourse(staff, params.id))) {
+      return NextResponse.json({ error: "Sem permissão para editar este curso" }, { status: 403 });
+    }
+
     const course = await prisma.course.findUnique({
       where: { id: params.id },
       select: SELECT_FIELDS,
@@ -41,6 +46,9 @@ export async function GET(_request: Request, props: { params: Promise<{ id: stri
     return NextResponse.json({ customization: course });
   } catch (error) {
     console.error("GET /api/producer/courses/[id]/customize error:", error);
+    const msg = error instanceof Error ? error.message : "";
+    if (msg === "Não autorizado") return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
+    if (msg === "Sem permissão") return NextResponse.json({ error: "Sem permissão" }, { status: 403 });
     return NextResponse.json({ error: "Erro ao buscar personalização" }, { status: 500 });
   }
 }
