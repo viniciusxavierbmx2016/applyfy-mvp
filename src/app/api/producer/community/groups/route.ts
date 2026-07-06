@@ -33,6 +33,26 @@ export async function GET(request: Request) {
       );
     }
 
+    // Workspace-scope: validate the query's courseId BEFORE ensureDefaultGroup —
+    // that helper writes (creates the default group), so a cross-tenant read
+    // must be rejected here or it would mutate another tenant's course.
+    let canAct = staff.role === "ADMIN";
+    if (!canAct && staff.role === "PRODUCER") {
+      const course = await prisma.course.findUnique({
+        where: { id: courseId },
+        select: { ownerId: true, workspace: { select: { ownerId: true } } },
+      });
+      canAct = course?.ownerId === staff.id || course?.workspace.ownerId === staff.id;
+    }
+    if (!canAct) {
+      canAct = await collaboratorCanActOnCourse(staff.id, courseId, [
+        "MANAGE_COMMUNITY",
+      ]);
+    }
+    if (!canAct) {
+      return NextResponse.json({ error: "Sem permissão" }, { status: 403 });
+    }
+
     await ensureDefaultGroup(courseId);
 
     const groups = await prisma.communityGroup.findMany({

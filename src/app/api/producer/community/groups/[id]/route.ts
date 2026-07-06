@@ -51,6 +51,27 @@ export async function GET(_request: Request, props: { params: Promise<{ id: stri
       );
     }
 
+    // Workspace-scope: the group's course must belong to this staff's scope.
+    // Mirrors the DELETE/POST slice (ADMIN → PRODUCER-owner →
+    // collaboratorCanActOnCourse). group.courseId comes from the include above
+    // (include keeps default scalars).
+    let canAct = staff.role === "ADMIN";
+    if (!canAct && staff.role === "PRODUCER") {
+      const course = await prisma.course.findUnique({
+        where: { id: group.courseId },
+        select: { ownerId: true, workspace: { select: { ownerId: true } } },
+      });
+      canAct = course?.ownerId === staff.id || course?.workspace.ownerId === staff.id;
+    }
+    if (!canAct) {
+      canAct = await collaboratorCanActOnCourse(staff.id, group.courseId, [
+        "MANAGE_COMMUNITY",
+      ]);
+    }
+    if (!canAct) {
+      return NextResponse.json({ error: "Sem permissão" }, { status: 403 });
+    }
+
     return NextResponse.json({ group });
   } catch (error) {
     console.error("GET /api/producer/community/groups/[id] error:", error);
@@ -77,6 +98,26 @@ export async function PUT(request: Request, props: { params: Promise<{ id: strin
         { error: "Grupo não encontrado" },
         { status: 404 }
       );
+    }
+
+    // Workspace-scope: authorize against the group's course before mutating.
+    // Mirrors the DELETE/POST slice (ADMIN → PRODUCER-owner →
+    // collaboratorCanActOnCourse). Runs before parsing the body (fail fast).
+    let canAct = staff.role === "ADMIN";
+    if (!canAct && staff.role === "PRODUCER") {
+      const course = await prisma.course.findUnique({
+        where: { id: group.courseId },
+        select: { ownerId: true, workspace: { select: { ownerId: true } } },
+      });
+      canAct = course?.ownerId === staff.id || course?.workspace.ownerId === staff.id;
+    }
+    if (!canAct) {
+      canAct = await collaboratorCanActOnCourse(staff.id, group.courseId, [
+        "MANAGE_COMMUNITY",
+      ]);
+    }
+    if (!canAct) {
+      return NextResponse.json({ error: "Sem permissão" }, { status: 403 });
     }
 
     const raw = await request.json().catch(() => ({}));
