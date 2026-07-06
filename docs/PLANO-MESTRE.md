@@ -196,16 +196,17 @@ O backlog parecia infinito porque ninguém tinha cruzado a lista com o que já e
 - [ ] Aplicar + staging (conforme a decisão) + merge `--no-ff`.
 **Dependência:** nenhuma. Achado adjacente do 1.10 (não corrigido no fix do customize).
 
-### 1.14 — groups/reorder cross-tenant (id cru sem escopo) 🟠
-**Problema:** `producer/community/groups/reorder/route.ts:27` faz `prisma.communityGroup.update({ where: { id: item.id } })` — **id cru do body, sem escopo**. Mesma CLASSE do 1.11 (cross-tenant reorder via id cru: `CommunityGroup → Course → Workspace`), achado na sinuca do 1.11. Um staff/colaborador (com `MANAGE_COMMUNITY`) de um workspace pode reordenar grupos de comunidade de curso de OUTRO tenant.
-**Abordagem (a confirmar na investigação):** amarrar o escopo no `where` espelhando o molde das rotas irmãs. ⚠️ A rota **não tem courseId/workspaceId na URL** (recebe `items:[{id,order}]`), então provavelmente precisa **pré-validar** que cada grupo pertence a um curso do workspace do staff (join `group→course→workspaceId` + filtro, como `producer/courses/reorder` faz), não um `where` composto simples. + confirmar `$transaction` + sub-decisão: colaborador `MANAGE_COMMUNITY` é course-scoped?
+### 1.14 — community/groups cross-tenant (CLUSTER de 6 handlers) 🟠 ✅ FEITO (`e0d3171`)
+**Problema (era "groups/reorder", virou CLUSTER):** o rótulo do plano cobria só o reorder, mas a investigação (lição do 1.4 — não confiar no rótulo) achou que **os 6 handlers de `producer/community/groups/**` operavam por id/courseId cru sem validar o workspace do recurso** — nenhum resolvia o escopo do staff. `CommunityGroup → Course → Workspace` (sem workspaceId direto; rota do reorder/GET/POST sem `[id]`). Vetores cross-tenant: DELETE (destrutivo :161), POST (cria em curso alheio :83), PUT (edita/censura), reorder, e os 2 GETs (o `groups` GET ainda disparava `ensureDefaultGroup` = **write cross-tenant por um read**).
+**Abordagem (molde reusado, zero helper novo):** bloco de 3 ramos inline (ADMIN → PRODUCER-dono via `course.ownerId`/`workspace.ownerId` → `collaboratorCanActOnCourse(staff.id, courseId, ["MANAGE_COMMUNITY"])`), espelhando `posts/[id]`. O helper do 1.9 já embute o guard cross-tenant + o course-scope do colaborador. Origem do courseId por handler: `group.courseId` (findUnique pré-op nos `[id]`), `courseId` da query/body (GET/POST), e no **reorder (bulk)** = findMany → cada courseId distinto validado, `$transaction` filtrado aos ids validados (all-or-nothing; ids inexistentes ignorados, sem P2025). Os 6 catches já mapeavam 401/403 (sem FURO#5). Fatiado: **Fatia 1** = DELETE+POST (`dca846c`, os destrutivos, authz antes do isDefault leak); **Fatia 2** = reorder+GET+`[id]` GET/PUT (`3210447`).
 **Etapas:**
-- [ ] Read-only: rota inteira + gate atual + o model CommunityGroup + o molde de pré-validação + confirmar cross-tenant.
-- [ ] Amarrar o escopo + staging (2-ws: staff do A não reordena grupos do B; legítimo intacto).
-- [ ] Merge `--no-ff`.
-**Dependência:** nenhuma. Achado adjacente do 1.11 (NÃO dobrado — domínio diferente: comunidade, não menu; merece read-only próprio).
+- [x] Read-only a fundo: os 6 handlers + o model + o molde (`community/route.ts`/`posts/[id]`); sinuca = posts/** já é seguro (valida o curso do recurso — é o molde), o cluster é só groups/**.
+- [x] Fatia 1 (DELETE+POST) + Fatia 2 (reorder+GET+[id] GET/PUT) — 3 arquivos, +147/−6, 6 blocos de 3 ramos (ramo dono nos 6).
+- [x] Staging **10/10 PASS** (2-ws): DELETE/POST/PUT/reorder/GET cross-tenant → 403; **write-por-read barrado** (GET do curso B → 403, `count(B)` = 2 → `ensureDefaultGroup` NÃO criou default) ⭐; **reorder all-or-nothing provado isolado** (lote misto A+B com order 9 → 403, nada virou 9) ⭐; grupo B name/order inalterados; anônimos → 401; dono legítimo no curso A (GET/PUT/reorder) → 200. Zero 5xx. (Percalço de infra: `.next` corrompeu com 2 dev servers concorrentes → 404 em tudo; resolvido com `rm -rf .next` + restart limpo.)
+- [x] Merge `--no-ff` (`e0d3171`, leva `dca846c`+`3210447`, branch deletada local+remota).
+**Dependência:** nenhuma. Achado adjacente do 1.11 (NÃO dobrado no 1.11 — domínio de comunidade). Correção de escopo diferente do menu: **join relacional `group→course→workspaceId`**, não `where` composto (o grupo não tem workspaceId; a rota não tem `[id]`).
 
-> **Nota menor (registrar, sem item próprio por ora):** o GET de groups trata COLLABORATOR como staff SEM aplicar course-scope — colaborador com escopo restrito a cursos específicos enxerga groups além do escopo. Reavaliar quando mexer nas rotas de groups.
+> **Nota menor — RESOLVIDA pelo 1.14:** o GET de groups tratava COLLABORATOR como staff SEM course-scope. O fix do 1.14 usa `collaboratorCanActOnCourse(..., ["MANAGE_COMMUNITY"])`, que embute o course-scope (courseIds do colaborador) — então o colaborador com escopo restrito não enxerga mais groups além do escopo. Fechado junto com o cluster.
 
 ---
 
@@ -489,7 +490,7 @@ A ordem dentro das fases, otimizada por dependência:
 
 ```
 SEGURANÇA       1.1 MANAGE_LIVES → 1.2 Tags → 1.3 workspaces-owner → 1.4 cluster → 1.7 ITEM 3 → 1.9 GET-curso-anon ✅
-                → 1.10 customize ✅ → 1.11 menu-reorder ✅ → 1.12 overrides-perms → 1.13 reviews-GET (decisão) → 1.14 groups-reorder → 1.8 plan-limit-ws
+                → 1.10 customize ✅ → 1.11 menu-reorder ✅ → 1.14 groups-cluster ✅ → 1.12 overrides-perms → 1.13 reviews-GET (decisão) → 1.8 plan-limit-ws
                 (1.5 magic-link + 1.6 token DEPOIS da Fase 3)
 INFRA BARATA    2.1 HSTS → 2.2 npm audit → 2.3 XSS sanitize
 EMAIL           3.1 retry → 3.2 EmailLog   [desbloqueia 1.5]
