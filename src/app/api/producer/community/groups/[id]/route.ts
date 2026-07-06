@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireStaff, requirePermission } from "@/lib/auth";
+import { collaboratorCanActOnCourse } from "@/lib/collaborator";
 import { updateCommunityGroupSchema, validateBody } from "@/lib/validations";
 
 function slugify(s: string): string {
@@ -149,6 +150,29 @@ export async function DELETE(_request: Request, props: { params: Promise<{ id: s
         { error: "Grupo não encontrado" },
         { status: 404 }
       );
+    }
+
+    // Workspace-scope: the group's course must belong to this staff's scope.
+    // Runs BEFORE the isDefault check so a cross-tenant caller gets 403 without
+    // learning any state of the foreign group. Mirrors posts/[id] (ADMIN →
+    // PRODUCER-owner → collaboratorCanActOnCourse), minus the author branch
+    // (groups have no author). Reuses group.courseId from the findUnique above
+    // — no extra query except the PRODUCER-owner path.
+    let canAct = staff.role === "ADMIN";
+    if (!canAct && staff.role === "PRODUCER") {
+      const course = await prisma.course.findUnique({
+        where: { id: group.courseId },
+        select: { ownerId: true, workspace: { select: { ownerId: true } } },
+      });
+      canAct = course?.ownerId === staff.id || course?.workspace.ownerId === staff.id;
+    }
+    if (!canAct) {
+      canAct = await collaboratorCanActOnCourse(staff.id, group.courseId, [
+        "MANAGE_COMMUNITY",
+      ]);
+    }
+    if (!canAct) {
+      return NextResponse.json({ error: "Sem permissão" }, { status: 403 });
     }
 
     if (group.isDefault) {
