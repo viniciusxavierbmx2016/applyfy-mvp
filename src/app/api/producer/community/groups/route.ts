@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireStaff, requirePermission } from "@/lib/auth";
+import { collaboratorCanActOnCourse } from "@/lib/collaborator";
 import { ensureDefaultGroup } from "@/lib/community-helpers";
 import { createCommunityGroupSchema, validateBody } from "@/lib/validations";
 
@@ -32,6 +33,26 @@ export async function GET(request: Request) {
       );
     }
 
+    // Workspace-scope: validate the query's courseId BEFORE ensureDefaultGroup —
+    // that helper writes (creates the default group), so a cross-tenant read
+    // must be rejected here or it would mutate another tenant's course.
+    let canAct = staff.role === "ADMIN";
+    if (!canAct && staff.role === "PRODUCER") {
+      const course = await prisma.course.findUnique({
+        where: { id: courseId },
+        select: { ownerId: true, workspace: { select: { ownerId: true } } },
+      });
+      canAct = course?.ownerId === staff.id || course?.workspace.ownerId === staff.id;
+    }
+    if (!canAct) {
+      canAct = await collaboratorCanActOnCourse(staff.id, courseId, [
+        "MANAGE_COMMUNITY",
+      ]);
+    }
+    if (!canAct) {
+      return NextResponse.json({ error: "Sem permissão" }, { status: 403 });
+    }
+
     await ensureDefaultGroup(courseId);
 
     const groups = await prisma.communityGroup.findMany({
@@ -61,6 +82,27 @@ export async function POST(request: Request) {
     const v = validateBody(createCommunityGroupSchema, raw);
     if (!v.success) return v.error;
     const { courseId, name, description, permission, order } = v.data;
+
+    // Workspace-scope: the body's courseId must belong to this staff's scope
+    // before creating a group in it. Mirrors posts/[id] (ADMIN → PRODUCER-owner
+    // → collaboratorCanActOnCourse). A nonexistent/cross-tenant courseId falls
+    // through every branch → 403 (not 500).
+    let canAct = staff.role === "ADMIN";
+    if (!canAct && staff.role === "PRODUCER") {
+      const course = await prisma.course.findUnique({
+        where: { id: courseId },
+        select: { ownerId: true, workspace: { select: { ownerId: true } } },
+      });
+      canAct = course?.ownerId === staff.id || course?.workspace.ownerId === staff.id;
+    }
+    if (!canAct) {
+      canAct = await collaboratorCanActOnCourse(staff.id, courseId, [
+        "MANAGE_COMMUNITY",
+      ]);
+    }
+    if (!canAct) {
+      return NextResponse.json({ error: "Sem permissão" }, { status: 403 });
+    }
 
     const perm = permission ?? "READ_WRITE";
 
