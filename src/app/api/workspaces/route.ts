@@ -30,7 +30,7 @@ export async function POST(request: Request) {
   try {
     const staff = await requireStaff();
 
-    if (staff.role === "PRODUCER") {
+    if (staff.role !== "ADMIN") {
       try {
         await checkPlanLimits(staff.id, "workspace");
       } catch (err) {
