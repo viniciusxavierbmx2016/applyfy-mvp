@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { canEditCourse, requireStaff } from "@/lib/auth";
+import { canManageStudentsOfCourse, requireStaff } from "@/lib/auth";
 
 export async function POST(
   _request: Request,
@@ -9,7 +9,7 @@ export async function POST(
   const params = await props.params;
   try {
     const staff = await requireStaff();
-    if (!(await canEditCourse(staff, params.id))) {
+    if (!(await canManageStudentsOfCourse(staff, params.id))) {
       return NextResponse.json({ error: "Sem permissão" }, { status: 403 });
     }
     const enrollment = await prisma.enrollment.findUnique({
