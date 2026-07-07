@@ -481,6 +481,10 @@ Context: Push before bell meant both lost when push hung. Reorder: bell (fast DB
 When a bug shows up in a UI component, ALWAYS verify the data reaching it before touching the component. A diagnostic script in the browser console (element counts, prop values, DOM content) is mandatory before the first fix. If 2 fix attempts fail, the hypothesis is wrong — stop and investigate the data.
 Context: carousel FASE 3 bug — 4h lost editing CSS/JS when the real problem was sectionId=null in the database.
 
+### L18 — `npm audit fix` can create a phantom fix (lockfile ≠ node_modules)
+`npm audit fix` updates `package-lock.json` to the patched versions but does NOT reinstall `node_modules` if the old version still satisfies the dependency range. Result: `npm audit` reports 0 (it reads the lockfile) and the build "passes" — but against the OLD vulnerable code still on disk. ALWAYS run `npm ci` (installs exactly from the lockfile, from scratch — what Vercel does in prod) to sync `node_modules` BEFORE validating the build, then confirm the real installed version (`node -e "require('.../package.json').version"`), not just `npm audit`.
+Context: 2.2 — `npm audit fix` bumped the lockfile dompurify 3.4.2→3.4.11 but node_modules stayed 3.4.2 (3.4.2 satisfied jspdf's `^3.3.1`); the green build tested the old code until `npm ci` synced it.
+
 ---
 
 ## PART 9 — COMMIT AND POST-IMPLEMENTATION

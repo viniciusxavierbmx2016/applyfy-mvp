@@ -214,10 +214,10 @@ O backlog parecia infinito porque ninguém tinha cruzado a lista com o que já e
 
 ---
 
-# FASE 2 — Infra de segurança 🟡 (2.1 ✅ iniciada)
+# FASE 2 — Infra de segurança 🟡 (2.1 + 2.2 ✅)
 
 > **Por que aqui:** barata e importante. Fecha a camada de infra que a auditoria de código não cobre. A maioria é trivial (1 header, 1 comando).
-> **Progresso:** ✅ **2.1 HSTS** (`de00875`). ABERTOS: **2.2** npm audit (dompurify CVE, trivial), **2.3** XSS sanitize (`lesson.description`), **2.6** sanitizar `emailCustomHtml` (defense-in-depth, achado do 1.3). Próximo natural = 2.2.
+> **Progresso:** ✅ **2.1 HSTS** (`de00875`) + ✅ **2.2 npm audit** (`7eaaf66`, 2 CVEs transitivas). ABERTOS: **2.3** XSS sanitize (`lesson.description`), **2.6** sanitizar `emailCustomHtml` (defense-in-depth, achado do 1.3). Próximo natural = 2.3.
 
 ### 2.1 — HSTS 🟢 ✅ FEITO (`de00875`)
 **Problema:** `next.config.mjs` tinha X-Frame/CSP/nosniff/Referrer/Permissions mas faltava `Strict-Transport-Security`. (HSTS não existia em lugar nenhum — nem no `proxy.ts` middleware, nem no `vercel.json`.)
@@ -230,12 +230,16 @@ O backlog parecia infinito porque ninguém tinha cruzado a lista com o que já e
 **⚠️ AÇÃO FUTURA (sem urgência):** ramp do `max-age` **30d → 1 ano (`31536000`)** quando confirmado estável em prod — 1 edição pontual do value no `next.config.mjs`.
 **Dependência:** nenhuma.
 
-### 2.2 — `npm audit` (dompurify CVE) 🟢
-**Problema:** 1 moderate — dompurify <=3.4.10 (transitivo via tiptap; app usa sanitize-html no server). `npm audit fix` disponível.
+### 2.2 — `npm audit` (CVEs transitivas) 🟢 ✅ FEITO (`7eaaf66`)
+**Problema:** 2 CVEs, **ambas transitivas**: **dompurify <=3.4.10** (moderate, via `jspdf@4.2.1` — NÃO via tiptap como o plano supôs; o app usa `sanitize-html` no server, não dompurify) + **@babel/core <=7.29.0** (low, via `eslint-config-next` → dev-tooling). Ambas com fix por `npm audit fix` SEM `--force` (bump patch).
+**Blast radius ≈ 0:** o app **não importa dompurify** (grep zero; sanitizador = `sanitize-html`); o único consumidor de jspdf é `certificate-pdf.ts`, que usa a **API de desenho** (`doc.rect/text/line`), **não** `.html()`/`fromHTML` (o caminho HTML→dompurify vulnerável). @babel/core é só lint (fora do runtime).
+**Fix:** `npm audit fix` (sem --force) → dompurify 3.4.2→3.4.11, @babel/core 7.29.0→7.29.7. **Só o `package-lock.json` mudou** (84/84), package.json intacto (nenhuma é dep direta).
+**⚠️ LIÇÃO — o fix-fantasma:** o `npm audit fix` atualizou o **lockfile** mas **NÃO reinstalou o node_modules** (a versão velha 3.4.2 satisfazia o range `^3.3.1` do jspdf, então o `npm install` não forçou o pin exato). Resultado enganoso: `npm audit` reportava 0 e o build "passava" — **mas contra o código VELHO**. Validar exige **`npm ci`** (instala exato do lockfile, do zero — o que a Vercel faz) ANTES do build, senão o "build verde" testa o código velho. Só após o `npm ci` o node_modules ficou em 3.4.11/7.29.7 e o build exercitou o código patcheado.
 **Etapas:**
-- [ ] Rodar `npm audit` read-only, confirmar o escopo.
-- [ ] `npm audit fix` (sem `--force` primeiro) + build verde + smoke test do editor (tiptap).
-- [ ] Merge `--no-ff`.
+- [x] Read-only: `npm audit` (2 CVEs transitivas) + `npm ls` (jspdf→dompurify, eslint→@babel) + grep (app não usa dompurify) + `--dry-run` (17 patch-bumps, zero major).
+- [x] `npm audit fix` (sem --force) + ⚠️ `npm ci` pra sincronizar node_modules ao lockfile + build verde contra as versões corrigidas.
+- [x] Verificação dobrada: audit 0 (todas severidades), node_modules E lockfile em 3.4.11/7.29.7, jspdf 4.2.1 intacto sem caminho HTML, só o lockfile no diff.
+- [x] Merge `--no-ff` (`7eaaf66`, branch deletada). Prod: a Vercel roda `npm ci` → instala as versões patcheadas do lockfile.
 **Dependência:** nenhuma.
 
 ### 2.3 — XSS sink: sanitizar `lesson.description` 🟡
