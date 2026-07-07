@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { canEditCourse, requireStaff } from "@/lib/auth";
+import { canManageStudentsOfCourse, requireStaff } from "@/lib/auth";
 import { enrollmentOverrideSchema, validateBody } from "@/lib/validations";
 
 async function loadEnrollment(enrollmentId: string, courseId: string) {
@@ -19,7 +19,7 @@ export async function GET(
   const params = await props.params;
   try {
     const staff = await requireStaff();
-    if (!(await canEditCourse(staff, params.id))) {
+    if (!(await canManageStudentsOfCourse(staff, params.id))) {
       return NextResponse.json({ error: "Sem permissão" }, { status: 403 });
     }
     if (!(await loadEnrollment(params.enrollmentId, params.id))) {
@@ -49,7 +49,7 @@ export async function POST(
   const params = await props.params;
   try {
     const staff = await requireStaff();
-    if (!(await canEditCourse(staff, params.id))) {
+    if (!(await canManageStudentsOfCourse(staff, params.id))) {
       return NextResponse.json({ error: "Sem permissão" }, { status: 403 });
     }
     if (!(await loadEnrollment(params.enrollmentId, params.id))) {
@@ -161,7 +161,7 @@ export async function DELETE(
   const params = await props.params;
   try {
     const staff = await requireStaff();
-    if (!(await canEditCourse(staff, params.id))) {
+    if (!(await canManageStudentsOfCourse(staff, params.id))) {
       return NextResponse.json({ error: "Sem permissão" }, { status: 403 });
     }
     if (!(await loadEnrollment(params.enrollmentId, params.id))) {
