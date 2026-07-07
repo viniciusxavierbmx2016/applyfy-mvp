@@ -214,17 +214,21 @@ O backlog parecia infinito porque ninguém tinha cruzado a lista com o que já e
 
 ---
 
-# FASE 2 — Infra de segurança 🟡
+# FASE 2 — Infra de segurança 🟡 (2.1 ✅ iniciada)
 
 > **Por que aqui:** barata e importante. Fecha a camada de infra que a auditoria de código não cobre. A maioria é trivial (1 header, 1 comando).
+> **Progresso:** ✅ **2.1 HSTS** (`de00875`). ABERTOS: **2.2** npm audit (dompurify CVE, trivial), **2.3** XSS sanitize (`lesson.description`), **2.6** sanitizar `emailCustomHtml` (defense-in-depth, achado do 1.3). Próximo natural = 2.2.
 
-### 2.1 — HSTS 🟢
-**Problema:** `next.config.mjs:26-50` tem X-Frame/CSP/nosniff mas falta `Strict-Transport-Security`.
+### 2.1 — HSTS 🟢 ✅ FEITO (`de00875`)
+**Problema:** `next.config.mjs` tinha X-Frame/CSP/nosniff/Referrer/Permissions mas faltava `Strict-Transport-Security`. (HSTS não existia em lugar nenhum — nem no `proxy.ts` middleware, nem no `vercel.json`.)
+**Abordagem + ⚠️ decisão dos custom domains:** adicionar `{ key: "Strict-Transport-Security", value: "max-age=2592000" }` (30 dias) no bloco `/(.*)` do `next.config.mjs`. **SEM `includeSubDomains`** — a investigação achou `Workspace.customDomain String? @unique` (schema:120): o `headers()` aplica em TODAS as respostas incl. os custom domains de cliente, então `includeSubDomains` imporia HTTPS em subdomínios de domínios que **não controlamos** (ex.: `mail.cliente.com`) e poderia quebrá-los. **SEM `preload`** — irreversível (lista embutida dos browsers). Bare host só (já é HTTPS via Vercel).
 **Etapas:**
-- [ ] Adicionar o header HSTS (1 linha) em `next.config.mjs`.
-- [ ] Build verde + confirmar o header na resposta.
-- [ ] Merge `--no-ff`.
-**Dependência:** nenhuma. Trivial.
+- [x] Read-only: confirmar que HSTS não existia (next.config/proxy.ts/vercel.json); mapear os domínios (apex + app + vercel.app + custom domains) → todos HTTPS na Vercel; a decisão sem includeSubDomains/preload.
+- [x] Adicionar o header (1 entrada no array `/(.*)`) — build verde, os 5 outros headers intactos.
+- [x] Staging: `curl -sI` provou `Strict-Transport-Security: max-age=2592000` servido, **sem includeSubDomains/preload** no value, + os 5 outros headers presentes.
+- [x] Merge `--no-ff` (`de00875`, branch deletada).
+**⚠️ AÇÃO FUTURA (sem urgência):** ramp do `max-age` **30d → 1 ano (`31536000`)** quando confirmado estável em prod — 1 edição pontual do value no `next.config.mjs`.
+**Dependência:** nenhuma.
 
 ### 2.2 — `npm audit` (dompurify CVE) 🟢
 **Problema:** 1 moderate — dompurify <=3.4.10 (transitivo via tiptap; app usa sanitize-html no server). `npm audit fix` disponível.
