@@ -175,13 +175,15 @@ O backlog parecia infinito porque ninguém tinha cruzado a lista com o que já e
 - [x] Merge `--no-ff` (`82cb150`, branch deletada local+remota).
 **Dependência:** nenhuma. **Achado adjacente → item 1.14** (`groups/reorder` cross-tenant, mesma classe, NÃO dobrado — domínio de comunidade).
 
-### 1.12 — overrides/release-all/resend: `MANAGE_LESSONS` onde deveria `MANAGE_STUDENTS` 🟡
-**Problema:** as rotas de overrides, release-all e resend gateiam por `MANAGE_LESSONS`, mas são ações sobre ALUNOS (matrícula/liberação/reenvio de acesso) — a permissão correta é `MANAGE_STUDENTS`. Colaborador de conteúdo (só lessons) consegue operar acesso de alunos. Achado na investigação do 1.7.
+### 1.12 — overrides/release-all/resend: `MANAGE_LESSONS` onde deveria `MANAGE_STUDENTS` 🟡 ✅ FEITO (`ef312d9`)
+**Problema:** as rotas de overrides, release-all e resend (`courses/[id]/students/[enrollmentId]/**`) gateiavam por `canEditCourse` (`MANAGE_LESSONS`), mas são ações per-`enrollmentId` sobre ALUNOS (liberar módulo/aula, liberar tudo, reenviar email de acesso) — a permissão correta é `MANAGE_STUDENTS`. As irmãs `students/[enrollmentId]` e `students/` já usavam `canManageStudentsOfCourse` (MANAGE_STUDENTS) — os 3 filhos eram os outliers.
+**Abordagem (drop-in, zero lógica nova):** trocar `canEditCourse` → `canManageStudentsOfCourse` (mesma assinatura `(staff, courseId)`, trata ADMIN/PRODUCER-dono igual) nos **5 handlers** (overrides GET/POST/DELETE + release-all POST + resend POST) + o import em cada um dos 3 arquivos. `loadEnrollment` (o cross-tenant no nível da matrícula) + os catches (já 401/403) + o corpo dos handlers ficam byte-idênticos.
+**⚠️ Confirmação decisiva (a UI):** a aba "Alunos" do editor de curso (`course-edit-tabs.tsx:90`) já tem `requires: "MANAGE_STUDENTS"` — o fix **alinha o backend à UI**. Não era só "não quebrar": era o par CONSERTO+FECHAMENTO — hoje o MANAGE_STUDENTS-só via a aba mas tomava 403 (fluxo quebrado), e o MANAGE_LESSONS-só conseguia via API crua (buraco).
 **Etapas:**
-- [ ] Read-only: confirmar as rotas exatas + o gate atual de cada uma + quem as consome na UI.
-- [ ] Trocar o gate para `MANAGE_STUDENTS` (decisão de produto se alguma ação for genuinamente híbrida).
-- [ ] Staging: colaborador só-lessons → 403; colaborador com MANAGE_STUDENTS → passa; dono intacto.
-- [ ] Merge `--no-ff`.
+- [x] Read-only: 3 rotas / 5 handlers com `canEditCourse`; o pai `students/[enrollmentId]` já usa `canManageStudentsOfCourse`; a UI já exige MANAGE_STUDENTS; sinuca = só esses 3 (courses/[id] é falso-positivo, é editor de curso).
+- [x] Troca drop-in (3 arquivos, +8/−8, imports substituídos sem órfão, loadEnrollment/catches/corpo intactos).
+- [x] Staging: colab MANAGE_STUDENTS → **200** nas 3 (CONSERTO ⭐⭐); colab MANAGE_LESSONS-só → **403** nas 3 (FECHAMENTO ⭐⭐); dono → 200; anônimo → 401. Prova SQL: override escrito pelo MANAGE_STUDENTS (count 1, baseline era 0 → conserto real), revertido a 0 no cleanup. Zero 5xx.
+- [x] Merge `--no-ff` (`ef312d9`, branch deletada local+remota).
 **Dependência:** nenhuma.
 
 ### 1.13 — reviews GET sem auth (courses/[id]/reviews) 🟡 — DECISÃO DE PRODUTO
@@ -490,7 +492,7 @@ A ordem dentro das fases, otimizada por dependência:
 
 ```
 SEGURANÇA       1.1 MANAGE_LIVES → 1.2 Tags → 1.3 workspaces-owner → 1.4 cluster → 1.7 ITEM 3 → 1.9 GET-curso-anon ✅
-                → 1.10 customize ✅ → 1.11 menu-reorder ✅ → 1.14 groups-cluster ✅ → 1.12 overrides-perms → 1.13 reviews-GET (decisão) → 1.8 plan-limit-ws
+                → 1.10 customize ✅ → 1.11 menu-reorder ✅ → 1.14 groups-cluster ✅ → 1.12 overrides-perms ✅ → 1.13 reviews-GET (decisão) → 1.8 plan-limit-ws
                 (1.5 magic-link + 1.6 token DEPOIS da Fase 3)
 INFRA BARATA    2.1 HSTS → 2.2 npm audit → 2.3 XSS sanitize
 EMAIL           3.1 retry → 3.2 EmailLog   [desbloqueia 1.5]
