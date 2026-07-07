@@ -25,6 +25,15 @@ const nextConfig = {
       {
         source: "/(.*)",
         headers: [
+          // HSTS: bare host only (no includeSubDomains — the header is served on
+          // every host incl. per-workspace client custom domains, and we must
+          // not force HTTPS onto subdomains of domains we don't control; no
+          // preload — that's irreversible). max-age 30d for the initial rollout,
+          // ramp to 1y once confirmed stable.
+          {
+            key: "Strict-Transport-Security",
+            value: "max-age=2592000",
+          },
           { key: "X-Frame-Options", value: "SAMEORIGIN" },
           { key: "X-Content-Type-Options", value: "nosniff" },
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
