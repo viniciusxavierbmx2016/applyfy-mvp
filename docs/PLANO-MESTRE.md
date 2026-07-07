@@ -39,11 +39,11 @@ O backlog parecia infinito porque ninguém tinha cruzado a lista com o que já e
 
 ---
 
-# FASE 1 — Segurança restante 🟢 (parte TÉCNICA completa)
+# FASE 1 — Segurança restante 🟢 (SEM item de código em aberto)
 
 > **Por que primeiro:** risco em produção vem antes de tudo. São os furos que a auditoria mapeou.
-> **✅ FASE 1 TÉCNICA COMPLETA (11 itens):** 1.1, 1.2, 1.3, 1.4, 1.7, 1.9, 1.10, 1.11, 1.12, 1.14, 1.8 — todos fechados (`requireWorkspaceOwner`, `requirePermission` + `hasWorkspaceAccess`, catálogo de permissões, workspace-scope por `collaboratorCanActOnCourse`, `canManageStudentsOfCourse`, plan-limit por `!== ADMIN`).
-> **RESTAM só 2, nenhum é código puro:** **1.13** (reviews GET — **DECISÃO DE PRODUTO** do Vinicius: reviews públicas?) e **1.5 / 1.6** (magic-link + token single-use no convite — **BLOQUEADOS pela Fase 3** = email confiável). Nada mais técnico em aberto na Fase 1.
+> **✅ FASE 1 COMPLETA no código (12 itens):** 1.1, 1.2, 1.3, 1.4, 1.7, 1.9, 1.10, 1.11, 1.12, 1.14, 1.8, 1.13 — todos fechados e validados no staging (`requireWorkspaceOwner`, `requirePermission` + `hasWorkspaceAccess`, catálogo de permissões, workspace-scope por `collaboratorCanActOnCourse`, `canManageStudentsOfCourse`, plan-limit por `!== ADMIN`, select explícito nas reviews).
+> **⚠️ NÃO HÁ MAIS NENHUM ITEM DE CÓDIGO EM ABERTO na Fase 1.** Restam SÓ **1.5 e 1.6** (magic-link + token single-use no convite) — **BLOQUEADOS pela Fase 3** (dependem de email confiável). Assim que a Fase 3 (email) entrar, 1.5/1.6 saem.
 
 ### 1.1 — `MANAGE_LIVES` + Lives writes ungated 🟡 ✅ FEITO (`78275d4`)
 **Problema:** `producer/lives/route.ts:53`, `[id]/route.ts:50,94`, `[id]/status/route.ts:27` são `requireStaff` puro — qualquer colaborador cria/edita/exclui live e dispara push em massa (status→push). Gravidade ALTA (blast outbound).
@@ -189,17 +189,16 @@ O backlog parecia infinito porque ninguém tinha cruzado a lista com o que já e
 - [x] Merge `--no-ff` (`ef312d9`, branch deletada local+remota).
 **Dependência:** nenhuma.
 
-### 1.13 — reviews GET sem auth (courses/[id]/reviews) 🟡 — DECISÃO DE PRODUTO
-**Problema:** o GET de `courses/[id]/reviews/route.ts:6-53` não tem gate de auth (importa `getCurrentUser` mas só usa no POST). Anônimo com o id do curso lê **todas as reviews + identidade do autor** (`user.id/name/avatarUrl`) + média/contagem de **qualquer** curso, inclusive pago/não publicado. Achado na varredura de primos do 1.10.
-**⚠️ DECISÃO DE PRODUTO (Vinicius):** as reviews **são exibidas** na página de vendas/preview (`reviews-section` em `course-preview.tsx` + na página do curso do aluno) — podem ser **públicas de propósito** (prova social). NÃO é o mesmo caso do 1.10 (customize é claramente privado, sub-tela de edição; reviews têm caso de uso público legítimo).
-**Opções (decidir antes de fixar):**
-- (a) manter público mas **stripar `user.id`** (privacidade — nome/avatar pra prova social, sem o id interno);
-- (b) restringir a cursos **`isPublished`** (não vaza review de curso oculto/rascunho);
-- (c) exigir login (quebraria a prova social pública — provavelmente NÃO).
+### 1.13 — reviews GET vazava id do reviewer (courses/[id]/reviews) 🟡 ✅ FEITO (`e71e39c`)
+**Problema:** o GET de reviews (público, sem gate) expunha ao anônimo **a identidade interna do autor** (`user.id` + o escalar `review.userId`) de todas as reviews de qualquer curso. Achado na varredura de primos do 1.10.
+**Decisão de produto (Vinicius) — resolvida por evidência:** **Opção A** (manter público, stripar o id). A investigação provou que a **Opção C (exigir login) QUEBRARIA a vitrine pública** — `/course/[slug]` é acessível por anônimo (o layout não bloqueia; `getCurrentUser()` sem redirect) e renderiza o `CoursePreview` → `ReviewsSection` = prova social pública legítima. As reviews DEVEM ser públicas; só o id interno não pode vazar. (B/isPublished não foi necessária — as reviews aparecem só em cursos que o produtor expõe.)
+**Abordagem (causa-raiz, 2 commits):** (1) `7162e6a` — stripar `user.id` do select aninhado + ajustar o `interface ReviewItem` do front. (2) `002abfd` — ⚠️ o 1º foi **insuficiente**: o `include` trazia TODOS os escalares da Review, incl. **`review.userId`** (o mesmo id, por outro campo). Trocar `include` → **`select` explícito** que retorna só `{ id, rating, comment, createdAt, user:{name,avatarUrl} }` (os 6 campos que o front usa, mapeados por evidência) — omite `userId`/`courseId`/`updatedAt`. **POST intacto** (retorna o id do próprio autor logado, não é leak).
 **Etapas:**
-- [ ] Decisão de produto (Vinicius): qual das opções (a/b/c ou combinação).
-- [ ] Aplicar + staging (conforme a decisão) + merge `--no-ff`.
-**Dependência:** nenhuma. Achado adjacente do 1.10 (não corrigido no fix do customize).
+- [x] Investigação: quem consome o GET (a vitrine pública consome → C quebraria); o front usa só 6 campos; A é a opção certa.
+- [x] Fix causa-raiz (strip user.id + include→select), 2 arquivos (`route.ts` + `reviews-section.tsx`), build verde.
+- [x] Staging: anônimo GET → **200** (público preservado); **payload cru** provou **nenhum `userId`, nenhum `user.id`, nenhum `courseId`/`updatedAt`** — só `id/rating/comment/createdAt/user{name,avatarUrl}`. ⚠️ O payload cru pegou o vazamento que o status 200 escondia (o 1º commit "passava" mas vazava `review.userId`).
+- [x] Merge `--no-ff` (`e71e39c`, leva `7162e6a`+`002abfd`, branch deletada).
+**Dependência:** nenhuma. **Lição:** validar o PAYLOAD, não só o status — um 200 pode esconder o vazamento; e stripar um campo não basta se o ORM traz o mesmo dado por outro (`include` vs `select` explícito).
 
 ### 1.14 — community/groups cross-tenant (CLUSTER de 6 handlers) 🟠 ✅ FEITO (`e0d3171`)
 **Problema (era "groups/reorder", virou CLUSTER):** o rótulo do plano cobria só o reorder, mas a investigação (lição do 1.4 — não confiar no rótulo) achou que **os 6 handlers de `producer/community/groups/**` operavam por id/courseId cru sem validar o workspace do recurso** — nenhum resolvia o escopo do staff. `CommunityGroup → Course → Workspace` (sem workspaceId direto; rota do reorder/GET/POST sem `[id]`). Vetores cross-tenant: DELETE (destrutivo :161), POST (cria em curso alheio :83), PUT (edita/censura), reorder, e os 2 GETs (o `groups` GET ainda disparava `ensureDefaultGroup` = **write cross-tenant por um read**).
@@ -495,7 +494,7 @@ A ordem dentro das fases, otimizada por dependência:
 
 ```
 SEGURANÇA       1.1 MANAGE_LIVES → 1.2 Tags → 1.3 workspaces-owner → 1.4 cluster → 1.7 ITEM 3 → 1.9 GET-curso-anon ✅
-                → 1.10 customize ✅ → 1.11 menu-reorder ✅ → 1.14 groups-cluster ✅ → 1.12 overrides-perms ✅ → 1.8 plan-limit-ws ✅ | RESTAM: 1.13 reviews-GET (decisão produto) + 1.5/1.6 (Fase 3)
+                → 1.10 customize ✅ → 1.11 menu-reorder ✅ → 1.14 groups-cluster ✅ → 1.12 overrides-perms ✅ → 1.8 plan-limit-ws ✅ → 1.13 reviews-id ✅ | FASE 1 SEM código aberto — restam SÓ 1.5/1.6 (Fase 3)
                 (1.5 magic-link + 1.6 token DEPOIS da Fase 3)
 INFRA BARATA    2.1 HSTS → 2.2 npm audit → 2.3 XSS sanitize
 EMAIL           3.1 retry → 3.2 EmailLog   [desbloqueia 1.5]
