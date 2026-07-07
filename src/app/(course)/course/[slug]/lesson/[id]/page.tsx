@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { SkeletonPlayer, SkeletonLessonsSidebar } from "@/components/ui/skeleton";
+import { sanitizeHtml } from "@/lib/sanitize-html";
 
 const VideoPlayer = dynamic(
   () => import("@/components/video-player").then((m) => m.VideoPlayer),
@@ -665,7 +666,7 @@ export default function LessonPage(
                           {data.lesson.description ? (
                             <div
                               className="prose-lesson text-sm leading-relaxed text-gray-700 dark:text-gray-300 break-words"
-                              dangerouslySetInnerHTML={{ __html: data.lesson.description }}
+                              dangerouslySetInnerHTML={{ __html: sanitizeHtml(data.lesson.description) }}
                             />
                           ) : (
                             <p className="text-gray-400 dark:text-gray-500 text-sm italic">Sem descrição para esta aula.</p>
