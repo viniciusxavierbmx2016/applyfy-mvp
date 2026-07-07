@@ -27,7 +27,16 @@ export async function GET(request: Request, props: { params: Promise<{ id: strin
         orderBy: { createdAt: "desc" },
         skip: (page - 1) * pageSize,
         take: pageSize,
-        include: {
+        // Explicit select (not include): a bare include returns ALL Review
+        // scalars — including `userId`, which is the reviewer's internal id and
+        // the exact leak 1.13 is about. Listing only the fields the UI uses
+        // (ReviewItem) keeps `userId`/`courseId`/`updatedAt` out of the public
+        // payload while preserving the public social proof.
+        select: {
+          id: true,
+          rating: true,
+          comment: true,
+          createdAt: true,
           user: { select: { name: true, avatarUrl: true } },
         },
       }),
