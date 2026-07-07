@@ -39,9 +39,11 @@ O backlog parecia infinito porque ninguém tinha cruzado a lista com o que já e
 
 ---
 
-# FASE 1 — Segurança restante 🔴
+# FASE 1 — Segurança restante 🟢 (parte TÉCNICA completa)
 
-> **Por que primeiro:** risco em produção vem antes de tudo. São os furos que a auditoria mapeou e ainda não fecharam. Família dos 8 já resolvidos — mesmos padrões (`requireWorkspaceOwner`, `requirePermission` + `hasWorkspaceAccess`, nova permissão de colaborador).
+> **Por que primeiro:** risco em produção vem antes de tudo. São os furos que a auditoria mapeou.
+> **✅ FASE 1 TÉCNICA COMPLETA (11 itens):** 1.1, 1.2, 1.3, 1.4, 1.7, 1.9, 1.10, 1.11, 1.12, 1.14, 1.8 — todos fechados (`requireWorkspaceOwner`, `requirePermission` + `hasWorkspaceAccess`, catálogo de permissões, workspace-scope por `collaboratorCanActOnCourse`, `canManageStudentsOfCourse`, plan-limit por `!== ADMIN`).
+> **RESTAM só 2, nenhum é código puro:** **1.13** (reviews GET — **DECISÃO DE PRODUTO** do Vinicius: reviews públicas?) e **1.5 / 1.6** (magic-link + token single-use no convite — **BLOQUEADOS pela Fase 3** = email confiável). Nada mais técnico em aberto na Fase 1.
 
 ### 1.1 — `MANAGE_LIVES` + Lives writes ungated 🟡 ✅ FEITO (`78275d4`)
 **Problema:** `producer/lives/route.ts:53`, `[id]/route.ts:50,94`, `[id]/status/route.ts:27` são `requireStaff` puro — qualquer colaborador cria/edita/exclui live e dispara push em massa (status→push). Gravidade ALTA (blast outbound).
@@ -133,15 +135,16 @@ O backlog parecia infinito porque ninguém tinha cruzado a lista com o que já e
 - [x] Merge `--no-ff` (12355d3, branch deletada).
 **Dependência:** nenhuma.
 
-### 1.8 — `checkPlanLimits` bypass em criar workspace 🟡
-**Problema:** `workspaces/route.ts` POST (:31) roda `checkPlanLimits` só `if (staff.role === "PRODUCER")` (:33). Um colaborador (role COLLABORATOR/STUDENT-com-Collab) cai fora do check e **cria workspaces ilimitados**, virando dono deles, bypassando o limite do plano. Abuso de plano (não é vazamento de dados nem cross-tenant). Achado à parte durante a investigação do 1.3.
-**Abordagem:** aplicar o `checkPlanLimits` (ou o gate correto de criação) independente do role, ou bloquear criação de ws por colaborador. Decisão de produto: colaborador PODE criar workspace próprio?
+### 1.8 — `checkPlanLimits` bypass em criar workspace 🟡 ✅ FEITO (`da47e05`)
+**Problema:** `workspaces/route.ts` POST rodava `checkPlanLimits` só `if (staff.role === "PRODUCER")` (:33). Um colaborador (role COLLABORATOR/STUDENT-com-Collab, que passa no `requireStaff`) caía fora do check e **criava workspaces ilimitados**, virando dono deles (`ownerId: staff.id`), bypassando o limite do plano. Abuso de plano. Achado à parte durante a investigação do 1.3.
+**Natureza = TÉCNICO (não decisão de produto):** o `Plan.maxWorkspaces` (default 10) EXISTE no schema e o `checkPlanLimits` JÁ tem o branch `type === "workspace"` (`count(workspace where ownerId===userId) >= maxWorkspaces → throw`). O limite existe e funciona — o furo era só a condição do `if`.
+**Fix (1 linha, espelha o 1.7 dos cursos):** `if (staff.role === "PRODUCER")` → `if (staff.role !== "ADMIN")`. Agora todo não-ADMIN entra no check. Anchor `staff.id` já correto (no workspace o criador É o dono, ≠ do curso onde ancora em workspace.ownerId). Catch já certo (`PlanLimitError → 403` no try/catch interno). Colaborador sem Subscription → `!sub → throw → 403 "Assine um plano"` (bloqueio real, não vira 500).
 **Etapas:**
-- [ ] Read-only: confirmar o gate do POST + como `checkPlanLimits` conta e a quem se aplica.
-- [ ] Decisão de produto (Vinicius): colaborador cria ws? Se sim, sob qual limite?
-- [ ] Aplicar + staging (colaborador tenta criar além do limite → bloqueado).
-- [ ] Merge `--no-ff`.
-**Dependência:** nenhuma.
+- [x] Read-only: gate `requireStaff` (aceita colab); o check estava atrás de `=== "PRODUCER"`; `maxWorkspaces` existe + branch workspace do helper; molde = courses/route.ts (1.7); catch já mapeia PlanLimitError→403; sinuca limpa (só courses+workspaces são plan-limitados).
+- [x] Fix 1 linha (`=== "PRODUCER"` → `!== "ADMIN"`), corpo/anchor/catch intactos, +1/−1, build verde.
+- [x] Staging (as 2 metades): colab-sem-plano → **403 "Assine um plano"** (bypass fechado ⭐⭐); producer-test (plano max2, owns 1) → #1 **201** (abaixo), #2 **403 "Limite de 2 workspaces"** (limite aplicado ⭐); dono A exempt → 201; anônimo → 401. Prova: os 3 caminhos barrados NÃO criaram workspace-fantasma (count antes==depois; slugs test18 = só os 3 que passaram). Zero 5xx.
+- [x] Merge `--no-ff` (`da47e05`, branch deletada local+remota).
+**Dependência:** nenhuma. **Decisão de produto resolvida:** colaborador só cria ws se tiver plano próprio com folga (sem plano → 403); espelha o tratamento do 1.7. Bloqueio explícito não foi necessário (o check já barra o colab-sem-plano).
 
 ### 1.9 — GET `/api/courses/[id]` SEM AUTH (content leak anônimo) 🔴 ✅ FEITO (`ca8a81b`)
 **Problema:** o GET de `courses/[id]/route.ts` não exige autenticação — qualquer anônimo com o id do curso baixa o curso COMPLETO (estrutura de módulos/aulas e conteúdo, **`videoUrl` de todas as aulas** + escalares do curso), inclusive curso pago/não publicado. Content leak direto do produto vendido. Achado durante a investigação do 1.7 (não estava no plano).
@@ -492,7 +495,7 @@ A ordem dentro das fases, otimizada por dependência:
 
 ```
 SEGURANÇA       1.1 MANAGE_LIVES → 1.2 Tags → 1.3 workspaces-owner → 1.4 cluster → 1.7 ITEM 3 → 1.9 GET-curso-anon ✅
-                → 1.10 customize ✅ → 1.11 menu-reorder ✅ → 1.14 groups-cluster ✅ → 1.12 overrides-perms ✅ → 1.13 reviews-GET (decisão) → 1.8 plan-limit-ws
+                → 1.10 customize ✅ → 1.11 menu-reorder ✅ → 1.14 groups-cluster ✅ → 1.12 overrides-perms ✅ → 1.8 plan-limit-ws ✅ | RESTAM: 1.13 reviews-GET (decisão produto) + 1.5/1.6 (Fase 3)
                 (1.5 magic-link + 1.6 token DEPOIS da Fase 3)
 INFRA BARATA    2.1 HSTS → 2.2 npm audit → 2.3 XSS sanitize
 EMAIL           3.1 retry → 3.2 EmailLog   [desbloqueia 1.5]
