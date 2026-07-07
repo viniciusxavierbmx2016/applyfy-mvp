@@ -28,7 +28,7 @@ export async function GET(request: Request, props: { params: Promise<{ id: strin
         skip: (page - 1) * pageSize,
         take: pageSize,
         include: {
-          user: { select: { id: true, name: true, avatarUrl: true } },
+          user: { select: { name: true, avatarUrl: true } },
         },
       }),
       prisma.review.count({ where: { courseId: course.id } }),

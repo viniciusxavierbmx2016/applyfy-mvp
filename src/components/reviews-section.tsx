@@ -10,7 +10,7 @@ interface ReviewItem {
   rating: number;
   comment: string | null;
   createdAt: string;
-  user: { id: string; name: string; avatarUrl: string | null };
+  user: { name: string; avatarUrl: string | null };
 }
 
 interface Props {
