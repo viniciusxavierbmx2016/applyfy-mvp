@@ -214,10 +214,10 @@ O backlog parecia infinito porque ninguém tinha cruzado a lista com o que já e
 
 ---
 
-# FASE 2 — Infra de segurança 🟡 (2.1 + 2.2 ✅)
+# FASE 2 — Infra de segurança 🟡 (2.1 + 2.2 + 2.3 ✅)
 
 > **Por que aqui:** barata e importante. Fecha a camada de infra que a auditoria de código não cobre. A maioria é trivial (1 header, 1 comando).
-> **Progresso:** ✅ **2.1 HSTS** (`de00875`) + ✅ **2.2 npm audit** (`7eaaf66`, 2 CVEs transitivas). ABERTOS: **2.3** XSS sanitize (`lesson.description`), **2.6** sanitizar `emailCustomHtml` (defense-in-depth, achado do 1.3). Próximo natural = 2.3.
+> **Progresso:** ✅ **2.1 HSTS** (`de00875`) + ✅ **2.2 npm audit** (`7eaaf66`) + ✅ **2.3 lesson.description XSS** (`3d40bc3`). ABERTOS: **2.6** sanitizar `emailCustomHtml` (defense-in-depth, achado do 1.3) + **2.7** validar cores vs CSS-injection (candidato, sinuca do 2.3). Próximo natural = 2.6.
 
 ### 2.1 — HSTS 🟢 ✅ FEITO (`de00875`)
 **Problema:** `next.config.mjs` tinha X-Frame/CSP/nosniff/Referrer/Permissions mas faltava `Strict-Transport-Security`. (HSTS não existia em lugar nenhum — nem no `proxy.ts` middleware, nem no `vercel.json`.)
@@ -242,15 +242,18 @@ O backlog parecia infinito porque ninguém tinha cruzado a lista com o que já e
 - [x] Merge `--no-ff` (`7eaaf66`, branch deletada). Prod: a Vercel roda `npm ci` → instala as versões patcheadas do lockfile.
 **Dependência:** nenhuma.
 
-### 2.3 — XSS sink: sanitizar `lesson.description` 🟡
-**Problema:** `(course)/.../lesson/[id]/page.tsx:668` renderiza `lesson.description` (producer-authored) sem `sanitizeHtml`.
-**Abordagem:** aplicar o `sanitizeHtml` que já existe no server (reuso, não nova lib).
+### 2.3 — XSS sink: sanitizar `lesson.description` 🟡 ✅ FEITO (`3d40bc3`)
+**Problema:** `(course)/.../lesson/[id]/page.tsx:669` renderizava `lesson.description` (producer-authored) via `dangerouslySetInnerHTML` **sem `sanitizeHtml`** — stored XSS producer→aluno (um colaborador com MANAGE_LESSONS injeta `<script>` na descrição → executa na aba do aluno matriculado).
+**Investigação (varredura de TODOS os `dangerouslySetInnerHTML`):** 8 sinks — os **4 da comunidade** (pending-tab, posts-tab, post-card x2) **JÁ sanitizam** (`sanitizeHtml(content)`); os **3 de `<style>`** (course/w layout + producer-theme-provider) são **CSS-vars** (categoria à parte, não HTML de usuário); o **único cru de HTML de usuário era o `lesson.description`**.
+**Fix (render, reusa o padrão da comunidade):** `sanitizeHtml(data.lesson.description)` no sink + o import `import { sanitizeHtml } from "@/lib/sanitize-html"` (byte-idêntico ao post-card). **Render-time** (não persistência) → protege o conteúdo **retroativo** (descrições já salvas nunca foram sanitizadas) e espelha os 4 sinks da comunidade. Null-safe pelo guard `data.lesson.description ?`. Roda client-side (a page é `"use client"`, como o post-card). A allowlist cobre o Tiptap do description (`rich-text-editor.tsx`, heading levels 1-2) → **sem perda de formatação** (só o `<hr>` menor sai, consistente com os posts). +2/−1, 1 arquivo.
 **Etapas:**
-- [ ] Read-only: confirmar o sink + onde o `sanitizeHtml` server-side já é usado (reusar o mesmo).
-- [ ] Aplicar a sanitização no ponto de render/persistência.
-- [ ] Staging: tentar injetar `<script>` na description → neutralizado.
-- [ ] Merge `--no-ff`.
+- [x] Read-only: varredura dos 8 sinks (1 cru = lesson.description); o `sanitizeHtml` (allowlist rich-text) + o Tiptap (h1-2, coberto); render vs persistência (render protege o retroativo).
+- [x] `sanitizeHtml(data.lesson.description)` no render (mesmo helper/import da comunidade).
+- [x] Prova: rodei o `sanitizeHtml` com payload de ataque — `<script>`/`onerror`/`<iframe>`/`onclick` **neutralizados**, `<h2>/<strong>/<em>/<ul>/<a>/<blockquote>` **preservados**, `<a>` endurecido (`rel=noopener noreferrer nofollow`). Build verde.
+- [x] Merge `--no-ff` (`3d40bc3`, branch deletada).
 **Dependência:** relaciona com 1.7 (quem edita conteúdo).
+
+> **Candidato 2.7 (sinuca do 2.3, registrar — NÃO fazer agora):** os 3 sinks de `<style>` (`course/[slug]/layout.tsx`, `w/[slug]/layout.tsx`, `producer-theme-provider.tsx`) interpolam cores do config em `:root{...}` — **CSS-injection** se alguma cor não for validada (um `}` quebraria a regra e injetaria CSS). As cores `member*` são validadas como hex (customize PUT, do 1.10); vale confirmar num item futuro se TODAS (vitrine + producer theme) também são → **2.7 — validar cores contra CSS-injection**. Categoria diferente do 2.3 (CSS-injection, não JS-XSS; risco menor).
 
 ### 2.4 — Rate limiting compartilhado 🔴
 **Problema:** `src/lib/rate-limit.ts` cobre ~14 rotas auth, in-memory per-instance (reseta em cold start, não compartilha entre lambdas). CRUD producer sem proteção.
