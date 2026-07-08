@@ -323,7 +323,7 @@ export function buildAccessEmail(
 </body>
 </html>`;
 
-  return { subject: subjectFor(`Seu acesso ao curso ${vars.curso}`), html };
+  return { subject: subjectFor(`Seu acesso ao curso ${vars.curso}`), html: sanitizeEmailHtml(html) };
 }
 
 // Sends the student access email using the workspace's customization (or the
