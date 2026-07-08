@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { sanitizeEmailHtml } from "@/lib/sanitize-html";
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://app.mymembersclub.com.br";
 
@@ -219,7 +220,7 @@ export function buildAccessEmail(
   if (config.emailUseCustomHtml && config.emailCustomHtml) {
     return {
       subject: subjectFor(`Seu acesso ao curso ${vars.curso}`),
-      html: applyVars(config.emailCustomHtml, vars),
+      html: applyVars(sanitizeEmailHtml(config.emailCustomHtml), vars),
     };
   }
 
