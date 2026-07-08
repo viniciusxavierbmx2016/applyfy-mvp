@@ -214,7 +214,9 @@ O backlog parecia infinito porque ninguém tinha cruzado a lista com o que já e
 
 ---
 
-# FASE 2 — Infra de segurança 🟡 (2.1 + 2.2 + 2.3 ✅)
+# FASE 2 — Infra de segurança 🟡 (2.1 + 2.2 + 2.3 + 2.6 ✅)
+
+> **Abertos:** 2.4 (rate limit compartilhado — DESENHADO, pendente de infra Upstash: provisionar conta + valor do limite) · 2.5 (CSP `unsafe-inline`/`unsafe-eval`) · 2.7 (validar cores do tema vs CSS-injection — candidato do 2.3) · candidatos do 2.6 (2.6b `emailBody`/`emailTitle`/`emailFooter` do path themed + preview `email-tab.tsx`).
 
 > **Por que aqui:** barata e importante. Fecha a camada de infra que a auditoria de código não cobre. A maioria é trivial (1 header, 1 comando).
 > **Progresso:** ✅ **2.1 HSTS** (`de00875`) + ✅ **2.2 npm audit** (`7eaaf66`) + ✅ **2.3 lesson.description XSS** (`3d40bc3`). ABERTOS: **2.6** sanitizar `emailCustomHtml` (defense-in-depth, achado do 1.3) + **2.7** validar cores vs CSS-injection (candidato, sinuca do 2.3). Próximo natural = 2.6.
@@ -276,16 +278,20 @@ O backlog parecia infinito porque ninguém tinha cruzado a lista com o que já e
 - [ ] Merge `--no-ff` OU registro de risco aceito.
 **Dependência:** nenhuma. Candidato a adiar se o custo/risco não compensar agora.
 
-### 2.6 — Sanitizar `emailCustomHtml` (defense-in-depth) 🟡
-**Problema:** `buildAccessEmail` (`email-templates.ts:219-224`) renderiza o HTML do produtor (`emailCustomHtml`, e `emailTitle`/`emailBody`/`emailFooter` inline em :263-303) SEM escapar, no email transacional de acesso enviado a TODO comprador novo (enrollment, import, add-students, resend, webhooks Applyfy). O template expõe as variáveis `{senha}` (senha temp em texto puro) e `{link}` → HTML malicioso pode exfiltrar a senha inicial do aluno (ex: `<img src>` para endpoint do atacante). Mais grave que o 2.3 (que é defacement; este vaza senha).
-**Mitigação já aplicada:** o 1.3 fecha quem pode SETAR o campo (só o dono agora), removendo o vetor via colaborador. Este item é a camada defense-in-depth (um dono comprometido, ou futura reabertura do gate, ainda injetaria).
-**Abordagem:** aplicar o `sanitizeHtml` server-side que já existe (reuso, mesma lib do 2.3), preservando os placeholders `{senha}`/`{link}`. Mesma família do 2.3.
-**Etapas:**
-- [ ] Read-only: confirmar o sink + o `sanitizeHtml` reusável + como não quebrar os placeholders de variável.
-- [ ] Aplicar a sanitização no render/persistência do email custom.
-- [ ] Staging: injetar `<script>`/`<img src=exfil>` no emailCustomHtml → neutralizado, email ainda renderiza.
-- [ ] Merge `--no-ff`.
-**Dependência:** relaciona com 2.3 (mesmo `sanitizeHtml`). Mitigado por 1.3.
+### 2.6 — Sanitizar `emailCustomHtml` (defense-in-depth) 🟡 ✅ FEITO (`aa0e1a2`)
+**Problema:** o path RAW do `buildAccessEmail` (`email-templates.ts:219-223`) injetava o `emailCustomHtml` do produtor no corpo do email de acesso SEM sanitizar (`html: applyVars(config.emailCustomHtml, vars)`). Enviado a TODO comprador novo (enrollment, import, add-students, resend, webhooks Applyfy).
+**Fix (`aa0e1a2`):** `sanitizeEmailHtml` novo em `src/lib/sanitize-html.ts` (ao lado do `sanitizeHtml`) + wrap no sink → `applyVars(sanitizeEmailHtml(config.emailCustomHtml), vars)`. Render-time. **2 arquivos, +45/−1.**
+**⚠️ A PREMISSA DO PLANO ESTAVA ERRADA:** o plano dizia "reusar o `sanitizeHtml` do 2.3". **Não serve** — a allowlist do 2.3 é rich-text de PÁGINA (p/strong/ul/h1-3/…) e apagaria o layout de EMAIL (provado tag a tag: `table`/`thead`/`tbody`/`tr`/`td`/`th`/`div`/`center`/`font`/`hr`/`h4-6` AUSENTES, e `style` só era permitido em `<img>`). → Precisou de uma **allowlist de EMAIL própria** (`EMAIL_OPTIONS`): permissiva pra layout (tabelas + `style=""` inline em todas as tags + `align`/`bgcolor`/`width`/`height`/`cellpadding`/`cellspacing`/`border`/`colspan`/…) mas que ainda **bloqueia** `script`/`on*`/`iframe`/`object`/`embed`/`form`/`link`/`javascript:`+`data:` URIs/`<style>` blocks (só `style=""` inline sobra).
+**Ordem `sanitize → applyVars`:** sanitiza a estrutura crua do produtor PRIMEIRO, injeta as vars DEPOIS. As 6 vars foram rastreadas a file:line: `senha`/`link` = **sistema** (temp password rotacionada + env/slug); `curso`/`workspace` = **do produtor** (dono, mesma fronteira de quem escreve o campo); `nome`/`email` = **do próprio destinatário** (self-targeted). **Nenhuma é "terceiro ataca vítima diferente"** → sanitizar antes é seguro e evita mangar uma senha/link com char especial.
+**Provas:** 12 vetores bloqueados rodando a config exata (execução real da lib) + **13/13 no fluxo completo do staging** (ws de teste com `emailUseCustomHtml=true`, round-trip `@db.Text` idêntico, `sanitizeEmailHtml` transpilado da FONTE REAL): layout preservado (`table`/`cellpadding`/`bgcolor`/`width`/`td style`/`h1 style`/`a href`) + payload neutralizado (`<script>` sumiu, `onerror` stripado, `<iframe>` sumiu) + vars injetadas (`{nome}`→`Maria Silva`, etc.). Build exit 0.
+**Risco:** defense-in-depth de risco BAIXO — input é **owner-only** (fechado no 1.3) + clientes de email já sandboxam JS. Blinda o cliente raro que renderiza JS, webview in-app, e phishing via `<iframe>`/`<form>`.
+**⚠️ 2 RESÍDUOS declarados e aceitos:**
+- (a) o `<a>` em email usa `rel="noopener noreferrer"` **sem** `nofollow`/`target="_blank"` forçado (adaptado ao contexto de email — `nofollow` é SEO, e clientes de email reescrevem/sandboxam links; forçar `target` só sobrescreveria a intenção do produtor sem ganho). `href`/`target`/`style` do produtor preservados.
+- (b) o `sanitize-html` **não faz deep-sanitize do VALOR do `style`** (permite `style="…url(javascript:)…"`/`url(data:)`). Não executa em browser moderno nem em email sandboxed, e o autor do style é o próprio owner; restringir via `allowedStyles` quebraria layout legítimo. Aceito dado o risco-base baixo.
+**⚠️ CANDIDATOS gerados (NÃO feitos):**
+- **(2.6b?)** estender a sanitização ao `emailBody`/`emailTitle`/`emailFooter` (path THEMED — HTML de produtor, mas injetado num molde controlado nosso; escopo do 2.6 foi A-contido no `emailCustomHtml`/path raw).
+- sanitizar o **preview client-side** (`email-tab.tsx` — o produtor vê o próprio HTML; self-XSS, risco baixo).
+**Dependência:** mitigado por 1.3 (owner-only).
 
 ---
 
