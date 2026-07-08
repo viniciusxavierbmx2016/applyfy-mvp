@@ -214,12 +214,13 @@ O backlog parecia infinito porque ninguém tinha cruzado a lista com o que já e
 
 ---
 
-# FASE 2 — Infra de segurança 🟡 (2.1 + 2.2 + 2.3 + 2.6 ✅)
+# FASE 2 — Infra de segurança 🟡 (2.1 + 2.2 + 2.3 + 2.6 ✅ código; 2.7 ✅ confirmado-seguro)
 
-> **Abertos:** 2.4 (rate limit compartilhado — DESENHADO, pendente de infra Upstash: provisionar conta + valor do limite) · 2.5 (CSP `unsafe-inline`/`unsafe-eval`) · 2.7 (validar cores do tema vs CSS-injection — candidato do 2.3) · candidatos do 2.6 (2.6b `emailBody`/`emailTitle`/`emailFooter` do path themed + preview `email-tab.tsx`).
+> **Abertos:** 2.4 (rate limit compartilhado — DESENHADO, pendente de infra Upstash: provisionar conta + valor do limite) · 2.5 (CSP `unsafe-inline`/`unsafe-eval`) · candidatos do 2.6 (2.6b `emailBody`/`emailTitle`/`emailFooter` do path themed + preview `email-tab.tsx`).
+> **Fechados:** 2.7 (validar cores dos `<style>` vs CSS-injection — investigado, VERDICT não-item: todas as 19 cores já são hex-validadas na escrita; ver §2.7).
 
 > **Por que aqui:** barata e importante. Fecha a camada de infra que a auditoria de código não cobre. A maioria é trivial (1 header, 1 comando).
-> **Progresso:** ✅ **2.1 HSTS** (`de00875`) + ✅ **2.2 npm audit** (`7eaaf66`) + ✅ **2.3 lesson.description XSS** (`3d40bc3`). ABERTOS: **2.6** sanitizar `emailCustomHtml` (defense-in-depth, achado do 1.3) + **2.7** validar cores vs CSS-injection (candidato, sinuca do 2.3). Próximo natural = 2.6.
+> **Progresso:** ✅ **2.1 HSTS** (`de00875`) + ✅ **2.2 npm audit** (`7eaaf66`) + ✅ **2.3 lesson.description XSS** (`3d40bc3`) + ✅ **2.6 emailCustomHtml sanitize** (`aa0e1a2`) + ✅ **2.7 cores/CSS-injection** (confirmado-seguro, não-item). ABERTOS: **2.4** rate limit (desenhado, pendente Upstash) + **2.5** CSP + candidatos do 2.6.
 
 ### 2.1 — HSTS 🟢 ✅ FEITO (`de00875`)
 **Problema:** `next.config.mjs` tinha X-Frame/CSP/nosniff/Referrer/Permissions mas faltava `Strict-Transport-Security`. (HSTS não existia em lugar nenhum — nem no `proxy.ts` middleware, nem no `vercel.json`.)
@@ -255,7 +256,7 @@ O backlog parecia infinito porque ninguém tinha cruzado a lista com o que já e
 - [x] Merge `--no-ff` (`3d40bc3`, branch deletada).
 **Dependência:** relaciona com 1.7 (quem edita conteúdo).
 
-> **Candidato 2.7 (sinuca do 2.3, registrar — NÃO fazer agora):** os 3 sinks de `<style>` (`course/[slug]/layout.tsx`, `w/[slug]/layout.tsx`, `producer-theme-provider.tsx`) interpolam cores do config em `:root{...}` — **CSS-injection** se alguma cor não for validada (um `}` quebraria a regra e injetaria CSS). As cores `member*` são validadas como hex (customize PUT, do 1.10); vale confirmar num item futuro se TODAS (vitrine + producer theme) também são → **2.7 — validar cores contra CSS-injection**. Categoria diferente do 2.3 (CSS-injection, não JS-XSS; risco menor).
+> **Candidato 2.7 (sinuca do 2.3) → ✅ RESOLVIDO como NÃO-ITEM (ver 2.7 abaixo):** confirmado que TODAS as cores dos 3 sinks `<style>` (member* + vitrine + producer theme) são hex-validadas na escrita — não há CSS-injection. Nada a aplicar.
 
 ### 2.4 — Rate limiting compartilhado 🔴
 **Problema:** `src/lib/rate-limit.ts` cobre ~14 rotas auth, in-memory per-instance (reseta em cold start, não compartilha entre lambdas). CRUD producer sem proteção.
@@ -292,6 +293,14 @@ O backlog parecia infinito porque ninguém tinha cruzado a lista com o que já e
 - **(2.6b?)** estender a sanitização ao `emailBody`/`emailTitle`/`emailFooter` (path THEMED — HTML de produtor, mas injetado num molde controlado nosso; escopo do 2.6 foi A-contido no `emailCustomHtml`/path raw).
 - sanitizar o **preview client-side** (`email-tab.tsx` — o produtor vê o próprio HTML; self-XSS, risco baixo).
 **Dependência:** mitigado por 1.3 (owner-only).
+
+### 2.7 — Validar cores dos `<style>` vs CSS-injection 🟢 ✅ CONFIRMADO SEGURO (NÃO-ITEM, sem código)
+Os 3 sinks `<style>` (`course/[slug]/layout.tsx`, `w/[slug]/layout.tsx`, `producer-theme-provider.tsx`) injetam **19 valores de cor** em `:root{}`. A investigação (READ-ONLY) provou que **NÃO há CSS-injection**, em 3 camadas:
+1. **Todos os 19 são hex-validados** `/^#[0-9a-fA-F]{6}$/` → 400 na escrita (member* `customize/route.ts:8,72-79`; vitrine* `validations.ts:264` via `vitrine/route.ts:100`; accentColor tb no PATCH owner-only `workspaces/[id]/route.ts:19,43-63`; producer-theme `theme/route.ts:73-79`) — um `}` é rejeitado.
+2. O input é **`<input type="color">`** (`color-field.tsx:26`) que SÓ emite `#rrggbb` → a validação hex-only **não quebra cor legítima** (zero falso-positivo).
+3. **Zero cor não-hex salva no staging** (1 curso × 6 + 1 ws × 7 + 4 users × 7 = todos hex; sem risco retroativo).
+**Fios soltos verificados:** `darkenHex` é safe-by-construction (`color-utils.ts:2` valida antes); as 5 rotas restantes usam os campos em `select:` (leitura de valores já validados na origem); `supportButtonColor` (`courses/[id]/route.ts:174`) + `login*`/`email*` (`workspaces/[id]/route.ts:43-53`) **também** hex-validados. O `producer-theme` (sink 3) é ainda **self-scoped** (só o próprio dashboard, `user.themeConfig` lido só no `producer/layout.tsx`).
+**VERDICT:** não-item, nada a aplicar. **A validação hex das cores já fecha o vetor de CSS-injection.** (Categoria era diferente do 2.3: CSS-injection, não JS-XSS.)
 
 ---
 
