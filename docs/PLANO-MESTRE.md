@@ -214,13 +214,13 @@ O backlog parecia infinito porque ninguém tinha cruzado a lista com o que já e
 
 ---
 
-# FASE 2 — Infra de segurança 🟡 (2.1 + 2.2 + 2.3 + 2.6 ✅ código; 2.7 ✅ confirmado-seguro)
+# FASE 2 — Infra de segurança 🟡 (2.1 + 2.2 + 2.3 + 2.6 + 2.6b ✅ código; 2.7 + Candidato-2 ✅ confirmado-seguro)
 
-> **Abertos:** 2.4 (rate limit compartilhado — DESENHADO, pendente de infra Upstash: provisionar conta + valor do limite) · 2.5 (CSP `unsafe-inline`/`unsafe-eval`) · candidatos do 2.6 (2.6b `emailBody`/`emailTitle`/`emailFooter` do path themed + preview `email-tab.tsx`).
-> **Fechados:** 2.7 (validar cores dos `<style>` vs CSS-injection — investigado, VERDICT não-item: todas as 19 cores já são hex-validadas na escrita; ver §2.7).
+> **Abertos:** 2.4 (rate limit compartilhado — DESENHADO, pendente de infra Upstash: provisionar conta + valor do limite) · 2.5 (CSP `unsafe-inline`/`unsafe-eval`).
+> **Fechados:** 2.7 (cores dos `<style>` vs CSS-injection — não-item, 19 cores já hex-validadas; ver §2.7) · 2.6b (path themed sanitizado; ver §2.6b) · Candidato-2 (preview `email-tab.tsx` — não-item, iframe `sandbox=""`). ✅ **MARCO: família email/sanitize completa** (raw+themed+preview).
 
 > **Por que aqui:** barata e importante. Fecha a camada de infra que a auditoria de código não cobre. A maioria é trivial (1 header, 1 comando).
-> **Progresso:** ✅ **2.1 HSTS** (`de00875`) + ✅ **2.2 npm audit** (`7eaaf66`) + ✅ **2.3 lesson.description XSS** (`3d40bc3`) + ✅ **2.6 emailCustomHtml sanitize** (`aa0e1a2`) + ✅ **2.7 cores/CSS-injection** (confirmado-seguro, não-item). ABERTOS: **2.4** rate limit (desenhado, pendente Upstash) + **2.5** CSP + candidatos do 2.6.
+> **Progresso:** ✅ **2.1 HSTS** (`de00875`) + ✅ **2.2 npm audit** (`7eaaf66`) + ✅ **2.3 lesson.description XSS** (`3d40bc3`) + ✅ **2.6 emailCustomHtml sanitize** (`aa0e1a2`) + ✅ **2.6b themed sanitize** (`98b1381`) + ✅ **2.7 cores/CSS-injection** (não-item) + ✅ **Candidato-2 preview** (não-item). ABERTOS: **2.4** rate limit (desenhado, pendente Upstash) + **2.5** CSP.
 
 ### 2.1 — HSTS 🟢 ✅ FEITO (`de00875`)
 **Problema:** `next.config.mjs` tinha X-Frame/CSP/nosniff/Referrer/Permissions mas faltava `Strict-Transport-Security`. (HSTS não existia em lugar nenhum — nem no `proxy.ts` middleware, nem no `vercel.json`.)
@@ -289,9 +289,26 @@ O backlog parecia infinito porque ninguém tinha cruzado a lista com o que já e
 **⚠️ 2 RESÍDUOS declarados e aceitos:**
 - (a) o `<a>` em email usa `rel="noopener noreferrer"` **sem** `nofollow`/`target="_blank"` forçado (adaptado ao contexto de email — `nofollow` é SEO, e clientes de email reescrevem/sandboxam links; forçar `target` só sobrescreveria a intenção do produtor sem ganho). `href`/`target`/`style` do produtor preservados.
 - (b) o `sanitize-html` **não faz deep-sanitize do VALOR do `style`** (permite `style="…url(javascript:)…"`/`url(data:)`). Não executa em browser moderno nem em email sandboxed, e o autor do style é o próprio owner; restringir via `allowedStyles` quebraria layout legítimo. Aceito dado o risco-base baixo.
-**⚠️ CANDIDATOS gerados (NÃO feitos):**
-- **(2.6b?)** estender a sanitização ao `emailBody`/`emailTitle`/`emailFooter` (path THEMED — HTML de produtor, mas injetado num molde controlado nosso; escopo do 2.6 foi A-contido no `emailCustomHtml`/path raw).
-- sanitizar o **preview client-side** (`email-tab.tsx` — o produtor vê o próprio HTML; self-XSS, risco baixo).
+**CANDIDATOS gerados — AMBOS FECHADOS:**
+- **2.6b** ✅ FEITO (`98b1381`) — sanitizar o path THEMED. Ver §2.6b abaixo.
+- **Preview `email-tab.tsx`** ✅ CONFIRMADO SEGURO (não-item). Ver §Candidato-2 abaixo.
+
+### 2.6b — Sanitizar o path THEMED do `buildAccessEmail` 🟡 ✅ FEITO (`98b1381`)
+O path THEMED (`email-templates.ts:259-326`, roda quando há campos visuais setados) injetava **4 campos de produtor crus** no HTML montado: `emailBody`→`<div>` (:304), `emailTitle`→`<h1>` (:303), `emailFooter`→`<p>` (:316) — HTML cru — e `emailLogoUrl`→`<img src="${logoUrl}">` (:296) — **attribute-injection** via breakout de aspas (`x" onerror="…`, URL só length-cap, sem validação de formato). Owner-only (1.3), mesma classe do 2.6 (raw), só que via themed.
+**Fix (abordagem B):** 1 linha no return do themed (:326) — `html` → `sanitizeEmailHtml(html)` (reusa o helper do 2.6, já importado). Envolve o **HTML montado** (depois do molde + `applyVars`), cobrindo os 4 num lugar só — **inclusive o logo breakout, que um sanitize per-campo NÃO pegaria** (o `onerror` do atributo é stripado). +1/−1, 1 arquivo.
+**Vigilância central provada (execução real + staging 13/13):** o NOSSO molde sobrevive (`<table role=presentation>`, `style` inline, `<h1>/<div>/<p>`, CTA `<a target>`, `<img>`); as vars/link sobrevivem (`{nome}/{curso}/{senha}/{workspace}` + `{link}` com query — o `&`→`&amp;` é **encoding HTML correto**, o cliente decodifica ao seguir → não quebra); os 4 vetores morrem (`<script>`/`<iframe>` removidos, `onerror` do title E do logo stripados). Build exit 0.
+**Escopo:** só o return themed (:326). O RAW (:223, do 2.6) e o DEFAULT (:247/:256, molde hardcoded sem campos de HTML de produtor) inalterados.
+**Risco:** defense-in-depth BAIXO (owner-only + email sandboxa JS), idêntico ao 2.6.
+
+### Candidato-2 — Preview do email (`email-tab.tsx`) 🟢 ✅ CONFIRMADO SEGURO (NÃO-ITEM)
+O preview renderiza o `emailCustomHtml` num **`<iframe srcDoc={previewHtml} sandbox="">`** (`email-tab.tsx:329-333`). **`sandbox=""` vazio = restrição máxima** (sem `allow-scripts` → JS não executa) → não há self-XSS. Sanitizar seria redundante. **Não-item.**
+**Nuance de UX (NÃO furo, registrada):** pós-2.6/2.6b o email ENVIADO é sanitizado, mas o preview mostra o `emailCustomHtml` cru → o preview diverge do que sai. Alinhar (sanitizar o preview) seria WYSIWYG mais fiel — **decisão de produto, não segurança**.
+
+### Candidato cosmético — SUBJECT do path themed 🟢 (trivial, NÃO furo — registrar)
+O wrap do 2.6b sanitiza só o `html` (corpo). O **subject** do themed continua cru (`subjectFor(emailTitle)`) — no teste saiu `subject: "Acesso <img … onerror=…> liberado"`. **NÃO é furo:** o header Subject é renderizado como **texto puro** pelos clientes (a tag aparece literal, não executa). Só fica feio se o produtor puser tag no título. `stripHtml(subject)` de 1 linha resolveria — **candidato cosmético, não segurança**.
+
+### ✅ MARCO — família email/sanitize COMPLETA
+Os 3 paths do `buildAccessEmail` que tocam HTML de produtor estão cobertos: **RAW** (`emailCustomHtml`, 2.6 `aa0e1a2`) + **THEMED** (`emailBody`/`emailTitle`/`emailFooter`/`emailLogoUrl`, 2.6b `98b1381`) + **PREVIEW** (não-item, `<iframe sandbox="">`). Resíduos declarados: subject cosmético (acima) + os 2 do 2.6 (rel sem nofollow/target; style-value não deep-sanitizado).
 **Dependência:** mitigado por 1.3 (owner-only).
 
 ### 2.7 — Validar cores dos `<style>` vs CSS-injection 🟢 ✅ CONFIRMADO SEGURO (NÃO-ITEM, sem código)
