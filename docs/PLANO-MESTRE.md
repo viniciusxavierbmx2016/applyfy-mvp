@@ -351,12 +351,19 @@ Os 3 sinks `<style>` (`course/[slug]/layout.tsx`, `w/[slug]/layout.tsx`, `produc
 
 ---
 
-# FASE 4 — Bugs conhecidos 🟢 (4.1 ✅ via 1.12; abertos: 4.2, 4.3, 4.4, 4.5)
+# FASE 4 — Bugs conhecidos 🟢 (4.1 ✅ via 1.12 · 4.2 ✅ `022f933`; abertos: 4.3, 4.4, 4.5)
+
+> **Candidato separado (registrado, NÃO fazer):** moderação de comunidade exigir `MANAGE_COMMUNITY` (hoje `REPLY_COMMENTS` já basta — para colab-por-role E STUDENT-collab). Apertaria os DOIS personas → fora do escopo da paridade do 4.2. Avaliar em item futuro.
 
 > **Por que aqui:** bugs reais registrados, mas todos de gravidade baixa-média (nenhum crítico). Limpeza antes das features.
 
 - [x] **4.1 — resend de credencial: permissão errada** 🟢 ✅ FEITO (via `ef312d9` — item 1.12). RESOLVIDO pelo 1.12, que trocou `canEditCourse` → `canManageStudentsOfCourse` em `courses/[id]/students/[enrollmentId]/resend/route.ts:14`. Prova antes→depois: pai `39e7279` usava `canEditCourse` (MANAGE_LESSONS); main usa `canManageStudentsOfCourse` (MANAGE_STUDENTS). Disambiguação: as outras rotas de "resend" (`producer`/`admin` collaborators = convite de colaborador; `analytics` = falso-positivo de string) são de outro domínio e não são o alvo do 4.1. **NÃO-ITEM — o plano estava desatualizado.**
-- [ ] **4.2 — STUDENT-com-collab não promovido em `getCurrentUser`** 🟢 — resposta fica PENDING em alguns fluxos. Investigar `getCurrentUser` vs `requireStaff`.
+- [x] **4.2 — STUDENT-com-collab: capacidade de moderação** 🟢 ✅ FEITO (`022f933`). Era FURO REAL remanescente (a hipótese "não-item" foi **refutada** por varredura adversarial de 21 getCurrentUser-direct paths → **3 mishandled, 18 safe, 0 falsos-positivos**).
+  - **⚠️ CORREÇÃO DE MODELO MENTAL:** o título ("getCurrentUser não promove") descrevia **design CORRETO** — `getCurrentUser` devolve identidade crua de propósito; a promoção vive em `requireStaff` (C6) + helpers row-based. O furo real: rotas que consomem `getCurrentUser` **direto** e gateiam **CAPACIDADE** em `isStaff(user)` (`auth.ts:196`, sem row-lookup → `false` pro STUDENT-collab por construção). **Fix-incompleto do Stage C:** de-role-gatearam os gates de ACESSO, deixaram os de CAPACIDADE.
+  - **3 rotas:** `posts/[id]/comments` (2 call sites: GET statusFilter + POST auto-approve), `courses/[id]/groups` (bool isStaff), `lessons/[id]/comments` (POST auto-approve).
+  - **Fix = paridade:** `isStaff(user) || (await <row-lookup da própria rota>)`. O `||` curto-circuita (zero query pros que já passavam). Reuso puro: `collaboratorCanActOnCourse` + `collaboratorAllowed` local. **ZERO helper novo; `getCurrentUser`/`isStaff` intocados** (corretos por design). Semântica = replicar o `isStaff` atual (concede a qualquer colab que passou o acesso REPLY|MANAGE), NÃO apertar.
+  - **BÔNUS:** `courses/[id]/groups` fechou um **over-broad** — o branch `role==="COLLABORATOR"` puro não tinha workspace/course/permission scope; colab de outro ws via grupos alheios. Era a ÚNICA rota com esse bypass (as de comentário já eram scoped no acesso desde o C6).
+  - **Provado no staging (5 personas + regressões):** P1 STUDENT-collab ganha as 3 capacidades · P1==P2 (paridade, a inconsistência que era o bug) · P3 aluno puro não ganha nada (contra-teste) · P4 colab de outro ws e P5 colab sem REPLY|MANAGE perdem o bypass do groups (over-broad fechado) · ADMIN/PRODUCER-dono intactos. Ver [[project_student_collab_capability_4_2]].
 - [ ] **4.3 — redirect deslogado: gap em admin/student** 🟢 — o fix do `/producer` (logout→login) não cobre admin (tela branca) e student (skeleton). Espelhar o fix existente para os outros 2 caminhos.
 - [ ] **4.4 — edge: cookie inválido ping-pong** 🟢 — `/producer`↔`/producer/login` em caso de cookie inválido (edge case). Investigar `proxy.ts` + `producer/page.tsx`.
 - [ ] **4.5 — `console.error` ruidoso no catch** 🟢 — loga "Sem permissão" como erro em todo 403 (cosmético, não é bug de status). Rebaixar o log de error→debug em todas as rotas. Housekeeping.
