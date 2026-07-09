@@ -13,12 +13,19 @@ export default function AdminLayout({
 }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, collaborator, isLoading } = useUserStore();
+  const { user, collaborator, isLoading, authError } = useUserStore();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const isLoginPage = pathname === "/admin/login";
 
   useEffect(() => {
-    if (isLoginPage || isLoading || !user) return;
+    if (isLoginPage || isLoading || authError) return;
+    // 4.3/4.4: logged-out (stale cookie let the middleware through) → login.
+    // The AuthProvider already cleared the cookie on the 401, so this replace
+    // lands on /admin/login and stays (no ping-pong).
+    if (!user) {
+      router.replace("/admin/login");
+      return;
+    }
     // C6: STUDENT with Collaborator row goes to /producer (workspace
     // collab work) like a regular COLLABORATOR. Pure students go to /.
     if (user.role === "STUDENT") {
@@ -26,7 +33,7 @@ export default function AdminLayout({
     } else if (user.role === "PRODUCER" || user.role === "COLLABORATOR") {
       router.replace("/producer");
     }
-  }, [user, collaborator, isLoading, router, isLoginPage]);
+  }, [user, collaborator, isLoading, authError, router, isLoginPage]);
 
   if (isLoginPage) return <>{children}</>;
 

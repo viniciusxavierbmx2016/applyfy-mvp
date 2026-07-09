@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { CourseSidebar } from "@/components/course-sidebar";
 import { TermsModal } from "@/components/terms-modal";
+import { useUserStore } from "@/stores/user-store";
 
 interface CourseShellProps {
   course: {
@@ -33,12 +35,23 @@ export function CourseShell({
   hasCustomization,
   children,
 }: CourseShellProps) {
+  const router = useRouter();
+  const { user, isLoading, authError } = useUserStore();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const [termsRequired, setTermsRequired] = useState(false);
   const [termsContent, setTermsContent] = useState("");
   const [termsFileUrl, setTermsFileUrl] = useState("");
   const [termsChecked, setTermsChecked] = useState(false);
+
+  // 4.3/4.4: logged-out (stale cookie let the middleware through) → login.
+  // Guard on the store's `user`, NOT hasAccess — a logged-in student without
+  // enrollment (user set, hasAccess=false) must still get the preview/paywall,
+  // not a bounce to login.
+  useEffect(() => {
+    if (isLoading || authError) return;
+    if (!user) router.replace("/producer/login");
+  }, [user, isLoading, authError, router]);
 
   useEffect(() => {
     try {
