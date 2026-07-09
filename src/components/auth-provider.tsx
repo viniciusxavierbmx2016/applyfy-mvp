@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useUserStore } from "@/stores/user-store";
+import { createClient } from "@/lib/supabase";
 
 const TIMEOUT_MS = 8000;
 // Backoff (ms) for transient network/5xx failures. Each entry = one retry on
@@ -70,7 +71,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           if (cancelled) return;
           const r2 = await attempt();
           if (r2 === "ok") return;
-          if (!cancelled) setUser(null);
+          // Stale/invalid cookie: clear it LOCALLY so the middleware (which
+          // checks cookie PRESENCE, not validity) redirects to login and STAYS
+          // instead of bouncing back (the /producer<->/producer/login loop).
+          // scope:local = no server round-trip; try/catch = never break here.
+          if (!cancelled) {
+            try {
+              await createClient().auth.signOut({ scope: "local" });
+            } catch {}
+            setUser(null);
+          }
           return;
         }
 
