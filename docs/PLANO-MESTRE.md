@@ -351,11 +351,11 @@ Os 3 sinks `<style>` (`course/[slug]/layout.tsx`, `w/[slug]/layout.tsx`, `produc
 
 ---
 
-# FASE 4 — Bugs conhecidos 🟢
+# FASE 4 — Bugs conhecidos 🟢 (4.1 ✅ via 1.12; abertos: 4.2, 4.3, 4.4, 4.5)
 
 > **Por que aqui:** bugs reais registrados, mas todos de gravidade baixa-média (nenhum crítico). Limpeza antes das features.
 
-- [ ] **4.1 — resend de credencial: permissão errada** 🟢 — gateado por `MANAGE_LESSONS`, devia ser `MANAGE_STUDENTS`. Trocar o gate. (Relaciona com 1.1/1.2.)
+- [x] **4.1 — resend de credencial: permissão errada** 🟢 ✅ FEITO (via `ef312d9` — item 1.12). RESOLVIDO pelo 1.12, que trocou `canEditCourse` → `canManageStudentsOfCourse` em `courses/[id]/students/[enrollmentId]/resend/route.ts:14`. Prova antes→depois: pai `39e7279` usava `canEditCourse` (MANAGE_LESSONS); main usa `canManageStudentsOfCourse` (MANAGE_STUDENTS). Disambiguação: as outras rotas de "resend" (`producer`/`admin` collaborators = convite de colaborador; `analytics` = falso-positivo de string) são de outro domínio e não são o alvo do 4.1. **NÃO-ITEM — o plano estava desatualizado.**
 - [ ] **4.2 — STUDENT-com-collab não promovido em `getCurrentUser`** 🟢 — resposta fica PENDING em alguns fluxos. Investigar `getCurrentUser` vs `requireStaff`.
 - [ ] **4.3 — redirect deslogado: gap em admin/student** 🟢 — o fix do `/producer` (logout→login) não cobre admin (tela branca) e student (skeleton). Espelhar o fix existente para os outros 2 caminhos.
 - [ ] **4.4 — edge: cookie inválido ping-pong** 🟢 — `/producer`↔`/producer/login` em caso de cookie inválido (edge case). Investigar `proxy.ts` + `producer/page.tsx`.
