@@ -351,7 +351,9 @@ Os 3 sinks `<style>` (`course/[slug]/layout.tsx`, `w/[slug]/layout.tsx`, `produc
 
 ---
 
-# FASE 4 — Bugs conhecidos 🟢 (4.1 ✅ via 1.12 · 4.2 ✅ `022f933`; abertos: 4.3, 4.4, 4.5)
+# FASE 4 — Bugs conhecidos 🟢 (4.1 ✅ via 1.12 · 4.2 ✅ `022f933` · 4.3 ✅ `159fc0f` · 4.4 ✅ condição eliminada; aberto: 4.5)
+
+> **Candidato de UX (registrado, item separado):** student deslogado é mandado pro `/producer/login` (esquisito). Deveria ir pro `/w/{slug}/login` — mudar no middleware (`proxy.ts:75-86`) **E** no guard (`course-shell`) JUNTOS, com validação própria. O slug está disponível via `useParams`.
 
 > **Candidato separado (registrado, NÃO fazer):** moderação de comunidade exigir `MANAGE_COMMUNITY` (hoje `REPLY_COMMENTS` já basta — para colab-por-role E STUDENT-collab). Apertaria os DOIS personas → fora do escopo da paridade do 4.2. Avaliar em item futuro.
 
@@ -364,8 +366,12 @@ Os 3 sinks `<style>` (`course/[slug]/layout.tsx`, `w/[slug]/layout.tsx`, `produc
   - **Fix = paridade:** `isStaff(user) || (await <row-lookup da própria rota>)`. O `||` curto-circuita (zero query pros que já passavam). Reuso puro: `collaboratorCanActOnCourse` + `collaboratorAllowed` local. **ZERO helper novo; `getCurrentUser`/`isStaff` intocados** (corretos por design). Semântica = replicar o `isStaff` atual (concede a qualquer colab que passou o acesso REPLY|MANAGE), NÃO apertar.
   - **BÔNUS:** `courses/[id]/groups` fechou um **over-broad** — o branch `role==="COLLABORATOR"` puro não tinha workspace/course/permission scope; colab de outro ws via grupos alheios. Era a ÚNICA rota com esse bypass (as de comentário já eram scoped no acesso desde o C6).
   - **Provado no staging (5 personas + regressões):** P1 STUDENT-collab ganha as 3 capacidades · P1==P2 (paridade, a inconsistência que era o bug) · P3 aluno puro não ganha nada (contra-teste) · P4 colab de outro ws e P5 colab sem REPLY|MANAGE perdem o bypass do groups (over-broad fechado) · ADMIN/PRODUCER-dono intactos. Ver [[project_student_collab_capability_4_2]].
-- [ ] **4.3 — redirect deslogado: gap em admin/student** 🟢 — o fix do `/producer` (logout→login) não cobre admin (tela branca) e student (skeleton). Espelhar o fix existente para os outros 2 caminhos.
-- [ ] **4.4 — edge: cookie inválido ping-pong** 🟢 — `/producer`↔`/producer/login` em caso de cookie inválido (edge case). Investigar `proxy.ts` + `producer/page.tsx`.
+- [x] **4.3 — redirect deslogado (raiz: cookie stale)** 🟢 ✅ FEITO (`159fc0f`). Era FURO REAL. **⚠️ MAS a solução que o item prescrevia ("espelhar o fix do /producer") estava ERRADA:** o molde do producer não tem defesa contra cookie-stale — ele só não trava porque o *logout* limpa o cookie. Espelhá-lo teria **plantado** o bounce em admin/student.
+  - **GATILHO REAL (não é logout):** cookie **PRESENTE mas INVÁLIDO** (sessão expirada). O middleware (`proxy.ts:75`) checa `hasSessionCookie` = **presença, não validade** → deixa passar → `/api/auth/me` 401 → o AuthProvider fazia `setUser(null)` mas **NÃO limpava o cookie** → admin: layout retorna `null` (tela branca, sem guard); student: skeleton infinito (sem guard).
+  - **FIX NA RAIZ (1 lugar, 3 contextos):** `auth-provider.tsx`, ramo `if (r === "unauth")` (após o retry), `try { await createClient().auth.signOut({ scope: "local" }) } catch {}` **antes** do `setUser(null)`. Generaliza o padrão já existente em `producer/(auth)/register:131` ("clear the stale session first — otherwise /producer/login reuses the old cookies and 401s"). + guards client em `admin/layout` (`replace /admin/login`) e `course-shell` (`replace /producer/login`), ambos respeitando `isLoading`/`authError`.
+  - **⚠️ ISOLAMENTO DO 5xx (o risco central):** o ramo `"fail"` (5xx/rede) fica FORA do `if(unauth)` → `setAuthError`, nunca `setUser(null)`, nunca `signOut`. Harness curl + código: **unauth=1 signOut=1, fail(5xx/network)=0 signOut** (estruturalmente impossível deslogar num blip). **SIGNUP preservado:** signOut só após o retry 1× (1º 401 propagação → retry → ok). **PAYWALL preservado:** o guard lê o `user` da store (não `hasAccess`) → aluno logado sem enrollment continua no paywall.
+  - Ver [[project_stale_cookie_clear_4_3]].
+- [x] **4.4 — cookie ping-pong** 🟢 ✅ **CONDIÇÃO ELIMINADA** (via `159fc0f`, não um fix próprio). ⚠️ **REGISTRO HONESTO:** a condição que causaria o loop (`/producer`↔`/producer/login`) foi eliminada pelo 4.3 — o cookie stale não sobrevive ao 401, então o `redirectIfAuthed` (que faz bounce por **presença** de cookie nas rotas de login, `proxy.ts:102`) não dispara. **PORÉM o loop pleno NÃO foi reproduzido no harness** (que testa o middleware isolado, não o ciclo client→middleware→client). Provado por curl: COM cookie `/producer/login`→307→/producer (o bounce); SEM cookie→200 (fica). Não afirmamos que o loop existia; afirmamos que a **condição necessária** (cookie stale pós-401) não existe mais.
 - [ ] **4.5 — `console.error` ruidoso no catch** 🟢 — loga "Sem permissão" como erro em todo 403 (cosmético, não é bug de status). Rebaixar o log de error→debug em todas as rotas. Housekeeping.
 
 Cada um: read-only → fix → staging (onde aplicável) → merge `--no-ff`.
