@@ -44,7 +44,9 @@ export async function GET(_request: Request, props: { params: Promise<{ id: stri
     }
 
     const userSelect = { id: true, name: true, avatarUrl: true, role: true };
-    const staff = isStaff(user);
+    const staff =
+      isStaff(user) ||
+      (await collaboratorCanActOnCourse(user.id, post.courseId, ["REPLY_COMMENTS", "MANAGE_COMMUNITY"]));
 
     const statusFilter = staff
       ? undefined
@@ -143,7 +145,9 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
       validParentId = parentComment.parentId || parentComment.id;
     }
 
-    const staff = isStaff(user);
+    const staff =
+      isStaff(user) ||
+      (await collaboratorCanActOnCourse(user.id, post.courseId, ["REPLY_COMMENTS", "MANAGE_COMMUNITY"]));
     const moderationOn = post.course.communityModerationEnabled;
     const commentStatus = !moderationOn || staff ? "APPROVED" : "PENDING";
 

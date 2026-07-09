@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
+import { collaboratorCanActOnCourse } from "@/lib/collaborator";
 import { ensureDefaultGroup } from "@/lib/community-helpers";
 
 export async function GET(_request: Request, props: { params: Promise<{ id: string }> }) {
@@ -39,7 +40,7 @@ export async function GET(_request: Request, props: { params: Promise<{ id: stri
       user.role === "ADMIN" ||
       (user.role === "PRODUCER" &&
         (course.ownerId === user.id || course.workspace.ownerId === user.id)) ||
-      user.role === "COLLABORATOR";
+      (await collaboratorCanActOnCourse(user.id, course.id, ["REPLY_COMMENTS", "MANAGE_COMMUNITY"]));
 
     if (!isStaff) {
       const enrollment = await prisma.enrollment.findUnique({

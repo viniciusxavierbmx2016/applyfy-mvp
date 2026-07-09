@@ -209,7 +209,9 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
       }
     }
 
-    const staff = isStaff(user);
+    const staff =
+      isStaff(user) ||
+      (await collaboratorAllowed(user.id, lesson.module.courseId));
     const moderationOn = lesson.module.course.lessonCommentsModerationEnabled;
     const commentStatus = !moderationOn || staff ? "APPROVED" : "PENDING";
 
