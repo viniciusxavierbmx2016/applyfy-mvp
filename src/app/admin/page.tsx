@@ -85,9 +85,15 @@ export default function AdminDashboardPage() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Mirror admin/layout.tsx:41: the admin shell — and /api/admin/dashboard
+  // (gated by requireAdminOrCollab) — serve the whole admin team, so
+  // ADMIN_COLLABORATOR belongs on this home like an ADMIN, not bounced out.
+  const isAdminRole =
+    user?.role === "ADMIN" || user?.role === "ADMIN_COLLABORATOR";
+
   useEffect(() => {
     if (!user) return;
-    if (user.role !== "ADMIN") {
+    if (!isAdminRole) {
       // C6: STUDENT-with-Collaborator goes to /producer (workspace work),
       // pure students to /.
       const isCollabLike =
@@ -99,7 +105,7 @@ export default function AdminDashboardPage() {
   }, [user, collaborator, router]);
 
   useEffect(() => {
-    if (!user || user.role !== "ADMIN") return;
+    if (!user || !isAdminRole) return;
     setLoading(true);
     const params = new URLSearchParams();
     params.set("startDate", range.startDate);
@@ -113,7 +119,7 @@ export default function AdminDashboardPage() {
       .finally(() => setLoading(false));
   }, [range, producerId, user]);
 
-  if (!user || user.role !== "ADMIN") {
+  if (!user || !isAdminRole) {
     return (
       <div className="space-y-6">
         <SkeletonCards count={8} />
