@@ -376,6 +376,30 @@ Os 3 sinks `<style>` (`course/[slug]/layout.tsx`, `w/[slug]/layout.tsx`, `produc
 
 Cada um: read-only → fix → staging (onde aplicável) → merge `--no-ff`.
 
+### BUG A — produtor não conseguia subir material na aula 🔴 ✅ FEITO (merge `f2ea405`)
+Reportado fora do backlog (upload não carregava, "aula não salvava"). Investigação achou **3 causas-raiz** (3 commits, rollback granular):
+- **(1) `c71ac43`** — Windows reporta `.zip` como `application/x-zip-compressed`, ausente da allowlist → produtor Windows tomava **400 silencioso** mesmo em arquivo pequeno.
+- **(2) `9ab3c11`** — o componente **engolia toda falha** (`if (res.ok)` sem else, `catch {}` vazio) → qualquer rejeição parecia "nada aconteceu". Agora valida tipo/tamanho no client, mostra erro (`setError` + `<p>` vermelho, padrão do projeto), lê o corpo defensivo.
+- **(3) `e771ad0`** — o arquivo transitava pela função da Vercel, com teto **hard de ~4.5MB** (`FUNCTION_PAYLOAD_TOO_LARGE`) enquanto o código prometia 50MB → **upload direto do browser pro Supabase Storage via signed URL** (rota nova `materials/signed-url`); o POST vira gravação de metadado JSON.
+
+**Decisões:**
+- **Fonte única:** `src/lib/materials-constants.ts` (allowlist + MAX_SIZE + `sanitizeFileName` + `MATERIALS_BUCKET_NAME`), importado pela rota E pelo componente. *(O projeto duplica allowlists em 4 lugares — não expandimos o débito.)*
+- **DELETE (`materials/[materialId]`) NÃO tocado:** `getPublicUrl` mantém o formato → o regex `/object/public/materials/(.+)` resolve o storagePath. **PROVADO por execução** (getPublicUrl real + upload 20MB + delete → sumiu do bucket staging), não assumido.
+- **Guarda cross-workspace:** o servidor monta o path; o POST de metadado confere o prefixo `workspaces/{ws}/lessons/{id}/` → 400 se não bater (provado).
+- **413 virou impossível** (o arquivo não passa mais pela lambda) → a branch do 413 saiu do C2.
+- **Validado staging:** T1 (20MB direto pro `*.supabase.co`, não Vercel) + T3 (delete some do bucket) + T5 (prefixo barra) por execução real; T4/T2 confirmados no browser pelo dono.
+
+**⚠️ REGISTRADO (escopo separado, NÃO feito):**
+- `listBuckets/createBucket` em **8 OUTRAS rotas de upload** (auth/me, admin/integrations/logo, admin/platform-settings/upload, workspaces/[id]/login-images+logo, community/upload, upload) — round-trip inútil + recriaria o bucket **sem os limites/policies auditados** se alguém o apagasse.
+- **Content-Type gravado = o que o BROWSER declara** (upload direto). Aceitável: o ator é o próprio produtor, no próprio ws, e o bucket serve download, não execução. Declarado.
+- **`.zip` do Windows** (`x-zip-compressed`) provado por **código**, não testado em runtime Windows.
+- POST de metadado **não confere se o arquivo existe** no storage (link quebrado possível) — endurecimento opcional.
+- **hydration mismatch no `ThemeToggle`** (aria-label servidor≠cliente) — bug real, outro componente.
+- **tiptap:** duplicate extension names `['link','underline']`.
+- **Service Worker:** 11× "FetchEvent redirected response".
+
+Cada um: read-only → fix → staging (onde aplicável) → merge `--no-ff`.
+
 ---
 
 # FASE 5 — Quick-wins escondidos 🟢🟡
