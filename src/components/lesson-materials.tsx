@@ -2,6 +2,12 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useConfirm } from "@/hooks/use-confirm";
+import { createClient } from "@/lib/supabase";
+import {
+  MATERIALS_ALLOWED_TYPES,
+  MATERIALS_MAX_SIZE,
+  MATERIALS_BUCKET_NAME,
+} from "@/lib/materials-constants";
 
 interface Material {
   id: string;
@@ -39,6 +45,7 @@ export function LessonMaterials({ lessonId }: { lessonId: string }) {
   const [materials, setMaterials] = useState<Material[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
@@ -64,22 +71,86 @@ export function LessonMaterials({ lessonId }: { lessonId: string }) {
   }, [fetchMaterials]);
 
   async function uploadFiles(files: FileList | File[]) {
+    setError(null);
     setUploading(true);
+    const supabase = createClient();
     for (const file of Array.from(files)) {
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("name", file.name.replace(/\.[^.]+$/, ""));
+      // Valida no cliente ANTES de enviar (mesma allowlist/tamanho do server).
+      // `continue` — um arquivo inválido não aborta o lote.
+      if (!MATERIALS_ALLOWED_TYPES.has(file.type)) {
+        setError(`"${file.name}": formato não suportado.`);
+        continue;
+      }
+      if (file.size > MATERIALS_MAX_SIZE) {
+        setError(`"${file.name}": excede 50 MB.`);
+        continue;
+      }
       try {
-        const res = await fetch(`/api/producer/lessons/${lessonId}/materials`, {
-          method: "POST",
-          body: formData,
-        });
-        if (res.ok) {
-          const data = await res.json();
+        // 1. pede a signed upload URL (corpo minúsculo — nunca bate no 4.5MB)
+        const signRes = await fetch(
+          `/api/producer/lessons/${lessonId}/materials/signed-url`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              fileName: file.name,
+              fileSize: file.size,
+              fileType: file.type,
+            }),
+          }
+        );
+        if (!signRes.ok) {
+          let msg: string | null = null;
+          try {
+            const j = await signRes.json();
+            msg = j.error;
+          } catch {
+            // corpo não-JSON
+          }
+          setError(msg || `Falha ao preparar o envio (${signRes.status}).`);
+          continue;
+        }
+        const { path, token } = await signRes.json();
+
+        // 2. upload DIRETO pro Supabase Storage (bypassa a Vercel → destrava 50MB)
+        const { error: upErr } = await supabase.storage
+          .from(MATERIALS_BUCKET_NAME)
+          .uploadToSignedUrl(path, token, file);
+        if (upErr) {
+          setError(`"${file.name}": falha no envio do arquivo.`);
+          continue;
+        }
+
+        // 3. grava o metadado (corpo minúsculo)
+        const recRes = await fetch(
+          `/api/producer/lessons/${lessonId}/materials`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              path,
+              name: file.name.replace(/\.[^.]+$/, ""),
+              fileName: file.name,
+              fileSize: file.size,
+              fileType: file.type,
+            }),
+          }
+        );
+        if (recRes.ok) {
+          const data = await recRes.json();
           setMaterials((prev) => [...prev, data.material]);
+        } else {
+          let msg: string | null = null;
+          try {
+            const j = await recRes.json();
+            msg = j.error;
+          } catch {
+            // corpo não-JSON
+          }
+          setError(msg || `Falha ao salvar o material (${recRes.status}).`);
         }
       } catch {
-        // silent
+        setError("Falha de conexão ao enviar o arquivo.");
       }
     }
     setUploading(false);
@@ -223,6 +294,10 @@ export function LessonMaterials({ lessonId }: { lessonId: string }) {
             );
           })}
         </ul>
+      )}
+
+      {error && (
+        <p className="text-xs text-red-500 dark:text-red-400">{error}</p>
       )}
 
       <div
