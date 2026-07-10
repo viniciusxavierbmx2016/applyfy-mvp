@@ -4,14 +4,6 @@ import { canEditLesson, requireStaff } from "@/lib/auth";
 import { createAdminClient, MATERIALS_BUCKET } from "@/lib/supabase-admin";
 import { MATERIALS_ALLOWED_TYPES, MATERIALS_MAX_SIZE } from "@/lib/materials-constants";
 
-function sanitizeFileName(name: string): string {
-  return name
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-zA-Z0-9._-]/g, "_")
-    .replace(/_{2,}/g, "_");
-}
-
 export async function GET(_request: Request, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
   try {
@@ -33,6 +25,10 @@ export async function GET(_request: Request, props: { params: Promise<{ id: stri
   }
 }
 
+// Grava o metadado do material APÓS o browser subir o arquivo direto pro
+// Storage (via a signed URL de ./signed-url). Recebe JSON minúsculo (o arquivo
+// NÃO transita mais por aqui), reconfere o gate + o prefixo do path, e resolve
+// a fileUrl com getPublicUrl (mesmo formato de antes → o DELETE segue igual).
 export async function POST(request: Request, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
   try {
@@ -41,21 +37,17 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
       return NextResponse.json({ error: "Sem permissão" }, { status: 403 });
     }
 
-    const formData = await request.formData();
-    const file = formData.get("file") as File | null;
-    const name = (formData.get("name") as string)?.trim();
+    const body = await request.json().catch(() => ({}));
+    const { path, name, fileName, fileSize, fileType } = body as {
+      path?: string;
+      name?: string;
+      fileName?: string;
+      fileSize?: number;
+      fileType?: string;
+    };
 
-    if (!file) {
-      return NextResponse.json({ error: "Arquivo obrigatório" }, { status: 400 });
-    }
-    if (!name) {
-      return NextResponse.json({ error: "Nome obrigatório" }, { status: 400 });
-    }
-    if (file.size > MATERIALS_MAX_SIZE) {
-      return NextResponse.json({ error: "Arquivo excede 50MB" }, { status: 400 });
-    }
-    if (!MATERIALS_ALLOWED_TYPES.has(file.type)) {
-      return NextResponse.json({ error: `Tipo de arquivo não permitido: ${file.type}` }, { status: 400 });
+    if (!path || !name || !fileName || typeof fileSize !== "number" || !fileType) {
+      return NextResponse.json({ error: "Dados incompletos" }, { status: 400 });
     }
 
     const lesson = await prisma.lesson.findUnique({
@@ -66,33 +58,26 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
       return NextResponse.json({ error: "Aula não encontrada" }, { status: 404 });
     }
 
+    // Confere o prefixo do path — o cliente não pode gravar metadado apontando
+    // pro storage de outro workspace/aula.
     const workspaceId = lesson.module.course.workspaceId;
-    const safeName = sanitizeFileName(file.name);
-    const storagePath = `workspaces/${workspaceId}/lessons/${params.id}/${Date.now()}_${safeName}`;
+    const expectedPrefix = `workspaces/${workspaceId}/lessons/${params.id}/`;
+    if (!path.startsWith(expectedPrefix)) {
+      return NextResponse.json({ error: "Caminho inválido" }, { status: 400 });
+    }
+
+    // Defense-in-depth: revalida tipo/tamanho (o metadado vem do cliente).
+    if (fileSize > MATERIALS_MAX_SIZE) {
+      return NextResponse.json({ error: "Arquivo excede 50MB" }, { status: 400 });
+    }
+    if (!MATERIALS_ALLOWED_TYPES.has(fileType)) {
+      return NextResponse.json({ error: `Tipo de arquivo não permitido: ${fileType}` }, { status: 400 });
+    }
 
     const supabase = createAdminClient();
-
-    const { data: buckets } = await supabase.storage.listBuckets();
-    if (!buckets?.some((b) => b.name === MATERIALS_BUCKET)) {
-      await supabase.storage.createBucket(MATERIALS_BUCKET, { public: true });
-    }
-
-    const arrayBuffer = await file.arrayBuffer();
-    const { error: uploadError } = await supabase.storage
-      .from(MATERIALS_BUCKET)
-      .upload(storagePath, arrayBuffer, {
-        contentType: file.type,
-        upsert: false,
-      });
-
-    if (uploadError) {
-      console.error("Upload error:", uploadError);
-      return NextResponse.json({ error: "Erro no upload" }, { status: 500 });
-    }
-
     const { data: publicUrl } = supabase.storage
       .from(MATERIALS_BUCKET)
-      .getPublicUrl(storagePath);
+      .getPublicUrl(path);
 
     const maxOrder = await prisma.lessonMaterial.aggregate({
       where: { lessonId: params.id },
@@ -102,11 +87,11 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
     const material = await prisma.lessonMaterial.create({
       data: {
         lessonId: params.id,
-        name,
-        fileName: file.name,
+        name: name.trim(),
+        fileName,
         fileUrl: publicUrl.publicUrl,
-        fileSize: file.size,
-        fileType: file.type,
+        fileSize,
+        fileType,
         sortOrder: (maxOrder._max.sortOrder ?? -1) + 1,
       },
     });

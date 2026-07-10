@@ -24,3 +24,18 @@ export const MATERIALS_ALLOWED_TYPES = new Set([
 ]);
 
 export const MATERIALS_MAX_SIZE = 50 * 1024 * 1024; // 50MB
+
+// Bucket público onde os materiais vivem (mesmo valor de MATERIALS_BUCKET em
+// supabase-admin.ts, mas exportado daqui pra ser importável pelo componente
+// client sem puxar o service-role).
+export const MATERIALS_BUCKET_NAME = "materials";
+
+// Normaliza o nome do arquivo pro storagePath. Movida de materials/route.ts
+// porque a rota signed-url também monta o path (comportamento idêntico).
+export function sanitizeFileName(name: string): string {
+  return name
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/[^a-zA-Z0-9._-]/g, "_")
+    .replace(/_{2,}/g, "_");
+}

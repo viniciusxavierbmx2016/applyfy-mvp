@@ -2,7 +2,12 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useConfirm } from "@/hooks/use-confirm";
-import { MATERIALS_ALLOWED_TYPES, MATERIALS_MAX_SIZE } from "@/lib/materials-constants";
+import { createClient } from "@/lib/supabase";
+import {
+  MATERIALS_ALLOWED_TYPES,
+  MATERIALS_MAX_SIZE,
+  MATERIALS_BUCKET_NAME,
+} from "@/lib/materials-constants";
 
 interface Material {
   id: string;
@@ -68,6 +73,7 @@ export function LessonMaterials({ lessonId }: { lessonId: string }) {
   async function uploadFiles(files: FileList | File[]) {
     setError(null);
     setUploading(true);
+    const supabase = createClient();
     for (const file of Array.from(files)) {
       // Valida no cliente ANTES de enviar (mesma allowlist/tamanho do server).
       // `continue` — um arquivo inválido não aborta o lote.
@@ -79,31 +85,69 @@ export function LessonMaterials({ lessonId }: { lessonId: string }) {
         setError(`"${file.name}": excede 50 MB.`);
         continue;
       }
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("name", file.name.replace(/\.[^.]+$/, ""));
       try {
-        const res = await fetch(`/api/producer/lessons/${lessonId}/materials`, {
-          method: "POST",
-          body: formData,
-        });
-        if (res.ok) {
-          const data = await res.json();
-          setMaterials((prev) => [...prev, data.material]);
-        } else {
-          // O 413 da Vercel NÃO devolve nosso JSON (é HTML da infra) → defensivo.
+        // 1. pede a signed upload URL (corpo minúsculo — nunca bate no 4.5MB)
+        const signRes = await fetch(
+          `/api/producer/lessons/${lessonId}/materials/signed-url`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              fileName: file.name,
+              fileSize: file.size,
+              fileType: file.type,
+            }),
+          }
+        );
+        if (!signRes.ok) {
           let msg: string | null = null;
           try {
-            const j = await res.json();
+            const j = await signRes.json();
             msg = j.error;
           } catch {
-            // corpo não-JSON (ex.: 413 da plataforma)
+            // corpo não-JSON
           }
-          setError(
-            res.status === 413
-              ? "Arquivo muito grande para o envio. Tente um arquivo menor."
-              : msg || `Falha no envio (${res.status}).`
-          );
+          setError(msg || `Falha ao preparar o envio (${signRes.status}).`);
+          continue;
+        }
+        const { path, token } = await signRes.json();
+
+        // 2. upload DIRETO pro Supabase Storage (bypassa a Vercel → destrava 50MB)
+        const { error: upErr } = await supabase.storage
+          .from(MATERIALS_BUCKET_NAME)
+          .uploadToSignedUrl(path, token, file);
+        if (upErr) {
+          setError(`"${file.name}": falha no envio do arquivo.`);
+          continue;
+        }
+
+        // 3. grava o metadado (corpo minúsculo)
+        const recRes = await fetch(
+          `/api/producer/lessons/${lessonId}/materials`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              path,
+              name: file.name.replace(/\.[^.]+$/, ""),
+              fileName: file.name,
+              fileSize: file.size,
+              fileType: file.type,
+            }),
+          }
+        );
+        if (recRes.ok) {
+          const data = await recRes.json();
+          setMaterials((prev) => [...prev, data.material]);
+        } else {
+          let msg: string | null = null;
+          try {
+            const j = await recRes.json();
+            msg = j.error;
+          } catch {
+            // corpo não-JSON
+          }
+          setError(msg || `Falha ao salvar o material (${recRes.status}).`);
         }
       } catch {
         setError("Falha de conexão ao enviar o arquivo.");
