@@ -2,29 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { canEditLesson, requireStaff } from "@/lib/auth";
 import { createAdminClient, MATERIALS_BUCKET } from "@/lib/supabase-admin";
-
-const MAX_SIZE = 50 * 1024 * 1024; // 50MB
-
-const ALLOWED_TYPES = new Set([
-  "application/pdf",
-  "application/msword",
-  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-  "application/vnd.ms-excel",
-  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-  "application/vnd.ms-powerpoint",
-  "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-  "application/zip",
-  "application/x-zip-compressed",
-  "application/x-rar-compressed",
-  "application/vnd.rar",
-  "image/png",
-  "image/jpeg",
-  "image/jpg",
-  "audio/mpeg",
-  "video/mp4",
-  "text/plain",
-  "text/csv",
-]);
+import { MATERIALS_ALLOWED_TYPES, MATERIALS_MAX_SIZE } from "@/lib/materials-constants";
 
 function sanitizeFileName(name: string): string {
   return name
@@ -73,10 +51,10 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
     if (!name) {
       return NextResponse.json({ error: "Nome obrigatório" }, { status: 400 });
     }
-    if (file.size > MAX_SIZE) {
+    if (file.size > MATERIALS_MAX_SIZE) {
       return NextResponse.json({ error: "Arquivo excede 50MB" }, { status: 400 });
     }
-    if (!ALLOWED_TYPES.has(file.type)) {
+    if (!MATERIALS_ALLOWED_TYPES.has(file.type)) {
       return NextResponse.json({ error: `Tipo de arquivo não permitido: ${file.type}` }, { status: 400 });
     }
 

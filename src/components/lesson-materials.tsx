@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useConfirm } from "@/hooks/use-confirm";
+import { MATERIALS_ALLOWED_TYPES, MATERIALS_MAX_SIZE } from "@/lib/materials-constants";
 
 interface Material {
   id: string;
@@ -39,6 +40,7 @@ export function LessonMaterials({ lessonId }: { lessonId: string }) {
   const [materials, setMaterials] = useState<Material[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
@@ -64,8 +66,19 @@ export function LessonMaterials({ lessonId }: { lessonId: string }) {
   }, [fetchMaterials]);
 
   async function uploadFiles(files: FileList | File[]) {
+    setError(null);
     setUploading(true);
     for (const file of Array.from(files)) {
+      // Valida no cliente ANTES de enviar (mesma allowlist/tamanho do server).
+      // `continue` — um arquivo inválido não aborta o lote.
+      if (!MATERIALS_ALLOWED_TYPES.has(file.type)) {
+        setError(`"${file.name}": formato não suportado.`);
+        continue;
+      }
+      if (file.size > MATERIALS_MAX_SIZE) {
+        setError(`"${file.name}": excede 50 MB.`);
+        continue;
+      }
       const formData = new FormData();
       formData.append("file", file);
       formData.append("name", file.name.replace(/\.[^.]+$/, ""));
@@ -77,9 +90,23 @@ export function LessonMaterials({ lessonId }: { lessonId: string }) {
         if (res.ok) {
           const data = await res.json();
           setMaterials((prev) => [...prev, data.material]);
+        } else {
+          // O 413 da Vercel NÃO devolve nosso JSON (é HTML da infra) → defensivo.
+          let msg: string | null = null;
+          try {
+            const j = await res.json();
+            msg = j.error;
+          } catch {
+            // corpo não-JSON (ex.: 413 da plataforma)
+          }
+          setError(
+            res.status === 413
+              ? "Arquivo muito grande para o envio. Tente um arquivo menor."
+              : msg || `Falha no envio (${res.status}).`
+          );
         }
       } catch {
-        // silent
+        setError("Falha de conexão ao enviar o arquivo.");
       }
     }
     setUploading(false);
@@ -223,6 +250,10 @@ export function LessonMaterials({ lessonId }: { lessonId: string }) {
             );
           })}
         </ul>
+      )}
+
+      {error && (
+        <p className="text-xs text-red-500 dark:text-red-400">{error}</p>
       )}
 
       <div
