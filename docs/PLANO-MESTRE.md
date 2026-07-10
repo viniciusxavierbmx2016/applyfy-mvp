@@ -402,6 +402,25 @@ Cada um: read-only → fix → staging (onde aplicável) → merge `--no-ff`.
 
 ---
 
+### BUG B — colaborador do painel ADMIN caía na landing ao entrar 🔴 ✅ FEITO (merge `4ad99f5`)
+Reportado fora do backlog: uma **ADMIN_COLLABORATOR** (aceita, status ACCEPTED) logava em `/admin/login` e era **expulsa pra `/landing`** (página de marketing). A investigação (READ-ONLY, incl. 3 SELECTs em produção) **refutou** a 1ª hipótese (não era conta STUDENT/PENDING) e isolou a raiz.
+- **Raiz:** `admin/page.tsx` gateava em `user.role !== "ADMIN"` (estrito) em **3 pontos solidários** — `:90` redirect (`router.replace`), `:102` return antes do fetch, `:116` return `<SkeletonCards/>`. Divergia de 4 peças que **já** reconhecem o papel: a API que a própria página chama (`/api/admin/dashboard` → `requireAdminOrCollab`, **retorna 200** pra ela), o `admin/layout.tsx:41` (`isAdminRole` inclui ADMIN_COLLABORATOR), o sidebar (Dashboard é o 1º item dela, sem `requires`) e as demais páginas de `/admin`. Os 3 pontos são **solidários**: mudar só o `:90` a tiraria da landing mas a prenderia num skeleton eterno (`:102` pula o fetch, `:116` mostra skeleton).
+- **Fix (1 arquivo):** deriva `const isAdminRole = role==="ADMIN" || role==="ADMIN_COLLABORATOR"` (espelha o layout) e troca os 3 predicados por `!isAdminRole`. `isCollabLike` e os arrays de deps **intactos**. **Raio provado por tabela do enum inteiro:** só ADMIN_COLLABORATOR muda; ADMIN/PRODUCER/STUDENT/COLLABORATOR idênticos.
+- **Zero dado novo:** a API já autorizava o papel (200 provado por curl no staging); o fix é 100% client-side, nenhuma rota tocada.
+- **Validado staging (real Supabase):** persona ADMIN_COLLABORATOR criada (User + AdminCollaborator ACCEPTED). Por execução: login 200, `/api/auth/me` role=ADMIN_COLLABORATOR + `adminPermissions` reais, `/api/admin/dashboard` **200** (anônimo → 401), sidebar determinística (Dashboard/Produtores/Suporte/Planos/Assinaturas · esconde Relatórios/Logs/Colaboradores/Configurações). No browser (dono): baseline reproduziu a expulsão → `/landing`; com o fix cai em `/admin` com dados reais; ADMIN inalterado (R1). Cleanup: persona removida (count=0 em Session/AdminCollaborator/User/Auth).
+
+**⚠️ REGISTRADO (mesma família de roteamento, NÃO corrigido — escopo separado):**
+- **Órfão 2 — `producer/layout.tsx:34`:** `isStaff` não inclui ADMIN_COLLABORATOR → é o **terminal** que despeja o papel na `/landing` (o `admin/page.tsx` era só o gatilho; este é o destino).
+- **Órfão 3 — `proxy.ts:88`:** middleware **role-blind**; `authed && "/"` → `/producer` (não considera ADMIN_COLLABORATOR).
+- **BUG D — STUDENT logado sem cookie de activeWs e sem Collaborator** → `/landing` (mesmo órfão de roteamento do proxy/producer-layout).
+- **`sidebar.tsx:392` — logo `href="/"`:** clicar no logo manda pra `/` → **re-expulsa** a ADMIN_COLLABORATOR pela mesma cadeia.
+- **`landing:98` — CTA "Entrar" → `/producer/login`**, que **rejeita** ADMIN_COLLABORATOR com 403 (a entrada dela é `/admin/login`).
+- **Produto:** a home `/admin` mostra MRR/churn/receita da plataforma. Granularidade por permissão (esconder KPIs financeiros de quem não tem VIEW_REPORTS/BILLING) seria decisão de produto **na API**, não na página — item novo.
+
+Cada um: read-only → fix → staging (onde aplicável) → merge `--no-ff`.
+
+---
+
 # FASE 5 — Quick-wins escondidos 🟢🟡
 
 > **Por que aqui:** features quase-prontas com backend já construído. ALTO valor, BAIXO esforço. A varredura achou estas "surpresas" — dinheiro no chão.
