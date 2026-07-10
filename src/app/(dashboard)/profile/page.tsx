@@ -66,7 +66,7 @@ export default function ProfilePage({ workspaceSlug }: { workspaceSlug?: string 
       </div>
 
       <div className="mb-6">
-        <ChangePasswordForm />
+        <ChangePasswordForm workspaceSlug={workspaceSlug} />
       </div>
 
       {/* Gamification card */}
