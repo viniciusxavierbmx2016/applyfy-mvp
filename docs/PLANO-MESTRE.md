@@ -421,6 +421,35 @@ Cada um: read-only → fix → staging (onde aplicável) → merge `--no-ff`.
 
 ---
 
+### BUG C — aluno não consegue trocar senha ("senha atual incorreta") 🔴 🔍 INVESTIGADO, NÃO CORRIGIDO
+Relatado como regressão ("antes funcionava"). Investigação READ-ONLY completa (código + caso real em prod + contagens agregadas).
+
+**RAIZ PROVADA:** `/api/auth/password:28` valida a senha **GLOBAL** (`signInWithPassword` efêmero) e atualiza a global (`:40` `updateUserById`) — toca `WorkspaceCredential` **0 vezes**. Aluno-comprador tem global **aleatória** (`webhook-helpers:70` `generateTempPassword`, comentário: *"legacy fallback only"*); a senha real vive em `WorkspaceCredential.passwordHash`. Rota tocada pela última vez em **2026-05-06**; o dual-auth nasceu em **2026-05-08** (migração `20260508000000_workspace_credential`). **Regressão ESTRUTURAL: o split mudou o chão sob a rota** — ninguém a revisitou.
+
+**CASO REAL:** Juliana (jurocha1985@gmail.com), compradora 2026-07-02 (timeline atômica de 1.1s: Auth user → email auto-confirmado +64ms → User → credencial → enrollment → WebhookLog `TRANSACTION_PAID`), 1 credencial intocada, `last_sign_in_at` = hoje (o login FUNCIONA — só a troca falha). **Determinístico: nenhum input faz a rota funcionar pra ela.**
+
+**4.3 (`159fc0f`) REFUTADO — 3 provas:** fora do `--stat` (só admin/layout, auth-provider, course-shell); o fluxo de troca não chama `/api/auth/me` (o único gatilho do 4.3); e o sintoma "Senha atual incorreta" (`:34`) exige `authUser` presente (`:13`) = sessão **VIVA** — se o cookie tivesse sido limpo, a rota retornaria "Não autenticado" (`:14`), mensagem diferente.
+
+**DECISÕES DE PRODUTO (Vinicius):** a troca altera SÓ a credencial do workspace corrente. Caso marginal (`/profile` global, 4 acessos STUDENT/90d na telemetria AccessLog): **OPÇÃO 2** — o form some para ALUNO PURO ali; ele troca em `/w/[slug]/profile` (slug na URL, zero cookie, zero tamper).
+⚠️ **TRAVA:** o esconder deve ser `role==="STUDENT" && !collaborator`. Se for "todos no global", **ADMIN_COLLABORATOR (Larissa) fica SEM tela de troca** — o header do admin manda "Meu Perfil" → `/profile` (header.tsx:126) e é a ÚNICA tela linkada dela.
+
+**MOLDE (precedente triplo no repo):** escopo slug→ws→404 (`reset-password:31-40`) + validar a atual (`login:132-145` — `findUnique userId_workspaceId` + `verifyPassword` timing-safe) + gravar (`reset-password:58-68` — `generateSalt` + `hashPassword` scrypt + `update`). Discriminador = o do login (`:91-100`: `STAFF_ROLES.has(role) || !!collab`) — **NUNCA "tem credencial"** (6 PRODUCERs + 1 STUDENT-collab têm rows MORTAS). O form é o ÚNICO caller da rota (contrato pode mudar).
+
+**NÚMEROS (prod, agregado):** 17.575 credenciais STUDENT · 253 alunos com >1 credencial (até 5 ws) · cenário 2 (lazy-migrate sincronizado) ≤79 (0,45%) · cenário 1 (global aleatória, quebra imediata) ~99,5%.
+
+**⚠️ PENDÊNCIAS ANTES DE DESENHAR (declarados não-lidos):**
+1. `w/[slug]/login:23-87` — ramo master-password. Interage com credencial?
+2. `/api/auth/reset-password` (global) — ⚠️ o staff-recovery manda aluno puro pra lá? Se sim, esta via FABRICA cenário 2. Ler o body.
+3. `webhook-helpers.ts` integral — onde nasce a credencial do comprador.
+
+**⚠️ ACHADOS FORA DO ESCOPO (registrados, não corrigidos):**
+- `w/[slug]/login` **NÃO tem rateLimit** (oráculo de brute-force em 17.575 contas). Família do 2.4.
+- `/api/auth/password` **NÃO tem rateLimit**.
+- **NENHUMA troca de senha é auditada** (`logAudit` ausente em password/reset-password) → o desync do cenário 2 é IMENSURÁVEL.
+- **Cenário 2 é INVISÍVEL:** aluno lazy-migrated troca a senha → sistema diz "sucesso" → atualiza a global → a do workspace fica velha → **ele não consegue mais entrar**. Reclama de "esqueci a senha", não de "não consigo trocar".
+
+---
+
 # FASE 5 — Quick-wins escondidos 🟢🟡
 
 > **Por que aqui:** features quase-prontas com backend já construído. ALTO valor, BAIXO esforço. A varredura achou estas "surpresas" — dinheiro no chão.
