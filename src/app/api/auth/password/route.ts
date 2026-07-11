@@ -2,9 +2,13 @@ import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { createAdminClient } from "@/lib/supabase-admin";
+import { rateLimit } from "@/lib/rate-limit";
 import { passwordChangeSchema, validateBody } from "@/lib/validations";
 
 export async function PATCH(request: Request) {
+  const limited = rateLimit(request);
+  if (limited) return limited;
+
   try {
     const supabase = await createServerSupabaseClient();
     const {

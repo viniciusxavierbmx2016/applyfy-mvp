@@ -5,6 +5,7 @@ import { createAdminClient } from "@/lib/supabase-admin";
 import { prisma } from "@/lib/prisma";
 import { hasWorkspaceAccess } from "@/lib/workspace-access";
 import { loginSchema, validateBody } from "@/lib/validations";
+import { rateLimit } from "@/lib/rate-limit";
 import { logAudit } from "@/lib/audit";
 import {
   generateSalt,
@@ -23,6 +24,9 @@ const STAFF_ROLES = new Set<string>([
 type AuthSuccess = { user: SupabaseUser; session: Session };
 
 export async function POST(request: Request, props: { params: Promise<{ slug: string }> }) {
+  const limited = rateLimit(request);
+  if (limited) return limited;
+
   const params = await props.params;
   try {
     const raw = await request.json().catch(() => ({}));
