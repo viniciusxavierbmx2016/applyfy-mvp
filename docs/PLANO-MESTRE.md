@@ -445,12 +445,26 @@ Relatado como regressão ("antes funcionava"). Investigação READ-ONLY completa
 **✅ As 3 leituras pendentes foram feitas antes do desenho (todas fechadas):** (1) master-password (`login:23-90`) = ortogonal — não toca credencial, sessão via magic-link, só STUDENT com access; (2) `/api/auth/reset-password` global = rotaciona a GLOBAL, o fluxo normal do aluno NÃO passa lá (rastreado elo a elo: workspace-login-form→w/forgot→w/reset→credencial); (3) `webhook-helpers` integral = global e credencial são **2 sorteios independentes** de `generateTempPassword` (raiz confirmada).
 
 **⚠️ ITENS-IRMÃOS revelados pela investigação (NÃO corrigidos — escopo próprio):**
-- **BUG C-irmão (o pior):** `sendWorkspaceAccessEmail` (`students/route.ts:256` add manual + `resend/route.ts:39`) manda o aluno pro reset **GLOBAL** (`/reset-password?next=/w/slug`) — mas o add manual cria uma **WorkspaceCredential** (`students:287`). O aluno "define a senha" na global, que **NÃO loga** (o login valida a credencial). Mesma raiz do BUG C (dual-auth), efeito pior: **tranca**, não só frustra.
+- **BUG C-irmão** — ⚠️ hipótese "tranca" **REFUTADA** por investigação a fundo → rebaixado a **housekeeping** (ver seção própria `### BUG C-irmão` abaixo).
 - `/api/auth/forgot-password` **sem gate de role** — aluno puro na tela errada (`/forgot-password` do producer/admin) rotaciona a global → divergência conhecida-vs-credencial; sem credencial, fabrica cenário 2 via lazy-migrate.
 - **Cenário 2 (≤79 contas): já desincronizados** por lazy-migrate + troca global antiga. O fix corrige daqui pra frente; **NÃO sincroniza os já afetados**. Paliativo (ex.: reset dirigido) = item próprio.
 - **Master-password em PLAINTEXT** (`Workspace.masterPassword`, comparação `===` no login:80). Registrado.
 - ~~`w/[slug]/login` NÃO tem rateLimit~~ ✅ **FECHADO (merge `c3bad5a`)** — rateLimit in-memory aplicado em `w/[slug]/login` E `/api/auth/password` (padrão idêntico às 4 irmãs; provado method-agnostic — só lê IP+pathname, precedente GET em invite/[id]). Staging T1-T6: fluxo normal 200 em todos os ramos, burst 429 exato na #101, rota do BUG C funciona sob o limite. **Stopgap** — o teto continua per-instance e por-segmento; upgrade real = 2.4.
 - Nota: `/api/auth/password` (global) segue **sem gate de aluno-puro** — inerte (aluno não conhece a global), endurecer junto com o irmão do reset global.
+
+---
+
+### BUG C-irmão — 🟢 HOUSEKEEPING (não é bug de acesso)
+**VEREDITO: a hipótese inicial ("add-manual manda o aluno pro reset global que não loga → tranca") foi REFUTADA** por leitura integral + prova de produção. O add-manual **envia a senha `mc-`** via `sendCustomAccessEmail` (`students:313`, com `tempPassword`), **idêntico ao comprador** (webhook `applyfy:415`) e ao import CSV (`import:255`). O aluno recebe a senha da credencial e loga normalmente. O link de recovery **global** (`sendWorkspaceAccessEmail`) é gerado, retornado no JSON e **DESCARTADO** (`grep accessLink` em `.tsx` = 0 consumidores) — **não é emailado**.
+
+**PROVA de que `generateLink` NÃO auto-envia** (sem inbox): as rotas de forgot fazem `generateLink` → **`sendEmail` MANUAL** (`auth/forgot:47-69`, `w/forgot:79-91`). Se `generateLink` auto-enviasse, **todo reset em produção mandaria 2 emails** — nunca reportado em 17k+ usuários. Reforços: a resposta do `generateLink` não tem campo `sent` (só `action_link`/`otp`/`token`); e o design que retorna-e-descarta o link só faz sentido se ele não é auto-entregue.
+
+**3 ACHADOS REAIS (housekeeping, baixa prioridade):**
+1. **Código morto:** `sendWorkspaceAccessEmail` em `students:257` + `resend:39` gera um recovery global que ninguém usa. Remover.
+2. **Comentário errado:** `students:249` afirma "which auto-emails 'Reset password'" — **falso**. Corrigir.
+3. ⚠️ **RESEND sem senha (único UX gap):** `resend:47` chama `sendCustomAccessEmail` **SEM `tempPassword`** → email com login URL mas **sem a `mc-`**. Quem esqueceu a senha e pede "reenviar acesso" não recupera nada — o caminho certo é `/w/{slug}/forgot-password`. Vale um fix, mas é "resend inútil", não "aluno trancado".
+
+**⚠️ Nota:** confirmação empírica final (contar emails num inbox) só é possível em **PRODUÇÃO** (`BREVO_API_KEY` vazia em staging → app não envia email lá; e a prova via log do Brevo é inviável). A prova lógica de produção acima é conclusiva; se restar dúvida, um add-manual real com email próprio em prod confirma.
 
 ---
 
