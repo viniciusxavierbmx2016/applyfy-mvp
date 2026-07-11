@@ -8,6 +8,7 @@ import { formatWhatsAppUrl } from "./_components/whatsapp-link";
 import { SendAccessModal } from "./_components/send-access-modal";
 import { AccessSuccessModal } from "./_components/access-success-modal";
 import { EditAccessModal } from "./_components/edit-access-modal";
+import { ImportStudentsModal } from "@/components/import-students-modal";
 
 export default function CourseStudentsPage(
   props: {
@@ -25,6 +26,7 @@ export default function CourseStudentsPage(
   const [editTarget, setEditTarget] = useState<Student | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   const { confirm, ConfirmDialog } = useConfirm();
 
   function showToast(msg: string) {
@@ -151,6 +153,18 @@ export default function CourseStudentsPage(
             </svg>
           )}
           {exporting ? "Exportando..." : "Exportar CSV"}
+        </button>
+        <button
+          type="button"
+          onClick={() => setImportOpen(true)}
+          className="inline-flex items-center gap-2 px-3 py-2 border border-gray-200 dark:border-white/10 hover:bg-gray-100 dark:hover:bg-white/5 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-lg transition-colors"
+        >
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M3 15v4a2 2 0 002 2h14a2 2 0 002-2v-4" />
+            <polyline strokeLinecap="round" strokeLinejoin="round" points="7 9 12 4 17 9" />
+            <line x1="12" y1="4" x2="12" y2="16" />
+          </svg>
+          Importar CSV
         </button>
       </div>
       <div className="mb-4">
@@ -506,6 +520,15 @@ export default function CourseStudentsPage(
           }}
         />
       )}
+      <ImportStudentsModal
+        open={importOpen}
+        onClose={() => {
+          setImportOpen(false);
+          load();
+        }}
+        courses={[]}
+        scopedCourseId={params.id}
+      />
       <ConfirmDialog />
       {toast && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-4 py-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-sm font-medium rounded-lg shadow-lg">
