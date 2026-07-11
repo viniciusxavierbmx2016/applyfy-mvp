@@ -83,11 +83,11 @@ STAFF_ROLES = { PRODUCER, ADMIN, COLLABORATOR, ADMIN_COLLABORATOR }
 - FASE 1 segurança: 1.1–1.14 ✅ (todos com SHA no plano). Abertos: **1.5** (magic-link convite) e **1.6** (token single-use) — dependem da Fase 3 / migração.
 - FASE 2: 2.1 HSTS `de00875` · 2.2 npm audit `7eaaf66` · 2.3 XSS `3d40bc3` · 2.6/2.6b email sanitize `aa0e1a2`/`98b1381` · 2.7 + Candidato-2 (não-itens). Abertos: **2.4** rate-limit compartilhado · **2.5** CSP.
 - FASE 4: 4.1 (via 1.12) · 4.2 `022f933` · 4.3 `159fc0f` · 4.4 (condição eliminada) ✅. Aberto: **4.5** console.error (decisão de forma pendente).
-- BUG A materials upload `f2ea405` · **BUG B** admin-collab dashboard `4ad99f5` · **BUG C** troca senha aluno `9fac2d9` · **1.2/1.3** rateLimit 2 rotas `c3bad5a`.
+- BUG A materials upload `f2ea405` · **BUG B** admin-collab dashboard `4ad99f5` · **BUG C** troca senha aluno `9fac2d9` · **1.2/1.3** rateLimit 2 rotas `c3bad5a` · **5.4** CSV import no editor de curso `2c2ef5b`.
 - **BUG C-irmão** 🟢 housekeeping (hipótese "tranca" refutada; achados: código morto + comentário errado + resend sem senha).
 
 **ABERTO:**
-- 1.5, 1.6 (convite) · 2.4 (rate-limit; **input**: balde compartilhado por segmento `w` — precisa chave por-rota) · 2.5 (CSP) · 4.5 (console.error) · FASE 3 (email A retry + B EmailLog) · FASE 5 quick-wins (5.1 custom domain / 5.2 admin-nav integrations / 5.3 toggle box / 5.4 CSV editor) · FASE 6 (épico multi-gateway) · FASE 9 (débito/QA).
+- 1.5, 1.6 (convite) · 2.4 (rate-limit; **input**: balde compartilhado por segmento `w` — precisa chave por-rota) · 2.5 (CSP) · 4.5 (console.error) · FASE 3 (email A retry + B EmailLog) · FASE 5 quick-wins (5.1 custom domain / 5.2 admin-nav integrations / 5.3 toggle box) · FASE 6 (épico multi-gateway) · FASE 9 (débito/QA).
 - Órfãos de roteamento do BUG B (§3) · BUG C-irmão housekeeping.
 
 ---

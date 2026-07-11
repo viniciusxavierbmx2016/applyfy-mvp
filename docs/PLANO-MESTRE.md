@@ -503,15 +503,11 @@ Relatado como regressão ("antes funcionava"). Investigação READ-ONLY completa
 - [ ] Merge `--no-ff`.
 **Dependência:** nenhuma. Baixo risco (padrão repetido).
 
-### 5.4 — CSV no editor de curso 🟢
-**Achado:** o `<ImportStudentsModal>` existe e funciona na tela global Meus Alunos (`students/page.tsx:79,669`), POSTa pra `students/import/route.ts` que já enforça `canManageStudentsOfCourse` por curso. A aba "Alunos" do editor (`courses/[id]/students/page.tsx`) só tem "Enviar acesso" + "Exportar CSV" — zero import.
-**Abordagem:** renderizar o `ImportStudentsModal` que JÁ EXISTE na aba Alunos do editor, pré-escopado ao curso atual. **Zero mudança de backend** (a API já recebe `courseIds[]`).
-**Etapas:**
-- [ ] Read-only: confirmar o modal + a aba Alunos do editor + o pré-escopo por curso.
-- [ ] Renderizar o modal na aba, pré-selecionando o curso atual.
-- [ ] Staging: importar CSV de dentro do editor → alunos entram no curso correto.
-- [ ] Merge `--no-ff`.
-**Dependência:** nenhuma. Reuso trivial.
+### 5.4 — CSV no editor de curso 🟢 ✅ FEITO (merge `2c2ef5b`)
+**Achado:** o `<ImportStudentsModal>` existe na tela global Meus Alunos, POSTa pra `students/import/route.ts` (gated `canManageStudentsOfCourse` por curso). A aba "Alunos" do editor não tinha import.
+**⚠️ Correção da premissa "reuso trivial":** o modal é **GENÉRICO** — recebe `courses: CourseOption[]` e tem um **step 2 de seleção de cursos**. Não aceitava courseId único. Fix = **modo escopado** (prop opcional `scopedCourseId`): pré-seleciona o curso e **pula o step 2** (upload→resultado). Título do curso é inútil no escopado (nunca exibido nem enviado) → prop é só `string`, sem plumbing. **2 arquivos** (modal + aba); backend/schema intocados; **uso global byte-idêntico** (prop opcional; indicator DRY com equivalência provada pro caminho de 3 passos).
+**Validado staging (com 2 cursos):** cada import escopado (aba de A / aba de B) matriculou **só no seu curso**, zero vazamento cruzado (05:06→só A, 05:14→só B); fluxo global de 3 passos inalterado. Cleanup: 73 users + 146 enrollments + curso-B de teste removidos (count=0), curso A + personas preservados.
+**⚠️ LIÇÃO (staging):** os testes usaram 73 emails com **aparência real** (gmails). Em staging sem Brevo foi inócuo, mas o **mesmo hábito em prod dispararia 73 emails reais**. Dado de teste = sempre FICTÍCIO e identificável (`@staging.test`).
 
 ---
 
