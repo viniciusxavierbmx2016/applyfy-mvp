@@ -27,6 +27,7 @@ interface Props {
   open: boolean;
   onClose: () => void;
   courses: CourseOption[];
+  scopedCourseId?: string;
 }
 
 type Step = 1 | 2 | 3;
@@ -37,12 +38,17 @@ function formatBytes(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-export function ImportStudentsModal({ open, onClose, courses }: Props) {
+export function ImportStudentsModal({
+  open,
+  onClose,
+  courses,
+  scopedCourseId,
+}: Props) {
   const [step, setStep] = useState<Step>(1);
   const [file, setFile] = useState<File | null>(null);
   const [fileError, setFileError] = useState("");
-  const [selectedCourses, setSelectedCourses] = useState<Set<string>>(
-    new Set()
+  const [selectedCourses, setSelectedCourses] = useState<Set<string>>(() =>
+    scopedCourseId ? new Set([scopedCourseId]) : new Set()
   );
   const [importing, setImporting] = useState(false);
   const [summary, setSummary] = useState<ImportSummary | null>(null);
@@ -57,14 +63,14 @@ export function ImportStudentsModal({ open, onClose, courses }: Props) {
       setStep(1);
       setFile(null);
       setFileError("");
-      setSelectedCourses(new Set());
+      setSelectedCourses(scopedCourseId ? new Set([scopedCourseId]) : new Set());
       setImporting(false);
       setSummary(null);
       setDownloadCsv(null);
       setApiError(null);
       setErrorsExpanded(false);
     }
-  }, [open]);
+  }, [open, scopedCourseId]);
 
   useEffect(() => {
     if (!open) return;
@@ -157,6 +163,10 @@ export function ImportStudentsModal({ open, onClose, courses }: Props) {
 
   if (!open) return null;
 
+  // Modo escopado (curso travado) pula o step de seleção → 2 passos.
+  const steps = scopedCourseId ? [1, 2] : [1, 2, 3];
+  const lastStep = steps[steps.length - 1];
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
@@ -197,7 +207,7 @@ export function ImportStudentsModal({ open, onClose, courses }: Props) {
 
         {/* Step indicator */}
         <div className="flex items-center justify-center gap-2 px-6 py-3 border-b border-gray-100 dark:border-gray-800/50">
-          {[1, 2, 3].map((s) => (
+          {steps.map((s) => (
             <div key={s} className="flex items-center gap-2">
               <div
                 className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold transition-colors ${
@@ -208,7 +218,7 @@ export function ImportStudentsModal({ open, onClose, courses }: Props) {
               >
                 {s}
               </div>
-              {s < 3 && (
+              {s < lastStep && (
                 <div
                   className={`w-8 h-0.5 rounded-full transition-colors ${
                     step > s
@@ -314,11 +324,13 @@ export function ImportStudentsModal({ open, onClose, courses }: Props) {
 
               <div className="mt-6 flex justify-end">
                 <button
-                  onClick={() => setStep(2)}
+                  onClick={() =>
+                    scopedCourseId ? handleImport() : setStep(2)
+                  }
                   disabled={!file}
                   className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Próximo
+                  {scopedCourseId ? "Importar" : "Próximo"}
                 </button>
               </div>
             </div>
