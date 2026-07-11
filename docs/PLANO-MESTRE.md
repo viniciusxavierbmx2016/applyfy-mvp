@@ -421,8 +421,12 @@ Cada um: read-only → fix → staging (onde aplicável) → merge `--no-ff`.
 
 ---
 
-### BUG C — aluno não consegue trocar senha ("senha atual incorreta") 🔴 🔍 INVESTIGADO, NÃO CORRIGIDO
-Relatado como regressão ("antes funcionava"). Investigação READ-ONLY completa (código + caso real em prod + contagens agregadas).
+### BUG C — aluno não consegue trocar senha ("senha atual incorreta") 🔴 ✅ FEITO (merge `9fac2d9`)
+Relatado como regressão ("antes funcionava"). Investigação READ-ONLY completa (código + caso real em prod + contagens agregadas) → fix aplicado e validado.
+
+**O FIX (3 arquivos, branch `2e1bfb4` → merge `9fac2d9`):** rota nova **`/api/w/[slug]/password`** (irmã de reset-password): rateLimit → sessão (`getCurrentUser`) → **discriminador do login** (`STAFF_ROLES.has(role) || acceptedCollab` → 403; nunca "tem credencial") → workspace por slug → credencial `userId_workspaceId` (sem credencial → 404 apontando o forgot) → `verifyPassword` (timing-safe, chamada idêntica ao login:142) → `generateSalt`+`hashPassword`+update com **`resetToken:null`** (mata reset links pendentes) → **`logAudit("workspace_password_change")`** — a 1ª troca de senha auditada do sistema. Form: prop `workspaceSlug` + `isPureStudent = STUDENT && !collaborator` → POST escopado; staff mantém PATCH global **intocado**; TRAVA Opção 2 = `return null` no `/profile` global só pra aluno puro (ADMIN_COLLABORATOR continua vendo — é a única tela dela). `producer/profile` e `/api/auth/password` **intocados**.
+
+**Validado STAGING por execução real (T1-T10):** troca do aluno 200 → senha nova loga (200), antiga falha (401) · hash da credencial A mudou; **global provada INTOCADA funcionalmente** (`signIn` com a global antiga ainda sucede; com a nova de ws falha) · credencial do ws B **inalterada** (multi-ws isolado) · senha atual errada → 400 · resetToken pendente **nulificado** na troca · PRODUCER troca global idêntico · STUDENT-collab usa global e a escopada o rejeita (403) · anônimo 401 · staff na escopada 403 · aluno puro na global 400 (inerte) · AuditLog +2 rows · rate-limit 429 exato na req #101. Cleanup count=0; preservados producer-staging/aluno-staging/ws A/curso A (⚠️ senha global do producer-staging resetada p/ teste: `ProdStaging_New#2026`).
 
 **RAIZ PROVADA:** `/api/auth/password:28` valida a senha **GLOBAL** (`signInWithPassword` efêmero) e atualiza a global (`:40` `updateUserById`) — toca `WorkspaceCredential` **0 vezes**. Aluno-comprador tem global **aleatória** (`webhook-helpers:70` `generateTempPassword`, comentário: *"legacy fallback only"*); a senha real vive em `WorkspaceCredential.passwordHash`. Rota tocada pela última vez em **2026-05-06**; o dual-auth nasceu em **2026-05-08** (migração `20260508000000_workspace_credential`). **Regressão ESTRUTURAL: o split mudou o chão sob a rota** — ninguém a revisitou.
 
@@ -437,16 +441,15 @@ Relatado como regressão ("antes funcionava"). Investigação READ-ONLY completa
 
 **NÚMEROS (prod, agregado):** 17.575 credenciais STUDENT · 253 alunos com >1 credencial (até 5 ws) · cenário 2 (lazy-migrate sincronizado) ≤79 (0,45%) · cenário 1 (global aleatória, quebra imediata) ~99,5%.
 
-**⚠️ PENDÊNCIAS ANTES DE DESENHAR (declarados não-lidos):**
-1. `w/[slug]/login:23-87` — ramo master-password. Interage com credencial?
-2. `/api/auth/reset-password` (global) — ⚠️ o staff-recovery manda aluno puro pra lá? Se sim, esta via FABRICA cenário 2. Ler o body.
-3. `webhook-helpers.ts` integral — onde nasce a credencial do comprador.
+**✅ As 3 leituras pendentes foram feitas antes do desenho (todas fechadas):** (1) master-password (`login:23-90`) = ortogonal — não toca credencial, sessão via magic-link, só STUDENT com access; (2) `/api/auth/reset-password` global = rotaciona a GLOBAL, o fluxo normal do aluno NÃO passa lá (rastreado elo a elo: workspace-login-form→w/forgot→w/reset→credencial); (3) `webhook-helpers` integral = global e credencial são **2 sorteios independentes** de `generateTempPassword` (raiz confirmada).
 
-**⚠️ ACHADOS FORA DO ESCOPO (registrados, não corrigidos):**
-- `w/[slug]/login` **NÃO tem rateLimit** (oráculo de brute-force em 17.575 contas). Família do 2.4.
-- `/api/auth/password` **NÃO tem rateLimit**.
-- **NENHUMA troca de senha é auditada** (`logAudit` ausente em password/reset-password) → o desync do cenário 2 é IMENSURÁVEL.
-- **Cenário 2 é INVISÍVEL:** aluno lazy-migrated troca a senha → sistema diz "sucesso" → atualiza a global → a do workspace fica velha → **ele não consegue mais entrar**. Reclama de "esqueci a senha", não de "não consigo trocar".
+**⚠️ ITENS-IRMÃOS revelados pela investigação (NÃO corrigidos — escopo próprio):**
+- **BUG C-irmão (o pior):** `sendWorkspaceAccessEmail` (`students/route.ts:256` add manual + `resend/route.ts:39`) manda o aluno pro reset **GLOBAL** (`/reset-password?next=/w/slug`) — mas o add manual cria uma **WorkspaceCredential** (`students:287`). O aluno "define a senha" na global, que **NÃO loga** (o login valida a credencial). Mesma raiz do BUG C (dual-auth), efeito pior: **tranca**, não só frustra.
+- `/api/auth/forgot-password` **sem gate de role** — aluno puro na tela errada (`/forgot-password` do producer/admin) rotaciona a global → divergência conhecida-vs-credencial; sem credencial, fabrica cenário 2 via lazy-migrate.
+- **Cenário 2 (≤79 contas): já desincronizados** por lazy-migrate + troca global antiga. O fix corrige daqui pra frente; **NÃO sincroniza os já afetados**. Paliativo (ex.: reset dirigido) = item próprio.
+- **Master-password em PLAINTEXT** (`Workspace.masterPassword`, comparação `===` no login:80). Registrado.
+- `w/[slug]/login` **NÃO tem rateLimit** (oráculo de brute-force em 17.575 contas). Família do 2.4. A rota nova TEM, mas o rateLimit é in-memory/per-instance — entra no upgrade do 2.4.
+- Nota: `/api/auth/password` (global) segue sem rateLimit e sem gate de aluno-puro — inerte (aluno não conhece a global), endurecer junto com o irmão acima.
 
 ---
 
