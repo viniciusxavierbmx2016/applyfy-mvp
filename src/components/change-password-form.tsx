@@ -1,14 +1,21 @@
 "use client";
 
 import { useState } from "react";
+import { useUserStore } from "@/stores/user-store";
 
-export function ChangePasswordForm() {
+export function ChangePasswordForm({ workspaceSlug }: { workspaceSlug?: string } = {}) {
+  const { user, collaborator } = useUserStore();
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+
+  // Dual-auth (mirrors w/[slug]/login): a pure STUDENT's password lives in
+  // WorkspaceCredential, scoped per workspace; staff and accepted
+  // collaborators use the global Supabase Auth password.
+  const isPureStudent = user?.role === "STUDENT" && !collaborator;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -24,11 +31,15 @@ export function ChangePasswordForm() {
     }
     setLoading(true);
     try {
-      const res = await fetch("/api/auth/password", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ currentPassword, newPassword }),
-      });
+      const scoped = isPureStudent && workspaceSlug;
+      const res = await fetch(
+        scoped ? `/api/w/${workspaceSlug}/password` : "/api/auth/password",
+        {
+          method: scoped ? "POST" : "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ currentPassword, newPassword }),
+        }
+      );
       const data = await res.json();
       if (!res.ok) {
         setError(data.error || "Erro ao alterar senha");
@@ -44,6 +55,13 @@ export function ChangePasswordForm() {
       setLoading(false);
     }
   }
+
+  // Opção 2: on the global /profile (no workspace in scope) a pure STUDENT
+  // doesn't see the form — their change lives at /w/[slug]/profile where the
+  // slug comes from the URL. Guard INSIDE the component so any future render
+  // site is safe by default. Staff and ADMIN_COLLABORATOR (not pure students)
+  // keep seeing it — /profile is ADMIN_COLLABORATOR's only password page.
+  if (isPureStudent && !workspaceSlug) return null;
 
   return (
     <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-6">
