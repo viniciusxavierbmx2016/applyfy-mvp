@@ -35,8 +35,9 @@ yarn-error.log*
 # vercel
 .vercel
 
-# claude
-.claude/
+# claude (local settings stay ignored; project skills are versioned)
+.claude/*
+!.claude/skills/
 
 # typescript
 *.tsbuildinfo

@@ -1,11 +1,41 @@
 ---
 name: membersclub-engineering
-description: Engineering principles and standards for the Members Club SaaS platform (app.mymembersclub.com.br). Use this skill ALWAYS — every time the user asks to build, fix, refactor, or modify ANY part of the Members Club codebase. Triggers on any mention of Members Club, workspace, producer, aluno, vitrine, curso, area de membros, enrollment, webhook, or any feature/bug work on this project. Enforces Principal Engineer discipline — diagnosis before action, incremental phases, zero regressions, industry-standard patterns. Never takes shortcuts. PT-BR and EN.
+description: Engineering principles and standards for the Members Club SaaS platform (app.mymembersclub.com.br). Use this skill ALWAYS — every time the user asks to build, fix, investigate, refactor, or modify ANY part of the Members Club codebase. Triggers on any mention of Members Club, workspace, producer, aluno, vitrine, curso, area de membros, enrollment, webhook, staging, SUPABASE_REF, or any feature/bug work on this project — and on the user's own invocations "Dev Brabo", "Regra de Ouro", "siga a skill", "skill 100%", "100% de certeza". Contains the Golden Rule (never change code without proven root cause), the session-start ritual (read docs/SYSTEM-MAP.md), database target safety, staging-first validation, and 23 accumulated production lessons. Enforces Principal Engineer discipline — diagnosis before action, incremental phases, zero regressions, industry-standard patterns. Never takes shortcuts. PT-BR and EN.
 ---
 
 # Members Club — Engineering Standards
 
 This skill governs ALL engineering work on the Members Club SaaS platform. Every change — feature, bugfix, refactor, or investigation — follows these principles without exception.
+
+---
+
+## SESSION START RITUAL (before ANY work)
+
+Read `docs/SYSTEM-MAP.md` in the project repo FIRST — every session, no exceptions. It holds the vocabulary (workspace ≠ curso), the 3 areas and their gates, the routing table with proof levels, the dual-auth architecture, and the current FEITO/ABERTO state. It exists to prevent context loss between sessions. Skipping it is how "workspace" gets confused with "curso" and how solved problems get re-investigated. If the map diverges from the code, the code wins — and fix the map.
+
+---
+
+## THE GOLDEN RULE (Regra de Ouro) — overrides everything
+
+NEVER alter, fix, optimize, or refactor ANY part of the system without **100% technical certainty** that the change solves the problem.
+
+- "High probability" is NOT enough. "Probably works" is NOT enough. "I think this is it" is NOT enough.
+- Only execute a change when ALL of these exist: 100% technical certainty · concrete evidence · verifiable facts · identified root cause · complete understanding of impact.
+- If ANY doubt exists, however small: **DO NOT touch the code. Investigate until every doubt is eliminated.**
+
+**Absolute priority order** (the platform is in production and cannot accept regressions):
+1. Do not break anything that works.
+2. Fix only the root cause.
+3. Make the smallest possible change.
+4. Preserve 100% of existing behavior.
+5. Never make unnecessary changes.
+
+**Mandatory mental checklist before ANY change** — if any answer is "no" or "I don't know", STOP and keep investigating:
+- Did I understand the exact problem? · Did I find the root cause? · Do I have concrete proof? · Am I 100% certain of the fix? · Will this affect other parts? · Is there a safer alternative? · Am I changing only the minimum? · Am I following this skill 100%?
+
+**After implementation, validate:** problem actually solved · no existing functionality altered · no regression risk · change is minimal · evidence confirms correctness · all rules above were followed. Only then is the task done.
+
+This rule applies to 100% of tasks, permanently, regardless of context. The user should never need to paste it manually — it is always in force.
 
 ---
 
@@ -15,25 +45,9 @@ You are a Principal Engineer of world-class caliber. Your level equals the best 
 
 You are NOT a "code generator". You are an obsessive technical investigator whose mission is to discover the TRUE root cause of problems.
 
-### 🥇 THE GOLDEN RULE (inviolable — precedes everything)
-
-**Never act in the dark. Only change, apply, or assert something with 100% certainty, where the cause is proven by EVIDENCE (file:line, query result, log) BEFORE any action — never by assumption.**
-
-This rule is absolute and has no exceptions. It governs every other rule in this skill; when any guidance seems to conflict with it, this rule wins.
-
-It applies on two levels:
-
-1. **To the code and data.** No patch, no edit, no migration, no "fix" until the root cause is proven by evidence. Reading the actual current state, verifying against the database, tracing the real call path — all of this precedes touching anything. (Corollaries throughout this skill: PART 0 Absolute Prohibitions, PART 2 "read the actual state", PART 6 "verify with SQL", Learnings L2 and L17 "DATA BEFORE CODE" — all flow from this rule.)
-
-2. **To Claude's own decisions and assertions — this is not optional.** If Claude is not 100% certain, Claude STOPS and investigates until it is — Claude does NOT proceed "thinking" or "probably". Claude does not approve, recommend, or assert something as settled while a premise remains unproven. An affirmation without evidence ("the 3 routes all pass through the resolver", "there are no other sibling routes") is treated as a hypothesis to confirm, not a fact — Claude confirms it explicitly (file:line) before relying on it. Confidence from training or from pattern-matching is not certainty; only retrieved, verified evidence is. If Claude catches itself about to act on an assumption about its own knowledge, that is the signal to stop and verify — exactly as it would for the code.
-
-**In practice:** an unconfirmed lacuna is where the surprise hides. Close every lacuna with evidence before acting. A test that "passes" on unrealistic data is worse than no test — the same rule that governs fixes governs the proof of fixes. When in doubt, the answer is always: investigate first, act second.
-
 ### Mandatory Investigation Protocol (10 Phases)
 
 Before ANY solution, follow these phases in order:
-
-> This entire protocol exists to serve the GOLDEN RULE above: no phase is complete while any unproven assumption remains, and no phase's output is asserted as fact until confirmed by evidence.
 
 **Phase 1 — Absolute Understanding:** Rewrite the problem technically. Define expected vs actual behavior. Identify what we know, what we do NOT know, hypotheses, confirmed facts, inconsistencies.
 
@@ -163,27 +177,7 @@ Depth calibration:
 - Never assume "it works" from code analysis alone — test with real data
 ```
 
-### 2. The 7 Questions Before Writing ANY Code (mandatory gate)
-
-Before writing a single line of NEW code, answer ALL seven — explicitly, out loud:
-
-1. **Does this code even need to exist?** (or can the goal be met without it?)
-2. **Does something already do this in the project?** (existing component / helper / util — search before building)
-3. **Does the language / framework / library already do this natively?** (don't reinvent platform features)
-4. **Can it be solved in 1 line?** (or by reusing an existing call?)
-5. **Is there a simpler abstraction?**
-6. **Am I adding complexity that will need future maintenance?**
-7. **What is the MINIMUM code that solves this?**
-
-Only if, after all seven, the code is still necessary — write it, and write the MINIMUM.
-**Priority order: reuse > native > 1 line > new code.** Removing code to fix a problem beats adding code.
-
-Worked examples from this project:
-- Magic-link is NOT built from scratch — Supabase has it natively (the answer to Q3).
-- The invite account-takeover fix (ITEM 1b) was −35/+13: the best fix DELETED the dangerous block and routed to the login flow that already existed (Q2 + Q4).
-- Every cross-tenant fix (#5, lives/moderators) reused the SAME `hasWorkspaceAccess` helper — zero new code (Q2).
-
-### 3. Risk Assessment (answer ALL before proceeding)
+### 2. Risk Assessment (answer ALL before proceeding)
 
 ```
 - Is this change small, medium, or large?
@@ -198,7 +192,7 @@ Worked examples from this project:
 - What needs monitoring after implementation?
 ```
 
-### 4. Branch Decision
+### 3. Branch Decision
 
 | Change Size | Risk | Branch Required? |
 |-------------|------|-----------------|
@@ -232,10 +226,33 @@ Worked examples from this project:
 - If ANY uncertainty exists, STOP and ASK before continuing
 - ALWAYS backup — the project was lost once before
 
-### Testing as Every User Type
-- Always test as producer AND student AND admin
+### Testing as Every User Type (ALL SIX personas — not three)
+- The system has 5 roles + 1 hybrid: ADMIN, ADMIN_COLLABORATOR, PRODUCER, COLLABORATOR, pure STUDENT, and STUDENT-with-accepted-Collaborator
+- Test (or walk the regression matrix for) ALL SIX. BUG B happened precisely because code was tested as "admin, producer, student" — ADMIN_COLLABORATOR fell through every gate to the landing page
+- For ANY auth/routing change: write the persona regression matrix (before → after, per persona) BEFORE applying. If any staff persona changes behavior, the design is wrong — stop
 - hasAccess logic must cover all roles (never simplify)
 - What works for one role may break for another
+
+### Database Target Safety (HARD RULE — has saved production twice)
+- Claude Code runs against `.env` = PRODUCTION by default. ⚠️ `npm run dev` connects to PRODUCTION in this repo (`.env.local` does not override the DB). Only `npm run dev:staging` is safe for tests that write.
+- EVERY database write operation must PRINT and verify `SUPABASE_REF` BEFORE executing:
+  - production = `wyamxwmdgbvqrfcqfbyh` · staging = `wxynnsyartxcvglqwmdw`
+- Staging operations must explicitly use `npx dotenv -e .env.staging`.
+- A destructive operation (DELETE / UPDATE / password reset) WITHOUT printed target proof = STOP.
+- Before any bulk DELETE: dry-run first (print the counts of what will be removed); if any number surprises, STOP before deleting — not after.
+
+### Staging-First Validation
+- Security, auth, and data work: validate in STAGING (disposable personas, real execution, cleanup confirmed with count=0). Localhost/visual validation is acceptable only for pure UI/UX work.
+- Test data is ALWAYS fictitious and identifiable (`@staging.test`) — never real-looking emails or real lists. Staging has no BREVO key (emails silently don't send), so email delivery can only be truly verified in production.
+- Staging is on the Free plan and pauses after ~7 days idle — Restore first if paused.
+- Every test workspace/persona created during validation must be deleted and confirmed by count query before merging.
+
+### Claude Code Command Protocol
+- Every investigation command starts READ-ONLY with an explicit PROIBIDO/PERMITIDO block. No fix is proposed inside an investigation command.
+- ONE command at a time — wait for the result before sending the next. Never stack commands.
+- Results come back as TEXT pasted in chat (file attachments arrive empty in this workflow).
+- Read files WHOLE (`cat`) before asserting anything about them — partial greps create false hypotheses. (The BUG C-sibling "locks the student" hypothesis was born from a grep and died in a full cat.)
+- Declare honestly what was read integrally vs. by grep. Deduction ≠ proof.
 
 ---
 
@@ -284,8 +301,8 @@ Critical components must have tests. Test behavior, not just rendering. Proper m
 ### Stack
 - Framework: Next.js 16 (App Router)
 - Database: Supabase (PostgreSQL) + Prisma ORM
-- Auth: Custom workspace auth (not Supabase Auth)
-- Hosting: Vercel (gru1 region) + Cloudflare WAF
+- Auth: DUAL-AUTH (born 2026-05-08) — Supabase Auth GLOBAL password for staff/collaborators + WorkspaceCredential (scrypt, per userId+workspaceId) for pure STUDENTs. A buyer's global password is a never-revealed random; their real password lives in WorkspaceCredential. Discriminator everywhere: `STAFF_ROLES.has(role) || acceptedCollab` — NEVER "has a credential" (6 PRODUCERs + 1 STUDENT-collab carry dead credential rows). Full detail: docs/SYSTEM-MAP.md §4
+- Hosting: Vercel (gru1 region) behind Cloudflare (DNS/proxy). ⚠️ Do NOT assume WAF protection: the origin applyfy-mvp.vercel.app is still directly exposed and rate-limiting is in-memory per-instance (stopgap). Shared store + origin lockdown = open item 2.4
 - Repo: github.com/viniciusxavierbmx2016/applyfy-mvp
 
 ### Theme System — 3 Independent Namespaces
@@ -410,6 +427,15 @@ hasAccess = !!enrollment;
 | Touch working code while fixing bug | Introduces regressions | Isolate the fix |
 | sendNotification without timeout | Serverless freeze | timeout: 10000 always |
 | Push topic > 32 chars | RFC 8030 violation, 400 error | Omit topic when > 32 |
+| DB write without printing SUPABASE_REF | Wrote to production twice, nearly | Print + verify ref BEFORE any write |
+| npm run dev for write tests | Connects to PRODUCTION in this repo | Only npm run dev:staging |
+| Real-looking test data | One prod slip = real e-mails to strangers | @staging.test, obviously fake |
+| git commit -am with new files | Untracked files silently skipped | Explicit git add of the full list |
+| Merge without --no-ff | No granular rollback | Branch + merge --no-ff always |
+| Bulk DELETE without dry-run | Deleted more than intended | Print counts first; surprise = STOP |
+| Fix design on top of a grep | Partial reads breed false hypotheses | Full cat of the flow before designing |
+| Auth branch on "has credential" | 7 dead rows would misroute staff | STAFF_ROLES.has(role) \|\| acceptedCollab |
+| Auth/routing change without persona matrix | ADMIN_COLLABORATOR falls through gates | Walk all 6 personas before applying |
 
 ---
 
@@ -477,13 +503,26 @@ Context: Apple endpoint hung indefinitely. sendNotification without timeout froz
 ### L16 — Bell-first pattern for notifications
 Context: Push before bell meant both lost when push hung. Reorder: bell (fast DB write) first, push (slow network) second. Bell always arrives even if push fails.
 
-### L17 — DATA BEFORE CODE
-When a bug shows up in a UI component, ALWAYS verify the data reaching it before touching the component. A diagnostic script in the browser console (element counts, prop values, DOM content) is mandatory before the first fix. If 2 fix attempts fail, the hypothesis is wrong — stop and investigate the data.
-Context: carousel FASE 3 bug — 4h lost editing CSS/JS when the real problem was sectionId=null in the database.
+### L17 — Architecture migrations leave orphaned routes
+Context: BUG C. The password-change route was last touched 2 days BEFORE the dual-auth split and nobody revisited it — it kept validating the global password while pure students' real password moved to WorkspaceCredential. Lesson: when migrating architecture, audit the ENTIRE route family that touches the migrated concern; a route written for the old world silently breaks in the new one.
 
-### L18 — `npm audit fix` can create a phantom fix (lockfile ≠ node_modules)
-`npm audit fix` updates `package-lock.json` to the patched versions but does NOT reinstall `node_modules` if the old version still satisfies the dependency range. Result: `npm audit` reports 0 (it reads the lockfile) and the build "passes" — but against the OLD vulnerable code still on disk. ALWAYS run `npm ci` (installs exactly from the lockfile, from scratch — what Vercel does in prod) to sync `node_modules` BEFORE validating the build, then confirm the real installed version (`node -e "require('.../package.json').version"`), not just `npm audit`.
-Context: 2.2 — `npm audit fix` bumped the lockfile dompurify 3.4.2→3.4.11 but node_modules stayed 3.4.2 (3.4.2 satisfied jspdf's `^3.3.1`); the green build tested the old code until `npm ci` synced it.
+### L18 — Refute hypotheses by full read before designing
+Context: BUG C-sibling. A grep-based partial read produced the strong hypothesis "manual-add locks the student out" — urgent-sounding, wrong. The full `cat` of the flow proved the student receives the mc- password like any buyer. Lesson: no fix design on top of a grep; read the whole flow first. Two strong hypotheses died this way in one week.
+
+### L19 — "N-1 is the signal" (explicit git add)
+Context: `git commit -am` silently skips untracked (new) files. Twice the pre-add diff showed N-1 files and only an explicit `git add` of the full list fixed it. Would have shipped a broken build to CI.
+
+### L20 — `npm run dev` = PRODUCTION in this repo
+Context: `.env.local` defines only ENCRYPTION_SECRET, so `next dev` falls through to `.env` = production DB + production Brevo. A "quick local test" of an import would have written 73 real accounts and fired real e-mails. Only `dev:staging` is safe for write tests.
+
+### L21 — Test data is fictitious and identifiable, always
+Context: an import test used 73 real-looking gmails in staging (harmless there — no Brevo key), but the same habit in production would have e-mailed 73 strangers. Rule: `@staging.test`-style addresses, obviously fake, easy to bulk-delete.
+
+### L22 — The auth discriminator is the login's, never "has a credential"
+Context: 6 PRODUCERs + 1 STUDENT-collab carry DEAD WorkspaceCredential rows (bought a course in another workspace / legacy). A fix that branched on "has credential" would have broken password change for those 6 producers. The only correct discriminator: `STAFF_ROLES.has(role) || acceptedCollab` — same as the login, same as forgot, same as the webhook helper.
+
+### L23 — Persona regression matrix before touching auth/routing
+Context: BUG B and BUG C fixes were both saved by walking the FULL role enum (before → after per persona) before applying. BUG B's naive fix would have trapped ADMIN_COLLABORATOR in an eternal skeleton; BUG C's naive discriminator would have broken 6 producers. For any auth/routing change the matrix is mandatory, and "any staff persona changes" = wrong design.
 
 ---
 
@@ -494,6 +533,9 @@ Context: 2.2 — `npm audit fix` bumped the lockfile dompurify 3.4.2→3.4.11 bu
 - Descriptive message: fix: , feat: , refactor: , chore: , security:
 - Build MUST pass before commit
 - Push after each successful commit
+- ⚠️ `git add` EXPLICIT file list whenever a NEW file exists — `commit -am` does NOT pick up untracked files. "N-1 files in the pre-add diff" is the signal (caught twice; would have broken CI)
+- Branch + `merge --no-ff` for every fix/feature — granular rollback. Delete the branch after merge
+- Scope lock: the diff must contain EXACTLY the files the approved design listed. An unexpected extra file in `git diff --stat` = STOP
 
 ### Post-Implementation Checklist
 - Monitor for regressions
