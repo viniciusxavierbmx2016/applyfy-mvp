@@ -3,8 +3,8 @@
 > **O mapa único.** Tudo que falta, em fases, por dependência × gravidade × esforço.
 > Documento vivo: marque `[x]` ao concluir, adicione itens novos na fase certa.
 >
-> **Estado base:** `main` em `36bb6b5` · auditoria de segurança crítica FECHADA · plataforma em produção com clientes pagantes.
-> **Última atualização:** sessão #08.
+> **Estado:** `main` em `cf4e979` · auditoria de segurança crítica FECHADA · plataforma em produção com clientes pagantes.
+> **Última atualização:** reconciliado 2026-07-13 (sessão #13).
 
 ---
 
@@ -20,6 +20,7 @@ Estas regras não são decoração. Elas moldam cada etapa abaixo. Um item só e
 6. **Proatividade com rigor.** Se no caminho aparecer bug ou oportunidade de melhoria, propor e melhorar o que já existe — sempre no mesmo padrão da plataforma. Nunca deixar o código pior do que estava.
 7. **Plataforma viva.** Clientes pagantes. Zero regressão. Branch para tudo que toca módulo sensível. Rollback via `git revert -m 1` sempre disponível.
 8. **Intensidade sustentável.** A skill proíbe trabalho no cansaço — é o que protege a plataforma. Fases pequenas, validadas, com pausa entre blocos. "Cansaço é como erro entra em produção."
+9. **Migrações e fecho de item** seguem o Migration Runbook e a Definition of Done da skill (canônico: `.claude/skills/membersclub-engineering`, desde `cf4e979`).
 
 **Legenda de tamanho:** 🟢 P (Pequeno, ~1 sessão parcial) · 🟡 M (Médio, ~1 sessão) · 🔴 G (Grande, várias sessões) · ⚫ ÉPICO (multi-item).
 **Legenda de status:** `[ ]` aberto · `[~]` em andamento · `[x]` feito.
@@ -31,7 +32,7 @@ Estas regras não são decoração. Elas moldam cada etapa abaixo. Um item só e
 O backlog parecia infinito porque ninguém tinha cruzado a lista com o que já está em produção. Cruzando:
 
 - **A segurança CRÍTICA já está fechada** (8 furos graves, todo o cross-tenant, o sequestro de conta) — a parte mais difícil JÁ PASSOU.
-- **~12 features que pareciam pendentes JÁ ESTÃO FEITAS** (player YouTube mascarado, login sou aluno, dislike oculto, vitrine 100%, aba enriquecida, e mais) — eram fantasmas no backlog.
+- **~12 features que pareciam pendentes JÁ ESTÃO FEITAS** (player YouTube mascarado, login sou aluno, dislike oculto, vitrine 100%, aba enriquecida, e mais) — eram fantasmas no backlog. *(narrativa histórica; sem lista item a item)*
 - **O que resta até o marco "PRONTO" são as Fases 1–7** — finitas, categorizadas, com file:line.
 - **As Fases 8–9 são crescimento de produto** (app nativo, marketplace, escala) — "dá pra fazer um dia", NÃO "falta pra terminar".
 
@@ -216,11 +217,11 @@ O backlog parecia infinito porque ninguém tinha cruzado a lista com o que já e
 
 # FASE 2 — Infra de segurança 🟡 (2.1 + 2.2 + 2.3 + 2.6 + 2.6b ✅ código; 2.7 + Candidato-2 ✅ confirmado-seguro)
 
-> **Abertos:** 2.4 (rate limit compartilhado — DESENHADO, pendente de infra Upstash: provisionar conta + valor do limite) · 2.5 (CSP `unsafe-inline`/`unsafe-eval`).
+> **Abertos:** 2.4 (rate limit — store compartilhado + origin lockdown; stopgap **2.4a** ✅ `c3bad5a`; pivô WAF em avaliação; Upstash = abordagem anterior, superada como plano corrente) · 2.5 (CSP `unsafe-inline`/`unsafe-eval`).
 > **Fechados:** 2.7 (cores dos `<style>` vs CSS-injection — não-item, 19 cores já hex-validadas; ver §2.7) · 2.6b (path themed sanitizado; ver §2.6b) · Candidato-2 (preview `email-tab.tsx` — não-item, iframe `sandbox=""`). ✅ **MARCO: família email/sanitize completa** (raw+themed+preview).
 
 > **Por que aqui:** barata e importante. Fecha a camada de infra que a auditoria de código não cobre. A maioria é trivial (1 header, 1 comando).
-> **Progresso:** ✅ **2.1 HSTS** (`de00875`) + ✅ **2.2 npm audit** (`7eaaf66`) + ✅ **2.3 lesson.description XSS** (`3d40bc3`) + ✅ **2.6 emailCustomHtml sanitize** (`aa0e1a2`) + ✅ **2.6b themed sanitize** (`98b1381`) + ✅ **2.7 cores/CSS-injection** (não-item) + ✅ **Candidato-2 preview** (não-item). ABERTOS: **2.4** rate limit (desenhado, pendente Upstash) + **2.5** CSP.
+> **Progresso:** ✅ **2.1 HSTS** (`de00875`) + ✅ **2.2 npm audit** (`7eaaf66`) + ✅ **2.3 lesson.description XSS** (`3d40bc3`) + ✅ **2.6 emailCustomHtml sanitize** (`aa0e1a2`) + ✅ **2.6b themed sanitize** (`98b1381`) + ✅ **2.7 cores/CSS-injection** (não-item) + ✅ **Candidato-2 preview** (não-item). ABERTOS: **2.4** rate limit (2.4a stopgap ✅; redesign store/WAF pendente) + **2.5** CSP.
 
 ### 2.1 — HSTS 🟢 ✅ FEITO (`de00875`)
 **Problema:** `next.config.mjs` tinha X-Frame/CSP/nosniff/Referrer/Permissions mas faltava `Strict-Transport-Security`. (HSTS não existia em lugar nenhum — nem no `proxy.ts` middleware, nem no `vercel.json`.)
@@ -258,16 +259,16 @@ O backlog parecia infinito porque ninguém tinha cruzado a lista com o que já e
 
 > **Candidato 2.7 (sinuca do 2.3) → ✅ RESOLVIDO como NÃO-ITEM (ver 2.7 abaixo):** confirmado que TODAS as cores dos 3 sinks `<style>` (member* + vitrine + producer theme) são hex-validadas na escrita — não há CSS-injection. Nada a aplicar.
 
-### 2.4 — Rate limiting compartilhado 🔴
-**Problema:** `src/lib/rate-limit.ts` cobre ~16 rotas auth (14 + as 2 do stopgap `c3bad5a`: `w/[slug]/login` e `/api/auth/password`), in-memory per-instance (reseta em cold start, não compartilha entre lambdas). CRUD producer sem proteção.
-**⚠️ INPUT comprovado em staging (T5 do stopgap, com contraprova):** a chave `ip:pathname.split('/')[2]` agrupa **TODAS** as `/api/w/*` sob o segmento `w` → o teto de 100/min é **por-segmento, não por-rota**. Provado ao vivo: 100 logins esgotaram o balde e a `forgot-password` do MESMO IP tomou 429 (IP limpo → 200). Um brute-force no login consome o mesmo balde de forgot/reset/password/troca-de-senha daquele IP (DoS auto-infligido leve + teto de 100/min dividido entre TODAS as rotas `/api/w/*`). ⚠️ **O 2.4 DEVE usar chave POR-ROTA + store compartilhado** (Upstash/WAF a decidir) — a chave atual `split('/')[2]` é o defeito a corrigir.
-**Abordagem:** Redis/Upstash (roadmap Fase 3 da infra). É o item maior da Fase 2.
-**Etapas:**
-- [ ] Read-only: mapear o rate-limit atual + as rotas que precisam de proteção.
-- [ ] Decisão de arquitetura: Upstash (serverless-friendly) + trade-offs.
-- [ ] Implementar o store compartilhado + aplicar nas rotas críticas (auth + CRUD sensível).
-- [ ] Staging: simular brute-force → bloqueio compartilhado entre instâncias.
-- [ ] Merge `--no-ff`.
+### 2.4 — Rate limiting: store compartilhado + origem 🔴 (stopgap 2.4a ✅ `c3bad5a`)
+**2.4a ✅ FEITO (merge `c3bad5a`) — stopgap in-memory:** rateLimit aplicado em `w/[slug]/login` e `/api/auth/password` (padrão idêntico às irmãs). Paliativo declarado: o teto continua per-instance (reseta em cold start, não compartilha entre lambdas) e POR-SEGMENTO (defeito da chave, abaixo). *(Rebatizado de "stopgap 1.2/1.3" → **2.4a**, encerrando a colisão de rótulo com os itens 1.2/1.3 da FASE 1.)*
+**Problema (o que segue aberto):** `src/lib/rate-limit.ts` cobre **17 rotas** (`grep -rl "rateLimit(" src/app/api`, recontado 2026-07-13; inclui a `w/[slug]/password` do BUG C), in-memory per-instance. CRUD producer sem proteção. **Origem `applyfy-mvp.vercel.app` diretamente exposta** (requests podem pular o Cloudflare → origin lockdown faz parte deste item).
+**⚠️ INPUT comprovado em staging (T5 do stopgap, com contraprova):** a chave `ip:pathname.split('/')[2]` agrupa **TODAS** as `/api/w/*` sob o segmento `w` → o teto de 100/min é **por-segmento, não por-rota**. Provado ao vivo: 100 logins esgotaram o balde e a `forgot-password` do MESMO IP tomou 429 (IP limpo → 200). Um brute-force no login consome o mesmo balde de forgot/reset/password/troca-de-senha daquele IP. ⚠️ **O redesign DEVE usar chave POR-ROTA** — a chave atual `split('/')[2]` é o defeito a corrigir, seja qual for a arquitetura.
+**Estado da decisão (2026-07-13):** store compartilhado **ADIADO** · **pivô WAF (Cloudflare) em avaliação** — rate-limit na borda + origin lockdown poderiam substituir o store aplicativo. **Upstash/Redis = abordagem anterior, SUPERADA como plano corrente** (só volta se o pivô WAF for descartado na análise).
+**Etapas (redesign):**
+- [ ] Decisão de arquitetura: WAF na borda (+ origin lockdown) vs store aplicativo — trade-offs, com chave POR-ROTA como requisito em ambos.
+- [ ] Implementar o caminho escolhido nas rotas críticas (auth + CRUD sensível).
+- [ ] Staging/borda: brute-force → bloqueio efetivo entre instâncias (ou na edge).
+- [ ] Merge `--no-ff` (ou registro de config de borda, se for WAF).
 **Dependência:** nenhuma, mas é o maior da fase — pode ir por último na Fase 2.
 
 ### 2.5 — CSP `unsafe-inline`/`unsafe-eval` (avaliar) 🔴
@@ -373,7 +374,7 @@ Os 3 sinks `<style>` (`course/[slug]/layout.tsx`, `w/[slug]/layout.tsx`, `produc
   - **⚠️ ISOLAMENTO DO 5xx (o risco central):** o ramo `"fail"` (5xx/rede) fica FORA do `if(unauth)` → `setAuthError`, nunca `setUser(null)`, nunca `signOut`. Harness curl + código: **unauth=1 signOut=1, fail(5xx/network)=0 signOut** (estruturalmente impossível deslogar num blip). **SIGNUP preservado:** signOut só após o retry 1× (1º 401 propagação → retry → ok). **PAYWALL preservado:** o guard lê o `user` da store (não `hasAccess`) → aluno logado sem enrollment continua no paywall.
   - Ver [[project_stale_cookie_clear_4_3]].
 - [x] **4.4 — cookie ping-pong** 🟢 ✅ **CONDIÇÃO ELIMINADA** (via `159fc0f`, não um fix próprio). ⚠️ **REGISTRO HONESTO:** a condição que causaria o loop (`/producer`↔`/producer/login`) foi eliminada pelo 4.3 — o cookie stale não sobrevive ao 401, então o `redirectIfAuthed` (que faz bounce por **presença** de cookie nas rotas de login, `proxy.ts:102`) não dispara. **PORÉM o loop pleno NÃO foi reproduzido no harness** (que testa o middleware isolado, não o ciclo client→middleware→client). Provado por curl: COM cookie `/producer/login`→307→/producer (o bounce); SEM cookie→200 (fica). Não afirmamos que o loop existia; afirmamos que a **condição necessária** (cookie stale pós-401) não existe mais.
-- [ ] **4.5 — `console.error` ruidoso no catch** 🟢 — loga "Sem permissão" como erro em todo 403 (cosmético, não é bug de status). Rebaixar o log de error→debug em todas as rotas. Housekeeping.
+- [ ] **4.5 — `console.error` ruidoso no catch** 🟢 — loga "Sem permissão" como erro em todo 403 (cosmético, não é bug de status). **Forma DECIDIDA (2026-07-13): guard-por-status** — `console.error` apenas para status ≥500; 401/403/400 silenciosos. ⚠️ A forma anterior ("rebaixar error→debug") foi **REFUTADA**: `console.debug` some em produção — apagaria a observabilidade dos 500 reais. Escopo + helper: no desenho. Housekeeping.
 
 Cada um: read-only → fix → staging (onde aplicável) → merge `--no-ff`.
 
@@ -427,7 +428,7 @@ Relatado como regressão ("antes funcionava"). Investigação READ-ONLY completa
 
 **O FIX (3 arquivos, branch `2e1bfb4` → merge `9fac2d9`):** rota nova **`/api/w/[slug]/password`** (irmã de reset-password): rateLimit → sessão (`getCurrentUser`) → **discriminador do login** (`STAFF_ROLES.has(role) || acceptedCollab` → 403; nunca "tem credencial") → workspace por slug → credencial `userId_workspaceId` (sem credencial → 404 apontando o forgot) → `verifyPassword` (timing-safe, chamada idêntica ao login:142) → `generateSalt`+`hashPassword`+update com **`resetToken:null`** (mata reset links pendentes) → **`logAudit("workspace_password_change")`** — a 1ª troca de senha auditada do sistema. Form: prop `workspaceSlug` + `isPureStudent = STUDENT && !collaborator` → POST escopado; staff mantém PATCH global **intocado**; TRAVA Opção 2 = `return null` no `/profile` global só pra aluno puro (ADMIN_COLLABORATOR continua vendo — é a única tela dela). `producer/profile` e `/api/auth/password` **intocados**.
 
-**Validado STAGING por execução real (T1-T10):** troca do aluno 200 → senha nova loga (200), antiga falha (401) · hash da credencial A mudou; **global provada INTOCADA funcionalmente** (`signIn` com a global antiga ainda sucede; com a nova de ws falha) · credencial do ws B **inalterada** (multi-ws isolado) · senha atual errada → 400 · resetToken pendente **nulificado** na troca · PRODUCER troca global idêntico · STUDENT-collab usa global e a escopada o rejeita (403) · anônimo 401 · staff na escopada 403 · aluno puro na global 400 (inerte) · AuditLog +2 rows · rate-limit 429 exato na req #101. Cleanup count=0; preservados producer-staging/aluno-staging/ws A/curso A (⚠️ senha global do producer-staging foi resetada p/ testes — após o stopgap 1.2/1.3 está em `ProdStaging_New2#2026`; era desconhecida antes, resetável via `/forgot-password`).
+**Validado STAGING por execução real (T1-T10):** troca do aluno 200 → senha nova loga (200), antiga falha (401) · hash da credencial A mudou; **global provada INTOCADA funcionalmente** (`signIn` com a global antiga ainda sucede; com a nova de ws falha) · credencial do ws B **inalterada** (multi-ws isolado) · senha atual errada → 400 · resetToken pendente **nulificado** na troca · PRODUCER troca global idêntico · STUDENT-collab usa global e a escopada o rejeita (403) · anônimo 401 · staff na escopada 403 · aluno puro na global 400 (inerte) · AuditLog +2 rows · rate-limit 429 exato na req #101. Cleanup count=0; preservados producer-staging/aluno-staging/ws A/curso A (⚠️ senha global do producer-staging foi resetada p/ testes — após o stopgap 2.4a (ex-"1.2/1.3") está em `ProdStaging_New2#2026`; era desconhecida antes, resetável via `/forgot-password`).
 
 **RAIZ PROVADA:** `/api/auth/password:28` valida a senha **GLOBAL** (`signInWithPassword` efêmero) e atualiza a global (`:40` `updateUserById`) — toca `WorkspaceCredential` **0 vezes**. Aluno-comprador tem global **aleatória** (`webhook-helpers:70` `generateTempPassword`, comentário: *"legacy fallback only"*); a senha real vive em `WorkspaceCredential.passwordHash`. Rota tocada pela última vez em **2026-05-06**; o dual-auth nasceu em **2026-05-08** (migração `20260508000000_workspace_credential`). **Regressão ESTRUTURAL: o split mudou o chão sob a rota** — ninguém a revisitou.
 
@@ -440,7 +441,7 @@ Relatado como regressão ("antes funcionava"). Investigação READ-ONLY completa
 
 **MOLDE (precedente triplo no repo):** escopo slug→ws→404 (`reset-password:31-40`) + validar a atual (`login:132-145` — `findUnique userId_workspaceId` + `verifyPassword` timing-safe) + gravar (`reset-password:58-68` — `generateSalt` + `hashPassword` scrypt + `update`). Discriminador = o do login (`:91-100`: `STAFF_ROLES.has(role) || !!collab`) — **NUNCA "tem credencial"** (6 PRODUCERs + 1 STUDENT-collab têm rows MORTAS). O form é o ÚNICO caller da rota (contrato pode mudar).
 
-**NÚMEROS (prod, agregado):** 17.575 credenciais STUDENT · 253 alunos com >1 credencial (até 5 ws) · cenário 2 (lazy-migrate sincronizado) ≤79 (0,45%) · cenário 1 (global aleatória, quebra imediata) ~99,5%.
+**NÚMEROS (prod, agregado):** 17.575 credenciais STUDENT · 253 alunos com >1 credencial (até 5 ws) · cenário 2 (lazy-migrate sincronizado) ≤79 (0,45%) · cenário 1 (global aleatória, quebra imediata) ~99,5%. *(snapshot 2026-07-10 — histórico, não re-auditado)*
 
 **✅ As 3 leituras pendentes foram feitas antes do desenho (todas fechadas):** (1) master-password (`login:23-90`) = ortogonal — não toca credencial, sessão via magic-link, só STUDENT com access; (2) `/api/auth/reset-password` global = rotaciona a GLOBAL, o fluxo normal do aluno NÃO passa lá (rastreado elo a elo: workspace-login-form→w/forgot→w/reset→credencial); (3) `webhook-helpers` integral = global e credencial são **2 sorteios independentes** de `generateTempPassword` (raiz confirmada).
 
@@ -449,7 +450,7 @@ Relatado como regressão ("antes funcionava"). Investigação READ-ONLY completa
 - `/api/auth/forgot-password` **sem gate de role** — aluno puro na tela errada (`/forgot-password` do producer/admin) rotaciona a global → divergência conhecida-vs-credencial; sem credencial, fabrica cenário 2 via lazy-migrate.
 - **Cenário 2 (≤79 contas): já desincronizados** por lazy-migrate + troca global antiga. O fix corrige daqui pra frente; **NÃO sincroniza os já afetados**. Paliativo (ex.: reset dirigido) = item próprio.
 - **Master-password em PLAINTEXT** (`Workspace.masterPassword`, comparação `===` no login:80). Registrado.
-- ~~`w/[slug]/login` NÃO tem rateLimit~~ ✅ **FECHADO (merge `c3bad5a`)** — rateLimit in-memory aplicado em `w/[slug]/login` E `/api/auth/password` (padrão idêntico às 4 irmãs; provado method-agnostic — só lê IP+pathname, precedente GET em invite/[id]). Staging T1-T6: fluxo normal 200 em todos os ramos, burst 429 exato na #101, rota do BUG C funciona sob o limite. **Stopgap** — o teto continua per-instance e por-segmento; upgrade real = 2.4.
+- ~~`w/[slug]/login` NÃO tem rateLimit~~ ✅ **FECHADO (merge `c3bad5a` = o stopgap 2.4a)** — rateLimit in-memory aplicado em `w/[slug]/login` E `/api/auth/password` (padrão idêntico às 4 irmãs; provado method-agnostic — só lê IP+pathname, precedente GET em invite/[id]). Staging T1-T6: fluxo normal 200 em todos os ramos, burst 429 exato na #101, rota do BUG C funciona sob o limite. **Stopgap** — o teto continua per-instance e por-segmento; upgrade real = 2.4.
 - Nota: `/api/auth/password` (global) segue **sem gate de aluno-puro** — inerte (aluno não conhece a global), endurecer junto com o irmão do reset global.
 
 ---
@@ -609,15 +610,17 @@ Cada um: Dev Brabo completo (read-only → proposta → staging → merge `--no-
 > Qualidade interna e QA. Não bloqueia o "pronto", mas mantém a casa em ordem. Pode ser intercalado entre as outras fases quando houver fôlego.
 
 ### Débito
-- [ ] **9.1 — Migrations do zero (D1)** 🟡 — 78 migrations não reconstroem do zero; ~10 tabelas só via `db push` + RLS fora das migrations. Bloqueia novos ambientes. Ritual reset→push→resolve→RLS. **Coordenar com 1.6, 3.2 (migrações novas).**
+- [ ] **9.1 — Migrations do zero (D1)** 🟡 — 77 migrations (em 2026-07-13, inclui a do 5.3) não reconstroem do zero; ~10 tabelas só via `db push` + RLS fora das migrations. Bloqueia novos ambientes. Ritual reset→push→resolve→RLS. **Coordenar com 1.6, 3.2 (migrações novas).**
 - [ ] **9.2 — Staging completo (D2)** 🟢 — aplicar `storage-policies.sql` + seed de contas no staging.
 - [ ] **9.3 — README stale (D3)** 🟢 — descreve Next 14/React 18/NextAuth/Stripe/"Applyfy — Área de Membros"; real é Next 16/React 19/Supabase Auth/"Members Club". Reescrever.
 - [ ] **9.4 — DEPLOY_CHECKLIST stale** 🟢 — `src/docs/DEPLOY_CHECKLIST.md` com produto Applyfy R$97 (é R$597) + checklist pós-deploy unchecked. Atualizar.
 - [ ] **9.5 — Guard `findUnique` antes de `user.create` (D4)** 🟢 — nas 2 rotas de aceite de convite (consistência).
-- [ ] **9.6 — 4 branches stale (D5)** 🟢 — deletar `ios-pwa-carousel-scroll`, `webhook-await-send-email`, `ensure-user-paginated-auth-lookup`, `perf/automation-execute-batch` (todas ahead 0, já na main). Housekeeping git.
-- [ ] **9.7 — Carrossel (branch `feat/course-banner-carousel`)** 🟡 — 2 ahead/32 behind. `Course.bannerExtra` no schema da branch. Precisa: rebase + `db push` do `bannerExtra` no staging + validação visual + merge. **Decidir: terminar ou descartar.**
+- [ ] **9.6 — 4 branches stale (D5)** 🟢 — deletar `origin/fix/ios-pwa-carousel-scroll`, `origin/fix/webhook-await-send-email`, `origin/fix/ensure-user-paginated-auth-lookup`, `origin/perf/automation-execute-batch` (remotas; todas ahead 0, já na main — prefixos reais conferidos 2026-07-13). Housekeeping git.
+- [ ] **9.7 — Carrossel (branch `feat/course-banner-carousel`)** 🟡 — 2 ahead/**128 behind** (2026-07-13 — custo de rebase 4× desde o registro; pesa na decisão terminar-ou-descartar). `Course.bannerExtra` no schema da branch. Precisa: rebase + `db push` do `bannerExtra` no staging + validação visual + merge. **Decidir: terminar ou descartar.**
 - [ ] **9.8 — BLOCO E refactor (D6)** 🟡 — E4 (DRY) feito; E1 (tipagem/`any`)/E2 (hooks) abertos; E3/E5/E6 parciais. Qualidade interna.
 - [ ] **9.9 — `let`→`const` parkeado (D7)** 🟢 — cosmético.
+- [ ] **9.17 — Investigar inverter o default de `npm run dev`** 🟡 — hoje `npm run dev` = **PRODUÇÃO** (L20: `.env.local` não sobrepõe o DB). Candidato: dev→staging por padrão, prod só explícito. Toca Vercel/env/workflow — investigação read-only primeiro. *(Numerado 9.17 — 9.8/9.9 já existiam.)*
+- [ ] **9.18 — Housekeeping: bloco morto `{!hasAccess}` no member page** 🟢 — o early return em `(course)/course/[slug]/page.tsx:379` garante `hasAccess`; o bloco em :525+ nunca renderiza (provado na investigação do 5.3). Remover.
 
 ### QA & Observabilidade
 - [ ] **9.10 — Error boundaries** 🟡 — em páginas críticas (player, dashboard, checkout).
@@ -638,19 +641,19 @@ A ordem dentro das fases, otimizada por dependência:
 SEGURANÇA       1.1 MANAGE_LIVES → 1.2 Tags → 1.3 workspaces-owner → 1.4 cluster → 1.7 ITEM 3 → 1.9 GET-curso-anon ✅
                 → 1.10 customize ✅ → 1.11 menu-reorder ✅ → 1.14 groups-cluster ✅ → 1.12 overrides-perms ✅ → 1.8 plan-limit-ws ✅ → 1.13 reviews-id ✅ | FASE 1 SEM código aberto — restam SÓ 1.5/1.6 (Fase 3)
                 (1.5 magic-link + 1.6 token DEPOIS da Fase 3)
-INFRA BARATA    2.1 HSTS → 2.2 npm audit → 2.3 XSS sanitize
+INFRA BARATA    2.1 HSTS ✅ → 2.2 npm audit ✅ → 2.3 XSS sanitize ✅
 EMAIL           3.1 retry → 3.2 EmailLog   [desbloqueia 1.5]
 CONVITE         1.5 magic-link → 1.6 token single-use   [agora que o email é confiável]
-INFRA PESADA    2.4 rate-limit → 2.5 CSP (avaliar)
-BUGS            4.1 → 4.2 → 4.3 → 4.4 → 4.5
-QUICK-WINS      5.2 admin-nav → 5.3 toggle-box → 5.4 CSV-editor → 5.1 custom-domain
+INFRA PESADA    2.4 store+origem (2.4a stopgap ✅) → 2.5 CSP (avaliar)
+BUGS            4.1 ✅ → 4.2 ✅ → 4.3 ✅ → 4.4 ✅ → 4.5
+QUICK-WINS      5.2 admin-nav → 5.3 toggle-box ✅ (943b8e4) → 5.4 CSV-editor ✅ (2c2ef5b) → 5.1 custom-domain   [5.2 segue aberto]
 INTEGRAÇÕES     6.0 fundação → 6.2 multi-token → 6.1 cada gateway → 6.3 cancelamento
                 ────────────────── 🏁 MARCO PRONTO ──────────────────
 CRESCIMENTO     Fase 7 (push-test, IA, click-report, ...) → Fase 8 (app, marketplace, ...)
 CONTÍNUO        Fase 9 intercalada quando houver fôlego (Sentry cedo; migrations com 1.6/3.2)
 ```
 
-**Higienes pendentes (fazer quando conveniente):** rotacionar senha Postgres staging (vazou em transcripts) · consolidar memória (cheia 30/30) · atualizar o estado-mestre da auditoria na memória.
+**Higienes:** senha Postgres staging ROTACIONADA ✅ (confirmado 2026-07-13) · pendentes: consolidar memória (cheia 30/30) · atualizar o estado-mestre da auditoria na memória.
 
 ---
 
