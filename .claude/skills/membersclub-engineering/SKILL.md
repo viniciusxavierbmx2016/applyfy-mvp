@@ -33,6 +33,8 @@ NEVER alter, fix, optimize, or refactor ANY part of the system without **100% te
 **Mandatory mental checklist before ANY change** — if any answer is "no" or "I don't know", STOP and keep investigating:
 - Did I understand the exact problem? · Did I find the root cause? · Do I have concrete proof? · Am I 100% certain of the fix? · Will this affect other parts? · Is there a safer alternative? · Am I changing only the minimum? · Am I following this skill 100%?
 
+**Level 2 — this rule applies to Claude's OWN assertions, not just code changes.** If Claude is not 100% certain, Claude STOPS and investigates — it does NOT proceed on "thinking" or "probably". An affirmation without evidence ("the 3 routes all pass through the resolver") is a hypothesis to confirm, not a fact — confirm it explicitly (file:line) before relying on it. Confidence from training or pattern-matching is not certainty; only retrieved, verified evidence is. In practice: an unconfirmed lacuna is where the surprise hides. A test that "passes" on unrealistic data is worse than no test. When in doubt: investigate first, act second.
+
 **After implementation, validate:** problem actually solved · no existing functionality altered · no regression risk · change is minimal · evidence confirms correctness · all rules above were followed. Only then is the task done.
 
 This rule applies to 100% of tasks, permanently, regardless of context. The user should never need to paste it manually — it is always in force.
@@ -177,7 +179,23 @@ Depth calibration:
 - Never assume "it works" from code analysis alone — test with real data
 ```
 
-### 2. Risk Assessment (answer ALL before proceeding)
+### 2. The 7 Questions Before Writing ANY Code (mandatory gate)
+
+Before writing a single line of NEW code, answer ALL seven — explicitly:
+
+1. Does this code even need to exist?
+2. Does something already do this in the project?
+3. Does the language/framework/library already do this natively?
+4. Can it be solved in 1 line?
+5. Is there a simpler abstraction?
+6. Am I adding complexity that will need future maintenance?
+7. What is the MINIMUM code that solves this?
+
+Priority order: **reuse > native > 1 line > new code**. Removing code to fix a problem beats adding code.
+
+Worked examples: magic-link = native Supabase (Q3) · the ITEM 1b fix was −35/+13 by deleting the dangerous block (Q2+Q4) · every cross-tenant fix reused the same hasWorkspaceAccess (Q2).
+
+### 3. Risk Assessment (answer ALL before proceeding)
 
 ```
 - Is this change small, medium, or large?
@@ -192,7 +210,7 @@ Depth calibration:
 - What needs monitoring after implementation?
 ```
 
-### 3. Branch Decision
+### 4. Branch Decision
 
 | Change Size | Risk | Branch Required? |
 |-------------|------|-----------------|
@@ -523,6 +541,12 @@ Context: 6 PRODUCERs + 1 STUDENT-collab carry DEAD WorkspaceCredential rows (bou
 
 ### L23 — Persona regression matrix before touching auth/routing
 Context: BUG B and BUG C fixes were both saved by walking the FULL role enum (before → after per persona) before applying. BUG B's naive fix would have trapped ADMIN_COLLABORATOR in an eternal skeleton; BUG C's naive discriminator would have broken 6 producers. For any auth/routing change the matrix is mandatory, and "any staff persona changes" = wrong design.
+
+### L24 — DATA BEFORE CODE (UI bugs)
+Context: carousel FASE 3 bug — 4 hours lost editing CSS/JS when the real problem was sectionId=null in the database. When a bug shows up in a UI component, ALWAYS verify the data reaching it before touching the component. A diagnostic script in the browser console (element counts, prop values, DOM content) is mandatory before the first fix. If 2 fix attempts fail, the hypothesis is wrong — stop and investigate the data.
+
+### L25 — `npm audit fix` can create a phantom fix (lockfile ≠ node_modules)
+Context: item 2.2 — npm audit fix bumped the lockfile dompurify 3.4.2→3.4.11 but node_modules stayed 3.4.2 (it still satisfied jspdf's ^3.3.1); the green build tested the OLD vulnerable code until npm ci synced it. `npm audit fix` updates package-lock.json but does NOT reinstall node_modules when the old version still satisfies the range — `npm audit` then reports 0 (it reads the lockfile) while the vulnerable code stays on disk. ALWAYS run `npm ci` (installs exactly from the lockfile, from scratch — what Vercel does in prod) before validating the build, then confirm the real installed version, not just npm audit.
 
 ---
 
