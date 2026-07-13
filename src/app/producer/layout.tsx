@@ -1,8 +1,7 @@
 import { getCurrentUser, hasAcceptedCollaborator } from "@/lib/auth";
-import { redirect } from "next/navigation";
-import { cookies } from "next/headers";
 import { ProducerThemeProvider } from "@/components/producer-theme-provider";
 import { ProducerShell } from "@/components/producer-shell";
+import { ContextLockNotice } from "@/components/context-lock-notice";
 
 const THEME_DEFAULTS = {
   mode: "dark",
@@ -27,25 +26,45 @@ export default async function ProducerLayout({
     return <>{children}</>;
   }
 
-  // Security: only staff (ADMIN/PRODUCER/COLLABORATOR, or STUDENT with an
-  // accepted Collaborator row — same exception as requireStaff) may see the
-  // producer chrome. APIs are already protected by requireStaff; this closes
-  // the UI/SSR-data leak so authed STUDENTs can't reach /producer/* by URL.
+  // Trava de Contexto (SYSTEM-MAP §6b): quem não pertence à área do produtor
+  // é BLOQUEADO com aviso no lugar — nunca redirect silencioso nem despejo na
+  // /landing (mata o Órfão 2: ADMIN_COLLABORATOR→landing, e o BUG D:
+  // STUDENT sem cookie→landing). APIs seguem protegidas por requireStaff.
+  // ⚠️ ADMIN saiu do isStaff por decisão da MATRIZ do Vinicius (admin usa
+  // /admin; pendente confirmação final — reverter = devolver `user.role ===
+  // "ADMIN" ||` à condição abaixo).
   const isStaff =
-    user.role === "ADMIN" ||
     user.role === "PRODUCER" ||
     user.role === "COLLABORATOR" ||
     (user.role === "STUDENT" && (await hasAcceptedCollaborator(user.id)));
 
   if (!isStaff) {
-    const slug = (await cookies()).get("active_workspace_slug")?.value;
-    if (slug && /^[a-z0-9-]+$/.test(slug)) {
-      redirect(`/w/${slug}`);
+    const isAdminRole =
+      user.role === "ADMIN" || user.role === "ADMIN_COLLABORATOR";
+    if (isAdminRole) {
+      return (
+        <ContextLockNotice
+          sessionLabel="administrador"
+          description="Esta é a área do produtor. Sua sessão ativa é do painel administrativo — para trabalhar aqui, saia e entre com uma conta de produtor."
+          homeHref="/admin"
+          homeLabel="Ir para o painel admin"
+          loginHref="/producer/login"
+        />
+      );
     }
-    // Fallback: /producer/login would loop (middleware bounces authed users
-    // off it back to /producer). /landing is public and not in
-    // redirectIfAuthed, so it terminates cleanly.
-    redirect("/landing");
+    // STUDENT puro. homeHref="/" reusa a resolução que já existe na raiz
+    // ((dashboard)/page: cookie → store → /api/student/workspace → /w/{slug}).
+    // ⚠️ Se o middleware interceptar o client-nav e devolver /producer,
+    // trocar para o workspace resolvido — teste obrigatório no staging.
+    return (
+      <ContextLockNotice
+        sessionLabel="aluno"
+        description="Esta é a área do produtor. Sua sessão ativa é de aluno — seus cursos ficam na sua área de membros."
+        homeHref="/"
+        homeLabel="Ir para minha área de aluno"
+        loginHref="/producer/login"
+      />
+    );
   }
 
   let initialTheme = THEME_DEFAULTS;

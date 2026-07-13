@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { Sidebar } from "@/components/sidebar";
 import { Header } from "@/components/header";
 import { useUserStore } from "@/stores/user-store";
+import { ContextLockNotice } from "@/components/context-lock-notice";
 
 export default function AdminLayout({
   children,
@@ -24,23 +25,39 @@ export default function AdminLayout({
     // lands on /admin/login and stays (no ping-pong).
     if (!user) {
       router.replace("/admin/login");
-      return;
     }
-    // C6: STUDENT with Collaborator row goes to /producer (workspace
-    // collab work) like a regular COLLABORATOR. Pure students go to /.
-    if (user.role === "STUDENT") {
-      router.replace(collaborator ? "/producer" : "/");
-    } else if (user.role === "PRODUCER" || user.role === "COLLABORATOR") {
-      router.replace("/producer");
-    }
-  }, [user, collaborator, isLoading, authError, router, isLoginPage]);
+    // Trava de Contexto (§6b): os replaces silenciosos por role saíram —
+    // não-admins agora veem o aviso renderizado abaixo, no lugar.
+  }, [user, isLoading, authError, router, isLoginPage]);
 
   if (isLoginPage) return <>{children}</>;
 
   const isAdminRole =
     user?.role === "ADMIN" || user?.role === "ADMIN_COLLABORATOR";
-  if (isLoading || !user || !isAdminRole) {
+  if (isLoading || !user) {
     return null;
+  }
+  if (!isAdminRole) {
+    const isStudentPure = user.role === "STUDENT" && !collaborator;
+    return (
+      <ContextLockNotice
+        sessionLabel={
+          isStudentPure
+            ? "aluno"
+            : user.role === "PRODUCER"
+              ? "produtor"
+              : "colaborador"
+        }
+        description="Este é o painel administrativo da plataforma. Sua sessão ativa não é de administrador."
+        homeHref={isStudentPure ? "/" : "/producer"}
+        homeLabel={
+          isStudentPure
+            ? "Ir para minha área de aluno"
+            : "Ir para o painel do produtor"
+        }
+        loginHref="/admin/login"
+      />
+    );
   }
 
   return (
