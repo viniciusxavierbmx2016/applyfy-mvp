@@ -13,6 +13,8 @@ This skill governs ALL engineering work on the Members Club SaaS platform. Every
 
 Read `docs/SYSTEM-MAP.md` in the project repo FIRST — every session, no exceptions. It holds the vocabulary (workspace ≠ curso), the 3 areas and their gates, the routing table with proof levels, the dual-auth architecture, and the current FEITO/ABERTO state. It exists to prevent context loss between sessions. Skipping it is how "workspace" gets confused with "curso" and how solved problems get re-investigated. If the map diverges from the code, the code wins — and fix the map.
 
+`.claude/skills/` in the repo is the CANONICAL source for skills. If the loaded skill diverges from the repo copy, the repo wins — flag the divergence so the claude.ai install gets re-saved. Never edit either copy without diffing both first.
+
 ---
 
 ## THE GOLDEN RULE (Regra de Ouro) — overrides everything
@@ -258,6 +260,14 @@ Worked examples: magic-link = native Supabase (Q3) · the ITEM 1b fix was −35/
 - Staging operations must explicitly use `npx dotenv -e .env.staging`.
 - A destructive operation (DELETE / UPDATE / password reset) WITHOUT printed target proof = STOP.
 - Before any bulk DELETE: dry-run first (print the counts of what will be removed); if any number surprises, STOP before deleting — not after.
+
+### Migration Runbook (schema changes — the order is a GATE, not a suggestion)
+1. Migration file created on the branch — FILE ONLY; no database touched yet.
+2. STAGING first: print SUPABASE_REF (expect `wxynnsyartxcvglqwmdw`) → `npx dotenv -e .env.staging -- npx prisma db push`. Staging has a migration-history gap — db push is its established path; never migrate deploy there. Prove the column via information_schema AND prove the same read-only query on PROD returns `[]` (dual proof: the write landed only in staging).
+3. Full staging validation of the feature. Only then merge --no-ff.
+4. PRODUCTION — BEFORE pushing code: print SUPABASE_REF (expect `wyamxwmdgbvqrfcqfbyh`) → `npx prisma migrate deploy` (NEVER migrate dev on the pooler) → prove via information_schema + row counts, with expected numbers stated beforehand.
+   ⛔ If migrate deploy fails: DO NOT push. Vercel deploys automatically on push — the column must exist BEFORE the code arrives. Inverting the order = broken writes in production.
+5. Only after the production proof: `git push` (triggers the deploy).
 
 ### Staging-First Validation
 - Security, auth, and data work: validate in STAGING (disposable personas, real execution, cleanup confirmed with count=0). Localhost/visual validation is acceptable only for pure UI/UX work.
@@ -560,6 +570,15 @@ Context: item 2.2 — npm audit fix bumped the lockfile dompurify 3.4.2→3.4.11
 - ⚠️ `git add` EXPLICIT file list whenever a NEW file exists — `commit -am` does NOT pick up untracked files. "N-1 files in the pre-add diff" is the signal (caught twice; would have broken CI)
 - Branch + `merge --no-ff` for every fix/feature — granular rollback. Delete the branch after merge
 - Scope lock: the diff must contain EXACTLY the files the approved design listed. An unexpected extra file in `git diff --stat` = STOP
+
+### Definition of Done (an item is CLOSED only when all six exist)
+1. Validation green — STAGING for anything touching security/data/schema (disposable personas, cleanup count=0); localhost only for pure visual/UX.
+2. `merge --no-ff` + push; feature branch deleted.
+3. PLANO-MESTRE updated — item marked ✅ with the merge SHA, and findings/lessons registered.
+4. SYSTEM-MAP §5 state moved (ABERTO → FEITO).
+5. Persistent memory written (lessons, patterns, gotchas worth surviving the session).
+6. Working tree clean — `git status` pasted in the report.
+"Close item X" means: execute all six and report each one. An item missing any of the six is NOT closed.
 
 ### Post-Implementation Checklist
 - Monitor for regressions
