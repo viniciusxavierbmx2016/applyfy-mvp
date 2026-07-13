@@ -491,17 +491,17 @@ Relatado como regressão ("antes funcionava"). Investigação READ-ONLY completa
 - [ ] Merge `--no-ff`.
 **Dependência:** nenhuma. Trivial. **Desbloqueia visibilidade pro épico de integrações (Fase 6).**
 
-### 5.3 — Toggle do box de info do curso 🟢
+### 5.3 — Toggle do box de info do curso 🟢 ✅ FEITO (merge `943b8e4`) — client demand #3 entregue
 **Pedido (Vinicius):** um novo card na aba "Configurações" do editor de curso pra mostrar/esconder o box (nome + módulos + aulas + progresso) abaixo do banner na área de membros. **Mesmo padrão dos toggles existentes** (`showStudentCount`, `showLessonSupport`).
 **Etapas:**
-- [ ] Schema: `showCourseInfoBox Boolean @default(true)` no Course + migração.
-- [ ] API: aceitar o campo no PUT `/api/courses/[id]`.
-- [ ] Admin: novo card toggle na aba Configurações (ícone + título "Exibir resumo do curso" + descrição + salvamento automático + toast), espelhando os cards existentes.
-- [ ] Área do aluno: condicional — se false, esconder o box abaixo do banner.
-- [ ] Retornar o campo na API que alimenta a área do aluno.
-- [ ] Staging: toggle off → box some; on → box volta. Default true (não muda comportamento atual).
-- [ ] Merge `--no-ff`.
-**Dependência:** nenhuma. Baixo risco (padrão repetido).
+- [x] Schema: `showCourseInfoBox Boolean @default(true)` no Course + migração (`20260712233817_add_course_info_box_toggle`).
+- [x] API: aceitar o campo no PUT `/api/courses/[id]` (destructure + spread, molde do irmão).
+- [x] Admin: card nas **DUAS** páginas (decisão do Vinicius): Configurações (ícone `InfoBoxIcon` + "Exibir resumo do curso" + `disabledHint` honesto — avisa que progresso e contagem de alunos saem juntos) e Personalizar (entrada com tooltip honesto; `toggleFlag` genérico já cobriu o save).
+- [x] Área do aluno: condicional `!== false` (molde default-true do showLessonSupport) + **pt do wrapper agora depende de banner×box** — box oculta com banner nunca deixa o conteúdo encostado (o `-mt`/`pt` eram acoplados; comentário do wrapper atualizado).
+- [x] Retornar o campo na API que alimenta a área do aluno → **zero edits, provado**: init route e GET usam `include` + spread (todo escalar novo flui). CoursePreview (vendas), getCourseMeta: intocados.
+- [x] Staging: validado ①-⑧ (4 estados banner×box, as 2 páginas do produtor, aluno real via init; default intocado; cleanup count(false)=0). Prod: `migrate deploy` ANTES do push, coluna provada (boolean/default true/NOT NULL), **0 de 37 cursos** mudaram.
+- [x] Merge `--no-ff` (`943b8e4`; branch apagada).
+**Dependência:** nenhuma. Baixo risco (padrão repetido) — confirmado: 6 arquivos, +48/−4.
 
 ### 5.4 — CSV no editor de curso 🟢 ✅ FEITO (merge `2c2ef5b`)
 **Achado:** o `<ImportStudentsModal>` existe na tela global Meus Alunos, POSTa pra `students/import/route.ts` (gated `canManageStudentsOfCourse` por curso). A aba "Alunos" do editor não tinha import.
