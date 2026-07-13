@@ -146,6 +146,7 @@ export async function PUT(request: Request, props: { params: Promise<{ id: strin
       supportEmail,
       supportWhatsapp,
       showLessonSupport,
+      showCourseInfoBox,
       supportButtonColor,
       supportButtonImage,
       featured,
@@ -295,6 +296,9 @@ export async function PUT(request: Request, props: { params: Promise<{ id: strin
         }),
         ...(showLessonSupport !== undefined && {
           showLessonSupport: Boolean(showLessonSupport),
+        }),
+        ...(showCourseInfoBox !== undefined && {
+          showCourseInfoBox: Boolean(showCourseInfoBox),
         }),
         ...(supportButtonColor !== undefined && {
           supportButtonColor:
