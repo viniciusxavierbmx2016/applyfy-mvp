@@ -227,6 +227,7 @@ model Course {
   supportEmail                    String?
   supportWhatsapp                 String?
   showLessonSupport               Boolean   @default(true)
+  showCourseInfoBox               Boolean   @default(true)
   supportButtonColor              String?
   supportButtonImage              String?
   memberBgColor                   String?

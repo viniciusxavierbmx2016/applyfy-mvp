@@ -15,6 +15,7 @@ interface CourseFlags {
   gamificationEnabled: boolean;
   showStudentCount: boolean;
   showLessonSupport: boolean;
+  showCourseInfoBox: boolean;
 }
 
 type FlagKey = keyof CourseFlags;
@@ -105,6 +106,15 @@ const ITEMS: SettingItem[] = [
     disabledHint: "Desativado — a aba de suporte não aparecerá nas aulas.",
     icon: <HeadphonesIcon />,
   },
+  {
+    key: "showCourseInfoBox",
+    title: "Exibir resumo do curso",
+    description:
+      "Mostra o box com nome, módulos, aulas e barra de progresso abaixo do banner na área do aluno.",
+    disabledHint:
+      "Desativado — o box some da home do curso, levando junto a barra de progresso e a contagem de alunos.",
+    icon: <InfoBoxIcon />,
+  },
 ];
 
 export default function CourseSettingsPage(
@@ -140,6 +150,7 @@ export default function CourseSettingsPage(
           gamificationEnabled: Boolean(c.gamificationEnabled),
           showStudentCount: Boolean(c.showStudentCount),
           showLessonSupport: c.showLessonSupport !== false,
+          showCourseInfoBox: c.showCourseInfoBox !== false,
         });
       })
       .finally(() => alive && setLoading(false));
@@ -460,6 +471,24 @@ function ShieldIcon() {
       className="w-5 h-5"
     >
       <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+    </svg>
+  );
+}
+
+function InfoBoxIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="w-5 h-5"
+    >
+      <rect x="3" y="5" width="18" height="14" rx="2" />
+      <path d="M7 10h6" />
+      <path d="M7 14h10" />
     </svg>
   );
 }

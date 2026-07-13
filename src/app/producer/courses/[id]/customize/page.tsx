@@ -58,6 +58,7 @@ interface CourseFlags {
   communityModerationEnabled: boolean;
   showStudentCount: boolean;
   showLessonSupport: boolean;
+  showCourseInfoBox: boolean;
 }
 
 // F2 — Support button customization (color + image). Saved through the
@@ -86,6 +87,7 @@ const FEATURE_ITEMS: Array<{
   { key: "gamificationEnabled", title: "Pontos e níveis", description: "Pontos ao concluir aulas e interagir", tooltip: "Sistema de pontos e níveis que recompensa alunos por ações como concluir aulas e participar da comunidade." },
   { key: "showStudentCount", title: "Exibir quantidade de alunos", description: "Mostra matriculados na página do curso" },
   { key: "showLessonSupport", title: "Suporte nas aulas", description: "Email e WhatsApp abaixo de cada aula" },
+  { key: "showCourseInfoBox", title: "Exibir resumo do curso", description: "Box com nome, módulos, aulas e progresso na home do curso", tooltip: "Desligar esconde o box inteiro da home do aluno — incluindo a barra de progresso e a contagem de alunos matriculados." },
 ];
 
 export default function CourseCustomizePage() {
@@ -139,6 +141,7 @@ export default function CourseCustomizePage() {
             communityModerationEnabled: Boolean(c.communityModerationEnabled),
             showStudentCount: Boolean(c.showStudentCount),
             showLessonSupport: c.showLessonSupport !== false,
+            showCourseInfoBox: c.showCourseInfoBox !== false,
           });
           const loaded: SupportButton = {
             color: typeof c.supportButtonColor === "string" ? c.supportButtonColor : null,
