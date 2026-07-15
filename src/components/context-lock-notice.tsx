@@ -9,11 +9,18 @@ interface ContextLockNoticeProps {
   sessionLabel: string;
   /** Por que esta área está bloqueada para a sessão atual (frase completa). */
   description: string;
-  /** Destino do botão primário ("meu lugar"). */
-  homeHref: string;
+  /** Destino direto do botão primário. Ignorado quando resolveStudentHome. */
+  homeHref?: string;
   homeLabel: string;
   /** Pós-"Sair desta conta": o login DA ÁREA que o usuário tentou acessar. */
   loginHref: string;
+  /**
+   * Aluno: resolve o destino REAL no clique via GET /api/student/workspace e
+   * faz hard-nav pro /w/{slug}. Necessário porque href="/" morre no
+   * middleware — o proxy responde 307 pra área atual em requests authed na
+   * raiz (provado por curl com header RSC: client-nav vira no-op).
+   */
+  resolveStudentHome?: boolean;
 }
 
 /**
@@ -33,8 +40,30 @@ export function ContextLockNotice({
   homeHref,
   homeLabel,
   loginHref,
+  resolveStudentHome,
 }: ContextLockNoticeProps) {
   const [signingOut, setSigningOut] = useState(false);
+  const [resolving, setResolving] = useState(false);
+  const [noWorkspace, setNoWorkspace] = useState(false);
+
+  async function goStudentHome() {
+    if (resolving) return;
+    setResolving(true);
+    try {
+      const r = await fetch("/api/student/workspace");
+      if (r.ok) {
+        const d = await r.json();
+        if (d?.slug) {
+          window.location.href = `/w/${d.slug}`;
+          return;
+        }
+      }
+    } catch {}
+    // 404/erro: aluno sem workspace — mensagem honesta no lugar, sem navegar
+    // pra beco (a Raiz Inteligente assume este caso).
+    setNoWorkspace(true);
+    setResolving(false);
+  }
 
   async function handleSignOut() {
     if (signingOut) return;
@@ -74,12 +103,27 @@ export function ContextLockNotice({
           {description}
         </p>
         <div className="flex flex-col gap-2">
-          <Link
-            href={homeHref}
-            className="inline-flex items-center justify-center px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold rounded-lg transition-colors"
-          >
-            {homeLabel}
-          </Link>
+          {noWorkspace ? (
+            <p className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-lg">
+              Sua conta não tem acesso a nenhuma área de membros no momento.
+            </p>
+          ) : resolveStudentHome ? (
+            <button
+              type="button"
+              onClick={goStudentHome}
+              disabled={resolving}
+              className="inline-flex items-center justify-center px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold rounded-lg transition-colors disabled:opacity-60"
+            >
+              {resolving ? "Localizando..." : homeLabel}
+            </button>
+          ) : (
+            <Link
+              href={homeHref!}
+              className="inline-flex items-center justify-center px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold rounded-lg transition-colors"
+            >
+              {homeLabel}
+            </Link>
+          )}
           <button
             type="button"
             onClick={handleSignOut}

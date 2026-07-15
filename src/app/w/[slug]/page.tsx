@@ -200,7 +200,8 @@ export default function WorkspaceVitrinePage() {
           isAdminRole ? "administrador" : isStudentPure ? "aluno" : "produtor"
         }
         description="Você não tem acesso a esta área de membros. Se você é aluno de outro produtor, seu espaço é outro."
-        homeHref={isAdminRole ? "/admin" : isStudentPure ? "/" : "/producer"}
+        homeHref={isAdminRole ? "/admin" : isStudentPure ? undefined : "/producer"}
+        resolveStudentHome={isStudentPure}
         homeLabel="Ir para meu espaço"
         loginHref={`/w/${slug}/login`}
       />

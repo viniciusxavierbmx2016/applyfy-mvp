@@ -52,15 +52,15 @@ export default async function ProducerLayout({
         />
       );
     }
-    // STUDENT puro. homeHref="/" reusa a resolução que já existe na raiz
-    // ((dashboard)/page: cookie → store → /api/student/workspace → /w/{slug}).
-    // ⚠️ Se o middleware interceptar o client-nav e devolver /producer,
-    // trocar para o workspace resolvido — teste obrigatório no staging.
+    // STUDENT puro. β provado no staging: href="/" morre no middleware — o
+    // proxy 307a requests authed na raiz de volta pra área atual (inclusive
+    // client-nav/RSC; provado por curl com header RSC) = clique morto. O
+    // botão resolve o destino REAL via /api/student/workspace e hard-nava.
     return (
       <ContextLockNotice
         sessionLabel="aluno"
         description="Esta é a área do produtor. Sua sessão ativa é de aluno — seus cursos ficam na sua área de membros."
-        homeHref="/"
+        resolveStudentHome
         homeLabel="Ir para minha área de aluno"
         loginHref="/producer/login"
       />
