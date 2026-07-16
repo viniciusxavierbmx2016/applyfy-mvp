@@ -21,14 +21,21 @@ export async function GET(request: Request) {
     if (event && event !== "ALL") where.event = event;
 
     if (staff.role === "PRODUCER") {
-      const owned = await prisma.course.findMany({
-        where: { ownerId: staff.id },
-        select: {
-          id: true,
-          externalProductId: true,
-          externalProducts: { select: { externalProductId: true } },
-        },
-      });
+      // 7.16: escopar ao WORKSPACE ATIVO, não producer-wide. O gate
+      // requireWorkspaceOwner acima já provou que staff é dono de workspace.id
+      // (a fronteira); a query escopa DENTRO dela. Antes: `ownerId: staff.id`
+      // pegava TODOS os cursos do dono, de TODOS os workspaces dele → um ws
+      // recém-criado (vazio) exibia os eventos do irmão, com email do comprador.
+      const owned = workspace
+        ? await prisma.course.findMany({
+            where: { workspaceId: workspace.id },
+            select: {
+              id: true,
+              externalProductId: true,
+              externalProducts: { select: { externalProductId: true } },
+            },
+          })
+        : [];
       const ownedIds = owned.map((c) => c.id);
       // F11: union the legacy single field with all ids from the new table so
       // logs for newer ids (not mirrored to the legacy field) still match.
@@ -44,14 +51,18 @@ export async function GET(request: Request) {
       );
 
       if (ownedIds.length === 0 && ownedExternal.length === 0) {
-        return NextResponse.json({ logs: [] });
+        // Sem ws resolvido, ou ws sem cursos: só os logs tagueados com este
+        // workspace (arm 1). Nunca os arms 2/3 producer-wide (o vazamento).
+        where.OR = workspace
+          ? [{ workspaceId: workspace.id }]
+          : [{ workspaceId: "__none__" }];
+      } else {
+        where.OR = [
+          { workspaceId: workspace!.id },
+          { courseId: { in: ownedIds } },
+          { productExternalId: { in: ownedExternal } },
+        ];
       }
-
-      where.OR = [
-        ...(workspace ? [{ workspaceId: workspace.id }] : []),
-        { courseId: { in: ownedIds } },
-        { productExternalId: { in: ownedExternal } },
-      ];
     }
 
     const logs = await prisma.webhookLog.findMany({
