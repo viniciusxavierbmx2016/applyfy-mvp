@@ -58,9 +58,11 @@ export async function POST(request: Request) {
       );
     }
 
-    if (file.size > 5 * 1024 * 1024) {
+    // 4 MB = a verdade do pipeline (a lambda recebe o arquivo no body; a Vercel corta
+    // em ~4.5MB). O front também guarda em 4MB (o prometido = o aceito, nas 2 pontas).
+    if (file.size > 4 * 1024 * 1024) {
       return NextResponse.json(
-        { error: "Arquivo muito grande (máx. 5MB)" },
+        { error: "Arquivo muito grande (máx. 4MB)" },
         { status: 400 }
       );
     }
@@ -82,7 +84,7 @@ export async function POST(request: Request) {
     if (!bucketExists) {
       const { error: createErr } = await supabase.storage.createBucket(
         STORAGE_BUCKET,
-        { public: true, fileSizeLimit: 5 * 1024 * 1024 }
+        { public: true, fileSizeLimit: 4 * 1024 * 1024 }
       );
       if (createErr) {
         console.error("createBucket error:", createErr);

@@ -2,6 +2,7 @@
 
 import { useState, useRef, useCallback } from "react";
 import Image from "next/image";
+import { uploadImage } from "@/lib/upload-image";
 
 interface ImagePosition {
   x: number;
@@ -39,7 +40,7 @@ export function BannerUpload({
   onModeChange,
   aspectRatio = "1125/350",
   label = "Banner do curso",
-  hint = "Tamanho ideal: 1125x350px. PNG, JPG ou WebP, máx. 5MB.",
+  hint = "Tamanho ideal: 1125x350px. PNG, JPG ou WebP, máx. 4MB.",
   cropWindows,
 }: BannerUploadProps) {
   const [uploading, setUploading] = useState(false);
@@ -58,15 +59,10 @@ export function BannerUpload({
     setError("");
     setUploading(true);
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-      if (uploadPath) formData.append("path", uploadPath);
-      const res = await fetch("/api/upload", { method: "POST", body: formData });
-      const data = await res.json();
-      if (!res.ok) { setError(data.error || "Erro ao fazer upload"); return; }
-      onChange(data.url);
-    } catch {
-      setError("Erro ao fazer upload");
+      const url = await uploadImage(file, uploadPath);
+      onChange(url);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro ao fazer upload");
     } finally {
       setUploading(false);
     }
