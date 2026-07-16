@@ -115,7 +115,7 @@ export function NotificationsBell({ workspaceSlug }: { workspaceSlug?: string } 
           />
         </svg>
         {unread > 0 && (
-          <span className="absolute top-1 right-1 min-w-[18px] h-[18px] px-1 flex items-center justify-center text-[10px] font-bold text-[var(--producer-button-text,#ffffff)] bg-[var(--producer-primary,#3b82f6)] rounded-full shadow-[0_0_8px_color-mix(in_srgb,var(--producer-primary,#3b82f6)_40%,transparent)]">
+          <span className="absolute top-1 right-1 min-w-[18px] h-[18px] px-1 flex items-center justify-center text-[10px] font-bold text-[var(--producer-button-text,#ffffff)] bg-[var(--producer-primary,#3b82f6)] rounded-full shadow-[0_0_8px_color-mix(in_srgb,var(--producer-primary,#6366f1)_40%,transparent)]">
             {unread > 99 ? "99+" : unread}
           </span>
         )}
