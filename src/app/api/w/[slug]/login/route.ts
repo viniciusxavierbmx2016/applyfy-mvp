@@ -4,6 +4,7 @@ import { createRouteHandlerClient } from "@/lib/supabase-route";
 import { createAdminClient } from "@/lib/supabase-admin";
 import { prisma } from "@/lib/prisma";
 import { hasWorkspaceAccess } from "@/lib/workspace-access";
+import { isEnrollmentActive } from "@/lib/auth";
 import { loginSchema, validateBody } from "@/lib/validations";
 import { rateLimit } from "@/lib/rate-limit";
 import { logAudit } from "@/lib/audit";
@@ -77,18 +78,28 @@ export async function POST(request: Request, props: { params: Promise<{ slug: st
     let authData: AuthSuccess | null = null;
     let usedMasterPassword = false;
 
-    // 1) Master password — highest priority. STUDENT only, must already
-    //    have workspace access. Does not rotate the user's real password.
-    if (
-      workspace.masterPassword &&
-      password === workspace.masterPassword &&
-      target.role === "STUDENT" &&
-      (await hasWorkspaceAccess(target.id, workspace.id))
-    ) {
-      const sess = await sessionViaMagicLink();
-      if (sess) {
-        authData = sess;
-        usedMasterPassword = true;
+    // 1) Master password — highest priority. STUDENT-BOND only: works for
+    //    anyone with an ACTIVE (non-expired) Enrollment in this workspace,
+    //    regardless of role. Deliberately NOT hasWorkspaceAccess — that also
+    //    grants via ownership/accepted-collaborator, which would turn the
+    //    master into a staff back door. Owner/collab without an enrollment
+    //    keep using their global password (block 2). Does not rotate the
+    //    user's real password.
+    if (workspace.masterPassword && password === workspace.masterPassword) {
+      const enrollment = await prisma.enrollment.findFirst({
+        where: {
+          userId: target.id,
+          course: { workspaceId: workspace.id },
+          status: "ACTIVE",
+        },
+        select: { status: true, expiresAt: true },
+      });
+      if (isEnrollmentActive(enrollment)) {
+        const sess = await sessionViaMagicLink();
+        if (sess) {
+          authData = sess;
+          usedMasterPassword = true;
+        }
       }
     }
 
