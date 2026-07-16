@@ -147,6 +147,9 @@ export async function PUT(request: Request, props: { params: Promise<{ id: strin
       supportWhatsapp,
       showLessonSupport,
       showCourseInfoBox,
+      courseBannerFadeEnabled,
+      courseBannerFadeColor,
+      courseBannerFadeOpacity,
       supportButtonColor,
       supportButtonImage,
       featured,
@@ -299,6 +302,22 @@ export async function PUT(request: Request, props: { params: Promise<{ id: strin
         }),
         ...(showCourseInfoBox !== undefined && {
           showCourseInfoBox: Boolean(showCourseInfoBox),
+        }),
+        ...(courseBannerFadeEnabled !== undefined && {
+          courseBannerFadeEnabled: Boolean(courseBannerFadeEnabled),
+        }),
+        ...(courseBannerFadeColor !== undefined && {
+          courseBannerFadeColor:
+            courseBannerFadeColor &&
+            /^#[0-9a-fA-F]{6}$/.test(courseBannerFadeColor)
+              ? courseBannerFadeColor
+              : null,
+        }),
+        ...(courseBannerFadeOpacity !== undefined && {
+          courseBannerFadeOpacity:
+            typeof courseBannerFadeOpacity === "number"
+              ? courseBannerFadeOpacity
+              : null,
         }),
         ...(supportButtonColor !== undefined && {
           supportButtonColor:

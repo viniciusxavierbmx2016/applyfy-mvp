@@ -28,6 +28,8 @@ interface LoginTabProps {
   setLoginPrimaryColor: Dispatch<SetStateAction<string>>;
   loginLinkColor: string;
   setLoginLinkColor: Dispatch<SetStateAction<string>>;
+  loginTextColor: string;
+  setLoginTextColor: Dispatch<SetStateAction<string>>;
   loginBgColor: string;
   setLoginBgColor: Dispatch<SetStateAction<string>>;
   loginBoxColor: string;
@@ -61,6 +63,8 @@ export function LoginTab({
   setLoginPrimaryColor,
   loginLinkColor,
   setLoginLinkColor,
+  loginTextColor,
+  setLoginTextColor,
   loginBgColor,
   setLoginBgColor,
   loginBoxColor,
@@ -147,6 +151,13 @@ export function LoginTab({
             value={loginLinkColor}
             fallback={DEFAULT_LINK}
             onChange={setLoginLinkColor}
+          />
+          <ColorField
+            label="Cor do texto"
+            description="Título e texto (vazio = automático pelo contraste da caixa)"
+            value={loginTextColor}
+            fallback="#ffffff"
+            onChange={setLoginTextColor}
           />
           <ColorField
             label="Cor de fundo"

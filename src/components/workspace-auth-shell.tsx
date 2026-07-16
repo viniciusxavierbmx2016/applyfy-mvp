@@ -19,6 +19,7 @@ export interface WorkspaceAuthInfo {
   loginBoxOpacity?: number | null;
   loginSideColor?: string | null;
   loginLinkColor?: string | null;
+  loginTextColor?: string | null;
 }
 
 const DEFAULT_BG = "#0a0a1a";
@@ -110,7 +111,14 @@ export function getLoginTheme(ws: WorkspaceAuthInfo | null) {
   // dark, legible text. Dark boxes (the default and the vast majority) keep the
   // exact white values used before — zero visual change.
   const boxIsLight = isLightColor(boxColor);
-  const textColor = boxIsLight ? "#0a0a0a" : "#ffffff";
+  // 7.13: override explícito do produtor rege o texto PRIMÁRIO; NULL → o
+  // auto-derive por luminância da box (o fallback inteligente de sempre). Os
+  // secundários (muted/label/faint) seguem auto-derivados (tuning de legibilidade).
+  const autoTextColor = boxIsLight ? "#0a0a0a" : "#ffffff";
+  const textColor =
+    ws?.loginTextColor && HEX_RE.test(ws.loginTextColor)
+      ? ws.loginTextColor
+      : autoTextColor;
   const textColorMuted = boxIsLight ? "rgba(0,0,0,0.6)" : "rgba(255,255,255,0.6)";
   const textColorLabel = boxIsLight ? "rgba(0,0,0,0.7)" : "rgba(255,255,255,0.75)";
   const textColorFaint = boxIsLight ? "rgba(0,0,0,0.4)" : "rgba(255,255,255,0.35)";
