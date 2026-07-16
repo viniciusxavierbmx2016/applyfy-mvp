@@ -97,6 +97,7 @@ STAFF_ROLES = { PRODUCER, ADMIN, COLLABORATOR, ADMIN_COLLABORATOR }
 - **Master password híbridos** ✅ `1fdfd1e` — gate da master = vínculo de aluno (enrollment ACTIVE), não role; destravou 14 híbridos reais; fechou looseness do EXPIRED; edge MFA declarado. Ver PM 7.8 + §4.
 - **Vitrine obedece o tema (7.9+7.15)** ✅ `462a24d` — `vitrineTextColor` agora rege todo texto de corpo (var `--producer-text` + regras espelhadas do member no globals.css, gate duplo de wrapper); ProfilePage compartilhado herda dentro da vitrine, intocado no global. Ver PM 7.9.
 - **Webhook history sibling-scope (7.16)** ✅ `944e152` — arms do `webhook-logs` escopados ao ws ativo (era producer-wide → ws irmão vazava). ⚠️ Tenancy: `getCurrentWorkspace` rejeita hint de ws alheio NA ORIGEM (owner-check antes do gate) — produtor nem resolve ws de outro dono. Ver PM 7.16.
+- **Badge do sino + nível (7.10)** ✅ `6f27ee6` — var-com-fallback (`--producer-primary`) nos 4 elementos; número via `--producer-button-text`; glow color-mix fallback indigo. Padrão var-com-fallback = POUCOS elementos (vs wrapper CSS = MUITOS). Ver PM 7.10.
 
 **ABERTO:**
 - 1.5, 1.6 (convite) · 2.4 (rate-limit: store+origem; 2.4a stopgap ✅; **input**: balde por-segmento — chave por-rota no redesign; pivô WAF em avaliação) · 2.5 (CSP) · 4.5 (console.error) · FASE 3 (email A retry + B EmailLog) · FASE 5 quick-wins (5.1 custom domain / 5.2 admin-nav integrations) · FASE 6 (épico multi-gateway) · FASE 9 (débito/QA).
