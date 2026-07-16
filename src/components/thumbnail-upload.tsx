@@ -26,7 +26,7 @@ export function ThumbnailUpload({
   value,
   onChange,
   label = "Thumbnail",
-  helperText = "Tamanho ideal: 1280x720px (16:9). PNG, JPG ou WebP, máx. 4MB.",
+  helperText = "Tamanho ideal: 1280x720px (16:9). PNG, JPG ou WebP, máx. 10MB.",
   uploadPath,
   aspectClass = "aspect-video",
   position,

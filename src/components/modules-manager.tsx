@@ -658,7 +658,7 @@ function SortableModule({
             value={module.thumbnailUrl}
             onChange={(url) => onUpdate(module.id, { thumbnailUrl: url })}
             label="Capa do módulo"
-            helperText="Tamanho ideal: 380x680px (formato vertical). PNG, JPG ou WebP, máx. 5MB."
+            helperText="Tamanho ideal: 380x680px (formato vertical). PNG, JPG ou WebP, máx. 10MB."
             uploadPath={`modules/${module.id}`}
             aspectClass="aspect-[9/16] max-w-[180px]"
           />
