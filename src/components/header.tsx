@@ -78,7 +78,7 @@ export function Header({ onMenuToggle }: HeaderProps) {
                 {user.points} pts
               </span>
               <span className="text-xs text-gray-400 dark:text-gray-600">|</span>
-              <span className="text-xs text-blue-500 dark:text-blue-400 font-medium">
+              <span className="text-xs text-[var(--producer-primary,#3b82f6)] dark:text-[var(--producer-primary,#60a5fa)] font-medium">
                 {currentLevel.name}
               </span>
             </div>

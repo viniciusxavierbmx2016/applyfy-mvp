@@ -115,7 +115,7 @@ export function NotificationsBell({ workspaceSlug }: { workspaceSlug?: string } 
           />
         </svg>
         {unread > 0 && (
-          <span className="absolute top-1 right-1 min-w-[18px] h-[18px] px-1 flex items-center justify-center text-[10px] font-bold text-white bg-blue-500 rounded-full shadow-[0_0_8px_rgba(99,102,241,0.4)]">
+          <span className="absolute top-1 right-1 min-w-[18px] h-[18px] px-1 flex items-center justify-center text-[10px] font-bold text-[var(--producer-button-text,#ffffff)] bg-[var(--producer-primary,#3b82f6)] rounded-full shadow-[0_0_8px_color-mix(in_srgb,var(--producer-primary,#6366f1)_40%,transparent)]">
             {unread > 99 ? "99+" : unread}
           </span>
         )}
@@ -153,7 +153,7 @@ export function NotificationsBell({ workspaceSlug }: { workspaceSlug?: string } 
                       type="button"
                       onClick={() => handleClick(n)}
                       className={`w-full flex items-start gap-3 px-4 py-3 text-left hover:bg-gray-800/50 transition ${
-                        n.read ? "" : "bg-blue-500/5"
+                        n.read ? "" : "bg-[color-mix(in_srgb,var(--producer-primary,#3b82f6)_5%,transparent)]"
                       }`}
                     >
                       <span className="mt-0.5 w-8 h-8 shrink-0 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-sm">
@@ -172,7 +172,7 @@ export function NotificationsBell({ workspaceSlug }: { workspaceSlug?: string } 
                         </p>
                       </div>
                       {!n.read && (
-                        <span className="mt-2 w-2 h-2 rounded-full bg-blue-500 shrink-0" />
+                        <span className="mt-2 w-2 h-2 rounded-full bg-[var(--producer-primary,#3b82f6)] shrink-0" />
                       )}
                     </button>
                   </li>
