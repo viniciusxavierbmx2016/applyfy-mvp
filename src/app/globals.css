@@ -249,6 +249,47 @@ body {
 .producer-layout .focus\:border-blue-500\/50:focus { border-color: var(--producer-primary, #3b82f6) !important; }
 .producer-layout .focus\:ring-blue-500\/20:focus { --tw-ring-color: var(--producer-primary, #3b82f6) !important; }
 
+/* 7.11 — GAPS: as variantes de azul-chrome que o ruleset acima não cobria
+   (tints, hover/focus variants, dark:, text-blue-300/700, gradientes). Espelha
+   os percentuais/valores PROVADOS do member theme (.course-customized) — mesmo
+   color-mix, mesmos hex de fallback = byte-idêntico sem customização. Só azul é
+   mapeado → verde/vermelho/âmbar (semânticos: dinheiro, erro, status) IMUNES por
+   construção. Admin/vitrine não têm .producer-layout → ficam no fallback (α). */
+/* bg sólido — hover */
+.producer-layout .hover\:bg-blue-700:hover { background-color: var(--producer-primary-hover, #1d4ed8) !important; }
+/* texto — variantes que faltavam */
+.producer-layout .text-blue-700 { color: var(--producer-primary, #1d4ed8) !important; }
+.producer-layout .text-blue-300 { color: var(--producer-primary, #93c5fd) !important; }
+.dark .producer-layout .dark\:text-blue-400 { color: var(--producer-primary, #60a5fa) !important; }
+.dark .producer-layout .dark\:text-blue-300 { color: var(--producer-primary, #93c5fd) !important; }
+.producer-layout .hover\:text-blue-500:hover { color: var(--producer-primary, #3b82f6) !important; }
+.producer-layout .hover\:text-blue-400:hover { color: var(--producer-primary, #60a5fa) !important; }
+.producer-layout .hover\:text-blue-300:hover { color: var(--producer-primary, #93c5fd) !important; }
+/* foco/ring/borda — variantes planas e por-opacidade */
+.producer-layout .focus\:ring-blue-500:focus { --tw-ring-color: var(--producer-primary, #3b82f6) !important; }
+.producer-layout .focus\:ring-blue-500\/40:focus { --tw-ring-color: color-mix(in srgb, var(--producer-primary, #3b82f6) 40%, transparent) !important; }
+.producer-layout .focus\:border-blue-500:focus { border-color: var(--producer-primary, #3b82f6) !important; }
+.producer-layout .border-blue-500\/50 { border-color: color-mix(in srgb, var(--producer-primary, #3b82f6) 50%, transparent) !important; }
+.producer-layout .border-blue-500\/30 { border-color: color-mix(in srgb, var(--producer-primary, #3b82f6) 30%, transparent) !important; }
+.producer-layout .border-blue-500\/20 { border-color: color-mix(in srgb, var(--producer-primary, #3b82f6) 20%, transparent) !important; }
+.dark .producer-layout .dark\:border-blue-500\/20 { border-color: color-mix(in srgb, var(--producer-primary, #3b82f6) 20%, transparent) !important; }
+.producer-layout .hover\:border-blue-500\/30:hover { border-color: color-mix(in srgb, var(--producer-primary, #3b82f6) 30%, transparent) !important; }
+.producer-layout .border-blue-200 { border-color: color-mix(in srgb, var(--producer-primary, #3b82f6) 35%, white) !important; }
+/* tints de fundo — claros e por-opacidade (molde member :306/:348/:363) */
+.producer-layout .bg-blue-50 { background-color: color-mix(in srgb, var(--producer-primary, #3b82f6) 8%, white) !important; }
+.producer-layout .bg-blue-500\/5 { background-color: color-mix(in srgb, var(--producer-primary, #3b82f6) 5%, transparent) !important; }
+.producer-layout .bg-blue-500\/10 { background-color: color-mix(in srgb, var(--producer-primary, #3b82f6) 10%, transparent) !important; }
+.producer-layout .bg-blue-500\/20 { background-color: color-mix(in srgb, var(--producer-primary, #3b82f6) 20%, transparent) !important; }
+.producer-layout .bg-blue-600\/10 { background-color: color-mix(in srgb, var(--producer-primary, #2563eb) 10%, transparent) !important; }
+.producer-layout .bg-blue-600\/30 { background-color: color-mix(in srgb, var(--producer-primary, #2563eb) 30%, transparent) !important; }
+.dark .producer-layout .dark\:bg-blue-500\/5 { background-color: color-mix(in srgb, var(--producer-primary, #3b82f6) 5%, transparent) !important; }
+.dark .producer-layout .dark\:bg-blue-500\/10 { background-color: color-mix(in srgb, var(--producer-primary, #3b82f6) 10%, transparent) !important; }
+.dark .producer-layout .dark\:bg-blue-500\/15 { background-color: color-mix(in srgb, var(--producer-primary, #3b82f6) 15%, transparent) !important; }
+/* gradientes (from/to) */
+.producer-layout .from-blue-500 { --tw-gradient-from: var(--producer-primary, #3b82f6) !important; }
+.producer-layout .from-blue-400 { --tw-gradient-from: var(--producer-primary, #60a5fa) !important; }
+.producer-layout .to-blue-600 { --tw-gradient-to: var(--producer-primary, #2563eb) !important; }
+
 /* Override hardcoded dark-mode card/bg colors with producer variables */
 .producer-layout .dark\:bg-\[\#0a0e19\] { background-color: var(--producer-card, #0a0e19) !important; }
 .producer-layout .dark\:bg-\[\#0a0a1a\] { background-color: var(--producer-bg, #0a0a1a) !important; }
