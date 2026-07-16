@@ -2,6 +2,7 @@
 
 import { useState, useRef, useCallback } from "react";
 import Image from "next/image";
+import { uploadImage } from "@/lib/upload-image";
 
 interface ImagePosition {
   x: number;
@@ -25,7 +26,7 @@ export function ThumbnailUpload({
   value,
   onChange,
   label = "Thumbnail",
-  helperText = "Tamanho ideal: 1280x720px (16:9). PNG, JPG ou WebP, máx. 5MB.",
+  helperText = "Tamanho ideal: 1280x720px (16:9). PNG, JPG ou WebP, máx. 4MB.",
   uploadPath,
   aspectClass = "aspect-video",
   position,
@@ -49,15 +50,10 @@ export function ThumbnailUpload({
     setError("");
     setUploading(true);
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-      if (uploadPath) formData.append("path", uploadPath);
-      const res = await fetch("/api/upload", { method: "POST", body: formData });
-      const data = await res.json();
-      if (!res.ok) { setError(data.error || "Erro ao fazer upload"); return; }
-      onChange(data.url);
-    } catch {
-      setError("Erro ao fazer upload");
+      const url = await uploadImage(file, uploadPath);
+      onChange(url);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro ao fazer upload");
     } finally {
       setUploading(false);
     }
