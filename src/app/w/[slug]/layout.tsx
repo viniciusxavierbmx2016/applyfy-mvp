@@ -45,9 +45,22 @@ export default async function WorkspaceLayout(
     ws.vitrineHeaderColor && `--producer-header: ${ws.vitrineHeaderColor}`,
     ws.vitrineCardColor && `--producer-card: ${ws.vitrineCardColor}`,
     ws.vitrineTextColor && `--producer-button-text: ${ws.vitrineTextColor}`,
+    ws.vitrineTextColor && `--producer-text: ${ws.vitrineTextColor}`,
   ]
     .filter(Boolean)
     .join("; ");
+
+  // 7.9/7.15 — gate DUPLO (espelho do hasCustomization do member, mais estreito):
+  // .vitrine-customized (accent OU texto) ativa só as regras de AZUL→accent
+  // (fallback no hex exato, sem opacity — inócuas p/ quem não setou);
+  // .vitrine-text-customized (SÓ texto) ativa as regras de texto com hierarquia
+  // por opacity. Texto vazio = sem classe = zero regras = byte-idêntico.
+  const themeClasses = [
+    (ws.accentColor || ws.vitrineTextColor) && "vitrine-customized",
+    ws.vitrineTextColor && "vitrine-text-customized",
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   return (
     <WorkspaceThemeLock forceTheme={ws.forceTheme}>
@@ -58,7 +71,9 @@ export default async function WorkspaceLayout(
           }}
         />
       )}
-      <WorkspaceShell slug={params.slug}>{children}</WorkspaceShell>
+      <WorkspaceShell slug={params.slug} themeClasses={themeClasses}>
+        {children}
+      </WorkspaceShell>
     </WorkspaceThemeLock>
   );
 }

@@ -36,9 +36,12 @@ const tooltipCls =
 export function WorkspaceShell({
   slug,
   children,
+  themeClasses = "",
 }: {
   slug: string;
   children: React.ReactNode;
+  /** 7.9/7.15: classes-wrapper do tema da vitrine (gate duplo no layout). */
+  themeClasses?: string;
 }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -225,7 +228,7 @@ export function WorkspaceShell({
   }
 
   return (
-    <div className="min-h-screen dark:bg-[var(--producer-bg,#030712)]">
+    <div className={`min-h-screen dark:bg-[var(--producer-bg,#030712)] ${themeClasses}`.trim()}>
       {/* Header */}
       <header className="fixed top-0 left-0 right-0 z-30 bg-white dark:bg-[var(--producer-header,#111827)] border-b border-gray-200 dark:border-white/5">
         <div className="px-4 sm:px-6 h-14 flex items-center justify-between gap-3">

@@ -371,6 +371,32 @@ html:not(.dark) .course-customized .text-primary { color: var(--member-primary, 
 .course-customized .text-emerald-300 { color: var(--member-primary, #6ee7b7) !important; }
 .course-customized .to-blue-700 { --tw-gradient-to: var(--member-primary, #1d4ed8) !important; }
 
+/* ─── 7.9/7.15: Vitrine obedece o tema (espelho do molde .course-customized) ──
+   Gate DUPLO aplicado pelo layout de w/[slug] no root do WorkspaceShell:
+   .vitrine-text-customized (SÓ com vitrineTextColor) → regras de TEXTO, uma cor
+   com hierarquia por opacity (espelho de .course-customized:322-330);
+   .vitrine-customized (accent OU texto) → AZUIS→accent, fallback no hex exato,
+   sem opacity (espelho de :288-291). Sem cor setada = sem classe = zero regras
+   = byte-idêntico (a Regra de Ouro do item, garantida por construção).
+   Cobre página + shell + o ProfilePage compartilhado por herança; o /profile
+   GLOBAL nunca tem o wrapper → intocado por construção. */
+.vitrine-text-customized .text-gray-900 { color: var(--producer-text, #111827) !important; }
+.dark .vitrine-text-customized .dark\:text-white { color: var(--producer-text, #ffffff) !important; }
+.vitrine-text-customized .text-gray-800 { color: var(--producer-text, #1f2937) !important; opacity: 0.95; }
+.vitrine-text-customized .text-gray-700 { color: var(--producer-text, #374151) !important; opacity: 0.85; }
+.dark .vitrine-text-customized .dark\:text-gray-300 { color: var(--producer-text, #d1d5db) !important; opacity: 0.85; }
+.dark .vitrine-text-customized .dark\:text-gray-200 { color: var(--producer-text, #e5e7eb) !important; opacity: 0.9; }
+.vitrine-text-customized .text-gray-600 { color: var(--producer-text, #4b5563) !important; opacity: 0.7; }
+.dark .vitrine-text-customized .dark\:text-gray-400 { color: var(--producer-text, #9ca3af) !important; opacity: 0.7; }
+.vitrine-text-customized .text-gray-500 { color: var(--producer-text, #6b7280) !important; opacity: 0.6; }
+.dark .vitrine-text-customized .dark\:text-gray-500 { color: var(--producer-text, #6b7280) !important; opacity: 0.55; }
+.vitrine-text-customized .text-gray-400 { color: var(--producer-text, #9ca3af) !important; opacity: 0.5; }
+
+.vitrine-customized .bg-blue-600 { background-color: var(--producer-primary, #2563eb) !important; }
+.vitrine-customized .hover\:bg-blue-700:hover { background-color: var(--producer-primary-hover, #1d4ed8) !important; }
+.vitrine-customized .bg-blue-500 { background-color: var(--producer-primary, #3b82f6) !important; }
+.vitrine-customized .text-blue-400 { color: var(--producer-primary, #60a5fa) !important; }
+
 /* ─── Rich text display (prose-lesson) ───────────────────────── */
 .prose-lesson { color: var(--member-text, #d1d5db); }
 .prose-lesson h1 { font-size: 1.5rem; font-weight: 700; margin: 1rem 0 0.5rem; }
