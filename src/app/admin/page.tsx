@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { useUserStore } from "@/stores/user-store";
 import { useCountUp } from "@/hooks/use-count-up";
@@ -76,8 +75,7 @@ function getGreeting() {
 }
 
 export default function AdminDashboardPage() {
-  const { user, collaborator } = useUserStore();
-  const router = useRouter();
+  const { user } = useUserStore();
   const [range, setRange] = useState<DateRangeValue>(() =>
     computeRange("last_30_days")
   );
@@ -85,24 +83,14 @@ export default function AdminDashboardPage() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Mirror admin/layout.tsx:41: the admin shell — and /api/admin/dashboard
+  // Mirror admin/layout.tsx: the admin shell — and /api/admin/dashboard
   // (gated by requireAdminOrCollab) — serve the whole admin team, so
   // ADMIN_COLLABORATOR belongs on this home like an ADMIN, not bounced out.
+  // Trava de Contexto (§6b): o redirect silencioso por role saiu — o layout
+  // renderiza o aviso antes desta página montar; o espelho vira render-guard
+  // (nunca um replace que brigaria com o aviso).
   const isAdminRole =
     user?.role === "ADMIN" || user?.role === "ADMIN_COLLABORATOR";
-
-  useEffect(() => {
-    if (!user) return;
-    if (!isAdminRole) {
-      // C6: STUDENT-with-Collaborator goes to /producer (workspace work),
-      // pure students to /.
-      const isCollabLike =
-        user.role === "PRODUCER" ||
-        user.role === "COLLABORATOR" ||
-        (user.role === "STUDENT" && !!collaborator);
-      router.replace(isCollabLike ? "/producer" : "/");
-    }
-  }, [user, collaborator, router]);
 
   useEffect(() => {
     if (!user || !isAdminRole) return;

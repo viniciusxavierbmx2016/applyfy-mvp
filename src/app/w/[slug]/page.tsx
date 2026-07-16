@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import { CourseCard } from "@/components/course-card";
+import { ContextLockNotice } from "@/components/context-lock-notice";
 import { calculateCourseProgress } from "@/lib/utils";
 import { useUserStore } from "@/stores/user-store";
 import { SkeletonFilters, SkeletonCourseCard } from "@/components/ui/skeleton";
@@ -103,13 +104,14 @@ export default function WorkspaceVitrinePage() {
   const params = useParams<{ slug: string }>();
   const router = useRouter();
   const slug = params.slug;
-  const { user, isLoading: userLoading } = useUserStore();
+  const { user, collaborator, isLoading: userLoading } = useUserStore();
   const [ws, setWs] = useState<WorkspaceInfo | null>(null);
   const [enrolled, setEnrolled] = useState<EnrolledCourse[]>([]);
   const [store, setStore] = useState<StoreCourse[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [suspended, setSuspended] = useState(false);
+  const [blocked, setBlocked] = useState(false);
   const [loadError, setLoadError] = useState(false);
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
@@ -120,10 +122,11 @@ export default function WorkspaceVitrinePage() {
     try {
       const res = await fetch(`/api/w/${slug}/init`);
       if (res.status === 403) {
-        await fetch("/api/auth/logout", { method: "POST" }).catch(() => {});
-        router.replace(
-          `/w/${slug}/login?error=${encodeURIComponent("Você não tem acesso a esta área de membros")}`
-        );
+        // Trava de Contexto (§6b): cross-tenant bloqueia COM AVISO no lugar.
+        // O logout global que vivia aqui SAIU — derrubava a sessão de TODOS
+        // os devices/abas por um simples acesso errado (contradizia o design
+        // do ws-login, que preserva sessões multi-área).
+        setBlocked(true);
         return;
       }
       if (res.status === 503) {
@@ -182,6 +185,27 @@ export default function WorkspaceVitrinePage() {
   function parseBannerPos(): { x: number; y: number } | null {
     if (!ws?.bannerPosition) return null;
     try { const p = JSON.parse(ws.bannerPosition); return { x: p.x ?? 50, y: p.y ?? 50 }; } catch { return null; }
+  }
+
+  // Ajuste α do desenho: o aviso SÓ renderiza com o user resolvido da store —
+  // nunca rotula a sessão com user indefinido (sem user, o effect acima já
+  // manda pro login deste workspace).
+  if (blocked && user) {
+    const isAdminRole =
+      user.role === "ADMIN" || user.role === "ADMIN_COLLABORATOR";
+    const isStudentPure = user.role === "STUDENT" && !collaborator;
+    return (
+      <ContextLockNotice
+        sessionLabel={
+          isAdminRole ? "administrador" : isStudentPure ? "aluno" : "produtor"
+        }
+        description="Você não tem acesso a esta área de membros. Se você é aluno de outro produtor, seu espaço é outro."
+        homeHref={isAdminRole ? "/admin" : isStudentPure ? undefined : "/producer"}
+        resolveStudentHome={isStudentPure}
+        homeLabel="Ir para meu espaço"
+        loginHref={`/w/${slug}/login`}
+      />
+    );
   }
 
   if (suspended) {

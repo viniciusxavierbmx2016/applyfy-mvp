@@ -77,12 +77,16 @@ export default function HomePage() {
         router.replace(`/w/${workspace.slug}`);
       } else {
         fetch("/api/student/workspace")
-          .then((r) => r.ok ? r.json() : null)
+          .then((r) => (r.ok ? r.json() : null))
           .then((d) => {
             if (d?.slug) router.replace(`/w/${d.slug}`);
-            else router.replace("/login?error=sem-workspace");
+            // Trava de Contexto (§6b/d): aluno SEM workspace fica AQUI — o
+            // StudentHome abaixo já trata "nenhum curso" com empty-state.
+            // (O destino antigo era a rota global de login com query de erro,
+            // que redireciona pro login de ADMIN — beco errado pra um aluno.
+            // A Raiz Inteligente assume este caso depois.)
           })
-          .catch(() => router.replace("/login?error=sem-workspace"));
+          .catch(() => {});
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally omitting collaborator: adding would re-fire redirect logic on store updates
