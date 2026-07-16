@@ -111,17 +111,26 @@ export function getLoginTheme(ws: WorkspaceAuthInfo | null) {
   // dark, legible text. Dark boxes (the default and the vast majority) keep the
   // exact white values used before — zero visual change.
   const boxIsLight = isLightColor(boxColor);
-  // 7.13: override explícito do produtor rege o texto PRIMÁRIO; NULL → o
-  // auto-derive por luminância da box (o fallback inteligente de sempre). Os
-  // secundários (muted/label/faint) seguem auto-derivados (tuning de legibilidade).
+  // 7.13: quando o produtor seta loginTextColor, ela rege a TELA INTEIRA — o
+  // texto primário 100% e os secundários com a MESMA hierarquia de opacidade
+  // que o login já usa (subtítulo 0.6 · labels 0.75 · faint/placeholder 0.4),
+  // agora na cor custom via hexToRgba. NULL → o auto-derive por luminância da
+  // box (byte-idêntico ao de sempre). O texto do botão "Entrar" NÃO entra aqui:
+  // ele é branco sobre a loginPrimaryColor (cor do BOTÃO, não da página) — segui-
+  // lo pela cor da página seria a armadilha (texto-da-página sobre cor-do-botão).
+  const customText =
+    ws?.loginTextColor && HEX_RE.test(ws.loginTextColor) ? ws.loginTextColor : null;
   const autoTextColor = boxIsLight ? "#0a0a0a" : "#ffffff";
-  const textColor =
-    ws?.loginTextColor && HEX_RE.test(ws.loginTextColor)
-      ? ws.loginTextColor
-      : autoTextColor;
-  const textColorMuted = boxIsLight ? "rgba(0,0,0,0.6)" : "rgba(255,255,255,0.6)";
-  const textColorLabel = boxIsLight ? "rgba(0,0,0,0.7)" : "rgba(255,255,255,0.75)";
-  const textColorFaint = boxIsLight ? "rgba(0,0,0,0.4)" : "rgba(255,255,255,0.35)";
+  const textColor = customText ?? autoTextColor;
+  const textColorMuted = customText
+    ? hexToRgba(customText, 0.6)
+    : boxIsLight ? "rgba(0,0,0,0.6)" : "rgba(255,255,255,0.6)";
+  const textColorLabel = customText
+    ? hexToRgba(customText, 0.75)
+    : boxIsLight ? "rgba(0,0,0,0.7)" : "rgba(255,255,255,0.75)";
+  const textColorFaint = customText
+    ? hexToRgba(customText, 0.4)
+    : boxIsLight ? "rgba(0,0,0,0.4)" : "rgba(255,255,255,0.35)";
   const inputBg = boxIsLight ? "rgba(0,0,0,0.04)" : "rgba(255,255,255,0.06)";
   const inputBgFocus = boxIsLight ? "rgba(0,0,0,0.06)" : "rgba(255,255,255,0.08)";
   const inputBorder = boxIsLight ? "rgba(0,0,0,0.12)" : "rgba(255,255,255,0.1)";
