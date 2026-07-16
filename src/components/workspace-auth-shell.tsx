@@ -19,6 +19,8 @@ export interface WorkspaceAuthInfo {
   loginBoxOpacity?: number | null;
   loginSideColor?: string | null;
   loginLinkColor?: string | null;
+  loginTextColor?: string | null;
+  loginSecondaryTextColor?: string | null;
 }
 
 const DEFAULT_BG = "#0a0a1a";
@@ -110,10 +112,42 @@ export function getLoginTheme(ws: WorkspaceAuthInfo | null) {
   // dark, legible text. Dark boxes (the default and the vast majority) keep the
   // exact white values used before — zero visual change.
   const boxIsLight = isLightColor(boxColor);
-  const textColor = boxIsLight ? "#0a0a0a" : "#ffffff";
-  const textColorMuted = boxIsLight ? "rgba(0,0,0,0.6)" : "rgba(255,255,255,0.6)";
-  const textColorLabel = boxIsLight ? "rgba(0,0,0,0.7)" : "rgba(255,255,255,0.75)";
-  const textColorFaint = boxIsLight ? "rgba(0,0,0,0.4)" : "rgba(255,255,255,0.35)";
+  // 7.13: quando o produtor seta loginTextColor, ela rege a TELA INTEIRA — o
+  // texto primário 100% e os secundários com a MESMA hierarquia de opacidade
+  // que o login já usa (subtítulo 0.6 · labels 0.75 · faint/placeholder 0.4),
+  // agora na cor custom via hexToRgba. NULL → o auto-derive por luminância da
+  // box (byte-idêntico ao de sempre). O texto do botão "Entrar" NÃO entra aqui:
+  // ele é branco sobre a loginPrimaryColor (cor do BOTÃO, não da página) — segui-
+  // lo pela cor da página seria a armadilha (texto-da-página sobre cor-do-botão).
+  const customText =
+    ws?.loginTextColor && HEX_RE.test(ws.loginTextColor) ? ws.loginTextColor : null;
+  const customSecondary =
+    ws?.loginSecondaryTextColor && HEX_RE.test(ws.loginSecondaryTextColor)
+      ? ws.loginSecondaryTextColor
+      : null;
+  const autoTextColor = boxIsLight ? "#0a0a0a" : "#ffffff";
+  const textColor = customText ?? autoTextColor;
+  // Emenda 3: o texto do botão "Entrar" SEGUE a cor principal (decisão do dono,
+  // vetando o branco-fixo; contraste = responsabilidade do produtor, que controla
+  // a cor do botão à parte). NULL → branco de hoje.
+  const buttonTextColor = customText ?? "#ffffff";
+  // Secundários (subtítulo + labels) — cascata: loginSecondaryTextColor setada →
+  // a cor · NULL → a hierarquia por opacidade da principal (emenda 2) · tudo NULL →
+  // auto-derive por luminância da box (de sempre). Placeholders (faint) ficam SEMPRE
+  // na principal a 40%.
+  const textColorMuted = customSecondary
+    ? customSecondary
+    : customText
+      ? hexToRgba(customText, 0.6)
+      : boxIsLight ? "rgba(0,0,0,0.6)" : "rgba(255,255,255,0.6)";
+  const textColorLabel = customSecondary
+    ? customSecondary
+    : customText
+      ? hexToRgba(customText, 0.75)
+      : boxIsLight ? "rgba(0,0,0,0.7)" : "rgba(255,255,255,0.75)";
+  const textColorFaint = customText
+    ? hexToRgba(customText, 0.4)
+    : boxIsLight ? "rgba(0,0,0,0.4)" : "rgba(255,255,255,0.35)";
   const inputBg = boxIsLight ? "rgba(0,0,0,0.04)" : "rgba(255,255,255,0.06)";
   const inputBgFocus = boxIsLight ? "rgba(0,0,0,0.06)" : "rgba(255,255,255,0.08)";
   const inputBorder = boxIsLight ? "rgba(0,0,0,0.12)" : "rgba(255,255,255,0.1)";
@@ -136,6 +170,7 @@ export function getLoginTheme(ws: WorkspaceAuthInfo | null) {
     boxBackground,
     boxIsLight,
     textColor,
+    buttonTextColor,
     textColorMuted,
     textColorLabel,
     textColorFaint,
@@ -284,6 +319,7 @@ function ThemedRoot({
           ["--wa-primary-hover" as string]: hover,
           ["--wa-primary-light" as string]: light,
           ["--wa-text" as string]: theme.textColor,
+          ["--wa-button-text" as string]: theme.buttonTextColor,
           ["--wa-text-muted" as string]: theme.textColorMuted,
           ["--wa-text-label" as string]: theme.textColorLabel,
           ["--wa-text-faint" as string]: theme.textColorFaint,
@@ -422,4 +458,4 @@ export const authErrorCls =
   "mb-4 p-3 rounded-xl bg-red-500/10 border border-red-400/25 text-red-200 text-sm";
 
 export const authSubmitCls =
-  "wa-submit w-full h-12 rounded-xl text-white font-semibold shadow-lg transition disabled:opacity-60 disabled:cursor-not-allowed";
+  "wa-submit w-full h-12 rounded-xl text-[var(--wa-button-text,#ffffff)] font-semibold shadow-lg transition disabled:opacity-60 disabled:cursor-not-allowed";

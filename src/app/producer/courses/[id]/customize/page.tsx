@@ -113,6 +113,10 @@ export default function CourseCustomizePage() {
   });
   const [savingSupportBtn, setSavingSupportBtn] = useState(false);
   const [uploadingSupportImg, setUploadingSupportImg] = useState(false);
+  // 7.12 — fade do banner do curso (molde do support-button: estado + save via PUT genérico)
+  const [fade, setFade] = useState<{ enabled: boolean; color: string | null; opacity: number }>({ enabled: true, color: null, opacity: 1 });
+  const [fadeSaved, setFadeSaved] = useState<{ enabled: boolean; color: string | null; opacity: number }>({ enabled: true, color: null, opacity: 1 });
+  const [savingFade, setSavingFade] = useState(false);
   const { confirm, ConfirmDialog } = useConfirm();
 
   function showToast(msg: string, error = false) {
@@ -149,6 +153,13 @@ export default function CourseCustomizePage() {
           };
           setSupportBtn(loaded);
           setSupportBtnSaved(loaded);
+          const loadedFade = {
+            enabled: c.courseBannerFadeEnabled !== false,
+            color: typeof c.courseBannerFadeColor === "string" ? c.courseBannerFadeColor : null,
+            opacity: typeof c.courseBannerFadeOpacity === "number" ? c.courseBannerFadeOpacity : 1,
+          };
+          setFade(loadedFade);
+          setFadeSaved(loadedFade);
         }
         const customRes = await fetch(`/api/producer/courses/${courseId}/customize`);
 
@@ -303,6 +314,38 @@ export default function CourseCustomizePage() {
       setSavingSupportBtn(false);
     }
   }
+
+  async function saveFade() {
+    setSavingFade(true);
+    try {
+      const color = fade.color && HEX_RE.test(fade.color) ? fade.color : null;
+      const res = await fetch(`/api/courses/${courseId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          courseBannerFadeEnabled: fade.enabled,
+          courseBannerFadeColor: color,
+          courseBannerFadeOpacity: fade.opacity,
+        }),
+      });
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        showToast(d?.error || "Erro ao salvar", true);
+        return;
+      }
+      setFadeSaved({ ...fade, color });
+      showToast("Fade do banner salvo");
+    } catch {
+      showToast("Erro de rede", true);
+    } finally {
+      setSavingFade(false);
+    }
+  }
+
+  const fadeDirty =
+    fade.enabled !== fadeSaved.enabled ||
+    fade.color !== fadeSaved.color ||
+    fade.opacity !== fadeSaved.opacity;
 
   const supportBtnDirty =
     supportBtn.color !== supportBtnSaved.color ||
@@ -512,6 +555,82 @@ export default function CourseCustomizePage() {
                 ))}
               </div>
             )}
+          </div>
+
+          {/* SEÇÃO 4.4 — Fade do banner (7.12) — molde do Botão de Suporte */}
+          <div className="mb-8 pt-8 border-t border-gray-200 dark:border-white/5">
+            <h2 className="text-sm font-medium text-gray-900 dark:text-white mb-0.5">
+              Fade do banner
+              <HelpTooltip text="Controla o degradê que funde o banner do curso com o fundo da página. Sem cor, usa o padrão (branco/escuro conforme o tema)." />
+            </h2>
+            <p className="text-xs text-gray-500 mb-4">
+              Aparece sobre o banner do curso na área de membros.
+            </p>
+
+            <div className="bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl p-4 space-y-4">
+              <label className="flex items-center justify-between gap-3">
+                <span className="text-sm text-gray-700 dark:text-gray-300">Exibir o fade</span>
+                <input
+                  type="checkbox"
+                  checked={fade.enabled}
+                  onChange={(e) => setFade((f) => ({ ...f, enabled: e.target.checked }))}
+                  className="w-4 h-4 rounded accent-[var(--producer-primary,#3b82f6)] cursor-pointer"
+                />
+              </label>
+
+              <div>
+                <label className="block text-[11px] font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Cor do fade
+                </label>
+                <div className="flex items-center gap-2">
+                  <span
+                    className="w-9 h-9 rounded-md border border-gray-200 dark:border-white/10 relative overflow-hidden flex-shrink-0"
+                    style={{ backgroundColor: HEX_RE.test(fade.color || "") ? fade.color! : "#0a0a1a" }}
+                  >
+                    <input
+                      type="color"
+                      value={HEX_RE.test(fade.color || "") ? fade.color! : "#0a0a1a"}
+                      onChange={(e) => setFade((f) => ({ ...f, color: e.target.value }))}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                    />
+                  </span>
+                  <input
+                    type="text"
+                    value={fade.color || ""}
+                    onChange={(e) => setFade((f) => ({ ...f, color: e.target.value || null }))}
+                    placeholder="vazio = padrão do tema"
+                    maxLength={7}
+                    className="flex-1 px-3 py-2 text-sm font-mono bg-white dark:bg-gray-800 border border-gray-200 dark:border-white/10 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:border-primary/50"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Intensidade ({Math.round(fade.opacity * 100)}%)
+                </label>
+                <input
+                  type="range"
+                  min={0}
+                  max={1}
+                  step={0.05}
+                  value={fade.opacity}
+                  onChange={(e) => setFade((f) => ({ ...f, opacity: Number(e.target.value) }))}
+                  className="w-full accent-[var(--producer-primary,#3b82f6)] cursor-pointer"
+                />
+              </div>
+
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  onClick={saveFade}
+                  disabled={savingFade || !fadeDirty}
+                  className="px-4 py-2 bg-primary hover:bg-primary disabled:opacity-50 text-white text-sm font-medium rounded-lg transition-colors"
+                >
+                  {savingFade ? "Salvando…" : "Salvar fade"}
+                </button>
+              </div>
+            </div>
           </div>
 
           {/* SEÇÃO 4.5 — Botão de Suporte (F2) */}

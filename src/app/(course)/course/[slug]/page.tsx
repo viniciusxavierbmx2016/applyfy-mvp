@@ -63,6 +63,9 @@ interface CourseDetail {
   reviewsEnabled?: boolean;
   showStudentCount?: boolean;
   showCourseInfoBox?: boolean;
+  courseBannerFadeEnabled?: boolean;
+  courseBannerFadeColor?: string | null;
+  courseBannerFadeOpacity?: number | null;
   enrollmentCount?: number;
   supportEmail?: string | null;
   supportWhatsapp?: string | null;
@@ -80,6 +83,14 @@ interface MyReview {
 }
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
+// Local helper (mirror da vitrine w/[slug]/page.tsx) — hexToRgba não vive em color-utils.
+function hexToRgba(hex: string, alpha: number): string {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
 function releaseInfo(base: Date | null, days: number) {
   const baseMs = base ? new Date(base).getTime() : Date.now();
   const releaseTime = baseMs + Math.max(0, days) * MS_PER_DAY;
@@ -454,8 +465,30 @@ export default function CourseHomePage() {
             style={course.bannerPosition ? (() => { try { const p = JSON.parse(course.bannerPosition); return { objectPosition: `${p.x}% ${p.y}%` }; } catch { return undefined; } })() : undefined}
             priority
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-white via-white/0 to-transparent dark:from-gray-950 dark:via-gray-950/0 dark:to-transparent" />
-          <div className="absolute inset-0 bg-gradient-to-r from-white/30 via-transparent to-white/30 dark:from-gray-950/40 dark:via-transparent dark:to-gray-950/40" />
+          {/* Fade parametrizado (7.12) — espelha o molde da vitrine w/[slug]/page.tsx.
+              Default (enabled + sem cor) = os 2 gradientes de hoje (byte-idêntico). */}
+          {course.courseBannerFadeEnabled !== false && (() => {
+            const fadeColor =
+              course.courseBannerFadeColor &&
+              /^#[0-9a-fA-F]{6}$/.test(course.courseBannerFadeColor)
+                ? course.courseBannerFadeColor
+                : null;
+            const fadeOpacity = course.courseBannerFadeOpacity ?? 1;
+            return fadeColor ? (
+              <div
+                className="absolute inset-0"
+                style={{
+                  background: `linear-gradient(to top, ${fadeColor} 0%, ${hexToRgba(fadeColor, 0.3)} 50%, transparent 100%)`,
+                  opacity: fadeOpacity,
+                }}
+              />
+            ) : (
+              <>
+                <div className="absolute inset-0 bg-gradient-to-t from-white via-white/0 to-transparent dark:from-gray-950 dark:via-gray-950/0 dark:to-transparent" style={fadeOpacity !== 1 ? { opacity: fadeOpacity } : undefined} />
+                <div className="absolute inset-0 bg-gradient-to-r from-white/30 via-transparent to-white/30 dark:from-gray-950/40 dark:via-transparent dark:to-gray-950/40" style={fadeOpacity !== 1 ? { opacity: fadeOpacity } : undefined} />
+              </>
+            );
+          })()}
         </div>
       )}
 

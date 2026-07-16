@@ -61,6 +61,8 @@ export default function EditWorkspacePage() {
     useState<number>(DEFAULT_BOX_OPACITY);
   const [loginSideColor, setLoginSideColor] = useState(DEFAULT_SIDE);
   const [loginLinkColor, setLoginLinkColor] = useState(DEFAULT_LINK);
+  const [loginTextColor, setLoginTextColor] = useState("");
+  const [loginSecondaryTextColor, setLoginSecondaryTextColor] = useState("");
   const [uploadingBg, setUploadingBg] = useState(false);
   const [uploadingLoginLogo, setUploadingLoginLogo] = useState(false);
 
@@ -135,6 +137,8 @@ export default function EditWorkspacePage() {
           );
           setLoginSideColor(found.loginSideColor || DEFAULT_SIDE);
           setLoginLinkColor(found.loginLinkColor || DEFAULT_LINK);
+          setLoginTextColor(found.loginTextColor || "");
+          setLoginSecondaryTextColor(found.loginSecondaryTextColor || "");
           setAccentColor(found.accentColor || "");
           setWsBannerUrl(found.bannerUrl || null);
           setWsBannerPos(parsePosition(found.bannerPosition));
@@ -364,6 +368,16 @@ export default function EditWorkspacePage() {
         setSaving(false);
         return;
       }
+      if (loginTextColor && !HEX_RE.test(loginTextColor)) {
+        setError("Cor do texto deve ser hex (#RRGGBB)");
+        setSaving(false);
+        return;
+      }
+      if (loginSecondaryTextColor && !HEX_RE.test(loginSecondaryTextColor)) {
+        setError("Cor dos textos secundários deve ser hex (#RRGGBB)");
+        setSaving(false);
+        return;
+      }
       payload.loginLayout = loginLayout;
       payload.loginBgColor = loginBgColor || null;
       payload.loginPrimaryColor = loginPrimaryColor || null;
@@ -375,6 +389,8 @@ export default function EditWorkspacePage() {
       payload.loginBoxOpacity = loginBoxOpacity;
       payload.loginSideColor = loginSideColor || null;
       payload.loginLinkColor = loginLinkColor || null;
+      payload.loginTextColor = loginTextColor || null;
+      payload.loginSecondaryTextColor = loginSecondaryTextColor || null;
 
       // Access-email customization. Colors only when valid hex (server rejects
       // malformed); text trimmed → null when empty. Defaults restore on empty.
@@ -547,6 +563,10 @@ export default function EditWorkspacePage() {
             setLoginPrimaryColor={setLoginPrimaryColor}
             loginLinkColor={loginLinkColor}
             setLoginLinkColor={setLoginLinkColor}
+            loginTextColor={loginTextColor}
+            setLoginTextColor={setLoginTextColor}
+            loginSecondaryTextColor={loginSecondaryTextColor}
+            setLoginSecondaryTextColor={setLoginSecondaryTextColor}
             loginBgColor={loginBgColor}
             setLoginBgColor={setLoginBgColor}
             loginBoxColor={loginBoxColor}

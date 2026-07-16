@@ -88,6 +88,8 @@ model Workspace {
   loginBoxOpacity   Float?   @default(0.85)
   loginSideColor    String?  @default("#0a0a1a")
   loginLinkColor    String?  @default("#818cf8")
+  loginTextColor    String?
+  loginSecondaryTextColor String?
   accentColor       String?
   bannerUrl         String?
   bannerPosition    String?  @default("{\"x\":50,\"y\":50}")
@@ -238,6 +240,9 @@ model Course {
   memberTextColor                 String?
   memberWelcomeText               String?
   memberLayoutStyle               String?   @default("netflix")
+  courseBannerFadeEnabled         Boolean   @default(true)
+  courseBannerFadeColor           String?
+  courseBannerFadeOpacity         Float?    @default(1)
   featured                        Boolean   @default(false)
   category                        String?
   order                           Int       @default(0)
