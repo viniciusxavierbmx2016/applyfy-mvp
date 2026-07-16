@@ -81,6 +81,8 @@ STAFF_ROLES = { PRODUCER, ADMIN, COLLABORATOR, ADMIN_COLLABORATOR }
 
 **O BUG C era:** `/api/auth/password` (troca de senha) validava a **global** → aluno puro (que só conhece a mc- da credencial) tomava "senha atual incorreta". Corrigido com a rota escopada `/api/w/[slug]/password` (`9fac2d9`).
 
+**A MASTER PASSWORD** (`Workspace.masterPassword`, plaintext — skeleton-key do produtor) é um 3º caminho no ws-login (bloco 1, prioridade máxima). ⚠️ **Gate = VÍNCULO DE ALUNO, não role** (corrigido em `1fdfd1e`/PM 7.8): `Enrollment ACTIVE não-expirado no ws` (`isEnrollmentActive`), qualquer role — **nunca** owner/collab sem matrícula (esses usam a global). Antes gateava `role === "STUDENT"` → cega p/ 14 híbridos reais (produtor que é aluno de outro produtor). Sessão nasce via magic-link (AAL1); híbrido **com MFA** é rejeitado pelo `getCurrentUser` AAL-gate (limitação declarada). Não rotaciona senha nenhuma.
+
 ---
 
 ## 5) ESTADO (puxado do PLANO-MESTRE)
@@ -92,6 +94,7 @@ STAFF_ROLES = { PRODUCER, ADMIN, COLLABORATOR, ADMIN_COLLABORATOR }
 - BUG A materials upload `f2ea405` · **BUG B** admin-collab dashboard `4ad99f5` · **BUG C** troca senha aluno `9fac2d9` · **2.4a** rateLimit stopgap 2 rotas `c3bad5a` (ex-"1.2/1.3" — rebatizado p/ não colidir com os itens 1.2/1.3 da FASE 1) · **5.4** CSV import no editor de curso `2c2ef5b` · **5.3** toggle box de info do curso `943b8e4` (client demand #3).
 - **BUG C-irmão** 🟢 housekeeping (hipótese "tranca" refutada; achados: código morto + comentário errado + resend sem senha).
 - **Trava de Contexto FASE 1 (§6b)** ✅ `9d8b7a2` — aviso acionável no lugar de redirect/landing/logout-global; mata Órfão 2 + BUG D; sair local; botão do aluno resolve via student-workspace (β). Ver PM 7.6.
+- **Master password híbridos** ✅ `1fdfd1e` — gate da master = vínculo de aluno (enrollment ACTIVE), não role; destravou 14 híbridos reais; fechou looseness do EXPIRED; edge MFA declarado. Ver PM 7.8 + §4.
 
 **ABERTO:**
 - 1.5, 1.6 (convite) · 2.4 (rate-limit: store+origem; 2.4a stopgap ✅; **input**: balde por-segmento — chave por-rota no redesign; pivô WAF em avaliação) · 2.5 (CSP) · 4.5 (console.error) · FASE 3 (email A retry + B EmailLog) · FASE 5 quick-wins (5.1 custom domain / 5.2 admin-nav integrations) · FASE 6 (épico multi-gateway) · FASE 9 (débito/QA).
