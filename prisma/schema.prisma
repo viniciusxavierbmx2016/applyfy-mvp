@@ -89,6 +89,7 @@ model Workspace {
   loginSideColor    String?  @default("#0a0a1a")
   loginLinkColor    String?  @default("#818cf8")
   loginTextColor    String?
+  loginSecondaryTextColor String?
   accentColor       String?
   bannerUrl         String?
   bannerPosition    String?  @default("{\"x\":50,\"y\":50}")

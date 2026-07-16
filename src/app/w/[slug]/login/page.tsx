@@ -33,6 +33,7 @@ export default async function WorkspaceLoginPage({
       loginSideColor: true,
       loginLinkColor: true,
       loginTextColor: true,
+      loginSecondaryTextColor: true,
     },
   });
 

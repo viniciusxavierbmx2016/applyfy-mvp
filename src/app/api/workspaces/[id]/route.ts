@@ -47,6 +47,7 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
       "loginSideColor",
       "loginLinkColor",
       "loginTextColor",
+      "loginSecondaryTextColor",
       "accentColor",
       "emailPrimaryColor",
       "emailBgColor",

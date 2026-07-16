@@ -33,6 +33,7 @@ export default async function WorkspaceResetPasswordPage({
       loginSideColor: true,
       loginLinkColor: true,
       loginTextColor: true,
+      loginSecondaryTextColor: true,
       accentColor: true,
     },
   });

@@ -5,3 +5,4 @@ ALTER TABLE "Course" ADD COLUMN "courseBannerFadeOpacity" DOUBLE PRECISION DEFAU
 
 -- AlterTable
 ALTER TABLE "Workspace" ADD COLUMN "loginTextColor" TEXT;
+ALTER TABLE "Workspace" ADD COLUMN "loginSecondaryTextColor" TEXT;
