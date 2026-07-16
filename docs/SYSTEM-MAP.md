@@ -44,17 +44,23 @@ Regra do Vinicius: "cada um vai pro lugar do seu link". Estado atual:
 | PRODUCER em `/producer/login` | `/producer` | `/producer` | ✅ OK | [código] |
 | COLLABORATOR / STUDENT-collab | `/producer` | `/producer` | ✅ OK | [código] |
 | STUDENT em `/w/{slug}/login` | `/w/{slug}` (vitrine) | `/w/{slug}` | ✅ OK | [código] |
-| autenticado que acessa `/` (apex) | seu lugar | cookie `active_workspace_slug`→`/w/{slug}`, senão `/producer` | ⚠️ **QUEBRADO p/ aluno sem cookie** (BUG D) | [código] |
+| autenticado que acessa `/` (apex) | seu lugar | cookie `active_workspace_slug`→`/w/{slug}`, senão `/producer` → **aviso da Trava com resolução real** | ✅ **FEITO** (Trava `9d8b7a2` — BUG D morto) | **[browser]** (matriz 16 passos) |
 | STUDENT deslogado num curso | `/w/{slug}/login` | `/producer/login` | ⚠️ **esquisito** (candidato UX) | [código] |
 
-> **Prova:** `[browser]` = comportamento verificado ao vivo num navegador. `[código]` = lido no código, **não** testado em runtime. **Só o ADMIN_COLLABORATOR foi [browser]** (BUG B) — os demais ✅ são inferência do código; para rigor total, tratar como "a confirmar".
+> **Prova:** `[browser]` = comportamento verificado ao vivo num navegador. `[código]` = lido no código, **não** testado em runtime.
 
-**⚠️ Órfãos de roteamento registrados (BUG B, NÃO corrigidos):**
-- `producer/layout.tsx:34` — `isStaff` NÃO inclui ADMIN_COLLABORATOR → é o **terminal** que joga na `/landing`.
-- `proxy.ts:88` — role-blind, `"/"`→`/producer`.
-- **BUG D** — STUDENT logado sem cookie de ws e sem Collaborator → `/landing`.
-- `sidebar.tsx:392` — logo `href="/"` → re-expulsa ADMIN_COLLABORATOR.
-- `landing:98` — CTA "Entrar" → `/producer/login` (rejeita ADMIN_COLLABORATOR com 403).
+**⚠️ CORREÇÕES PROVADAS na Trava (2026-07-15) — o que a investigação #1 tinha errado:**
+- **(i) Client-nav PASSA pelo middleware.** A afirmação "client-nav não passa pelo proxy" estava **ERRADA** — requests RSC de `<Link>`/`router.replace` são GETs que o matcher intercepta (provado por curl com header `RSC: 1`: 307 idêntico). Foi a raiz do β (clique morto: 307 pra rota atual = no-op).
+- **(ii) ADMIN × `/w/[slug]` = ACESSA por design.** O gate do init exceptua ADMIN (`init/route.ts:55` — `if (user.role !== "ADMIN")`); `hasWorkspaceAccess` documenta "callers should skip for ADMIN". Por isso a etapa ③ da matriz ENTROU em vez de avisar.
+- **(iii) `(dashboard)/page` é INALCANÇÁVEL para qualquer authed** — o proxy sempre redireciona `/` antes (server E client-nav, provado). O StudentHome só existiria pós-Raiz.
+
+**⚠️ Órfãos de roteamento (estado pós-Trava `9d8b7a2`):**
+- ~~`producer/layout.tsx:34` — isStaff sem ADMIN_COLLABORATOR → `/landing`~~ ✅ **MORTO** (aviso da Trava).
+- ~~**BUG D** — STUDENT sem cookie → `/landing`~~ ✅ **MORTO** (aviso + resolução via student-workspace).
+- `proxy.ts:88` — role-blind, `"/"`→`/producer` (vivo; a Raiz §6a assume).
+- `sidebar.tsx:392` — logo `href="/"` (vivo, MITIGADO: hoje pousa no aviso da Trava, não na landing).
+- `landing:98` — CTA "Entrar" → `/producer/login` (rejeita ADMIN_COLLABORATOR com 403) (vivo).
+- `(auth)/login/page.tsx:4` — **`/login` → redirect `/admin/login`** (achado da Trava; o antigo destino "sem-workspace" do dashboard apontava pra cá — removido no `9d8b7a2`; a rota em si segue viva).
 
 ---
 
@@ -85,18 +91,19 @@ STAFF_ROLES = { PRODUCER, ADMIN, COLLABORATOR, ADMIN_COLLABORATOR }
 - FASE 4: 4.1 (via 1.12) · 4.2 `022f933` · 4.3 `159fc0f` · 4.4 (condição eliminada) ✅. Aberto: **4.5** console.error (forma decidida: guard-por-status — `console.error` só ≥500; aguardando implementação).
 - BUG A materials upload `f2ea405` · **BUG B** admin-collab dashboard `4ad99f5` · **BUG C** troca senha aluno `9fac2d9` · **2.4a** rateLimit stopgap 2 rotas `c3bad5a` (ex-"1.2/1.3" — rebatizado p/ não colidir com os itens 1.2/1.3 da FASE 1) · **5.4** CSV import no editor de curso `2c2ef5b` · **5.3** toggle box de info do curso `943b8e4` (client demand #3).
 - **BUG C-irmão** 🟢 housekeeping (hipótese "tranca" refutada; achados: código morto + comentário errado + resend sem senha).
+- **Trava de Contexto FASE 1 (§6b)** ✅ `9d8b7a2` — aviso acionável no lugar de redirect/landing/logout-global; mata Órfão 2 + BUG D; sair local; botão do aluno resolve via student-workspace (β). Ver PM 7.6.
 
 **ABERTO:**
 - 1.5, 1.6 (convite) · 2.4 (rate-limit: store+origem; 2.4a stopgap ✅; **input**: balde por-segmento — chave por-rota no redesign; pivô WAF em avaliação) · 2.5 (CSP) · 4.5 (console.error) · FASE 3 (email A retry + B EmailLog) · FASE 5 quick-wins (5.1 custom domain / 5.2 admin-nav integrations) · FASE 6 (épico multi-gateway) · FASE 9 (débito/QA).
-- Órfãos de roteamento do BUG B (§3) · BUG C-irmão housekeeping.
+- **Raiz Inteligente (§6a / PM 7.7)** — decisões travadas, sem código · Órfãos restantes do §3 (proxy role-blind :88 · sidebar logo `href="/"` · landing CTA · `/login`→`/admin/login`) · BUG C-irmão housekeeping.
 
 ---
 
-## 6) REGRAS DE NEGÓCIO NOVAS — **DECIDIDO, não implementado**
+## 6) REGRAS DE NEGÓCIO NOVAS — 6b ✅ implementado (Fase 1) · 6a decidido, sem código
 
-Definidas pelo Vinicius, ainda **sem código**:
+Definidas pelo Vinicius:
 
-### 6a) Raiz Inteligente — **DECIDIDO, não implementado**
+### 6a) Raiz Inteligente — **DECIDIDO, não implementado** (decisões finais travadas no PM 7.7: binária · STUDENT-collab=staff · lista inline só mediante senha + rate-limit dia-um · reuso producer-login/student-workspaces · assume o sem-workspace)
 O apex `/` recebe **email + senha** e IDENTIFICA o tipo de conta, ramificando:
 - **PRODUCER** → **LOGA na própria raiz** → vai pro painel `/producer`.
 - **conta que é aluno E producer** → **tenta logar**; se a senha estiver errada → erro **"senha incorreta"** (pode confirmar que a conta existe, porque ela é produtor).
@@ -106,16 +113,17 @@ O apex `/` recebe **email + senha** e IDENTIFICA o tipo de conta, ramificando:
 
 **Já existe (metade da lógica):** `POST /api/auth/student-workspaces` (67 linhas) — recebe `email`, agrupa workspaces por `Enrollment` ACTIVE (`isActive`), e **responde SEMPRE `{ok:true}`** (anti-enumeração ✅). MAS: hoje ele **ENVIA a lista por EMAIL** (`studentWorkspacesList` template), **não** a mostra inline; **não valida senha**; **não distingue producer/aluno**. → Reutilizável: o agrupamento + o anti-enum já estão prontos; falta o fluxo de identificar-e-ramificar na raiz + render inline da lista + nova-guia. **Não é item pequeno** (é um novo fluxo de auth na raiz), mas parte da base existe.
 
-### 6b) Trava de Contexto — **DECIDIDO, não implementado** (opção A: bloqueia COM AVISO)
-Cada área é **isolada**. Quem está logado numa área e tenta invadir outra é **BLOQUEADO com aviso claro** (não redirecionado em silêncio, não despejado na landing). Regra: **fica onde está; pra mudar de área, desloga primeiro.**
+### 6b) Trava de Contexto — ✅ **IMPLEMENTADO (FASE 1, merge `9d8b7a2`)**
+Cada área é isolada por ROLE nos guards existentes (proxy é role-blind — ficou fora). Quem tenta invadir outra área vê o **`ContextLockNotice`** no lugar (HTTP 200, URL preservada): sessão atual nomeada + botão "Ir para [meu lugar]" + "Sair desta conta" (**signOut LOCAL** — nunca revoga outros devices/abas).
 
-| Logado em | Tenta acessar | Ação |
+| Logado como | Tenta | Ação implementada |
 |---|---|---|
-| `/admin` | `/producer` **ou** `/w/{slug}` | 🚫 BLOQUEIA + aviso |
-| `/producer` | `/admin` **ou** `/w/{slug}` | 🚫 BLOQUEIA + aviso |
-| workspace A (`/w/A`) | workspace B (`/w/B`) **ou** `/producer` **ou** `/admin` | 🚫 BLOQUEIA + aviso |
+| ADMIN / ADMIN_COLLABORATOR | `/producer` | 🚫 aviso (decisão do dono: admin travado; **impersonate é o caminho de suporte**) |
+| PRODUCER / COLLABORATOR / STUDENT-collab | `/admin` | 🚫 aviso |
+| STUDENT puro | `/producer` ou `/admin` | 🚫 aviso; botão resolve o ws real via `/api/student/workspace` (β); sem workspace → mensagem honesta |
+| qualquer um sem vínculo | `/w/{slug}` | 🚫 aviso no 403 do init (o **logout global saiu**) |
 
-Relacionado aos órfãos do §3 (hoje o sistema redireciona/despeja em vez de bloquear-com-aviso).
+**EXCEÇÕES decididas e provadas:** `/w/**` é governado por **VÍNCULO** (`hasWorkspaceAccess`), não por role — produtor-matriculado acessa como aluno; **ADMIN bypassa o init por design** (`init/route.ts:55`) → ADMIN entra em qualquer vitrine; **impersonate** pousa em `/producer` como o produtor-alvo (nenhuma trava dispara); **`?preview`** do editor intocado.
 
 ---
 
