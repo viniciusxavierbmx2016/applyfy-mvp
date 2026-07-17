@@ -1,10 +1,17 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import { PlatformLogo } from "@/components/platform-logo";
+
+interface StudentWorkspaceItem {
+  slug: string;
+  name: string;
+  logoUrl: string | null;
+}
 
 function ProducerLoginForm() {
   const searchParams = useSearchParams();
@@ -13,10 +20,13 @@ function ProducerLoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const [errorRole, setErrorRole] = useState<
-    "ADMIN" | "STUDENT" | "COLLABORATOR" | null
-  >(null);
   const [loading, setLoading] = useState(false);
+  // Raiz (7.7): a lista de áreas do aluno (null = form normal; [] = conta
+  // sem área — mensagem honesta) e o destino pós-MFA vindo do servidor.
+  const [studentWorkspaces, setStudentWorkspaces] = useState<
+    StudentWorkspaceItem[] | null
+  >(null);
+  const [postLoginRedirect, setPostLoginRedirect] = useState("/");
   const [mfaRequired, setMfaRequired] = useState(false);
   const [factorId, setFactorId] = useState("");
   const [mfaCode, setMfaCode] = useState("");
@@ -29,7 +39,6 @@ function ProducerLoginForm() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
-    setErrorRole(null);
     setLoading(true);
     try {
       const res = await fetch("/api/auth/producer-login", {
@@ -40,19 +49,21 @@ function ProducerLoginForm() {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        const msg: string = data.error || `Erro ao entrar (${res.status})`;
-        setError(msg);
-        if (msg.includes("/admin/login")) setErrorRole("ADMIN");
-        else if (msg.toLowerCase().includes("link do seu curso"))
-          setErrorRole("STUDENT");
-        else if (msg.toLowerCase().includes("workspace onde você colabora"))
-          setErrorRole("COLLABORATOR");
+        setError(data.error || `Erro ao entrar (${res.status})`);
+        setLoading(false);
+        return;
+      }
+      // Raiz (7.7): a senha bateu numa credencial de aluno → lista inline
+      // (nenhuma sessão foi criada; cada item abre o ws-login em nova guia).
+      if (data.studentWorkspaces) {
+        setStudentWorkspaces(data.studentWorkspaces);
         setLoading(false);
         return;
       }
       if (data.requiresMfa) {
         setMfaRequired(true);
         setFactorId(data.factorId);
+        setPostLoginRedirect(data.redirect || "/");
         setLoading(false);
         return;
       }
@@ -94,7 +105,7 @@ function ProducerLoginForm() {
         setLoading(false);
         return;
       }
-      window.location.href = "/";
+      window.location.href = postLoginRedirect;
     } catch {
       setMfaError("Erro ao verificar código");
       setLoading(false);
@@ -114,7 +125,10 @@ function ProducerLoginForm() {
             />
           </div>
           <p className="text-sm font-medium text-primary">
-            Área do produtor e colaborador
+            Entre na sua conta
+          </p>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            Produtores, colaboradores e alunos
           </p>
         </div>
 
@@ -132,18 +146,76 @@ function ProducerLoginForm() {
           {error && (
             <div className="mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-500 text-sm">
               <p>{error}</p>
-              {errorRole === "ADMIN" && (
-                <Link
-                  href="/admin/login"
-                  className="inline-block mt-2 text-primary hover:text-primary font-medium"
-                >
-                  Ir para login do admin →
-                </Link>
-              )}
             </div>
           )}
 
-          {mfaRequired ? (
+          {studentWorkspaces !== null ? (
+            <div>
+              <div className="text-center mb-6">
+                <h2 className="text-lg font-bold text-gray-900 dark:text-white">
+                  Suas áreas de membros
+                </h2>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                  {studentWorkspaces.length > 0
+                    ? "Encontramos as áreas vinculadas à sua conta. Clique para entrar — abre em uma nova guia."
+                    : "Sua conta não tem acesso a nenhuma área de membros no momento."}
+                </p>
+              </div>
+
+              {studentWorkspaces.length > 0 && (
+                <ul className="space-y-2">
+                  {studentWorkspaces.map((w) => (
+                    <li key={w.slug}>
+                      <a
+                        href={`/w/${w.slug}/login`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-3 p-3 rounded-xl bg-gray-100 dark:bg-white/[0.04] border border-gray-300 dark:border-white/[0.08] hover:border-primary/50 transition"
+                      >
+                        {w.logoUrl ? (
+                          <Image
+                            src={w.logoUrl}
+                            alt=""
+                            width={36}
+                            height={36}
+                            className="w-9 h-9 rounded-lg object-cover shrink-0"
+                          />
+                        ) : (
+                          <span className="w-9 h-9 rounded-lg bg-primary/15 text-primary flex items-center justify-center font-bold shrink-0">
+                            {w.name.charAt(0).toUpperCase()}
+                          </span>
+                        )}
+                        <span className="flex-1 min-w-0 text-sm font-medium text-gray-900 dark:text-white truncate">
+                          {w.name}
+                        </span>
+                        <svg
+                          className="w-4 h-4 text-gray-400 shrink-0"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                          />
+                        </svg>
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              )}
+
+              <button
+                type="button"
+                onClick={() => setStudentWorkspaces(null)}
+                className="mt-4 w-full text-center text-sm text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+              >
+                Voltar ao login
+              </button>
+            </div>
+          ) : mfaRequired ? (
             <form onSubmit={handleMfaVerify} className="space-y-4">
               <div className="text-center mb-6">
                 <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-3">
@@ -274,9 +346,21 @@ function ProducerLoginForm() {
               {showStudentLookup && (
                 <div className="mt-4 p-4 rounded-xl bg-white/5 border border-white/10">
                   {lookupSent ? (
-                    <p className="text-sm text-gray-400 text-center">
-                      Se este email estiver cadastrado, você receberá os links de acesso no seu email.
-                    </p>
+                    <div className="text-center">
+                      <p className="text-sm text-gray-400">
+                        Se este email estiver cadastrado, você receberá os links de acesso no seu email.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setLookupSent(false);
+                          setLookupEmail("");
+                        }}
+                        className="mt-2 text-xs text-primary hover:underline"
+                      >
+                        Enviar para outro email
+                      </button>
+                    </div>
                   ) : (
                     <>
                       <p className="text-sm text-gray-400 mb-3">

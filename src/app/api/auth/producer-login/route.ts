@@ -6,8 +6,20 @@ import { loginSchema, validateBody } from "@/lib/validations";
 import { logAudit, getRequestMeta } from "@/lib/audit";
 import { trackLoginFailure } from "@/lib/security-alerts";
 import { hasAcceptedCollaborator } from "@/lib/auth";
+import { verifyPassword } from "@/lib/workspace-auth";
+import { getStudentWorkspaces } from "@/lib/student-workspaces";
 
 const MAX_SESSIONS = 3;
+
+// Espelho do ws-login (w/[slug]/login/route.ts:18-23) — o discriminador do
+// dual-auth (SYSTEM-MAP §4). NUNCA ramificar por "tem credencial" (L22: há
+// credenciais MORTAS em contas staff).
+const STAFF_ROLES = new Set<string>([
+  "PRODUCER",
+  "ADMIN",
+  "COLLABORATOR",
+  "ADMIN_COLLABORATOR",
+]);
 
 export async function POST(request: Request) {
   const limited = rateLimit(request);
@@ -27,6 +39,36 @@ export async function POST(request: Request) {
     });
 
     if (error) {
+      // RAIZ (7.7), ramo só-aluno: a senha global falhou. Se o email é de um
+      // aluno PURO (pelo discriminador — nunca "tem credencial") e a senha
+      // bate em ≥1 WorkspaceCredential, devolve a lista COMPLETA das áreas
+      // dele (decisão C do dono). NENHUMA sessão nasce aqui — a sessão do
+      // aluno nasce só no /w/{slug}/login. Qualquer falha (email inexistente
+      // · sem credencial · senha errada) converge no MESMO 401 neutro abaixo.
+      const target = await prisma.user.findUnique({
+        where: { email: email.trim().toLowerCase() },
+        select: { id: true, role: true },
+      });
+      if (
+        target &&
+        !STAFF_ROLES.has(target.role) &&
+        !(await hasAcceptedCollaborator(target.id))
+      ) {
+        const credentials = await prisma.workspaceCredential.findMany({
+          where: { userId: target.id },
+          select: { passwordHash: true, salt: true },
+        });
+        // .some() short-circuita no 1º match — caminho feliz ≈ 1-2 scrypts.
+        const matched = credentials.some((c) =>
+          verifyPassword(password, c.passwordHash, c.salt)
+        );
+        if (matched) {
+          return NextResponse.json({
+            studentWorkspaces: await getStudentWorkspaces(target.id),
+          });
+        }
+      }
+
       console.error("[AUTH] Producer login error:", error.message);
       const meta = getRequestMeta(request);
       trackLoginFailure(meta.ip, email);
@@ -40,28 +82,36 @@ export async function POST(request: Request) {
       where: { email: email.trim().toLowerCase() },
     });
 
-    // Accept PRODUCER, COLLABORATOR, and STUDENT-with-accepted-Collaborator
-    // (post-C5 Marcilene case: a student of a course who is also a workspace
-    // collaborator on the same workspace).
-    const isStudentCollab =
-      user?.role === "STUDENT" &&
-      (await hasAcceptedCollaborator(user.id));
-
-    if (
-      !user ||
-      (user.role !== "PRODUCER" &&
-        user.role !== "COLLABORATOR" &&
-        !isStudentCollab)
-    ) {
+    if (!user) {
+      // Auth global OK mas sem row no prisma — edge pré-existente, mantido.
       await supabase.auth.signOut();
-      const message =
-        user?.role === "ADMIN"
-          ? "Use /admin/login para acessar o painel admin"
-          : user?.role === "STUDENT"
-            ? "Acesse pelo link do seu curso"
-            : "Conta sem permissão de produtor ou colaborador";
-      return NextResponse.json({ error: message }, { status: 403 });
+      return NextResponse.json(
+        { error: "Conta sem permissão de produtor ou colaborador" },
+        { status: 403 }
+      );
     }
+
+    const isStudentCollab =
+      user.role === "STUDENT" && (await hasAcceptedCollaborator(user.id));
+
+    // RAIZ (7.7), legado: aluno puro cuja senha GLOBAL ainda é a real
+    // (pré-desincronizados do dual-auth). Mesma prova de posse → a mesma
+    // lista; a sessão da raiz é desfeita (ela nasce só no ws-login).
+    if (user.role === "STUDENT" && !isStudentCollab) {
+      await supabase.auth.signOut();
+      return NextResponse.json({
+        studentWorkspaces: await getStudentWorkspaces(user.id),
+      });
+    }
+
+    // Decisão binária do 7.7: QUALQUER staff loga na raiz (ADMIN e
+    // ADMIN_COLLABORATOR inclusos — antes eram 403). O destino segue o role:
+    // admins → /admin (mandá-los pra "/" pousaria na Trava do /producer);
+    // o resto → "/" e o proxy roteia como sempre (:88-99).
+    const destination =
+      user.role === "ADMIN" || user.role === "ADMIN_COLLABORATOR"
+        ? "/admin"
+        : "/";
 
     // 2FA check — defer Session/audit to /mfa/challenge if user has a verified
     // TOTP factor. AAL1 cookies remain until challenge upgrades to AAL2.
@@ -72,6 +122,9 @@ export async function POST(request: Request) {
       return NextResponse.json({
         requiresMfa: true,
         factorId: verifiedFactors[0].id,
+        // A página guarda e usa PÓS-challenge (antes o client hardcodava "/",
+        // que pousaria admin na Trava do /producer).
+        redirect: destination,
       });
     }
 
@@ -112,7 +165,7 @@ export async function POST(request: Request) {
     return NextResponse.json({
       success: true,
       message: "Login realizado com sucesso",
-      redirect: "/",
+      redirect: destination,
       user: data.user,
       session: data.session,
     });

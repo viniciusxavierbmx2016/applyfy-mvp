@@ -1,11 +1,18 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { rateLimit } from "@/lib/rate-limit";
 import { sendEmail } from "@/lib/email";
 import { studentWorkspacesList } from "@/lib/email-templates";
+import { getStudentWorkspaces } from "@/lib/student-workspaces";
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://app.mymembersclub.com.br";
 
 export async function POST(req: Request) {
+  // 7.7 colateral: era a ÚNICA rota da família /api/auth sem rateLimit —
+  // disparadora de email sem freio. Mesmo padrão 2.4a das 9 irmãs.
+  const limited = rateLimit(req);
+  if (limited) return limited;
+
   try {
     const { email } = await req.json();
     if (!email || typeof email !== "string") {
@@ -20,28 +27,8 @@ export async function POST(req: Request) {
     });
 
     if (user) {
-      // Buscar enrollments ACTIVE agrupados por workspace
-      const enrollments = await prisma.enrollment.findMany({
-        where: { userId: user.id, status: "ACTIVE" },
-        include: {
-          course: {
-            include: {
-              workspace: { select: { id: true, slug: true, name: true, isActive: true } },
-            },
-          },
-        },
-      });
-
-      // Agrupar por workspace (um aluno pode ter vários cursos no mesmo workspace)
-      const workspaceMap = new Map<string, { name: string; slug: string }>();
-      for (const e of enrollments) {
-        const ws = e.course.workspace;
-        if (ws && ws.isActive && !workspaceMap.has(ws.id)) {
-          workspaceMap.set(ws.id, { name: ws.name, slug: ws.slug });
-        }
-      }
-
-      const workspaces = Array.from(workspaceMap.values());
+      // Agrupamento canônico compartilhado com a Raiz (7.7) — mesma fonte.
+      const workspaces = await getStudentWorkspaces(user.id);
 
       if (workspaces.length > 0) {
         const template = studentWorkspacesList(
