@@ -40,7 +40,7 @@ export function BannerUpload({
   onModeChange,
   aspectRatio = "1125/350",
   label = "Banner do curso",
-  hint = "Tamanho ideal: 1125x350px. PNG, JPG ou WebP, máx. 4MB.",
+  hint = "Tamanho ideal: 1125x350px. PNG, JPG ou WebP, máx. 10MB.",
   cropWindows,
 }: BannerUploadProps) {
   const [uploading, setUploading] = useState(false);

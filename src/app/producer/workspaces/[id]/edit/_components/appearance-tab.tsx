@@ -269,7 +269,7 @@ export function AppearanceTab({
             { label: "Celular", aspect: 3 / 2 },
           ]}
           label="Banner da vitrine"
-          hint="Tamanho ideal: 1920x400px. PNG, JPG ou WebP, máx. 5MB."
+          hint="Tamanho ideal: 1920x400px. PNG, JPG ou WebP, máx. 10MB."
         />
       </div>
 
