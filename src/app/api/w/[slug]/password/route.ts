@@ -25,7 +25,7 @@ export async function POST(
   request: Request,
   props: { params: Promise<{ slug: string }> }
 ) {
-  const limited = rateLimit(request);
+  const limited = await rateLimit(request);
   if (limited) return limited;
 
   const params = await props.params;

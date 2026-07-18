@@ -25,7 +25,7 @@ const STAFF_ROLES = new Set<string>([
 type AuthSuccess = { user: SupabaseUser; session: Session };
 
 export async function POST(request: Request, props: { params: Promise<{ slug: string }> }) {
-  const limited = rateLimit(request);
+  const limited = await rateLimit(request);
   if (limited) return limited;
 
   const params = await props.params;

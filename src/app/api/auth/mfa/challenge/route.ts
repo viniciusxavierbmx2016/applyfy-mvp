@@ -8,7 +8,7 @@ import { mfaChallengeSchema, validateBody } from "@/lib/validations";
 const MAX_SESSIONS = 3;
 
 export async function POST(req: Request) {
-  const limited = rateLimit(req);
+  const limited = await rateLimit(req);
   if (limited) return limited;
 
   try {
