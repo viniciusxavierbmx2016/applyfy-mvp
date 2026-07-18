@@ -10,7 +10,7 @@ const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://app.mymembersclub.co
 export async function POST(req: Request) {
   // 7.7 colateral: era a ÚNICA rota da família /api/auth sem rateLimit —
   // disparadora de email sem freio. Mesmo padrão 2.4a das 9 irmãs.
-  const limited = rateLimit(req);
+  const limited = await rateLimit(req);
   if (limited) return limited;
 
   try {

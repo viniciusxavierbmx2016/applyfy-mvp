@@ -22,7 +22,7 @@ const STAFF_ROLES = new Set<string>([
 ]);
 
 export async function POST(request: Request) {
-  const limited = rateLimit(request);
+  const limited = await rateLimit(request);
   if (limited) return limited;
 
   try {

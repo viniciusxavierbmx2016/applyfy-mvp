@@ -16,7 +16,7 @@ import { resetPasswordSchema, validateBody } from "@/lib/validations";
 // admin API to set the new password, then sign them out so they re-login
 // from scratch (which triggers MFA challenge if applicable).
 export async function POST(req: Request) {
-  const limited = rateLimit(req);
+  const limited = await rateLimit(req);
   if (limited) return limited;
 
   try {

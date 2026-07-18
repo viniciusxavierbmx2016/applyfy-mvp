@@ -24,7 +24,7 @@ const MAX_SIZE = 10 * 1024 * 1024; // 10MB per file
 // Auth: any authenticated user. Path includes userId so admins know who
 // uploaded; we additionally sanity-check ownership at signed-url time.
 export async function POST(request: Request) {
-  const limited = rateLimit(request);
+  const limited = await rateLimit(request);
   if (limited) return limited;
 
   try {

@@ -8,7 +8,7 @@ import { forgotPasswordSchema, validateBody } from "@/lib/validations";
 import { logger } from "@/lib/logger";
 
 export async function POST(req: Request) {
-  const limited = rateLimit(req);
+  const limited = await rateLimit(req);
   if (limited) return limited;
 
   try {

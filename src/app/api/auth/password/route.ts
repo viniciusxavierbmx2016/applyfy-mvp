@@ -6,7 +6,7 @@ import { rateLimit } from "@/lib/rate-limit";
 import { passwordChangeSchema, validateBody } from "@/lib/validations";
 
 export async function PATCH(request: Request) {
-  const limited = rateLimit(request);
+  const limited = await rateLimit(request);
   if (limited) return limited;
 
   try {

@@ -9,7 +9,7 @@ import { trackLoginFailure } from "@/lib/security-alerts";
 const MAX_SESSIONS = 3;
 
 export async function POST(request: Request) {
-  const limited = rateLimit(request);
+  const limited = await rateLimit(request);
   if (limited) return limited;
 
   try {
