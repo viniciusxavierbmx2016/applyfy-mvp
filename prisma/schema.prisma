@@ -140,6 +140,7 @@ model Workspace {
   notifications        Notification[]
   pushSubscriptions    PushSubscription[]
   applyfyTokens        WorkspaceApplyfyToken[]
+  gatewaySecrets       WorkspaceGatewaySecret[]
   pointsLedger         PointsLedger[]
   courseSupportTickets CourseSupportTicket[]
 
@@ -1173,12 +1174,13 @@ model CourseExternalProduct {
   courseId          String
   externalProductId String
   workspaceId       String
+  gateway           String   @default("applyfy")
   createdAt         DateTime @default(now())
 
   course    Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
   workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 
-  @@unique([workspaceId, externalProductId])
+  @@unique([workspaceId, gateway, externalProductId])
   @@index([externalProductId, workspaceId])
   @@index([courseId])
 }
@@ -1194,6 +1196,22 @@ model WorkspaceApplyfyToken {
   workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 
   @@index([workspaceId])
+}
+
+// Segredo de gateway NOVO (Hubla, ...) — genérico, por-workspace, VALUE CIFRADO via
+// encrypt() (src/lib/encryption.ts). O WorkspaceApplyfyToken fica no Applyfy (intocado).
+model WorkspaceGatewaySecret {
+  id          String    @id @default(cuid())
+  workspaceId String
+  gateway     String
+  label       String    @default("Principal")
+  value       String
+  createdAt   DateTime  @default(now())
+  lastUsedAt  DateTime?
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId, gateway])
 }
 
 // Per-workspace points audit trail. User.points/User.level remain global (profile),
