@@ -5,6 +5,7 @@ import {
   subscriptionSuspended,
 } from "@/lib/email-templates";
 import { logger } from "@/lib/logger";
+import { observeOrigin } from "@/lib/origin-lock";
 
 export async function GET(req: Request) {
   const authHeader = req.headers.get("authorization");
@@ -13,6 +14,7 @@ export async function GET(req: Request) {
   if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
+  await observeOrigin(req, "exempt-cron"); // 2.4 B.1 observe-mode
 
   const now = new Date();
   const results = { reminded: 0, suspended: 0, errors: 0 };

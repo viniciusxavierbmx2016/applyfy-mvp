@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createRouteHandlerClient } from "@/lib/supabase-route";
 import { prisma } from "@/lib/prisma";
 import { rateLimit } from "@/lib/rate-limit";
+import { observeOrigin } from "@/lib/origin-lock";
 import { loginSchema, validateBody } from "@/lib/validations";
 import { logAudit, getRequestMeta } from "@/lib/audit";
 import { trackLoginFailure } from "@/lib/security-alerts";
@@ -11,6 +12,7 @@ const MAX_SESSIONS = 3;
 export async function POST(request: Request) {
   const limited = await rateLimit(request);
   if (limited) return limited;
+  await observeOrigin(request); // 2.4 B.1 observe-mode (no-stamp)
 
   try {
     const body = await request.json();

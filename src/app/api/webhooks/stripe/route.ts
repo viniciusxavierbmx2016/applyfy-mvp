@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import crypto from "crypto";
 import { prisma } from "@/lib/prisma";
+import { observeOrigin } from "@/lib/origin-lock";
 import {
   activateEnrollment,
   ensureUserByEmail,
@@ -51,6 +52,7 @@ function verifyStripeSignature(
 }
 
 export async function POST(request: Request) {
+  await observeOrigin(request, "webhook-external"); // 2.4 B.1 observe-mode
   try {
     const secret =
       (await getSetting("stripe_webhook_secret")) ||

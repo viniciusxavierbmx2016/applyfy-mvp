@@ -189,6 +189,7 @@ const adminLinks: NavLink[] = [
   { href: "/admin/support", label: "Suporte", icon: iconSupport, requires: "SUPPORT" },
   { href: "/admin/reports", label: "Relatórios", icon: iconAnalytics, requires: "VIEW_REPORTS" },
   { href: "/admin/audit", label: "Logs", icon: iconShield, requires: "VIEW_AUDIT" },
+  { href: "/admin/origin-lock", label: "Origem", icon: iconShield, requires: "VIEW_AUDIT" },
   { href: "/admin/plans", label: "Planos", icon: iconPlans, requires: "MANAGE_PLANS" },
   { href: "/admin/subscriptions", label: "Assinaturas", icon: iconSubscriptions, requires: "MANAGE_BILLING" },
   // Admin não configura gateway de pagamento aqui — cada producer cuida do

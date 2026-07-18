@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { processPendingExecutions } from "@/lib/automation-pending";
+import { observeOrigin } from "@/lib/origin-lock";
 
 export async function GET(request: Request) {
   const authHeader = request.headers.get("authorization");
@@ -8,6 +9,7 @@ export async function GET(request: Request) {
   if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+  await observeOrigin(request, "exempt-cron"); // 2.4 B.1 observe-mode
 
   try {
     const result = await processPendingExecutions();

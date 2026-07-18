@@ -1270,3 +1270,20 @@ model CourseSupportMessage {
 
   @@index([ticketId, createdAt])
 }
+
+// 2.4 Peça B.1 — modo-observação do origin lockdown. Enxuto por design:
+// path/method/ip/userAgent/reason/createdAt, NADA de corpo/query/PII além do IP
+// técnico (mesma postura do AuditLog). reason: "no-stamp" | "webhook-external"
+// | "exempt-cron". Retenção curta (purge = follow-up fora deste escopo).
+model OriginLockLog {
+  id        String   @id @default(cuid())
+  path      String
+  method    String
+  ip        String?
+  userAgent String?
+  reason    String
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([path])
+}

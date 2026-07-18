@@ -4,6 +4,7 @@ import type { Prisma, SubscriptionStatus } from "@prisma/client";
 import { sendEmail } from "@/lib/email";
 import { subscriptionActivated, subscriptionRenewed, subscriptionSuspended } from "@/lib/email-templates";
 import { safeCompare } from "@/lib/safe-compare";
+import { observeOrigin } from "@/lib/origin-lock";
 import { logger } from "@/lib/logger";
 import { applyfyWebhookSchema } from "@/lib/validations";
 import type { z } from "zod";
@@ -40,6 +41,7 @@ async function logWebhookError(
 }
 
 export async function POST(request: Request) {
+  await observeOrigin(request, "webhook-external"); // 2.4 B.1 observe-mode
   const raw = await request.json().catch(() => ({}));
   const parsed = applyfyWebhookSchema.safeParse(raw);
   if (!parsed.success) {
