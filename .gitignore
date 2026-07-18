@@ -35,6 +35,9 @@ yarn-error.log*
 # vercel
 .vercel
 
+# local secrets handed to the operator (never committed)
+.origin-lock-secret.txt
+
 # claude (local settings stay ignored; project skills are versioned)
 .claude/*
 !.claude/skills/
