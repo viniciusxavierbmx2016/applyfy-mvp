@@ -520,16 +520,36 @@ Relatado como regressão ("antes funcionava"). Investigação READ-ONLY completa
 >
 > **⚠️ AÇÃO DO VINICIUS:** a cada gateway, o Claude PEDE a documentação do webhook daquele gateway (formato do payload, autenticação, eventos). O Vinicius busca e envia. O Claude mapeia a integração específica encaixando no padrão.
 
-### 6.0 — Fundação: arquitetura comum 🔴
+### 6.0 — Fundação: arquitetura comum 🔴 — DESENHADA (decisões travadas 2026-07-18; nasce com o 1º gateway real)
 **Abordagem:** abstrair o padrão do Applyfy (que já funciona) num formato reutilizável — de modo que adicionar um gateway novo seja "encaixar", não reescrever. Aproveitar a tela de admin de integrações + o fluxo de `IntegrationRequest` que já existem.
+
+**⭐ AS 8 DECISÕES DE ARQUITETURA (travadas 2026-07-18, após 2 investigações read-only + desenho):**
+1. **Rota por-gateway** `/api/webhooks/{gateway}/[slug]` — o Applyfy fica onde está (o padrão atual já é por-gateway: `/applyfy/[slug]`, `/stripe`, `/members-club`).
+2. **Verificador PLUGÁVEL** — cada adapter define `verify(request)`: valida E decide **como lê o corpo** (⚠️ o achado Stripe: `request.json()` do Applyfy vs `request.text()` cru do HMAC-SHA256 do Stripe, `stripe/route.ts:70-72`). A validação roda **ANTES** do parse comum.
+3. **`CourseExternalProduct` + dimensão `gateway`** — o `@@unique([workspaceId, externalProductId])` (`schema:1181`) vira `[workspaceId, gateway, externalProductId]`, com **default "applyfy"** nos rows existentes (backfill explícito no migration.sql, não só o default da coluna) → o Applyfy resolve com `gateway="applyfy"` e fica idêntico. ⚠️ o filtro `gateway` na resolução de curso do adapter Applyfy tem que **entrar JUNTO** com a migração (senão planta cross-gateway latente quando o 2º entrar).
+4. **Tela por-gateway** (hub = menu de integrações); a do Applyfy (`producer/settings/integrations/applyfy/page.tsx`) **intocada**.
+5. **Segredos CIFRADOS via `encrypt()`** (`src/lib/encryption.ts`, AES-256-GCM keyed no `ENCRYPTION_SECRET`, já protege CPF/CNPJ) — o `decrypt()` é tolerante e **convive com plaintext legado**. Os secrets de gateway são **plaintext hoje** (candidato de migração, ver housekeeping).
+6. **Núcleo obrigatório = matricular + avisar aluno**; extras (transação/`trackProps`/revoke/email) por **capability** que cada adapter liga conforme o gateway entrega.
+7. ⭐ **Fundação AO LADO** — Applyfy (acesso-de-aluno) E members-club (billing SaaS) **INTOCADOS**; o caminho que vende fica byte-idêntico.
+8. ⭐ **A fundação nasce JUNTO com o 1º gateway real** (a doc oficial na mão) — não se constrói abstração no vácuo; o 1º gateway concreto é quem prova o contrato.
+
+**O CONTRATO desenhado** (validado por leitura contra Applyfy + Stripe, os 2 exemplos reais):
+- `GatewayAdapter` = `{ id, capabilities, verify(request,ctx), parseEvent(payload), extractFields(payload) }`.
+- `processGatewayWebhook(adapter, request, ctx)` = a **lib comum** extraída da rota **ESCOPADA** (o superset canônico: faz tudo que a global faz + `trackProps` + filtro-ws + tx-no-revoke). Reusa os helpers neutros intocados (`ensureUserByEmail`/`activateEnrollment`/`processAutomations`/`sendCustomAccessEmail`/`logWebhook`). O comportamento da escopada é preservado byte-a-byte (o que era inline vira chamada, mesma sequência).
+- **Store de secret novo:** `WorkspaceGatewaySecret` genérico (cifrado) pros gateways NOVOS; o `WorkspaceApplyfyToken` fica no Applyfy (intocado, honra a decisão 7).
+
+**⚠️ A DISTINÇÃO DOS 2 FLUXOS APPLYFY** (mapeada na investigação, ambos intocados pela fundação):
+- **Billing SaaS** — `webhooks/members-club/route.ts` → `Subscription`/`Invoice` (o produtor pagando o Members Club; token `MEMBERS_CLUB_WEBHOOK_TOKEN` global; PAID→cria/renova, CANCELED→cancela, REFUNDED→suspende). **Fora da fundação 6.0.**
+- **Acesso-de-aluno** — `webhooks/applyfy/[slug]/route.ts` → `Enrollment` (a compra do curso). **É o que a fundação extrai.**
+
 **Etapas:**
-- [ ] Read-only: mapear COMO o Applyfy processa webhook → concede acesso, ponta a ponta.
-- [ ] As 7 Perguntas (o que já é reutilizável? o `IntegrationRequest`/admin já cobre quanto?).
-- [ ] Desenhar a abstração comum (interface de gateway: parse payload → validar auth → mapear evento → conceder/revogar acesso).
-- [ ] Refatorar o Applyfy para usar a abstração (provar que o padrão funciona com o gateway que já existe, sem regressão).
-- [ ] Staging: Applyfy via a nova abstração → acesso concedido igual antes (zero regressão).
-- [ ] Merge `--no-ff`.
-**Dependência:** 5.2 (visibilidade da tela de integrações).
+- [x] Read-only #1 — o molde Applyfy ponta a ponta (entrada/parse/mapeamento/config/saída; 6.3 é greenfield — só entrada).
+- [x] Read-only #2 — a orquestração copiada (escopada = superset), o Stripe como 2º padrão HMAC (é adapter de aluno, não billing), a `encrypt()`.
+- [x] As 7 Perguntas + desenho do contrato (`GatewayAdapter` + `processGatewayWebhook`) — DECIDIDO.
+- [ ] ⏳ **Aguardando o Vinicius escolher/trazer a doc do 1º gateway real** (a fundação nasce com ele — decisão 8).
+- [ ] Implementar: contrato + lib comum + migração (CourseExternalProduct +gateway) + Applyfy vira 1º adapter (byte-idêntico, a matriz de regressão é O gate) + o gateway novo.
+- [ ] Staging + Merge `--no-ff`.
+**Dependência:** 5.2 (visibilidade da tela) + a **doc do 1º gateway** (decisão 8). **Estado: DECIDIDO, aguardando o 1º gateway.**
 
 ### 6.1 a 6.N — Cada gateway (um por vez) 🟡 cada
 Para CADA gateway (Hubla, Cakto, Kirvano, Perfect Pay, Kiwify, Hotmart):
@@ -540,20 +560,16 @@ Para CADA gateway (Hubla, Cakto, Kirvano, Perfect Pay, Kiwify, Hotmart):
 - [ ] Merge `--no-ff`.
 **Ordem dos gateways:** definir com o Vinicius (provavelmente por demanda de cliente).
 
-### 6.2 — Múltiplos tokens Applyfy por workspace 🟡
+### 6.2 — Múltiplos tokens Applyfy por workspace 🟡 ✅ JÁ IMPLEMENTADO (reconciliação retroativa 2026-07-18 — o doc estava atrás do código)
 **Achado (conversa):** produtor com 2+ contas Applyfy. Já tem a opção de vários IDs, MAS cada conta gera um token novo, e hoje só aceita 1 token/workspace (`Settings.applyfy_token:workspaceId`).
-**Abordagem:** aceitar múltiplos tokens por workspace (encaixa na arquitetura da fundação 6.0).
-**Etapas:**
-- [ ] Read-only: como o token único é armazenado/usado hoje.
-- [ ] Schema/lógica: suportar N tokens por workspace.
-- [ ] Staging: 2 tokens → webhooks de ambas as contas concedem acesso.
-- [ ] Merge `--no-ff`.
-**Dependência:** 6.0 (fundação).
+**✅ Provado na investigação da FASE 6 (não é mais aberto):** o model `WorkspaceApplyfyToken` já existe (`schema:1186`), aceita **até 5 tokens/ws** (`applyfy-tokens/route.ts:7,121`, owner-only), as duas rotas de webhook validam contra ele (`[slug]:143-158` · `applyfy/route.ts:159-172`, `safeCompare` em loop), a UI gerencia (add/remove, valor mascarado), e `syncLegacySettings` espelha o token mais antigo pra `Settings["applyfy_token:<wsId>"]` (fallback legado coerente). **Nada a fazer.** ⚠️ Quando a fundação 6.0 entrar, o padrão multi-secret por-ws generaliza pros outros gateways (`WorkspaceGatewaySecret`).
+~~**Etapas / Dependência**~~ — resolvido.
 
 ### 6.3 — Cancelamento bidirecional via API Applyfy 🟡
 **Achado (conversa):** hoje é mão-única. Cancelar no admin NÃO cancela na Applyfy (continua cobrando). Vinicius pediu pra fazer.
 **Abordagem:** chamar a API de cancelar assinatura da Applyfy quando o produtor cancela no admin.
 **⚠️ AÇÃO DO VINICIUS:** trazer a doc da API de cancelar da Applyfy (`app.applyfy.com.br/docs`) + credenciais (x-public-key/x-secret-key).
+**⚠️ Confirmado greenfield na investigação:** hoje o fluxo é **só entrada** — NÃO existe nenhuma chamada saindo do Members Club pro Applyfy (grep `applyfy` ∩ `fetch|axios|http` = só o nosso backend + a URL de checkout onde o **produtor paga a própria assinatura**). O 6.3 é infra de saída nova (cliente HTTP + credenciais de API por-ws).
 **Etapas:**
 - [ ] Vinicius traz a doc da API de cancelamento + credenciais.
 - [ ] Read-only: o fluxo de cancelamento atual no admin.
@@ -561,6 +577,12 @@ Para CADA gateway (Hubla, Cakto, Kirvano, Perfect Pay, Kiwify, Hotmart):
 - [ ] Staging: cancelar no admin → confirma cancelamento na Applyfy (sem cobrança futura).
 - [ ] Merge `--no-ff`.
 **Dependência:** doc + credenciais da Applyfy.
+
+### 6.H — Housekeeping revelado pela investigação da FASE 6 (NÃO fazer agora — registrar)
+- **Secrets de gateway em PLAINTEXT hoje** — `WorkspaceApplyfyToken.value` (`schema:1190`) e `stripe_webhook_secret` (`Settings`, gravado sem `encrypt()` em `producer/settings/route.ts:114-117`) ficam em claro. Candidato: migrar pra `encrypt()` (`encryption.ts`, já usado no CPF/CNPJ); o `decrypt()` tolerante convive com os valores legados sem quebrar leitura. Baixo risco, conveniência.
+- **Stripe adapter mais MAGRO que o Applyfy** — a rota `webhooks/stripe/route.ts` já matricula aluno (`ensureUserByEmail`+`activateEnrollment`+`processAutomations`, `:134-142`) mas **NÃO** manda email de acesso (`:131-133`), **NÃO** grava `ProducerTransaction`, **NÃO** trata revoke (refund/cancel), e resolve curso sem filtro de ws (`:118-121`). É **gap de paridade**, não decisão — quando o Stripe virar 2º adapter da fundação, as capabilities ficam `false` (comportamento idêntico ao de hoje) e cada extra liga por demanda.
+- **Dedup de email: comentário vs código divergem** — `[slug]:364` diz "within 24h" mas o código é `Date.now() - 60*1000` = **60s** (`[slug]:375`). A extração pra lib comum deve preservar o **código** (60s), não o comentário. Registrar; não "consertar" na extração (Regra de Ouro: byte-idêntico).
+- **`Course.externalProductId` legado** (`schema:214`, `@unique` GLOBAL) — sincronizado a `ids[0]` pelo mapeamento (`courses/[id]:81`); vira ambíguo no mundo multi-gateway. Deixar como está no slice da fundação (é o fallback do Applyfy); convergir depois.
 
 ---
 
