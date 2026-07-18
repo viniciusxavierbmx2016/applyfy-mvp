@@ -3,8 +3,8 @@
 > **O mapa único.** Tudo que falta, em fases, por dependência × gravidade × esforço.
 > Documento vivo: marque `[x]` ao concluir, adicione itens novos na fase certa.
 >
-> **Estado:** `main` em `aa250e9` (+ docs-commit desta atualização) · auditoria de segurança crítica FECHADA · plataforma em produção com clientes pagantes.
-> **Última atualização:** 2026-07-18 (2.4 Peça B.1 origin lockdown OBSERVE finalizada, env ligada).
+> **Estado:** `main` em `50edb79` (+ docs-commit desta atualização) · auditoria de segurança crítica FECHADA · plataforma em produção com clientes pagantes.
+> **Última atualização:** 2026-07-18 (FASE 6.0 Fatia 1 schema `50edb79` — gateway dimension; Applyfy byte-idêntico provado).
 
 ---
 
@@ -545,11 +545,12 @@ Relatado como regressão ("antes funcionava"). Investigação READ-ONLY completa
 **Etapas:**
 - [x] Read-only #1 — o molde Applyfy ponta a ponta (entrada/parse/mapeamento/config/saída; 6.3 é greenfield — só entrada).
 - [x] Read-only #2 — a orquestração copiada (escopada = superset), o Stripe como 2º padrão HMAC (é adapter de aluno, não billing), a `encrypt()`.
-- [x] As 7 Perguntas + desenho do contrato (`GatewayAdapter` + `processGatewayWebhook`) — DECIDIDO.
-- [ ] ⏳ **Aguardando o Vinicius escolher/trazer a doc do 1º gateway real** (a fundação nasce com ele — decisão 8).
-- [ ] Implementar: contrato + lib comum + migração (CourseExternalProduct +gateway) + Applyfy vira 1º adapter (byte-idêntico, a matriz de regressão é O gate) + o gateway novo.
-- [ ] Staging + Merge `--no-ff`.
-**Dependência:** 5.2 (visibilidade da tela) + a **doc do 1º gateway** (decisão 8). **Estado: DECIDIDO, aguardando o 1º gateway.**
+- [x] Read-only #3 (Hubla) — assinaturas dos 5 helpers neutros, os call-sites do `courseExternalProduct` (1 só create), `WorkspaceGatewaySecret` livre, `requireWorkspaceOwner`, webhooks sem rateLimit.
+- [x] As 7 Perguntas + desenho do contrato (`GatewayAdapter` + `processGatewayWebhook`) + o desenho Hubla (adapter + rota + migração + UI) — DECIDIDO.
+- [x] **FATIA 1 — SCHEMA ✅ FEITO (merge `50edb79`)** — `CourseExternalProduct` +`gateway String @default("applyfy")` + `@@unique` movido pra `(ws,gateway,externalId)` + tabela `WorkspaceGatewaySecret` (molde `WorkspaceApplyfyToken` + gateway + value cifrado via `encrypt()`). **Zero runtime.** ⚠️ **Applyfy BYTE-IDÊNTICO provado por PAYLOAD no staging:** um `TRANSACTION_PAID` na rota **intocada** `/applyfy/[slug]` concedeu acesso com WebhookLog/enrollment idênticos ao baseline pré-migração — o create do Applyfy (omite gateway → default preenche) e a resolução do webhook (query sem filtro gateway) ficam iguais. Prod: `migrate deploy` ANTES do push (ordem-gate; a órfã `add_course_banner_extra` ignorada, forward-only); **30 mapeamentos de prod backfillados p/ 'applyfy'**, coluna+tabela provadas. ⚠️ **RISCO cross-gateway ACEITO (registrado):** o `@@unique(ws,gateway,externalId)` permite o mesmo externalId em applyfy+hubla no mesmo ws, e a rota Applyfy resolve SEM filtro gateway ([slug]:66) → se um id colidir, o Applyfy poderia achar um mapping alheio. Enquanto os ids forem distintos, ok; blindar exigiria tocar o Applyfy (decisão 7 veta). Aceito pelo dono.
+- [ ] ⏳ **FATIA 2 — LIB + ADAPTER + ROTA** (types.ts + process-webhook.ts + hubla/adapter.ts + a rota). ⚠️ **GATE: o `verify()` da Hubla é PENDENTE DE SPEC** (o header/HMAC de autenticação do webhook Hubla) — a fatia entra em staging com placeholder, NÃO vai a prod sem confirmar. **Aguardando a doc de autenticação do webhook Hubla.**
+- [ ] ⏳ **FATIA 3 — UI + CONFIG** (`<HublaCard>` + a tela + o endpoint de secret cifrado + o mapeamento gateway="hubla").
+**Dependência:** 5.2 (visibilidade da tela) + a **doc de AUTENTICAÇÃO do webhook Hubla** (o gate da Fatia 2). **Estado: Fatia 1 (schema) FEITA; Fatia 2 aguarda a spec de auth da Hubla.**
 
 ### 6.1 a 6.N — Cada gateway (um por vez) 🟡 cada
 Para CADA gateway (Hubla, Cakto, Kirvano, Perfect Pay, Kiwify, Hotmart):
