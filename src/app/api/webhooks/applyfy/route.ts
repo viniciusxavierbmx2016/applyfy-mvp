@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { observeOrigin } from "@/lib/origin-lock";
 import {
   activateEnrollment,
   ensureUserByEmail,
@@ -74,6 +75,7 @@ async function findCourseByExternalId(externalProductId: string) {
 }
 
 export async function POST(request: Request) {
+  await observeOrigin(request, "webhook-external"); // 2.4 B.1 observe-mode
   let body: ApplyfyPayload = {};
   try {
     const raw = await request.json().catch(() => ({}));

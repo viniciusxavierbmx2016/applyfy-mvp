@@ -7,6 +7,7 @@ import { hasWorkspaceAccess } from "@/lib/workspace-access";
 import { isEnrollmentActive } from "@/lib/auth";
 import { loginSchema, validateBody } from "@/lib/validations";
 import { rateLimit } from "@/lib/rate-limit";
+import { observeOrigin } from "@/lib/origin-lock";
 import { logAudit } from "@/lib/audit";
 import {
   generateSalt,
@@ -27,6 +28,7 @@ type AuthSuccess = { user: SupabaseUser; session: Session };
 export async function POST(request: Request, props: { params: Promise<{ slug: string }> }) {
   const limited = await rateLimit(request);
   if (limited) return limited;
+  await observeOrigin(request); // 2.4 B.1 observe-mode (no-stamp)
 
   const params = await props.params;
   try {
