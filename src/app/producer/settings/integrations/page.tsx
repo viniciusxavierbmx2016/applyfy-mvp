@@ -100,7 +100,16 @@ function ApplyfyCard({
   logoUrl: string;
 }) {
   return (
-    <div className="group relative flex flex-col gap-3 p-5 rounded-xl bg-white dark:bg-white/5 border border-gray-200 dark:border-white/5 hover:border-gray-300 dark:hover:border-white/10 hover:shadow-lg transition-[border-color,box-shadow] duration-200">
+    <div className="group relative flex flex-col gap-3 p-5 rounded-xl bg-white dark:bg-white/5 border border-amber-400/60 dark:border-amber-400/40 ring-1 ring-amber-400/30 shadow-lg shadow-amber-500/10 hover:border-amber-400 hover:shadow-amber-500/20 transition-[border-color,box-shadow] duration-200">
+      {/* Selo Recomendado — Applyfy é o gateway oficial. Dourado (amber, mesmo tom do
+          logo fallback do GatewayLogo), no canto superior ESQUERDO: não colide com o
+          badge de status ("Conectado"/"Não configurado") que fica à direita. */}
+      <span className="absolute -top-2.5 left-4 z-10 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-400 text-gray-900 shadow-sm">
+        <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M12 2l2.9 6.26L22 9.27l-5 4.87L18.18 22 12 18.56 5.82 22 7 14.14l-5-4.87 7.1-1.01L12 2z" />
+        </svg>
+        Recomendado
+      </span>
       <div className="flex items-start justify-between gap-3">
         <GatewayLogo src={logoUrl} label="Applyfy" size={48} />
         <span
@@ -121,7 +130,8 @@ function ApplyfyCard({
           Applyfy
         </h2>
         <p className="text-sm text-gray-600 dark:text-gray-400 mt-0.5">
-          Gateway de pagamentos para infoprodutores.
+          Gateway oficial do Members Club. Integração nativa, melhor suporte e
+          mensalidade zero usando a Applyfy.
         </p>
       </Link>
       <Link
