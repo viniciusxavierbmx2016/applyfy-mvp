@@ -28,8 +28,12 @@ const kiwifySchema = z
         email: z.string().max(255).nullable().optional(),
         full_name: z.string().max(255).nullable().optional(),
         mobile: z.string().max(50).nullable().optional(),
+        // ⚠️ O payload REAL da Kiwify usa CPF/CNPJ MAIÚSCULOS. Mantemos os minúsculos
+        // como fallback defensivo (caso variem por versão/tipo de conta).
+        CPF: z.string().max(50).nullable().optional(),
+        CNPJ: z.string().max(50).nullable().optional(),
+        cpf: z.string().max(50).nullable().optional(),
         cnpj: z.string().max(50).nullable().optional(),
-        cpf: z.string().max(50).nullable().optional(), // defensivo — Kiwify pode mandar cpf tb
         ip: z.string().max(100).nullable().optional(),
       })
       .passthrough()
@@ -54,7 +58,9 @@ const kiwifySchema = z
 type KiwifyPayload = z.infer<typeof kiwifySchema>;
 
 const GRANT_EVENTS = new Set(["order_approved"]);
-// ⚠️ nomes PROVÁVEIS — CONFIRMAR a lista real de eventos de revoke da Kiwify.
+// ⚠️ Nomes TÉCNICOS prováveis pros rótulos do painel Kiwify (Reembolso · Chargeback ·
+// Assinatura cancelada). CONFIRMAR capturando um evento real — se o webhook_event_type
+// real diferir, o REVOKE não dispara até ajustar aqui (o GRANT já está provado).
 const REVOKE_EVENTS = new Set([
   "order_refunded",
   "chargeback",
@@ -133,11 +139,14 @@ export const kiwifyAdapter: GatewayAdapter = {
       email: c?.email?.trim().toLowerCase() || null,
       name: c?.full_name?.trim() || null,
       phone: c?.mobile?.trim() || null,
-      document: (c?.cnpj ?? c?.cpf)?.trim() || null,
+      // ⚠️ Kiwify manda CPF/CNPJ MAIÚSCULOS (payload real); minúsculos como fallback.
+      document: (c?.CPF ?? c?.CNPJ ?? c?.cpf ?? c?.cnpj)?.trim() || null,
       transactionId: p.order_id?.trim() || null,
-      // ⚠️ CONFIRMAR A UNIDADE no staging: se charge_amount vier em CENTAVOS (ex. 9700=R$97),
-      // dividir por 100. A matriz (a) prova o valor gravado no ProducerTransaction.
-      amount: p.Commissions?.charge_amount ?? null,
+      // ⚠️ charge_amount vem em CENTAVOS (payload real: 1770 = R$17,70) → dividir por 100.
+      amount:
+        p.Commissions?.charge_amount != null
+          ? p.Commissions.charge_amount / 100
+          : null,
       paymentMethod: p.payment_method?.trim() || null,
       products: p.Product?.product_id ? [{ externalId: p.Product.product_id.trim() }] : [],
       trackProps: { ip: c?.ip || null },
