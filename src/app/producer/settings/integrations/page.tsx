@@ -32,6 +32,7 @@ interface StatusResponse {
 export default function ProducerIntegrationsPage() {
   const router = useRouter();
   const [applyfy, setApplyfy] = useState<GatewayStatus | null>(null);
+  const [hublaConnected, setHublaConnected] = useState(false);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
 
@@ -47,6 +48,12 @@ export default function ProducerIntegrationsPage() {
         }
       })
       .finally(() => setLoading(false));
+
+    // Hubla "conectado" = tem WorkspaceGatewaySecret(hubla) cadastrado.
+    fetch("/api/producer/integrations/hubla-secrets")
+      .then((r) => (r.ok ? r.json() : { tokens: [] }))
+      .then((d) => setHublaConnected((d.tokens || []).length > 0))
+      .catch(() => {});
   }, [router]);
 
   return (
@@ -74,6 +81,7 @@ export default function ProducerIntegrationsPage() {
             connected={!!applyfy?.connected}
             logoUrl={applyfy?.logoUrl || DEFAULT_APPLYFY_LOGO}
           />
+          <HublaCard connected={hublaConnected} />
           {STRIPE_ENABLED && <StripeCard />}
           <RequestIntegrationCard onOpen={() => setModalOpen(true)} />
         </div>
@@ -92,7 +100,16 @@ function ApplyfyCard({
   logoUrl: string;
 }) {
   return (
-    <div className="group relative flex flex-col gap-3 p-5 rounded-xl bg-white dark:bg-white/5 border border-gray-200 dark:border-white/5 hover:border-gray-300 dark:hover:border-white/10 hover:shadow-lg transition-[border-color,box-shadow] duration-200">
+    <div className="group relative flex flex-col gap-3 p-5 rounded-xl bg-white dark:bg-white/5 border border-amber-400/60 dark:border-amber-400/40 ring-1 ring-amber-400/30 shadow-lg shadow-amber-500/10 hover:border-amber-400 hover:shadow-amber-500/20 transition-[border-color,box-shadow] duration-200">
+      {/* Selo Recomendado — Applyfy é o gateway oficial. Dourado (amber, mesmo tom do
+          logo fallback do GatewayLogo), no canto superior ESQUERDO: não colide com o
+          badge de status ("Conectado"/"Não configurado") que fica à direita. */}
+      <span className="absolute -top-2.5 left-4 z-10 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-400 text-gray-900 shadow-sm">
+        <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M12 2l2.9 6.26L22 9.27l-5 4.87L18.18 22 12 18.56 5.82 22 7 14.14l-5-4.87 7.1-1.01L12 2z" />
+        </svg>
+        Recomendado
+      </span>
       <div className="flex items-start justify-between gap-3">
         <GatewayLogo src={logoUrl} label="Applyfy" size={48} />
         <span
@@ -113,11 +130,56 @@ function ApplyfyCard({
           Applyfy
         </h2>
         <p className="text-sm text-gray-600 dark:text-gray-400 mt-0.5">
-          Gateway de pagamentos para infoprodutores.
+          Gateway oficial do Members Club. Integração nativa, melhor suporte e
+          mensalidade zero usando a Applyfy.
         </p>
       </Link>
       <Link
         href="/producer/settings/integrations/applyfy"
+        className="group/cta mt-auto pt-1 inline-flex items-center text-xs text-primary font-medium hover:text-primary-hover dark:hover:text-primary w-fit"
+      >
+        {connected ? "Gerenciar" : "Configurar"}
+        <svg
+          className="w-3.5 h-3.5 ml-1 transition-transform group-hover/cta:translate-x-0.5"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+        </svg>
+      </Link>
+    </div>
+  );
+}
+
+function HublaCard({ connected }: { connected: boolean }) {
+  return (
+    <div className="group relative flex flex-col gap-3 p-5 rounded-xl bg-white dark:bg-white/5 border border-gray-200 dark:border-white/5 hover:border-gray-300 dark:hover:border-white/10 hover:shadow-lg transition-[border-color,box-shadow] duration-200">
+      <div className="flex items-start justify-between gap-3">
+        <GatewayLogo src={null} label="Hubla" size={48} />
+        <span
+          className={`text-[11px] font-medium px-2.5 py-1 rounded-full border ${
+            connected
+              ? "bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/30"
+              : "bg-gray-500/10 text-gray-600 dark:text-gray-400 border-gray-400/30"
+          }`}
+        >
+          {connected ? "● Conectado" : "● Não configurado"}
+        </span>
+      </div>
+      <Link
+        href="/producer/settings/integrations/hubla"
+        className="group/title block focus:outline-none"
+      >
+        <h2 className="text-base font-semibold text-gray-900 dark:text-white group-hover/title:text-primary dark:group-hover/title:text-primary transition-colors">
+          Hubla
+        </h2>
+        <p className="text-sm text-gray-600 dark:text-gray-400 mt-0.5">
+          Gateway de pagamentos para infoprodutores.
+        </p>
+      </Link>
+      <Link
+        href="/producer/settings/integrations/hubla"
         className="group/cta mt-auto pt-1 inline-flex items-center text-xs text-primary font-medium hover:text-primary-hover dark:hover:text-primary w-fit"
       >
         {connected ? "Gerenciar" : "Configurar"}
