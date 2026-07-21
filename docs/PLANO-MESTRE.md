@@ -3,8 +3,8 @@
 > **O mapa único.** Tudo que falta, em fases, por dependência × gravidade × esforço.
 > Documento vivo: marque `[x]` ao concluir, adicione itens novos na fase certa.
 >
-> **Estado:** `main` em `5f6a80e` (+ docs-commit desta atualização) · auditoria de segurança crítica FECHADA · plataforma em produção com clientes pagantes.
-> **Última atualização:** 2026-07-19 (⭐ FASE 6.0 fundação multi-gateway COMPLETA + 6.1 Hubla ponta-a-ponta em produção — schema `50edb79` · core `c5f2f7a` · ui `5f6a80e`).
+> **Estado:** `main` em `142b960` (+ docs-commit desta atualização) · auditoria de segurança crítica FECHADA · plataforma em produção com clientes pagantes.
+> **Última atualização:** 2026-07-20 (⭐ FASE 6 multi-gateway: fundação COMPLETA + 2 gateways em produção — Hubla `5f6a80e` + Kiwify `142b960`, o 1º com HMAC-query + recordTransaction/amount).
 
 ---
 
@@ -560,12 +560,16 @@ Relatado como regressão ("antes funcionava"). Investigação READ-ONLY completa
 ### 6.1 — Hubla (o 1º gateway) ✅ FEITO (ponta-a-ponta em produção — fatias `50edb79`+`c5f2f7a`+`5f6a80e`)
 O 1º gateway da fundação, entregue completo: adapter (`src/lib/gateways/hubla/adapter.ts`) com `verify()` real (`x-hubla-token` cru vs secret cifrado, `x-hubla-idempotency` no dedup, corpo JSON, leitura defensiva `user ?? payer`), `member_added`→GRANT / `member_removed`→REVOKE, `recordTransaction` OFF (sem amount) · rota `/api/webhooks/hubla/[slug]` · tela de config + card no hub (Fatia 3). Provado no staging por payload (matriz a-f + Applyfy byte-idêntico). **⚠️ Em prod: configurável mas INERTE até um produtor cadastrar o token dele** (capacidade nova, não muda nada do que já existia). O 6.3 (cancelamento bidirecional/saída) segue greenfield e vale pra qualquer gateway.
 
+### 6.1b — Kiwify (o 2º gateway) ✅ FEITO (merge `142b960`, ponta-a-ponta em produção)
+O 2º gateway — **mecânico, a fundação pagou** (só adapter + rota + tela + card, **zero migração**, fundação/Applyfy/Hubla intocados por diff vazio + webhooks idênticos no staging). **⭐ O 3º padrão de auth: HMAC-SHA1 sobre o corpo cru, assinatura na QUERY STRING `?signature=`** (ao lado do token-no-corpo do Applyfy e do token-no-header da Hubla — todos no mesmo `verify` plugável; o corpo cru chega intacto porque a rota não o consome antes do verify). **HMAC provado por MATCH REAL no staging:** `HMAC-SHA1(corpo_capturado_exato, token_real) == a signature real` (par casado — assinatura+corpo do MESMO webhook). **⭐ 1º gateway a exercitar `recordTransaction`:** manda amount (`Commissions.charge_amount` em CENTAVOS → `/100`) → as vendas do produtor aparecem no dashboard (provado: um `order_approved` real gravou **R$17,70**). Leitura defensiva (CPF/CNPJ MAIÚSCULOS do payload real, amount coerido). **Eventos:** GRANT `order_approved` ✅ + REVOKE `order_refunded` ✅ (ambos provados contra payloads Kiwify reais).
+⚠️ **Status honesto dos 3 REVOKE_EVENTS:** `order_refunded` ✅ **CONFIRMADO por captura real** (reembolso). `chargeback` ⚠️ nome **ASSUMIDO** (não capturado, provável). `subscription_canceled` ⚠️ nome **ASSUMIDO** (⚠️ no payload de reembolso o `Subscription.status` vem "canceled", mas isso é um CAMPO, não o `webhook_event_type` — o nome do EVENTO de cancelamento segue não-capturado). **Candidato:** confirmar `chargeback` + `subscription_canceled` quando surgirem eventos reais. O essencial (grant + refund) está provado.
+
 ### 6.2 a 6.N — Cada gateway SEGUINTE (um por vez) 🟡 cada — a fundação já existe
-Para CADA gateway novo (Cakto, Kirvano, Perfect Pay, Kiwify, Hotmart) = **só adapter + rota + tela + card** (o schema/lib/secret-store da 6.0 já cobrem). Molde: o adapter da Hubla (6.1).
+Para CADA gateway novo (Cakto, Kirvano, Perfect Pay, Hotmart) = **só adapter + rota + tela + card** (o schema/lib/secret-store da 6.0 já cobrem). Molde: o adapter da Hubla (6.1) ou Kiwify (6.1b, se HMAC). **Reconfirmado 2× (Hubla + Kiwify): gateway novo é mecânico.**
 - [ ] **Claude pede a documentação do webhook** → Vinicius busca e envia.
 - [ ] Read-only: mapear o payload/auth/eventos daquele gateway contra a abstração.
 - [ ] Implementar o adapter específico encaixando no padrão da fundação.
-- [ ] Staging: simular webhook daquele gateway → acesso concedido.
+- [ ] Staging: simular webhook daquele gateway → acesso concedido. ⚠️ **Se HMAC: usar o PAR CASADO** (assinatura + corpo do MESMO webhook) no gate, senão dá falso-negativo.
 - [ ] Merge `--no-ff`.
 **Ordem dos gateways:** definir com o Vinicius (provavelmente por demanda de cliente).
 
