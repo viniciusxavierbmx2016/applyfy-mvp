@@ -37,6 +37,8 @@ yarn-error.log*
 
 # local secrets handed to the operator (never committed)
 .origin-lock-secret.txt
+.kiwify-test-token.txt
+.kiwify-payload.txt
 
 # claude (local settings stay ignored; project skills are versioned)
 .claude/*
