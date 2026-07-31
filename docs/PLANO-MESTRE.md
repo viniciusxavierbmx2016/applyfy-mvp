@@ -473,6 +473,32 @@ Relatado como regressão ("antes funcionava"). Investigação READ-ONLY completa
 
 ---
 
+### BUG D (Vimeo) — aulas com vídeo do Vimeo davam TELA PRETA 🔴 ✅ FEITO (merge `5e78edd`)
+> ⚠️ **Colisão de nome:** já existe um **BUG D** de roteamento (STUDENT sem cookie → `/landing`), registrado na família do BUG B e **morto na Trava `9d8b7a2`**. A mensagem do merge rotula este como "BUG D"; a letra livre era **E**. Renomear se atrapalhar — os dois são distinguíveis pelo SHA.
+
+Reportado pelo dono: aula com vídeo do Vimeo = retângulo preto, sem mensagem, sem erro visível. YouTube e Panda tocavam normalmente. Investigação READ-ONLY (código + SELECTs em produção + fonte do SDK + headers vivos + histórico git) → repro no staging → fix de 1 linha.
+
+**RAIZ PROVADA (cadeia completa):** o `Lesson` **não tem campo de provider** (`schema:332` só tem `videoUrl`) — o provider é deduzido da URL por `parseVideoUrl` (`src/lib/video.ts:59-63`). Para Vimeo, o player usa o **SDK JS** (`video-player.tsx:191-204`): seta `data-vimeo-id` e chama `new Vimeo.Player(mountEl)` (`:201`). **O SDK, ao receber um id numérico, monta `https://vimeo.com/<ID>` e dispara um `XMLHttpRequest` para `https://vimeo.com/api/oembed.json` — e só cria o iframe a partir do HTML que vem NESSA resposta** (lido no fonte real do `player.js`: `function C(...)` monta a URL, `function j(...)` injeta o `e.html`). Esse XHR é regido por **`connect-src`**, não por `frame-src`. A CSP (`next.config.mjs`) tinha `connect-src 'self' + Supabase` e **nunca** listou vimeo → XHR bloqueado → promise rejeitada → **iframe nunca existiu** → a div de montagem ficava vazia sobre o container `bg-black` (`lesson/[id]/page.tsx:424` + `video-player.tsx:280`) = **tela preta**.
+
+**Por que só o Vimeo:** é o **único dos 3 que faz requisição de rede ANTES de existir iframe**. YouTube (`:138`, `new YT.Player` monta o iframe direto do `videoId`) e Panda (`:211-212`, `createElement("iframe")` com src montada em código) dependem **só de `frame-src`**, que já permitia. Por isso os dois sempre funcionaram.
+
+**Por que o silêncio (3 meses):** o ramo Vimeo é o **único sem tratamento de erro**. O do YouTube tem `onError` → `setPlayerError` → mensagem na tela (`:170-182`). O do Vimeo não tem `.catch()` nenhum — a rejeição morre dentro do SDK. Falha invisível = ninguém reportou como erro, só como "vídeo não aparece".
+
+**O a487074 foi a MESMA DOENÇA MEIO CURADA:** a CSP nasceu em `3de774c` (2026-04-29) já sem vimeo em `connect-src`, derrubando YouTube **e** Vimeo. O `a487074` (2026-05-06, *"fix: CSP allow YouTube iframe API… for video player"* — registrado em `docs/05-plano-de-teste.md:233` como *"Vídeo tela preta | CSP"*) adicionou `www.youtube.com` **e `player.vimeo.com`** ao `script-src` (o SDK do Vimeo passou a **carregar**) e `youtube-nocookie` ao `frame-src` — mas **não tocou `connect-src`**, o endpoint que esse SDK chama. `git log -S"connect-src" -- next.config.mjs` retorna **só `3de774c`**: a diretiva nunca mais foi modificada até este fix. **A verificação foi feita com YouTube apenas** → o Vimeo ficou preto por 3 meses.
+
+**ALCANCE (prod, SELECT read-only):** **115 aulas Vimeo** · 3 cursos · 2 workspaces (`milena-business` 78+1, `vitor-pietro` 36) · **33 matrículas ativas**. Formatos gravados: `vimeo.com/<ID>?fl=ml&fe=ec` (44) · `?share=copy` (36) · URL limpa (34) · 1 lixo (`player.vimeo.com/api/player.js` — o produtor colou a URL do *script*). **Os 3 formatos reais parseiam corretamente** (query string não entra no `pathname`) — o regex NUNCA foi a causa; refutado com o `parseVideoUrl` real transpilado. **Não é regressão recente:** os 3 cursos foram criados em 2026-05-21, 2026-07-22 e 2026-07-29, todos **depois** da CSP → Vimeo nunca funcionou para esses produtores.
+
+**O FIX (1 arquivo, 1 linha + 2 de comentário, branch `3767776` → merge `5e78edd`):** `connect-src` ganha `https://vimeo.com` **e** `https://*.vimeo.com`. **O apex é OBRIGATÓRIO** — o wildcard não casa domínio nu, e o SDK **remove o prefixo `player.` de propósito** ao montar a URL do oEmbed (`.replace("player.","")`, fallback `return "vimeo.com"`). Mudança **puramente aditiva**: as 3 fontes originais preservadas na ordem. Comentário de 2 linhas gravado acima da diretiva justamente porque essa linha já foi pisada uma vez.
+
+**PROVA:** (1) fonte real do `player.js` baixado do CDN (o XHR e o alvo apex); (2) header **vivo em produção** nos 2 hosts (`app.mymembersclub.com.br` e `applyfy-mvp.vercel.app`, enforcing, sem report-only); (3) histórico git; (4) **repro no browser** (staging, aula semeada com `vimeo.com/1127315172`): Console → *"Connecting to 'https://vimeo.com/api/oembed.json?...' violates … connect-src. The action has been blocked."*, stack em `video-player.tsx:201`; (5) **pós-fix, validação visual do dono nos 3 providers**: Vimeo toca, YouTube e Panda inalterados; (6) as outras **9 diretivas da CSP provadas byte-idênticas** diretiva a diretiva contra o HEAD. Build exit 0. **Zero migração** (config-only). Cleanup do staging: 3 aulas de teste removidas, count=0 por 3 critérios, `aula 01` original intocada.
+
+**⚠️ CANDIDATOS revelados pela investigação (NÃO corrigidos — escopo próprio):**
+1. **Ramo Vimeo sem tratamento de erro** (`video-player.tsx:191-204`) — sem `.catch()`, sem estado de erro. **Foi o que escondeu este bug por 3 meses.** O YouTube tem `onError` com mensagens por código (`:170-182`); o molde existe ao lado. Qualquer falha do Vimeo (privacidade, id inválido, rede) continua sendo tela preta muda.
+2. **Hash de vídeo privado descartado** — `parseVideoUrl:60-63` pega só o trecho numérico, então `vimeo.com/ID/HASH` (link de vídeo não-listado) **perde o hash**; e o payload mascara a URL crua (`view/route.ts:171`), tornando a perda irreversível. **Latente:** hoje há **0 URLs** nesse formato em prod. Vira bug real no dia que um produtor colar um link de vídeo privado.
+3. **`buildEmbedUrl` é código morto** (`video.ts:89-114`) — monta `player.vimeo.com/video/<ID>`, **nunca é chamado** por ninguém (`grep` = 0 call-sites). Confunde quem lê o arquivo achando que é o caminho do embed.
+
+---
+
 # FASE 5 — Quick-wins escondidos 🟢🟡
 
 > **Por que aqui:** features quase-prontas com backend já construído. ALTO valor, BAIXO esforço. A varredura achou estas "surpresas" — dinheiro no chão.
