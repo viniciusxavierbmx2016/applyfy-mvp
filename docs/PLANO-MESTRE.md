@@ -473,8 +473,8 @@ Relatado como regressão ("antes funcionava"). Investigação READ-ONLY completa
 
 ---
 
-### BUG D (Vimeo) — aulas com vídeo do Vimeo davam TELA PRETA 🔴 ✅ FEITO (merge `5e78edd`)
-> ⚠️ **Colisão de nome:** já existe um **BUG D** de roteamento (STUDENT sem cookie → `/landing`), registrado na família do BUG B e **morto na Trava `9d8b7a2`**. A mensagem do merge rotula este como "BUG D"; a letra livre era **E**. Renomear se atrapalhar — os dois são distinguíveis pelo SHA.
+### BUG E — aulas com vídeo do Vimeo davam TELA PRETA 🔴 ✅ FEITO (merge `5e78edd`)
+> ⚠️ **NOTA DE NOME (renomeado D → E):** a letra **D** já era do bug de **roteamento** (STUDENT sem cookie → `/landing`, registrado na família do BUG B e **morto na Trava `9d8b7a2`**). O merge commit `5e78edd` diz **"BUG D"** no texto — **histórico publicado, não reescrito**. **O índice canônico é BUG E.** Ao procurar por este bug no `git log`, o commit está rotulado com a letra antiga.
 
 Reportado pelo dono: aula com vídeo do Vimeo = retângulo preto, sem mensagem, sem erro visível. YouTube e Panda tocavam normalmente. Investigação READ-ONLY (código + SELECTs em produção + fonte do SDK + headers vivos + histórico git) → repro no staging → fix de 1 linha.
 
