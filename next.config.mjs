@@ -49,7 +49,9 @@ const nextConfig = {
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "img-src 'self' data: blob: https://*.supabase.co https://*.supabase.in",
               "font-src 'self' data: https://fonts.gstatic.com",
-              "connect-src 'self' https://*.supabase.co https://*.supabase.in wss://*.supabase.co",
+              // Vimeo: the SDK fetches vimeo.com/api/oembed.json via XHR BEFORE the iframe exists — that's connect-src, not frame-src.
+              // The apex is mandatory: the wildcard doesn't match a bare domain, and the SDK deliberately strips the "player." prefix.
+              "connect-src 'self' https://*.supabase.co https://*.supabase.in wss://*.supabase.co https://vimeo.com https://*.vimeo.com",
               "media-src 'self' https://*.youtube.com https://*.vimeo.com https://*.tv.pandavideo.com.br",
               "frame-src 'self' https://*.youtube.com https://*.vimeo.com https://*.stripe.com https://www.youtube-nocookie.com https://*.tv.pandavideo.com.br https://*.pandavideo.com.br",
               "worker-src 'self' blob:",
