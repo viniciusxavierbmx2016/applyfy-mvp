@@ -72,10 +72,13 @@ function itemsOf(p: CaktoPayload): CaktoItem[] {
 }
 
 const GRANT_EVENTS = new Set(["purchase_approved"]);
-// ⚠️ Nomes TÉCNICOS ASSUMIDOS pros rótulos do painel Cakto (Reembolso · Chargeback ·
-// Assinatura cancelada) — CONFIRMAR capturando um evento real de cada. Só o GRANT
-// (purchase_approved) está provado por payload. Se o nome real divergir, o REVOKE NÃO
-// dispara e cai em IGNORE (com WebhookLog) — aluno reembolsado mantém acesso até ajustar.
+// Status por evento (⚠️ manter honesto — é o que diz se um reembolso REALMENTE revoga):
+//   "refund"                ✅ CONFIRMADO por captura real (payload de reembolso, data como OBJETO)
+//   "chargeback"            ⚠️ nome ASSUMIDO — não capturado
+//   "subscription_canceled" ⚠️ nome ASSUMIDO — não capturado
+// Se um nome assumido divergir do real, o REVOKE não dispara: cai em IGNORE (com
+// WebhookLog) e o aluno reembolsado MANTÉM o acesso até ajustarmos aqui. Confirmar
+// capturando um evento real de cada. (Mesma pendência aberta na Kiwify.)
 const REVOKE_EVENTS = new Set(["refund", "chargeback", "subscription_canceled"]);
 
 // IGNORE (o default já cobre; listados para leitura): purchase_refused · pix_gerado ·
