@@ -611,8 +611,35 @@ O 3º gateway — **mecânico de novo** (só adapter + rota + tela + card, **zer
 
 **⚠️ CANDIDATO ABERTO (transversal, vale pros 2 gateways) — `chargeback` + `subscription_canceled`:** os dois nomes seguem **ASSUMIDOS na Cakto E na Kiwify**. O que JÁ está provado nos dois é o par principal (compra → GRANT, reembolso → REVOKE): Kiwify `order_approved`/`order_refunded` ✅ (2 capturas) e Cakto `purchase_approved`/`refund` ✅. **O que sobra é a cauda:** um chargeback ou um cancelamento de assinatura com nome divergente cai em IGNORE **em silêncio** e o aluno mantém o acesso. **Como fechar (barato):** pedir ao suporte de cada gateway a **lista de `event` que eles disparam** — é uma pergunta, não uma investigação; ou capturar quando o 1º evento real aparecer. **Método que fechou as pendências até aqui: capturar o evento REAL de cada ação, um por um** — foi assim que `order_refunded` e `refund` saíram de assumidos.
 
+### 6.1d — Perfect Pay (o 4º da fundação, 5º do sistema) ✅ FEITO (merge `fcfe357`, em produção)
+Mecânico de novo (adapter + rota + tela + card, **zero migração**, fundação/Applyfy/Hubla/Kiwify/Cakto intocados — diff vazio **+ replay real de cada um pela lib compartilhada, com controles negativos**). Auth = **token no CORPO**, o padrão da Cakto (o 4º padrão da fundação, agora reusado — não é 5º).
+
+**⭐ A DIFERENÇA ESTRUTURAL — ação derivada de ESTADO, não de verbo.** A Perfect Pay **não manda nome de evento**: manda o **STATUS NUMÉRICO** da venda (`sale_status_enum`) e o adapter traduz. Consequência que muda o raciocínio: **o MESMO webhook (mesmo `code`) chega VÁRIAS VEZES** conforme a venda caminha (`1 pending` → `2 approved` → `10 completed` → talvez `7 refunded`). Mapa: **2** approved → GRANT · **7** refunded / **9** charged_back / **6** cancelled → REVOKE · **todo o resto** (0,1,3,4,5,8,10,11,12,13,16) → IGNORE. O `sale_status_enum_key` ("approved") entra **só** no `rawEventName` do log (`"approved (2)"`); a decisão vem **sempre do número** (campo canônico). `z.coerce.number()` porque pode chegar como string — provado no staging (`"2"` → GRANT).
+
+**⭐ 1º gateway cujo mapa de eventos NÃO é hipótese.** Enum **numérico oficial** não muda de grafia — ao contrário dos `chargeback`/`subscription_canceled` que Cakto e Kiwify ainda carregam como nome assumido. **O candidato transversal dos nomes assumidos NÃO cresce com a Perfect Pay.**
+
+**⚠️ DUAS ARMADILHAS, comentadas NO CÓDIGO (não só aqui):**
+- **`10 completed`** (≈30 dias após a aprovação, fim da garantia) parece "a confirmação final da venda" — e é **IGNORE de propósito**. O acesso já foi dado no `2`. Promovê-lo a GRANT mandaria um **SEGUNDO email de acesso um mês depois de CADA compra**, e o dedup **não pega**: janela de 60s (`process-webhook.ts:219`) e o `code` é idêntico nas duas chegadas. Provado no staging: `completed (10)` → IGNORED, zero 2º email.
+- **`8 authorized`** (pré-autorizado, não capturado) não libera — o dinheiro não entrou.
+
+**amount = `sale_amount` em REAIS, SEM `/100`** (captura real: `19.99`; a row do staging gravou `19.99`, não `1999` nem `0.1999`). Igual à Cakto, oposto da Kiwify.
+
+**⭐ 1º adapter da FUNDAÇÃO a preencher os 3 `trackProps` de uma vez** — `ip` + **`userAgent`** + `affiliateCode`, porque a Perfect Pay manda `customer.user_agent`. O `purchaseDevice` era coluna morta na fundação (só a rota escopada do Applyfy preenchia, `applyfy/[slug]:357`). Colunas já existiam (`schema:639-641`) → zero migração. Provado por row.
+
+**products = `product.code`** (canônico; `external_reference` veio **NULL** na captura real), com `external_reference` como fallback caso o produtor um dia o preencha — o `code` sempre ganha quando existe, então não muda o comportamento de hoje. `idempotencyKey` sintetizado do `code` (aqui um `dedupTxPath:["code"]` funcionaria — o shape é fixo; o idempotencyKey é **escolha de padronização**, path fixo e imune a shape).
+
+**⚠️ A TELA CLONOU A KIWIFY, NÃO A CAKTO — e o porquê importa como padrão:** a tela Cakto = tela Kiwify **+ 24 linhas de "Gerar chave" em 5 lugares** (helper `generateSecureKey`, copy, placeholder, botão, passo 1 do "Como configurar"). Clonar a Cakto exigiria **REMOÇÃO** → risco de helper órfão sem caller e de texto mentiroso ("quem escolhe o valor é você" numa tela onde **quem gera o token é a Perfect Pay**). Clonar a Kiwify é **adição pura**. Provado por grep: **zero** `generateSecureKey`/"Gerar chave"/`getRandomValues` na tela nova (a da Cakto tem 4). **Regra que fica: clonar o molde MAIS SIMPLES que serve, não o mais completo.**
+
+**Validação (matriz 18/18 no staging, por payload e row):** status 2 ✅ · status string `"2"` (coerce) ✅ · 7/9/6 → CANCELLED ✅ · 1/12/**10**/8 → IGNORED ✅ · token errado/ausente → `{received:true}` com **zero user** ✅ · dedup (1 skip, 3 emails p/ 3 compradores) ✅ · `document` cifrado (len 88) ✅ · vale-tudo sem crash ✅ · anônimo 401 nas 3 rotas ✅ · **os 4 antigos: diff VAZIO + Hubla/Kiwify/Cakto concedendo pela lib + 3 controles negativos recusando** ✅. Cleanup count=0 (incl. `ProducerTransaction`), baseline preservado.
+
+**⚠️ PRIVACIDADE:** a captura real era de uma **venda de verdade** (dados pessoais de um comprador). **Nada dela entrou no staging** — só a ESTRUTURA. Todo dado de teste foi fictício e auto-identificável: `@staging.test`, IP em TEST-NET-3 (RFC 5737, nunca roteável), user-agent `"Mozilla/5.0 (StagingTest) PerfectPayMatrix/1.0"` (se aparecer em produção algum dia, o vazamento é óbvio à vista).
+
+**⚠️ Em prod a rota é configurável mas INERTE** até um produtor cadastrar o token. Nenhum produtor afetado.
+
+**⚠️ CANDIDATO NOVO (nasceu aqui, vale pra TODOS os gateways da fundação) — o revoke da lib é BINÁRIO:** `process-webhook.ts:295` faz `/refund/i.test(rawEventName) ? "REFUNDED" : "CHARGED_BACK"`. Um evento **`cancelled (6)`** não casa o regex → a `ProducerTransaction` é gravada como **`CHARGED_BACK`**, rótulo errado no dashboard do produtor. **Confirmado empiricamente** (row `PPTESTE0004`, evento `cancelled (6)`, status `CHARGED_BACK`). ⚠️ **O acesso é revogado CORRETAMENTE** — só a etiqueta está errada. Corrigir = tocar `process-webhook.ts`, **fora do escopo de uma fatia de gateway por lei**. Alternativa suja rejeitada: nomear o evento `"cancelled_refund (6)"` pra enganar o regex (seria mentir no WebhookLog pra acertar uma coluna).
+
 ### 6.2 a 6.N — Cada gateway SEGUINTE (um por vez) 🟡 cada — a fundação já existe
-Para CADA gateway novo (Kirvano, Perfect Pay, Hotmart) = **só adapter + rota + tela + card** (o schema/lib/secret-store da 6.0 já cobrem). Molde: o adapter da Hubla (6.1), Kiwify (6.1b, se HMAC) ou Cakto (6.1c, se secret-no-corpo / payload de forma variável). **Reconfirmado 3× (Hubla + Kiwify + Cakto): gateway novo é mecânico.**
+Para CADA gateway novo (Kirvano, Hotmart) = **só adapter + rota + tela + card** (o schema/lib/secret-store da 6.0 já cobrem). Molde: Hubla (6.1, token-header), Kiwify (6.1b, HMAC-query), Cakto (6.1c, secret-no-corpo / payload de forma variável) ou Perfect Pay (6.1d, **ação por status numérico**). **Reconfirmado 4× (Hubla + Kiwify + Cakto + Perfect Pay): gateway novo é mecânico.**
 - [ ] **Claude pede a documentação do webhook** → Vinicius busca e envia.
 - [ ] Read-only: mapear o payload/auth/eventos daquele gateway contra a abstração.
 - [ ] Implementar o adapter específico encaixando no padrão da fundação.
