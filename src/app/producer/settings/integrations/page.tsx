@@ -35,6 +35,7 @@ export default function ProducerIntegrationsPage() {
   const [hublaConnected, setHublaConnected] = useState(false);
   const [kiwifyConnected, setKiwifyConnected] = useState(false);
   const [caktoConnected, setCaktoConnected] = useState(false);
+  const [perfectPayConnected, setPerfectPayConnected] = useState(false);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
 
@@ -68,6 +69,12 @@ export default function ProducerIntegrationsPage() {
       .then((r) => (r.ok ? r.json() : { tokens: [] }))
       .then((d) => setCaktoConnected((d.tokens || []).length > 0))
       .catch(() => {});
+
+    // Perfect Pay "conectado" = tem WorkspaceGatewaySecret(perfectpay) cadastrado.
+    fetch("/api/producer/integrations/perfectpay-secrets")
+      .then((r) => (r.ok ? r.json() : { tokens: [] }))
+      .then((d) => setPerfectPayConnected((d.tokens || []).length > 0))
+      .catch(() => {});
   }, [router]);
 
   return (
@@ -98,6 +105,7 @@ export default function ProducerIntegrationsPage() {
           <HublaCard connected={hublaConnected} />
           <KiwifyCard connected={kiwifyConnected} />
           <CaktoCard connected={caktoConnected} />
+          <PerfectPayCard connected={perfectPayConnected} />
           {STRIPE_ENABLED && <StripeCard />}
           <RequestIntegrationCard onOpen={() => setModalOpen(true)} />
         </div>
@@ -240,6 +248,50 @@ function CaktoCard({ connected }: { connected: boolean }) {
       </Link>
       <Link
         href="/producer/settings/integrations/cakto"
+        className="group/cta mt-auto pt-1 inline-flex items-center text-xs text-primary font-medium hover:text-primary-hover dark:hover:text-primary w-fit"
+      >
+        {connected ? "Gerenciar" : "Configurar"}
+        <svg
+          className="w-3.5 h-3.5 ml-1 transition-transform group-hover/cta:translate-x-0.5"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+        </svg>
+      </Link>
+    </div>
+  );
+}
+
+function PerfectPayCard({ connected }: { connected: boolean }) {
+  return (
+    <div className="group relative flex flex-col gap-3 p-5 rounded-xl bg-white dark:bg-white/5 border border-gray-200 dark:border-white/5 hover:border-gray-300 dark:hover:border-white/10 hover:shadow-lg transition-[border-color,box-shadow] duration-200">
+      <div className="flex items-start justify-between gap-3">
+        <GatewayLogo src={null} label="Perfect Pay" size={48} />
+        <span
+          className={`text-[11px] font-medium px-2.5 py-1 rounded-full border ${
+            connected
+              ? "bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/30"
+              : "bg-gray-500/10 text-gray-600 dark:text-gray-400 border-gray-400/30"
+          }`}
+        >
+          {connected ? "● Conectado" : "● Não configurado"}
+        </span>
+      </div>
+      <Link
+        href="/producer/settings/integrations/perfectpay"
+        className="group/title block focus:outline-none"
+      >
+        <h2 className="text-base font-semibold text-gray-900 dark:text-white group-hover/title:text-primary dark:group-hover/title:text-primary transition-colors">
+          Perfect Pay
+        </h2>
+        <p className="text-sm text-gray-600 dark:text-gray-400 mt-0.5">
+          Gateway de pagamentos para infoprodutores.
+        </p>
+      </Link>
+      <Link
+        href="/producer/settings/integrations/perfectpay"
         className="group/cta mt-auto pt-1 inline-flex items-center text-xs text-primary font-medium hover:text-primary-hover dark:hover:text-primary w-fit"
       >
         {connected ? "Gerenciar" : "Configurar"}
