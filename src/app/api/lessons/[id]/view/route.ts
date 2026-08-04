@@ -9,6 +9,12 @@ import {
   loadEnrollmentOverrides,
   type ReleaseOverrides,
 } from "@/lib/auth";
+import {
+  isBlockedViewer,
+  getWorkspaceBlock,
+  contactOf,
+  SUSPENDED_MESSAGE,
+} from "@/lib/workspace-block";
 import { parseVideoUrl } from "@/lib/video";
 import { getAutomationLocks } from "@/lib/automation-locks";
 
@@ -29,6 +35,7 @@ export async function GET(_request: Request, props: { params: Promise<{ id: stri
               include: {
                 workspace: {
                   select: {
+                    id: true,
                     ownerId: true,
                     slug: true,
                     name: true,
@@ -64,6 +71,28 @@ export async function GET(_request: Request, props: { params: Promise<{ id: stri
       user.role === "PRODUCER" &&
       (course.ownerId === user.id || course.workspace.ownerId === user.id);
     const isStaffViewer = user.role === "ADMIN" || isCourseOwner;
+
+    // FASE 6B fatia 2 — bloqueio por plano do produtor.
+    // ⚠️ Par obrigatório do layout SSR: este é o caminho da API, que o client
+    // chama direto. Bloquear só o layout deixaria esta rota servindo.
+    // Ordem: DECIDE quem → SÓ ENTÃO consulta.
+    if (isBlockedViewer(user, course.workspace.ownerId)) {
+      const block = await getWorkspaceBlock(course.workspace.id);
+      if (block.blocked) {
+        return NextResponse.json(
+          {
+            suspended: true,
+            error: SUSPENDED_MESSAGE,
+            // Aqui o curso vem por `include` → os contatos de suporte existem.
+            contact: contactOf(block.owner, {
+              supportEmail: course.supportEmail,
+              supportWhatsapp: course.supportWhatsapp,
+            }),
+          },
+          { status: 503 }
+        );
+      }
+    }
 
     // Check enrollment (admins + producer owners bypass)
     let enrollmentCreatedAt: Date | null = null;

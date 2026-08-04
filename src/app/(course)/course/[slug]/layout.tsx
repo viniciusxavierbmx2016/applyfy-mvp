@@ -1,6 +1,12 @@
 import { notFound } from "next/navigation";
 import { getCourseMeta } from "@/lib/course-meta";
 import { getCurrentUser, isEnrollmentActive } from "@/lib/auth";
+import {
+  isBlockedViewer,
+  getWorkspaceBlock,
+  contactOf,
+} from "@/lib/workspace-block";
+import { WorkspaceSuspendedNotice } from "@/components/workspace-suspended-notice";
 import { prisma } from "@/lib/prisma";
 import { CourseShell } from "@/components/course-shell";
 import { CourseSupportWidget } from "@/components/course-support-widget";
@@ -66,6 +72,21 @@ export default async function CourseSlugLayout(props: {
       }
       hasAccess = isEnrollmentActive(enrollment);
       isStudentAccess = hasAccess;
+    }
+  }
+
+  // FASE 6B fatia 2 — bloqueio por plano do produtor. Cobre página do curso,
+  // módulo, aula e comunidade de uma vez (o layout envolve as 4 rotas).
+  // ⚠️ SSR: protege o RENDER. A API do player (/api/lessons/[id]/view) tem o
+  // mesmo bloqueio — bloquear só um deixa o outro servindo.
+  // ⚠️ Contato: getCourseMeta NÃO traz supportEmail/supportWhatsapp (só
+  // showLessonSupport e as cores do botão), e esta fatia não toca a peça
+  // compartilhada — aqui o contato é o do DONO. Trazer o suporte do curso ao
+  // meta é candidato próprio.
+  if (isBlockedViewer(user, course.workspace!.ownerId)) {
+    const block = await getWorkspaceBlock(course.workspace!.id);
+    if (block.blocked) {
+      return <WorkspaceSuspendedNotice contact={contactOf(block.owner)} />;
     }
   }
 

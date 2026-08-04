@@ -2,7 +2,12 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { hasWorkspaceAccess } from "@/lib/workspace-access";
-import { isWorkspaceSuspended } from "@/lib/subscription";
+import {
+  isBlockedViewer,
+  getWorkspaceBlock,
+  contactOf,
+  SUSPENDED_MESSAGE,
+} from "@/lib/workspace-block";
 import { logger } from "@/lib/logger";
 
 export async function GET(_request: Request, props: { params: Promise<{ slug: string }> }) {
@@ -62,11 +67,20 @@ export async function GET(_request: Request, props: { params: Promise<{ slug: st
       }
     }
 
-    if (user.role === "STUDENT" || user.role === "COLLABORATOR") {
-      const suspended = await isWorkspaceSuspended(workspace.id);
-      if (suspended) {
+    // FASE 6B fatia 2 — o recorte passou de INCLUSÃO (STUDENT‖COLLABORATOR) para
+    // EXCLUSÃO (todos, menos o dono do ws e o ADMIN). Mudança de comportamento
+    // deliberada: PRODUCER-aluno de outro ws e ADMIN_COLLABORATOR passam a ser
+    // bloqueados. O dono e o ADMIN continuam entrando.
+    // Ordem: DECIDE quem → SÓ ENTÃO consulta.
+    if (isBlockedViewer(user, workspace.ownerId)) {
+      const block = await getWorkspaceBlock(workspace.id);
+      if (block.blocked) {
         return NextResponse.json(
-          { suspended: true, error: "Esta área de membros está temporariamente indisponível." },
+          {
+            suspended: true,
+            error: SUSPENDED_MESSAGE,
+            contact: contactOf(block.owner),
+          },
           { status: 503 }
         );
       }

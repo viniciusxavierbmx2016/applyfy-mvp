@@ -1,5 +1,8 @@
 "use client";
 
+import { formatWhatsappLink, formatPhoneDisplay } from "@/lib/utils";
+import type { BlockContact } from "@/lib/workspace-block";
+
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
@@ -24,6 +27,8 @@ export function WorkspaceLoginForm({
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  // FASE 6B fatia 2: contato do produtor quando o ws está bloqueado por plano (503).
+  const [blockContact, setBlockContact] = useState<BlockContact | null>(null);
   const [loading, setLoading] = useState(false);
   const [requiresMfa, setRequiresMfa] = useState(false);
   const [factorId, setFactorId] = useState("");
@@ -64,6 +69,8 @@ export function WorkspaceLoginForm({
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
+        // 503 + suspended = plano do produtor bloqueado: mostra o contato dele.
+        if (res.status === 503 && data.suspended) setBlockContact(data.contact ?? null);
         setError(data.error || `Erro ao entrar (${res.status})`);
         setLoading(false);
         return;
@@ -152,7 +159,28 @@ export function WorkspaceLoginForm({
           role="alert"
         >
           <AlertIcon />
-          <span>{error}</span>
+          <span>
+            {error}
+            {blockContact && (blockContact.email || formatWhatsappLink(blockContact.whatsapp)) && (
+              <span className="mt-2 flex flex-col gap-1">
+                {blockContact.email && (
+                  <a href={`mailto:${blockContact.email}`} className="underline underline-offset-2 hover:no-underline break-all">
+                    {blockContact.email}
+                  </a>
+                )}
+                {formatWhatsappLink(blockContact.whatsapp) && (
+                  <a
+                    href={formatWhatsappLink(blockContact.whatsapp)!}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline underline-offset-2 hover:no-underline"
+                  >
+                    {formatPhoneDisplay(blockContact.whatsapp)}
+                  </a>
+                )}
+              </span>
+            )}
+          </span>
         </div>
       )}
 
