@@ -599,6 +599,24 @@ export function subscriptionSuspended(name: string) {
   };
 }
 
+// FASE 6B fatia 4 — aviso de assinatura CANCELADA. Clone do subscriptionSuspended
+// acima (mesmos helpers, mesmo vermelho, zero estilo novo); o que muda é o verbo,
+// já que "cancelada" e "suspensa" são estados diferentes para o produtor.
+export function subscriptionCancelled(name: string) {
+  const firstName = name.split(" ")[0];
+  const html = baseTemplate(`
+    ${heading("Sua assinatura foi cancelada")}
+    ${paragraph(`Olá, ${firstName}. Sua assinatura do Members Club foi cancelada.`)}
+    ${paragraph("<strong style='color:#ef4444;'>Seus alunos não conseguem acessar os cursos enquanto a assinatura estiver cancelada.</strong>")}
+    ${paragraph("Você pode reativar a qualquer momento e o acesso deles volta na hora.")}
+    ${ctaButton("Reativar assinatura", `${APP_URL}/producer/settings/billing`, "#ef4444")}
+  `);
+  return {
+    subject: "Sua assinatura foi cancelada - Members Club",
+    htmlContent: html,
+  };
+}
+
 function sanitizeHtmlForEmail(html: string): string {
   return html
     .replace(/<p>/g, '<p style="margin:0 0 8px 0;font-size:15px;color:#d1d5db;line-height:1.6;">')
