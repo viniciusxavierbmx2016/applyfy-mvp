@@ -3,6 +3,11 @@ import { prisma } from "@/lib/prisma";
 import { requireAdminPerm } from "@/lib/admin-permissions-server";
 import type { SubscriptionStatus } from "@prisma/client";
 import { logAudit, getRequestMeta } from "@/lib/audit";
+import { sendEmail } from "@/lib/email";
+import {
+  subscriptionCancelled,
+  subscriptionSuspended,
+} from "@/lib/email-templates";
 import { subscriptionActionSchema, validateBody } from "@/lib/validations";
 
 interface Ctx {
@@ -170,6 +175,37 @@ export async function PATCH(request: Request, props: Ctx) {
       await prisma.billingReminder.deleteMany({
         where: { subscriptionId: params.id },
       });
+    }
+
+    // FASE 6B fatia 4 — avisar o produtor quando o admin corta o acesso dos alunos
+    // dele. Antes desta fatia, cancelar/suspender pelo admin não mandava NADA (só o
+    // fluxo de refund/chargeback do webhook members-club avisava).
+    //
+    // ⚠️ FIRE-AND-FORGET com .catch: a ação do admin JÁ FOI PERSISTIDA acima e vale
+    // independente do email. NÃO copiamos a trava do cron (cron/billing:83-92, que só
+    // suspende se o email saiu) — lá o sistema decide sozinho e o aviso é pré-requisito
+    // ético; aqui um humano já decidiu, e falhar o envio não pode desfazer nem travar
+    // a decisão dele.
+    //
+    // ⚠️ Este aviso PODE SUMIR EM SILÊNCIO: sendEmail não tem retry nem timeout e
+    // engole o erro (lib/email.ts:50-53) — é o ITEM 5, aberto. A rede de segurança é o
+    // banner do painel (fatia 1), que reage ao ESTADO e não depende do Brevo.
+    if (action === "cancel" || action === "suspend") {
+      const template =
+        action === "cancel"
+          ? subscriptionCancelled(updated.user.name || "Produtor")
+          : subscriptionSuspended(updated.user.name || "Produtor");
+      sendEmail({
+        to: { email: updated.user.email, name: updated.user.name || undefined },
+        subject: template.subject,
+        htmlContent: template.htmlContent,
+      }).catch((err) =>
+        console.error(
+          `[SUBSCRIPTION_${action.toUpperCase()}] aviso ao produtor falhou:`,
+          updated.user.email,
+          err instanceof Error ? err.message : err
+        )
+      );
     }
 
     await logAudit({
