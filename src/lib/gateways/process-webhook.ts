@@ -5,6 +5,7 @@ import { activateEnrollment, ensureUserByEmail } from "@/lib/webhook-helpers";
 import { processAutomations } from "@/lib/automation-engine";
 import { sendCustomAccessEmail } from "@/lib/email-templates";
 import { logger } from "@/lib/logger";
+import { getWorkspaceBlock } from "@/lib/workspace-block";
 import type { GatewayAdapter, GatewayContext, CanonicalFields } from "./types";
 
 // FASE 6.0 — a lib comum: orquestra o fluxo CANÔNICO da rota ESCOPADA do Applyfy
@@ -148,6 +149,17 @@ async function grant(
     f.document ?? null
   );
 
+  // FASE 6B fatia 3 — plano do produtor bloqueado (CANCELLED/SUSPENDED, não-exempt).
+  // A venda NÃO se perde: matricula e grava a transação normalmente. O que NÃO sai é o
+  // email de acesso — o aluno não conseguiria entrar (a fatia 2 bloqueia login/vitrine/
+  // curso/player), então mandar a senha agora só geraria frustração e suporte. Ele recebe
+  // quando o produtor regularizar (o reenvio na reativação é fatia futura).
+  //
+  // ⚠️ UMA query, ANTES do loop de produtos — dentro seria N queries por webhook.
+  // ⚠️ FAIL-OPEN: se a query falhar, getWorkspaceBlock devolve blocked=false e o email
+  // sai exatamente como hoje. Erro nosso nunca pode fazer uma venda legítima perder o acesso.
+  const blockedWs = (await getWorkspaceBlock(ctx.workspaceId)).blocked;
+
   const results: Array<{
     externalId?: string;
     courseId?: string;
@@ -205,7 +217,8 @@ async function grant(
       }
     }
 
-    if (adapter.capabilities.sendAccessEmail) {
+    // ⚠️ `!blockedWs` é UMA condição a mais no if que já existia — nada reordenado.
+    if (adapter.capabilities.sendAccessEmail && !blockedWs) {
       // Dedup do email de acesso (escopada [slug]:367-381, janela de 60s no CÓDIGO).
       // Preferência: o idempotencyKey do gateway (mais forte); fallback: o txId via dedupTxPath.
       let alreadyEmailed = false;

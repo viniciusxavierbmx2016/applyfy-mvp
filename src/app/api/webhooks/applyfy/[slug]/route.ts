@@ -8,6 +8,7 @@ import {
   getSetting,
 } from "@/lib/webhook-helpers";
 import { sendCustomAccessEmail } from "@/lib/email-templates";
+import { getWorkspaceBlock } from "@/lib/workspace-block";
 import { processAutomations } from "@/lib/automation-engine";
 import { safeCompare } from "@/lib/safe-compare";
 import { logger } from "@/lib/logger";
@@ -268,6 +269,17 @@ export async function POST(request: Request, props: { params: Promise<{ slug: st
       // field synced here would re-introduce a single-workspace binding for
       // multi-workspace students.
 
+      // FASE 6B fatia 3 — plano do produtor bloqueado (CANCELLED/SUSPENDED, nao-exempt).
+      // A venda NAO se perde: matricula e grava a transacao normalmente. O que NAO sai e
+      // o email de acesso — o aluno nao conseguiria entrar (a fatia 2 bloqueia login/
+      // vitrine/curso/player), entao mandar a senha agora so geraria frustracao e suporte.
+      // Ele recebe quando o produtor regularizar (o reenvio e fatia futura).
+      //
+      // ⚠️ UMA query, ANTES do loop de items — dentro seria N queries por webhook.
+      // ⚠️ FAIL-OPEN: query falhou → blocked=false → o email sai exatamente como hoje.
+      // Erro nosso nunca pode fazer uma venda legitima perder o acesso.
+      const blockedWs = (await getWorkspaceBlock(workspace.id)).blocked;
+
       const results: Array<{
         externalId: string;
         courseId?: string;
@@ -379,7 +391,16 @@ export async function POST(request: Request, props: { params: Promise<{ slug: st
           });
           alreadyEmailed = !!prior;
         }
-        if (alreadyEmailed) {
+        if (blockedWs) {
+          // Ramo PROPRIO (nao reusa o de duplicata) para o log dizer o motivo REAL —
+          // "pulei por bloqueio de plano" e "pulei por duplicata" sao coisas diferentes
+          // na hora de diagnosticar.
+          logger.info("applyfy webhook", "skipping access email — workspace blocked by plan", {
+            slug: params.slug,
+            email,
+            txId,
+          });
+        } else if (alreadyEmailed) {
           logger.info("applyfy webhook", "skipping duplicate email", {
             slug: params.slug,
             email,
