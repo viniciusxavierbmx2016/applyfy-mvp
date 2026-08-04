@@ -695,8 +695,8 @@ Para CADA gateway novo (Kirvano, Hotmart) = **só adapter + rota + tela + card**
 | # | fatia | estado |
 |---|---|---|
 | **1** | **BANNER no painel (por ESTADO)** | ✅ **FEITO — merge `6151d9a`** |
+| **2** | **Bloqueio do aluno (os 4 pontos) + mensagem** | ✅ **FEITO — merge `fb16201`** |
 | **4** | Email no cancelamento (por EVENTO) | ⏳ aberta |
-| **2** | Bloqueio do aluno (os 4 pontos) + mensagem | ⏳ aberta |
 | **3** | Nova compra: matricula sem email | ⏳ aberta |
 | — | Reenvio de acesso na reativação | ⏳ fatia própria, depois |
 
@@ -708,6 +708,26 @@ Duas peças, ambas de **AVISO** — não bloqueia nada: (1) `producer/layout.tsx
 **Staging 6/6:** CANCELLED ✅ aparece · SUSPENDED ✅ aparece · ACTIVE ❌ · **ACTIVE+exempt ❌ (os 28 intocados)** · **PENDING ❌ (os 34 intocados)** · PAST_DUE ❌. Texto variável e link provados por HTML. ⚠️ **Com CANCELLED o produtor navega o painel inteiro** (5 rotas → 200) — avisa, não bloqueia, porque ele precisa chegar no checkout.
 ⭐ **Premissa PROVADA no fecho:** o `❓` do desenho ("o checkout aceita recompra de quem já teve assinatura?") foi resolvido — o dono clicou em "Reativar assinatura" no staging e **o checkout abriu normal**. O banner leva a uma saída que funciona; **não é beco sem saída**.
 ⚠️ **Lição de teste:** dois greps de verificação deram 0 e **nenhum era bug** — o React SSR insere `<!-- -->` entre nós de texto (`está<!-- -->cancelada`), e a tela de billing é `"use client"` (SSR entrega só skeleton). Aceitar o 0 teria "consertado" código correto.
+
+### 6B.2 — Bloqueio do aluno nos 4 pontos ✅ FEITO (merge `fb16201`)
+Antes: **só a vitrine** checava o plano (`/init:66`, único caller de `isWorkspaceSuspended`) → **link direto de aula continuava funcionando**. Agora os **4 pontos** bloqueiam: **(a)** `w/[slug]/login` (+`ownerId` no select) · **(b)** `w/[slug]/init` · **(c)** `(course)/course/[slug]/layout.tsx` (SSR — cobre curso+módulo+aula+comunidade) · **(d)** `lessons/[id]/view` (+`id` no select do ws). ⚠️ **(c) e (d) são obrigatoriamente os dois**: um protege o render, o outro o dado.
+
+**⭐ O RECORTE VIROU EXCLUSÃO — e a inversão é o ponto.** `isBlockedViewer(user, workspaceOwnerId)`: bloqueia todos, **exceto o DONO daquele ws e o ADMIN**. Com a inclusão antiga (`STUDENT‖COLLABORATOR`) o dono escapava **por não estar na lista** — errar vazava acesso. Com exclusão ele **só escapa se a condição estiver certa** — **errar TRANCA O PRODUTOR fora do painel de onde ele paga**. Por isso: **UMA função de decisão** chamada nos 4 (provado por grep: 4 call-sites, mesma assinatura), e a ordem é sempre **decide → só então consulta** (dono e ADMIN nem fazem a query). A comparação é `user.id === workspaceOwnerId`, **não** `role === "PRODUCER"` — produtor em área alheia É bloqueado.
+
+**`getWorkspaceBlock`:** 1 query (ws→owner→última subscription + contato), **FAIL-OPEN deliberado** (ws inexistente/sem subscription/erro → **não** bloqueia; um blip tirar 21 mil alunos do ar é pior) e **`exempt` sai ANTES do status**. Arquivo **novo** (`workspace-block.ts`) — `subscription.ts` fica **intocado**; a `isWorkspaceSuspended` perdeu o último caller e vira **candidato de limpeza** (não removida aqui: limpeza no meio de mudança que bloqueia aluno é risco desnecessário).
+
+**Mensagem:** componente `WorkspaceSuspendedNotice` novo, extraído do molde que já existia inline na vitrine. Contato: **suporte do CURSO ganha, cadastro do dono é fallback** (provado nos dois sentidos). 3 superfícies, 2 formatos — vitrine e curso usam a tela cheia; **o login não** (é estado de erro no form, que já existia).
+
+**⚠️⚠️ OS 2 GATES (rodados ANTES de tudo):** **G1 — o DONO entra:** `init=200 view=200 layout=0`. **G2 — o ADMIN entra:** `init=200 view=200 layout=0`. ✅
+**Matriz:** aluno→login **503** com contato ✅ · COLLABORATOR 🚫 ✅ · **PRODUCER-aluno 🚫 (mudança)** ✅ · **ADMIN_COLLABORATOR 🚫 (mudança)** ✅ · **sessão já aberta**: loga com ACTIVE → plano cai → **503 na requisição seguinte** ✅ · **ACTIVE+exempt 200/200/200 (os 28 intocados)** ✅ · **PENDING 200/200/200 (os 34 intocados)** ✅ · ACTIVE/PAST_DUE 200 ✅ · contato do curso ✅ e fallback do dono ✅.
+**Mudança de comportamento deliberada:** ~14 PRODUCER-aluno + 3 ADMIN_COLLABORATOR = **17 pessoas** passam a ser bloqueadas.
+
+**⚠️ ❓ E RESSALVAS HONESTAS DESTA FATIA:**
+1. **Multi-ws NÃO testado** — o staging tem **1 workspace só**. O bloqueio é por-ws **por construção** (`getWorkspaceBlock` recebe o `workspaceId`), mas **não foi provado com dois**. Candidato de validação.
+2. **O ADMIN_COLLABORATOR e o anônimo são barrados por gates PRÉ-EXISTENTES, não pelo bloqueio novo** — o ADMIN_COLLABORATOR toma **403** da Trava de Contexto (`hasWorkspaceAccess`, `init:55-62`, que roda antes) e o anônimo toma **307** do middleware para `/producer/login`. O resultado é o mesmo, **a causa não**. Registrado para não confundir investigação futura.
+3. **Sessão já aberta:** barra na **requisição seguinte**; uma aula **já carregada** continua tocando até recarregar. Comportamento aceito.
+4. **`getCourseMeta` NÃO traz `supportEmail`/`supportWhatsapp`** (só `showLessonSupport` e as cores do botão). Caminho tomado: o ponto **(c) usa o contato do DONO** — a peça compartilhada **não foi tocada** nesta fatia. Levar o suporte do curso ao meta = **candidato próprio**. O ponto (d) tem os contatos (vêm por `include`) e os usa.
+5. **Lição de teste:** um resultado do caso "curso sem suporte" devolveu um contato inesperado e pareceu bug de resolução de workspace. **Era o rótulo do teste que estava errado** — o curso do staging **já tinha** `supportEmail` preenchido de um teste antigo, e o contato do curso ganhou (a lei correta). Quando o resultado surpreende, **suspeitar do rótulo antes do código**.
 
 ### ⚠️ ACHADOS QUE VIRARAM ITENS PRÓPRIOS (não fazer nas fatias acima)
 1. 🔴 **As 63 subscriptions estão SEM `currentPeriodEnd` → o cron de cobrança NUNCA rodou.** O filtro de `cron/billing:24-28` exige `status IN (ACTIVE,PAST_DUE) AND exempt=false AND currentPeriodEnd IS NOT NULL` → **0 elegíveis**, e `BillingReminder` tem **0 rows na história inteira**. A carência de 3 dias (`cron/billing:78`, sem constante — literal inline) e o ciclo aviso→PAST_DUE→SUSPENDED existem em código e são **letra morta**. ⚠️ **Quando for cobrar de verdade, resolver isto ANTES** — senão nada dispara.
