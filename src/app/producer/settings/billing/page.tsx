@@ -254,9 +254,10 @@ function BillingContent() {
           Seu pagamento está pendente. Regularize para evitar suspensão.
         </Banner>
       )}
-      {sub?.status === "SUSPENDED" && (
+      {(sub?.status === "SUSPENDED" || sub?.status === "CANCELLED") && (
         <Banner color="red">
-          Sua conta está suspensa. Seus alunos não conseguem acessar os cursos. Regularize agora.
+          Sua conta está {sub.status === "CANCELLED" ? "cancelada" : "suspensa"}.
+          Seus alunos não conseguem acessar os cursos. Regularize agora.
         </Banner>
       )}
 

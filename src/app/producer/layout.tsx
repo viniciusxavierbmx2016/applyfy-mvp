@@ -1,3 +1,5 @@
+import Link from "next/link";
+import { prisma } from "@/lib/prisma";
 import { getCurrentUser, hasAcceptedCollaborator } from "@/lib/auth";
 import { ProducerThemeProvider } from "@/components/producer-theme-provider";
 import { ProducerShell } from "@/components/producer-shell";
@@ -77,9 +79,54 @@ export default async function ProducerLayout({
     }
   }
 
+  // Aviso de assinatura — reage ao ESTADO, não a um evento: aparece em TODA
+  // carga do painel enquanto a assinatura estiver cancelada/suspensa. É a rede
+  // de segurança que não depende do Brevo (o email de aviso pode falhar em
+  // silêncio — sendEmail não tem retry, lib/email.ts:50-53), e é o único aviso
+  // possível para quem JÁ foi cancelado antes deste código existir.
+  //
+  // Vive no LAYOUT e não no dashboard de propósito: o produtor pode entrar
+  // direto em /producer/courses e nunca passar pela home.
+  //
+  // ⚠️ AVISA, NÃO BLOQUEIA — o produtor precisa navegar o painel inteiro para
+  // conseguir PAGAR (/producer/settings/billing).
+  // ⚠️ `exempt` sai antes de tudo: os produtores isentos nunca veem o banner.
+  let billingAlert: "CANCELLED" | "SUSPENDED" | null = null;
+  if (user.role === "PRODUCER") {
+    const sub = await prisma.subscription.findFirst({
+      where: { userId: user.id },
+      orderBy: { createdAt: "desc" },
+      select: { status: true, exempt: true },
+    });
+    if (
+      sub &&
+      !sub.exempt &&
+      (sub.status === "CANCELLED" || sub.status === "SUSPENDED")
+    ) {
+      billingAlert = sub.status;
+    }
+  }
+
   return (
     <ProducerThemeProvider initialTheme={initialTheme}>
-      <ProducerShell>{children}</ProducerShell>
+      <ProducerShell>
+        {billingAlert && (
+          <div className="mb-4 px-4 py-3 rounded-xl border text-sm font-medium bg-red-50 dark:bg-red-500/5 border-red-200 dark:border-red-500/20 text-red-700 dark:text-red-400 flex flex-wrap items-center gap-x-2 gap-y-1">
+            <span>
+              Sua assinatura está{" "}
+              {billingAlert === "CANCELLED" ? "cancelada" : "suspensa"}.{" "}
+              <strong>Seus alunos não conseguem acessar os cursos.</strong>
+            </span>
+            <Link
+              href="/producer/settings/billing"
+              className="underline underline-offset-2 hover:no-underline"
+            >
+              Reativar agora
+            </Link>
+          </div>
+        )}
+        {children}
+      </ProducerShell>
     </ProducerThemeProvider>
   );
 }
