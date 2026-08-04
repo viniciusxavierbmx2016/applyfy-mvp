@@ -697,8 +697,10 @@ Para CADA gateway novo (Kirvano, Hotmart) = **só adapter + rota + tela + card**
 | **1** | **BANNER no painel (por ESTADO)** | ✅ **FEITO — merge `6151d9a`** |
 | **2** | **Bloqueio do aluno (os 4 pontos) + mensagem** | ✅ **FEITO — merge `fb16201`** |
 | **4** | **Email no cancelamento (por EVENTO)** | ✅ **FEITO — merge `ed7c97f`** |
-| **3** | Nova compra: matricula sem email | ⏳ **aberta — a última do bloqueio** |
-| — | Reenvio de acesso na reativação | ⏳ fatia própria, depois |
+| **3** | **Nova compra: matricula sem email** | ✅ **FEITO — merge `6ec1ae4`** |
+| — | **Reenvio de acesso na reativação** | ⏳ **a ÚNICA aberta** — fatia própria |
+
+**Estado: as 4 fatias do bloqueio estão FEITAS.** Só o reenvio na reativação segue aberto.
 
 ⭐ **Por que o banner vem ANTES do email** (a discordância que mudou a ordem): o **email reage ao EVENTO** de cancelamento — e o gatilho do `kingdomacademy` **já passou em 2026-08-04**. Um email por evento **nunca alcançaria** esse produtor. O **banner reage ao ESTADO** → é o **único aviso possível para quem já está cancelado**. Vale como princípio geral: *aviso por estado alcança quem já está no estado; aviso por evento só alcança os futuros.*
 
@@ -744,6 +746,25 @@ Antes: **nenhuma** das duas ações avisava o produtor. O cron avisa antes de su
 ⚠️ **O staging NÃO envia email** (`BREVO_API_KEY` vazia → guard de `email.ts:29-32`): a prova foi **por LOG** (`skipping email to …` = 1 chamada real ao `sendEmail`). **O envio real só se confirma no primeiro cancelamento em produção.**
 
 **✅ CORREÇÃO DE REGISTRO — o ❓ da investigação #1 está resolvido:** o `subscription_cancel` **É auditado** (provado no staging: 3 ocorrências no `AuditLog`). A ausência da ação no `AuditLog` de produção era **falta de USO, não de código** — o registro anterior dizia "não sei se é auditado" e estava incompleto.
+
+### 6B.3 — Nova compra em ws bloqueado: matricula sem mandar o acesso ✅ FEITO (merge `6ec1ae4`)
+Com a 6B.2 no ar, o aluno que comprasse de um produtor cancelado **ainda recebia o email de boas-vindas** e então batia na tela de indisponível: **pagou, recebeu login, não conseguiu usar** — pior que não receber nada.
+
+**A LEI:** enrollment **SIM** · `ProducerTransaction` **SIM** · email de acesso **NÃO**. A venda nunca se perde e o aluno recebe o acesso quando o produtor regularizar.
+
+**⚠️ Esta é a única fatia do épico que encosta em RECEITA** — `process-webhook.ts` é o caminho comum dos 4 gateways da fundação e `applyfy/[slug]` é o que **fatura hoje** (17 tokens vivos). Por isso o diff é deliberadamente mínimo:
+- **O enrollment e a transação NÃO foram tocados** — provado por grep: nenhuma linha de `activateEnrollment`/`producerTransaction` aparece no diff. Os dois já ficavam **antes e fora** do bloco do email; só a condição do email mudou.
+- Na lib comum: **`!blockedWs` é UMA condição a mais** no `if` que já existia. Nada reordenado.
+- **UMA query por webhook, ANTES do loop** de produtos/items (dentro seria N queries).
+- **FAIL-OPEN preservado:** query falhou → `blocked=false` → o email sai como hoje. **Perder uma entrega paga é pior que mandar um acesso a mais.**
+- No Applyfy o bloqueio ganhou **ramo próprio** em vez de reusar o de duplicata — o log precisa dizer o motivo REAL (`"skipping access email — workspace blocked by plan"`), porque "pulei por bloqueio" e "pulei por duplicata" são coisas diferentes ao diagnosticar.
+
+**Matriz staging (por row e por log, nos 2 caminhos):** **regressões** — ACTIVE não-exempt **2 emails** ✅ · **ACTIVE+exempt (os 28) 2 emails** ✅ · **PENDING (os 34) 2 emails** ✅ · PAST_DUE 2 emails ✅. **Bloqueio** — CANCELLED **0 emails** ✅ · SUSPENDED **0 emails** ✅. **A LEI provada por row** em ws CANCELLED: 2 users, 2 enrollments ACTIVE, 2 `ProducerTransaction` (lei-aplf, lei-cakto) e **0 emails**. **Os 4 gateways da fundação concedendo** em ws ativo (Hubla/Kiwify/Cakto/Perfect Pay) + os **4 controles negativos** recusando ✅.
+
+**⚠️ ❓ E RESSALVAS DESTA FATIA:**
+1. **O ramo do `catch` do fail-open NÃO foi forçado** — exigiria derrubar a conexão no meio da query. O ramo **"sem owner"** foi provado por unidade (`ws inexistente → {"blocked":false}`); o do `catch` está no código e não foi testado.
+2. ⚠️ **O rastro segue ambíguo no `logWebhook`:** ele grava `SUCCESS` igual, então **"email pulado por bloqueio" continua indistinguível de "Brevo falhou"** na tabela. O log de aplicação distingue (ramo próprio no Applyfy), o `WebhookLog` não. **É exatamente o que empurra a fatia de reenvio** — sem marca, achar quem ficou sem acesso depende de janela de tempo.
+3. **Lição de teste (3ª vez nesta sessão):** a 1ª rodada acusou "1 email em vez de 2" e parecia que o Applyfy ignorava a guarda. Era o **harness**: o payload usava `items` e a rota espera `orderItems` (`applyfy/[slug]:237`), então o webhook morria em `"Missing orderItems"` **antes** do ponto testado. **Suspeitar do harness antes do código.**
 
 ### ⚠️ ACHADOS QUE VIRARAM ITENS PRÓPRIOS (não fazer nas fatias acima)
 1. 🔴 **As 63 subscriptions estão SEM `currentPeriodEnd` → o cron de cobrança NUNCA rodou.** O filtro de `cron/billing:24-28` exige `status IN (ACTIVE,PAST_DUE) AND exempt=false AND currentPeriodEnd IS NOT NULL` → **0 elegíveis**, e `BillingReminder` tem **0 rows na história inteira**. A carência de 3 dias (`cron/billing:78`, sem constante — literal inline) e o ciclo aviso→PAST_DUE→SUSPENDED existem em código e são **letra morta**. ⚠️ **Quando for cobrar de verdade, resolver isto ANTES** — senão nada dispara.
