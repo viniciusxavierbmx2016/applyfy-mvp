@@ -696,8 +696,8 @@ Para CADA gateway novo (Kirvano, Hotmart) = **só adapter + rota + tela + card**
 |---|---|---|
 | **1** | **BANNER no painel (por ESTADO)** | ✅ **FEITO — merge `6151d9a`** |
 | **2** | **Bloqueio do aluno (os 4 pontos) + mensagem** | ✅ **FEITO — merge `fb16201`** |
-| **4** | Email no cancelamento (por EVENTO) | ⏳ aberta |
-| **3** | Nova compra: matricula sem email | ⏳ aberta |
+| **4** | **Email no cancelamento (por EVENTO)** | ✅ **FEITO — merge `ed7c97f`** |
+| **3** | Nova compra: matricula sem email | ⏳ **aberta — a última do bloqueio** |
 | — | Reenvio de acesso na reativação | ⏳ fatia própria, depois |
 
 ⭐ **Por que o banner vem ANTES do email** (a discordância que mudou a ordem): o **email reage ao EVENTO** de cancelamento — e o gatilho do `kingdomacademy` **já passou em 2026-08-04**. Um email por evento **nunca alcançaria** esse produtor. O **banner reage ao ESTADO** → é o **único aviso possível para quem já está cancelado**. Vale como princípio geral: *aviso por estado alcança quem já está no estado; aviso por evento só alcança os futuros.*
@@ -728,6 +728,22 @@ Antes: **só a vitrine** checava o plano (`/init:66`, único caller de `isWorksp
 3. **Sessão já aberta:** barra na **requisição seguinte**; uma aula **já carregada** continua tocando até recarregar. Comportamento aceito.
 4. **`getCourseMeta` NÃO traz `supportEmail`/`supportWhatsapp`** (só `showLessonSupport` e as cores do botão). Caminho tomado: o ponto **(c) usa o contato do DONO** — a peça compartilhada **não foi tocada** nesta fatia. Levar o suporte do curso ao meta = **candidato próprio**. O ponto (d) tem os contatos (vêm por `include`) e os usa.
 5. **Lição de teste:** um resultado do caso "curso sem suporte" devolveu um contato inesperado e pareceu bug de resolução de workspace. **Era o rótulo do teste que estava errado** — o curso do staging **já tinha** `supportEmail` preenchido de um teste antigo, e o contato do curso ganhou (a lei correta). Quando o resultado surpreende, **suspeitar do rótulo antes do código**.
+
+### 6B.4 — Email ao produtor no cancelamento/suspensão manual ✅ FEITO (merge `ed7c97f`)
+Antes: **nenhuma** das duas ações avisava o produtor. O cron avisa antes de suspender automaticamente (`cron/billing:83-92`), mas **cancelar ou suspender pelo painel do admin era silencioso** — o produtor descobria pelos alunos reclamando. **Extensão do dono:** sai em **`cancel` E `suspend` manual** (o desenho previa só o cancel).
+
+**Onde:** o gancho pós-update de `admin/subscriptions/[id]` (o mesmo bloco que já rodava em activate/reactivate/exempt). Template novo `subscriptionCancelled`, **clone** do `subscriptionSuspended` (mesmos helpers, mesmo vermelho, zero estilo novo) — muda o verbo, porque cancelada e suspensa são estados diferentes pro produtor. Os dois dizem que **os alunos perderam acesso** e levam a `/producer/settings/billing`.
+
+**⚠️ FIRE-AND-FORGET, fundamentado:** a ação do admin **já foi persistida** e vale independente do email. **NÃO copiamos a trava do cron** (que só suspende se o email saiu) — lá o *sistema* decide sozinho e o aviso é pré-requisito ético; **aqui um humano já decidiu**, e falhar o envio não pode desfazer nem travar a decisão dele. **Provado por row:** o `cancel` persistiu (`CANCELLED` + `cancelledAt`) **com o email não saindo**.
+
+**⚠️ Reage ao EVENTO** → só serve dos próximos cancelamentos em diante. O `kingdomacademy` foi cancelado **antes** desta fatia e **não recebe** — quem o alcança é o **banner da 6B.1**. Foi exatamente por isso que o banner veio primeiro na ordem.
+
+**⚠️ Este aviso pode sumir em silêncio** — `sendEmail` não tem retry nem timeout e engole o erro (`email.ts:50-53`, ITEM 5 aberto). O banner é a rede que não depende do Brevo. Declarado no comentário do código.
+
+**Matriz staging 5/5:** `cancel` → 1 email ("cancelada") ✅ · `suspend` → 1 email ("suspensa") ✅ · **`activate`/`reactivate`/`exempt` → 0 emails** ✅ (regressão) · ação conclui com o Brevo ausente ✅ · conteúdo dos 2 templates verificado (subject, "seus alunos não conseguem acessar", link `/producer/settings/billing`, CTA) ✅.
+⚠️ **O staging NÃO envia email** (`BREVO_API_KEY` vazia → guard de `email.ts:29-32`): a prova foi **por LOG** (`skipping email to …` = 1 chamada real ao `sendEmail`). **O envio real só se confirma no primeiro cancelamento em produção.**
+
+**✅ CORREÇÃO DE REGISTRO — o ❓ da investigação #1 está resolvido:** o `subscription_cancel` **É auditado** (provado no staging: 3 ocorrências no `AuditLog`). A ausência da ação no `AuditLog` de produção era **falta de USO, não de código** — o registro anterior dizia "não sei se é auditado" e estava incompleto.
 
 ### ⚠️ ACHADOS QUE VIRARAM ITENS PRÓPRIOS (não fazer nas fatias acima)
 1. 🔴 **As 63 subscriptions estão SEM `currentPeriodEnd` → o cron de cobrança NUNCA rodou.** O filtro de `cron/billing:24-28` exige `status IN (ACTIVE,PAST_DUE) AND exempt=false AND currentPeriodEnd IS NOT NULL` → **0 elegíveis**, e `BillingReminder` tem **0 rows na história inteira**. A carência de 3 dias (`cron/billing:78`, sem constante — literal inline) e o ciclo aviso→PAST_DUE→SUSPENDED existem em código e são **letra morta**. ⚠️ **Quando for cobrar de verdade, resolver isto ANTES** — senão nada dispara.
