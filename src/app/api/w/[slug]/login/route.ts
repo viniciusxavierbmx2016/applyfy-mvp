@@ -4,6 +4,12 @@ import { createRouteHandlerClient } from "@/lib/supabase-route";
 import { createAdminClient } from "@/lib/supabase-admin";
 import { prisma } from "@/lib/prisma";
 import { hasWorkspaceAccess } from "@/lib/workspace-access";
+import {
+  isBlockedViewer,
+  getWorkspaceBlock,
+  contactOf,
+  SUSPENDED_MESSAGE,
+} from "@/lib/workspace-block";
 import { isEnrollmentActive } from "@/lib/auth";
 import { loginSchema, validateBody } from "@/lib/validations";
 import { rateLimit } from "@/lib/rate-limit";
@@ -40,7 +46,14 @@ export async function POST(request: Request, props: { params: Promise<{ slug: st
 
     const workspace = await prisma.workspace.findUnique({
       where: { slug: params.slug },
-      select: { id: true, slug: true, isActive: true, masterPassword: true },
+      // ownerId: usado pelo bloqueio por plano (isBlockedViewer isenta o dono).
+      select: {
+        id: true,
+        slug: true,
+        isActive: true,
+        masterPassword: true,
+        ownerId: true,
+      },
     });
     if (!workspace || !workspace.isActive) {
       return NextResponse.json(
@@ -55,6 +68,25 @@ export async function POST(request: Request, props: { params: Promise<{ slug: st
     });
     if (!target) {
       return NextResponse.json({ error: "Senha incorreta" }, { status: 401 });
+    }
+
+    // FASE 6B fatia 2 — bloqueio por plano do produtor.
+    // Ordem: DECIDE quem (isBlockedViewer) → SÓ ENTÃO consulta (getWorkspaceBlock).
+    // Assim o dono e o ADMIN nem fazem a query.
+    // ⚠️ O dono do ws e o ADMIN NUNCA são bloqueados — o dono precisa entrar
+    // para chegar ao checkout e PAGAR.
+    if (isBlockedViewer(target, workspace.ownerId)) {
+      const block = await getWorkspaceBlock(workspace.id);
+      if (block.blocked) {
+        return NextResponse.json(
+          {
+            suspended: true,
+            error: SUSPENDED_MESSAGE,
+            contact: contactOf(block.owner),
+          },
+          { status: 503 }
+        );
+      }
     }
 
     const supabase = await createRouteHandlerClient();

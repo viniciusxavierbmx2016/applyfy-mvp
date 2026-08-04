@@ -1,5 +1,8 @@
 "use client";
 
+import { WorkspaceSuspendedNotice } from "@/components/workspace-suspended-notice";
+import type { BlockContact } from "@/lib/workspace-block";
+
 import { useCallback, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
@@ -111,6 +114,7 @@ export default function WorkspaceVitrinePage() {
   const [categories, setCategories] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [suspended, setSuspended] = useState(false);
+  const [suspendedContact, setSuspendedContact] = useState<BlockContact | null>(null);
   const [blocked, setBlocked] = useState(false);
   const [loadError, setLoadError] = useState(false);
   const [search, setSearch] = useState("");
@@ -132,6 +136,7 @@ export default function WorkspaceVitrinePage() {
       if (res.status === 503) {
         const data = await res.json().catch(() => ({}));
         if (data.suspended) {
+          setSuspendedContact(data.contact ?? null);
           setSuspended(true);
           return;
         }
@@ -210,21 +215,11 @@ export default function WorkspaceVitrinePage() {
 
   if (suspended) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-white dark:bg-[var(--producer-bg,#030712)] px-4">
-        <div className="text-center max-w-md">
-          <div className="mx-auto w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center mb-6">
-            <svg className="w-8 h-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-            </svg>
-          </div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-            Área temporariamente indisponível
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400">
-            O administrador desta área de membros está com o acesso suspenso. Por favor, entre em contato com o responsável.
-          </p>
-        </div>
-      </div>
+      <WorkspaceSuspendedNotice
+        contact={
+          suspendedContact ?? { name: null, email: null, whatsapp: null }
+        }
+      />
     );
   }
 
