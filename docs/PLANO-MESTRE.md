@@ -673,6 +673,50 @@ Para CADA gateway novo (Kirvano, Hotmart) = **só adapter + rota + tela + card**
 
 ---
 
+# FASE 6B — Épico: Bloqueio por plano do produtor 🔴
+
+> **De onde veio:** o produtor do `kingdomacademy` teve a assinatura **CANCELLED** em 2026-08-04 (plano **Pro R$597**, não "gratuito" — o enunciado inicial estava errado). Uma auditoria read-only mediu o que existia de fato.
+
+### O CONTEXTO (o que a auditoria achou — investigações #1 e #2)
+- **O bloqueio existia, mas só na PORTA:** `isWorkspaceSuspended` (`subscription.ts:76-92`) tinha **um único caller** — `w/[slug]/init:66`, a vitrine. **Login, layout de curso e player NÃO checavam nada** (0 ocorrências). Link direto de aula não passa pelo `/init`.
+- **Nova compra passava batido:** nem `process-webhook.ts` (os 4 gateways), nem `applyfy/[slug]`, nem `webhook-helpers.ts` verificavam plano. Aluno que comprasse era matriculado E recebia o email de acesso normalmente — só esbarrava na vitrine depois. **Contradiz** a expectativa de "novos alunos não recebem nada".
+- **⭐ O produtor cancelado NÃO via NADA:** nenhuma checagem em `producer/layout`, `producer/page` ou `proxy.ts`. Dashboard normal, sem banner, sem badge. E o **CANCELLED era o único status sem banner na própria tela de billing** (`:247-262` cobria PENDING/PAST_DUE/SUSPENDED). **Ele descobriria pelos alunos reclamando.**
+- **Alcance:** 1 produtor CANCELLED · **1.180 matrículas ACTIVE** afetadas · 28 ACTIVE (todos `exempt`) · 34 PENDING · 0 workspaces com `isActive=false`.
+
+### AS DECISÕES DO DONO (lei do épico)
+1. **Bloqueiam: CANCELLED + SUSPENDED**, e só quando **não-exempt**. ⛔ **PENDING NÃO bloqueia** (34 produtores — seria mudança em massa, fora do épico).
+2. **Recorte por EXCLUSÃO:** bloqueia todos, **exceto (a) o PRODUCER DONO daquele workspace e (b) o ADMIN da plataforma**. ⚠️ Muda o comportamento de hoje (o `/init` é por inclusão `STUDENT‖COLLABORATOR`): **PRODUCER-aluno (~14 híbridos) e ADMIN_COLLABORATOR (3) passam a ser bloqueados**. ⚠️⚠️ **GUARD-RAIL:** com inclusão o dono escapava por natureza; com exclusão ele só escapa se a condição estiver certa — **errar tranca o produtor fora do painel, e ele precisa entrar para PAGAR**. Por isso: **UMA função de decisão** (`isBlockedViewer(user, workspaceOwnerId)`) usada nos 4 pontos, nunca 4 cópias.
+3. **Os 4 pontos:** `w/[slug]/login` · `/init` (já tem) · `(course)/course/[slug]/layout.tsx` (SSR) · `lessons/[id]/view` (API). ⚠️ **Não há ancestral comum** (provado: `/w/**` é slug de workspace, `/course/**` é slug de curso; o layout do grupo `(course)` é vazio de lógica). ⚠️ SSR e API são **obrigatoriamente os dois** — bloquear só um deixa o outro servindo.
+4. **Mensagem:** contato do **curso** (`supportEmail`/`supportWhatsapp`, 42/52 preenchidos) → fallback no **cadastro do dono** (33/33 com email, 28/33 com phone). Na vitrine não há curso no contexto → **fonte é o dono** ("o 1º curso" seria arbitrário num ws com N cursos). Reusa `formatWhatsappLink`/`formatPhoneDisplay` (`utils.ts:106,114`).
+5. **Nova compra em ws bloqueado:** matricula ✅ + grava transação ✅ + **email de acesso NÃO**.
+6. **Avisar o produtor** — frente nova, nascida do achado acima.
+
+### A ORDEM DAS FATIAS (travada; o desenho discordou da 1ª versão e o dono aceitou)
+| # | fatia | estado |
+|---|---|---|
+| **1** | **BANNER no painel (por ESTADO)** | ✅ **FEITO — merge `6151d9a`** |
+| **4** | Email no cancelamento (por EVENTO) | ⏳ aberta |
+| **2** | Bloqueio do aluno (os 4 pontos) + mensagem | ⏳ aberta |
+| **3** | Nova compra: matricula sem email | ⏳ aberta |
+| — | Reenvio de acesso na reativação | ⏳ fatia própria, depois |
+
+⭐ **Por que o banner vem ANTES do email** (a discordância que mudou a ordem): o **email reage ao EVENTO** de cancelamento — e o gatilho do `kingdomacademy` **já passou em 2026-08-04**. Um email por evento **nunca alcançaria** esse produtor. O **banner reage ao ESTADO** → é o **único aviso possível para quem já está cancelado**. Vale como princípio geral: *aviso por estado alcança quem já está no estado; aviso por evento só alcança os futuros.*
+
+### 6B.1 — Banner de assinatura no painel ✅ FEITO (merge `6151d9a`)
+Duas peças, ambas de **AVISO** — não bloqueia nada: (1) `producer/layout.tsx` — banner vermelho no painel **inteiro** (vive no layout, não no dashboard: o produtor pode entrar direto em `/producer/courses` e nunca passar pela home), dizendo que a assinatura está cancelada/suspensa, que **os alunos não conseguem acessar**, com link pro billing; (2) `settings/billing/page.tsx` — o Banner vermelho passa a cobrir **CANCELLED** também, texto variando "cancelada"/"suspensa".
+**Mode A:** zero token/cor/fonte nova — as classes são cópia literal do `Banner color="red"` que já existia, e a frase também.
+**Staging 6/6:** CANCELLED ✅ aparece · SUSPENDED ✅ aparece · ACTIVE ❌ · **ACTIVE+exempt ❌ (os 28 intocados)** · **PENDING ❌ (os 34 intocados)** · PAST_DUE ❌. Texto variável e link provados por HTML. ⚠️ **Com CANCELLED o produtor navega o painel inteiro** (5 rotas → 200) — avisa, não bloqueia, porque ele precisa chegar no checkout.
+⭐ **Premissa PROVADA no fecho:** o `❓` do desenho ("o checkout aceita recompra de quem já teve assinatura?") foi resolvido — o dono clicou em "Reativar assinatura" no staging e **o checkout abriu normal**. O banner leva a uma saída que funciona; **não é beco sem saída**.
+⚠️ **Lição de teste:** dois greps de verificação deram 0 e **nenhum era bug** — o React SSR insere `<!-- -->` entre nós de texto (`está<!-- -->cancelada`), e a tela de billing é `"use client"` (SSR entrega só skeleton). Aceitar o 0 teria "consertado" código correto.
+
+### ⚠️ ACHADOS QUE VIRARAM ITENS PRÓPRIOS (não fazer nas fatias acima)
+1. 🔴 **As 63 subscriptions estão SEM `currentPeriodEnd` → o cron de cobrança NUNCA rodou.** O filtro de `cron/billing:24-28` exige `status IN (ACTIVE,PAST_DUE) AND exempt=false AND currentPeriodEnd IS NOT NULL` → **0 elegíveis**, e `BillingReminder` tem **0 rows na história inteira**. A carência de 3 dias (`cron/billing:78`, sem constante — literal inline) e o ciclo aviso→PAST_DUE→SUSPENDED existem em código e são **letra morta**. ⚠️ **Quando for cobrar de verdade, resolver isto ANTES** — senão nada dispara.
+2. **3 réguas diferentes de "bloqueado" no projeto:** `isWorkspaceSuspended` (CANCELLED+SUSPENDED — a lei em produção) · `getProducerSubscriptionStatus` (+PENDING+NONE; **DORMENTE**, zero callers, e ⚠️ **ESCREVE durante a leitura** — auto-suspende PAST_DUE em `subscription.ts:55-58`) · `checkPlanLimits` (+PENDING; já bloqueia criar curso/workspace hoje). Convergir é item próprio.
+3. **O campo `restricted` é código morto** — escrito em `subscription.ts:48`, **nunca lido** por ninguém.
+4. **O cancelamento pelo admin não manda email nenhum hoje** — só refund/chargeback avisa (`members-club:296-304`). É exatamente o que a **Fatia 4** resolve. ⚠️ E quando resolver: o `sendEmail` **não tem retry nem timeout** e engole o erro (`email.ts:50-53`, ITEM 5 aberto) → o email pode sumir em silêncio. **O banner é a rede que não depende do Brevo.**
+
+---
+
 # 🏁 MARCO: PLATAFORMA PRONTA
 
 > **Concluídas as Fases 1–6, a plataforma está:**
