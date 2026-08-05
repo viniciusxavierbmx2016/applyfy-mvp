@@ -573,6 +573,8 @@ export const updateWorkspaceSchema = z
     emailFooter: z.string().max(500).optional().nullable(),
     emailCustomHtml: z.string().max(50000).optional().nullable(),
     emailUseCustomHtml: z.boolean().optional(),
+    supportEmail: z.string().max(255).optional().nullable(),
+    supportWhatsapp: z.string().max(50).optional().nullable(),
   })
   .passthrough();
 

@@ -21,6 +21,11 @@ interface InfoTabProps {
   setShowMasterPassword: Dispatch<SetStateAction<boolean>>;
   customDomain: string;
   setCustomDomain: (v: string) => void;
+  // Contato de suporte
+  supportEmail: string;
+  setSupportEmail: (v: string) => void;
+  supportWhatsapp: string;
+  setSupportWhatsapp: (v: string) => void;
 }
 
 export function InfoTab({
@@ -37,6 +42,10 @@ export function InfoTab({
   setShowMasterPassword,
   customDomain,
   setCustomDomain,
+  supportEmail,
+  setSupportEmail,
+  supportWhatsapp,
+  setSupportWhatsapp,
 }: InfoTabProps) {
   const logoFileRef = useRef<HTMLInputElement>(null);
 
@@ -172,6 +181,41 @@ export function InfoTab({
               disabled
               className={`${inputClass} !font-mono cursor-not-allowed`}
             />
+          </div>
+        </div>
+      </div>
+
+      {/* Contato de suporte */}
+      <div className="pt-8 border-t border-gray-200 dark:border-white/5">
+        <h2 className="text-sm font-medium text-gray-900 dark:text-white mb-0.5">Contato de suporte</h2>
+        <p className="text-xs text-gray-500 mb-4">Usado quando o curso não tem contato próprio.</p>
+
+        <div className="grid sm:grid-cols-2 gap-4">
+          <div>
+            <label className={labelClass}>
+              Email de suporte
+              <HelpTooltip text="O aluno vê este contato quando o curso não tem um próprio. Se ficar vazio, o aluno vê o email da sua conta pessoal." />
+            </label>
+            <input
+              type="email"
+              value={supportEmail}
+              onChange={(e) => setSupportEmail(e.target.value)}
+              placeholder="suporte@suaempresa.com"
+              className={inputClass}
+            />
+          </div>
+          <div>
+            <label className={labelClass}>WhatsApp de suporte</label>
+            <input
+              type="tel"
+              value={supportWhatsapp}
+              onChange={(e) => setSupportWhatsapp(e.target.value)}
+              placeholder="(11) 99999-9999"
+              className={inputClass}
+            />
+            <p className="text-[11px] text-gray-500 mt-1">
+              Se ficar vazio, o aluno vê o WhatsApp da sua conta pessoal.
+            </p>
           </div>
         </div>
       </div>
