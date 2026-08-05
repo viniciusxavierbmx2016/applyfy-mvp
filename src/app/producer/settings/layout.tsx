@@ -58,6 +58,19 @@ const tabs = [
     ),
   },
   {
+    key: "support",
+    label: "Contato",
+    href: "/producer/settings/support",
+    exact: false,
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
+        <path d="M4 14v-2a8 8 0 0 1 16 0v2" />
+        <path d="M4 14h2a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1z" />
+        <path d="M20 14h-2a1 1 0 0 0-1 1v4a1 1 0 0 0 1 1h1a1 1 0 0 0 1-1z" />
+      </svg>
+    ),
+  },
+  {
     key: "security",
     label: "Segurança",
     href: "/producer/settings/security",
