@@ -121,6 +121,10 @@ model Workspace {
   forceTheme        String?
   customDomain      String?  @unique
   masterPassword    String?
+  // Contato de suporte do workspace — fallback do curso, antes do dono.
+  // supportWhatsapp guarda só dígitos; a formatação acontece na exibição.
+  supportEmail      String?
+  supportWhatsapp   String?
   ownerId           String
   isActive          Boolean  @default(true)
   createdAt         DateTime @default(now())
