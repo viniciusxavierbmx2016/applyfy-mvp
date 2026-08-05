@@ -90,6 +90,7 @@ STAFF_ROLES = { PRODUCER, ADMIN, COLLABORATOR, ADMIN_COLLABORATOR }
 ## 5) ESTADO (puxado do PLANO-MESTRE)
 
 **FEITO (merge SHA):**
+- **Exposição da Data API fechada (FASE 6C)** ✅ `271d4aa` + `b0cfea8` — chave anon pública lia/escrevia `WorkspaceGatewaySecret` e lia `OriginLockLog`. Hoje: 60/60 com RLS, **0 grants para anon** em `public`, defaults revogados. ⚠️ App usa o papel **`postgres`** (não `service_role`). ⚠️ `REVOKE` sem `IN SCHEMA public` mata o upload. ⛔ `migrate deploy` proibido enquanto a Fatia A estiver pendente. Resta 6C.3 (`pg_default_acl` do `supabase_admin` — ticket Supabase).
 - FASE 1 segurança: 1.1–1.14 ✅ (todos com SHA no plano). Abertos: **1.5** (magic-link convite) e **1.6** (token single-use) — dependem da Fase 3 / migração.
 - FASE 2: 2.1 HSTS `de00875` · 2.2 npm audit `7eaaf66` · 2.3 XSS `3d40bc3` · 2.6/2.6b email sanitize `aa0e1a2`/`98b1381` · 2.7 + Candidato-2 (não-itens) · **2.4 Peça A shared-store Upstash `75c07be`** · **2.4 Peça B.1 origin lockdown OBSERVE `53748b2`** (vigia em Node, proxy intocado, 10 rotas, tela `/admin/origin-lock`; ✅ **FINALIZADA 2026-07-18** — env ligada: `ORIGIN_LOCK_SECRET` na Vercel + Transform Rule 'Origin Lock Stamp' no Cloudflare, carimbo provado em prod). Abertos: **2.4** Peça B.2 enforce (após janela de observação limpa) + constant-time · **2.5** CSP.
 - FASE 4: 4.1 (via 1.12) · 4.2 `022f933` · 4.3 `159fc0f` · 4.4 (condição eliminada) ✅. Aberto: **4.5** console.error (forma decidida: guard-por-status — `console.error` só ≥500; aguardando implementação).

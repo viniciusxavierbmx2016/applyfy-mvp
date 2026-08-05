@@ -182,11 +182,23 @@ isEnrollmentActive(enrollment)               // Acesso ao conteúdo
 
 ## 8. RLS no Postgres (Supabase)
 
-**Postura:** RLS habilitado sem policies permissivas = bloqueio total para anon/authenticated. O app sempre usa service_role (Prisma), que bypassa RLS. RLS serve como defesa em profundidade contra leakage via Supabase client direto.
+**Postura:** RLS habilitado sem policies permissivas = bloqueio total para anon/authenticated. O app acessa o banco via Prisma com o papel **`postgres`** (`rolbypassrls = true`, dono de todas as tabelas de `public`) — **não** com `service_role`. RLS é a defesa em profundidade contra leitura direta via Data API (PostgREST) com a chave anon pública.
 
-**51 tabelas com RLS habilitado:**
+**Cobertura (2026-08-05): 60/60 tabelas de `public` com RLS + 0 policies, e 0 grants para `anon`/`authenticated`.**
 
-AccessLog, AdminCollaborator, AuditLog, Automation, AutomationLog, BillingReminder, Certificate, Collaborator, Comment, CommunityGroup, Course, Enrollment, EnrollmentOverride, ImpersonateToken, IntegrationRequest, Invoice, Lesson, LessonComment, LessonMaterial, LessonProgress, LessonReaction, Like, Live, LiveMessage, LiveModerator, LiveNotification, MenuItem, Module, Notification, PendingExecution, Plan, PlatformSettings, Post, ProducerTransaction, PushSubscription, Quiz, QuizAttempt, QuizOption, QuizQuestion, Review, Section, Session, Settings, Subscription, SupportTicket, Tag, TicketMessage, User, UserTag, WebhookLog, **WorkspaceCredential**, Workspace
+Listar os nomes aqui já desatualizou duas vezes e foi o que escondeu a exposição de `OriginLockLog` e `WorkspaceGatewaySecret` (nasceram em 2026-07-18 e ficaram fora da lista). A verificação é por query, não por lista:
+
+```sql
+-- tabelas SEM RLS (esperado: 0 linhas)
+SELECT relname FROM pg_class
+WHERE relkind='r' AND relnamespace='public'::regnamespace AND NOT relrowsecurity;
+
+-- tabelas com grant para anon/authenticated (esperado: 0 linhas)
+SELECT DISTINCT table_name FROM information_schema.role_table_grants
+WHERE table_schema='public' AND grantee IN ('anon','authenticated');
+```
+
+⚠️ Toda tabela nova nasce exposta por default do projeto Supabase (`pg_default_acl`). Ver FASE 6C no PLANO-MESTRE.
 
 ---
 
