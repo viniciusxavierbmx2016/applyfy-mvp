@@ -22,8 +22,13 @@ export function SubscriptionGate({ children }: { children: React.ReactNode }) {
   const [pastDueDays, setPastDueDays] = useState<number | null>(null);
   const fetched = useRef(false);
 
+  // Rotas alcançáveis sem plano ativo. Critério: o produtor mantém o direito de
+  // encerrar bem — pagar, entrar, e corrigir o contato pelo qual seus alunos o
+  // procuram. Não é conveniência: o contato vazio expõe o telefone pessoal dele
+  // nas 4 telas de bloqueio. Qualquer adição aqui precisa passar nesse critério.
   const skip =
     pathname === "/producer/settings/billing" ||
+    pathname === "/producer/settings/support" ||
     pathname === "/producer/login" ||
     pathname === "/producer/register";
 
