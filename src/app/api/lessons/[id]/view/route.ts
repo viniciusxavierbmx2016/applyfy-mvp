@@ -84,10 +84,14 @@ export async function GET(_request: Request, props: { params: Promise<{ id: stri
             suspended: true,
             error: SUSPENDED_MESSAGE,
             // Aqui o curso vem por `include` → os contatos de suporte existem.
-            contact: contactOf(block.owner, {
-              supportEmail: course.supportEmail,
-              supportWhatsapp: course.supportWhatsapp,
-            }),
+            contact: contactOf(
+              block.owner,
+              {
+                supportEmail: course.supportEmail,
+                supportWhatsapp: course.supportWhatsapp,
+              },
+              block.workspace
+            ),
           },
           { status: 503 }
         );

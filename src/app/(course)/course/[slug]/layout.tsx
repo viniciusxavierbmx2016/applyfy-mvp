@@ -86,7 +86,11 @@ export default async function CourseSlugLayout(props: {
   if (isBlockedViewer(user, course.workspace!.ownerId)) {
     const block = await getWorkspaceBlock(course.workspace!.id);
     if (block.blocked) {
-      return <WorkspaceSuspendedNotice contact={contactOf(block.owner)} />;
+      return (
+        <WorkspaceSuspendedNotice
+          contact={contactOf(block.owner, null, block.workspace)}
+        />
+      );
     }
   }
 
