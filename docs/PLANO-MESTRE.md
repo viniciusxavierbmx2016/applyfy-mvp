@@ -774,6 +774,20 @@ Com a 6B.2 no ar, o aluno que comprasse de um produtor cancelado **ainda recebia
 
 ---
 
+# FASE 6C — Segurança: exposição da Data API 🔴
+
+Chave anon pública (extraível do bundle) lia e **escrevia** `WorkspaceGatewaySecret` e lia `OriginLockLog` (14k linhas de IP/UA) via PostgREST, sem autenticação. Cadeia de ataque provada: anon key → `Workspace.id` do HTML público de `/w/<slug>/login` → INSERT em `WorkspaceGatewaySecret` → `decrypt()` devolve verbatim o que não tem formato `iv:tag:ct` (`encryption.ts:33-34`, dispensa o `ENCRYPTION_SECRET`) → webhook forjado → GRANT/REVOKE de matrícula. Applyfy não afetado (usa `WorkspaceApplyfyToken`, com RLS).
+
+- [x] **6C.1 — RLS + REVOKE nas 2 tabelas expostas** 🔴 ✅ `271d4aa` — `ENABLE ROW LEVEL SECURITY` + `REVOKE ALL` em `OriginLockLog` e `WorkspaceGatewaySecret`. Aplicado via SQL cru (session mode 5432, nunca pooler) e versionado em `20260805004547_enable_rls_origin_lock_and_gateway_secret` com `migrate resolve --applied`. Provado com a chave anon **real do bundle**: 200 → 401. Produção escrevendo durante a janela.
+- [x] **6C.2 — REVOKE global no schema `public` + default privileges** 🔴 ✅ `b0cfea8` — 6 statements (`TABLES`/`SEQUENCES`/`FUNCTIONS` + os 3 `ALTER DEFAULT PRIVILEGES`), todos com **`IN SCHEMA public` obrigatório** (sem isso mata o upload: o browser sobe como `authenticated` no schema `storage`). Capability-neutral: RLS já devolvia 0 linhas; o que fecha de fato é **TRUNCATE**, que RLS não governa. Migration `20260805015234_revoke_anon_grants_public_schema`. Estado: 60/60 RLS, 0 grants anon, storage 7/7 intacto.
+  ⚠️ **`postgres` é membro de `anon`/`authenticated` com `rolinherit=true`** — o REVOKE também tira o que ele herda. Só não quebrou porque é **dono das 60 e tem grant explícito próprio**. Gate obrigatório antes de qualquer REVOKE futuro.
+- [ ] **6C.3 — `pg_default_acl` do `supabase_admin` (causa-raiz pela metade)** 🔴 — 3 linhas (`r`/`S`/`f`) de propriedade do `supabase_admin` seguem concedendo a `anon`/`authenticated`. **Infixável com o papel que temos**: `pg_has_role('postgres','supabase_admin','MEMBER')=false` e `postgres.rolsuper=false`. Dormente (as 60 são `owner=postgres` e o Prisma cria como `postgres`); o gatilho é instalar pelo painel extensão que crie tabela em `public` — nasceria exposta. **Ação: ticket no suporte Supabase.** Mitigação prática: sempre instalar extensão em schema próprio.
+- [ ] **6C.4 — Validar em staging** 🟡 — 6C.1/6C.2 foram aplicados direto em produção (staging zerado desde o incidente do `--shadow-database-url`). Rede: capability-neutral + rollback simétrico (`GRANT ALL ON ALL TABLES IN SCHEMA public TO anon, authenticated`). Revalidar no rebuild do staging.
+
+**Nota permanente:** `prisma migrate deploy` está **PROIBIDO** enquanto `20260804180000_add_enrollment_access_email_pending` (Fatia A) estiver pendente e untracked — o deploy a levaria de carona pra produção. Usar `migrate resolve --applied` para registrar migrations já aplicadas via SQL.
+
+---
+
 # 🏁 MARCO: PLATAFORMA PRONTA
 
 > **Concluídas as Fases 1–6, a plataforma está:**
@@ -837,7 +851,7 @@ Cada um: Dev Brabo completo (read-only → proposta → staging → merge `--no-
 > Qualidade interna e QA. Não bloqueia o "pronto", mas mantém a casa em ordem. Pode ser intercalado entre as outras fases quando houver fôlego.
 
 ### Débito
-- [ ] **9.1 — Migrations do zero (D1)** 🟡 — 77 migrations (em 2026-07-13, inclui a do 5.3) não reconstroem do zero; ~10 tabelas só via `db push` + RLS fora das migrations. Bloqueia novos ambientes. Ritual reset→push→resolve→RLS. **Coordenar com 1.6, 3.2 (migrações novas).**
+- [ ] **9.1 — Migrations do zero (D1)** 🟡 — 77 migrations (em 2026-07-13, inclui a do 5.3) não reconstroem do zero; ~10 tabelas só via `db push` + RLS fora das migrations. Bloqueia novos ambientes. Ritual reset→push→resolve→RLS. **Coordenar com 1.6, 3.2 (migrações novas).** **Materializou-se 2× — ver FASE 6C (6C.3 é a raiz que sobrou).**
 - [ ] **9.2 — Staging completo (D2)** 🟢 — aplicar `storage-policies.sql` + seed de contas no staging.
 - [ ] **9.3 — README stale (D3)** 🟢 — descreve Next 14/React 18/NextAuth/Stripe/"Applyfy — Área de Membros"; real é Next 16/React 19/Supabase Auth/"Members Club". Reescrever.
 - [ ] **9.4 — DEPLOY_CHECKLIST stale** 🟢 — `src/docs/DEPLOY_CHECKLIST.md` com produto Applyfy R$97 (é R$597) + checklist pós-deploy unchecked. Atualizar.
