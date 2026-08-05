@@ -82,7 +82,7 @@ export async function POST(request: Request, props: { params: Promise<{ slug: st
           {
             suspended: true,
             error: SUSPENDED_MESSAGE,
-            contact: contactOf(block.owner),
+            contact: contactOf(block.owner, null, block.workspace),
           },
           { status: 503 }
         );

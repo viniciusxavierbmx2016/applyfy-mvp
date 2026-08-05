@@ -25,6 +25,8 @@ export interface WorkspaceBlock {
   blocked: boolean;
   /** Contato do DONO do workspace — fallback quando o curso não tem suporte. */
   owner: { name: string | null; email: string | null; phone: string | null };
+  /** Contato do WORKSPACE — nível do meio: vale mais que o dono, menos que o curso. */
+  workspace: { supportEmail: string | null; supportWhatsapp: string | null };
 }
 
 /**
@@ -67,12 +69,15 @@ export async function getWorkspaceBlock(
   const empty: WorkspaceBlock = {
     blocked: false,
     owner: { name: null, email: null, phone: null },
+    workspace: { supportEmail: null, supportWhatsapp: null },
   };
 
   try {
     const ws = await prisma.workspace.findUnique({
       where: { id: workspaceId },
       select: {
+        supportEmail: true,
+        supportWhatsapp: true,
         owner: {
           select: {
             name: true,
@@ -95,13 +100,18 @@ export async function getWorkspaceBlock(
       email: ws.owner.email ?? null,
       phone: ws.owner.phone ?? null,
     };
+    const workspace = {
+      supportEmail: ws.supportEmail ?? null,
+      supportWhatsapp: ws.supportWhatsapp ?? null,
+    };
     const sub = ws.owner.subscriptions[0];
 
-    if (!sub || sub.exempt) return { blocked: false, owner };
+    if (!sub || sub.exempt) return { blocked: false, owner, workspace };
 
     return {
       blocked: sub.status === "SUSPENDED" || sub.status === "CANCELLED",
       owner,
+      workspace,
     };
   } catch (err) {
     // FAIL-OPEN: erro de banco nunca bloqueia aluno legítimo.
@@ -111,19 +121,22 @@ export async function getWorkspaceBlock(
 }
 
 /**
- * O contato exibido ao aluno. Lei: o suporte do CURSO ganha; se vazio, cai no
- * cadastro do dono do workspace.
+ * O contato exibido ao aluno. Lei: CURSO → WORKSPACE → DONO. O mais específico
+ * ganha; cada nível vazio cai no seguinte.
  *
- * ⚠️ Na VITRINE não há curso no contexto → chame sem o 2º argumento (a fonte é
- * o dono). "Pegar o 1º curso" seria arbitrário num workspace com N cursos.
+ * ⚠️ Na VITRINE não há curso no contexto → passe `null` no 2º argumento (a fonte
+ * é o workspace, e o dono como último recurso). "Pegar o 1º curso" seria
+ * arbitrário num workspace com N cursos.
  */
 export function contactOf(
   owner: { name: string | null; email: string | null; phone: string | null },
-  course?: { supportEmail?: string | null; supportWhatsapp?: string | null } | null
+  course?: { supportEmail: string | null; supportWhatsapp: string | null } | null,
+  workspace?: { supportEmail: string | null; supportWhatsapp: string | null } | null
 ): BlockContact {
   return {
     name: owner.name,
-    email: course?.supportEmail?.trim() || owner.email,
-    whatsapp: course?.supportWhatsapp?.trim() || owner.phone,
+    email: course?.supportEmail?.trim() || workspace?.supportEmail?.trim() || owner.email,
+    whatsapp:
+      course?.supportWhatsapp?.trim() || workspace?.supportWhatsapp?.trim() || owner.phone,
   };
 }
