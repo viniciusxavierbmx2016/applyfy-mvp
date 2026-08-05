@@ -70,6 +70,8 @@ export default function EditWorkspacePage() {
   const [uploadingFavicon, setUploadingFavicon] = useState(false);
   const [forceTheme, setForceTheme] = useState<"" | "light" | "dark">("");
   const [customDomain, setCustomDomain] = useState("");
+  const [supportEmail, setSupportEmail] = useState("");
+  const [supportWhatsapp, setSupportWhatsapp] = useState("");
   const [accentColor, setAccentColor] = useState("");
   const [wsBannerUrl, setWsBannerUrl] = useState<string | null>(null);
   const [wsBannerPos, setWsBannerPos] = useState<ImagePosition>({ x: 50, y: 50 });
@@ -149,6 +151,8 @@ export default function EditWorkspacePage() {
               : ""
           );
           setCustomDomain(found.customDomain || "");
+          setSupportEmail(found.supportEmail || "");
+          setSupportWhatsapp(found.supportWhatsapp || "");
           setEmailConfig({
             emailLogoUrl: found.emailLogoUrl || "",
             emailPrimaryColor: found.emailPrimaryColor || "",
@@ -342,6 +346,8 @@ export default function EditWorkspacePage() {
         faviconUrl: faviconUrl || null,
         forceTheme: forceTheme || null,
         customDomain: customDomain.trim() || null,
+        supportEmail: supportEmail.trim() || null,
+        supportWhatsapp: supportWhatsapp.trim() || null,
       };
       if (loginBgColor && !HEX_RE.test(loginBgColor)) {
         setError("Cor de fundo deve ser hex (#RRGGBB)");
@@ -552,6 +558,10 @@ export default function EditWorkspacePage() {
             setShowMasterPassword={setShowMasterPassword}
             customDomain={customDomain}
             setCustomDomain={setCustomDomain}
+            supportEmail={supportEmail}
+            setSupportEmail={setSupportEmail}
+            supportWhatsapp={supportWhatsapp}
+            setSupportWhatsapp={setSupportWhatsapp}
           />
         )}
 

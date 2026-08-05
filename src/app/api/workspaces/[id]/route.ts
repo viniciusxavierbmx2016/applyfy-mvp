@@ -115,6 +115,25 @@ export async function PATCH(request: Request, props: { params: Promise<{ id: str
       data.forceTheme = body.forceTheme;
     }
 
+    // Contato de suporte do workspace — fallback do curso, antes do dono.
+    // Zod cuida do tamanho; formato é validado aqui, como o resto da rota.
+    if (body?.supportEmail !== undefined) {
+      const raw = body.supportEmail;
+      const v = typeof raw === "string" ? raw.trim().toLowerCase() : "";
+      if (v && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) {
+        return NextResponse.json({ error: "Email de suporte inválido" }, { status: 400 });
+      }
+      data.supportEmail = v || null;
+    }
+    if (body?.supportWhatsapp !== undefined) {
+      const raw = body.supportWhatsapp;
+      const digits = typeof raw === "string" ? raw.replace(/\D/g, "") : "";
+      if (digits && digits.length < 8) {
+        return NextResponse.json({ error: "WhatsApp de suporte inválido" }, { status: 400 });
+      }
+      data.supportWhatsapp = digits || null;
+    }
+
     if (Object.keys(data).length === 0) {
       return NextResponse.json({ error: "Nada a atualizar" }, { status: 400 });
     }
