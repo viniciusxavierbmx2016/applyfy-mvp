@@ -4,6 +4,88 @@ import { requireStaff } from "@/lib/auth";
 import { requireWorkspaceOwner } from "@/lib/workspace";
 import { updateWorkspaceSchema, validateBody } from "@/lib/validations";
 
+// Fonte própria da tela de edição do workspace. Antes ela buscava a LISTA
+// inteira (GET /api/workspaces) e filtrava no client — o que obrigava as outras
+// cinco consumidoras da lista a receber o payload completo, masterPassword
+// incluída. Aqui o payload é o que essa tela lê, e nada mais.
+//
+// ⚠️ O select foi montado a partir dos campos LIDOS NO CÓDIGO da tela, não do
+// tipo Workspace de _types.ts — ele está desatualizado em 4 (loginTextColor,
+// loginSecondaryTextColor, supportEmail, supportWhatsapp). E `tsc` não protege:
+// r.json() é `any`, então found.<campo> nunca é checado. Campo faltando aqui
+// vira undefined em runtime, cai no `|| DEFAULT` da tela e é REGRAVADO por cima
+// no próximo save. Conferir contra a tela, nunca contra o tipo nem contra o
+// compilador.
+//
+// Gate idêntico ao do PATCH/DELETE. A ordem importa: requireWorkspaceOwner já
+// devolve 403 quando o PRODUCER não é dono — inclusive para id inexistente, o
+// que não vaza existência. O 404 abaixo só é alcançável por ADMIN, que passa
+// pelo gate sem consultar a linha.
+export async function GET(_request: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
+  try {
+    const staff = await requireStaff();
+    const gate = await requireWorkspaceOwner(staff, params.id);
+    if (!gate.ok) return gate.response;
+
+    const workspace = await prisma.workspace.findUnique({
+      where: { id: params.id },
+      select: {
+        id: true,
+        slug: true,
+        name: true,
+        logoUrl: true,
+        isActive: true,
+        masterPassword: true,
+        loginLayout: true,
+        loginBgImageUrl: true,
+        loginBgColor: true,
+        loginPrimaryColor: true,
+        loginLogoUrl: true,
+        loginTitle: true,
+        loginSubtitle: true,
+        loginBoxColor: true,
+        loginBoxOpacity: true,
+        loginSideColor: true,
+        loginLinkColor: true,
+        loginTextColor: true,
+        loginSecondaryTextColor: true,
+        accentColor: true,
+        bannerUrl: true,
+        bannerPosition: true,
+        faviconUrl: true,
+        forceTheme: true,
+        customDomain: true,
+        supportEmail: true,
+        supportWhatsapp: true,
+        emailLogoUrl: true,
+        emailPrimaryColor: true,
+        emailBgColor: true,
+        emailBoxColor: true,
+        emailTitle: true,
+        emailBody: true,
+        emailFooter: true,
+        emailCustomHtml: true,
+        emailUseCustomHtml: true,
+        _count: { select: { courses: true, members: true } },
+      },
+    });
+    if (!workspace) {
+      return NextResponse.json(
+        { error: "Workspace não encontrado" },
+        { status: 404 }
+      );
+    }
+    return NextResponse.json({ workspace });
+  } catch (error) {
+    console.error("GET /api/workspaces/[id] error:", error);
+    const msg = error instanceof Error ? error.message : "";
+    const status =
+      msg === "Não autorizado" ? 401 : msg === "Sem permissão" ? 403 : 500;
+    return NextResponse.json({ error: msg || "Erro" }, { status });
+  }
+}
+
 export async function PATCH(request: Request, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
   try {
