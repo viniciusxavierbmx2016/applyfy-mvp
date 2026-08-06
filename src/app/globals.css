@@ -180,6 +180,30 @@ body {
 .post-content img:hover {
   opacity: 0.9;
 }
+
+/* Mídia do POST sangra até a borda do cartão. ⚠️ Escopado por .post-media-bleed
+   de propósito: .post-content sozinha veste TAMBÉM o balão de comentário
+   (post-card.tsx:640), onde margem negativa estouraria o balão. A classe só é
+   aplicada na div do post (post-card.tsx:407).
+   Os números casam com o padding do cartão (p-4 sm:p-5 = 1rem / 1.25rem) — se o
+   padding mudar, estes mudam junto. cursor/transition/object-fit continuam vindo
+   da regra acima; aqui só a caixa muda. */
+.post-content.post-media-bleed img {
+  width: calc(100% + 2rem);
+  max-width: calc(100% + 2rem);
+  margin-left: -1rem;
+  margin-right: -1rem;
+  max-height: 420px;
+  border-radius: 0;
+}
+@media (min-width: 640px) {
+  .post-content.post-media-bleed img {
+    width: calc(100% + 2.5rem);
+    max-width: calc(100% + 2.5rem);
+    margin-left: -1.25rem;
+    margin-right: -1.25rem;
+  }
+}
 .post-content ul {
   list-style: disc;
   padding-left: 1.25rem;

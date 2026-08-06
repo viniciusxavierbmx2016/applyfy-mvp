@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { memo, useState } from "react";
 import dynamic from "next/dynamic";
 import { Avatar } from "@/components/ui/avatar";
 import { formatRelativeTime } from "@/lib/utils";
@@ -53,12 +53,25 @@ export interface CommentItem {
   replies?: CommentItem[];
 }
 
+// Uma única pílula temável para os 3 tipos. As 4 cores antigas (amarelo/verde/
+// roxo/azul) eram a "pastel-palette-of-six" que a skill da casa proíbe — e só a
+// azul era remapeada por .course-customized, então num curso customizado três
+// delas ficavam de fábrica. Estas duas classes o ruleset do aluno cobre.
+const TYPE_PILL = "bg-blue-500/[0.08] text-blue-400";
+
 const typeLabels: Record<PostItem["type"], { label: string; color: string }> = {
-  QUESTION: { label: "Dúvida", color: "bg-yellow-500/20 text-yellow-400" },
-  RESULT: { label: "Resultado", color: "bg-green-500/20 text-green-400" },
-  FEEDBACK: { label: "Feedback", color: "bg-purple-500/20 text-purple-400" },
-  FREE: { label: "Livre", color: "bg-blue-500/20 text-blue-400" },
+  QUESTION: { label: "Dúvida", color: TYPE_PILL },
+  RESULT: { label: "Resultado", color: TYPE_PILL },
+  FEEDBACK: { label: "Feedback", color: TYPE_PILL },
+  // FREE fica na tabela: `type` chega do servidor e typeLabels[type] não pode ser
+  // undefined. O que mudou é o JSX, que não renderiza a pílula para FREE — 79%
+  // dos posts são FREE e "Livre" não informa nada.
+  FREE: { label: "Livre", color: TYPE_PILL },
 };
+
+// Pílula de papel (ADMIN/PRODUTOR): mesmo acento, um degrau mais presente que a
+// de tipo, para o olho separar "quem é" de "o que é".
+const ROLE_PILL = "bg-blue-500/15 text-blue-400";
 
 interface Props {
   post: PostItem;
@@ -71,7 +84,12 @@ interface Props {
   onDeleteComment?: (postId: string, commentId: string) => void;
 }
 
-export function PostCard({
+// ⚠️ memo INERTE hoje, de propósito registrado: a página declara updatePost,
+// deletePost e togglePin como `function` dentro do componente (community/page.tsx
+// :229/:233/:240), então as props mudam de identidade a cada render e a comparação
+// rasa falha sempre. Envolver os três em useCallback lá é o que liga isto — até
+// então, um like continua re-renderizando todos os cards da tela.
+export const PostCard = memo(function PostCard({
   post,
   isAdmin,
   isProducer = false,
@@ -252,7 +270,14 @@ export function PostCard({
   const typeMeta = typeLabels[post.type];
 
   return (
-    <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4 sm:p-5">
+    // "Fixado" saiu do header e virou ESTADO do cartão: a borda assume o acento.
+    // Sozinha a cor não pode carregar significado, então o alfinete continua
+    // presente — como ícone na linha de metadados, não como mais uma pílula.
+    <div
+      className={`bg-white dark:bg-gray-900 border rounded-xl p-4 sm:p-5 ${
+        post.pinned ? "border-blue-500" : "border-gray-200 dark:border-gray-800"
+      }`}
+    >
       <div className="flex items-start gap-3 mb-3">
         <Avatar src={post.user.avatarUrl} name={post.user.name} size="md" />
         <div className="flex-1 min-w-0">
@@ -261,38 +286,44 @@ export function PostCard({
               {post.user.name}
             </span>
             {post.user.role === "ADMIN" && (
-              <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-600/30 text-blue-300">
+              <span className={`text-[10px] px-1.5 py-0.5 rounded ${ROLE_PILL}`}>
                 ADMIN
               </span>
             )}
             {post.user.role === "PRODUCER" && (
-              <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-600/30 text-amber-300">
+              <span className={`text-[10px] px-1.5 py-0.5 rounded ${ROLE_PILL}`}>
                 PRODUTOR
               </span>
             )}
-            {post.pinned && (
-              <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400 inline-flex items-center gap-1">
-                Fixado
-              </span>
-            )}
-            <span
-              className={`text-[10px] px-1.5 py-0.5 rounded ${typeMeta.color}`}
-            >
-              {typeMeta.label}
-            </span>
-            {post.group && (
-              <span className="text-[10px] px-2 py-0.5 rounded-full bg-gray-100 dark:bg-white/5 text-gray-500 dark:text-gray-400">
-                {post.group.name}
+            {post.type !== "FREE" && (
+              <span
+                className={`text-[10px] px-1.5 py-0.5 rounded ${typeMeta.color}`}
+              >
+                {typeMeta.label}
               </span>
             )}
             {post.status === "PENDING" && (
-              <span className="px-2 py-0.5 text-[10px] bg-amber-500/15 text-amber-500 rounded-full">
+              <span className="px-2 py-0.5 text-[10px] rounded-full bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-gray-400">
                 Aguardando aprovação
               </span>
             )}
           </div>
-          <p className="text-xs text-gray-500">
-            {formatRelativeTime(new Date(post.createdAt))}
+          {/* Metadados numa linha só: hora · grupo · fixado. O grupo deixou de ser
+              pílula — competia com papel e tipo por atenção sendo só contexto. */}
+          <p className="text-xs text-gray-500 flex items-center gap-1.5 flex-wrap">
+            {post.pinned && (
+              <svg className="w-3 h-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-label="Fixado">
+                <title>Fixado</title>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+              </svg>
+            )}
+            <span>{formatRelativeTime(new Date(post.createdAt))}</span>
+            {post.group && (
+              <>
+                <span aria-hidden>·</span>
+                <span className="truncate max-w-[160px]">{post.group.name}</span>
+              </>
+            )}
           </p>
         </div>
         <div className="flex gap-1 flex-shrink-0">
@@ -373,7 +404,10 @@ export function PostCard({
         </div>
       ) : (
         <div
-          className="post-content text-gray-800 dark:text-gray-200 text-sm break-words mb-3"
+          // post-media-bleed escopa a sangria da imagem SÓ ao post. A classe
+          // .post-content sozinha veste também o balão de comentário (:640),
+          // onde margem negativa estouraria o balão.
+          className="post-content post-media-bleed text-gray-800 dark:text-gray-200 text-sm break-words mb-4"
           dangerouslySetInnerHTML={{ __html: sanitizeHtml(post.content) }}
           onClick={(e) => {
             const target = e.target as HTMLElement;
@@ -385,7 +419,9 @@ export function PostCard({
         />
       )}
 
-      <div className="flex items-center gap-4 border-t border-gray-200 dark:border-gray-800 pt-3">
+      {/* Rodapé sem régua: o espaçamento separa. Uma linha a menos por cartão
+          num feed de N cartões é subtração real, não estética. */}
+      <div className="flex items-center gap-5">
         <button
           type="button"
           onClick={toggleLike}
@@ -409,7 +445,8 @@ export function PostCard({
               d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
             />
           </svg>
-          <span>{post.likeCount}</span>
+          {/* Zero não é informação — o ícone já diz o que o botão faz. */}
+          {post.likeCount > 0 && <span>{post.likeCount}</span>}
         </button>
         <button
           type="button"
@@ -429,7 +466,7 @@ export function PostCard({
               d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
             />
           </svg>
-          <span>{post.commentCount}</span>
+          {post.commentCount > 0 && <span>{post.commentCount}</span>}
         </button>
       </div>
 
@@ -530,7 +567,7 @@ export function PostCard({
       )}
     </div>
   );
-}
+});
 
 /* ───── Comment Block ───── */
 
