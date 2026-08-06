@@ -16,6 +16,8 @@ export interface Workspace {
   loginBoxOpacity: number | null;
   loginSideColor: string | null;
   loginLinkColor: string | null;
+  loginTextColor: string | null;
+  loginSecondaryTextColor: string | null;
   masterPassword: string | null;
   accentColor: string | null;
   bannerUrl: string | null;
@@ -23,6 +25,11 @@ export interface Workspace {
   faviconUrl: string | null;
   forceTheme: string | null;
   customDomain: string | null;
+  // Contato de suporte do workspace — a tela já lia estes dois; o tipo é que
+  // não os declarava (nem loginTextColor/loginSecondaryTextColor acima). Ficou
+  // invisível porque r.json() é `any` e o acesso nunca era checado.
+  supportEmail: string | null;
+  supportWhatsapp: string | null;
   isActive: boolean;
   // Access-email customization (step 5)
   emailLogoUrl: string | null;

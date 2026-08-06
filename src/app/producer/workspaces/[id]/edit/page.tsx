@@ -115,10 +115,17 @@ export default function EditWorkspacePage() {
   }, [previewOpen]);
 
   useEffect(() => {
-    fetch("/api/workspaces")
-      .then((r) => (r.ok ? r.json() : { workspaces: [] }))
-      .then((d) => {
-        const found = (d.workspaces || []).find((w: Workspace) => w.id === id);
+    // Fonte própria (GET /api/workspaces/[id]) em vez da lista inteira filtrada
+    // no client. A lista serve outras cinco telas que precisam de 3 a 7 campos;
+    // era esta aqui, com 36, que obrigava o payload delas a ser completo.
+    // Tipar a resposta é o ponto: com `d` anotado, o compilador passa a cobrir
+    // os ~34 found.<campo> abaixo — antes r.json() era `any` e nenhum era
+    // checado. Erro (403/404/500) segue caindo em `found` nulo → `ws` nulo →
+    // "Workspace não encontrado", o mesmo comportamento de antes.
+    fetch(`/api/workspaces/${id}`)
+      .then((r) => (r.ok ? r.json() : { workspace: null }))
+      .then((d: { workspace: Workspace | null }) => {
+        const found = d.workspace;
         if (found) {
           setWs(found);
           setName(found.name);
