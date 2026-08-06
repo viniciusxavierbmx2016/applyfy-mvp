@@ -300,6 +300,9 @@ body {
    ruleset, então ficava azul de fábrica nos dois lados. Preserva o alpha /50
    como a :272 faz, para quem nunca escolheu cor ver o mesmo de hoje. */
 .producer-layout .focus-within\:border-blue-500\/50:focus-within { border-color: color-mix(in srgb, var(--producer-primary, #3b82f6) 50%, transparent) !important; }
+/* Área de soltar imagem do editor (:466): o tint de hover era a única variante
+   de bg-blue-500/5 fora do ruleset — a :280 já cobre a versão sem hover. */
+.producer-layout .hover\:bg-blue-500\/5:hover { background-color: color-mix(in srgb, var(--producer-primary, #3b82f6) 5%, transparent) !important; }
 
 /* ─── Course member area customization ──────────────────────── */
 
@@ -419,6 +422,14 @@ html:not(.dark) .course-customized .text-primary { color: var(--member-primary, 
 /* Espelho da regra do produtor: a borda de foco do editor (focus-within) não
    era coberta por ruleset nenhum. Alpha /50 preservado como na :415 logo acima. */
 .course-customized .focus-within\:border-blue-500\/50:focus-within { border-color: color-mix(in srgb, var(--member-primary, #3b82f6) 50%, transparent) !important; }
+/* CAUSA 2 — as variantes de azul do editor que o lado do produtor já cobria e
+   este não: os 4 inputs dos modais (:230/:242/:302/:514), o cartão Link/Botão
+   selecionado (:255/:270) e a área de soltar imagem (:466). Mesmos alvos das
+   :249/:273/:280 do .producer-layout, mesmos percentuais, acento do aluno. */
+.course-customized .focus\:border-blue-500\/50:focus { border-color: color-mix(in srgb, var(--member-primary, #3b82f6) 50%, transparent) !important; }
+.course-customized .bg-blue-500\/5 { background-color: color-mix(in srgb, var(--member-primary, #3b82f6) 5%, transparent) !important; }
+.course-customized .hover\:border-blue-500\/30:hover { border-color: color-mix(in srgb, var(--member-primary, #3b82f6) 30%, transparent) !important; }
+.course-customized .hover\:bg-blue-500\/5:hover { background-color: color-mix(in srgb, var(--member-primary, #3b82f6) 5%, transparent) !important; }
 
 /* ─── 7.9/7.15: Vitrine obedece o tema (espelho do molde .course-customized) ──
    Gate DUPLO aplicado pelo layout de w/[slug] no root do WorkspaceShell:
