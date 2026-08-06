@@ -4,7 +4,7 @@ import { useState } from "react";
 import dynamic from "next/dynamic";
 import { Avatar } from "@/components/ui/avatar";
 import { formatRelativeTime } from "@/lib/utils";
-import { sanitizeHtml } from "@/lib/sanitize-html";
+import { sanitizeHtml, hasPostContent } from "@/lib/sanitize-html";
 import { useConfirm } from "@/hooks/use-confirm";
 import { ImageLightbox } from "@/components/image-lightbox";
 
@@ -223,7 +223,7 @@ export function PostCard({
   }
 
   async function saveEdit() {
-    if (htmlIsEmpty(editContent) || savingEdit) return;
+    if (!hasPostContent(editContent) || savingEdit) return;
     setSavingEdit(true);
     try {
       const res = await fetch(`/api/posts/${post.id}`, {
@@ -364,7 +364,7 @@ export function PostCard({
             <button
               type="button"
               onClick={saveEdit}
-              disabled={htmlIsEmpty(editContent) || savingEdit}
+              disabled={!hasPostContent(editContent) || savingEdit}
               className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg disabled:opacity-50"
             >
               {savingEdit ? "Salvando..." : "Salvar"}

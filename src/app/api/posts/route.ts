@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { collaboratorCanActOnCourse } from "@/lib/collaborator";
 import { GAMIFICATION, getLevelForPoints } from "@/lib/utils";
-import { sanitizeHtml, stripHtml } from "@/lib/sanitize-html";
+import { sanitizeHtml, hasPostContent } from "@/lib/sanitize-html";
 import { PostType } from "@prisma/client";
 import { ensureDefaultGroup } from "@/lib/community-helpers";
 import { createNotification } from "@/lib/notifications";
@@ -176,7 +176,7 @@ export async function POST(request: Request) {
     const { content, type, courseId, courseSlug, groupId } = v.data;
 
     const sanitized = sanitizeHtml(content);
-    if (!stripHtml(sanitized)) {
+    if (!hasPostContent(content)) {
       return NextResponse.json(
         { error: "Conteúdo obrigatório" },
         { status: 400 }

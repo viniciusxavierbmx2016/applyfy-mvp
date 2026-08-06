@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { PostCard, type PostItem } from "@/components/post-card";
+import { hasPostContent } from "@/lib/sanitize-html";
 import { useUserStore } from "@/stores/user-store";
 
 const RichTextEditor = dynamic(
@@ -16,10 +17,6 @@ const RichTextEditor = dynamic(
     ),
   }
 );
-
-function htmlIsEmpty(html: string) {
-  return !html.replace(/<[^>]*>/g, "").trim();
-}
 
 const POST_TYPES: Array<{ value: PostItem["type"]; label: string }> = [
   { value: "FREE", label: "Livre" },
@@ -180,7 +177,7 @@ export default function CommunityPage() {
 
   async function submitPost(e: React.FormEvent) {
     e.preventDefault();
-    if (htmlIsEmpty(content) || submitting) return;
+    if (!hasPostContent(content) || submitting) return;
     setSubmitting(true);
     try {
       const res = await fetch("/api/posts", {
@@ -402,12 +399,17 @@ export default function CommunityPage() {
             </div>
             <button
               type="submit"
-              disabled={htmlIsEmpty(content) || submitting}
+              disabled={!hasPostContent(content) || submitting}
               className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg disabled:opacity-50"
             >
               {submitting ? "Publicando..." : "Publicar"}
             </button>
           </div>
+          {!hasPostContent(content) && !submitting && (
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+              Escreva algo ou adicione uma imagem para publicar.
+            </p>
+          )}
         </form>
       ) : (
         <div className="flex items-center justify-center gap-2 py-4 mb-6 text-sm text-gray-500 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl">

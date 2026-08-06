@@ -45,6 +45,17 @@ export function stripHtml(html: string): string {
   return sanitize(html, { allowedTags: [], allowedAttributes: {} }).trim();
 }
 
+/**
+ * Um conteúdo de post é válido se, DEPOIS de sanitizado, tiver texto
+ * ou ao menos uma imagem com src que sobreviveu à allowlist.
+ * Calcular antes do sanitize deixaria passar <img src="javascript:...">.
+ */
+export function hasPostContent(html: string): boolean {
+  const clean = sanitizeHtml(html);
+  if (stripHtml(clean).trim()) return true;
+  return /<img[^>]+src\s*=\s*["'][^"']+["']/i.test(clean);
+}
+
 // Permissive allowlist for producer-authored email HTML (buildAccessEmail raw
 // path). Email layouts rely on table-based structure and inline styles that the
 // page-oriented sanitizeHtml above would strip — so this is a SEPARATE, wider
