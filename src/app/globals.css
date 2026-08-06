@@ -296,6 +296,11 @@ body {
 .producer-layout .dark\:bg-\[\#0f1320\] { background-color: var(--producer-card, #0f1320) !important; }
 .producer-layout .dark\:bg-\[\#1a1e2e\] { background-color: var(--producer-secondary, #1a1e2e) !important; }
 
+/* Borda do editor ao receber foco — focus-within não é coberto por nenhum
+   ruleset, então ficava azul de fábrica nos dois lados. Preserva o alpha /50
+   como a :272 faz, para quem nunca escolheu cor ver o mesmo de hoje. */
+.producer-layout .focus-within\:border-blue-500\/50:focus-within { border-color: color-mix(in srgb, var(--producer-primary, #3b82f6) 50%, transparent) !important; }
+
 /* ─── Course member area customization ──────────────────────── */
 
 /* Cards & surfaces */
@@ -411,6 +416,9 @@ html:not(.dark) .course-customized .text-primary { color: var(--member-primary, 
 .course-customized .text-blue-300 { color: var(--member-primary, #93c5fd) !important; }
 .course-customized .text-emerald-300 { color: var(--member-primary, #6ee7b7) !important; }
 .course-customized .to-blue-700 { --tw-gradient-to: var(--member-primary, #1d4ed8) !important; }
+/* Espelho da regra do produtor: a borda de foco do editor (focus-within) não
+   era coberta por ruleset nenhum. Alpha /50 preservado como na :415 logo acima. */
+.course-customized .focus-within\:border-blue-500\/50:focus-within { border-color: color-mix(in srgb, var(--member-primary, #3b82f6) 50%, transparent) !important; }
 
 /* ─── 7.9/7.15: Vitrine obedece o tema (espelho do molde .course-customized) ──
    Gate DUPLO aplicado pelo layout de w/[slug] no root do WorkspaceShell:
