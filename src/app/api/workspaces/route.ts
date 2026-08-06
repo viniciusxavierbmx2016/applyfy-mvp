@@ -9,10 +9,34 @@ const SLUG_RE = /^[a-z0-9][a-z0-9-]{1,48}[a-z0-9]$/;
 export async function GET() {
   try {
     const staff = await requireStaff();
+    // A união exata do que as QUATRO consumidoras da lista leem — medida no
+    // código delas, não em tipos (os tipos locais já estiveram 4 campos
+    // desatualizados). Antes era `include`, que devolve a row inteira: 51
+    // campos, masterPassword entre eles, para telas que precisam de 3 a 7.
+    // Pesava mais porque workspace-switcher e use-active-workspace ficam
+    // montados no shell do produtor — a senha trafegava em toda navegação.
+    //
+    // ⚠️ masterPassword NÃO entra aqui de propósito. A tela que precisa dela
+    // tem fonte própria desde a fase 2 (GET /api/workspaces/[id]).
+    // ⚠️ Nenhuma das quatro tipa a resposta (r.json() é `any`), então campo
+    // faltando aqui NÃO dá erro de compilação — vira undefined em runtime e
+    // quebra a navegação em silêncio. Conferir contra o código das quatro:
+    //   use-active-workspace  id, slug, name
+    //   workspace-switcher    + logoUrl, isActive
+    //   workspaces/page       + loginBgColor, _count
+    //   settings/support      + supportEmail, supportWhatsapp
     const workspaces = await prisma.workspace.findMany({
       where: staff.role === "ADMIN" ? undefined : { ownerId: staff.id },
       orderBy: { createdAt: "asc" },
-      include: {
+      select: {
+        id: true,
+        slug: true,
+        name: true,
+        logoUrl: true,
+        isActive: true,
+        loginBgColor: true,
+        supportEmail: true,
+        supportWhatsapp: true,
         _count: { select: { courses: true, members: true } },
       },
     });
