@@ -431,6 +431,32 @@ html:not(.dark) .course-customized .text-primary { color: var(--member-primary, 
 .course-customized .hover\:border-blue-500\/30:hover { border-color: color-mix(in srgb, var(--member-primary, #3b82f6) 30%, transparent) !important; }
 .course-customized .hover\:bg-blue-500\/5:hover { background-color: color-mix(in srgb, var(--member-primary, #3b82f6) 5%, transparent) !important; }
 
+/* CAUSA 4 — os neutros do editor (38 ocorrências, 7 valores). O texto dele já
+   seguia --member-text desde sempre; o fundo não, então num curso customizado a
+   tinta andava e o papel ficava. Aqui o papel passa a derivar de --member-card,
+   com as % ajustadas por LUMINÂNCIA para preservar a hierarquia atual (a toolbar
+   é 1.36x mais clara que o corpo do editor, não mais escura — não é uma escada).
+
+   ⚠️ O FALLBACK É EM DUAS ETAPAS DE PROPÓSITO. Curso que customizou só o acento
+   tem .course-customized mas NÃO tem --member-card. Pôr o hex dentro do
+   color-mix (…var(--member-card, #111827) 81%…) misturaria o fallback e devolvia
+   #0e1420, não #0f1320. E as duas declarações (hex puro + color-mix por cima)
+   são PIORES: var() sem fallback que não resolve é guaranteed-invalid, a
+   propriedade vira unset e o fundo fica TRANSPARENTE — medido no Chrome.
+   A cadeia abaixo é a única exata: --ed-* fica inválida sem --member-card, e aí
+   var(--ed-*, #hex) cai no hex literal de hoje. Provado: 10/10 valores idênticos
+   ao atual sem --member-card, e a paleta do curso quando ele existe. */
+.dark .course-customized .dark\:bg-\[\#0a0c14\] { --ed-0a0c14: color-mix(in srgb, var(--member-card) 50%, black); background-color: var(--ed-0a0c14, #0a0c14) !important; }
+.dark .course-customized .dark\:bg-\[\#0f1320\] { --ed-0f1320: color-mix(in srgb, var(--member-card) 81%, black); background-color: var(--ed-0f1320, #0f1320) !important; }
+.dark .course-customized .dark\:bg-\[\#141416\] { --ed-141416: color-mix(in srgb, var(--member-card) 84%, black); background-color: var(--ed-141416, #141416) !important; }
+.dark .course-customized .dark\:bg-\[\#1d1d21\] { --ed-1d1d21: color-mix(in srgb, var(--member-card) 98%, white); background-color: var(--ed-1d1d21, #1d1d21) !important; }
+.dark .course-customized .dark\:bg-\[\#28282e\] { --ed-28282e: color-mix(in srgb, var(--member-card) 93%, white); background-color: var(--ed-28282e, #28282e) !important; }
+.dark .course-customized .dark\:hover\:bg-\[\#28282e\]:hover { --ed-28282e: color-mix(in srgb, var(--member-card) 93%, white); background-color: var(--ed-28282e, #28282e) !important; }
+.dark .course-customized .dark\:border-\[\#1a1e2e\] { --ed-1a1e2e: color-mix(in srgb, var(--member-card) 97%, white); border-color: var(--ed-1a1e2e, #1a1e2e) !important; }
+.dark .course-customized .dark\:border-\[\#28282e\] { --ed-28282e: color-mix(in srgb, var(--member-card) 93%, white); border-color: var(--ed-28282e, #28282e) !important; }
+.dark .course-customized .dark\:hover\:border-\[\#363640\]:hover { --ed-363640: color-mix(in srgb, var(--member-card) 87%, white); border-color: var(--ed-363640, #363640) !important; }
+.course-customized .ring-offset-\[\#141416\] { --ed-141416: color-mix(in srgb, var(--member-card) 84%, black); --tw-ring-offset-color: var(--ed-141416, #141416) !important; }
+
 /* ─── 7.9/7.15: Vitrine obedece o tema (espelho do molde .course-customized) ──
    Gate DUPLO aplicado pelo layout de w/[slug] no root do WorkspaceShell:
    .vitrine-text-customized (SÓ com vitrineTextColor) → regras de TEXTO, uma cor
