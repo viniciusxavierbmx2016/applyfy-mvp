@@ -259,6 +259,8 @@ export async function POST(request: Request) {
       showInStore,
       featured,
       category,
+      supportEmail,
+      supportWhatsapp,
       workspaceId: explicitWorkspaceId,
     } = vb.data;
 
@@ -328,6 +330,13 @@ export async function POST(request: Request) {
         order: (lastCourse?.order ?? -1) + 1,
         featured: Boolean(featured),
         category: typeof category === "string" && category.trim() ? category.trim() : null,
+        // Mesma normalização do PUT (`courses/[id]:288-299`), para o curso nascer
+        // no formato que a edição grava. As duas formas diferem de propósito:
+        // `.email()` do zod recusa espaços, então o trim nunca esvazia o email;
+        // já o `min(8)` do whatsapp conta CARACTERES, então "abcdefgh" passa e
+        // vira "" ao tirar os não-dígitos — aí cai em null, como no PUT.
+        supportEmail: supportEmail.trim(),
+        supportWhatsapp: supportWhatsapp.replace(/\D/g, "") || null,
         ownerId: courseOwnerId,
         workspaceId: targetWorkspaceId,
       },
