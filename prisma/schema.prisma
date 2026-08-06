@@ -359,6 +359,28 @@ model Enrollment {
   termsAcceptedAt DateTime?
   createdAt       DateTime         @default(now())
 
+  // FASE 6B — matrícula criada enquanto o plano do produtor estava BLOQUEADO
+  // (CANCELLED/SUSPENDED): o acesso foi concedido mas o email de acesso NÃO saiu
+  // (fatia 3). Serve para reenviar quando o produtor regularizar.
+  //
+  // ⚠️ Marca EXPLÍCITA e não inferência de propósito: 4 das 5 vias de bloqueio NÃO
+  // auditam (o próprio produtor em producer/billing/cancel, o cron, o webhook de
+  // billing e o auto-suspend dormente de subscription.ts) e a row só guarda a ÚLTIMA
+  // data — reconstituir a janela daria cobertura PARCIAL, e o que escapa é aluno
+  // pagante que nunca recebe acesso, em silêncio.
+  //
+  // ⚠️ NOT NULL com @default(false): preenche as matrículas existentes com false na
+  // própria migração, sem backfill — elas já receberam email e não podem entrar na
+  // lista de reenvio.
+  //
+  // ⚠️ O índice desta coluna é PARCIAL (`WHERE "accessEmailPending" = true`) e vive
+  // SÓ na migration — o Prisma não modela índice parcial, por isso não há @@index
+  // aqui. A fila é a exceção: um B-tree completo sobre um boolean quase todo false
+  // não seria usado pelo planner. Um `migrate diff` vai acusar essa divergência; ela
+  // é esperada. Não "conserte" acrescentando @@index — isso criaria um índice
+  // completo duplicado ao lado do parcial.
+  accessEmailPending Boolean       @default(false)
+
   user      User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
   course    Course               @relation(fields: [courseId], references: [id], onDelete: Cascade)
   overrides EnrollmentOverride[]
