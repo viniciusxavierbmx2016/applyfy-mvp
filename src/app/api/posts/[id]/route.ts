@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { collaboratorCanActOnCourse } from "@/lib/collaborator";
-import { sanitizeHtml, stripHtml } from "@/lib/sanitize-html";
+import { sanitizeHtml, hasPostContent } from "@/lib/sanitize-html";
 import { PostType } from "@prisma/client";
 import { updatePostSchema, validateBody } from "@/lib/validations";
 
@@ -48,7 +48,7 @@ export async function PUT(request: Request, props: { params: Promise<{ id: strin
         return NextResponse.json({ error: "Conteúdo inválido" }, { status: 400 });
       }
       const sanitized = sanitizeHtml(content);
-      if (!stripHtml(sanitized)) {
+      if (!hasPostContent(content)) {
         return NextResponse.json({ error: "Conteúdo obrigatório" }, { status: 400 });
       }
       if (sanitized.length > 20000) {
