@@ -604,8 +604,11 @@ export const PostCard = memo(function PostCard({
                         }}
                       />
                       {/* Replies */}
+                      {/* Hierarquia por espaçamento: o recuo anterior (margem +
+                          barra vertical + padding) comia ~44px em 375px — quase
+                          um terço da largura útil, num balão que já é estreito. */}
                       {c.replies && c.replies.length > 0 && (
-                        <div className="ml-8 mt-2 space-y-2 border-l-2 border-gray-200 dark:border-gray-800 pl-3">
+                        <div className="ml-5 mt-2 space-y-2">
                           {c.replies.map((r) => (
                             <CommentBlock
                               key={r.id}
@@ -620,7 +623,24 @@ export const PostCard = memo(function PostCard({
                       )}
                       {/* Reply input */}
                       {replyingTo === c.id && (
-                        <div className="ml-8 mt-2 space-y-2">
+                        <div className="ml-5 mt-2 space-y-2">
+                          {/* Diz a quem se responde. Usa o `c` do map — nenhum
+                              estado novo. O × chama exatamente o que o botão
+                              Cancelar abaixo já chama. */}
+                          <div className="flex items-center gap-1.5 text-[11px] text-gray-600 dark:text-gray-400">
+                            <span>Respondendo a</span>
+                            <span className="font-medium text-gray-900 dark:text-white truncate max-w-[160px]">
+                              {c.user.name}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => setReplyingTo(null)}
+                              aria-label="Cancelar resposta"
+                              className="leading-none text-gray-500 hover:text-gray-900 dark:hover:text-white"
+                            >
+                              ×
+                            </button>
+                          </div>
                           <RichTextEditor
                             value={replyContent}
                             onChange={setReplyContent}
@@ -706,20 +726,28 @@ function CommentBlock({
       <Avatar
         src={c.user.avatarUrl}
         name={c.user.name}
-        size="sm"
+        // A resposta desce um degrau. Com o recuo menor, a escala é o que
+        // sobrou para ler a hierarquia sem barra vertical.
+        size={isReply ? "xs" : "sm"}
       />
-      <div className="flex-1 bg-gray-100 dark:bg-gray-800/60 rounded-lg px-3 py-2">
+      {/* Sem `flex-1`: o balão encolhe até o texto em vez de esticar na largura
+          toda — é o que faz ler como conversa e não como formulário.
+          A superfície saiu de `dark:bg-gray-800/60`, que o ruleset do aluno NÃO
+          cobre: num curso customizado o cartão seguia o tema e os balões dentro
+          dele ficavam cinza de fábrica. `bg-gray-50 dark:bg-white/[0.04]` são
+          cobertas, e derivam do cartão em vez de competir com ele. */}
+      <div className="min-w-0 bg-gray-50 dark:bg-white/[0.04] rounded-2xl px-3 py-2">
         <div className="flex items-center gap-2 flex-wrap">
           <span className="text-xs font-medium text-gray-900 dark:text-white">
             {c.user.name}
           </span>
           {c.user.role === "ADMIN" && (
-            <span className="text-[9px] px-1 rounded bg-blue-600/30 text-blue-300">
+            <span className={`text-[9px] px-1 rounded ${ROLE_PILL}`}>
               ADMIN
             </span>
           )}
           {c.user.role === "PRODUCER" && (
-            <span className="text-[9px] px-1 rounded bg-amber-600/30 text-amber-300">
+            <span className={`text-[9px] px-1 rounded ${ROLE_PILL}`}>
               PRODUTOR
             </span>
           )}
@@ -727,7 +755,7 @@ function CommentBlock({
             {formatRelativeTime(new Date(c.createdAt))}
           </span>
           {c.status === "PENDING" && (
-            <span className="px-2 py-0.5 text-[10px] bg-amber-500/15 text-amber-500 rounded-full">
+            <span className="px-2 py-0.5 text-[10px] rounded-full bg-gray-100 dark:bg-white/[0.06] text-gray-600 dark:text-gray-400">
               Aguardando aprovação
             </span>
           )}
