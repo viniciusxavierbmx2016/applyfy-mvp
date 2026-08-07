@@ -77,7 +77,11 @@ export function ScrollableTabs({ children, className, activeIndex }: Props) {
       cancelAnimationFrame(raf);
       ro.disconnect();
     };
-  }, [measure, children]);
+    // `children` NÃO entra aqui: ele muda de identidade a cada render, o que
+    // desmontava e remontava o ResizeObserver em todo ciclo. Aba adicionada ou
+    // removida muda o scrollWidth do track (que é w-max), e o RO já observa o
+    // track — então a remedição continua acontecendo, sem o churn.
+  }, [measure]);
 
   // ── Trazer a aba ativa para a viewport ──
   // Lógica NOVA (o carrossel não tem item selecionado, então não precisava).
@@ -199,16 +203,26 @@ export function ScrollableTabs({ children, className, activeIndex }: Props) {
           ? "linear-gradient(to right, black 0, black calc(100% - 24px), transparent 100%)"
           : undefined;
 
+  // aria-disabled + opacity-30 é o tratamento do module-carousel: a seta inativa
+  // continua VISÍVEL e continua ocupando a mesma caixa. Com `disabled:opacity-0`
+  // ela sumia mas mantinha os 36px (w-7 + gap-2), e a barra abria com um vazio à
+  // esquerda. Deixar de renderizá-la seria pior: o track encolheria 36px no
+  // primeiro pixel de arrasto e as abas saltariam no meio do gesto.
   const arrow =
-    "hidden md:flex items-center justify-center w-7 h-7 shrink-0 rounded-full bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-white/10 disabled:opacity-0 disabled:pointer-events-none transition-colors";
+    "hidden md:flex items-center justify-center w-7 h-7 shrink-0 rounded-full bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-white/10 aria-disabled:opacity-30 aria-disabled:cursor-not-allowed transition-colors";
 
   return (
     <div className={`flex items-center gap-2 ${className || ""}`}>
       {isMd && maxOffset > 0 && (
         <button
           type="button"
-          onClick={() => scrollByDir(-1)}
-          disabled={!canLeft}
+          // aria-disabled não bloqueia o clique como `disabled` bloqueia — o
+          // guard aqui é o que impede a seta apagada de continuar clicável.
+          onClick={() => {
+            if (!canLeft) return;
+            scrollByDir(-1);
+          }}
+          aria-disabled={!canLeft}
           aria-label="Anterior"
           className={arrow}
         >
@@ -241,8 +255,11 @@ export function ScrollableTabs({ children, className, activeIndex }: Props) {
       {isMd && maxOffset > 0 && (
         <button
           type="button"
-          onClick={() => scrollByDir(1)}
-          disabled={!canRight}
+          onClick={() => {
+            if (!canRight) return;
+            scrollByDir(1);
+          }}
+          aria-disabled={!canRight}
           aria-label="Próximo"
           className={arrow}
         >
