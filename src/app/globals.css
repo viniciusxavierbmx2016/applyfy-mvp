@@ -547,6 +547,17 @@ html:not(.dark) .course-customized .text-primary { color: var(--member-primary, 
 .prose-editor pre { background: rgba(0,0,0,0.3); padding: 0.75rem 1rem; border-radius: 8px; overflow-x: auto; margin: 0.5rem 0; }
 .prose-editor pre code { background: none; padding: 0; }
 .prose-editor img { max-width: 100%; border-radius: 8px; margin: 0.5rem 0; }
+/* Miniatura enquanto se escreve — SÓ nos editores com appendMediaAtEnd (a
+   comunidade). ⚠️ Escopado por `.media-thumbs`: sem ela o seletor alcançaria a
+   descrição da aula no painel, onde a imagem grande no fluxo é o correto. E
+   `.prose-editor` NÃO veste o card nem o balão de comentário — esses usam
+   `.post-content`, outra classe. A imagem segue selecionável/apagável pelo
+   TipTap; só o tamanho na superfície de edição muda. */
+.prose-editor.media-thumbs img {
+  max-height: 120px;
+  width: auto;
+  margin: 0.75rem 0 0.25rem;
+}
 .prose-editor blockquote { border-left: 3px solid #3b82f6; padding-left: 1rem; margin: 0.5rem 0; color: #9ca3af; }
 .prose-editor p.is-editor-empty:first-child::before {
   content: attr(data-placeholder);

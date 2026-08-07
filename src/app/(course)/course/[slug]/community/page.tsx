@@ -378,6 +378,7 @@ export default function CommunityPage() {
             value={content}
             onChange={setContent}
             placeholder="Compartilhe algo com a turma..."
+            appendMediaAtEnd
             minHeight="120px"
           />
           <div className="flex flex-wrap items-center justify-between gap-3 mt-3">
