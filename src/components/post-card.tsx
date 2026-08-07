@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useState } from "react";
+import { memo, useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { Avatar } from "@/components/ui/avatar";
 import { formatRelativeTime } from "@/lib/utils";
@@ -72,6 +72,134 @@ const typeLabels: Record<PostItem["type"], { label: string; color: string }> = {
 // Pílula de papel (ADMIN/PRODUTOR): mesmo acento, um degrau mais presente que a
 // de tipo, para o olho separar "quem é" de "o que é".
 const ROLE_PILL = "bg-blue-500/15 text-blue-400";
+
+/* ───── Menu de ações do post (···) ─────
+   Local de propósito: depende das 3 condições de permissão deste card e não tem
+   uso fora dele. A estrutura vem do CardMenu do painel
+   (producer/automations/_components/card-menu.tsx), com três diferenças
+   deliberadas:
+   1. `hover:bg-white/5` de lá não tem par claro e não é coberta pelo ruleset do
+      aluno — aqui é `hover:bg-gray-100 dark:hover:bg-white/5`, ambas cobertas.
+   2. Fecha no Escape. Nenhum dos 9 dropdowns do projeto fecha; os modais fecham.
+      Um menu que só se fecha com o mouse é uma armadilha de teclado.
+   3. TODA ação fecha o menu ANTES de disparar. No excluir isso é crítico: o
+      `await confirm()` suspende, e com o menu aberto ele sumiria por trás do
+      diálogo. O CardMenu do painel acerta isso no editar e erra no excluir.
+   ⚠️ `mousedown`, nunca `click` — é o que o deixa coexistir com o backdrop do
+   ImageLightbox, que fecha no `click`. Trocar por `click` quebra os dois juntos. */
+function PostActionsMenu({
+  pinned,
+  canPin,
+  canEdit,
+  canDelete,
+  onPin,
+  onEdit,
+  onDelete,
+}: {
+  pinned: boolean;
+  canPin: boolean;
+  canEdit: boolean;
+  canDelete: boolean;
+  onPin: () => void;
+  onEdit: () => void;
+  onDelete: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    function onDown(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setOpen(false);
+    }
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  // Fecha primeiro, age depois — sempre, nos três.
+  const run = (fn: () => void) => () => {
+    setOpen(false);
+    fn();
+  };
+
+  const item =
+    "w-full text-left px-3 py-2 text-sm rounded-lg flex items-center gap-2 transition-colors hover:bg-gray-100 dark:hover:bg-white/5";
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-label="Ações do post"
+        className="p-1.5 -mr-1 text-gray-500 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5 rounded-lg transition-colors"
+      >
+        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+          <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+        </svg>
+      </button>
+
+      {open && (
+        <div
+          role="menu"
+          onClick={(e) => e.stopPropagation()}
+          className="absolute right-0 top-8 z-20 w-44 bg-white dark:bg-gray-950 border border-gray-200 dark:border-white/10 rounded-xl shadow-xl p-1"
+        >
+          {canPin && (
+            <button
+              type="button"
+              role="menuitem"
+              onClick={run(onPin)}
+              className={`${item} text-gray-700 dark:text-gray-300`}
+            >
+              <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" /></svg>
+              {pinned ? "Desafixar" : "Fixar"}
+            </button>
+          )}
+          {canEdit && (
+            <button
+              type="button"
+              role="menuitem"
+              onClick={run(onEdit)}
+              className={`${item} text-gray-700 dark:text-gray-300`}
+            >
+              <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+              Editar
+            </button>
+          )}
+          {canDelete && (
+            <>
+              {(canPin || canEdit) && (
+                <div className="h-px bg-gray-100 dark:bg-white/[0.06] my-1" />
+              )}
+              <button
+                type="button"
+                role="menuitem"
+                onClick={run(onDelete)}
+                className={`${item} text-red-400`}
+              >
+                <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M1 7h22M8 7V4a2 2 0 012-2h4a2 2 0 012 2v3" />
+                </svg>
+                Excluir
+              </button>
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
 
 interface Props {
   post: PostItem;
@@ -267,6 +395,10 @@ export const PostCard = memo(function PostCard({
 
   const canDelete = isModerator || post.user.id === currentUserId;
   const canEdit = isModerator || post.user.id === currentUserId;
+  // Gatilho do menu: só existe se houver ao menos uma ação. Escrito com as três
+  // condições explícitas (e não `canEdit || canDelete`) para que acrescentar uma
+  // 4ª ação amanhã seja uma linha aqui, e não uma pegadinha.
+  const hasActions = isModerator || canEdit || canDelete;
   const typeMeta = typeLabels[post.type];
 
   return (
@@ -326,36 +458,22 @@ export const PostCard = memo(function PostCard({
             )}
           </p>
         </div>
-        <div className="flex gap-1 flex-shrink-0">
-          {isModerator && (
-            <button
-              type="button"
-              onClick={() => onTogglePin(post.id)}
-              title={post.pinned ? "Desafixar" : "Fixar"}
-              className="p-1.5 text-gray-600 dark:text-gray-400 hover:text-amber-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"
-            >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" /></svg>
-            </button>
-          )}
-          {canEdit && (
-            <button
-              type="button"
-              onClick={() => {
+        {/* Sem nenhuma permissão o canto fica vazio, como antes — um ··· que
+            abre menu vazio seria regressão. É o caso mais comum: aluno vendo
+            post de outro (20 autores distintos no feed). */}
+        {hasActions && (
+          <div className="flex-shrink-0">
+            <PostActionsMenu
+              pinned={post.pinned}
+              canPin={isModerator}
+              canEdit={canEdit}
+              canDelete={canDelete}
+              onPin={() => onTogglePin(post.id)}
+              onEdit={() => {
                 setEditContent(post.content);
                 setEditing(true);
               }}
-              title="Editar"
-              className="p-1.5 text-gray-600 dark:text-gray-400 hover:text-blue-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"
-            >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-              </svg>
-            </button>
-          )}
-          {canDelete && (
-            <button
-              type="button"
-              onClick={async () => {
+              onDelete={async () => {
                 const ok = await confirm({
                   title: "Excluir post",
                   message: "Excluir este post?",
@@ -364,15 +482,9 @@ export const PostCard = memo(function PostCard({
                 });
                 if (ok) onDelete(post.id);
               }}
-              title="Excluir"
-              className="p-1.5 text-gray-600 dark:text-gray-400 hover:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"
-            >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M1 7h22M8 7V4a2 2 0 012-2h4a2 2 0 012 2v3" />
-              </svg>
-            </button>
-          )}
-        </div>
+            />
+          </div>
+        )}
       </div>
 
       {/* Post content or edit mode */}
