@@ -15,6 +15,17 @@ interface Props {
   onChange: (html: string) => void;
   placeholder?: string;
   minHeight?: string;
+  /**
+   * Mídia entra no FIM do documento em vez do ponto do cursor, e a imagem é
+   * exibida como miniatura enquanto se escreve.
+   *
+   * ⚠️ OPT-IN, default `false` = exatamente o comportamento de sempre. Este
+   * editor é compartilhado: na comunidade a foto no meio da frase empurra o
+   * texto e move o cursor; na descrição da aula (lessons-manager) a imagem
+   * inline no ponto do cursor é justamente o que o produtor quer. Ligar isto
+   * por padrão quebraria o segundo caso.
+   */
+  appendMediaAtEnd?: boolean;
 }
 
 interface LinkEditData {
@@ -29,6 +40,7 @@ export default function RichTextEditor({
   onChange,
   placeholder = "Digite aqui...",
   minHeight = "200px",
+  appendMediaAtEnd = false,
 }: Props) {
   const [linkModal, setLinkModal] = useState(false);
   const [imageModal, setImageModal] = useState(false);
@@ -64,7 +76,10 @@ export default function RichTextEditor({
     },
     editorProps: {
       attributes: {
-        class: "prose-editor focus:outline-none",
+        // A classe `media-thumbs` é o que escopa o CSS da miniatura. Sem ela o
+        // seletor seria `.prose-editor img` e alcançaria também a descrição da
+        // aula, onde a imagem grande no fluxo é o comportamento correto.
+        class: `prose-editor focus:outline-none${appendMediaAtEnd ? " media-thumbs" : ""}`,
         style: `min-height: ${minHeight}`,
       },
     },
@@ -126,6 +141,7 @@ export default function RichTextEditor({
       {imageModal && (
         <ImageModal
           editor={editor}
+          appendAtEnd={appendMediaAtEnd}
           onClose={() => setImageModal(false)}
         />
       )}
@@ -362,7 +378,15 @@ function LinkModal({
   );
 }
 
-function ImageModal({ editor, onClose }: { editor: Editor; onClose: () => void }) {
+function ImageModal({
+  editor,
+  appendAtEnd,
+  onClose,
+}: {
+  editor: Editor;
+  appendAtEnd: boolean;
+  onClose: () => void;
+}) {
   const [tab, setTab] = useState<"upload" | "url">("upload");
   const [url, setUrl] = useState("");
   const [previewError, setPreviewError] = useState(false);
@@ -376,7 +400,18 @@ function ImageModal({ editor, onClose }: { editor: Editor; onClose: () => void }
   function handleInsert() {
     const src = tab === "upload" ? uploadedUrl : url.trim();
     if (!src) return;
-    editor.chain().focus().setImage({ src }).run();
+    if (appendAtEnd) {
+      // Guarda onde o cursor estava ANTES de inserir. Inserir no FIM não
+      // desloca nenhuma posição anterior a ele, então a seleção guardada
+      // continua válida depois da inserção — é isso que permite devolver o
+      // cursor exatamente para onde a pessoa estava escrevendo. Inserir no fim
+      // e deixar o cursor lá seria trocar um incômodo por outro.
+      const { from, to } = editor.state.selection;
+      editor.chain().focus("end").setImage({ src }).run();
+      editor.chain().focus().setTextSelection({ from, to }).run();
+    } else {
+      editor.chain().focus().setImage({ src }).run();
+    }
     onClose();
   }
 

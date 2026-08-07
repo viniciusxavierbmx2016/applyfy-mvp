@@ -494,6 +494,7 @@ export const PostCard = memo(function PostCard({
             value={editContent}
             onChange={setEditContent}
             placeholder="Edite seu post..."
+            appendMediaAtEnd
             minHeight="100px"
           />
           <div className="flex gap-2 justify-end">
