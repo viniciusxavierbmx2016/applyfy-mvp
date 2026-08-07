@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { PostCard, type PostItem } from "@/components/post-card";
+import { ScrollableTabs } from "@/components/scrollable-tabs";
 import { hasPostContent } from "@/lib/sanitize-html";
 import { useUserStore } from "@/stores/user-store";
 
@@ -323,9 +324,15 @@ export default function CommunityPage() {
         )}
       </div>
 
-      {/* Group tabs */}
+      {/* Group tabs — sem scroller nativo: `touch-pan-x overflow-x-auto` é o par
+          que o iOS em PWA standalone captura, travando a rolagem vertical da
+          página. O ScrollableTabs resolve só a rolagem; o activeGroup e os
+          botões continuam aqui. */}
       {groups.length > 1 && (
-        <div className="flex gap-1 touch-pan-x overflow-x-auto pb-2 mb-4 scrollbar-hide">
+        <ScrollableTabs
+          className="pb-2 mb-4"
+          activeIndex={groups.findIndex((g) => g.id === activeGroup)}
+        >
           {groups.map((group) => (
             <button
               key={group.id}
@@ -356,7 +363,7 @@ export default function CommunityPage() {
               )}
             </button>
           ))}
-        </div>
+        </ScrollableTabs>
       )}
 
       {/* Active group description (rendered outside the tabs block so
