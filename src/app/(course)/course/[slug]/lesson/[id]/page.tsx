@@ -449,7 +449,7 @@ export default function LessonPage(
             </div>
           )}
 
-          <div className="px-4 py-4 sm:px-6 sm:py-5 lg:px-8 max-w-[960px]">
+          <div className="px-4 pt-4 pb-16 sm:px-6 sm:pt-5 sm:pb-12 lg:px-8 lg:pb-8 max-w-[960px]">
             {(() => {
               const currentModule = data.course.modules.find(m => m.lessons.some(l => l.id === data.lesson.id));
               const currentModuleTitle = currentModule?.title || "";
