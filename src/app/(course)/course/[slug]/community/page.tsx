@@ -476,6 +476,7 @@ export default function CommunityPage() {
               onUpdate={updatePost}
               onDelete={deletePost}
               onTogglePin={togglePin}
+              onToast={showToast}
             />
           ))}
           {hasMore && (
