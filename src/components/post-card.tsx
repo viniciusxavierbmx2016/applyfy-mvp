@@ -210,6 +210,16 @@ interface Props {
   onDelete: (id: string) => void;
   onTogglePin: (id: string) => void;
   onDeleteComment?: (postId: string, commentId: string) => void;
+  /**
+   * Aviso ao usuário quando algo falha. Opcional de propósito: o card é usado
+   * fora da comunidade e continua funcionando sem ele — só volta a falhar em
+   * silêncio, que é o comportamento de sempre.
+   *
+   * ⚠️ Prop, e não estado próprio: a página já tem `showToast` e um único toast
+   * na tela (`community/page.tsx:174`). Estado no card seria a 28ª cópia do
+   * padrão no projeto e empilharia avisos se dois cards falhassem juntos.
+   */
+  onToast?: (msg: string) => void;
 }
 
 // ⚠️ memo INERTE hoje, de propósito registrado: a página declara updatePost,
@@ -226,6 +236,7 @@ export const PostCard = memo(function PostCard({
   onDelete,
   onTogglePin,
   onDeleteComment,
+  onToast,
 }: Props) {
   const isModerator = isAdmin || isProducer;
   const { confirm, ConfirmDialog } = useConfirm();
@@ -279,7 +290,15 @@ export const PostCard = memo(function PostCard({
         setComments((prev) => [...(prev ?? []), { ...data.comment, replies: [] }]);
         setNewComment("");
         onUpdate({ ...post, commentCount: post.commentCount + 1 });
+      } else {
+        // O rascunho continua no editor: `setNewComment("")` só roda no sucesso,
+        // logo acima. O que faltava era dizer que falhou — sem isso o aluno acha
+        // que enviou, sai da tela, e AÍ perde o texto.
+        const d = await res.json().catch(() => ({}));
+        onToast?.(d.error || "Erro ao comentar");
       }
+    } catch {
+      onToast?.("Erro de rede. Tente novamente.");
     } finally {
       setPosting(false);
     }
@@ -306,7 +325,15 @@ export const PostCard = memo(function PostCard({
         setReplyContent("");
         setReplyingTo(null);
         onUpdate({ ...post, commentCount: post.commentCount + 1 });
+      } else {
+        // ⭐ Aqui o `d.error` do servidor resolve o 9.32 de quebra: responder a
+        // um comentário pendente devolve 403 com "Não é possível responder a um
+        // comentário pendente" (`comments/route.ts:143`), que hoje é engolido.
+        const d = await res.json().catch(() => ({}));
+        onToast?.(d.error || "Erro ao responder");
       }
+    } catch {
+      onToast?.("Erro de rede. Tente novamente.");
     } finally {
       setPostingReply(false);
     }
@@ -322,23 +349,33 @@ export const PostCard = memo(function PostCard({
       }))
     )
       return;
-    const res = await fetch(`/api/posts/${post.id}/comments/${commentId}`, {
-      method: "DELETE",
-    });
-    if (res.ok) {
-      if (parentId) {
-        setComments((prev) =>
-          (prev ?? []).map((c) =>
-            c.id === parentId
-              ? { ...c, replies: (c.replies ?? []).filter((r) => r.id !== commentId) }
-              : c
-          )
-        );
+    // Era o único dos quatro sem try algum: um fetch que lançasse escapava da
+    // função como unhandled rejection, e o comentário simplesmente continuava
+    // na tela sem explicação.
+    try {
+      const res = await fetch(`/api/posts/${post.id}/comments/${commentId}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        if (parentId) {
+          setComments((prev) =>
+            (prev ?? []).map((c) =>
+              c.id === parentId
+                ? { ...c, replies: (c.replies ?? []).filter((r) => r.id !== commentId) }
+                : c
+            )
+          );
+        } else {
+          setComments((prev) => (prev ?? []).filter((x) => x.id !== commentId));
+        }
+        onUpdate({ ...post, commentCount: Math.max(0, post.commentCount - 1) });
+        onDeleteComment?.(post.id, commentId);
       } else {
-        setComments((prev) => (prev ?? []).filter((x) => x.id !== commentId));
+        const d = await res.json().catch(() => ({}));
+        onToast?.(d.error || "Erro ao excluir");
       }
-      onUpdate({ ...post, commentCount: Math.max(0, post.commentCount - 1) });
-      onDeleteComment?.(post.id, commentId);
+    } catch {
+      onToast?.("Erro de rede. Tente novamente.");
     }
   }
 
@@ -357,12 +394,18 @@ export const PostCard = memo(function PostCard({
       });
       if (!res.ok) {
         onUpdate({ ...post, ...prev });
+        // A reversão acima continua igual — o que faltava era explicar por que
+        // o coração voltou sozinho. Sem isto o aluno vê o próprio clique ser
+        // desfeito sem motivo.
+        const d = await res.json().catch(() => ({}));
+        onToast?.(d.error || "Erro ao curtir");
       } else {
         const data = await res.json();
         onUpdate({ ...post, liked: data.liked, likeCount: data.likeCount });
       }
     } catch {
       onUpdate({ ...post, ...prev });
+      onToast?.("Erro de rede. Tente novamente.");
     } finally {
       setLikeBusy(false);
     }
