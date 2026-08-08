@@ -497,7 +497,7 @@ export default function CourseHomePage() {
           sobrepõe o banner (sem pt aqui pro margin-top negativo colapsar através deste
           wrapper). Box oculto pelo toggle showCourseInfoBox → pt volta, pro conteúdo
           não encostar no banner. */}
-      <div className={`px-4 sm:px-6 lg:px-10 pb-4 lg:pb-6 max-w-[1400px] mx-auto w-full ${course.bannerUrl && course.showCourseInfoBox !== false ? "" : "pt-4 lg:pt-6"}`}>
+      <div className={`px-4 sm:px-6 lg:px-10 pb-16 sm:pb-12 lg:pb-8 max-w-[1400px] mx-auto w-full ${course.bannerUrl && course.showCourseInfoBox !== false ? "" : "pt-4 lg:pt-6"}`}>
       {/* Course header row — toggleável pelo produtor (showCourseInfoBox, default true) */}
       {course.showCourseInfoBox !== false && (
       <div className={`mb-5 lg:mb-10 flex flex-col lg:flex-row lg:items-center gap-3 lg:gap-6 bg-white/80 dark:bg-white/5 backdrop-blur-xl border border-gray-200/70 dark:border-white/5 rounded-2xl p-4 lg:p-5 shadow-sm shadow-black/[0.02] dark:shadow-none relative z-10 ${course.bannerUrl ? "-mt-12 sm:-mt-14" : ""}`}>
