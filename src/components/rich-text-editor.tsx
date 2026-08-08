@@ -54,6 +54,20 @@ export default function RichTextEditor({
     extensions: [
       StarterKit.configure({
         heading: { levels: [1, 2] },
+        // O StarterKit 3.22.5 já embute link e underline (estão nas dependências
+        // dele). Importá-los de novo abaixo criava duas extensões com o mesmo
+        // nome, e o TipTap não deduplica: ele avisa
+        // ("[tiptap warn]: Duplicate extension names found") e mantém as duas.
+        //
+        // ⚠️ Desligar as DELE, não apagar as nossas: a nossa `Link` é a que tem
+        // `addAttributes` com `class`/`style` (os links-botão do LinkModal) e o
+        // `openOnClick: false`. Hoje ela vence só por posição — `extension-link`
+        // tem `priority: 1`, as duas caem no fim da ordenação, o sort é estável
+        // e a nossa está depois do StarterKit no array, então o `last-wins` do
+        // schema a escolhe. Mover uma linha para cima e os botões perderiam
+        // class e style, sem erro nenhum.
+        link: false,
+        underline: false,
       }),
       Link.extend({
         addAttributes() {

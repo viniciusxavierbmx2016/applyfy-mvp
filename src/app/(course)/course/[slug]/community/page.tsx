@@ -251,8 +251,22 @@ export default function CommunityPage() {
           groupId: activeGroup || undefined,
         }),
       });
+      if (!res.ok) {
+        // O erro do servidor sai por aqui, no molde dos 4 handlers do card
+        // (9.31). Antes ele era RELANÇADO e caía no mesmo `catch` das exceções
+        // — e era isso que fazia uma queda de rede escrever "Failed to fetch"
+        // na tela do aluno: o `catch` não tinha como distinguir o `throw`
+        // deliberado (mensagem boa, em português) de um TypeError do fetch.
+        //
+        // O `.catch(() => ({}))` no parse cobre um terceiro caso que passava
+        // batido: resposta de erro que não é JSON (página HTML de 502 da borda,
+        // por exemplo). Antes o `res.json()` rodava ANTES do `res.ok` e estourava
+        // um SyntaxError, que virava "Unexpected token '<'" na tela.
+        const d = await res.json().catch(() => ({}));
+        showToast(d.error || "Erro ao publicar");
+        return;
+      }
       const body = await res.json();
-      if (!res.ok) throw new Error(body.error || "Erro ao publicar");
       setPosts((prev) => [body.post, ...prev]);
       setContent("");
       setType("FREE");
@@ -280,8 +294,11 @@ export default function CommunityPage() {
         if (body.leveledUp) msg += " Subiu de nivel!";
         showToast(msg);
       }
-    } catch (e) {
-      showToast(e instanceof Error ? e.message : "Erro");
+    } catch {
+      // Agora o `catch` só vê exceção de verdade — rede caída, DNS, abort. O
+      // erro do servidor já foi tratado acima, então nenhuma mensagem útil se
+      // perde aqui. Mesma frase dos outros 5 handlers da tela.
+      showToast("Erro de rede. Tente novamente.");
     } finally {
       setSubmitting(false);
     }
