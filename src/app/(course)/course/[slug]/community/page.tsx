@@ -26,6 +26,20 @@ const POST_TYPES: Array<{ value: PostItem["type"]; label: string }> = [
   { value: "FEEDBACK", label: "Feedback" },
 ];
 
+/**
+ * Mínimo de posts para o marcador de fim de lista aparecer.
+ *
+ * ⚠️ O número é medido, não escolhido: com 5, o marcador alcança 2 dos 35 grupos
+ * em produção (os de 8 e 7 posts); com 10 — o tamanho da página — ele não
+ * apareceria em NENHUM, porque nenhum grupo chegou a 10 posts ainda. Um limiar
+ * que nunca dispara é código morto.
+ *
+ * A pergunta que o marcador responde ("acabou ou tem mais embaixo?") só se forma
+ * na cabeça de quem já rolou. Num grupo de 2 posts o feed inteiro cabe na tela e
+ * "você chegou ao fim" vira ruído — daí exigir um mínimo em vez de só `!hasMore`.
+ */
+const END_OF_FEED_MIN_POSTS = 5;
+
 interface CommunityGroup {
   id: string;
   name: string;
@@ -603,6 +617,21 @@ export default function CommunityPage() {
             >
               {loadingMore ? "Carregando..." : "Carregar mais posts"}
             </button>
+          )}
+          {/* Fim de lista. Render condicional puro — nenhum estado, nenhum
+              handler, e `hasMore`/`loadMore` intocados: este bloco só LÊ.
+              É excludente com o botão acima por construção (`hasMore` decide os
+              dois), então nunca aparecem juntos.
+              As 3 classes são cobertas pelo ruleset do aluno: `text-gray-500`
+              vira `--member-text` (globals.css:402) e o par
+              `border-gray-200 dark:border-gray-800` é o MESMO fio dos cartões
+              (:413), então a régua nasce igual à borda deles. */}
+          {!hasMore && posts.length >= END_OF_FEED_MIN_POSTS && (
+            <div className="flex items-center gap-3 pt-2 text-xs text-gray-500">
+              <span className="flex-1 border-t border-gray-200 dark:border-gray-800" />
+              <span>Você chegou ao fim</span>
+              <span className="flex-1 border-t border-gray-200 dark:border-gray-800" />
+            </div>
           )}
         </div>
       )}
