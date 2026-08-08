@@ -36,6 +36,43 @@ interface CommunityGroup {
   _count: { posts: number };
 }
 
+/**
+ * Esqueleto do feed — no lugar dos dois spinners (o da tela e o do feed).
+ *
+ * ⚠️ As barras usam `bg-gray-200 dark:bg-gray-800/60`, e NÃO os neutros do
+ * cartão. No `.course-customized` todo neutro de fundo colapsa para a mesma
+ * `--member-card` (`bg-white`, `dark:bg-gray-900`, `bg-gray-100` e
+ * `dark:bg-gray-800` puro, globals.css:334-341): barra e cartão ficariam da
+ * mesma cor e o esqueleto sumiria nos cursos com tema. As variantes com alpha
+ * (`/60`) não estão no ruleset e sobrevivem — é o mesmo par que o esqueleto do
+ * curso já usa (`course/[slug]/page.tsx:345-347`). O cartão em volta continua
+ * coberto, então ele acompanha o tema do produtor.
+ */
+function FeedSkeleton({ count = 3 }: { count?: number }) {
+  return (
+    <div className="space-y-4" aria-hidden="true">
+      {Array.from({ length: count }).map((_, i) => (
+        <div
+          key={i}
+          className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4 sm:p-5"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-full bg-gray-200 dark:bg-gray-800/60 animate-pulse" />
+            <div className="flex-1 space-y-2">
+              <div className="h-3 w-1/3 rounded bg-gray-200 dark:bg-gray-800/60 animate-pulse" />
+              <div className="h-2 w-1/4 rounded bg-gray-200 dark:bg-gray-800/60 animate-pulse" />
+            </div>
+          </div>
+          <div className="mt-4 space-y-2">
+            <div className="h-3 w-full rounded bg-gray-200 dark:bg-gray-800/60 animate-pulse" />
+            <div className="h-3 w-4/5 rounded bg-gray-200 dark:bg-gray-800/60 animate-pulse" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function CommunityPage() {
   const params = useParams<{ slug: string }>();
   const router = useRouter();
@@ -64,73 +101,87 @@ export default function CommunityPage() {
   const [hasMore, setHasMore] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
 
-  // Initial load: fetch posts + course info
+  // Memoizado porque agora os efeitos abaixo dependem dele. Sem `useCallback`
+  // a função seria recriada a cada render e, estando nas deps de um efeito que
+  // busca, o efeito refaria a busca a cada render — laço infinito. É o MESMO
+  // aviso de sempre (um toast na tela, :495), só que estável.
+  const showToast = useCallback((msg: string) => {
+    setToast(msg);
+    setTimeout(() => setToast(null), 3000);
+  }, []);
+
+  // ⭐ Carga inicial: os GRUPOS primeiro.
+  //
+  // Antes eram duas buscas de posts em toda abertura: esta posição buscava o
+  // feed SEM grupo (só para descobrir o curso) e, quando o grupo padrão
+  // chegava, o efeito de baixo rebuscava COM o grupo. O aluno via
+  // posts → spinner → posts, e nos cursos com mais de um grupo os posts dos
+  // outros grupos apareciam e sumiam (a API não filtra grupo quando o
+  // `groupId` vem ausente, posts/route.ts:92). Sabendo o grupo ativo ANTES, o
+  // feed é buscado uma vez só, já no grupo certo.
+  //
+  // O portão da tela mora aqui agora. É o mesmo das duas rotas — 401, 404 de
+  // curso, 403 de comunidade desativada e 403 de não-matriculado — então nada
+  // afrouxou ao trocar quem chega primeiro.
   useEffect(() => {
     let cancelled = false;
-    setLoading(true);
-    fetch(`/api/posts?courseSlug=${params.slug}&page=1&limit=10`)
+    fetch(`/api/courses/${params.slug}/groups`)
       .then(async (res) => {
-        if (res.status === 403) {
-          const body = await res.json().catch(() => ({}));
-          if (!cancelled) setError(body.error || "Acesso negado");
-          return null;
-        }
         if (res.status === 404) {
           if (!cancelled) router.replace(`/course/${params.slug}`);
           return null;
         }
+        // 401 e 403 são fatais: sem sessão ou sem acesso, não há feed a mostrar.
+        // O 401 precisa estar aqui explicitamente — cair no `.catch` de baixo o
+        // trataria como falha de rede e o deslogado veria um aviso e um feed
+        // vazio, em vez da tela de erro que ele via antes.
+        if (res.status === 401 || res.status === 403) {
+          const body = await res.json().catch(() => ({}));
+          if (!cancelled) {
+            setError(body.error || "Acesso negado");
+            // Sem isto a tela ficaria no esqueleto para sempre: o esqueleto é
+            // servido enquanto `loading && !groupsLoaded`, e nenhum dos dois
+            // mudaria mais. O erro só aparece depois desse portão.
+            setLoading(false);
+          }
+          return null;
+        }
         if (!res.ok) {
           const body = await res.json().catch(() => ({}));
-          throw new Error(body.error || "Erro");
+          throw new Error(body.error || "Erro ao carregar os grupos");
         }
         return res.json();
       })
       .then((data) => {
-        if (data && !cancelled) {
-          setPosts(data.posts);
-          setCourse(data.course);
-          setIsStaffViewer(!!data.isStaffViewer);
-          setHasMore(!!data.hasMore);
-          setPage(1);
-        }
+        if (!data || cancelled) return;
+        setGroups(data.groups);
+        const defaultGroup = data.groups.find(
+          (g: CommunityGroup) => g.isDefault
+        );
+        if (defaultGroup) setActiveGroup(defaultGroup.id);
+        setGroupsLoaded(true);
       })
       .catch((e: Error) => {
-        if (!cancelled) setError(e.message);
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
+        if (cancelled) return;
+        // Rede ou 500 nos grupos NÃO pode matar o feed — antes isto era um
+        // `.catch(() => {})` mudo. Libera a carga sem escopo (activeGroup
+        // segue null = todos os grupos do curso) e diz o que houve.
+        showToast(e.message || "Erro ao carregar os grupos");
+        setGroupsLoaded(true);
       });
     return () => {
       cancelled = true;
     };
-  }, [params.slug, router]);
+  }, [params.slug, router, showToast]);
 
-  // Fetch groups once we have a courseId
-  useEffect(() => {
-    if (!course?.id) return;
-    let cancelled = false;
-    fetch(`/api/courses/${course.id}/groups`)
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data) => {
-        if (data && !cancelled) {
-          setGroups(data.groups);
-          const defaultGroup = data.groups.find(
-            (g: CommunityGroup) => g.isDefault
-          );
-          if (defaultGroup) setActiveGroup(defaultGroup.id);
-          setGroupsLoaded(true);
-        }
-      })
-      .catch(() => {});
-    return () => {
-      cancelled = true;
-    };
-  }, [course?.id]);
-
-  // Re-fetch posts when activeGroup changes (after initial load)
+  // Busca o feed, sempre já escopado no grupo ativo. É também por aqui que o
+  // curso e o isStaffViewer chegam — vinham da busca que foi removida acima.
+  //
+  // ⚠️ O `if (!course) return` que existia aqui saiu de propósito: com os
+  // grupos vindo primeiro, o curso passa a chegar NESTA resposta. Manter a
+  // guarda travaria o feed para sempre (esperaria um curso que só ele traz).
   const loadPosts = useCallback(
     async (groupId: string | null) => {
-      if (!course) return;
       setLoading(true);
       try {
         const url = `/api/posts?courseSlug=${params.slug}&page=1&limit=10${groupId ? `&groupId=${groupId}` : ""}`;
@@ -138,14 +189,21 @@ export default function CommunityPage() {
         if (res.ok) {
           const data = await res.json();
           setPosts(data.posts);
+          setCourse(data.course);
+          setIsStaffViewer(!!data.isStaffViewer);
           setHasMore(!!data.hasMore);
           setPage(1);
+        } else {
+          const d = await res.json().catch(() => ({}));
+          showToast(d.error || "Erro ao carregar os posts");
         }
+      } catch {
+        showToast("Erro de rede. Tente novamente.");
       } finally {
         setLoading(false);
       }
     },
-    [course, params.slug]
+    [params.slug, showToast]
   );
 
   async function loadMore() {
@@ -160,7 +218,14 @@ export default function CommunityPage() {
         setPosts((prev) => [...prev, ...data.posts]);
         setHasMore(!!data.hasMore);
         setPage(nextPage);
+      } else {
+        // Era o pior dos mudos: o botão voltava a dizer "Carregar mais posts"
+        // como se nada tivesse acontecido, e o aluno clicava de novo.
+        const d = await res.json().catch(() => ({}));
+        showToast(d.error || "Erro ao carregar mais posts");
       }
+    } catch {
+      showToast("Erro de rede. Tente novamente.");
     } finally {
       setLoadingMore(false);
     }
@@ -170,11 +235,6 @@ export default function CommunityPage() {
     if (!groupsLoaded) return;
     loadPosts(activeGroup);
   }, [activeGroup, groupsLoaded, loadPosts]);
-
-  function showToast(msg: string) {
-    setToast(msg);
-    setTimeout(() => setToast(null), 3000);
-  }
 
   async function submitPost(e: React.FormEvent) {
     e.preventDefault();
@@ -231,36 +291,58 @@ export default function CommunityPage() {
     setPosts((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
   }
 
+  // Estes dois são o 9.31 que faltou: os handlers de post da PÁGINA. O 9.31
+  // cobriu os quatro do card (comentar, responder, excluir comentário, curtir)
+  // e estes ficaram para trás — apagar um post que falha deixava o post na
+  // tela, sem uma palavra.
   async function deletePost(id: string) {
-    const res = await fetch(`/api/posts/${id}`, { method: "DELETE" });
-    if (res.ok) {
-      setPosts((prev) => prev.filter((p) => p.id !== id));
+    try {
+      const res = await fetch(`/api/posts/${id}`, { method: "DELETE" });
+      if (res.ok) {
+        setPosts((prev) => prev.filter((p) => p.id !== id));
+      } else {
+        const d = await res.json().catch(() => ({}));
+        showToast(d.error || "Erro ao excluir o post");
+      }
+    } catch {
+      showToast("Erro de rede. Tente novamente.");
     }
   }
 
   async function togglePin(id: string) {
-    const res = await fetch(`/api/posts/${id}/pin`, { method: "POST" });
-    if (res.ok) {
-      const body = await res.json();
-      setPosts((prev) => {
-        const next = prev.map((p) =>
-          p.id === id ? { ...p, pinned: body.pinned } : p
-        );
-        next.sort((a, b) => {
-          if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
-          return (
-            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    try {
+      const res = await fetch(`/api/posts/${id}/pin`, { method: "POST" });
+      if (res.ok) {
+        const body = await res.json();
+        setPosts((prev) => {
+          const next = prev.map((p) =>
+            p.id === id ? { ...p, pinned: body.pinned } : p
           );
+          next.sort((a, b) => {
+            if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
+            return (
+              new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+            );
+          });
+          return next;
         });
-        return next;
-      });
+      } else {
+        const d = await res.json().catch(() => ({}));
+        showToast(d.error || "Erro ao fixar o post");
+      }
+    } catch {
+      showToast("Erro de rede. Tente novamente.");
     }
   }
 
+  // Enquanto os grupos não chegam, esqueleto no lugar do spinner. Este portão
+  // é também o que garante que o composer nunca renderize com a permissão
+  // desconhecida: `groupsLoaded` e `activeGroup` são gravados juntos, então
+  // quando a tela passa daqui a permissão do grupo ativo já é sabida.
   if (loading && !groupsLoaded) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pb-16 sm:pb-12">
+        <FeedSkeleton />
       </div>
     );
   }
@@ -436,10 +518,13 @@ export default function CommunityPage() {
       )}
 
       {/* Feed */}
-      {loading ? (
-        <div className="flex items-center justify-center h-32">
-          <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-        </div>
+      {/* ⚠️ `loading && posts.length === 0`, e não `loading` puro: com o `loading`
+          puro o esqueleto SUBSTITUÍA o feed a cada rebusca, e a troca de grupo
+          piscava conteúdo → vazio → conteúdo. Agora o esqueleto só aparece
+          quando não há nada para mostrar; havendo, os posts ficam na tela e só
+          esmaecem (opacity-60 abaixo) enquanto os novos vêm. */}
+      {loading && posts.length === 0 ? (
+        <FeedSkeleton />
       ) : posts.length === 0 ? (
         <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-8 text-center">
           <svg
@@ -455,8 +540,13 @@ export default function CommunityPage() {
               d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z"
             />
           </svg>
+          {/* "neste grupo" só faz sentido quando as abas estão na tela. Elas
+              só aparecem com `groups.length > 1`, e 27 dos 30 cursos têm um
+              grupo só — para esses o aluno lia "grupo" sem nunca ter visto um. */}
           <p className="text-gray-400 dark:text-gray-500">
-            Nenhum post neste grupo ainda
+            {groups.length > 1
+              ? "Nenhum post neste grupo ainda"
+              : "Nenhum post por aqui ainda"}
           </p>
           {canPost && (
             <p className="text-gray-500 text-sm mt-1">
@@ -465,7 +555,15 @@ export default function CommunityPage() {
           )}
         </div>
       ) : (
-        <div className="space-y-4">
+        // ⚠️ A animação é do WRAPPER, nunca por card. Stagger por card criaria
+        // um stacking context em cada um, e o menu ··· de um card ficaria preso
+        // atrás do card seguinte.
+        // O `opacity-60` é a rebusca: o feed esmaece em vez de sumir.
+        <div
+          className={`animate-fade-in-up space-y-4 transition-opacity ${
+            loading ? "opacity-60" : ""
+          }`}
+        >
           {posts.map((post) => (
             <PostCard
               key={post.id}
