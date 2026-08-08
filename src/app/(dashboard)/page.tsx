@@ -16,6 +16,7 @@ interface EnrolledCourse {
   ratingAverage?: number;
   ratingCount?: number;
   isExpired?: boolean;
+  expiresAt?: string | null;
   modules: Array<{
     lessons: Array<{
       id: string;
@@ -249,6 +250,7 @@ function StudentHome({ firstName }: { firstName: string }) {
                 ratingAverage={course.ratingAverage}
                 ratingCount={course.ratingCount}
                 expired={course.isExpired}
+                expiresAt={course.expiresAt}
               />
             ))}
           </div>
