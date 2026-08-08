@@ -28,11 +28,41 @@ type ApplyfyPayload = z.infer<typeof applyfyWebhookSchema>;
 
 const GRANT_EVENTS = new Set(["TRANSACTION_PAID"]);
 const REVOKE_EVENTS = new Set([
-  "TRANSACTION_CANCELED",
   "TRANSACTION_REFUNDED",
   "TRANSACTION_CHARGED_BACK",
 ]);
-const IGNORED_EVENTS = new Set(["TRANSACTION_CREATED"]);
+
+/**
+ * ⚠️ TRANSACTION_CANCELED está aqui, e NÃO no REVOKE. Não é esquecimento —
+ * não reponha.
+ *
+ * O nome engana: na Applyfy esse evento é **tentativa de compra que falhou**,
+ * não cliente cancelando assinatura. Medido nos 1.519 webhooks recebidos até
+ * ago/26: `transaction.status` é `FAILED` em **100%** deles e `payedAt` é
+ * **null em todos** — nunca houve dinheiro. O controle fecha o argumento: os
+ * três irmãos têm `payedAt` preenchido em 100% (TRANSACTION_PAID 5.911/5.911,
+ * REFUNDED 144/144, CHARGED_BACK 52/52). A esmagadora maioria é cartão
+ * recusado (1.359 de 1.519 em CREDIT_CARD).
+ *
+ * Enquanto ele revogava, um cartão negado numa compra NOVA derrubava o acesso
+ * de um curso JÁ PAGO. 4 alunos foram encontrados com matrícula CANCELLED,
+ * pagamento confirmado e zero reembolso; nos últimos 30 dias o caminho de
+ * revogação foi disparado 125 vezes por recusa.
+ *
+ * Os outros 4 gateways sempre acertaram isto — o Cakto inclusive documenta
+ * `purchase_refused` na lista de IGNORE (`gateways/cakto/adapter.ts:84`).
+ *
+ * ⚠️ IGNORED_EVENTS e não simplesmente removido da lista: o fall-through do fim
+ * do handler também ignoraria, mas gravaria `errorMessage: "Unhandled event"` —
+ * mentira, já que a decisão de ignorar é deliberada — e só chegaria lá depois
+ * de passar por dois portões que respondem ERROR (`Missing client.email` e
+ * `Missing orderItems`). Hoje os 1.519 têm os dois campos, mas um payload sem
+ * eles viraria ERROR no log, parecendo defeito. Aqui o curto-circuito é antes.
+ */
+const IGNORED_EVENTS = new Set([
+  "TRANSACTION_CREATED",
+  "TRANSACTION_CANCELED",
+]);
 
 async function logWebhook(entry: {
   event: string;
