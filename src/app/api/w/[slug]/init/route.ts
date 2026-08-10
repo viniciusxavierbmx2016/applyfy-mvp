@@ -133,6 +133,11 @@ export async function GET(_request: Request, props: { params: Promise<{ slug: st
           checkoutUrl: true,
           ownerId: true,
           reviewsEnabled: true,
+          // ⚠️ Este select e o da loja (abaixo) são DOIS e precisam do campo nos
+          // dois. Faltando num deles, o curso chega sem `showAccessBadge` e o
+          // `!== false` do card cai em MOSTRAR — metade da vitrine ignoraria o
+          // toggle sem erro nenhum.
+          showAccessBadge: true,
           memberBgColor: true,
           memberSidebarColor: true,
           memberHeaderColor: true,
@@ -180,6 +185,9 @@ export async function GET(_request: Request, props: { params: Promise<{ slug: st
           priceCurrency: true,
           ownerId: true,
           reviewsEnabled: true,
+          // O par do select de cima — ver o aviso lá. Mesma posição relativa de
+          // propósito, para os dois lerem iguais.
+          showAccessBadge: true,
           memberBgColor: true,
           memberSidebarColor: true,
           memberHeaderColor: true,

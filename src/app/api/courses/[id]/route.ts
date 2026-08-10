@@ -147,6 +147,7 @@ export async function PUT(request: Request, props: { params: Promise<{ id: strin
       supportWhatsapp,
       showLessonSupport,
       showCourseInfoBox,
+      showAccessBadge,
       courseBannerFadeEnabled,
       courseBannerFadeColor,
       courseBannerFadeOpacity,
@@ -302,6 +303,9 @@ export async function PUT(request: Request, props: { params: Promise<{ id: strin
         }),
         ...(showCourseInfoBox !== undefined && {
           showCourseInfoBox: Boolean(showCourseInfoBox),
+        }),
+        ...(showAccessBadge !== undefined && {
+          showAccessBadge: Boolean(showAccessBadge),
         }),
         ...(courseBannerFadeEnabled !== undefined && {
           courseBannerFadeEnabled: Boolean(courseBannerFadeEnabled),
