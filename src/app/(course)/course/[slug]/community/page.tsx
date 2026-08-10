@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import dynamic from "next/dynamic";
@@ -115,6 +115,12 @@ export default function CommunityPage() {
   const [hasMore, setHasMore] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
 
+  // Cancela a busca do feed que ficou para trás quando o aluno troca de aba.
+  // Ref e não estado: trocar o controller não pode disparar render.
+  // ⚠️ Molde do global-search.tsx:40,54-70 — o mesmo caso (chegou pedido novo,
+  // cancela o anterior), e de lá vem também a guarda de AbortError no catch.
+  const abortRef = useRef<AbortController | null>(null);
+
   // Memoizado porque agora os efeitos abaixo dependem dele. Sem `useCallback`
   // a função seria recriada a cada render e, estando nas deps de um efeito que
   // busca, o efeito refaria a busca a cada render — laço infinito. É o MESMO
@@ -196,10 +202,16 @@ export default function CommunityPage() {
   // guarda travaria o feed para sempre (esperaria um curso que só ele traz).
   const loadPosts = useCallback(
     async (groupId: string | null) => {
+      // Aborta a anterior ANTES de disparar: sem isto, duas trocas rápidas de aba
+      // deixam duas buscas em voo e quem responder por último vence — os posts do
+      // grupo errado ficam na tela, sob a aba certa.
+      abortRef.current?.abort();
+      const ctrl = new AbortController();
+      abortRef.current = ctrl;
       setLoading(true);
       try {
         const url = `/api/posts?courseSlug=${params.slug}&page=1&limit=10${groupId ? `&groupId=${groupId}` : ""}`;
-        const res = await fetch(url);
+        const res = await fetch(url, { signal: ctrl.signal });
         if (res.ok) {
           const data = await res.json();
           setPosts(data.posts);
@@ -211,10 +223,21 @@ export default function CommunityPage() {
           const d = await res.json().catch(() => ({}));
           showToast(d.error || "Erro ao carregar os posts");
         }
-      } catch {
-        showToast("Erro de rede. Tente novamente.");
+      } catch (e) {
+        // ⚠️ Abortar NÃO é falha: é o aluno trocando de aba. Sem esta guarda o
+        // toast do 9.31 dispararia "Erro de rede" em toda troca. Molde do
+        // global-search.tsx:70.
+        if ((e as Error).name !== "AbortError") {
+          showToast("Erro de rede. Tente novamente.");
+        }
       } finally {
-        setLoading(false);
+        // ⭐ Requisição abortada não mexe em estado nenhum — quem a substituiu é
+        // que manda. Desligar o loading aqui apagaria o esqueleto enquanto a
+        // busca NOVA ainda corre, que é o oposto do que a F5 construiu.
+        // `ctrl.signal.aborted` e não `abortRef.current === ctrl`: o segundo
+        // continua verdadeiro quando o cleanup aborta no desmonte, e aí o
+        // setState rodaria num componente que já saiu.
+        if (!ctrl.signal.aborted) setLoading(false);
       }
     },
     [params.slug, showToast]
@@ -248,6 +271,11 @@ export default function CommunityPage() {
   useEffect(() => {
     if (!groupsLoaded) return;
     loadPosts(activeGroup);
+    // ⚠️ Este efeito aborta; o dos grupos (:140) usa flag `cancelled`. Formas
+    // diferentes para problemas diferentes: lá a busca roda UMA vez e só é
+    // preciso não gravar depois do desmonte; aqui ela roda a cada troca de aba e
+    // a anterior precisa MORRER, senão a resposta atrasada sobrescreve a nova.
+    return () => abortRef.current?.abort();
   }, [activeGroup, groupsLoaded, loadPosts]);
 
   async function submitPost(e: React.FormEvent) {
