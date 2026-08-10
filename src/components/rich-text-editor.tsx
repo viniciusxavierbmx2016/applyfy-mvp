@@ -42,6 +42,17 @@ interface Props {
    * colado de fora continua sendo renderizado.
    */
   compactToolbar?: boolean;
+  /**
+   * Foca o editor assim que ele monta.
+   *
+   * ⚠️ OPT-IN, default `false` = como sempre foi. Ligado por padrão, toda página
+   * que tem editor roubaria o foco no carregamento — inclusive a descrição da
+   * aula, que fica no meio de um formulário longo.
+   *
+   * ⚠️ `"end"` e não `true`: o composer pode remontar com texto de uma sessão
+   * anterior, e o cursor tem que cair DEPOIS dele, não antes.
+   */
+  autoFocus?: boolean;
 }
 
 interface LinkEditData {
@@ -58,6 +69,7 @@ export default function RichTextEditor({
   minHeight = "200px",
   appendMediaAtEnd = false,
   compactToolbar = false,
+  autoFocus = false,
 }: Props) {
   const [linkModal, setLinkModal] = useState(false);
   const [imageModal, setImageModal] = useState(false);
@@ -68,6 +80,7 @@ export default function RichTextEditor({
     // SSR/hydration (incl. React StrictMode's dev double-render), which throws
     // "SSR has been detected". See https://tiptap.dev/docs/editor/getting-started/install/nextjs
     immediatelyRender: false,
+    autofocus: autoFocus ? "end" : false,
     extensions: [
       StarterKit.configure({
         heading: { levels: [1, 2] },
