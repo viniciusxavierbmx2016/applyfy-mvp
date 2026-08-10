@@ -594,10 +594,17 @@ export default function CommunityPage() {
                 </button>
               ))}
             </div>
+            {/* Alvo de toque 36 -> 44px. É o mais folgado dos três: py-3 (12)
+                cresce 4px por lado e -my-1 devolve a caixa aos 36. Acima, o
+                row-gap de 12px do container (ou o mt-3 quando a linha não
+                quebra) deixa 8px de folga; abaixo, os 8px do mt-2 da dica
+                deixam 4. Em 375px esta linha soma ~396px contra 309 de
+                largura útil, então o botão já cai numa segunda linha — e o
+                crescimento vertical com margem negativa não muda isso. */}
             <button
               type="submit"
               disabled={!hasPostContent(content) || submitting}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg disabled:opacity-50"
+              className="px-4 py-3 -my-1 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg disabled:opacity-50"
             >
               {submitting ? "Publicando..." : "Publicar"}
             </button>
