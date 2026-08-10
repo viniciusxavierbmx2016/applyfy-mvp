@@ -19,6 +19,9 @@ interface CourseCardProps {
   ratingCount?: number;
   checkoutUrl?: string | null;
   expiresAt?: string | Date | null;
+  // Desliga o selo tranquilizador (Vitalício / Liberado). Opcional como
+  // expiresAt: call-site que não passa continua vendo o selo.
+  showAccessBadge?: boolean;
   className?: string;
   manageHref?: string;
   horizontal?: boolean;
@@ -44,6 +47,7 @@ export function CourseCard({
   ratingCount,
   checkoutUrl,
   expiresAt,
+  showAccessBadge,
   className,
   manageHref,
   horizontal = false,
@@ -145,19 +149,30 @@ export function CourseCard({
                 {daysLeft}d restantes
               </div>
             )
-          ) : typeof progress === "number" ? (
-            <div className="flex items-center gap-1 px-2 py-1 bg-emerald-500/90 backdrop-blur-sm rounded-full text-xs text-white font-medium">
-              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-              Vitalício
-            </div>
-          ) : (
-            <div className="flex items-center gap-1 px-2 py-1 bg-green-500/90 backdrop-blur-sm rounded-full text-xs text-white font-medium">
-              <span className="w-1.5 h-1.5 rounded-full bg-white" />
-              Liberado
-            </div>
-          )}
+          ) : showAccessBadge !== false ? (
+            // ⚠️ A condição entra AQUI, depois dos quatro primeiros ramos, e não
+            // em volta da cascata: `Expirado`, `Bloqueado`, `Expira em Nd` e
+            // `Nd restantes` são AVISO e contagem, e escondê-los tiraria do aluno
+            // justamente o que ele precisa ver. O produtor desliga só o selo
+            // tranquilizador — os dois estados que dizem "está tudo bem".
+            //
+            // `!== false`, nunca truthy: a prop chega `undefined` em call-site
+            // que não a passa e em curso que veio de um select sem o campo — e
+            // undefined tem que cair em MOSTRAR, o lado seguro da omissão.
+            typeof progress === "number" ? (
+              <div className="flex items-center gap-1 px-2 py-1 bg-emerald-500/90 backdrop-blur-sm rounded-full text-xs text-white font-medium">
+                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                Vitalício
+              </div>
+            ) : (
+              <div className="flex items-center gap-1 px-2 py-1 bg-green-500/90 backdrop-blur-sm rounded-full text-xs text-white font-medium">
+                <span className="w-1.5 h-1.5 rounded-full bg-white" />
+                Liberado
+              </div>
+            )
+          ) : null}
         </div>
       </div>
 
