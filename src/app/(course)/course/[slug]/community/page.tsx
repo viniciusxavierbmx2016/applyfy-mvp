@@ -535,7 +535,15 @@ export default function CommunityPage() {
           <button
             type="button"
             onClick={() => setComposerOpen(true)}
-            className="w-full flex items-center gap-3 text-left bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4 mb-6 hover:border-gray-300 dark:hover:border-gray-700 transition-colors"
+            /* Superfície AFUNDADA, não a do cartão: `bg-gray-50` (globals.css:339)
+               e `dark:bg-[#141416]` (:475 — color-mix do cartão 84% com preto,
+               que é a especificação do protótipo ao pé da letra). Sem borda: com
+               fundo próprio ela vira redundância, o afundamento já separa.
+               py-1.5 + avatar sm (32px) = 44px de altura.
+               ⚠️ O hover é de FUNDO agora; o antigo era de borda e ficaria inerte.
+                  `dark:hover:bg-white/5` (:349) eleva o campo de volta ao nível do
+                  cartão — as duas únicas variantes :hover que o ruleset cobre. */
+            className="w-full flex items-center gap-3 text-left bg-gray-50 dark:bg-[#141416] rounded-full px-4 py-1.5 mb-6 hover:bg-gray-100 dark:hover:bg-white/5 transition-colors"
           >
             <Avatar src={user?.avatarUrl ?? null} name={user?.name ?? ""} size="sm" />
             <span className="flex-1 text-sm text-gray-500 dark:text-gray-400">
@@ -566,7 +574,8 @@ export default function CommunityPage() {
             appendMediaAtEnd
             compactToolbar
             autoFocus
-            minHeight="120px"
+            surfaceClassName="bg-gray-50 dark:bg-[#141416]"
+            minHeight="88px"
           />
           <div className="flex flex-wrap items-center justify-between gap-3 mt-3">
             <div className="flex flex-wrap gap-1.5">
