@@ -59,6 +59,7 @@ interface CourseFlags {
   showStudentCount: boolean;
   showLessonSupport: boolean;
   showCourseInfoBox: boolean;
+  showAccessBadge: boolean;
 }
 
 // F2 — Support button customization (color + image). Saved through the
@@ -88,6 +89,7 @@ const FEATURE_ITEMS: Array<{
   { key: "showStudentCount", title: "Exibir quantidade de alunos", description: "Mostra matriculados na página do curso" },
   { key: "showLessonSupport", title: "Suporte nas aulas", description: "Email e WhatsApp abaixo de cada aula" },
   { key: "showCourseInfoBox", title: "Exibir resumo do curso", description: "Box com nome, módulos, aulas e progresso na home do curso", tooltip: "Desligar esconde o box inteiro da home do aluno — incluindo a barra de progresso e a contagem de alunos matriculados." },
+  { key: "showAccessBadge", title: "Exibir selo de acesso", description: "Selo de Vitalício ou Liberado no card do curso", tooltip: "Desligar esconde só o selo de acesso liberado. Avisos como Expirado, Bloqueado e a contagem de dias continuam aparecendo sempre." },
 ];
 
 export default function CourseCustomizePage() {
@@ -146,6 +148,7 @@ export default function CourseCustomizePage() {
             showStudentCount: Boolean(c.showStudentCount),
             showLessonSupport: c.showLessonSupport !== false,
             showCourseInfoBox: c.showCourseInfoBox !== false,
+            showAccessBadge: c.showAccessBadge !== false,
           });
           const loaded: SupportButton = {
             color: typeof c.supportButtonColor === "string" ? c.supportButtonColor : null,

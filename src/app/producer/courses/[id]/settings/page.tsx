@@ -16,6 +16,7 @@ interface CourseFlags {
   showStudentCount: boolean;
   showLessonSupport: boolean;
   showCourseInfoBox: boolean;
+  showAccessBadge: boolean;
 }
 
 type FlagKey = keyof CourseFlags;
@@ -115,6 +116,15 @@ const ITEMS: SettingItem[] = [
       "Desativado — o box some da home do curso, levando junto a barra de progresso e a contagem de alunos.",
     icon: <InfoBoxIcon />,
   },
+  {
+    key: "showAccessBadge",
+    title: "Exibir selo de acesso",
+    description:
+      "Mostra o selo Vitalício ou Liberado no card do curso, na home do aluno e na vitrine.",
+    disabledHint:
+      "Desativado — o selo some do card. Avisos de expiração e bloqueio continuam aparecendo.",
+    icon: <DiplomaIcon />,
+  },
 ];
 
 export default function CourseSettingsPage(
@@ -151,6 +161,7 @@ export default function CourseSettingsPage(
           showStudentCount: Boolean(c.showStudentCount),
           showLessonSupport: c.showLessonSupport !== false,
           showCourseInfoBox: c.showCourseInfoBox !== false,
+          showAccessBadge: c.showAccessBadge !== false,
         });
       })
       .finally(() => alive && setLoading(false));
