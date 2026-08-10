@@ -140,7 +140,19 @@ function PostActionsMenu({
         aria-haspopup="menu"
         aria-expanded={open}
         aria-label="Ações do post"
-        className="p-1.5 -mr-1 text-gray-500 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5 rounded-lg transition-colors"
+        // Alvo de toque 28 -> 40px. ⚠️ 40 e nao 44: o Avatar ao lado tem 40
+        // (h-10) e e ele que define a altura desta linha; 44 faria a area
+        // descer 4px abaixo dele. E na horizontal 44 exigiria 14px por lado
+        // contra 12 do gap-3 a esquerda e 12 do p-4 a direita — 2px de
+        // invasao de cada lado. Em 40 as quatro fronteiras fecham em 0.
+        // ⚠️ As margens sao ASSIMETRICAS porque o -mr-1 original NAO era
+        // compensacao, era um ajuste visual de 4px que encosta o botao na
+        // borda. Ele tem que sobreviver: -ml-1.5 devolve os 6px que o padding
+        // cresceu a esquerda, e -mr-2.5 devolve os mesmos 6 MAIS os 4 do
+        // ajuste. Caixa de margem: 40 − 6 − 10 = 24 na horizontal e
+        // 40 − 6 − 6 = 28 na vertical — identicas as de antes, entao o
+        // `relative` que ancora o dropdown (top-8) nao muda de tamanho.
+        className="p-3 -my-1.5 -ml-1.5 -mr-2.5 text-gray-500 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5 rounded-lg transition-colors"
       >
         <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
           <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
@@ -541,11 +553,19 @@ export const PostCard = memo(function PostCard({
             compactToolbar
             minHeight="100px"
           />
+          {/* ⚠️ Alvo de toque com orçamento ASSIMÉTRICO e um dos lados ZERADO.
+              Acima há o space-y-2 (8px) do editor. Abaixo há o mb-3 (12px) —
+              e o rodapé já consome os 12 inteiros com o seu pt-3, que é o que
+              lhe dá 44px. Crescer 1px para baixo aqui abriria sobreposição com
+              um alvo que já existe. Então: pt-3.5 (14 = 6 de antes + os 8 que
+              cabem em cima) e pb-1.5 intacto. 20 + 14 + 6 = 40px, não 44 —
+              o teto é o vizinho. -mt-2 (−8) devolve a caixa de layout aos
+              32px, então nem o editor nem o rodapé se mexem. */}
           <div className="flex gap-2 justify-end">
             <button
               type="button"
               onClick={() => setEditing(false)}
-              className="px-3 py-1.5 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg"
+              className="px-3 pt-3.5 pb-1.5 -mt-2 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg"
             >
               Cancelar
             </button>
@@ -553,7 +573,7 @@ export const PostCard = memo(function PostCard({
               type="button"
               onClick={saveEdit}
               disabled={!hasPostContent(editContent) || savingEdit}
-              className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg disabled:opacity-50"
+              className="px-3 pt-3.5 pb-1.5 -mt-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg disabled:opacity-50"
             >
               {savingEdit ? "Salvando..." : "Salvar"}
             </button>
