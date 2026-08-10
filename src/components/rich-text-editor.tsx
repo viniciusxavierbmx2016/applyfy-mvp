@@ -53,6 +53,20 @@ interface Props {
    * anterior, e o cursor tem que cair DEPOIS dele, não antes.
    */
   autoFocus?: boolean;
+  /**
+   * Classes da SUPERFÍCIE da área de escrita (a div que envolve o
+   * EditorContent). Nome com `ClassName` porque é string de classe, e com
+   * `surface` porque mira só o fundo do conteúdo — não a moldura externa, que
+   * segue com borda e raio próprios.
+   *
+   * ⚠️ OPT-IN. O default é exatamente o que sempre esteve na div: os outros 4
+   * call-sites não passam nada e não mudam um pixel.
+   *
+   * ⚠️ Serve para o composer da comunidade casar a cor do repouso com a do
+   * expandido — sem isto a caixa TROCA de cor ao abrir, que é pior que os dois
+   * estados sozinhos.
+   */
+  surfaceClassName?: string;
 }
 
 interface LinkEditData {
@@ -70,6 +84,7 @@ export default function RichTextEditor({
   appendMediaAtEnd = false,
   compactToolbar = false,
   autoFocus = false,
+  surfaceClassName = "bg-white dark:bg-[#0f1320]",
 }: Props) {
   const [linkModal, setLinkModal] = useState(false);
   const [imageModal, setImageModal] = useState(false);
@@ -165,7 +180,7 @@ export default function RichTextEditor({
         onImageClick={() => setImageModal(true)}
       />
       <div
-        className="relative bg-white dark:bg-[#0f1320] px-4 py-3 text-sm text-gray-900 dark:text-white"
+        className={`relative ${surfaceClassName} px-4 py-3 text-sm text-gray-900 dark:text-white`}
         onClick={handleEditorClick}
       >
         {editor.isEmpty && (
