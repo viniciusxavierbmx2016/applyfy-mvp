@@ -235,6 +235,12 @@ model Course {
   supportWhatsapp                 String?
   showLessonSupport               Boolean   @default(true)
   showCourseInfoBox               Boolean   @default(true)
+  // Exibe o selo de acesso (Vitalício / Liberado) no card do curso.
+  // NÃO afeta Expirado, Bloqueado nem a contagem regressiva — esses são avisos,
+  // e escondê-los tiraria do aluno justamente o que ele precisa ver.
+  // ⚠️ Ler SEMPRE como `!== false`, no molde do showCourseInfoBox: o campo
+  // ausente de um select explícito cai em MOSTRAR, que é o lado seguro da falha.
+  showAccessBadge                 Boolean   @default(true)
   supportButtonColor              String?
   supportButtonImage              String?
   memberBgColor                   String?
