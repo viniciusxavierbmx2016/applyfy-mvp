@@ -561,8 +561,26 @@ export default function CommunityPage() {
           // clique chegar nele.
           // ⚠️ Os modais de link e imagem não usam portal — vivem na árvore do
           // editor, logo dentro do form. Abrir um deles passa no `contains`.
+          // ⚠️ E `contains` sozinho não bastava: ele responde "o foco foi para
+          // DENTRO?", mas `contains(null)` é false, então "o foco não foi a
+          // lugar nenhum" era lido como saída. Clicar num elemento não-focável
+          // colapsava o composer vazio. Três casos reais:
+          //   1. o seletor de arquivo — a área tracejada do modal de imagem é
+          //      um <div> sem tabIndex; o focusout no mousedown desmontava o
+          //      <input type="file"> antes do click chegar nele, e o diálogo
+          //      do SO nunca abria. Upload de foto impossível.
+          //   2. o padding do próprio editor (px-4 py-3 em volta do
+          //      contenteditable) — fechava o composer sem modal nenhum.
+          //   3. qualquer área não-focável: backdrop e painel do modal.
+          // Medido no Chrome: nos três, relatedTarget é null, contains é false
+          // e document.hasFocus() é TRUE — o foco nunca sai da página, então
+          // hasFocus não separa nada.
+          // ⚠️ O que se perde: com o composer vazio, clicar em área morta da
+          // página não colapsa mais. É cosmético, e reversível rastreando o
+          // ponteiro — o que exigiria um ref e dois handlers novos.
           onBlur={(e) => {
             if (e.currentTarget.contains(e.relatedTarget as Node | null)) return;
+            if (!e.relatedTarget) return;
             if (!hasPostContent(content)) setComposerOpen(false);
           }}
           className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4 mb-6"
