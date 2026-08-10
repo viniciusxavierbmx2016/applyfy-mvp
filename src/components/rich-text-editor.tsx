@@ -26,6 +26,22 @@ interface Props {
    * por padrão quebraria o segundo caso.
    */
   appendMediaAtEnd?: boolean;
+  /**
+   * Barra enxuta: 6 botões em vez de 16 — negrito, itálico, lista, link,
+   * imagem e citação.
+   *
+   * ⚠️ OPT-IN, default `false` = exatamente os 16 de sempre. Mesmo motivo do
+   * `appendMediaAtEnd`: o editor é compartilhado, e na descrição da aula
+   * (lessons-manager) título e alinhamento são justamente o que o produtor usa.
+   * Na comunidade um comentário de duas linhas não precisa de Título 1.
+   *
+   * ⚠️ Esconde BOTÃO, não desliga EXTENSÃO — o array de extensions não muda.
+   * Os atalhos continuam vivos: Mod-U (sublinhado), Mod-Shift-s (tachado),
+   * Mod-Alt-N (títulos), Mod-Shift-7/8/9 (listas), Mod-Shift-l/e/r/j
+   * (alinhamento), Mod-Alt-c (código). Quem já os usa não perde nada, e o HTML
+   * colado de fora continua sendo renderizado.
+   */
+  compactToolbar?: boolean;
 }
 
 interface LinkEditData {
@@ -41,6 +57,7 @@ export default function RichTextEditor({
   placeholder = "Digite aqui...",
   minHeight = "200px",
   appendMediaAtEnd = false,
+  compactToolbar = false,
 }: Props) {
   const [linkModal, setLinkModal] = useState(false);
   const [imageModal, setImageModal] = useState(false);
@@ -130,6 +147,7 @@ export default function RichTextEditor({
     <div className="rounded-xl border border-gray-300 dark:border-[#1a1e2e] overflow-hidden focus-within:border-blue-500/50 transition-colors">
       <Toolbar
         editor={editor}
+        compact={compactToolbar}
         onLinkClick={() => { setEditingLink(null); setLinkModal(true); }}
         onImageClick={() => setImageModal(true)}
       />
@@ -604,33 +622,40 @@ function ImageModal({
 
 function Toolbar({
   editor,
+  compact,
   onLinkClick,
   onImageClick,
 }: {
   editor: Editor;
+  compact: boolean;
   onLinkClick: () => void;
   onImageClick: () => void;
 }) {
   return (
     <div className="flex flex-wrap items-center gap-0.5 bg-gray-50 dark:bg-[#1d1d21] border-b border-gray-200 dark:border-[#28282e] px-2 py-1.5">
-      <ToolbarBtn
-        active={editor.isActive("heading", { level: 1 })}
-        onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
-        title="Título 1"
-        useMouseDown
-      >
-        H1
-      </ToolbarBtn>
-      <ToolbarBtn
-        active={editor.isActive("heading", { level: 2 })}
-        onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-        title="Título 2"
-        useMouseDown
-      >
-        H2
-      </ToolbarBtn>
+      {/* fora da barra enxuta: os 2 títulos e o separador deles */}
+      {!compact && (
+        <>
+        <ToolbarBtn
+          active={editor.isActive("heading", { level: 1 })}
+          onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
+          title="Título 1"
+          useMouseDown
+        >
+          H1
+        </ToolbarBtn>
+        <ToolbarBtn
+          active={editor.isActive("heading", { level: 2 })}
+          onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+          title="Título 2"
+          useMouseDown
+        >
+          H2
+        </ToolbarBtn>
 
-      <Divider />
+        <Divider />
+        </>
+      )}
 
       <ToolbarBtn
         active={editor.isActive("bold")}
@@ -648,22 +673,27 @@ function Toolbar({
       >
         <span className="italic">I</span>
       </ToolbarBtn>
-      <ToolbarBtn
-        active={editor.isActive("underline")}
-        onClick={() => editor.chain().focus().toggleUnderline().run()}
-        title="Sublinhado"
-        useMouseDown
-      >
-        <span className="underline">U</span>
-      </ToolbarBtn>
-      <ToolbarBtn
-        active={editor.isActive("strike")}
-        onClick={() => editor.chain().focus().toggleStrike().run()}
-        title="Tachado"
-        useMouseDown
-      >
-        <span className="line-through">S</span>
-      </ToolbarBtn>
+      {/* fora da barra enxuta: sublinhado e tachado */}
+      {!compact && (
+        <>
+        <ToolbarBtn
+          active={editor.isActive("underline")}
+          onClick={() => editor.chain().focus().toggleUnderline().run()}
+          title="Sublinhado"
+          useMouseDown
+        >
+          <span className="underline">U</span>
+        </ToolbarBtn>
+        <ToolbarBtn
+          active={editor.isActive("strike")}
+          onClick={() => editor.chain().focus().toggleStrike().run()}
+          title="Tachado"
+          useMouseDown
+        >
+          <span className="line-through">S</span>
+        </ToolbarBtn>
+        </>
+      )}
 
       <Divider />
 
@@ -677,56 +707,66 @@ function Toolbar({
           <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
         </svg>
       </ToolbarBtn>
-      <ToolbarBtn
-        active={editor.isActive("orderedList")}
-        onClick={() => editor.chain().focus().toggleOrderedList().run()}
-        title="Lista numerada"
-        useMouseDown
-      >
-        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-          <text x="2" y="8" fontSize="7" fontWeight="bold">1</text>
-          <text x="2" y="15" fontSize="7" fontWeight="bold">2</text>
-          <text x="2" y="22" fontSize="7" fontWeight="bold">3</text>
-          <line x1="10" y1="6" x2="22" y2="6" stroke="currentColor" strokeWidth="2" />
-          <line x1="10" y1="13" x2="22" y2="13" stroke="currentColor" strokeWidth="2" />
-          <line x1="10" y1="20" x2="22" y2="20" stroke="currentColor" strokeWidth="2" />
-        </svg>
-      </ToolbarBtn>
+      {/* fora da barra enxuta: lista numerada */}
+      {!compact && (
+        <>
+        <ToolbarBtn
+          active={editor.isActive("orderedList")}
+          onClick={() => editor.chain().focus().toggleOrderedList().run()}
+          title="Lista numerada"
+          useMouseDown
+        >
+          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+            <text x="2" y="8" fontSize="7" fontWeight="bold">1</text>
+            <text x="2" y="15" fontSize="7" fontWeight="bold">2</text>
+            <text x="2" y="22" fontSize="7" fontWeight="bold">3</text>
+            <line x1="10" y1="6" x2="22" y2="6" stroke="currentColor" strokeWidth="2" />
+            <line x1="10" y1="13" x2="22" y2="13" stroke="currentColor" strokeWidth="2" />
+            <line x1="10" y1="20" x2="22" y2="20" stroke="currentColor" strokeWidth="2" />
+          </svg>
+        </ToolbarBtn>
+        </>
+      )}
 
       <Divider />
 
-      <ToolbarBtn
-        active={editor.isActive({ textAlign: "left" })}
-        onClick={() => editor.chain().focus().setTextAlign("left").run()}
-        title="Alinhar esquerda"
-        useMouseDown
-      >
-        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-          <path strokeLinecap="round" d="M3 6h18M3 12h12M3 18h18" />
-        </svg>
-      </ToolbarBtn>
-      <ToolbarBtn
-        active={editor.isActive({ textAlign: "center" })}
-        onClick={() => editor.chain().focus().setTextAlign("center").run()}
-        title="Centralizar"
-        useMouseDown
-      >
-        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-          <path strokeLinecap="round" d="M3 6h18M6 12h12M3 18h18" />
-        </svg>
-      </ToolbarBtn>
-      <ToolbarBtn
-        active={editor.isActive({ textAlign: "right" })}
-        onClick={() => editor.chain().focus().setTextAlign("right").run()}
-        title="Alinhar direita"
-        useMouseDown
-      >
-        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-          <path strokeLinecap="round" d="M3 6h18M9 12h12M3 18h18" />
-        </svg>
-      </ToolbarBtn>
+      {/* fora da barra enxuta: os 3 alinhamentos e o separador — senão sobrariam 2 juntos */}
+      {!compact && (
+        <>
+        <ToolbarBtn
+          active={editor.isActive({ textAlign: "left" })}
+          onClick={() => editor.chain().focus().setTextAlign("left").run()}
+          title="Alinhar esquerda"
+          useMouseDown
+        >
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" d="M3 6h18M3 12h12M3 18h18" />
+          </svg>
+        </ToolbarBtn>
+        <ToolbarBtn
+          active={editor.isActive({ textAlign: "center" })}
+          onClick={() => editor.chain().focus().setTextAlign("center").run()}
+          title="Centralizar"
+          useMouseDown
+        >
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" d="M3 6h18M6 12h12M3 18h18" />
+          </svg>
+        </ToolbarBtn>
+        <ToolbarBtn
+          active={editor.isActive({ textAlign: "right" })}
+          onClick={() => editor.chain().focus().setTextAlign("right").run()}
+          title="Alinhar direita"
+          useMouseDown
+        >
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" d="M3 6h18M9 12h12M3 18h18" />
+          </svg>
+        </ToolbarBtn>
 
-      <Divider />
+        <Divider />
+        </>
+      )}
 
       <ToolbarBtn
         active={editor.isActive("link")}
@@ -746,16 +786,21 @@ function Toolbar({
           <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
         </svg>
       </ToolbarBtn>
-      <ToolbarBtn
-        active={editor.isActive("codeBlock")}
-        onClick={() => editor.chain().focus().toggleCodeBlock().run()}
-        title="Bloco de código"
-        useMouseDown
-      >
-        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
-        </svg>
-      </ToolbarBtn>
+      {/* fora da barra enxuta: bloco de código */}
+      {!compact && (
+        <>
+        <ToolbarBtn
+          active={editor.isActive("codeBlock")}
+          onClick={() => editor.chain().focus().toggleCodeBlock().run()}
+          title="Bloco de código"
+          useMouseDown
+        >
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+          </svg>
+        </ToolbarBtn>
+        </>
+      )}
       <ToolbarBtn
         active={editor.isActive("blockquote")}
         onClick={() => editor.chain().focus().toggleBlockquote().run()}
@@ -767,18 +812,23 @@ function Toolbar({
         </svg>
       </ToolbarBtn>
 
-      <Divider />
+      {/* fora da barra enxuta: o separador de cauda e o limpar formatação */}
+      {!compact && (
+        <>
+        <Divider />
 
-      <ToolbarBtn
-        active={false}
-        onClick={() => editor.chain().focus().clearNodes().unsetAllMarks().run()}
-        title="Limpar formatação"
-        useMouseDown
-      >
-        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-        </svg>
-      </ToolbarBtn>
+        <ToolbarBtn
+          active={false}
+          onClick={() => editor.chain().focus().clearNodes().unsetAllMarks().run()}
+          title="Limpar formatação"
+          useMouseDown
+        >
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+          </svg>
+        </ToolbarBtn>
+        </>
+      )}
     </div>
   );
 }

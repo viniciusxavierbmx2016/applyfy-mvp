@@ -538,6 +538,7 @@ export const PostCard = memo(function PostCard({
             onChange={setEditContent}
             placeholder="Edite seu post..."
             appendMediaAtEnd
+            compactToolbar
             minHeight="100px"
           />
           <div className="flex gap-2 justify-end">
@@ -688,6 +689,7 @@ export const PostCard = memo(function PostCard({
                             value={replyContent}
                             onChange={setReplyContent}
                             placeholder="Escreva uma resposta..."
+                            compactToolbar
                             minHeight="80px"
                           />
                           <div className="flex gap-2 justify-end">
@@ -721,6 +723,7 @@ export const PostCard = memo(function PostCard({
                   value={newComment}
                   onChange={setNewComment}
                   placeholder="Escreva um comentário..."
+                  compactToolbar
                   minHeight="100px"
                 />
                 <div className="flex justify-end">
