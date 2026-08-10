@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { PostCard, type PostItem } from "@/components/post-card";
+import { Avatar } from "@/components/ui/avatar";
 import { ScrollableTabs } from "@/components/scrollable-tabs";
 import { hasPostContent } from "@/lib/sanitize-html";
 import { useUserStore } from "@/stores/user-store";
@@ -114,6 +115,14 @@ export default function CommunityPage() {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
+
+  // Composer em repouso: uma linha em vez dos ~200px de editor + tipo + botão
+  // + ajuda. Nasce FECHADO, e é o único estado que esta fase acrescenta.
+  // ⚠️ Desmontar o editor não perde nada: o texto vive em `content`, aqui na
+  // página — o RichTextEditor só o reflete (`value`/`onChange`). O que morre é
+  // cursor e histórico de undo, e num composer que só colapsa VAZIO não há o
+  // que desfazer.
+  const [composerOpen, setComposerOpen] = useState(false);
 
   // Cancela a busca do feed que ficou para trás quando o aluno troca de aba.
   // Ref e não estado: trocar o controller não pode disparar render.
@@ -312,6 +321,7 @@ export default function CommunityPage() {
       setPosts((prev) => [body.post, ...prev]);
       setContent("");
       setType("FREE");
+      setComposerOpen(false);
       if (user && body.user) {
         setUser({
           ...user,
@@ -518,8 +528,35 @@ export default function CommunityPage() {
 
       {/* Create post or read-only notice */}
       {canPost ? (
+        !composerOpen ? (
+          /* Repouso. `button` nativo, e não div com role+tabIndex: teclado,
+             Enter/Espaço e foco vêm de graça. Mesmas classes do <form> abaixo,
+             para a caixa não "pular" ao expandir. */
+          <button
+            type="button"
+            onClick={() => setComposerOpen(true)}
+            className="w-full flex items-center gap-3 text-left bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4 mb-6 hover:border-gray-300 dark:hover:border-gray-700 transition-colors"
+          >
+            <Avatar src={user?.avatarUrl ?? null} name={user?.name ?? ""} size="sm" />
+            <span className="flex-1 text-sm text-gray-500 dark:text-gray-400">
+              Compartilhe algo com a turma...
+            </span>
+          </button>
+        ) : (
         <form
           onSubmit={submitPost}
+          // ⭐ onBlur no WRAPPER, não no editor. O `focusout` borbulha, então este
+          // handler vê QUALQUER perda de foco lá dentro — inclusive a do editor
+          // quando o dedo vai para "Dúvida" ou "Publicar". `relatedTarget` diz
+          // para ONDE o foco foi; se for para dentro do próprio form, não é
+          // saída, é navegação interna. Sem isto o botão desmontaria antes do
+          // clique chegar nele.
+          // ⚠️ Os modais de link e imagem não usam portal — vivem na árvore do
+          // editor, logo dentro do form. Abrir um deles passa no `contains`.
+          onBlur={(e) => {
+            if (e.currentTarget.contains(e.relatedTarget as Node | null)) return;
+            if (!hasPostContent(content)) setComposerOpen(false);
+          }}
           className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4 mb-6"
         >
           <RichTextEditor
@@ -528,6 +565,7 @@ export default function CommunityPage() {
             placeholder="Compartilhe algo com a turma..."
             appendMediaAtEnd
             compactToolbar
+            autoFocus
             minHeight="120px"
           />
           <div className="flex flex-wrap items-center justify-between gap-3 mt-3">
@@ -561,6 +599,7 @@ export default function CommunityPage() {
             </p>
           )}
         </form>
+        )
       ) : (
         <div className="flex items-center justify-center gap-2 py-4 mb-6 text-sm text-gray-500 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl">
           <svg
