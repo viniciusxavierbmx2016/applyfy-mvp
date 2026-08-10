@@ -371,6 +371,16 @@ model Enrollment {
   expiresAt       DateTime?
   termsAcceptedAt DateTime?
   createdAt       DateTime         @default(now())
+  // NULL = criada ANTES desta migração e nunca alterada desde. Linha nova nunca
+  // nasce NULL: o Prisma preenche @updatedAt no create, como faz com createdAt
+  // (provado — o flag isUpdatedAt do DMMF não distingue opcional de obrigatório,
+  // e o create preenche nos dois).
+  // ⚠️ Opcional de propósito: NOT NULL sem default é REJEITADO pelo Postgres numa
+  // tabela com linhas, e pôr um default carimbaria a data de hoje nas 22.974
+  // existentes — um campo que mente é pior que um campo ausente.
+  // ⚠️ Zero mudança de código: os 11 pontos que escrevem Enrollment.status passam
+  // a gravar sozinhos, inclusive os updateMany do revoke.
+  updatedAt       DateTime?        @updatedAt
 
   // FASE 6B — matrícula criada enquanto o plano do produtor estava BLOQUEADO
   // (CANCELLED/SUSPENDED): o acesso foi concedido mas o email de acesso NÃO saiu
