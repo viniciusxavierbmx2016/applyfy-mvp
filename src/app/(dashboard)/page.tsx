@@ -17,6 +17,7 @@ interface EnrolledCourse {
   ratingCount?: number;
   isExpired?: boolean;
   expiresAt?: string | null;
+  showAccessBadge?: boolean;
   modules: Array<{
     lessons: Array<{
       id: string;
@@ -251,6 +252,7 @@ function StudentHome({ firstName }: { firstName: string }) {
                 ratingCount={course.ratingCount}
                 expired={course.isExpired}
                 expiresAt={course.expiresAt}
+                showAccessBadge={course.showAccessBadge}
               />
             ))}
           </div>

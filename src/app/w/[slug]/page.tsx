@@ -41,6 +41,7 @@ interface EnrolledCourse {
   ratingCount?: number;
   isExpired?: boolean;
   expiresAt?: string | null;
+  showAccessBadge?: boolean;
   canManage?: boolean;
   featured: boolean;
   category: string | null;
@@ -66,6 +67,10 @@ interface StoreCourse {
   ratingAverage?: number;
   ratingCount?: number;
   canManage?: boolean;
+  // Alcança "Liberado": com canManage=true o `locked` fica false e o cartão cai
+  // no último ramo. É a vista do PRÓPRIO produtor na vitrine dele — justamente
+  // onde ele vai conferir se o toggle pegou.
+  showAccessBadge?: boolean;
   featured: boolean;
   category: string | null;
   memberLayoutStyle?: string | null;
@@ -463,6 +468,7 @@ export default function WorkspaceVitrinePage() {
                             ratingAverage={course.ratingAverage}
                             ratingCount={course.ratingCount}
                             expiresAt={course.expiresAt}
+                            showAccessBadge={course.showAccessBadge}
                             featured={course.featured}
                             manageHref={
                               course.canManage
@@ -492,6 +498,7 @@ export default function WorkspaceVitrinePage() {
                           ratingAverage={course.ratingAverage}
                           ratingCount={course.ratingCount}
                           expiresAt={course.expiresAt}
+                          showAccessBadge={course.showAccessBadge}
                           featured={course.featured}
                           manageHref={
                             course.canManage
@@ -569,6 +576,7 @@ export default function WorkspaceVitrinePage() {
                           ratingCount={course.ratingCount}
                           featured={course.featured}
                           locked={!course.canManage}
+                          showAccessBadge={course.showAccessBadge}
                           manageHref={
                             course.canManage
                               ? `/producer/courses/${course.id}/edit`
