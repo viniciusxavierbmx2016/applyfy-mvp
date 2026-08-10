@@ -579,11 +579,27 @@ export const PostCard = memo(function PostCard({
       {/* Rodapé sem régua: o espaçamento separa. Uma linha a menos por cartão
           num feed de N cartões é subtração real, não estética. */}
       <div className="flex items-center gap-5">
+        {/* Alvo de toque: `p-N -m-N` cresce a área clicável sem mover um pixel
+            — a margem negativa devolve a caixa de layout ao tamanho de antes,
+            então o conteúdo fica onde estava e o gap segue valendo entre os
+            conteúdos. Por isso o gap-5 NÃO muda: o espaçamento visual É o gap.
+            O que o padding faz é aproximar as ÁREAS, e a conta que sobra é
+            `zona morta = gap − px − px`. Com o visual travado em 20px, px tem
+            teto de 10 (px-2.5): a partir daí as áreas se sobrepõem e o
+            comentar, mais tarde no DOM, roubaria o curtir. ⚠️ Na vertical o
+            padding é ASSIMÉTRICO porque os dois tetos são diferentes: para
+            cima o vizinho mais próximo é o `mb-3` do modo de EDIÇÃO (12px, não
+            os 16 do mb-4 normal) — `py-3.5` simétrico cobriria 2px dos botões
+            Salvar/Cancelar; para baixo há os 16px do mt-4 dos comentários (ou
+            o padding do cartão). 12 + 16 = 28, e 16 + 28 = 44 exatos: é
+            solução única, não escolha. Com contador visível o `span` é
+            text-sm, line box de 20px, e o alvo vai a 48px — nos dois casos a
+            altura de LAYOUT segue a de antes. */}
         <button
           type="button"
           onClick={toggleLike}
           disabled={likeBusy}
-          className={`flex items-center gap-1.5 text-sm transition ${
+          className={`flex items-center gap-1.5 px-2.5 pt-3 pb-4 -mx-2.5 -mt-3 -mb-4 text-sm transition ${
             post.liked
               ? "text-red-400"
               : "text-gray-600 dark:text-gray-400 hover:text-red-400"
@@ -608,7 +624,7 @@ export const PostCard = memo(function PostCard({
         <button
           type="button"
           onClick={toggleComments}
-          className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition"
+          className="flex items-center gap-1.5 px-2.5 pt-3 pb-4 -mx-2.5 -mt-3 -mb-4 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition"
         >
           <svg
             className="w-4 h-4"
@@ -680,7 +696,23 @@ export const PostCard = memo(function PostCard({
                               type="button"
                               onClick={() => setReplyingTo(null)}
                               aria-label="Cancelar resposta"
-                              className="leading-none text-gray-500 hover:text-gray-900 dark:hover:text-white"
+                              // `leading-none` deixava o × com 7×11px. Sem
+                              // vizinho crítico, a área cresce para onde há
+                              // espaço morto. ⚠️ A caixa de 11px é centrada
+                              // numa linha de 16,5px (os spans herdam o fator
+                              // 1.5), então cada lado alcança 2,75px A MENOS
+                              // que o padding: pt-4 sobe 13,25px (os 8 do mt-2
+                              // + 5,25 dos 8 do py-2 do balão acima) e pb-2
+                              // desce 5,25px, parando 2,75px antes do editor.
+                              // pr-7 avança sobre o vão à direita — que existe
+                              // acima de ~361px de viewport; abaixo disso o
+                              // nome trunca e a área transborda o balão em até
+                              // 28px, ainda dentro dos 33px de calha do
+                              // cartão, sem gerar rolagem horizontal. pl-1.5
+                              // é o gap-1.5 inteiro: encosta no span do nome
+                              // sem cobrir 1px dele. Resultado: 41×35 em vez
+                              // de 7×11, com zero sobreposição em toda volta.
+                              className="leading-none pl-1.5 pr-7 pt-4 pb-2 -ml-1.5 -mr-7 -mt-4 -mb-2 text-gray-500 hover:text-gray-900 dark:hover:text-white"
                             >
                               ×
                             </button>
@@ -805,12 +837,35 @@ function CommentBlock({
               Aguardando aprovação
             </span>
           )}
-          <div className="ml-auto flex items-center gap-2">
+          {/* O par perigoso: dois alvos de 15px de altura, e um deles apaga.
+              gap-3 (12px) é a ZONA MORTA entre as duas áreas de toque — sem
+              ela um toque que erra o Responder cai no Excluir. Por isso o
+              padding aqui é só vertical: cada 1px de padding horizontal come
+              2px dessa zona, e num par com um destrutivo a separação vale mais
+              que a largura. A conta: 12 − 0 − 0 = 12px de zona morta.
+              ⚠️ −6 e não −8 no eixo X: a conta é `gap − px − px`, e com gap-3
+              (12px) o −8 daria −4, ou seja SOBREPOSIÇÃO — um toque que erra o
+              Responder cairia no Excluir. Com −6 fecha em 12 − 6 − 6 = 0:
+              adjacentes, sem sobrepor. É o máximo que o gap-3 comporta.
+              ⚠️ O teto do pt é 8px, e ele NÃO é escolha — é aritmética.
+              O balão é shrink-to-fit (`min-w-0` sem `flex-1`, ver :798), então
+              `ml-auto` NÃO encosta estes botões na direita do cartão: com um
+              comentário curto o balão encolhe até o cabeçalho e o par desliza
+              para a esquerda, até a faixa horizontal dos botões do rodapé.
+              E na vertical eles disputam o MESMO mt-4 (16px) do painel de
+              comentários, do qual o rodapé já reserva 16px com o seu -mb-4.
+              Topo da área = 16 + 8 (py-2 do balão) + 0,5 (centro da linha)
+              − 8 = 16,5, contra 16 da base do rodapé: 0,5px de folga. Passar
+              de pt-2 faz o Responder do 1º comentário roubar o toque do botão
+              Comentar — e onReply limpa o rascunho. 15px viram 27px, não 44:
+              aqui o teto é o vizinho, não a régua. pb-1 (4px) para na
+              entrelinha do texto pelo mesmo motivo, do outro lado. */}
+          <div className="ml-auto flex items-center gap-3">
             {!isReply && onReply && (
               <button
                 type="button"
                 onClick={onReply}
-                className="text-[10px] text-gray-500 hover:text-blue-400"
+                className="px-1.5 pt-2 pb-1 -mx-1.5 -mt-2 -mb-1 text-[10px] text-gray-500 hover:text-blue-400"
               >
                 Responder
               </button>
@@ -819,7 +874,7 @@ function CommentBlock({
               <button
                 type="button"
                 onClick={() => onDelete(c.id)}
-                className="text-[10px] text-gray-500 hover:text-red-400"
+                className="px-1.5 pt-2 pb-1 -mx-1.5 -mt-2 -mb-1 text-[10px] text-gray-500 hover:text-red-400"
                 title="Excluir"
               >
                 Excluir
