@@ -213,6 +213,13 @@ model Course {
   thumbnailPosition               String?   @default("{\"x\":50,\"y\":50}")
   bannerUrl                       String?
   bannerPosition                  String?   @default("{\"x\":50,\"y\":50}")
+  // Coluna que JÁ EXISTIA em produção sem estar declarada aqui: a migration
+  // 20260612190201 rodou pela branch feat/course-banner-carousel (9.7) e nunca
+  // chegou na main. Declarar fecha o drift — enquanto o banco tinha a coluna e o
+  // schema não, um `migrate dev` proporia DROP COLUMN para "consertar".
+  // ⚠️ A linha é byte-idêntica à da branch, de propósito: se o carrossel for
+  // retomado, ela não conflita. Nenhum código da main lê o campo (0 usos).
+  bannerExtra                     Json?
   checkoutUrl                     String?
   price                           Float?
   priceCurrency                   String    @default("BRL")
