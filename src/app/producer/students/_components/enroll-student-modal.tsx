@@ -275,7 +275,8 @@ export function EnrollStudentModal({
                 <input
                   type="number"
                   min={1}
-                  max={3650}
+                  max={36500}
+                  step={1}
                   value={customDays}
                   onChange={(e) =>
                     // 9.57: o schema exige inteiro — 30.5 digitado viraria 400
