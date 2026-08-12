@@ -167,7 +167,13 @@ export function LessonMaterials({ lessonId }: { lessonId: string }) {
   }
 
   async function handleRename(id: string) {
-    if (!editName.trim()) return;
+    // 9.59: nome vazio CANCELA a edição (equivalente ao Esc) em vez do return
+    // cedo, que deixava o input montado sem foco — "edição órfã". Nada é salvo;
+    // o nome original segue na lista e o próximo editar re-seta editName (:282).
+    if (!editName.trim()) {
+      setEditingId(null);
+      return;
+    }
     const res = await fetch(`/api/producer/lessons/${lessonId}/materials/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
