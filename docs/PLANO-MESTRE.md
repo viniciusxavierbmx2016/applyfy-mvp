@@ -855,6 +855,14 @@ Cada um: Dev Brabo completo (read-only → proposta → staging → merge `--no-
 
 > Qualidade interna e QA. Não bloqueia o "pronto", mas mantém a casa em ordem. Pode ser intercalado entre as outras fases quando houver fôlego.
 
+### ⚖️ TRIAGEM DA FILA (12/08/26) — regra de decisão: **"parede marcada pra demolição não se reforma — se especifica"**
+
+**BALDE 1 — AGORA (faxina, branch+merge cada):** 9.57 (endurecer `days` da API) · 9.56 (hydration do theme-toggle) · 9.59 (rename órfão) · **9.48** (⚖️ classificado aqui: é correção de DADOS no ciclo de carga que a F5 acabou de construir — fundação nova, não parede velha; molde pronto no próprio arquivo, um segundo ref) · **rawPayload completo nas linhas ERROR do WebhookLog** (quick-win do epic PP — a linha magra matou a investigação do PPPB4REK; ⚠️ webhook = caminho crítico = sessão fresca, diff mínimo).
+
+**BALDE 2 — DEMOLIÇÃO (vira SPEC; não reformar):** caixa ~303px do composer (integral — a maior fatia é a linha de pílulas quebrada, 78→36px) · **9.53** (a revisão do editor vira **spec de fundação**; execução na repaginada) · **9.55** (já parqueado com a spec A) · **fatia 3 dos alvos de toque** (⚖️ classificada aqui: abas de grupo sob `overflow-hidden` do ScrollableTabs, pílulas de tipo sem largura — a linha já quebra em 375px —, Cancelar/Responder do balão com 6-8px de espaço, Enviar do comentário em 36px; **todas paredes da comunidade**; sem item próprio — o registro são os commits `a82b36e`/`b931343`; requisito de fundação: alvos ≥44px **nativos do layout novo**, não padding a posteriori).
+
+**BALDE 3 — DEDICADO (sessão própria cada):** **9.58** + **9.44b/9.45 acoplado** (⚖️ decisão (c) já tomada no 9.44b: tabela própria de eventos de acesso, construída junto da modelagem de assinatura; inclui o design de `EXPIRED` para gateway) · **epic prevenção Perfect Pay** · **Security & Infra audit** (inclui RLS das tabelas novas do staging). ⭐ **Tecido conjuntivo: a peça cron/jobs destrava 9.58 + fila retroativa PP + automações em massa — é o primeiro movimento do pesado.**
+
 ### Débito
 - [ ] **9.1 — Migrations do zero (D1)** 🟡 — 77 migrations (em 2026-07-13, inclui a do 5.3) não reconstroem do zero; ~10 tabelas só via `db push` + RLS fora das migrations. Bloqueia novos ambientes. Ritual reset→push→resolve→RLS. **Coordenar com 1.6, 3.2 (migrações novas).** **Materializou-se 2× — ver FASE 6C (6C.3 é a raiz que sobrou).**
 - [ ] **9.2 — Staging completo (D2)** 🟢 — aplicar `storage-policies.sql` + seed de contas no staging.
