@@ -15,10 +15,14 @@ export function ThemeToggle() {
 
   const isDark = theme === "dark";
 
+  // 9.56: aria-label ESTÁTICO — `theme` é undefined no SSR e o label dinâmico
+  // divergia SSR×client (hydration mismatch). Toggle com nome estável é o
+  // padrão de a11y correto; o estado visual fica com o ícone (já gated por
+  // `mounted`).
   return (
     <button
       type="button"
-      aria-label={isDark ? "Ativar modo claro" : "Ativar modo escuro"}
+      aria-label="Alternar tema"
       onClick={() => setTheme(isDark ? "light" : "dark")}
       className="p-2 rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-800 transition"
     >
