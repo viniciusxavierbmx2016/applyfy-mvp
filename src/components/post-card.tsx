@@ -18,10 +18,6 @@ const RichTextEditor = dynamic(
   }
 );
 
-function htmlIsEmpty(html: string) {
-  return !html.replace(/<[^>]*>/g, "").trim();
-}
-
 export interface PostAuthor {
   id: string;
   name: string;
@@ -289,7 +285,7 @@ export const PostCard = memo(function PostCard({
 
   async function submitComment(e: React.FormEvent) {
     e.preventDefault();
-    if (htmlIsEmpty(newComment) || posting) return;
+    if (!hasPostContent(newComment) || posting) return;
     setPosting(true);
     try {
       const res = await fetch(`/api/posts/${post.id}/comments`, {
@@ -317,7 +313,7 @@ export const PostCard = memo(function PostCard({
   }
 
   async function submitReply(parentId: string) {
-    if (htmlIsEmpty(replyContent) || postingReply) return;
+    if (!hasPostContent(replyContent) || postingReply) return;
     setPostingReply(true);
     try {
       const res = await fetch(`/api/posts/${post.id}/comments`, {
@@ -755,7 +751,7 @@ export const PostCard = memo(function PostCard({
                             <button
                               type="button"
                               onClick={() => submitReply(c.id)}
-                              disabled={htmlIsEmpty(replyContent) || postingReply}
+                              disabled={!hasPostContent(replyContent) || postingReply}
                               className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg disabled:opacity-50"
                             >
                               {postingReply ? "Enviando..." : "Responder"}
@@ -781,7 +777,7 @@ export const PostCard = memo(function PostCard({
                 <div className="flex justify-end">
                   <button
                     type="submit"
-                    disabled={htmlIsEmpty(newComment) || posting}
+                    disabled={!hasPostContent(newComment) || posting}
                     className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg disabled:opacity-50"
                   >
                     {posting ? "Enviando..." : "Enviar"}

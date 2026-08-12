@@ -5,6 +5,7 @@ import { collaboratorCanActOnCourse } from "@/lib/collaborator";
 import { createNotification } from "@/lib/notifications";
 import { sendPushToUser } from "@/lib/push-send";
 import { createCommentSchema, validateBody } from "@/lib/validations";
+import { hasPostContent } from "@/lib/sanitize-html";
 
 async function checkAccess(userId: string, userRole: string, post: { courseId: string; course: { ownerId: string | null; workspace: { ownerId: string } } }) {
   if (userRole === "ADMIN") return true;
@@ -100,7 +101,10 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
     const v = validateBody(createCommentSchema, body);
     if (!v.success) return v.error;
     const { content, parentId } = v.data;
-    if (!content.trim()) {
+    // 9.54 — espelho da régua do post (posts/route.ts:179): texto OU <img> que
+    // sobrevive à allowlist conta como conteúdo; <p></p> cru deixa de passar.
+    // O que é PERSISTIDO não muda aqui (sanitize-na-escrita = 9.24, item próprio).
+    if (!hasPostContent(content)) {
       return NextResponse.json({ error: "Conteúdo obrigatório" }, { status: 400 });
     }
 
