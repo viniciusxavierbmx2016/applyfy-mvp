@@ -278,7 +278,8 @@ export function EnrollStudentModal({
                   max={3650}
                   value={customDays}
                   onChange={(e) =>
-                    setCustomDays(Math.max(1, Number(e.target.value) || 1))
+                    // 9.57: o schema exige inteiro — 30.5 digitado viraria 400
+                    setCustomDays(Math.max(1, Math.round(Number(e.target.value) || 1)))
                   }
                   className="w-28 px-3 py-2 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                 />

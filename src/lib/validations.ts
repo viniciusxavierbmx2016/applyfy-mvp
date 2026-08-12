@@ -627,7 +627,17 @@ export const titleOnlySchema = z.object({
 export const enrollCourseStudentSchema = z.object({
   email: z.string().email("Email inválido").max(255),
   name: z.string().max(255).optional(),
-  days: z.union([z.number(), z.string()]).optional().nullable(),
+  // 9.57 — falhar ALTO em vez de conceder vitalício em silêncio: a união com
+  // string passava "30" pelo Zod e o typeof da rota descartava → expiresAt null.
+  // Agora string/0/negativo/decimal/acima do teto = 400. null/omitido = vitalício
+  // (explícito, único caminho). Teto 36500 = 100 anos.
+  days: z
+    .number("days deve ser número inteiro entre 1 e 36500; omita ou envie null para vitalício")
+    .int("days deve ser inteiro entre 1 e 36500; omita ou envie null para vitalício")
+    .min(1, "days deve ser entre 1 e 36500; omita ou envie null para vitalício")
+    .max(36500, "days deve ser entre 1 e 36500; omita ou envie null para vitalício")
+    .optional()
+    .nullable(),
   phone: z.string().max(50).optional(),
 });
 
