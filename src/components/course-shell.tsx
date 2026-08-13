@@ -24,6 +24,19 @@ interface CourseShellProps {
   };
   hasAccess: boolean;
   hasCustomization: boolean;
+  /**
+   * Aplica o tema do produtor TAMBÉM no modo preview (sem barra lateral).
+   *
+   * As `--member-*` já são emitidas pelo layout para todo mundo, mas as ~109
+   * regras de override moram em `.course-customized`, que só existia no shell
+   * completo. Resultado: quem cai no preview via meio tematizado — fundo do
+   * produtor, cards e acentos crus (a borda azul do post fixado do relato).
+   *
+   * ⚠️ Cosmético e nada mais. NÃO concede barra lateral, navegação, modal de
+   * termos nem acesso a conteúdo — quem decide isso é `hasAccess`, intocado.
+   * Default `false`: sem a prop, o preview fica byte-idêntico ao de hoje.
+   */
+  themeInPreview?: boolean;
   children: React.ReactNode;
 }
 
@@ -33,6 +46,7 @@ export function CourseShell({
   course,
   hasAccess,
   hasCustomization,
+  themeInPreview = false,
   children,
 }: CourseShellProps) {
   const router = useRouter();
@@ -93,7 +107,13 @@ export function CourseShell({
   // Preview mode: no sidebar
   if (!hasAccess) {
     return (
-      <div className="min-h-screen bg-[var(--member-bg,rgb(255_255_255))] dark:bg-[var(--member-bg,rgb(3_7_18))]">{children}</div>
+      <div
+        className={`min-h-screen bg-[var(--member-bg,rgb(255_255_255))] dark:bg-[var(--member-bg,rgb(3_7_18))] ${
+          hasCustomization && themeInPreview ? "course-customized" : ""
+        }`}
+      >
+        {children}
+      </div>
     );
   }
 
