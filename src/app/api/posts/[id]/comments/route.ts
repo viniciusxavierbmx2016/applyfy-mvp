@@ -1,37 +1,35 @@
 import { NextResponse } from "next/server";
+import type { User } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { getCurrentUser } from "@/lib/auth";
+import { getCurrentUser, isCourseStaffOwner } from "@/lib/auth";
 import { collaboratorCanActOnCourse } from "@/lib/collaborator";
 import { createNotification } from "@/lib/notifications";
 import { sendPushToUser } from "@/lib/push-send";
 import { createCommentSchema, validateBody } from "@/lib/validations";
 import { hasPostContent } from "@/lib/sanitize-html";
 
-// Dono DESTE curso/workspace, ou ADMIN. É o único atalho legítimo antes de
-// consultar o vínculo (lição do 9.63: o dono não pode ser julgado por ele).
-// Deliberadamente NÃO é `isStaff`: role global concede a um PRODUCER de OUTRO
-// workspace — que aqui é só um aluno que comprou o curso. Molde: posts/route.ts:57-61.
-function isCourseStaffOwner(
-  user: { id: string; role: string },
-  course: { ownerId: string | null; workspace: { ownerId: string } }
-) {
-  if (user.role === "ADMIN") return true;
-  return (
-    user.role === "PRODUCER" &&
-    (course.ownerId === user.id || course.workspace.ownerId === user.id)
-  );
-}
+// `isCourseStaffOwner` mora em @/lib/auth, ao lado do `isStaff` que ele
+// substitui — a segunda superfície (comentário de AULA) precisou do mesmo
+// predicado, e duas cópias do MESMO nome foi exatamente o que criou o no-op do
+// 9.63. Um lugar só, e visível de onde a escolha errada é feita.
 
-async function checkAccess(userId: string, userRole: string, post: { courseId: string; course: { ownerId: string | null; workspace: { ownerId: string } } }) {
-  if (isCourseStaffOwner({ id: userId, role: userRole }, post.course)) return true;
+// Recebe o usuário inteiro (era `userId: string, userRole: string`): o `role`
+// solto é `string` e não casa com o enum `Role` que o helper compartilhado
+// exige — e passar o objeto é o que impede alguém de montar um `{role}` que o
+// banco nunca produziria.
+async function checkAccess(
+  user: Pick<User, "id" | "role">,
+  post: { courseId: string; course: { ownerId: string | null; workspace: { ownerId: string } } }
+) {
+  if (isCourseStaffOwner(user, post.course)) return true;
   // C6: always try the collaborator path. collaboratorCanActOnCourse itself
   // looks up an ACCEPTED Collaborator row + permission + course scope, so it
   // returns false when there's no row (e.g., student without collab elevation).
   // Removes the redundant role-gate that excluded STUDENT-with-Collaborator.
-  const allowed = await collaboratorCanActOnCourse(userId, post.courseId, ["REPLY_COMMENTS", "MANAGE_COMMUNITY"]);
+  const allowed = await collaboratorCanActOnCourse(user.id, post.courseId, ["REPLY_COMMENTS", "MANAGE_COMMUNITY"]);
   if (allowed) return true;
   const enrollment = await prisma.enrollment.findUnique({
-    where: { userId_courseId: { userId, courseId: post.courseId } },
+    where: { userId_courseId: { userId: user.id, courseId: post.courseId } },
   });
   return enrollment?.status === "ACTIVE";
 }
@@ -54,7 +52,7 @@ export async function GET(_request: Request, props: { params: Promise<{ id: stri
       return NextResponse.json({ error: "Post não encontrado" }, { status: 404 });
     }
 
-    if (!(await checkAccess(user.id, user.role, post))) {
+    if (!(await checkAccess(user, post))) {
       return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
     }
 
@@ -148,7 +146,7 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
       return NextResponse.json({ error: "Post aguardando aprovação" }, { status: 403 });
     }
 
-    if (!(await checkAccess(user.id, user.role, post))) {
+    if (!(await checkAccess(user, post))) {
       return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
     }
 

@@ -193,11 +193,31 @@ export function isAdmin(user: Pick<User, "role">): boolean {
   return user.role === "ADMIN";
 }
 
+// ⚠️ `isStaff` é role GLOBAL e NÃO é autorização com escopo: dá true para
+// qualquer ADMIN/PRODUCER/COLLABORATOR da plataforma, inclusive um produtor de
+// OUTRO workspace que aqui é só um aluno matriculado. Use-o apenas para
+// decisões sem dono (ex.: "esta pessoa é staff em algum lugar"). Para
+// autorização dentro de um curso/workspace, use `isCourseStaffOwner` abaixo.
 export function isStaff(user: Pick<User, "role">): boolean {
   return (
     user.role === "ADMIN" ||
     user.role === "PRODUCER" ||
     user.role === "COLLABORATOR"
+  );
+}
+
+// Dono DESTE curso/workspace, ou ADMIN. É o atalho legítimo antes de consultar
+// o vínculo de colaborador — e o único que não pode ser trocado por role
+// global. Fica ao lado do `isStaff` de propósito: quem for escolher um dos dois
+// vê os dois. Molde original: posts/route.ts:57-61.
+export function isCourseStaffOwner(
+  user: Pick<User, "id" | "role">,
+  course: { ownerId: string | null; workspace: { ownerId: string } }
+): boolean {
+  if (user.role === "ADMIN") return true;
+  return (
+    user.role === "PRODUCER" &&
+    (course.ownerId === user.id || course.workspace.ownerId === user.id)
   );
 }
 
