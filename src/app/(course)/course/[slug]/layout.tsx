@@ -1,6 +1,10 @@
 import { notFound } from "next/navigation";
 import { getCourseMeta } from "@/lib/course-meta";
-import { getCurrentUser, isEnrollmentActive } from "@/lib/auth";
+import {
+  getCurrentUser,
+  isEnrollmentActive,
+  getCollaboratorContext,
+} from "@/lib/auth";
 import {
   isBlockedViewer,
   getWorkspaceBlock,
@@ -43,6 +47,11 @@ export default async function CourseSlugLayout(props: {
   // Verificar acesso (ADMIN | PRODUCER dono do curso/workspace | enrollment ativo)
   let hasAccess = false;
   let isStudentAccess = false; // F2: only enrolled students get the support widget
+  // ⚠️ COSMÉTICO. Só governa a classe `.course-customized` no modo preview —
+  // nunca `hasAccess`. Existe porque as `--member-*` vão para todos, mas as ~109
+  // regras de override vivem na classe, que só existia no shell completo: o
+  // colaborador sem matrícula via o fundo do produtor com cards e acentos crus.
+  let themeInPreview = false;
   const user = await getCurrentUser();
   if (user) {
     const isCourseOwner =
@@ -69,9 +78,32 @@ export default async function CourseSlugLayout(props: {
           err
         );
         enrollment = null;
+        // O ACESSO segue fail-closed (acima) — isto não o afrouxa. Mas o TEMA
+        // não precisa ser punido por um soluço de rede: "não confirmei sua
+        // matrícula" é diferente de "você não tem", e apagar as cores do
+        // produtor para um aluno legítimo é regressão visível causada por erro
+        // transitório. Só a classe cosmética sobrevive; o shell, não.
+        themeInPreview = true;
       }
       hasAccess = isEnrollmentActive(enrollment);
       isStudentAccess = hasAccess;
+
+      // Colaborador aceito DESTE workspace: entra na comunidade do curso para
+      // moderar (as APIs já o autorizam) e merece ver o curso com as cores do
+      // produtor, não com o Tailwind cru. `getCollaboratorContext` é por userId
+      // e cache()d — cego ao role, então cobre o híbrido do C5.
+      // ⚠️ Escopo deliberado: NÃO se aplica a visitante sem vínculo. Um `.
+      // course-customized` incondicional aqui mudaria a cara da PÁGINA DE VENDA
+      // de todo curso customizado, que é superfície de receita e não foi pedida.
+      if (!hasAccess && !themeInPreview) {
+        try {
+          const ctx = await getCollaboratorContext(user.id);
+          themeInPreview = ctx?.workspaceId === course.workspace!.id;
+        } catch (err) {
+          console.error("[COURSE_LAYOUT] collaborator lookup failed (cosmetic)", err);
+          themeInPreview = false;
+        }
+      }
     }
   }
 
@@ -136,6 +168,7 @@ export default async function CourseSlugLayout(props: {
         }}
         hasAccess={hasAccess}
         hasCustomization={hasCustomization}
+        themeInPreview={themeInPreview}
       >
         {children}
       </CourseShell>
