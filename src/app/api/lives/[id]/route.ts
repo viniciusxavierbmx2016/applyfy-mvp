@@ -57,17 +57,29 @@ export async function GET(_request: Request, props: { params: Promise<{ id: stri
       }
     }
 
-    // Moderator = owner of THIS workspace, ADMIN, an accepted collaborator of
-    // THIS workspace, or an explicit LiveModerator for this live. NOT any
-    // platform PRODUCER — that let a producer from another workspace moderate
-    // this live (cross-tenant privilege escalation). Mirrors the authorization
-    // in DELETE /api/lives/[id]/messages/[messageId].
+    // Moderator = owner of THIS workspace, ADMIN, a collaborator of THIS
+    // workspace WITH MANAGE_LIVES, or an explicit LiveModerator for this live.
+    // NOT any platform PRODUCER — that let a producer from another workspace
+    // moderate this live (cross-tenant privilege escalation). Mirrors the
+    // authorization in DELETE /api/lives/[id]/messages/[messageId].
+    //
+    // O vínculo com o workspace já estava certo; faltava a PERMISSÃO: qualquer
+    // colaborador aceito moderava a sala, inclusive quem só tem
+    // MANAGE_STUDENTS ou REPLY_COMMENTS. Todas as rotas de live do produtor já
+    // exigem MANAGE_LIVES (`producer/lives/**`) — a sala era o furo. Quem
+    // precisa moderar sem a permissão continua tendo o caminho explícito:
+    // LiveModerator, gerenciado em producer/lives/[id]/moderators.
     const isOwner = live.workspace.ownerId === user.id;
     const isAdmin = user.role === "ADMIN";
     let isCollaborator = false;
     if (!isOwner && !isAdmin) {
       const collab = await prisma.collaborator.findFirst({
-        where: { userId: user.id, workspaceId: live.workspace.id, status: "ACCEPTED" },
+        where: {
+          userId: user.id,
+          workspaceId: live.workspace.id,
+          status: "ACCEPTED",
+          permissions: { has: "MANAGE_LIVES" },
+        },
         select: { id: true },
       });
       isCollaborator = !!collab;
