@@ -32,10 +32,19 @@ export async function DELETE(
     const isOwner = live.workspace.ownerId === user.id;
     const isAdmin = user.role === "ADMIN";
 
+    // Espelho EXATO de GET /api/lives/[id]: colaborador deste workspace COM
+    // MANAGE_LIVES. Os dois têm de andar juntos — a rota é a parede, o `isModerator`
+    // do GET é só o que a sala desenha. Divergir aqui esconderia o botão e
+    // deixaria o DELETE passando (§13: esconder menu não é gate).
     let isCollaborator = false;
     if (!isOwner && !isAdmin) {
       const collab = await prisma.collaborator.findFirst({
-        where: { userId: user.id, workspaceId: live.workspaceId, status: "ACCEPTED" },
+        where: {
+          userId: user.id,
+          workspaceId: live.workspaceId,
+          status: "ACCEPTED",
+          permissions: { has: "MANAGE_LIVES" },
+        },
         select: { id: true },
       });
       isCollaborator = !!collab;

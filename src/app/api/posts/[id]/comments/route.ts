@@ -1,15 +1,29 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getCurrentUser, isStaff } from "@/lib/auth";
+import { getCurrentUser } from "@/lib/auth";
 import { collaboratorCanActOnCourse } from "@/lib/collaborator";
 import { createNotification } from "@/lib/notifications";
 import { sendPushToUser } from "@/lib/push-send";
 import { createCommentSchema, validateBody } from "@/lib/validations";
 import { hasPostContent } from "@/lib/sanitize-html";
 
+// Dono DESTE curso/workspace, ou ADMIN. É o único atalho legítimo antes de
+// consultar o vínculo (lição do 9.63: o dono não pode ser julgado por ele).
+// Deliberadamente NÃO é `isStaff`: role global concede a um PRODUCER de OUTRO
+// workspace — que aqui é só um aluno que comprou o curso. Molde: posts/route.ts:57-61.
+function isCourseStaffOwner(
+  user: { id: string; role: string },
+  course: { ownerId: string | null; workspace: { ownerId: string } }
+) {
+  if (user.role === "ADMIN") return true;
+  return (
+    user.role === "PRODUCER" &&
+    (course.ownerId === user.id || course.workspace.ownerId === user.id)
+  );
+}
+
 async function checkAccess(userId: string, userRole: string, post: { courseId: string; course: { ownerId: string | null; workspace: { ownerId: string } } }) {
-  if (userRole === "ADMIN") return true;
-  if (userRole === "PRODUCER" && (post.course.ownerId === userId || post.course.workspace.ownerId === userId)) return true;
+  if (isCourseStaffOwner({ id: userId, role: userRole }, post.course)) return true;
   // C6: always try the collaborator path. collaboratorCanActOnCourse itself
   // looks up an ACCEPTED Collaborator row + permission + course scope, so it
   // returns false when there's no row (e.g., student without collab elevation).
@@ -45,8 +59,12 @@ export async function GET(_request: Request, props: { params: Promise<{ id: stri
     }
 
     const userSelect = { id: true, name: true, avatarUrl: true, role: true };
+    // `staff` aqui decide quem LÊ comentário PENDING alheio. Era `isStaff(user)`
+    // — role GLOBAL: qualquer PRODUCER da plataforma matriculado neste curso
+    // como aluno lia a fila de moderação inteira (61 matrículas assim medidas em
+    // produção, ago/26). Agora é vínculo com ESTE curso.
     const staff =
-      isStaff(user) ||
+      isCourseStaffOwner(user, post.course) ||
       (await collaboratorCanActOnCourse(user.id, post.courseId, ["REPLY_COMMENTS", "MANAGE_COMMUNITY"]));
 
     const statusFilter = staff
@@ -149,8 +167,11 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
       validParentId = parentComment.parentId || parentComment.id;
     }
 
+    // Mesma régua do GET: aqui `staff` é quem PULA a moderação (comentário nasce
+    // APPROVED). Com `isStaff` global, um produtor de outro workspace publicava
+    // direto na comunidade de quem só o tem como aluno.
     const staff =
-      isStaff(user) ||
+      isCourseStaffOwner(user, post.course) ||
       (await collaboratorCanActOnCourse(user.id, post.courseId, ["REPLY_COMMENTS", "MANAGE_COMMUNITY"]));
     const moderationOn = post.course.communityModerationEnabled;
     const commentStatus = !moderationOn || staff ? "APPROVED" : "PENDING";
