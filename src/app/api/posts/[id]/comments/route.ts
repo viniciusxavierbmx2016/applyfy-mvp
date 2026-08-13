@@ -117,16 +117,16 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
     const v = validateBody(createCommentSchema, body);
     if (!v.success) return v.error;
     const { content, parentId } = v.data;
-    // 9.54 — espelho da régua do post (posts/route.ts:179): texto OU <img> que
-    // sobrevive à allowlist conta como conteúdo; <p></p> cru deixa de passar.
-    // O que é PERSISTIDO não muda aqui (sanitize-na-escrita = 9.24, item próprio).
-    if (!hasPostContent(content)) {
-      return NextResponse.json({ error: "Conteúdo obrigatório" }, { status: 400 });
-    }
+    // ⚠️ A régua de conteúdo (9.54) NÃO fica mais aqui: rodava antes de
+    // qualquer autorização, então comentário vazio em grupo somente-leitura
+    // respondia 400 "Conteúdo obrigatório" — ensinando ao aluno que o problema
+    // era o texto, quando ele nem podia comentar. Autorização primeiro; a régua
+    // desceu para depois do gate de grupo.
 
     const post = await prisma.post.findUnique({
       where: { id: params.id },
       include: {
+        group: { select: { permission: true } },
         course: {
           select: {
             slug: true,
@@ -150,6 +150,36 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
       return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
     }
 
+    // `staff` subiu para cá (era calculado depois do parentId) porque agora
+    // decide DUAS coisas: quem contribui em grupo somente-leitura e quem pula a
+    // moderação. Uma conta só, nenhuma consulta a mais.
+    const staff =
+      isCourseStaffOwner(user, post.course) ||
+      (await collaboratorCanActOnCourse(user.id, post.courseId, ["REPLY_COMMENTS", "MANAGE_COMMUNITY"]));
+
+    // GRUPO SOMENTE-LEITURA — a parede que faltava. O composer de POST já era
+    // gateado no servidor (posts/route.ts:259 e :273), mas comentário e
+    // resposta não: o aluno era barrado só pela UI, e um POST direto na API
+    // passava (§13 — esconder não é gate). Mesmo predicado e MESMA mensagem do
+    // post, para o aluno ler a mesma frase nas duas superfícies.
+    //
+    // `groupId` nulo NÃO é tratado como o ramo `else` de posts/route.ts: lá o
+    // grupo padrão é RESOLVIDO porque o post está nascendo e vai cair nele;
+    // aqui o post já existe e simplesmente não pertence a grupo nenhum — logo
+    // não há permissão de grupo a aplicar. (Medido em produção: 0 de 30 posts
+    // sem grupo.) E `ensureDefaultGroup` ESCREVE — criar grupo como efeito
+    // colateral de um comentário seria pior que o problema.
+    if (post.group?.permission === "READ_ONLY" && !staff) {
+      return NextResponse.json({ error: "Este grupo é somente leitura" }, { status: 403 });
+    }
+
+    // 9.54 — espelho da régua do post (posts/route.ts:179): texto OU <img> que
+    // sobrevive à allowlist conta como conteúdo; <p></p> cru deixa de passar.
+    // O que é PERSISTIDO não muda aqui (sanitize-na-escrita = 9.24, item próprio).
+    if (!hasPostContent(content)) {
+      return NextResponse.json({ error: "Conteúdo obrigatório" }, { status: 400 });
+    }
+
     let validParentId: string | null = null;
     if (parentId) {
       const parentComment = await prisma.comment.findUnique({
@@ -165,12 +195,9 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
       validParentId = parentComment.parentId || parentComment.id;
     }
 
-    // Mesma régua do GET: aqui `staff` é quem PULA a moderação (comentário nasce
-    // APPROVED). Com `isStaff` global, um produtor de outro workspace publicava
-    // direto na comunidade de quem só o tem como aluno.
-    const staff =
-      isCourseStaffOwner(user, post.course) ||
-      (await collaboratorCanActOnCourse(user.id, post.courseId, ["REPLY_COMMENTS", "MANAGE_COMMUNITY"]));
+    // `staff` (calculado acima) é quem PULA a moderação — comentário nasce
+    // APPROVED. Com o `isStaff` global de antes, um produtor de outro workspace
+    // publicava direto na comunidade de quem só o tem como aluno (9.67).
     const moderationOn = post.course.communityModerationEnabled;
     const commentStatus = !moderationOn || staff ? "APPROVED" : "PENDING";
 
