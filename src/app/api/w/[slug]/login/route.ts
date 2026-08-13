@@ -243,7 +243,11 @@ export async function POST(request: Request, props: { params: Promise<{ slug: st
     // because the user authenticated successfully against their
     // platform-wide identity; tearing that session down would also kill
     // valid /producer or /admin sessions in other tabs.
-    const allowed = await hasWorkspaceAccess(user.id, workspace.id);
+    // PORTA 1 — login do workspace. `requireMemberPermission` faz o vínculo
+    // exigir ACCESS_MEMBER_AREA; matrícula e posse seguem entrando como sempre.
+    const allowed = await hasWorkspaceAccess(user.id, workspace.id, {
+      requireMemberPermission: true,
+    });
     if (!allowed) {
       return NextResponse.json(
         {

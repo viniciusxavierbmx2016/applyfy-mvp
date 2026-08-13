@@ -94,7 +94,10 @@ export async function GET(_request: Request, props: { params: Promise<{ slug: st
     const allowedInTenant =
       user.role === "ADMIN" ||
       isCourseOwnerEarly ||
-      (await hasWorkspaceAccess(user.id, course.workspace.id));
+      // PORTA 3 — estrutura do curso (o que a página do curso carrega).
+      (await hasWorkspaceAccess(user.id, course.workspace.id, {
+        requireMemberPermission: true,
+      }));
     if (!allowedInTenant) {
       return NextResponse.json(
         { error: "Curso não encontrado" },
