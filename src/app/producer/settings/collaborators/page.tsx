@@ -314,8 +314,14 @@ function CollaboratorModal({
 }) {
   const [email, setEmail] = useState(editing?.email || "");
   const [name, setName] = useState(editing?.name || "");
+  // Convite NOVO nasce com ACCESS_MEMBER_AREA marcada — é o comportamento que
+  // sempre existiu (todo colaborador entrava na área de membros pelo vínculo,
+  // sem controle nenhum); a permissão só tornou isso revogável. EDIÇÃO respeita
+  // o que está gravado: `editing?.permissions` vem primeiro, então desmarcar e
+  // salvar continua desmarcado — o default não pode "ressuscitar" a permissão
+  // que o dono acabou de tirar.
   const [permissions, setPermissions] = useState<CollaboratorPermission[]>(
-    (editing?.permissions as CollaboratorPermission[]) || []
+    (editing?.permissions as CollaboratorPermission[]) ?? ["ACCESS_MEMBER_AREA"]
   );
   const [courseIds, setCourseIds] = useState<string[]>(
     editing?.courseIds || []

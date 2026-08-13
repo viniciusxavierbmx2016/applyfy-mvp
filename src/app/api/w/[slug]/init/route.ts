@@ -58,7 +58,10 @@ export async function GET(_request: Request, props: { params: Promise<{ slug: st
     // so the workspace owner and legitimate members pass; staff from ANOTHER
     // workspace is rejected. Mirrors the gate in the workspace login route.
     if (user.role !== "ADMIN") {
-      const allowed = await hasWorkspaceAccess(user.id, workspace.id);
+      // PORTA 2 — vitrine.
+      const allowed = await hasWorkspaceAccess(user.id, workspace.id, {
+        requireMemberPermission: true,
+      });
       if (!allowed) {
         return NextResponse.json(
           { error: "Você não tem acesso a esta área de membros" },

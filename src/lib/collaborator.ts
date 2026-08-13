@@ -9,6 +9,7 @@ export const COLLABORATOR_PERMISSIONS = [
   "MANAGE_LESSONS",
   "MANAGE_AUTOMATIONS",
   "MANAGE_LIVES",
+  "ACCESS_MEMBER_AREA",
 ] as const;
 
 
@@ -57,7 +58,23 @@ export const PERMISSION_LABELS: Record<CollaboratorPermission, string> = {
   MANAGE_LESSONS: "Gerenciar módulos e aulas",
   MANAGE_AUTOMATIONS: "Gerenciar automações (criar/editar/executar)",
   MANAGE_LIVES: "Gerenciar lives (criar/editar/transmitir/moderar)",
+  // ⚠️ O texto descreve o que o gate REALMENTE faz hoje, não o que a permissão
+  // pretende cobrir. O comando pedia "(vitrine, cursos e comunidade)", mas a
+  // comunidade NÃO passa por nenhuma das 3 portas gateadas: a página busca
+  // `/api/courses/[slug]/groups` e `/api/posts` direto, e o layout do curso usa
+  // `getCourseMeta`, que não tem gate. Prometer comunidade aqui seria repetir o
+  // defeito do 9.76 — texto que autoriza mais do que o dono imagina, agora ao
+  // contrário: texto que promete um controle que não existe.
+  // O "— sem assistir às aulas" também é literal: o player exige MATRÍCULA e
+  // continua exigindo; quem quiser dar o curso ao colaborador, matricula.
+  ACCESS_MEMBER_AREA:
+    "Entrar na área de membros (vitrine e páginas dos cursos) — sem assistir às aulas",
 };
+
+// A permissão que a PORTA da área de membros exige do colaborador. Fica numa
+// constante para os call-sites não repetirem a string, e nomeada pelo que É
+// (lição do 9.76: nome que agrupa vaza).
+export const MEMBER_AREA_PERMISSION = "ACCESS_MEMBER_AREA" as const;
 
 export interface CollaboratorContext {
   id: string;

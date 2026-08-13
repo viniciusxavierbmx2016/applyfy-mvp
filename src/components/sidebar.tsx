@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { useUserStore } from "@/stores/user-store";
 import { DASHBOARD_PAGE_PERMISSIONS } from "@/lib/collaborator";
 import { useActiveWorkspace } from "@/hooks/use-active-workspace";
+import { useMemberWorkspace } from "@/hooks/use-member-workspace";
 import { WorkspaceSwitcher } from "./workspace-switcher";
 import { PlatformLogo } from "./platform-logo";
 
@@ -222,7 +223,15 @@ export function Sidebar({ open, onClose }: SidebarProps) {
     user?.role === "COLLABORATOR" ||
     (user?.role === "STUDENT" && !!collaborator);
   const activeWorkspace = useActiveWorkspace();
-  const showVitrine = (isProducer || isCollaborator) && !!activeWorkspace;
+  // O link "Ver vitrine" já era escrito para o colaborador (`isCollaborator`
+  // abaixo cobre o híbrido do C5), mas NUNCA aparecia: `activeWorkspace` vem de
+  // /api/workspaces, que lista só o que a pessoa POSSUI — colaborador sem
+  // workspace próprio recebia [] e o link morria. O fallback resolve isso sem
+  // tocar em `activeWorkspace`, que sete telas leem (inclusive as de credencial
+  // de pagamento). Ordem importa: o dono continua indo para o ws DELE.
+  const memberWorkspace = useMemberWorkspace();
+  const vitrineWorkspace = activeWorkspace ?? memberWorkspace;
+  const showVitrine = (isProducer || isCollaborator) && !!vitrineWorkspace;
   const [supportUnread, setSupportUnread] = useState(0);
   const [courseSupportUnread, setCourseSupportUnread] = useState(0);
 
@@ -478,9 +487,9 @@ export function Sidebar({ open, onClose }: SidebarProps) {
             collapsed ? "lg:px-2 lg:items-center lg:pt-1" : "pt-2"
           )}
         >
-          {showVitrine && activeWorkspace && (
+          {showVitrine && vitrineWorkspace && (
             <a
-              href={`/w/${activeWorkspace.slug}`}
+              href={`/w/${vitrineWorkspace.slug}`}
               target="_blank"
               rel="noopener noreferrer"
               onClick={onClose}
