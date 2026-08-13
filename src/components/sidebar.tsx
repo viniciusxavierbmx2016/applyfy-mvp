@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { useUserStore } from "@/stores/user-store";
+import { DASHBOARD_PERMISSIONS } from "@/lib/collaborator";
 import { useActiveWorkspace } from "@/hooks/use-active-workspace";
 import { WorkspaceSwitcher } from "./workspace-switcher";
 import { PlatformLogo } from "./platform-logo";
@@ -136,7 +137,9 @@ const producerLinks: NavLink[] = [
 ];
 
 const collaboratorLinks: NavLink[] = [
-  { href: "/producer", label: "Dashboard", icon: iconDashboard, requires: "VIEW_ANALYTICS" },
+  // Espelha o gate do servidor (producer/page.tsx + sales/stats): as DUAS
+  // permissões abrem o dashboard. O filtro aceita array = anyOf.
+  { href: "/producer", label: "Dashboard", icon: iconDashboard, requires: [...DASHBOARD_PERMISSIONS] },
   {
     href: "/producer/courses",
     label: "Cursos",

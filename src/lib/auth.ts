@@ -302,6 +302,22 @@ export async function requirePermission(
   }
 }
 
+// Irmão anyOf do requirePermission — MESMAS regras (ADMIN/PRODUCER passam,
+// não-COLLABORATOR barra, contexto ausente barra), só o predicado muda: basta
+// UMA das permissões. Existe porque o dashboard é um recorte dos Relatórios e
+// as duas permissões o abrem (ver DASHBOARD_PERMISSIONS em lib/collaborator).
+export async function requireAnyPermission(
+  staff: Pick<User, "id" | "role">,
+  permissions: readonly string[]
+): Promise<void> {
+  if (staff.role === "ADMIN" || staff.role === "PRODUCER") return;
+  if (staff.role !== "COLLABORATOR") throw new Error("Sem permissão");
+  const ctx = await requireCollaboratorContextIfAny(staff);
+  if (!ctx || !permissions.some((p) => ctx.permissions.includes(p))) {
+    throw new Error("Sem permissão");
+  }
+}
+
 // Returns true if the staff user can edit the given course.
 // ADMIN: always. PRODUCER: only if they are the course owner.
 export async function canEditCourse(

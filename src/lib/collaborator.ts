@@ -5,18 +5,32 @@ export const COLLABORATOR_PERMISSIONS = [
   "REPLY_COMMENTS",
   "MANAGE_COMMUNITY",
   "MANAGE_STUDENTS",
+  "VIEW_DASHBOARD",
   "VIEW_ANALYTICS",
   "MANAGE_LESSONS",
   "MANAGE_AUTOMATIONS",
   "MANAGE_LIVES",
 ] as const;
 
+
 export type CollaboratorPermission = (typeof COLLABORATOR_PERMISSIONS)[number];
+
+// Os KPIs da tela inicial são um RECORTE dos Relatórios, então quem tem
+// VIEW_ANALYTICS enxerga o dashboard sem precisar da permissão nova — é o que
+// evita que os 6 colaboradores que já viam os números os percam no deploy
+// (§21 do 9.62). A granularidade nova serve para LIBERAR só o dashboard a quem
+// não deve ver Relatórios inteiros. Ordem importa: gate = qualquer uma das duas.
+export const DASHBOARD_PERMISSIONS = [
+  "VIEW_DASHBOARD",
+  "VIEW_ANALYTICS",
+] as const satisfies readonly CollaboratorPermission[];
+
 
 export const PERMISSION_LABELS: Record<CollaboratorPermission, string> = {
   REPLY_COMMENTS: "Responder comentários nas aulas",
   MANAGE_COMMUNITY: "Moderar comunidade",
   MANAGE_STUDENTS: "Gerenciar alunos (matricular/remover)",
+  VIEW_DASHBOARD: "Ver dashboard (KPIs de receita, vendas e alunos na tela inicial)",
   VIEW_ANALYTICS: "Ver analytics",
   MANAGE_LESSONS: "Gerenciar módulos e aulas",
   MANAGE_AUTOMATIONS: "Gerenciar automações (criar/editar/executar)",

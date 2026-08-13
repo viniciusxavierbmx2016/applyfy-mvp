@@ -1,5 +1,9 @@
 import { prisma } from "@/lib/prisma";
 import { sanitizeEmailHtml } from "@/lib/sanitize-html";
+import {
+  PERMISSION_LABELS,
+  type CollaboratorPermission,
+} from "@/lib/collaborator";
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://app.mymembersclub.com.br";
 
@@ -423,14 +427,16 @@ export function collaboratorInvite(
   inviteUrl: string,
   permissions: string[]
 ) {
-  const permLabels: Record<string, string> = {
-    MANAGE_COURSES: "Gerenciar cursos",
-    MANAGE_STUDENTS: "Gerenciar alunos",
-    MANAGE_COMMUNITY: "Gerenciar comunidade",
-    VIEW_ANALYTICS: "Ver relatórios",
-  };
+  // Catálogo ÚNICO: reusa PERMISSION_LABELS (src/lib/collaborator.ts) — antes
+  // este mapa era uma cópia parcial e desatualizada (4 labels, uma delas
+  // MANAGE_COURSES, que não existe no catálogo), então REPLY_COMMENTS,
+  // MANAGE_LESSONS, MANAGE_AUTOMATIONS e MANAGE_LIVES caíam no fallback e o
+  // convidado recebia a CONSTANTE CRUA no e-mail.
   const permList = permissions
-    .map((p) => `<li style="margin:0 0 6px;font-size:14px;color:#d1d5db;">${permLabels[p] || p}</li>`)
+    .map((p) => {
+      const label = PERMISSION_LABELS[p as CollaboratorPermission] || p;
+      return `<li style="margin:0 0 6px;font-size:14px;color:#d1d5db;">${label}</li>`;
+    })
     .join("");
 
   const html = baseTemplate(`
