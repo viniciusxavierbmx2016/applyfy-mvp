@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { getCurrentUser } from "@/lib/auth";
-import { getCollaboratorContext, DASHBOARD_PERMISSIONS } from "@/lib/collaborator";
+import { getCurrentUser, getCollaboratorContext } from "@/lib/auth";
+import { DASHBOARD_PERMISSIONS } from "@/lib/collaborator";
 import DashboardClient from "./_components/dashboard-client";
 
 // Gate SERVER do dashboard (defesa em profundidade — a parede de verdade é a
@@ -21,11 +21,23 @@ export default async function ProducerDashboardPage() {
   // ADMIN. Aqui só resolvemos a permissão do colaborador.
   if (!user) return <DashboardClient />;
 
-  const ctx = await getCollaboratorContext(user);
-  const isCollaborator = !!ctx;
+  // Resolve o vínculo pela LINHA Collaborator (`@/lib/auth`), não pelo role: o
+  // homônimo em `@/lib/collaborator` filtrava `role !== "COLLABORATOR"` e
+  // devolvia null para o aluno-colaborador (role STUDENT desde o C5) — este
+  // gate inteiro era um no-op para ele, e quem barrava era um `router.replace`
+  // no client, causando o redirect silencioso em vez desta mensagem.
+  //
+  // ADMIN/PRODUCER nunca são julgados pelo vínculo — mesmo short-circuit de
+  // `requireAnyPermission` (auth.ts:296) e de sales/stats. Não é estética:
+  // existe em produção 1 PRODUCER que TAMBÉM tem linha Collaborator aceita;
+  // sem o short-circuit ele passaria a ser avaliado pelas permissões do
+  // vínculo e perderia o próprio dashboard.
+  const ctx =
+    user.role === "ADMIN" || user.role === "PRODUCER"
+      ? null
+      : await getCollaboratorContext(user.id);
   const canSeeDashboard =
-    !isCollaborator ||
-    DASHBOARD_PERMISSIONS.some((p) => ctx.permissions.includes(p));
+    !ctx || DASHBOARD_PERMISSIONS.some((p) => ctx.permissions.includes(p));
 
   if (!canSeeDashboard) {
     return (

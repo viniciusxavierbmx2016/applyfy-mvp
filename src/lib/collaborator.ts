@@ -1,5 +1,4 @@
 import { prisma } from "./prisma";
-import type { User } from "@prisma/client";
 
 export const COLLABORATOR_PERMISSIONS = [
   "REPLY_COMMENTS",
@@ -45,22 +44,13 @@ export interface CollaboratorContext {
   courseIds: string[]; // empty array = all courses in workspace
 }
 
-export async function getCollaboratorContext(
-  user: Pick<User, "id" | "role">
-): Promise<CollaboratorContext | null> {
-  if (user.role !== "COLLABORATOR") return null;
-  const record = await prisma.collaborator.findFirst({
-    where: { userId: user.id, status: "ACCEPTED" },
-  });
-  if (!record) return null;
-  return {
-    id: record.id,
-    userId: user.id,
-    workspaceId: record.workspaceId,
-    permissions: record.permissions as CollaboratorPermission[],
-    courseIds: record.courseIds,
-  };
-}
+// REMOVIDO: `getCollaboratorContext(user)` vivia aqui e filtrava
+// `role !== "COLLABORATOR"` — cego ao aluno-colaborador (role STUDENT desde o
+// C5), devolvendo null justamente para quem precisava ser avaliado. Tinha o
+// MESMO NOME do helper correto em `@/lib/auth` (por userId, sem role, cache()),
+// que já era o usado por todos os outros call-sites; o autocompletar puxava o
+// errado. Ficou com zero consumidores e foi apagado para não haver de novo
+// duas funções homônimas com resultados diferentes.
 
 export function hasPermission(
   ctx: CollaboratorContext,

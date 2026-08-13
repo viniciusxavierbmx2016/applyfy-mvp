@@ -3,7 +3,6 @@
 import { Suspense, useEffect, useState } from "react";
 import { useCountUp } from "@/hooks/use-count-up";
 import { useRouter, useSearchParams } from "next/navigation";
-import { DASHBOARD_PERMISSIONS } from "@/lib/collaborator";
 import dynamic from "next/dynamic";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useUserStore } from "@/stores/user-store";
@@ -86,11 +85,14 @@ function DashboardContent() {
   const perms = collaborator?.permissions ?? [];
   // Discriminador pelo CONTEXTO (`collaborator` do /api/auth/me), não pelo role:
   // o aluno-colaborador carrega role STUDENT e o predicado antigo
-  // (`role !== "COLLABORATOR"`) o dava como autorizado sempre. E o par de
-  // permissões espelha o gate do servidor (page.tsx + sales/stats) — usar só
-  // VIEW_ANALYTICS aqui redirecionaria quem tem apenas VIEW_DASHBOARD.
-  const hasAnalytics =
-    !collaborator || DASHBOARD_PERMISSIONS.some((p) => perms.includes(p));
+  // (`role !== "COLLABORATOR"`) o dava como autorizado sempre.
+  //
+  // Cada seção pede a permissão da SUA rota — os KPIs (sales/stats) aceitam
+  // qualquer uma das duas via requireAnyPermission, mas /api/producer/analytics
+  // exige VIEW_ANALYTICS ESTRITO (route.ts:82). Um predicado único faria quem
+  // tem só VIEW_DASHBOARD disparar uma chamada proibida, e o 403 virava um
+  // "Erro ao carregar analytics" pendurado embaixo dos KPIs.
+  const canViewAnalytics = !collaborator || perms.includes("VIEW_ANALYTICS");
 
   useEffect(() => {
     // Ainda resolvendo /api/auth/me, ou uma falha transitória de rede/5xx está
@@ -122,17 +124,25 @@ function DashboardContent() {
       return;
     }
 
-    if (!hasAnalytics) {
-      router.replace("/producer/courses");
-      return;
-    }
+    // Quem não tem NENHUMA das permissões de dashboard não chega aqui: o gate
+    // server (page.tsx) devolve a mensagem no lugar deste componente. Existia
+    // aqui um `router.replace("/producer/courses")` que despejava o
+    // colaborador sem avisar — e que, por rodar depois da montagem, ganhava a
+    // corrida contra a mensagem. Quem decide é o servidor; a parede de verdade
+    // continua sendo o 403 das rotas.
+    //
+    // A lista de cursos do seletor vem de /api/producer/analytics, que exige
+    // VIEW_ANALYTICS: sem a permissão a chamada não sai (§3 — não pedir o que
+    // não se pode), e o seletor fica em "Todos os cursos" — que é exatamente o
+    // escopo que sales/stats já aplica no servidor para o colaborador.
+    if (!canViewAnalytics) return;
 
     fetch("/api/producer/analytics?tab=overview&window=7")
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => d && Array.isArray(d.courses) && setCourses(d.courses))
       .catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally omitting collaborator: adding would re-fire fetches on store updates
-  }, [user, isLoading, authError, router, hasAnalytics]);
+  }, [user, isLoading, authError, router, canViewAnalytics]);
 
   useEffect(() => {
     if (searchParams.get("welcome") === "true") {
@@ -210,12 +220,18 @@ function DashboardContent() {
 
       <SalesKpis startDate={range.startDate} endDate={range.endDate} courseId={courseId} />
 
-      <AnalyticsOverview
-        courseId={courseId}
-        startDate={range.startDate}
-        endDate={range.endDate}
-        rangeLabel={range.label}
-      />
+      {/* Sem VIEW_ANALYTICS a seção não existe — nem os widgets, nem o
+          "Erro ao carregar analytics" que o 403 produzia. O tratamento de erro
+          do componente segue intacto para quem TEM a permissão (falha real de
+          rede/5xx continua aparecendo). */}
+      {canViewAnalytics && (
+        <AnalyticsOverview
+          courseId={courseId}
+          startDate={range.startDate}
+          endDate={range.endDate}
+          rangeLabel={range.label}
+        />
+      )}
     </div>
   );
 }
