@@ -87,6 +87,14 @@ export async function GET(request: Request) {
 
     const groupId = searchParams.get("groupId");
     const staff = isStaffOwner || collabAllowed;
+    // Só consulta de novo quando é colaborador (raro): dono/ADMIN moderam por
+    // definição, e quem não passou em `collabAllowed` não tem vínculo nenhum.
+    const canModerateCommunity =
+      isStaffOwner ||
+      (collabAllowed &&
+        (await collaboratorCanActOnCourse(user.id, course.id, [
+          "MANAGE_COMMUNITY",
+        ])));
 
     const postWhere: Record<string, unknown> = { courseId: course.id };
     if (groupId) {
@@ -148,7 +156,21 @@ export async function GET(request: Request) {
       total,
       hasMore: total > page * limit,
       course: { id: course.id, slug: course.slug, title: course.title },
-      isStaffViewer: isStaffOwner,
+      // Dois flags porque o SERVIDOR tem duas regras distintas, e um flag só
+      // para as duas recriaria a divergência UI×API que o 9.67/9.68 fechou:
+      //
+      //   contribuir em grupo READ_ONLY → MANAGE_COMMUNITY **ou** REPLY_COMMENTS
+      //                                   (mesmo par de `:259` e do POST daqui)
+      //   moderar conteúdo alheio       → MANAGE_COMMUNITY **estrito**
+      //                                   (posts/[id]:107 e comments/[commentId]:47)
+      //
+      // Substituem o antigo `isStaffViewer`, que valia só dono/ADMIN e por isso
+      // escondia do colaborador botões que o servidor já lhe concedia. O nome
+      // mudou de propósito: `isStaffViewer` existe em outros 7 arquivos com
+      // OUTRO significado (acesso a conteúdo, bypass de drip/automação) e a
+      // homônima é a armadilha do 9.63.
+      canPostInReadOnly: staff,
+      canModerateCommunity,
     });
   } catch (error) {
     const details =

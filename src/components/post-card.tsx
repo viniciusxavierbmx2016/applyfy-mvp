@@ -219,6 +219,18 @@ interface Props {
   onTogglePin: (id: string) => void;
   onDeleteComment?: (postId: string, commentId: string) => void;
   /**
+   * O viewer pode contribuir mesmo em grupo `READ_ONLY` (dono, ADMIN, ou
+   * colaborador com MANAGE_COMMUNITY/REPLY_COMMENTS neste curso). Decidido no
+   * SERVIDOR e só consumido aqui — a parede é o 403 da rota de comentário.
+   *
+   * ⚠️ Distinto de `isProducer`, que é moderação de conteúdo alheio
+   * (excluir/editar/fixar) e exige MANAGE_COMMUNITY estrito. Fundir os dois
+   * mostraria botões que a API nega, ou esconderia botões que ela concede.
+   *
+   * Default `true`: sem a prop, o card se comporta exatamente como antes.
+   */
+  canContribute?: boolean;
+  /**
    * Aviso ao usuário quando algo falha. Opcional de propósito: o card é usado
    * fora da comunidade e continua funcionando sem ele — só volta a falhar em
    * silêncio, que é o comportamento de sempre.
@@ -244,9 +256,14 @@ export const PostCard = memo(function PostCard({
   onDelete,
   onTogglePin,
   onDeleteComment,
+  canContribute = true,
   onToast,
 }: Props) {
   const isModerator = isAdmin || isProducer;
+  // Grupo somente-leitura: o aluno LÊ e CURTE (spec do dono), mas não comenta
+  // nem responde. Espelha o 403 da rota; a UI só evita o clique que já falharia.
+  const canComment =
+    post.group?.permission !== "READ_ONLY" || canContribute;
   const { confirm, ConfirmDialog } = useConfirm();
   const [showComments, setShowComments] = useState(false);
   const [comments, setComments] = useState<CommentItem[] | null>(null);
@@ -674,10 +691,19 @@ export const PostCard = memo(function PostCard({
                         isModerator={isModerator}
                         currentUserId={currentUserId}
                         onDelete={(id) => deleteComment(id, null)}
-                        onReply={() => {
-                          setReplyingTo(replyingTo === c.id ? null : c.id);
-                          setReplyContent("");
-                        }}
+                        // Sem `onReply` o CommentBlock já não desenha o botão
+                        // (`!isReply && onReply`): reusa a guarda existente em
+                        // vez de somar condição nova. E sem o botão o
+                        // `replyingTo` nunca sai de null, então o formulário de
+                        // resposta também não monta.
+                        onReply={
+                          canComment
+                            ? () => {
+                                setReplyingTo(replyingTo === c.id ? null : c.id);
+                                setReplyContent("");
+                              }
+                            : undefined
+                        }
                       />
                       {/* Replies */}
                       {/* Hierarquia por espaçamento: o recuo anterior (margem +
@@ -766,24 +792,33 @@ export const PostCard = memo(function PostCard({
                 <p className="text-xs text-gray-500">Nenhum comentário ainda.</p>
               )}
 
-              <form onSubmit={submitComment} className="space-y-2">
-                <RichTextEditor
-                  value={newComment}
-                  onChange={setNewComment}
-                  placeholder="Escreva um comentário..."
-                  compactToolbar
-                  minHeight="100px"
-                />
-                <div className="flex justify-end">
-                  <button
-                    type="submit"
-                    disabled={!hasPostContent(newComment) || posting}
-                    className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg disabled:opacity-50"
-                  >
-                    {posting ? "Enviando..." : "Enviar"}
-                  </button>
-                </div>
-              </form>
+              {canComment ? (
+                <form onSubmit={submitComment} className="space-y-2">
+                  <RichTextEditor
+                    value={newComment}
+                    onChange={setNewComment}
+                    placeholder="Escreva um comentário..."
+                    compactToolbar
+                    minHeight="100px"
+                  />
+                  <div className="flex justify-end">
+                    <button
+                      type="submit"
+                      disabled={!hasPostContent(newComment) || posting}
+                      className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg disabled:opacity-50"
+                    >
+                      {posting ? "Enviando..." : "Enviar"}
+                    </button>
+                  </div>
+                </form>
+              ) : (
+                // Mesma frase que o composer de post já mostra neste grupo — o
+                // aluno lê a mesma explicação nas duas superfícies, em vez de um
+                // editor que aceita texto e devolve erro no envio.
+                <p className="text-xs text-gray-500 dark:text-gray-400 text-center py-2">
+                  Este grupo é somente leitura.
+                </p>
+              )}
             </>
           )}
         </div>

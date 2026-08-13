@@ -98,7 +98,12 @@ export default function CommunityPage() {
     title: string;
     slug: string;
   } | null>(null);
-  const [isStaffViewer, setIsStaffViewer] = useState(false);
+  // Dois flags do servidor, não um: contribuir em grupo somente-leitura aceita
+  // MANAGE_COMMUNITY **ou** REPLY_COMMENTS; moderar conteúdo alheio exige
+  // MANAGE_COMMUNITY **estrito**. Substituem o `isStaffViewer`, que valia só
+  // dono/ADMIN e escondia do colaborador botões que a API já lhe dava.
+  const [canPostInReadOnly, setCanPostInReadOnly] = useState(false);
+  const [canModerate, setCanModerate] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [content, setContent] = useState("");
@@ -204,7 +209,7 @@ export default function CommunityPage() {
   }, [params.slug, router, showToast]);
 
   // Busca o feed, sempre já escopado no grupo ativo. É também por aqui que o
-  // curso e o isStaffViewer chegam — vinham da busca que foi removida acima.
+  // curso e os flags de permissão chegam — vinham da busca removida acima.
   //
   // ⚠️ O `if (!course) return` que existia aqui saiu de propósito: com os
   // grupos vindo primeiro, o curso passa a chegar NESTA resposta. Manter a
@@ -225,7 +230,8 @@ export default function CommunityPage() {
           const data = await res.json();
           setPosts(data.posts);
           setCourse(data.course);
-          setIsStaffViewer(!!data.isStaffViewer);
+          setCanPostInReadOnly(!!data.canPostInReadOnly);
+          setCanModerate(!!data.canModerateCommunity);
           setHasMore(!!data.hasMore);
           setPage(1);
         } else {
@@ -431,16 +437,18 @@ export default function CommunityPage() {
   }
 
   const isAdmin = user?.role === "ADMIN";
-  const isProducer =
-    isStaffViewer &&
-    (user?.role === "PRODUCER" || user?.role === "COLLABORATOR");
-  const isStaff = isAdmin || isProducer;
+  // O re-filtro por role saiu daqui. Era `isStaffViewer && (role PRODUCER ||
+  // role COLLABORATOR)` — CEGO AO HÍBRIDO: colaborador nasce role=STUDENT desde
+  // o C5, então ele caía fora mesmo quando o servidor o autorizava. Quem decide
+  // é o servidor, que enxerga o vínculo; aqui só se consome a decisão.
+  const isProducer = canModerate;
 
   const activeGroupData = groups.find((g) => g.id === activeGroup);
   const canPost =
     !activeGroupData ||
     activeGroupData.permission !== "READ_ONLY" ||
-    isStaff;
+    isAdmin ||
+    canPostInReadOnly;
 
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pb-16 sm:pb-12">
@@ -703,6 +711,7 @@ export default function CommunityPage() {
               post={post}
               isAdmin={!!isAdmin}
               isProducer={isProducer}
+              canContribute={isAdmin || canPostInReadOnly}
               currentUserId={user?.id ?? ""}
               onUpdate={updatePost}
               onDelete={deletePost}
