@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { createNotification } from "@/lib/notifications";
 import { sendPushToUser } from "@/lib/push-send";
-import { isStaff } from "@/lib/auth";
+import { isCourseStaffOwner } from "@/lib/auth";
 import { createLessonCommentSchema, validateBody } from "@/lib/validations";
 
 async function collaboratorAllowed(
@@ -40,7 +40,18 @@ export async function GET(_request: Request, props: { params: Promise<{ id: stri
 
     const lesson = await prisma.lesson.findUnique({
       where: { id: params.id },
-      include: { module: true },
+      include: {
+        module: {
+          include: {
+            course: {
+              select: {
+                ownerId: true,
+                workspace: { select: { ownerId: true } },
+              },
+            },
+          },
+        },
+      },
     });
     if (!lesson) {
       return NextResponse.json(
@@ -49,7 +60,11 @@ export async function GET(_request: Request, props: { params: Promise<{ id: stri
       );
     }
 
-    if (user.role !== "ADMIN" && user.role !== "PRODUCER") {
+    // Era `user.role !== "ADMIN" && user.role !== "PRODUCER"`: QUALQUER produtor
+    // da plataforma pulava a checagem de escopo inteira e lia os comentários de
+    // qualquer aula de qualquer curso. Agora só o dono deste curso/workspace (e
+    // o ADMIN) tem o atalho; os demais seguem pelo vínculo ou pela matrícula.
+    if (!isCourseStaffOwner(user, lesson.module.course)) {
       // C6: drop role gate — helper returns false when there's no
       // ACCEPTED Collaborator row.
       const allowed = await collaboratorAllowed(
@@ -71,7 +86,13 @@ export async function GET(_request: Request, props: { params: Promise<{ id: stri
       }
     }
 
-    const staff = isStaff(user);
+    // Quem LÊ comentário PENDING alheio. Era `isStaff(user)` puro — role global,
+    // e ainda por cima cego ao colaborador do próprio workspace (que no POST
+    // logo abaixo JÁ contava como staff). Agora é o mesmo par das duas outras
+    // rotas de comentário: dono deste curso, ou vínculo com permissão nele.
+    const staff =
+      isCourseStaffOwner(user, lesson.module.course) ||
+      (await collaboratorAllowed(user.id, lesson.module.courseId));
 
     const statusFilter = staff
       ? undefined
@@ -148,6 +169,8 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
                 lessonCommentsModerationEnabled: true,
                 slug: true,
                 workspaceId: true,
+                ownerId: true,
+                workspace: { select: { ownerId: true } },
               },
             },
           },
@@ -168,7 +191,9 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
       );
     }
 
-    if (user.role !== "ADMIN" && user.role !== "PRODUCER") {
+    // Espelho do gate do GET: o atalho é do dono deste curso/workspace e do
+    // ADMIN, não de qualquer produtor da plataforma.
+    if (!isCourseStaffOwner(user, lesson.module.course)) {
       // C6: drop role gate — helper returns false when there's no
       // ACCEPTED Collaborator row.
       const allowed = await collaboratorAllowed(
@@ -209,8 +234,9 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
       }
     }
 
+    // Quem PULA a moderação. Mesma troca: `isStaff` global → dono deste curso.
     const staff =
-      isStaff(user) ||
+      isCourseStaffOwner(user, lesson.module.course) ||
       (await collaboratorAllowed(user.id, lesson.module.courseId));
     const moderationOn = lesson.module.course.lessonCommentsModerationEnabled;
     const commentStatus = !moderationOn || staff ? "APPROVED" : "PENDING";
@@ -336,25 +362,40 @@ export async function DELETE(request: Request, props: { params: Promise<{ id: st
 
     const comment = await prisma.lessonComment.findUnique({
       where: { id: commentId },
-      include: { lesson: { include: { module: true } } },
+      include: {
+        lesson: {
+          include: {
+            module: {
+              include: {
+                course: {
+                  select: {
+                    ownerId: true,
+                    workspace: { select: { ownerId: true } },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
     });
     if (!comment || comment.lessonId !== params.id) {
       return NextResponse.json({ error: "Comentário não encontrado" }, { status: 404 });
     }
 
+    // Era `if (user.role === "PRODUCER") isStaffAllowed = true` — INCONDICIONAL:
+    // qualquer produtor da plataforma apagava qualquer comentário de qualquer
+    // aula de qualquer curso. Destrutivo e cross-tenant; o pior dos pontos desta
+    // família, e o único que não estava no mapa do comando. Mesmo predicado dos
+    // outros dois handlers agora.
     const isOwner = comment.userId === user.id;
-    const isAdmin = user.role === "ADMIN";
     // C6: drop role gate — helper returns false when there's no
     // ACCEPTED Collaborator row.
-    let isStaffAllowed = await collaboratorAllowed(
-      user.id,
-      comment.lesson.module.courseId
-    );
-    if (user.role === "PRODUCER") {
-      isStaffAllowed = true;
-    }
+    const isStaffAllowed =
+      isCourseStaffOwner(user, comment.lesson.module.course) ||
+      (await collaboratorAllowed(user.id, comment.lesson.module.courseId));
 
-    if (!isOwner && !isAdmin && !isStaffAllowed) {
+    if (!isOwner && !isStaffAllowed) {
       return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
     }
 
