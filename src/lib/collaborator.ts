@@ -1,22 +1,35 @@
 import { prisma } from "./prisma";
-import type { User } from "@prisma/client";
 
 export const COLLABORATOR_PERMISSIONS = [
   "REPLY_COMMENTS",
   "MANAGE_COMMUNITY",
   "MANAGE_STUDENTS",
+  "VIEW_DASHBOARD",
   "VIEW_ANALYTICS",
   "MANAGE_LESSONS",
   "MANAGE_AUTOMATIONS",
   "MANAGE_LIVES",
 ] as const;
 
+
 export type CollaboratorPermission = (typeof COLLABORATOR_PERMISSIONS)[number];
+
+// Os KPIs da tela inicial são um RECORTE dos Relatórios, então quem tem
+// VIEW_ANALYTICS enxerga o dashboard sem precisar da permissão nova — é o que
+// evita que os 6 colaboradores que já viam os números os percam no deploy
+// (§21 do 9.62). A granularidade nova serve para LIBERAR só o dashboard a quem
+// não deve ver Relatórios inteiros. Ordem importa: gate = qualquer uma das duas.
+export const DASHBOARD_PERMISSIONS = [
+  "VIEW_DASHBOARD",
+  "VIEW_ANALYTICS",
+] as const satisfies readonly CollaboratorPermission[];
+
 
 export const PERMISSION_LABELS: Record<CollaboratorPermission, string> = {
   REPLY_COMMENTS: "Responder comentários nas aulas",
   MANAGE_COMMUNITY: "Moderar comunidade",
   MANAGE_STUDENTS: "Gerenciar alunos (matricular/remover)",
+  VIEW_DASHBOARD: "Ver dashboard (KPIs de receita, vendas e alunos na tela inicial)",
   VIEW_ANALYTICS: "Ver analytics",
   MANAGE_LESSONS: "Gerenciar módulos e aulas",
   MANAGE_AUTOMATIONS: "Gerenciar automações (criar/editar/executar)",
@@ -31,22 +44,13 @@ export interface CollaboratorContext {
   courseIds: string[]; // empty array = all courses in workspace
 }
 
-export async function getCollaboratorContext(
-  user: Pick<User, "id" | "role">
-): Promise<CollaboratorContext | null> {
-  if (user.role !== "COLLABORATOR") return null;
-  const record = await prisma.collaborator.findFirst({
-    where: { userId: user.id, status: "ACCEPTED" },
-  });
-  if (!record) return null;
-  return {
-    id: record.id,
-    userId: user.id,
-    workspaceId: record.workspaceId,
-    permissions: record.permissions as CollaboratorPermission[],
-    courseIds: record.courseIds,
-  };
-}
+// REMOVIDO: `getCollaboratorContext(user)` vivia aqui e filtrava
+// `role !== "COLLABORATOR"` — cego ao aluno-colaborador (role STUDENT desde o
+// C5), devolvendo null justamente para quem precisava ser avaliado. Tinha o
+// MESMO NOME do helper correto em `@/lib/auth` (por userId, sem role, cache()),
+// que já era o usado por todos os outros call-sites; o autocompletar puxava o
+// errado. Ficou com zero consumidores e foi apagado para não haver de novo
+// duas funções homônimas com resultados diferentes.
 
 export function hasPermission(
   ctx: CollaboratorContext,

@@ -1,21 +1,22 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireStaff, requirePermission, getStaffCourseIds } from "@/lib/auth";
+import { requireStaff, requireAnyPermission, getStaffCourseIds } from "@/lib/auth";
 import { resolveStaffWorkspace } from "@/lib/workspace";
+import { DASHBOARD_PERMISSIONS } from "@/lib/collaborator";
 
 // Gate espelhado da /api/producer/analytics (:80-83 e :102-131): a parede é a
 // ROTA, não a página — o redirect de producer/page.tsx é client-side e um
 // colaborador chamava esta URL direto e recebia receita, reembolsos, ticket e
 // série diária do workspace inteiro (resolveStaffWorkspace resolve o ws pela
 // própria linha Collaborator).
-// ⚠️ TODO: trocar VIEW_ANALYTICS por VIEW_DASHBOARD quando a permissão existir
-// no catálogo (src/lib/collaborator.ts). VIEW_ANALYTICS é a trava IMEDIATA —
-// quem tem Relatórios já vê estes números lá; quem não tem, deixa de vê-los aqui.
+// VIEW_DASHBOARD **ou** VIEW_ANALYTICS: os KPIs são um recorte dos Relatórios,
+// então quem vê Relatórios continua vendo o dashboard (ninguém perde acesso no
+// deploy) e a permissão nova serve para liberar SÓ os KPIs.
 export async function GET(request: Request) {
   try {
     const staff = await requireStaff();
     if (staff.role === "COLLABORATOR") {
-      await requirePermission(staff, "VIEW_ANALYTICS");
+      await requireAnyPermission(staff, DASHBOARD_PERMISSIONS);
     }
     const [{ workspace, scoped }, collabScope] = await Promise.all([
       resolveStaffWorkspace(staff),
