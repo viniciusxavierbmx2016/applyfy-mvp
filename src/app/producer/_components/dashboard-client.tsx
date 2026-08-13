@@ -87,11 +87,18 @@ function DashboardContent() {
   // o aluno-colaborador carrega role STUDENT e o predicado antigo
   // (`role !== "COLLABORATOR"`) o dava como autorizado sempre.
   //
-  // Cada seção pede a permissão da SUA rota — os KPIs (sales/stats) aceitam
-  // qualquer uma das duas via requireAnyPermission, mas /api/producer/analytics
-  // exige VIEW_ANALYTICS ESTRITO (route.ts:82). Um predicado único faria quem
-  // tem só VIEW_DASHBOARD disparar uma chamada proibida, e o 403 virava um
-  // "Erro ao carregar analytics" pendurado embaixo dos KPIs.
+  // Cada seção pede a permissão da SUA rota, e agora as duas são ESTRITAS:
+  //   KPIs 💰 (sales/stats)        → VIEW_DASHBOARD
+  //   widgets 📚 (analytics:82)    → VIEW_ANALYTICS
+  // Predicado único faria um dos dois disparar chamada proibida e pendurar um
+  // erro vermelho na tela (lição do 2C: não pedir o que não se pode).
+  //
+  // As duas metades são independentes — daí os quatro estados possíveis, todos
+  // legítimos: as duas permissões (dashboard cheio), só VIEW_DASHBOARD (KPIs),
+  // só VIEW_ANALYTICS (DASHBOARD PARCIAL — a metade pedagógica, sem os cards de
+  // dinheiro), nenhuma das duas (não chega aqui: o gate server devolve a
+  // mensagem em producer/page.tsx).
+  const canViewKpis = !collaborator || perms.includes("VIEW_DASHBOARD");
   const canViewAnalytics = !collaborator || perms.includes("VIEW_ANALYTICS");
 
   useEffect(() => {
@@ -218,7 +225,13 @@ function DashboardContent() {
         </div>
       </div>
 
-      <SalesKpis startDate={range.startDate} endDate={range.endDate} courseId={courseId} />
+      {/* Sem VIEW_DASHBOARD os 4 cards de dinheiro não são montados e a chamada
+          a sales/stats NÃO sai — o componente inteiro fica fora da árvore, e é
+          dentro dele que o fetch vive. Quem tem só VIEW_ANALYTICS segue nesta
+          página vendo a metade de baixo: é o dashboard parcial, não um erro. */}
+      {canViewKpis && (
+        <SalesKpis startDate={range.startDate} endDate={range.endDate} courseId={courseId} />
+      )}
 
       {/* Sem VIEW_ANALYTICS a seção não existe — nem os widgets, nem o
           "Erro ao carregar analytics" que o 403 produzia. O tratamento de erro

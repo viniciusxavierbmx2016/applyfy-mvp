@@ -14,23 +14,46 @@ export const COLLABORATOR_PERMISSIONS = [
 
 export type CollaboratorPermission = (typeof COLLABORATOR_PERMISSIONS)[number];
 
-// Os KPIs da tela inicial são um RECORTE dos Relatórios, então quem tem
-// VIEW_ANALYTICS enxerga o dashboard sem precisar da permissão nova — é o que
-// evita que os 6 colaboradores que já viam os números os percam no deploy
-// (§21 do 9.62). A granularidade nova serve para LIBERAR só o dashboard a quem
-// não deve ver Relatórios inteiros. Ordem importa: gate = qualquer uma das duas.
-export const DASHBOARD_PERMISSIONS = [
+// Quem ABRE a página do dashboard. NÃO é quem vê os números de dinheiro.
+//
+// A constante já se chamou `DASHBOARD_PERMISSIONS` e valia para as duas coisas:
+// abrir a página E ler `sales/stats`. Foi assim que `VIEW_ANALYTICS` — que não
+// concede um único campo financeiro nas 1.512 linhas de `/api/producer/analytics`
+// — passou a destravar receita líquida, ticket e reembolsos. Uma produtora marcou
+// "Ver analytics" achando que liberava engajamento e liberou o faturamento dela.
+//
+// Agora são duas decisões separadas, porque são duas capacidades (lição do 9.70):
+//   abrir a página  → qualquer uma das duas (a metade pedagógica é útil sozinha)
+//   ver os KPIs 💰  → VIEW_DASHBOARD **estrito** (`sales/stats` e `SalesKpis`)
+// Daí o DASHBOARD PARCIAL: quem só tem VIEW_ANALYTICS entra e vê a metade de
+// baixo. Não é tela vazia nem erro — é o recorte que a permissão dele descreve.
+export const DASHBOARD_PAGE_PERMISSIONS = [
   "VIEW_DASHBOARD",
   "VIEW_ANALYTICS",
 ] as const satisfies readonly CollaboratorPermission[];
 
 
+// FONTE ÚNICA — o modal de convite, o de edição e o email do convite leem daqui
+// (conferido: 3 consumidores, nenhuma cópia paralela; a que existia foi apagada
+// no 9.63). O texto É a interface de permissão: o dono decide por ele, não pelo
+// nome da constante. Onde houver dado FINANCEIRO ou PII, tem de estar escrito.
 export const PERMISSION_LABELS: Record<CollaboratorPermission, string> = {
-  REPLY_COMMENTS: "Responder comentários nas aulas",
-  MANAGE_COMMUNITY: "Moderar comunidade",
-  MANAGE_STUDENTS: "Gerenciar alunos (matricular/remover)",
-  VIEW_DASHBOARD: "Ver dashboard (KPIs de receita, vendas e alunos na tela inicial)",
-  VIEW_ANALYTICS: "Ver analytics",
+  // Vale nas aulas E na comunidade — 10 rotas, incluindo grupos, moderação e
+  // lives. O texto antigo dizia só "nas aulas" e era factualmente errado.
+  REPLY_COMMENTS: "Responder comentários nas aulas e na comunidade",
+  // "Moderar comunidade" não dizia que apaga conteúdo de terceiros.
+  MANAGE_COMMUNITY:
+    "Moderar comunidade: aprovar, editar e excluir posts e comentários de qualquer aluno",
+  // Também abre students/export — a lista completa com email e telefone.
+  MANAGE_STUDENTS:
+    "Gerenciar alunos: matricular, remover e exportar a lista (inclui email e telefone)",
+  VIEW_DASHBOARD:
+    "Ver dashboard (KPIs de receita, vendas, ticket médio e reembolsos na tela inicial)",
+  // Era "Ver analytics": anglicismo, escopo nenhum, e foi por este texto que uma
+  // produtora entregou o faturamento sem querer. Agora diz o que abre — e,
+  // sobretudo, o que NÃO abre.
+  VIEW_ANALYTICS:
+    "Ver relatórios de engajamento e progresso (alunos, conclusão, notas — sem dados financeiros)",
   MANAGE_LESSONS: "Gerenciar módulos e aulas",
   MANAGE_AUTOMATIONS: "Gerenciar automações (criar/editar/executar)",
   MANAGE_LIVES: "Gerenciar lives (criar/editar/transmitir/moderar)",
