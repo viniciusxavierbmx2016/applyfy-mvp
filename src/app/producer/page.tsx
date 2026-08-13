@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { getCurrentUser, getCollaboratorContext } from "@/lib/auth";
-import { DASHBOARD_PERMISSIONS } from "@/lib/collaborator";
+import { DASHBOARD_PAGE_PERMISSIONS } from "@/lib/collaborator";
 import DashboardClient from "./_components/dashboard-client";
 
 // Gate SERVER do dashboard (defesa em profundidade — a parede de verdade é a
@@ -36,8 +36,11 @@ export default async function ProducerDashboardPage() {
     user.role === "ADMIN" || user.role === "PRODUCER"
       ? null
       : await getCollaboratorContext(user.id);
+  // O PAR continua abrindo a página, de propósito: quem só tem VIEW_ANALYTICS
+  // entra e vê a metade pedagógica (o dashboard parcial). Quem decide os cards
+  // de dinheiro é o próprio bloco de KPIs, com VIEW_DASHBOARD estrito.
   const canSeeDashboard =
-    !ctx || DASHBOARD_PERMISSIONS.some((p) => ctx.permissions.includes(p));
+    !ctx || DASHBOARD_PAGE_PERMISSIONS.some((p) => ctx.permissions.includes(p));
 
   if (!canSeeDashboard) {
     return (

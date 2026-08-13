@@ -1,22 +1,32 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireStaff, requireAnyPermission, getStaffCourseIds } from "@/lib/auth";
+import { requireStaff, requirePermission, getStaffCourseIds } from "@/lib/auth";
 import { resolveStaffWorkspace } from "@/lib/workspace";
-import { DASHBOARD_PERMISSIONS } from "@/lib/collaborator";
 
 // Gate espelhado da /api/producer/analytics (:80-83 e :102-131): a parede é a
 // ROTA, não a página — o redirect de producer/page.tsx é client-side e um
 // colaborador chamava esta URL direto e recebia receita, reembolsos, ticket e
 // série diária do workspace inteiro (resolveStaffWorkspace resolve o ws pela
 // própria linha Collaborator).
-// VIEW_DASHBOARD **ou** VIEW_ANALYTICS: os KPIs são um recorte dos Relatórios,
-// então quem vê Relatórios continua vendo o dashboard (ninguém perde acesso no
-// deploy) e a permissão nova serve para liberar SÓ os KPIs.
+//
+// ⚠️ VIEW_DASHBOARD **ESTRITO**. Antes aceitava também VIEW_ANALYTICS, com o
+// argumento de que "os KPIs são um recorte dos Relatórios". O argumento estava
+// errado na direção que importa: /api/producer/analytics não devolve UM campo
+// financeiro (0 ocorrências de revenue/amount/ticket/refund em 1.512 linhas) —
+// receita não é recorte de Relatórios, é a única coisa que só existe AQUI. O
+// resultado foi uma produtora marcar "Ver analytics" para liberar engajamento e
+// entregar R$ 26.783,35 de faturamento. Medido em produção: R$ 171.355,97 de
+// receita alheia alcançável por 4 colaboradores dessa forma.
+//
+// Não-retroativo por decisão do dono: quem tinha VIEW_ANALYTICS perde os KPIs
+// até o produtor marcar "Ver dashboard" — e não perde Relatórios, que segue
+// aberto. Conceder VIEW_DASHBOARD em massa preservaria exatamente a exposição
+// que o pedido veio corrigir.
 export async function GET(request: Request) {
   try {
     const staff = await requireStaff();
     if (staff.role === "COLLABORATOR") {
-      await requireAnyPermission(staff, DASHBOARD_PERMISSIONS);
+      await requirePermission(staff, "VIEW_DASHBOARD");
     }
     const [{ workspace, scoped }, collabScope] = await Promise.all([
       resolveStaffWorkspace(staff),

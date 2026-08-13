@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { useUserStore } from "@/stores/user-store";
-import { DASHBOARD_PERMISSIONS } from "@/lib/collaborator";
+import { DASHBOARD_PAGE_PERMISSIONS } from "@/lib/collaborator";
 import { useActiveWorkspace } from "@/hooks/use-active-workspace";
 import { WorkspaceSwitcher } from "./workspace-switcher";
 import { PlatformLogo } from "./platform-logo";
@@ -139,7 +139,9 @@ const producerLinks: NavLink[] = [
 const collaboratorLinks: NavLink[] = [
   // Espelha o gate do servidor (producer/page.tsx + sales/stats): as DUAS
   // permissões abrem o dashboard. O filtro aceita array = anyOf.
-  { href: "/producer", label: "Dashboard", icon: iconDashboard, requires: [...DASHBOARD_PERMISSIONS] },
+  // O par, coerente com o gate da página: quem tem só VIEW_ANALYTICS entra no
+  // dashboard (parcial) e precisa do item no menu para chegar lá.
+  { href: "/producer", label: "Dashboard", icon: iconDashboard, requires: [...DASHBOARD_PAGE_PERMISSIONS] },
   {
     href: "/producer/courses",
     label: "Cursos",

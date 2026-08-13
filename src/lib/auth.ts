@@ -324,8 +324,14 @@ export async function requirePermission(
 
 // Irmão anyOf do requirePermission — MESMAS regras (ADMIN/PRODUCER passam,
 // não-COLLABORATOR barra, contexto ausente barra), só o predicado muda: basta
-// UMA das permissões. Existe porque o dashboard é um recorte dos Relatórios e
-// as duas permissões o abrem (ver DASHBOARD_PERMISSIONS em lib/collaborator).
+// UMA das permissões.
+// ⚠️ Nasceu para o gate de `sales/stats` aceitar VIEW_DASHBOARD ou
+// VIEW_ANALYTICS — e aquele uso foi DESFEITO: receita passou a exigir
+// VIEW_DASHBOARD estrito, porque VIEW_ANALYTICS não concede dado financeiro
+// nenhum. Hoje o padrão anyOf sobrevive em `DASHBOARD_PAGE_PERMISSIONS`
+// (quem ABRE a página, avaliado no server component e na sidebar). Antes de
+// usar esta função para um dado sensível: se as permissões do conjunto
+// descrevem coisas diferentes ao dono, o conjunto está errado, não o gate.
 export async function requireAnyPermission(
   staff: Pick<User, "id" | "role">,
   permissions: readonly string[]
