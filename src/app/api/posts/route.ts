@@ -64,10 +64,14 @@ export async function GET(request: Request) {
     // false when there's no ACCEPTED Collaborator row, so STUDENT without
     // collab elevation is a no-op (and STUDENT-with-Collab now passes).
     if (!isStaffOwner) {
-      collabAllowed = await collaboratorCanActOnCourse(user.id, course.id, [
-        "MANAGE_COMMUNITY",
-        "REPLY_COMMENTS",
-      ]);
+      // ENTRADA na comunidade (VER o feed): além da permissão de comunidade,
+      // exige ACCESS_MEMBER_AREA (9.78). Moderação pelo PAINEL não passa aqui.
+      collabAllowed = await collaboratorCanActOnCourse(
+        user.id,
+        course.id,
+        ["MANAGE_COMMUNITY", "REPLY_COMMENTS"],
+        { requireMemberAccess: true }
+      );
     }
     if (!isStaffOwner && !collabAllowed) {
       const enrollment = await prisma.enrollment.findUnique({
@@ -248,10 +252,13 @@ export async function POST(request: Request) {
     // false when there's no ACCEPTED Collaborator row, so STUDENT without
     // collab elevation is a no-op (and STUDENT-with-Collab now passes).
     if (!isStaffOwner) {
-      collabAllowed = await collaboratorCanActOnCourse(user.id, course.id, [
-        "MANAGE_COMMUNITY",
-        "REPLY_COMMENTS",
-      ]);
+      // ENTRADA na comunidade (PUBLICAR). Mesmo par + ACCESS_MEMBER_AREA.
+      collabAllowed = await collaboratorCanActOnCourse(
+        user.id,
+        course.id,
+        ["MANAGE_COMMUNITY", "REPLY_COMMENTS"],
+        { requireMemberAccess: true }
+      );
     }
     if (!isStaffOwner && !collabAllowed) {
       const enrollment = await prisma.enrollment.findUnique({

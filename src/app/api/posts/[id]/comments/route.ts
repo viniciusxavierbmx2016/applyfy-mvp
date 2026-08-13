@@ -26,7 +26,16 @@ async function checkAccess(
   // looks up an ACCEPTED Collaborator row + permission + course scope, so it
   // returns false when there's no row (e.g., student without collab elevation).
   // Removes the redundant role-gate that excluded STUDENT-with-Collaborator.
-  const allowed = await collaboratorCanActOnCourse(user.id, post.courseId, ["REPLY_COMMENTS", "MANAGE_COMMUNITY"]);
+  // ENTRADA (ler/escrever comentário como membro) — exige ACCESS_MEMBER_AREA.
+  // ⚠️ Os dois `staff` mais abaixo NÃO recebem a exigência de propósito: decidem
+  // MODERAÇÃO (ler PENDING alheio e pular a fila), que a opção B manteve com
+  // MANAGE_COMMUNITY/REPLY_COMMENTS sozinhos.
+  const allowed = await collaboratorCanActOnCourse(
+    user.id,
+    post.courseId,
+    ["REPLY_COMMENTS", "MANAGE_COMMUNITY"],
+    { requireMemberAccess: true }
+  );
   if (allowed) return true;
   const enrollment = await prisma.enrollment.findUnique({
     where: { userId_courseId: { userId: user.id, courseId: post.courseId } },

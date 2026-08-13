@@ -51,7 +51,15 @@ export async function GET(_request: Request, props: { params: Promise<{ id: stri
       user.role === "ADMIN" ||
       (user.role === "PRODUCER" &&
         (course.ownerId === user.id || course.workspace.ownerId === user.id)) ||
-      (await collaboratorCanActOnCourse(user.id, course.id, ["REPLY_COMMENTS", "MANAGE_COMMUNITY"]));
+      // ENTRADA: as abas da comunidade só abrem para quem circula como membro
+      // (9.78). Esta rota é chamada SÓ pela página da comunidade — o painel tem
+      // as suas próprias em `producer/community/groups/**`, intocadas.
+      (await collaboratorCanActOnCourse(
+        user.id,
+        course.id,
+        ["REPLY_COMMENTS", "MANAGE_COMMUNITY"],
+        { requireMemberAccess: true }
+      ));
 
     if (!isStaff) {
       const enrollment = await prisma.enrollment.findUnique({
