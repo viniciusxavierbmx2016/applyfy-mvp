@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser, isEnrollmentActive } from "@/lib/auth";
+import { hasWorkspaceAccess } from "@/lib/workspace-access";
 import { getAutomationLocks } from "@/lib/automation-locks";
 import { logger } from "@/lib/logger";
 
@@ -70,6 +71,31 @@ export async function GET(_request: Request, props: { params: Promise<{ slug: st
     });
 
     if (!course) {
+      return NextResponse.json(
+        { error: "Curso não encontrado" },
+        { status: 404 }
+      );
+    }
+
+    // Gate de TENANT. Antes, qualquer autenticado recebia módulos, aulas e
+    // metadados de QUALQUER curso da plataforma — `hasAccess` abaixo era campo
+    // da resposta, não parede.
+    // ⚠️ O gate é por WORKSPACE, não por matrícula: a página faz
+    // `if (!hasAccess) return <CoursePreview>` ((course)/course/[slug]/page.tsx:391)
+    // — o NÃO-matriculado é caminho LEGÍTIMO (é a tela de venda do curso).
+    // Exigir matrícula aqui quebraria o checkout. hasWorkspaceAccess cobre
+    // aluno do ws (ACTIVE **ou EXPIRED** — preserva a tela de expirado),
+    // colaborador ACCEPTED e dono do ws; o ADMIN e o dono do próprio curso
+    // entram explicitamente porque o helper não os contempla.
+    // 404 (não 403) para não confirmar a existência de curso de outro tenant.
+    const isCourseOwnerEarly =
+      user.role === "PRODUCER" &&
+      (course.ownerId === user.id || course.workspace.ownerId === user.id);
+    const allowedInTenant =
+      user.role === "ADMIN" ||
+      isCourseOwnerEarly ||
+      (await hasWorkspaceAccess(user.id, course.workspace.id));
+    if (!allowedInTenant) {
       return NextResponse.json(
         { error: "Curso não encontrado" },
         { status: 404 }
