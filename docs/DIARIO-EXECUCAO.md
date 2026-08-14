@@ -35,6 +35,40 @@ Copie o bloco abaixo e preencha todos os campos. Campo sem resposta = etapa não
 
 <!-- As entradas começam abaixo desta linha, da mais recente para a mais antiga. -->
 
+## 2026-08-14 — 📌 DECISÃO REGISTRADA (não é etapa fechada) — CAMADA 4, ETAPA E4.3 criada
+
+> ⚠️ **Esta entrada não fecha etapa nenhuma.** O diário registra fato, e o fato aqui é
+> **a decisão de produto**, não uma implementação. A E4.3 nasce ⬜ pendente. Os campos do
+> formato §2 que só fazem sentido para etapa executada estão marcados **n/a**.
+
+**Estado antes:** main em e406309
+**O que foi feito:** registrada a etapa **E4.3 — colaborador assistir aos cursos sem ocupar
+matrícula** na Camada 4 do roadmap, com a decisão do dono e o que precisa ser investigado
+antes de qualquer código.
+
+**A decisão (13/08):**
+- **Problema observado:** o colaborador com `ACCESS_MEMBER_AREA` entra na vitrine, mas os
+  cursos aparecem **"Bloqueado"** e o player recusa. **Isso é desenho, não bug** — aula
+  exige matrícula, decisão registrada no 9.77. Caso real: a colaboradora do `shop-club`
+  precisa conhecer o conteúdo para dar suporte.
+- **(A) ADOTADO AGORA:** matricular o colaborador (Vitalício). Já funciona hoje, é o
+  caminho existente, e é o que **5 dos 12** colaboradores já fazem.
+- **(C) REJEITADO:** incluir aulas no `ACCESS_MEMBER_AREA`. Colapsaria duas decisões
+  diferentes numa permissão só — exatamente o erro do 9.76, agora na direção do dinheiro.
+- **(B) FUTURO, com laudo antes:** permissão própria (`WATCH_COURSES`).
+
+**Arquivos tocados:** docs/ROADMAP-EXECUCAO.md · docs/DIARIO-EXECUCAO.md — zero código
+**Como foi provado:** n/a — nada foi implementado; a decisão vem do dono
+**SHA do merge:** n/a (commit direto na main, só docs) · **Rollback:** `git revert` do commit
+**Mudou em produção para quem:** ninguém
+**Ficou aberto:** **E4.3** (⬜, prioridade 🟢 — o caminho A já atende). ⚠️ **A pergunta que
+trava o (B):** colaborador com acesso por permissão **conta como aluno?** Impacta 5 pontos —
+total de alunos do dashboard · **limite do plano (faturamento)** · analytics de engajamento ·
+CSV de alunos · automações que disparam por matrícula. Palpite do dono: **não** deve contar;
+mas é decisão de negócio e exige laudo do impacto em cada ponto antes de implementar.
+**Regras conferidas:** §17 n/a (zero código) ✅ · staging-first n/a ✅ · gate humano n/a ✅ ·
+papelada ✅
+
 ## 2026-08-14 — CAMADA 0, ETAPA E0.3 — Elenco completo do staging
 
 **Estado antes:** main em 2b98ff2 · staging com 11 users, 1 workspace, 1 curso, 1 grupo

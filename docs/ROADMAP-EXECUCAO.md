@@ -217,6 +217,7 @@ papelada.
 |---|---|---|
 | **E4.1** | **Toggles em Personalizar Curso**: (a) esconder o botão flutuante de suporte (telefone/e-mail) — ⭐ resolve junto a sobreposição dele sobre "Enviar convite" e "Responder" no mobile; (b) esconder o box de nome/módulos/aulas/progresso abaixo do banner | — |
 | **E4.2** | **PDF/material para download na comunidade** — anexo em post, não imagem inline | ⚠️ **Decisão do dono:** hoje o bucket é **público** (URL = qualquer um baixa). Material de curso deve ser privado com URL assinada? E qual o teto de tamanho (hoje 5MB)? |
+| **E4.3** 🟢 | **Colaborador assistir aos cursos sem ocupar matrícula** — permissão nova (ex.: `WATCH_COURSES`) que o produtor marca por colaborador. **ORIGEM (13/08):** o colaborador com `ACCESS_MEMBER_AREA` vê a vitrine, mas os cursos aparecem **"Bloqueado"** e o player recusa — **por desenho**: aula é barreira de receita, decisão registrada no 9.77. Caso real: a colaboradora do `shop-club` precisa conhecer o conteúdo para dar suporte. **DECISÃO DO VINICIUS (13/08):** caminho **(A) adotado AGORA** — *matricular* o colaborador (Vitalício), que já funciona e é o que **5 dos 12** já fazem. Caminho **(C) REJEITADO**: incluir aulas no `ACCESS_MEMBER_AREA` colapsaria duas decisões diferentes numa permissão só — o erro do 9.76, na direção do dinheiro. | ⚠️ **INVESTIGAR ANTES DE IMPLEMENTAR (B):** colaborador com acesso por permissão **conta como ALUNO?** Impacta: total de alunos do dashboard · **LIMITE DO PLANO (faturamento)** · analytics de engajamento · CSV de alunos · automações que disparam por matrícula. **Palpite do dono: NÃO deve contar** — mas é decisão de negócio e exige **laudo do impacto em cada um desses 5 pontos** antes de qualquer linha. |
 
 **Portão de saída:** produtor consegue usar a feature em produção; nada regrediu na tela
 compartilhada.
@@ -296,6 +297,7 @@ Roda **em paralelo** às camadas, sem consumir sessão de desenvolvimento:
 | E3.4 Limpeza dead code | ⬜ pendente | — | — |
 | E4.1 Toggles Personalizar Curso | ⬜ pendente | — | — |
 | E4.2 PDF na comunidade | ⬜ pendente | — | — |
+| E4.3 Colab assistir aos cursos | ⬜ pendente | — | — |
 | E5.1 9.71 homônimos | ⬜ pendente | — | — |
 | E5.2 9.74 D1–D5 + FASE 0 | ⬜ pendente | — | — |
 | E5.3 9.74 FASES 1–6 | ⬜ pendente | — | — |
