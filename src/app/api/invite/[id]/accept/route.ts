@@ -33,12 +33,42 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
     const mode = body.mode;
 
     const sessionUser = await getCurrentUser();
+    const mesmoEmail =
+      !!sessionUser &&
+      sessionUser.email.toLowerCase() === invite.email.toLowerCase();
 
-    // If already authenticated, bind & accept.
-    if (sessionUser) {
-      if (
-        sessionUser.email.toLowerCase() !== invite.email.toLowerCase()
-      ) {
+    // E1.2 — DESPACHO POR MODO, ANTES de olhar a sessão.
+    //
+    // O `mode` era lido no topo e só consultado LÁ EMBAIXO, depois do ramo
+    // autenticado inteiro. Quem abria o convite com a sessão de OUTRA pessoa
+    // (o caso comum: o produtor manda o link, a pessoa abre no navegador da
+    // empresa) clicava em "Criar conta" e recebia "O e-mail da sua sessão não
+    // corresponde" — mensagem que nem descreve o que ela pediu. Só funcionava
+    // em janela anônima, e ninguém sabia disso.
+    //
+    // Quem CRIA CONTA não usa a sessão para nada: a conta nasce com o e-mail
+    // do convite e o auto-login em seguida troca o cookie. Então a sessão de
+    // terceiro é irrelevante aqui — e só aqui.
+    //
+    // ⚠️ A condição é COMPOSTA de propósito. `mode === "signup"` sozinho
+    // mandaria para a criação também o convidado que JÁ está logado como ele
+    // mesmo — e aí o Supabase responderia "already registered" e ele levaria um
+    // 409 no lugar de simplesmente entrar. Com `!mesmoEmail`, esse caso segue
+    // pelo bind, como sempre foi.
+    const criarConta = mode === "signup" && !mesmoEmail;
+
+    // Bind autenticado (todo o resto).
+    if (!criarConta) {
+      if (!sessionUser) {
+        // Sem sessão e sem pedir signup: nada a fazer aqui.
+        return NextResponse.json({ error: "Sessão ausente" }, { status: 401 });
+      }
+      // ⚠️ ESTA CHECAGEM NÃO SAI, e é o motivo de o despacho acima existir em
+      // vez de simplesmente removê-la: sem ela, quem está logado como A abre um
+      // convite endereçado a B — o id viaja na URL — e o update abaixo gravaria
+      // o userId de A na linha do convite. A entraria no workspace com as
+      // permissões destinadas a B. É aceitação de convite alheio.
+      if (!mesmoEmail) {
         return NextResponse.json(
           {
             error:
@@ -77,13 +107,13 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
       return NextResponse.json({ ok: true });
     }
 
-    // Not authenticated → need signup flow
-    if (mode !== "signup") {
-      return NextResponse.json(
-        { error: "Sessão ausente" },
-        { status: 401 }
-      );
-    }
+    // CAMINHO DE CRIAÇÃO DE CONTA. Só se chega aqui com `criarConta === true`,
+    // ou seja: mode "signup" E a sessão (se houver) é de outra pessoa.
+    // O antigo `if (mode !== "signup") return 401 "Sessão ausente"` ficava aqui
+    // e virou inalcançável — a mesma recusa passou a acontecer no despacho
+    // acima, onde ela é verdade ("sem sessão e sem pedir signup"). Removido em
+    // vez de mantido morto: guarda inalcançável em rota de autorização é
+    // exatamente o que faz o próximo leitor acreditar numa proteção que não roda.
 
     const name = String(body.name ?? "").trim();
     const password = String(body.password ?? "");

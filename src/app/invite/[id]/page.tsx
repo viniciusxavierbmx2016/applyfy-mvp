@@ -30,6 +30,35 @@ export default function InviteAcceptPage() {
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // E1.2 — quem está logado NESTE navegador, se for outra pessoa. Cenário
+  // comum: o produtor manda o link e a pessoa abre no navegador da empresa,
+  // logado como outra conta. O aviso ORIENTA; a parede é o servidor.
+  const [sessaoDeOutro, setSessaoDeOutro] = useState<string | null>(null);
+  const [saindo, setSaindo] = useState(false);
+
+  useEffect(() => {
+    // Cosmético: falha aqui não pode atrapalhar o convite, então erro vira
+    // silêncio e a tela segue exatamente como era antes.
+    fetch("/api/auth/me")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        const email = d?.user?.email;
+        if (email && inviteEmail && email.toLowerCase() !== inviteEmail.toLowerCase()) {
+          setSessaoDeOutro(email);
+        }
+      })
+      .catch(() => {});
+  }, [inviteEmail]);
+
+  async function sairEContinuar() {
+    setSaindo(true);
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+    } catch {}
+    // Permanece NA PÁGINA DO CONVITE — mandar para o login faria a pessoa
+    // perder o link, que é o que ela tem na mão.
+    window.location.reload();
+  }
 
   useEffect(() => {
     async function load() {
@@ -210,6 +239,25 @@ export default function InviteAcceptPage() {
               {inviteEmail}
             </span>
           </p>
+
+          {sessaoDeOutro && (
+            <div className="mb-4 p-3 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-lg">
+              <p className="text-xs text-amber-800 dark:text-amber-200">
+                Você está logado como{" "}
+                <span className="font-semibold">{sessaoDeOutro}</span>, e este
+                convite é para{" "}
+                <span className="font-semibold">{inviteEmail}</span>.
+              </p>
+              <button
+                type="button"
+                onClick={sairEContinuar}
+                disabled={saindo}
+                className="mt-2 text-xs font-medium text-amber-900 dark:text-amber-100 underline underline-offset-2 disabled:opacity-50"
+              >
+                {saindo ? "Saindo…" : `Sair e aceitar como ${inviteEmail}`}
+              </button>
+            </div>
+          )}
 
           {invite.permissions.length > 0 && (
             <div className="mb-5 p-3 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/5 rounded-lg">
