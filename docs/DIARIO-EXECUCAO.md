@@ -35,6 +35,55 @@ Copie o bloco abaixo e preencha todos os campos. Campo sem resposta = etapa não
 
 <!-- As entradas começam abaixo desta linha, da mais recente para a mais antiga. -->
 
+## 2026-08-14 — 📌 VARREDURA DE QA (staging) + TRIAGEM — não é etapa fechada
+
+> Registro da varredura exploratória (trilha paralela, §7 do roadmap) e da
+> triagem dos 7 achados. Nenhum código tocado; os itens nasceram no PLANO-MESTRE.
+
+**Estado antes:** main em 5eacfc8 · palco de staging no ar (19 users, 2 workspaces)
+
+**O que foi feito:** varredura de QA no painel do produtor, com as personas do
+E0.3. Sete achados reportados, todos triados com investigação própria antes de
+virar item.
+
+**O resultado da triagem:**
+
+| # | achado do QA | veredito |
+|---|---|---|
+| 1 | "IDOR cross-tenant em `/api/courses/[id]`" | 🔴 **FALSO POSITIVO, refutado com prova** → nota no **9.81** |
+| 2 | dono se autoconvida e vira colaborador de si mesmo | ✅ real → **9.82** 🟠 |
+| 3 | workspace de colaboração não aparece no seletor | já conhecido → é o **9.75**, sem item novo |
+| 4 | convite revogado não reativa; sem botão | ✅ real → **9.83** 🟢 |
+| 5 | tabela não responsiva no mobile | ✅ real → **9.84** 🟢 |
+| 6 | botão desabilitado sem motivo | ✅ real → **9.85** 🟢 |
+| 7 | textos de erro sem padronização | ✅ real → **9.86** 🟢 |
+
+**+ 1 achado que o QA não viu e a investigação encontrou:** a rota devolve
+`videoUrl` de todas as aulas a quem tem qualquer permissão do `anyOf` — em
+produção, **1.833 aulas, 100% com vídeo, 3 colaboradores nessa condição**. É o
+conteúdo do **9.81**.
+
+**Como foi provado (o falso positivo):** a persona `dono-b` **tem** vínculo
+`ACCEPTED` no workspace A com `MANAGE_COMMUNITY` — foi criada assim no E0.3. O
+200 é por desenho. A prova do contrário é `aluno-staging`: sessão válida, **zero
+linha de `Collaborator`**, recebe **403**.
+
+**✅ O que veio LIMPO na varredura** (vale tanto quanto o que veio sujo): painel
+do **admin**, área do **aluno**, e **10+ trocas de conta** sem vazamento de
+estado entre sessões.
+
+**Arquivos tocados:** docs/PLANO-MESTRE.md · docs/DIARIO-EXECUCAO.md — zero código
+**SHA do merge:** n/a (commit direto na main, só docs) · **Rollback:** `git revert`
+**Mudou em produção para quem:** ninguém
+**Ficou aberto:** 9.81 🟠 · 9.82 🟠 · 9.83/9.84/9.85/9.86 🟢 — todos → Camada 3
+**Regras conferidas:** §17 n/a (zero código) ✅ · staging-only ✅ · papelada ✅
+
+⚠️ **Lição de processo desta varredura:** o handoff descrevia `dono-b` como
+"dono do B **e** colaborador no A", e o agente usou a persona como "sem vínculo
+no A". Handoff de QA precisa listar, por persona, **papel + permissões exatas +
+escopo + o que ela DEVE e NÃO DEVE alcançar** — senão o relatório vira caça a
+buraco inexistente. Virou memória permanente.
+
 ## 2026-08-14 — CAMADA 1 FECHADA, ETAPAS E1.1 + E1.2 — Bug do convite
 
 **Estado antes:** main em 3a447ab
