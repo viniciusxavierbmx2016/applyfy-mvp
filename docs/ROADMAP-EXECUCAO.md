@@ -114,17 +114,22 @@ Roda em **toda** etapa que toque código, independentemente do que ela mexeu. É
 
 O staging precisa do elenco completo **antes** da Camada 3. Sem ele, matriz não é confiável.
 
-**Existe hoje:** `producer-staging` (dono) · `aluno-staging` (matriculado) · `colab-dash`
-(VIEW_DASHBOARD) · `colab-analytics` (VIEW_ANALYTICS) · `colab-comunidade`
-(MANAGE_COMMUNITY) · `colab-reply` (REPLY_COMMENTS) · `colab-modonly` (MANAGE_COMMUNITY sem
-ACCESS_MEMBER_AREA) · `colab-zero` (nenhuma).
+✅ **COMPLETO desde 14/08 (E0.3)** — 19 users, 2 workspaces, 3 cursos. Recriável por
+`npx dotenv -e .env.staging -- node scripts/seed-staging.mjs` (idempotente). O elenco
+nominal, o estado do palco e o que foi semeado fora do caminho real estão na entrada
+**E0.3 do [DIARIO-EXECUCAO.md](DIARIO-EXECUCAO.md)** — este documento aponta, o diário
+registra.
 
-**Falta criar:** `MANAGE_STUDENTS` · `MANAGE_LESSONS` · `MANAGE_AUTOMATIONS` · colaborador
-com **escopo de curso restrito** · **ADMIN de plataforma** · **dono de um 2º workspace que
-colabora no 1º** (a persona-alvo do 9.74) · colaborador de **dois** workspaces.
+**Workspace A** `staging-teste` (dono `producer-staging`): `curso-teste` + `curso-teste-2`,
+comunidade ON, ⚠️ **as duas moderações LIGADAS** (de propósito — sem elas a sonda de
+moderação passa vazia) e **cores do membro NULAS**.
+**Workspace B** `workspace-b-staging` (dono `dono-b`): `curso-b`, comunidade ON, 1 post,
+`aluno-b` matriculado. É o que torna qualquer teste cross-tenant real.
 
-**Falta montar:** um **segundo workspace** com curso, comunidade e conteúdo — sem ele,
-nenhum teste cross-tenant é real.
+**As 3 personas que o 9.74 exigia** existem: `dono-b` (dono do B **e** colaborador no A —
+o retrato do `applyfybr`) · `admin-staging` (ADMIN de plataforma) · `colab-duplo`
+(colaborador nos **dois** workspaces, o caso que torna o `findFirst` sem `orderBy`
+indeterminado). Mais `colab-escopo`, com **escopo restrito a 1 curso**.
 
 **Regras do palco:** prova dupla de `SUPABASE_REF` em toda escrita · conteúdo obviamente
 falso · **estado do palco registrado no diário** (moderações ligadas, cores nulas, etc.),
