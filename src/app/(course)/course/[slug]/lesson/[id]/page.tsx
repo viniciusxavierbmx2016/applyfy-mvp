@@ -98,6 +98,29 @@ export default function LessonPage(
     "description" | "comments" | "support"
   >("description");
   const [materials, setMaterials] = useState<MaterialData[]>([]);
+  /* Sinal de download. O clique abre uma aba que o navegador fecha assim que o
+     arquivo começa a baixar — comportamento correto, mas indistinguível de
+     falha: um piscar e nada. Sem sinal, quem clica clica de novo (aconteceu:
+     cinco vezes no mesmo material, e o "erro" virou alarme).
+
+     ⚠️ Isto NÃO intercepta o download. O <a href target="_blank"> segue
+     intacto e nativo; o onClick só acende um estado e não faz preventDefault.
+     Como navegação não emite evento de conclusão para a página que a disparou,
+     o sinal se apaga por tempo — é indicação de "partiu", não de "terminou", e
+     o texto diz exatamente isso. */
+  const [baixandoId, setBaixandoId] = useState<string | null>(null);
+  const baixandoTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(
+    () => () => {
+      if (baixandoTimer.current) clearTimeout(baixandoTimer.current);
+    },
+    []
+  );
+  function sinalizarDownload(id: string) {
+    if (baixandoTimer.current) clearTimeout(baixandoTimer.current);
+    setBaixandoId(id);
+    baixandoTimer.current = setTimeout(() => setBaixandoId(null), 4000);
+  }
   const [reactionData, setReactionData] = useState<{
     enabled: boolean;
     likeCount: number;
@@ -566,12 +589,14 @@ export default function LessonPage(
                 <div className="flex flex-col gap-2">
                   {materials.map((mat) => {
                     const icon = getMaterialIcon(mat.fileType);
+                    const baixando = baixandoId === mat.id;
                     return (
                       <a
                         key={mat.id}
                         href={`/api/lessons/${params.id}/materials/${mat.id}/download`}
                         target="_blank"
                         rel="noopener noreferrer"
+                        onClick={() => sinalizarDownload(mat.id)}
                         className="group flex items-center gap-3 p-3 bg-gray-50 dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.06] rounded-xl hover:bg-gray-100 dark:hover:bg-white/[0.06] hover:border-gray-300 dark:hover:border-white/[0.12] transition-colors"
                       >
                         <span className={`w-10 h-10 rounded-lg flex items-center justify-center text-[10px] font-bold flex-shrink-0 ${icon.color}`}>
@@ -582,12 +607,19 @@ export default function LessonPage(
                             {mat.name || mat.fileName}
                           </span>
                           <span className="block text-xs text-gray-400 dark:text-gray-500 mt-0.5">
-                            {formatFileSize(mat.fileSize)}
+                            {baixando ? "Baixando…" : formatFileSize(mat.fileSize)}
                           </span>
                         </span>
-                        <svg className="w-5 h-5 text-gray-400 dark:text-gray-500 group-hover:text-gray-600 dark:group-hover:text-gray-300 flex-shrink-0 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-8-9v10m0 0l-4-4m4 4l4-4" />
-                        </svg>
+                        {baixando ? (
+                          <span
+                            className="w-5 h-5 flex-shrink-0 border-2 border-gray-400 dark:border-gray-500 border-t-transparent rounded-full animate-spin motion-reduce:animate-none"
+                            aria-hidden="true"
+                          />
+                        ) : (
+                          <svg className="w-5 h-5 text-gray-400 dark:text-gray-500 group-hover:text-gray-600 dark:group-hover:text-gray-300 flex-shrink-0 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-8-9v10m0 0l-4-4m4 4l4-4" />
+                          </svg>
+                        )}
                       </a>
                     );
                   })}

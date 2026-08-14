@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
 import { checkLessonAccess } from "@/lib/lesson-access";
-import { materialPathFromUrl } from "@/lib/materials-constants";
+import { materialPathFromUrl, sanitizeFileName } from "@/lib/materials-constants";
 import { createAdminClient, MATERIALS_BUCKET } from "@/lib/supabase-admin";
 
 // Janela da assinatura. A assinatura é cunhada NO CLIQUE e consumida no
@@ -61,11 +61,26 @@ export async function GET(
       return NextResponse.json({ error: "Material indisponível" }, { status: 404 });
     }
 
+    /* ⚠️ O nome vai SANITIZADO para ASCII, e isso é medição, não preferência.
+       O Storage encoda o valor de `?download=` uma segunda vez sem decodificar a
+       primeira, então qualquer caractere que precise de percent-encoding chega
+       ao disco do aluno como lixo — medido nas quatro formas:
+
+         "às" decomposto (o que havia aqui) → "a%CC%80s"
+         "às" normalizado em NFC            → "%C3%A0s"   ← NFC NÃO conserta
+         NFC com underscore no lugar do espaço → "_%C3%A0s_"
+         ASCII puro                         → sai limpo
+
+       Passar o nome sanitizado é o único jeito de o aluno receber um nome legível
+       sem trocar o mecanismo. O preço é o acento: "às" vira "as". Preservá-lo
+       exigiria a rota TRANSMITIR os bytes e montar o Content-Disposition em
+       RFC 5987 por conta própria — o redesenho já registrado, com custo de
+       streaming na Vercel a medir. Item aberto, não decisão silenciosa. */
     const supabase = createAdminClient();
     const { data, error } = await supabase.storage
       .from(MATERIALS_BUCKET)
       .createSignedUrl(path, SIGNED_URL_TTL_SECONDS, {
-        download: material.fileName,
+        download: sanitizeFileName(material.fileName),
       });
 
     if (error || !data?.signedUrl) {
