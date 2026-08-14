@@ -1,0 +1,346 @@
+# ROADMAP DE EXECUÇÃO — Members Club
+
+> **O que é este documento.** O mapa de tudo que está em aberto, dividido em camadas, com
+> começo, meio e fim. Diz **o que fazer, em que ordem, e como provar que nada quebrou**.
+>
+> **O que este documento NÃO é.** Não é o registro dos itens (isso é o `PLANO-MESTRE.md`),
+> nem o plano de um épico específico (isso é o `PLANO-9.74.md`), nem a constituição
+> (isso é o `DEV-BRABO.md`). Este é o **mapa de execução**.
+
+---
+
+## 1. Como este documento se relaciona com os outros
+
+| Documento | Papel | Atualizado quando |
+|---|---|---|
+| `DEV-BRABO.md` | Constituição de engenharia. Prevalece sobre qualquer atalho. | Raramente |
+| `SYSTEM-MAP.md` | Mapa do sistema (vocabulário, áreas, roteamento, estado). | Quando o código muda o mapa |
+| `PLANO-MESTRE.md` | Registro por item: o que é, evidência, SHA, fechado ou aberto. | A cada item fechado |
+| **`ROADMAP-EXECUCAO.md`** (este) | **Ordem de execução, camadas, portões, status.** | A cada etapa fechada |
+| `DIARIO-EXECUCAO.md` | **Registro cronológico**: o que foi feito, quando, com que prova. | A cada etapa fechada |
+| `PLANO-9.74.md` | Plano do épico de autorização (7 fases). | Durante o épico |
+
+### 1.1 Procedimento de recuperação de contexto
+
+Se a sessão virar, se o chat estourar, ou se passarem semanas — o próximo a trabalhar lê,
+**nesta ordem**:
+
+1. `CLAUDE.md` (carregador nativo — aponta o resto)
+2. `DEV-BRABO.md` — as regras
+3. `SYSTEM-MAP.md` — onde as coisas ficam
+4. **`ROADMAP-EXECUCAO.md` § 8 (tabela de status)** — onde paramos
+5. `DIARIO-EXECUCAO.md`, últimas 3 entradas — o que aconteceu por último
+6. `git log --oneline -15` — o que o repo confirma
+
+> **Nunca executar pelo resumo.** O resumo aponta; o documento manda; o código vence os dois.
+
+---
+
+## 2. O sistema de documentação (obrigatório)
+
+**Nenhuma etapa fecha sem entrada no diário.** É o que impede o item-fantasma (item fechado
+no código e aberto no papel, ou o contrário — as duas faces já aconteceram).
+
+Cada entrada do `DIARIO-EXECUCAO.md` tem, sem exceção:
+
+```
+## [DATA] — CAMADA X, ETAPA X.Y — <nome>
+
+**Estado antes:** main em <sha>
+**O que foi feito:** <2–5 linhas, o essencial>
+**Arquivos tocados:** <lista>
+**Como foi provado:** <matriz de staging + validação humana, com o resultado colado>
+**SHA do merge:** <sha>  ·  **Rollback:** git revert -m 1 <sha>
+**Mudou em produção para quem:** <§21 — quem sente a mudança, quem avisar>
+**Ficou aberto:** <itens novos criados, com número>
+**Regras conferidas:** §17 respondido ✅ · staging-first ✅ · gate humano ✅ · papelada ✅
+```
+
+**Regra de ouro do diário:** ele registra **fato**, não intenção. Nada entra como "vai ser
+feito"; só entra o que já foi.
+
+---
+
+## 3. O ritual de cada etapa (invariável)
+
+Toda etapa, sem exceção, passa por estes 8 passos. Se um for pulado, a etapa não fechou.
+
+| # | Passo | Regra DEV-BRABO |
+|---|---|---|
+| 1 | **Investigação read-only** — causa provada por evidência, arquivo:linha | §1, Regra de Ouro |
+| 2 | **Bloco §17 respondido por escrito** — tamanho, risco técnico, risco de segurança, regressão, dependências, branch, rollback, prova de funcionamento, prova de segurança | §17 |
+| 3 | **Sinuca** — mapear todos os consumidores e irmãos antes de tocar em um | §15 |
+| 4 | **Branch própria**, commits pequenos e semânticos, gate encadeado `build && commit` | §18 |
+| 5 | **Validação em STAGING** — matriz de personas antes/depois, com controles positivos **e** negativos, mais a Matriz de Regressão Padrão (§4) | §16 |
+| 6 | **Gate humano estrutural** — o comando de merge exige o campo `RESULTADO DO CHECK HUMANO` preenchido; vazio = não executa | — |
+| 7 | **Merge `--no-ff`** + SHA de rollback registrado | §18 |
+| 8 | **Papelada no mesmo fôlego** — `PLANO-MESTRE` + `DIÁRIO` + memória + §21 (quem sente a mudança) | §21 |
+
+### 3.1 Sinais de parada imediata (§22)
+
+- Rota de credencial de pagamento ou de dono aparecendo num diff que não era pra tocá-la
+- Webhook, rota pública ou player afetados
+- Aparecer uma **segunda função com o mesmo nome** de um helper de autorização
+- Precisar de "só um `if` pra funcionar"
+- Divergência entre o que a investigação disse e o que o código mostra
+- Qualquer pressão para pular a validação em staging
+
+---
+
+## 4. Matriz de Regressão Padrão (o "nunca quebrar nada")
+
+Roda em **toda** etapa que toque código, independentemente do que ela mexeu. É o piso.
+
+| # | Check | Persona | Esperado |
+|---|---|---|---|
+| RP1 | Login e painel abrem | produtor dono | dashboard completo, menu íntegro |
+| RP2 | Curso abre e lista conteúdo | produtor dono | módulos e aulas |
+| RP3 | Área de membro abre | aluno matriculado | vitrine, curso, comunidade, player |
+| RP4 | Publicar e comentar | aluno matriculado | funciona como sempre |
+| RP5 | Painel do colaborador | colaborador com permissões | só o que a permissão dá |
+| RP6 | Telas de dono recusam | colaborador | integrações e credenciais de pagamento: 403 |
+| RP7 | Página de venda | anônimo / sem vínculo | preview intacto |
+| RP8 | Webhooks intocados | — | grep prova que o diff não tocou rota de webhook |
+| RP9 | Build verde | — | `npm run build` exit 0 |
+| RP10 | Bundle servido | — | quando o fix é de client: dev reiniciado + marcador positivo no chunk |
+
+> **Lições que esta matriz encapsula:** dev velho serve código velho · trocar de branch
+> invalida o palco · rota nunca tocada falhando = sinal de servidor · fix de CSS/JS se prova
+> no bundle servido, não no fonte.
+
+---
+
+## 5. Infraestrutura de teste (pré-requisito de tudo)
+
+O staging precisa do elenco completo **antes** da Camada 3. Sem ele, matriz não é confiável.
+
+**Existe hoje:** `producer-staging` (dono) · `aluno-staging` (matriculado) · `colab-dash`
+(VIEW_DASHBOARD) · `colab-analytics` (VIEW_ANALYTICS) · `colab-comunidade`
+(MANAGE_COMMUNITY) · `colab-reply` (REPLY_COMMENTS) · `colab-modonly` (MANAGE_COMMUNITY sem
+ACCESS_MEMBER_AREA) · `colab-zero` (nenhuma).
+
+**Falta criar:** `MANAGE_STUDENTS` · `MANAGE_LESSONS` · `MANAGE_AUTOMATIONS` · colaborador
+com **escopo de curso restrito** · **ADMIN de plataforma** · **dono de um 2º workspace que
+colabora no 1º** (a persona-alvo do 9.74) · colaborador de **dois** workspaces.
+
+**Falta montar:** um **segundo workspace** com curso, comunidade e conteúdo — sem ele,
+nenhum teste cross-tenant é real.
+
+**Regras do palco:** prova dupla de `SUPABASE_REF` em toda escrita · conteúdo obviamente
+falso · **estado do palco registrado no diário** (moderações ligadas, cores nulas, etc.),
+nunca só na conversa.
+
+---
+
+## 6. As camadas
+
+> Ordem por: **desbloquear pessoas → descobrir o desconhecido → consertar o conhecido →
+> entregar valor → construir fundação → tornar resiliente → redesenhar.**
+>
+> **Regra de injeção:** achado crítico de segurança em qualquer camada **fura a fila** e vira
+> etapa própria imediata. O resto entra pela ordem.
+
+---
+
+### CAMADA 0 — Base de trabalho
+*Sem isso, o resto é chute. Nenhuma etapa toca código.*
+
+| Etapa | O que é | Tipo |
+|---|---|---|
+| **E0.1** | Fechar o incidente Perfect Pay com evidência: 2× SUCCESS no log, matrículas ativas, credencial do Lazaro, ProducerTransaction | leitura |
+| **E0.2** | Avisos §21 pendentes: 3 produtores (Arthur, joaodobem, orionaibr) sobre o `VIEW_ANALYTICS` deixar de abrir o dashboard | comunicação |
+| **E0.3** | Completar o elenco de staging (§5) — personas faltantes + 2º workspace | escrita só em staging |
+| **E0.4** | Criar `DIARIO-EXECUCAO.md` e a tabela de status (§8) deste roadmap | documentação |
+
+**Portão de saída:** incidente fechado com PASS · produtores avisados · elenco completo
+provado por SELECT · diário criado com a primeira entrada.
+
+---
+
+### CAMADA 1 — Desbloquear pessoas
+*Gente travada agora. Prioridade sobre qualquer melhoria.*
+
+| Etapa | O que é | Risco |
+|---|---|---|
+| **E1.1** | **Bug do convite** — investigação: por que o modo "Criar conta" consulta a sessão existente e recusa com "o e-mail da sua sessão não corresponde". Hipóteses: validação aplicada no ramo errado · conta já existente com mensagem errada · convite expirado | leitura |
+| **E1.2** | **Bug do convite** — fix + staging + merge. Provável: modo signup ignora sessão; se já houver conta, mensagem correta é "use 'Já tenho conta'" | baixo |
+
+**Por que é urgente:** hoje só funciona em janela anônima, e ninguém sabe disso. O próximo
+convidado trava. Já aconteceu com um cliente real.
+
+**Portão de saída:** convite aceito com outra conta logada no navegador, sem anônima,
+provado em staging com 2 cenários (email novo × email com conta).
+
+---
+
+### CAMADA 2 — Diagnóstico (descobrir antes de consertar)
+*Leitura pura. Custa pouco e reordena o resto com base em fato.*
+
+| Etapa | O que é | Tipo |
+|---|---|---|
+| **E2.1** | **Auditoria Segurança & Infra** — read-only: env vars e `NEXT_PUBLIC_*` · CORS e headers (CSP, HSTS) · rate limiting / anti brute-force · validação de entrada e XSS além do Zod parcial · **buckets do Storage** (o `thumbnails` é público; a rota de upload da comunidade não checa matrícula) · `npm audit` (CVEs) · Data API do Supabase ligada sem uso · RLS das tabelas novas | leitura |
+| **E2.2** | **Triagem dos achados** — cada um classificado: crítico (fura a fila) · fix pequeno (vai pra Camada 3) · frente própria (vai pra Camada 6) | decisão |
+| **E2.3** | **Alerta Vercel 5xx** — `/api/notifications`, 19 falhas em 5 min contra média 0/24h, `Prisma client error`. Hipótese líder: pool de conexões esgotado. Investigar logs da janela + estado do Supabase + deploys simultâneos + se a rota tem retry | leitura |
+
+**Portão de saída:** laudo completo · cada achado com número e camada de destino · nada
+crítico em aberto sem etapa própria criada.
+
+---
+
+### CAMADA 3 — Faxina de bugs conhecidos
+*Todos já investigados. Agrupados por área para render uma sessão cada.*
+
+| Etapa | Itens | Por que juntos |
+|---|---|---|
+| **E3.1** | **9.72** colaborador modera mas não curte · **9.79** mensagem "não matriculado" quando a causa foi permissão · **9.69** `terms-status` deixa produtor de outro ws pular o aceite de termos · **9.64** assimetria POST×PATCH em `permissions:[]` | mesma família (permissões de colaborador) |
+| **E3.2** | **9.57c** teto `max` divergente nos modais irmãos de acesso · **9.60** clamp por tecla come dígitos no campo "Personalizado" | mesma tela |
+| **E3.3** | **9.61** Enter no rename de material salva a aula inteira (falta `preventDefault`) · **9.48** trocar de aba durante "Carregar mais" mistura posts do grupo antigo (falta 2º `abortRef`, molde no próprio arquivo) | ambos precisam de palco com conteúdo |
+| **E3.4** | **9.65** seletor de cursos do colab só com "Todos" · **9.66** `hasPermission`/`canAccessCourse` sem consumidores (dead code) | limpeza |
+
+**Nota do E3.3:** o 9.48 exige palco próprio — 2º grupo + ~15 posts para "Carregar mais"
+existir. Semear antes.
+
+**Portão de saída:** cada item com matriz própria + Matriz de Regressão Padrão + merge +
+papelada.
+
+---
+
+### CAMADA 4 — Features pedidas por produtores
+*Valor direto ao cliente, risco baixo, escopo fechado.*
+
+| Etapa | O que é | Decisão pendente |
+|---|---|---|
+| **E4.1** | **Toggles em Personalizar Curso**: (a) esconder o botão flutuante de suporte (telefone/e-mail) — ⭐ resolve junto a sobreposição dele sobre "Enviar convite" e "Responder" no mobile; (b) esconder o box de nome/módulos/aulas/progresso abaixo do banner | — |
+| **E4.2** | **PDF/material para download na comunidade** — anexo em post, não imagem inline | ⚠️ **Decisão do dono:** hoje o bucket é **público** (URL = qualquer um baixa). Material de curso deve ser privado com URL assinada? E qual o teto de tamanho (hoje 5MB)? |
+
+**Portão de saída:** produtor consegue usar a feature em produção; nada regrediu na tela
+compartilhada.
+
+---
+
+### CAMADA 5 — Fundação de autorização
+*O maior trabalho estrutural. Tem plano próprio.*
+
+| Etapa | O que é | Referência |
+|---|---|---|
+| **E5.1** | **9.71** — laudo dos 7 homônimos `isStaffViewer`; 5 gateiam **acesso a conteúdo** (drip, automação). ⚠️ Unificar o conceito seria escalação de privilégio. Laudo por homônimo, depois fix por homônimo | pré-requisito da FASE 4 do 9.74 |
+| **E5.2** | **9.74 — D1 a D5 respondidas** + **FASE 0** (inventário read-only) | `PLANO-9.74.md` §2.3 e §4 |
+| **E5.3** | **9.74 — FASES 1 a 6**: primitivas (no-op) → modo sombra 7 dias → migração em 5 lotes → flip com piloto → experiência de entrada → contração | `PLANO-9.74.md` |
+| **E5.4** | **9.75** — seletor de workspace / tela de escolha no login | desbloqueado pelo E5.3 |
+
+**Portão de saída:** `applyfybr` entra no painel do `shop-club` com **exatamente** as
+permissões do vínculo; telas de dono recusam; nenhum produtor perdeu nada.
+
+---
+
+### CAMADA 6 — Resiliência e observabilidade
+*Onde o sistema para de depender de sorte.*
+
+| Etapa | O que é | Destrava |
+|---|---|---|
+| **E6.1** | **Fundação de cron/jobs** — fila e execução em background | ⭐ destrava E6.3, E6.4 e as automações em massa (hoje `maxDuration 60s` corta acima de ~1000 alunos) |
+| **E6.2** | **Email** — (A) retry + backoff + timeout no `sendEmail` [resolve ~90%]; (B) tabela `EmailLog` outbox. Hoje: 1 chamada Brevo, sem retry, catch engole o erro, zero log. **Pior caso: cliente paga e não recebe acesso** | — |
+| **E6.3** | **9.58 — ciclo de vida da expiração**: cron D-7/D-1 (sino + email) + `ACTIVE→EXPIRED` (mata a contagem que mente — 17 hoje). Hoje o card é o **único** aviso | E6.1 |
+| **E6.4** | **Prevenção Perfect Pay / gateways**: `rawPayload` completo nas linhas ERROR (⚠️ **antes**: §10 — quem lê a `WebhookLog` e mascaramento de PII) · alerta bell-first ao produtor quando venda aprovada cai sem vínculo · aviso no setup quando o token é salvo com zero vínculos · **fila retroativa** de aprovados órfãos (⚠️ §11: idempotência e replay como fundação) | E6.1 |
+| **E6.5** | **Origin lock** — os 2 pré-requisitos: migrar todos os produtores com webhook na origem para o domínio; investigar por que login legítimo chega sem carimbo do Cloudflare. ⛔ **B.2 segue PROIBIDO de ligar até os dois** | — |
+
+**Portão de saída:** venda aprovada nunca mais morre em silêncio; email tem rastro;
+expiração avisa antes de cortar.
+
+---
+
+### CAMADA 7 — Épicos de produto
+*Redesenho, com fundação pronta embaixo.*
+
+| Etapa | O que é |
+|---|---|
+| **E7.1** | **Repaginada da comunidade** — nível Apple, referência Nubank. Composer, post com foto, post com legenda, respostas aninhadas (padrão Facebook), barra de grupos. ⭐ **Requisitos de fundação já registrados:** fechamento por rastreio de ponteiro (spec 9.55-A, nunca `onBlur` para desmontar) · régua `hasPostContent` nos dois lados · alvos de toque ≥44px nativos do layout, não padding a posteriori · editor respeitando as cores do produtor · barra de grupos sem `overflow-x-auto` (lição iOS PWA) |
+| **E7.2** | **Campanha de varredura da plataforma** — o formato de hoje (agente explora, relatório em 3 listas: bugs / inconsistências / melhorias), aplicado área por área: comunidade · player · vitrine · checkout e webhooks · alunos · automações · lives · suporte · configurações. Cada área com palco semeado e triagem alimentando o `PLANO-MESTRE` |
+
+---
+
+## 7. Trilha paralela — descoberta contínua
+
+Roda **em paralelo** às camadas, sem consumir sessão de desenvolvimento:
+
+- Varredura exploratória com o agente de navegador, **read-only**, área por área
+- Cada varredura produz 3 listas (bugs / inconsistências / melhorias)
+- Triagem: crítico fura a fila · pequeno entra na Camada 3 da vez · grande vira etapa
+- **Regra:** varredura em produção é **leitura pura**; escrita só em staging
+
+---
+
+## 8. Tabela de status
+
+> Atualizada a cada etapa fechada. É o primeiro lugar que se olha ao retomar.
+
+| Etapa | Estado | SHA | Data |
+|---|---|---|---|
+| E0.1 Fechar incidente PP | ⬜ pendente | — | — |
+| E0.2 Avisos §21 | ⬜ pendente | — | — |
+| E0.3 Elenco de staging | ⬜ pendente | — | — |
+| E0.4 Diário criado | ⬜ pendente | — | — |
+| E1.1 Convite — investigação | ⬜ pendente | — | — |
+| E1.2 Convite — fix | ⬜ pendente | — | — |
+| E2.1 Auditoria Segurança & Infra | ⬜ pendente | — | — |
+| E2.2 Triagem dos achados | ⬜ pendente | — | — |
+| E2.3 Alerta Vercel 5xx | ⬜ pendente | — | — |
+| E3.1 Faxina permissões | ⬜ pendente | — | — |
+| E3.2 Faxina campo de dias | ⬜ pendente | — | — |
+| E3.3 Faxina comunidade/materiais | ⬜ pendente | — | — |
+| E3.4 Limpeza dead code | ⬜ pendente | — | — |
+| E4.1 Toggles Personalizar Curso | ⬜ pendente | — | — |
+| E4.2 PDF na comunidade | ⬜ pendente | — | — |
+| E5.1 9.71 homônimos | ⬜ pendente | — | — |
+| E5.2 9.74 D1–D5 + FASE 0 | ⬜ pendente | — | — |
+| E5.3 9.74 FASES 1–6 | ⬜ pendente | — | — |
+| E5.4 9.75 seletor | ⬜ pendente | — | — |
+| E6.1 Cron/jobs | ⬜ pendente | — | — |
+| E6.2 Email | ⬜ pendente | — | — |
+| E6.3 9.58 expiração | ⬜ pendente | — | — |
+| E6.4 Prevenção gateways | ⬜ pendente | — | — |
+| E6.5 Origin lock | ⬜ pendente | — | — |
+| E7.1 Repaginada comunidade | ⬜ pendente | — | — |
+| E7.2 Campanha de varredura | ⬜ pendente | — | — |
+
+Legenda: ⬜ pendente · 🔵 em andamento · ✅ fechada · ⛔ bloqueada
+
+---
+
+## 9. Mapa de dependências
+
+```
+E0.3 (elenco staging) ──────────► toda etapa com matriz de personas
+E2.1 (auditoria) ───────────────► E2.2 ──► injeta em C3 / C6
+E5.1 (9.71) ────────────────────► E5.3 FASE 4 (flip do 9.74)
+E5.2 (D1–D5 + FASE 0) ──────────► E5.3
+E5.3 (9.74) ────────────────────► E5.4 (9.75)
+E6.1 (cron/jobs) ───────────────► E6.3 · E6.4 · automações em massa
+E4.2 (PDF) ──── decisão de privacidade do bucket ────► depende de E2.1
+E7.1 (repaginada) ── herda specs de 9.55-A, hasPostContent, alvos ≥44px
+```
+
+---
+
+## 10. Como saber que terminou
+
+O roadmap está cumprido quando, simultaneamente:
+
+- [ ] Nenhum item 🔴 ou 🟠 aberto no `PLANO-MESTRE`
+- [ ] Tabela de status (§8) sem ⬜
+- [ ] `applyfybr` (e qualquer colaborador) entra no painel do workspace onde colabora com as permissões corretas
+- [ ] Venda aprovada nunca morre em silêncio: alerta + fila retroativa funcionando
+- [ ] Email tem retry e rastro
+- [ ] Auditoria de Segurança & Infra fechada, com cada achado resolvido ou registrado com decisão
+- [ ] Comunidade redesenhada
+- [ ] O diário conta a história inteira, sem buraco
+
+---
+
+## 11. O que este plano nunca faz
+
+- **Não sobe nada sem staging.** Sem exceção, nem para "uma linha".
+- **Não mexe em webhook, rota pública ou player** fora de etapa dedicada a isso.
+- **Não toca nas rotas de dono** (integrações, credenciais de pagamento) fora de etapa dedicada.
+- **Não fecha item sem papelada** no mesmo fôlego.
+- **Não tem prazo.** Tem portões. A etapa avança quando está provada.
