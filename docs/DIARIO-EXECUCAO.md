@@ -35,6 +35,64 @@ Copie o bloco abaixo e preencha todos os campos. Campo sem resposta = etapa não
 
 <!-- As entradas começam abaixo desta linha, da mais recente para a mais antiga. -->
 
+## 2026-08-14 — CAMADA 2, STORAGE PARTE 1 — Fechar a torneira (`community/upload`)
+
+**Estado antes:** main em `febcfad`
+
+**O que foi feito:** o achado **A2** da auditoria E2.1 — `POST /api/community/upload` tinha
+`getCurrentUser()` como **único** gate, e escrevia num bucket público sem checar vínculo, sem
+rate-limit e validando mime pelo header que o cliente escolhe. A rota passou a exigir **vínculo
+real** com a plataforma, ganhou o rate-limit do helper da casa, teto de tamanho no servidor e
+**allowlist de mime por assinatura de bytes** — com a extensão gravada derivada do conteúdo,
+não do nome enviado.
+
+**Arquivos tocados:** `src/app/api/community/upload/route.ts` (único; +127/−36)
+
+**Como foi provado:**
+- **Matriz 14/14** em staging (`wxynnsyartxcvglqwmdw`, impresso antes de cada bloco). Legítimos
+  **200**: aluno matriculado (A e B), `colab-comunidade`, `colab-modonly`, `colab-reply`,
+  ⭐ `colab-lessons` (o caminho do produtor), dono, `dono-b`, ADMIN. Negados **403**:
+  `colab-zero`, `colab-students`, `colab-analytics` — e o **atacante do A2**, uma conta criada
+  na hora por `/api/auth/register-producer` (rota pública, **201**, nascida com 0 workspace,
+  0 curso, 0 matrícula). Anônimo **401**.
+- **Fronteira de contexto** (o desenho escolhido): `aluno-b` sobe **200**, publica no curso A
+  **403** *"Não matriculado neste curso"*, publica no próprio B **201**.
+- **Sondas**: 6 MB → **413** · PDF, EXE (`MZ`) e SVG **declarados `image/png`** → **415** ×3 ·
+  SVG honesto → **415** · rajada → **429** na #99, `Retry-After: 17`, `X-RateLimit-Limit: 100`.
+- **Marcador positivo por tipo**: PNG/JPEG/GIF/WebP enviados como `application/octet-stream`
+  e **sem extensão no nome** gravaram `.png/.jpg/.gif/.webp`.
+- **Controle crítico**: post com `<img>` publica (201), sobrevive ao sanitize, volta no feed, e
+  a URL pública serve **70 bytes, `image/png`, idênticos aos enviados**.
+- **Gate humano 5/5** no palco `e92a68b`: (1) post com imagem renderiza · (2) comentário e
+  resposta com imagem, 201 · (3) editar post trocando imagem, persiste após reload ·
+  (4) ⭐ **produtor insere imagem na descrição de aula — o irmão fora da comunidade não quebrou**
+  · (5) PDF barrado no client com a mensagem certa, em vermelho, sem sair requisição.
+
+**SHA do merge:** `af28974`  ·  **Rollback:** `git revert -m 1 af28974`
+
+**Mudou em produção para quem:** ninguém legítimo perde nada — todos os 5 call-sites do
+`RichTextEditor` foram mapeados antes e cobertos. **Passa a levar 403**: conta autenticada sem
+nenhum vínculo (o alvo do fix) · colaborador `ACCEPTED` **sem** `MANAGE_COMMUNITY`,
+`REPLY_COMMENTS` ou `MANAGE_LESSONS` · **PRODUCER recém-registrado sem workspace** (aprovado
+pelo dono: sem workspace não há curso, logo não há caminho legítimo). Ninguém a avisar.
+
+**Ficou aberto:** **9.88** portas irmãs do bucket gateadas por `role` (cegas ao híbrido) ·
+**9.89** rate-limit por contagem e não por peso (~500 MB/min por IP) · **9.90** comentário em
+post `PENDING` falha em silêncio (achado humano) · **9.91** seed sem persona sem-vínculo.
+⚠️ **A1 (bucket `materials` público e sem teto) segue 🔴 aberto — é a Storage Parte 2.**
+
+**Efeito colateral no staging (registrado):** `aluno-b@staging.test` ganhou a senha do elenco
+no ws B, usando `generateSalt`/`hashPassword` de `src/lib/workspace-auth.ts` (nunca cripto
+replicada). O login dele falhava desde a varredura de QA e **envenenava sondas** — foi a origem
+do falso positivo de IDOR. Contas `sem-vinculo` e `aluno-b2` criadas e apagadas (`count=0`);
+posts de teste removidos.
+
+**Regras conferidas:** §17 respondido ✅ · staging-first ✅ · gate humano ✅ · papelada ✅ ·
+7 perguntas (reuso do `rateLimit` e dos helpers de gate, zero abstração nova) ✅ ·
+irmãos mapeados antes do fix ✅
+
+---
+
 ## 2026-08-14 — 📌 VARREDURA DE QA (staging) + TRIAGEM — não é etapa fechada
 
 > Registro da varredura exploratória (trilha paralela, §7 do roadmap) e da

@@ -190,6 +190,21 @@ provado em staging com 2 cenários (email novo × email com conta).
 **Portão de saída:** laudo completo · cada achado com número e camada de destino · nada
 crítico em aberto sem etapa própria criada.
 
+**E2.1 executada em 14/08** (leitura pura; produção só SELECT). Voltou **melhor que o
+esperado** em quase tudo — 6/6 headers, 60/60 tabelas com RLS, zero grant de `anon`, nenhum
+segredo em `NEXT_PUBLIC_*`, os 8 `dangerouslySetInnerHTML` cobertos. **Dois 🔴 no Storage**,
+que furaram a fila e viraram a frente **"fechar a torneira"**:
+
+| Achado | O que é | Estado |
+|---|---|---|
+| **A2** | `community/upload` com `getCurrentUser()` como único gate — qualquer autenticado escrevia no bucket público, sem vínculo e sem rate-limit | ✅ **RESOLVIDO** — Storage Parte 1, merge `af28974` (item **9.87**) |
+| **A1** | bucket `materials` **público e sem teto de tamanho** — material de curso em URL aberta | 🔴 **ABERTO** — é a **Storage Parte 2** |
+
+Itens novos que a Parte 1 gerou: **9.88** (portas irmãs do bucket gateadas por role) ·
+**9.89** (rate-limit por contagem, não por peso) · **9.90** (comentário em post `PENDING`
+falha em silêncio) · **9.91** (seed sem persona sem-vínculo). Os três demais achados da
+auditoria — rate-limit da Peça B, HSTS e `npm audit` — seguem na Camada 3.
+
 ---
 
 ### CAMADA 3 — Faxina de bugs conhecidos
@@ -288,7 +303,9 @@ Roda **em paralelo** às camadas, sem consumir sessão de desenvolvimento:
 | E0.4 Diário criado | ✅ fechada | `a7e302a` | 2026-08-14 |
 | E1.1 Convite — investigação | ✅ fechada | `6510db1` | 2026-08-14 |
 | E1.2 Convite — fix | ✅ fechada | `6510db1` | 2026-08-14 |
-| E2.1 Auditoria Segurança & Infra | ⬜ pendente | — | — |
+| E2.1 Auditoria Segurança & Infra | ✅ fechada | laudo + achados no §Camada 2 | 2026-08-14 |
+| **Storage Parte 1** (A2 — torneira) | ✅ fechada | `af28974` | 2026-08-14 |
+| **Storage Parte 2** (A1 — bucket `materials`) | 🔴 **aberta, fura a fila** | — | — |
 | E2.2 Triagem dos achados | ⬜ pendente | — | — |
 | E2.3 Alerta Vercel 5xx | ⬜ pendente | — | — |
 | E3.1 Faxina permissões | ⬜ pendente | — | — |
