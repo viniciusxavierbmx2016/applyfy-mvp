@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getCurrentUser, isEnrollmentActive } from "@/lib/auth";
+import { getCurrentUser } from "@/lib/auth";
+import { checkLessonAccess } from "@/lib/lesson-access";
 
 export async function GET(_request: Request, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
@@ -10,43 +11,20 @@ export async function GET(_request: Request, props: { params: Promise<{ id: stri
       return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
     }
 
-    const lesson = await prisma.lesson.findUnique({
-      where: { id: params.id },
-      select: {
-        id: true,
-        module: {
-          select: {
-            course: {
-              select: {
-                id: true,
-                ownerId: true,
-                workspace: { select: { ownerId: true } },
-              },
-            },
-          },
-        },
-      },
-    });
-
-    if (!lesson) {
-      return NextResponse.json({ error: "Aula não encontrada" }, { status: 404 });
+    // Mesmo julgamento de antes, agora num lugar só — a rota de download precisa
+    // do idêntico. Ramos, ordem e códigos preservados (404 aula, 403 acesso).
+    const access = await checkLessonAccess(user, params.id);
+    if (!access.ok) {
+      return NextResponse.json(
+        { error: access.status === 404 ? "Aula não encontrada" : "Sem acesso" },
+        { status: access.status }
+      );
     }
 
-    const course = lesson.module.course;
-    const isOwner =
-      user.role === "ADMIN" ||
-      (user.role === "PRODUCER" &&
-        (course.ownerId === user.id || course.workspace.ownerId === user.id));
-
-    if (!isOwner) {
-      const enrollment = await prisma.enrollment.findUnique({
-        where: { userId_courseId: { userId: user.id, courseId: course.id } },
-      });
-      if (!isEnrollmentActive(enrollment)) {
-        return NextResponse.json({ error: "Sem acesso" }, { status: 403 });
-      }
-    }
-
+    // ⚠️ `fileUrl` NÃO sai daqui. A URL pública do arquivo deixou de ser
+    // devolvida ao cliente: o download passa pela rota assinada, que refaz o
+    // gate a cada clique. Nenhum consumidor usava o campo — o painel do
+    // produtor (`lesson-materials.tsx`) o declara e nunca renderiza.
     const materials = await prisma.lessonMaterial.findMany({
       where: { lessonId: params.id },
       select: {
@@ -55,7 +33,6 @@ export async function GET(_request: Request, props: { params: Promise<{ id: stri
         fileName: true,
         fileSize: true,
         fileType: true,
-        fileUrl: true,
       },
       orderBy: { sortOrder: "asc" },
     });

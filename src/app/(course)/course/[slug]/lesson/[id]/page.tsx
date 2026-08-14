@@ -35,7 +35,8 @@ interface MaterialData {
   fileName: string;
   fileSize: number;
   fileType: string;
-  fileUrl: string;
+  // Sem `fileUrl`: a API não devolve mais a URL do arquivo. O download vai pela
+  // rota assinada, montada a partir dos ids.
 }
 
 interface ViewData {
@@ -568,7 +569,7 @@ export default function LessonPage(
                     return (
                       <a
                         key={mat.id}
-                        href={mat.fileUrl}
+                        href={`/api/lessons/${params.id}/materials/${mat.id}/download`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="group flex items-center gap-3 p-3 bg-gray-50 dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.06] rounded-xl hover:bg-gray-100 dark:hover:bg-white/[0.06] hover:border-gray-300 dark:hover:border-white/[0.12] transition-colors"
