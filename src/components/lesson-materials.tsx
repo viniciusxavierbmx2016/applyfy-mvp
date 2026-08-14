@@ -13,7 +13,8 @@ interface Material {
   id: string;
   name: string;
   fileName: string;
-  fileUrl: string;
+  // Sem `fileUrl`: a rota do painel não devolve mais a URL do objeto (bucket
+  // privado). Nada aqui a renderizava — o campo só existia no tipo.
   fileSize: number;
   fileType: string;
   sortOrder: number;
