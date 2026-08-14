@@ -110,10 +110,23 @@ export function canAccessCourse(
 // One-shot check: user is an accepted collaborator on the given course and
 // has at least one of the listed permissions. Cheap enough to call per-request
 // since it's two indexed lookups.
+// `requireMemberAccess` (opt-in, default false) soma a exigência de
+// ACCESS_MEMBER_AREA. Serve às superfícies de ENTRADA da comunidade — ver o
+// feed, publicar, comentar, abrir os grupos — onde a pergunta é "esta pessoa
+// circula aqui como membro?".
+//
+// ⚠️ Opt-in por call-site, NUNCA embutido: este helper também sustenta o
+// PAINEL (gestão de grupos em `producer/community/groups/**`, 4 arquivos) e as
+// ações de MODERAÇÃO que o dono decidiu manter separadas — excluir post, fixar
+// e excluir comentário alheio seguem governados por MANAGE_COMMUNITY sozinho,
+// inclusive porque `DELETE /api/posts/[id]` e `pin` são chamados TAMBÉM pela
+// tela do painel (`producer/community/page.tsx:142,170`). Ligar a exigência
+// aqui dentro tiraria a fila de moderação de quem só modera.
 export async function collaboratorCanActOnCourse(
   userId: string,
   courseId: string,
-  anyOf: CollaboratorPermission[]
+  anyOf: CollaboratorPermission[],
+  opts?: { requireMemberAccess?: boolean }
 ): Promise<boolean> {
   const rec = await prisma.collaborator.findFirst({
     where: { userId, status: "ACCEPTED" },
@@ -122,6 +135,12 @@ export async function collaboratorCanActOnCourse(
   if (!rec) return false;
   const hasPerm = anyOf.some((p) => rec.permissions.includes(p));
   if (!hasPerm) return false;
+  if (
+    opts?.requireMemberAccess &&
+    !rec.permissions.includes(MEMBER_AREA_PERMISSION)
+  ) {
+    return false;
+  }
   const course = await prisma.course.findUnique({
     where: { id: courseId },
     select: { workspaceId: true },
