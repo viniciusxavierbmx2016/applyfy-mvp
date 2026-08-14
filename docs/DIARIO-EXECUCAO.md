@@ -35,6 +35,75 @@ Copie o bloco abaixo e preencha todos os campos. Campo sem resposta = etapa não
 
 <!-- As entradas começam abaixo desta linha, da mais recente para a mais antiga. -->
 
+## 2026-08-14 — CAMADA 0, ETAPA E0.3 — Elenco completo do staging
+
+**Estado antes:** main em 2b98ff2 · staging com 11 users, 1 workspace, 1 curso, 1 grupo
+
+**O que foi feito:** criado `scripts/seed-staging.mjs` (idempotente, versionado) e
+executado: **2º workspace** completo (`workspace-b-staging`, dono próprio, curso,
+comunidade, aluno matriculado, 1 post), **2º curso no workspace A**
+(`curso-teste-2`, para a persona de escopo restrito ter o que restringir), e as
+**8 personas que faltavam**. O palco passa de 11 para **19 users** e de 1 para
+**2 workspaces** — é o que torna qualquer teste cross-tenant real e destrava a
+Camada 5 (9.74).
+
+**Arquivos tocados:** scripts/seed-staging.mjs (novo) · docs/DIARIO-EXECUCAO.md ·
+docs/ROADMAP-EXECUCAO.md — **zero código de produção**
+
+**Como foi provado:** prova dupla de `SUPABASE_REF` em toda operação (staging
+confirmado, produção abortaria); seed rodado **3×** até convergir sem erro
+(idempotência real, não presumida); verificação final por SELECT com papel,
+permissões, escopo, workspace e matrícula de cada persona; `auth.users` **19 ×
+19** Prisma, zero órfão.
+
+**SHA do merge:** commit direto na main — só docs + script de seed
+**Rollback:** o staging é recriável pelo próprio seed; `git revert` do commit
+
+**Mudou em produção para quem:** ninguém — nenhuma escrita em produção, nenhuma
+linha de código de produção.
+
+**Ficou aberto:** E0.1 (⏸️ aguardando ação do produtor) · E0.2 (avisos §21).
+
+**Regras conferidas:** §17 respondido ✅ · staging-only ✅ · gate humano n/a ✅ ·
+papelada ✅
+
+### 📋 ESTADO DO PALCO (registrado aqui porque estado só na conversa se perde)
+
+**Workspace A — `staging-teste`** (dono `producer-staging@staging.test`)
+- Cursos: `curso-teste` (comunidade ON, grupo `Geral`/READ_WRITE) · `curso-teste-2` (novo)
+- ⚠️ **`curso-teste` com as DUAS moderações LIGADAS** (`communityModerationEnabled` e
+  `lessonCommentsModerationEnabled`) — ligadas de propósito no 9.68: sem elas toda
+  sonda de moderação passa vazia. Comentário novo nasce PENDING; **não é bug**.
+- ⚠️ **Cores do membro NULAS** — o 9.73 usou cores berrantes para a prova e as
+  restaurou. Quem for testar tema precisa setá-las de novo (1 chamada na tela
+  Personalizar).
+
+**Workspace B — `workspace-b-staging`** (dono `dono-b@staging.test`)
+- Curso `curso-b` (comunidade ON, grupo `Geral`/READ_WRITE, 1 post do dono)
+- `aluno-b@staging.test` matriculado ACTIVE
+
+**Elenco (19 users, senha `Staging@2026!`):**
+
+| persona | papel |
+|---|---|
+| `producer-staging` | DONO do A |
+| `dono-b` | **DONO do B + colaborador no A** `[MANAGE_COMMUNITY, VIEW_ANALYTICS]` — o retrato do `applyfybr`, persona-alvo do 9.74 |
+| `admin-staging` | **ADMIN de plataforma** |
+| `colab-duplo` | **colaborador nos DOIS** — A `[REPLY_COMMENTS]` · B `[MANAGE_COMMUNITY]` |
+| `colab-escopo` | `[MANAGE_STUDENTS, MANAGE_LESSONS]` com **escopo restrito a 1 curso** |
+| `colab-students` · `colab-lessons` · `colab-automations` | uma permissão isolada cada |
+| `colab-dash` · `colab-analytics` · `colab-comunidade` · `colab-reply` | uma permissão + `ACCESS_MEMBER_AREA` |
+| `colab-modonly` | `[MANAGE_COMMUNITY]` **sem** `ACCESS_MEMBER_AREA` (a célula ⭐ do 9.78) |
+| `colab-zero` | `[]` — nenhuma permissão |
+| `aluno-staging` · `aluno-b` | matriculados em A e B |
+| `faxina-teste-1/2/4` | alunos matriculados em A (legado de sessões anteriores) |
+
+**⚠️ Semeado FORA do caminho real** (não há rota, e está marcado no script):
+`Subscription` EXEMPT dos produtores novos (é checkout de verdade) · `role=ADMIN`
+do `admin-staging` (nenhuma rota promove a ADMIN de plataforma). Todo o resto —
+registro, workspace, curso, convite, aceite, matrícula, post, escopo por PATCH —
+passou pelas rotas reais.
+
 ## 2026-08-14 — CAMADA 0, ETAPA E0.4 — Sistema de documentação de execução
 
 **Estado antes:** main em 76c9b58

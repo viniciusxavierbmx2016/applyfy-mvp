@@ -147,7 +147,7 @@ nunca só na conversa.
 
 | Etapa | O que é | Tipo |
 |---|---|---|
-| **E0.1** | Fechar o incidente Perfect Pay com evidência: 2× SUCCESS no log, matrículas ativas, credencial do Lazaro, ProducerTransaction | leitura |
+| **E0.1** | Fechar o incidente Perfect Pay com evidência: 2× SUCCESS no log, matrículas ativas, credencial do Lazaro, ProducerTransaction. ⏸️ **VERIFICADO EM 14/08 — FAIL, aguardando terceiro**: os reenvios NÃO chegaram (`PPPB8MG3` só tem as 2 linhas ERROR de 11/08); os 2 compradores seguem sem matrícula. ⭐ Mas a integração está **provada viva**: 2 compras orgânicas pós-vínculo com SUCCESS, e o `PPPB8MG3` **está mapeado** — um reenvio agora funcionaria. Pendente: o produtor reenviar de novo | leitura |
 | **E0.2** | Avisos §21 pendentes: 3 produtores (Arthur, joaodobem, orionaibr) sobre o `VIEW_ANALYTICS` deixar de abrir o dashboard | comunicação |
 | **E0.3** | Completar o elenco de staging (§5) — personas faltantes + 2º workspace | escrita só em staging |
 | **E0.4** | Criar `DIARIO-EXECUCAO.md` e a tabela de status (§8) deste roadmap | documentação |
@@ -276,9 +276,9 @@ Roda **em paralelo** às camadas, sem consumir sessão de desenvolvimento:
 
 | Etapa | Estado | SHA | Data |
 |---|---|---|---|
-| E0.1 Fechar incidente PP | ⬜ pendente | — | — |
+| E0.1 Fechar incidente PP | ⏸️ aguardando terceiro | — | 2026-08-14 |
 | E0.2 Avisos §21 | ⬜ pendente | — | — |
-| E0.3 Elenco de staging | ⬜ pendente | — | — |
+| E0.3 Elenco de staging | ✅ fechada | seed versionado | 2026-08-14 |
 | E0.4 Diário criado | ✅ fechada | `a7e302a` | 2026-08-14 |
 | E1.1 Convite — investigação | ⬜ pendente | — | — |
 | E1.2 Convite — fix | ⬜ pendente | — | — |
@@ -303,7 +303,7 @@ Roda **em paralelo** às camadas, sem consumir sessão de desenvolvimento:
 | E7.1 Repaginada comunidade | ⬜ pendente | — | — |
 | E7.2 Campanha de varredura | ⬜ pendente | — | — |
 
-Legenda: ⬜ pendente · 🔵 em andamento · ✅ fechada · ⛔ bloqueada
+Legenda: ⬜ pendente · 🔵 em andamento · ⏸️ aguardando terceiro (ação fora do nosso alcance) · ✅ fechada · ⛔ bloqueada
 
 ---
 
