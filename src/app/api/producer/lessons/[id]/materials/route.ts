@@ -4,6 +4,29 @@ import { canEditLesson, requireStaff } from "@/lib/auth";
 import { createAdminClient, MATERIALS_BUCKET } from "@/lib/supabase-admin";
 import { MATERIALS_ALLOWED_TYPES, MATERIALS_MAX_SIZE } from "@/lib/materials-constants";
 
+/* O que o painel recebe — SEM `fileUrl`. O `findMany` sem `select` devolvia a
+   linha inteira, e com o bucket privado essa URL vira link morto entregue ao
+   browser. O painel nunca a renderizou (o componente só a declarava no tipo),
+   então o campo saía de graça e sem uso.
+
+   ⚠️ Vale para o GET **e** para o POST: `lesson-materials.tsx:141` empurra o
+   material devolvido pelo POST no MESMO estado que o GET preenche — formas
+   diferentes ali seriam uma lista com dois tipos de item. Mesmo conjunto da
+   rota do aluno (`api/lessons/[id]/materials`), de propósito.
+
+   ⚠️ A COLUNA continua guardando a URL pública: o POST segue gravando
+   `getPublicUrl`, porque hoje ela é o carregador do path e o parse do download
+   e do DELETE dependem desse formato. Guardar só o path é refactor com migração
+   de dados — item próprio, não um efeito colateral deste flip. */
+const MATERIAL_FIELDS = {
+  id: true,
+  name: true,
+  fileName: true,
+  fileSize: true,
+  fileType: true,
+  sortOrder: true,
+} as const;
+
 export async function GET(_request: Request, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
   try {
@@ -14,6 +37,7 @@ export async function GET(_request: Request, props: { params: Promise<{ id: stri
 
     const materials = await prisma.lessonMaterial.findMany({
       where: { lessonId: params.id },
+      select: MATERIAL_FIELDS,
       orderBy: { sortOrder: "asc" },
     });
 
@@ -94,6 +118,7 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
         fileType,
         sortOrder: (maxOrder._max.sortOrder ?? -1) + 1,
       },
+      select: MATERIAL_FIELDS,
     });
 
     return NextResponse.json({ material }, { status: 201 });
