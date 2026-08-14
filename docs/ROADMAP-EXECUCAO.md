@@ -279,7 +279,7 @@ Roda **em paralelo** às camadas, sem consumir sessão de desenvolvimento:
 | E0.1 Fechar incidente PP | ⬜ pendente | — | — |
 | E0.2 Avisos §21 | ⬜ pendente | — | — |
 | E0.3 Elenco de staging | ⬜ pendente | — | — |
-| E0.4 Diário criado | ⬜ pendente | — | — |
+| E0.4 Diário criado | ✅ fechada | `a7e302a` | 2026-08-14 |
 | E1.1 Convite — investigação | ⬜ pendente | — | — |
 | E1.2 Convite — fix | ⬜ pendente | — | — |
 | E2.1 Auditoria Segurança & Infra | ⬜ pendente | — | — |
