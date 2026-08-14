@@ -286,8 +286,8 @@ Roda **em paralelo** às camadas, sem consumir sessão de desenvolvimento:
 | E0.2 Avisos §21 | ⬜ pendente | — | — |
 | E0.3 Elenco de staging | ✅ fechada | seed versionado | 2026-08-14 |
 | E0.4 Diário criado | ✅ fechada | `a7e302a` | 2026-08-14 |
-| E1.1 Convite — investigação | ⬜ pendente | — | — |
-| E1.2 Convite — fix | ⬜ pendente | — | — |
+| E1.1 Convite — investigação | ✅ fechada | `6510db1` | 2026-08-14 |
+| E1.2 Convite — fix | ✅ fechada | `6510db1` | 2026-08-14 |
 | E2.1 Auditoria Segurança & Infra | ⬜ pendente | — | — |
 | E2.2 Triagem dos achados | ⬜ pendente | — | — |
 | E2.3 Alerta Vercel 5xx | ⬜ pendente | — | — |

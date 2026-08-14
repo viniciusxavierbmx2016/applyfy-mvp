@@ -35,6 +35,57 @@ Copie o bloco abaixo e preencha todos os campos. Campo sem resposta = etapa não
 
 <!-- As entradas começam abaixo desta linha, da mais recente para a mais antiga. -->
 
+## 2026-08-14 — CAMADA 1 FECHADA, ETAPAS E1.1 + E1.2 — Bug do convite
+
+**Estado antes:** main em 3a447ab
+
+**O que foi feito:** investigado (E1.1) e corrigido (E1.2) o bug que travava o
+aceite de convite quando o link era aberto num navegador com **outra conta
+logada** — só funcionava em janela anônima, e ninguém sabia disso. A causa era
+**ordem de checagem**: `accept/route.ts` lia o `mode` em `:33` e só o consultava
+em `:81`, então o ramo de sessão (`:38-49`) interceptava o signup antes. O fix
+despacha por modo **antes** da sessão, com condição composta, e a página passou a
+avisar quando a sessão é de outra pessoa.
+
+**Arquivos tocados:** `src/app/api/invite/[id]/accept/route.ts` ·
+`src/app/invite/[id]/page.tsx`
+
+**Como foi provado:** matriz de **6 cenários** antes/depois em staging, mais um
+**teste de segurança** dedicado e verificação no banco:
+
+```
+(c) sessão de TERCEIRO + signup      400 → 200 created ✅   (sem janela anônima)
+    ↳ userId gravado no vínculo      CONVIDADO (nunca o terceiro)
+    ↳ pós auto-login, a sessão é     do convidado (o cookie É substituído)
+(a) 200 created · (b) 409 useLogin · (d) 200 · (e) 200 (NÃO virou 409) ·
+(f) revogado 400 / já aceito 200 alreadyAccepted
+🔴 SEGURANÇA: A faz BIND no convite de B → 400, linha PENDING sem userId
+Todos idênticos antes e depois, exceto o (c).
+```
+
+Humano: cenário (c) real, **sem anônima** — aviso âmbar apareceu, "Criar conta e
+aceitar convite" funcionou, e terminou logado como o convidado. Bônus: reabrir o
+link consumido mostrou "Convite já aceito", confirmando o (f) por acidente.
+
+**SHA do merge:** 6510db1 · **Rollback:** `git revert -m 1 6510db1`
+
+**Mudou em produção para quem:** ninguém perde nada — o fix só **destrava** um
+caminho que antes recusava. Convidados futuros deixam de precisar de janela
+anônima. Nenhum aviso a produtores é necessário.
+
+**Ficou aberto:** ⚠️ **lacuna conhecida, baixo risco** — o botão "Sair e aceitar
+como…" **não foi exercitado por humano** (o link já estava consumido quando se
+pensou nele). Os dois comportamentos que ele compõe (logout · permanecer na
+página do convite) foram provados isoladamente. Decisão do dono: não gerar
+convite novo só para isso.
+
+**Regras conferidas:** §17 respondido ✅ · staging-first ✅ · gate humano ✅ ·
+papelada ✅
+
+⭐ **Descoberta registrada no 9.80:** **convite NÃO EXPIRA** neste sistema —
+`Collaborator` tem `invitedAt` e `acceptedAt`, sem `expiresAt`, e nenhuma rota
+calcula idade. Elimina "convite expirado" de diagnósticos futuros.
+
 ## 2026-08-14 — 📌 DECISÃO REGISTRADA (não é etapa fechada) — CAMADA 4, ETAPA E4.3 criada
 
 > ⚠️ **Esta entrada não fecha etapa nenhuma.** O diário registra fato, e o fato aqui é
