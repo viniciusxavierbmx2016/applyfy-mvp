@@ -35,6 +35,65 @@ Copie o bloco abaixo e preencha todos os campos. Campo sem resposta = etapa não
 
 <!-- As entradas começam abaixo desta linha, da mais recente para a mais antiga. -->
 
+## 2026-08-14 — CAMADA 2, STORAGE PARTE 2 · PASSO 1 — Download de material por URL assinada
+
+**Estado antes:** main em `3587505`
+
+**O que foi feito:** o achado **A1** (bucket `materials` público) em dois passos. Este é o
+**Passo 1, só código**: rota nova que assina o material por **900s** e redireciona, e a API de
+materiais deixa de devolver `fileUrl`. **O bucket segue PÚBLICO de propósito** — é o que faz o
+rollback não ter janela de quebra. Entraram junto dois acertos: nome de arquivo sanitizado (o
+aluno recebia `a%CC%80s` no lugar de `às`) e sinal visual no clique.
+
+**Arquivos tocados:** `api/lessons/[id]/materials/[materialId]/download/route.ts` (novo) ·
+`lib/lesson-access.ts` (novo) · `lib/materials-constants.ts` ·
+`api/lessons/[id]/materials/route.ts` · `(course)/course/[slug]/lesson/[id]/page.tsx`
+*(5 arquivos, não os 3 previstos: os 2 novos de `lib/` são a consequência mecânica de "reusar o
+gate e o regex" — reuso exige lugar comum. Molde: `lib/ticket-access.ts`.)*
+
+**Como foi provado:**
+- **Matriz de matrícula 9/9**, com o `Enrollment` lido do banco **antes de cada sonda** e colado
+  ao lado: `ACTIVE` → **302** · `CANCELLED` → **403** · `EXPIRED` → **403** · `ACTIVE` com
+  `expiresAt` no passado → **403** · com `expiresAt` no futuro → **302**. Rota irmã de listagem
+  **concorda nos 4 estados**. ⭐ Aluno que cancelou **não** continua baixando. Estado da persona
+  restaurado idêntico ao original (`try/finally`).
+- **Sondas**: material de outra aula → **404** · id inexistente → **404** · anônimo → **401** ·
+  token adulterado → **400** · **TTL lido do `exp` do JWT = 900s**. Bytes baixados == `fileSize`
+  do banco e idênticos aos da URL pública.
+- **Controle do rollback**: a `fileUrl` pública **ainda responde 206** neste passo — é o que
+  garante `git revert` sem janela.
+- **Produção (leitura)**: 3 materiais reais, incluindo nome com acento e com espaço, assinam e
+  entregam bytes idênticos.
+- **Reprova dos acertos**: o arquivo chega ao disco como
+  `Captura_de_Tela_2026-08-11_as_20.14.36.png`, **593.600 bytes**, sem nenhum `%` de encoding.
+- **Gate humano 4/4** pela porta do aluno (`/w/staging-teste`): dois materiais baixaram, painel
+  do produtor intacto, e link sem cookies → **401 JSON, nenhum arquivo**.
+
+**SHA do merge:** `21e4969`  ·  **Rollback:** `git revert -m 1 21e4969`
+
+**Mudou em produção para quem:** o aluno passa a baixar por uma rota do app em vez da URL do
+objeto — o arquivo é o mesmo e o clique é o mesmo. **Muda o nome do arquivo salvo**: acento vira
+letra simples e espaço vira `_` (`às` → `as`). Ninguém a avisar. O bucket **não** mudou.
+
+**Ficou aberto:** **9.93** seed sem `User.workspaceId` · **9.94** `/api/courses` vazio silencioso
+· **9.95** redirect entrega o aluno ao Supabase (e é o que resolveria o acento).
+⚠️ **O Passo 2 (flip do bucket para privado + teto de 50 MB) segue 🔴 aberto** e só acontece
+depois deste em **produção**, com download real validado lá.
+
+**Duas correções de rota, registradas:**
+1. A correção prescrita para o nome era **NFC**. A medição a **refutou** — NFC continua saindo
+   `%C3%A0s`, porque a dupla codificação está no Storage e atinge qualquer caractere que precise
+   de encoding. Entrou `sanitizeFileName`, e a mensagem do commit foi corrigida para não afirmar
+   NFC (commit que diz uma coisa e código que faz outra é item-fantasma em miniatura).
+2. O **"503 da signed URL" não existe** — três provas independentes no item 9.92. A causa do
+   alarme foi a ausência de sinal no clique: a aba pisca e fecha (comportamento **correto** de um
+   `attachment`), e o humano clicou 5×. O sinal visual entrou por isso.
+
+**Regras conferidas:** §17 respondido ✅ · staging-first ✅ · gate humano ✅ · papelada ✅ ·
+7 perguntas (2 helpers extraídos, zero abstração nova) ✅ · caminho destrutivo não tocado ✅
+
+---
+
 ## 2026-08-14 — CAMADA 2, STORAGE PARTE 1 — Fechar a torneira (`community/upload`)
 
 **Estado antes:** main em `febcfad`

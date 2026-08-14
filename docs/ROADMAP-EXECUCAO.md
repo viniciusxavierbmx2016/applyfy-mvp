@@ -198,7 +198,7 @@ que furaram a fila e viraram a frente **"fechar a torneira"**:
 | Achado | O que é | Estado |
 |---|---|---|
 | **A2** | `community/upload` com `getCurrentUser()` como único gate — qualquer autenticado escrevia no bucket público, sem vínculo e sem rate-limit | ✅ **RESOLVIDO** — Storage Parte 1, merge `af28974` (item **9.87**) |
-| **A1** | bucket `materials` **público e sem teto de tamanho** — material de curso em URL aberta | 🔴 **ABERTO** — é a **Storage Parte 2** |
+| **A1** | bucket `materials` **público e sem teto de tamanho** — material de curso em URL aberta | 🟡 **em 2 passos** — Passo 1 (download assinado) ✅ `21e4969` (item **9.92**); Passo 2 (flip do bucket + teto de 50 MB) 🔴 aberto |
 
 Itens novos que a Parte 1 gerou: **9.88** (portas irmãs do bucket gateadas por role) ·
 **9.89** (rate-limit por contagem, não por peso) · **9.90** (comentário em post `PENDING`
@@ -305,7 +305,8 @@ Roda **em paralelo** às camadas, sem consumir sessão de desenvolvimento:
 | E1.2 Convite — fix | ✅ fechada | `6510db1` | 2026-08-14 |
 | E2.1 Auditoria Segurança & Infra | ✅ fechada | laudo + achados no §Camada 2 | 2026-08-14 |
 | **Storage Parte 1** (A2 — torneira) | ✅ fechada | `af28974` | 2026-08-14 |
-| **Storage Parte 2** (A1 — bucket `materials`) | 🔴 **aberta, fura a fila** | — | — |
+| **Storage Parte 2 · Passo 1** (download assinado) | ✅ fechada | `21e4969` | 2026-08-14 |
+| **Storage Parte 2 · Passo 2** (flip do bucket p/ privado) | 🔴 **aberta** — só após o Passo 1 em PRODUÇÃO e download real validado lá | — | — |
 | E2.2 Triagem dos achados | ⬜ pendente | — | — |
 | E2.3 Alerta Vercel 5xx | ⬜ pendente | — | — |
 | E3.1 Faxina permissões | ⬜ pendente | — | — |
