@@ -35,6 +35,66 @@ Copie o bloco abaixo e preencha todos os campos. Campo sem resposta = etapa não
 
 <!-- As entradas começam abaixo desta linha, da mais recente para a mais antiga. -->
 
+## 2026-08-16 — RENAME DO PROJETO — o produto passa a se chamar Members Club em tudo que se vê
+
+**Estado antes:** main em `8906d25` · repo `applyfy-mvp` · remote local no nome antigo
+
+**O que foi feito:** rename **de exibição**, precedido de uma investigação de risco que mudou o
+escopo. Trocaram de nome: `package.json` (`"projeto"` → `"members-club"`), o README (título + 9
+menções ao **produto**) e o SYSTEM-MAP, que ganhou uma seção **§0 O NOME** com a nota histórica.
+O repositório foi renomeado no GitHub para **`members-club`** (1.398 commits, `main` intacta) e o
+remote local atualizado. **Nada funcional foi tocado.**
+
+**Arquivos tocados:** `package.json` · `README.md` · `docs/SYSTEM-MAP.md` (merge `69aeb23`) ·
+`docs/PLANO-MESTRE.md` (docs `8906d25`) · `docs/01-knowledge-base.md` + a skill do repo (URL do
+repo, nesta entrada)
+
+**Como foi provado:**
+- `git diff --name-only src/` → **zero arquivo**. Nenhuma rota, schema, env ou config no diff.
+- Cada uma das 9 trocas no README verificada como **ocorrência única** antes de aplicar (troca
+  ambígua abortaria o script).
+- As linhas do diff que citam `APPLYFY_*`, `WorkspaceApplyfyToken` e `/api/webhooks/applyfy` são
+  **todas `+` na prosa das notas novas** — coladas uma a uma na conferência.
+- Os dois exemplos `SEU-APP.vercel.app` viraram `app.mymembersclub.com.br` com o **caminho da
+  rota preservado byte a byte**.
+- Remote novo provado por comportamento: `git fetch` + `git status -sb` em sincronia, e **este
+  push** é a prova final. Redirect do nome antigo conferido: **301 →
+  `github.com/viniciusxavierbmx2016/members-club`**.
+
+**SHA do merge:** `69aeb23`  ·  **Rollback:** `git revert -m 1 69aeb23` (só texto)
+
+**Mudou em produção para quem:** **ninguém.** Zero código, zero config, zero comportamento.
+
+**⛔ AS DUAS DECISÕES DE NÃO-FAZER (o mais importante desta entrada):**
+1. **O projeto na Vercel NÃO foi renomeado.** `applyfy-mvp.vercel.app` está **ATIVO** (Valid
+   Configuration em Domains) e produtores mandam webhook de **venda** para ele — renomear
+   quebraria a liberação de acesso: **o aluno paga e não recebe o curso.**
+2. **O gateway Applyfy permanece INTACTO** em tudo (`APPLYFY_*`, rota, tabela, schema, telas).
+   ⚠️ E o motivo não é "nome legado": é um **produto de pagamento do próprio Vinicius**,
+   integrado ao Members Club. **Produtos distintos que se integram** — a coincidência de nome é
+   histórica, a separação é real e permanente.
+
+**⭐ ACHADO DE MÉTODO:** busca-e-substitui cega teria renomeado **uma PESSOA** — o handle
+`applyfybr`, colaboradora do `shop-club` e persona-alvo do 9.74 — dentro da documentação do
+épico, além de derrubar o gateway. Classificar **ocorrência por ocorrência** revelou que toda
+menção a "applyfy" no repo é uma de **quatro** coisas, e **nenhuma é o nome do produto**: o
+gateway · o hostname da origem · a URL do repositório · o handle de uma pessoa. Em `docs/` o
+resultado foi **nada a renomear**.
+
+**Confirmado na investigação (Etapa 1):** `NEXT_PUBLIC_APP_URL` de **Production e Preview** já
+aponta para `app.mymembersclub.com.br` — os links de e-mail (acesso, reset, convite) estavam
+corretos e não dependiam do hostname da Vercel.
+
+**Ficou aberto:** **9.98** 🔴 (as 5 telas emitem a URL do webhook a partir de
+`window.location.origin` — pré-requisito do B.2 e de qualquer rename futuro na Vercel) ·
+**9.99** 🟢 (o carimbo do Cloudflare é menos confiável do que a B.1 registrava) · **9.100** 🟢
+(campo "About" do GitHub).
+
+**Regras conferidas:** §17 respondido ✅ · escopo travado provado linha a linha ✅ · build verde
+✅ · papelada ✅ · nenhuma mudança funcional ✅
+
+---
+
 ## 2026-08-14 — CAMADA 2, STORAGE PARTE 2 · PASSO 2 — Flip do bucket (o A1 fechou)
 
 **Estado antes:** main em `2ba455d` · bucket `materials` `public=true`, sem teto

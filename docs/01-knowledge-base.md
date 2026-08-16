@@ -34,7 +34,7 @@
 
 | Item | Valor |
 |------|-------|
-| Repo | github.com/viniciusxavierbmx2016/applyfy-mvp |
+| Repo | github.com/viniciusxavierbmx2016/members-club (renomeado 16/08/26; `applyfy-mvp` redireciona) |
 | Deploy | git push → Vercel auto-deploy (main = prod, branches = staging) |
 | Região Vercel | GRU1 (São Paulo) |
 | Domínio principal | app.mymembersclub.com.br |

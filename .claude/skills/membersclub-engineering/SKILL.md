@@ -331,7 +331,7 @@ Critical components must have tests. Test behavior, not just rendering. Proper m
 - Database: Supabase (PostgreSQL) + Prisma ORM
 - Auth: DUAL-AUTH (born 2026-05-08) — Supabase Auth GLOBAL password for staff/collaborators + WorkspaceCredential (scrypt, per userId+workspaceId) for pure STUDENTs. A buyer's global password is a never-revealed random; their real password lives in WorkspaceCredential. Discriminator everywhere: `STAFF_ROLES.has(role) || acceptedCollab` — NEVER "has a credential" (6 PRODUCERs + 1 STUDENT-collab carry dead credential rows). Full detail: docs/SYSTEM-MAP.md §4
 - Hosting: Vercel (gru1 region) behind Cloudflare (DNS/proxy). ⚠️ Do NOT assume WAF protection: the origin applyfy-mvp.vercel.app is still directly exposed and rate-limiting is in-memory per-instance (stopgap). Shared store + origin lockdown = open item 2.4
-- Repo: github.com/viniciusxavierbmx2016/applyfy-mvp
+- Repo: github.com/viniciusxavierbmx2016/members-club (renomeado 16/08/26; o nome antigo `applyfy-mvp` ainda redireciona — 301 — mas o remote correto é o novo). ⚠️ O projeto na **Vercel** segue `applyfy-mvp` DE PROPÓSITO: `applyfy-mvp.vercel.app` é hostname ativo e recebe webhook de venda. Ver §0 do SYSTEM-MAP.
 
 ### Theme System — 3 Independent Namespaces
 
