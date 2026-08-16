@@ -1,6 +1,21 @@
-# Applyfy — Área de Membros
+# Members Club — Área de Membros
 
 Plataforma de cursos online com comunidade integrada, construída em Next.js 14 (App Router), Prisma, Supabase e Tailwind CSS. Tema escuro e mobile-first.
+
+> ### ⚠️ Sobre o nome — leia antes de renomear qualquer coisa
+>
+> O produto chama-se **Members Club** (`app.mymembersclub.com.br`). O repositório e o projeto
+> na Vercel nasceram como **`applyfy-mvp`**; o identificador da Vercel **permanece assim DE
+> PROPÓSITO** — `applyfy-mvp.vercel.app` é hostname **ATIVO** (Valid Configuration em Domains) e
+> há produtores com webhooks apontando para ele. Renomear o projeto na Vercel quebraria a
+> liberação de acesso dessas vendas: **o aluno paga e não recebe o curso.**
+>
+> ⚠️ **"Applyfy" é TAMBÉM o nome de um GATEWAY de pagamento integrado.** `APPLYFY_*`,
+> `/api/webhooks/applyfy`, `WorkspaceApplyfyToken` e `gateway="applyfy"` são **funcionais**
+> (7.037 webhooks em 30 dias) e **nunca devem ser renomeados**. Toda ocorrência de "Applyfy"
+> neste repositório é uma das três coisas: o gateway, o hostname da origem, ou o handle
+> `applyfybr` de uma pessoa. Nenhuma é o nome do produto — **busca-e-substitui cega aqui
+> derruba venda.**
 
 ## Stack
 
@@ -111,16 +126,16 @@ A plataforma suporta login com Google via Supabase Auth. Fluxo: botão "Entrar c
 
 ### 1. Google Cloud Console
 
-1. Acesse [console.cloud.google.com](https://console.cloud.google.com) e crie um projeto (ex: `applyfy-prod`).
+1. Acesse [console.cloud.google.com](https://console.cloud.google.com) e crie um projeto (ex: `members-club-prod`).
 2. **APIs & Services → OAuth consent screen**:
    - User type: **External**.
-   - App name: `Applyfy`.
+   - App name: `Members Club`.
    - User support email e Developer contact: seu email.
    - Scopes: adicione `.../auth/userinfo.email`, `.../auth/userinfo.profile` e `openid`.
    - Test users (enquanto o app estiver em *Testing*): adicione os emails que farão login. Para produção, publique o app.
 3. **APIs & Services → Credentials → Create credentials → OAuth client ID**:
    - Application type: **Web application**.
-   - Name: `Applyfy Web`.
+   - Name: `Members Club Web`.
    - **Authorized redirect URIs**: copie a URL exata mostrada no painel do Supabase (próximo passo) — geralmente `https://<seu-projeto>.supabase.co/auth/v1/callback`.
    - Salve e copie o **Client ID** e o **Client secret**.
 
@@ -140,34 +155,34 @@ Em dev, reinicie o `npm run dev` e clique em **Entrar com Google** na tela de lo
 
 ## Webhooks de pagamento
 
-O Applyfy libera acesso automaticamente após uma compra aprovada via **Applyfy** ou **Stripe**. O roteamento do produto → curso usa o campo **ID externo do produto** cadastrado em `Admin → Cursos`.
+O Members Club libera acesso automaticamente após uma compra aprovada via **Applyfy** ou **Stripe**. O roteamento do produto → curso usa o campo **ID externo do produto** cadastrado em `Admin → Cursos`.
 
 ### 1. Vincular produtos aos cursos
 
 Em **Admin → Cursos**, edite cada curso e preencha **ID externo do produto** com:
 - **Applyfy:** o `product.id` (ou `ucode`) do produto.
-- **Stripe:** o `prod_XXXX` ou qualquer identificador que você coloque em `metadata.externalProductId` do checkout session. Alternativamente, envie `metadata.courseId` com o UUID do curso no Applyfy.
+- **Stripe:** o `prod_XXXX` ou qualquer identificador que você coloque em `metadata.externalProductId` do checkout session. Alternativamente, envie `metadata.courseId` com o UUID do curso no Members Club.
 
 ### 2. Configurar Applyfy
 
 1. Acesse o Applyfy → **Ferramentas → Webhook (Postback) → Cadastrar**.
-2. URL: `https://SEU-APP.vercel.app/api/webhooks/applyfy`
+2. URL: `https://app.mymembersclub.com.br/api/webhooks/applyfy`
 3. Selecione eventos: `PURCHASE_APPROVED`, `PURCHASE_COMPLETE`, `PURCHASE_REFUNDED`, `PURCHASE_CHARGEBACK`, `PURCHASE_CANCELED`.
 4. Copie o **token** gerado.
-5. No Applyfy, vá em **Admin → Configurações → Applyfy** e cole o token.
+5. No Members Club, vá em **Admin → Configurações → Applyfy** e cole o token.
 
 ### 3. Configurar Stripe
 
 1. Acesse [dashboard.stripe.com](https://dashboard.stripe.com) → **Developers → Webhooks → Add endpoint**.
-2. Endpoint URL: `https://SEU-APP.vercel.app/api/webhooks/stripe`
+2. Endpoint URL: `https://app.mymembersclub.com.br/api/webhooks/stripe`
 3. Event: `checkout.session.completed`.
 4. Copie o **Signing secret** (`whsec_...`).
-5. No Applyfy, vá em **Admin → Configurações → Stripe** e cole o secret.
+5. No Members Club, vá em **Admin → Configurações → Stripe** e cole o secret.
 6. Ao criar checkout sessions, envie `metadata`:
    ```js
    stripe.checkout.sessions.create({
      // ...
-     metadata: { courseId: "<uuid-do-curso-no-applyfy>" },
+     metadata: { courseId: "<uuid-do-curso-no-members-club>" },
      // ou: metadata: { externalProductId: "prod_XXXX" }
    });
    ```
