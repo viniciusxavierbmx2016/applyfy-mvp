@@ -5,6 +5,27 @@
 
 ---
 
+## 0) O NOME — nota histórica (⚠️ ler antes de qualquer rename)
+
+O produto chama-se **Members Club** (`app.mymembersclub.com.br`). O repositório e o projeto na
+Vercel nasceram como **`applyfy-mvp`**; o identificador da Vercel **permanece assim DE PROPÓSITO**
+— `applyfy-mvp.vercel.app` é hostname **ATIVO** (Valid Configuration em Domains, confirmado
+14/08/26) e há produtores com webhooks apontando para ele. Renomear o projeto na Vercel quebraria
+a liberação de acesso dessas vendas: **o aluno paga e não recebe o curso.**
+
+⚠️ **"Applyfy" é TAMBÉM o nome de um GATEWAY de pagamento integrado.** `APPLYFY_PUBLIC_KEY` ·
+`APPLYFY_SECRET_KEY` · `APPLYFY_TOKEN` · `/api/webhooks/applyfy/[slug]` · `WorkspaceApplyfyToken`
+· `gateway="applyfy"` no schema · `/api/producer/integrations/applyfy-tokens` e sua tela são
+**funcionais** — **7.037 webhooks em 30 dias** — e **nunca devem ser renomeados**.
+
+⭐ **Toda ocorrência de "applyfy" neste repositório é uma de quatro coisas**, e nenhuma é o nome
+do produto: (1) o **gateway** · (2) o **hostname da origem** `applyfy-mvp.vercel.app`, citado nos
+itens de origin lock como fato técnico · (3) a **URL do repositório** · (4) o handle
+**`applyfybr`**, que é uma **pessoa** (a colaboradora do `shop-club`, persona-alvo do 9.74).
+**Busca-e-substitui cega aqui derruba venda.**
+
+---
+
 ## 1) VOCABULÁRIO
 
 - **Workspace** = a "área de membros" de um produtor (tem `slug`, tema, branding, `masterPassword`, `ownerId`). Um **PRODUCER pode ter VÁRIOS** workspaces (limitado por `plan.maxWorkspaces`, `src/lib/plan-limits.ts:37`). Cada workspace contém vários cursos. URL pública: `/w/{slug}`.
