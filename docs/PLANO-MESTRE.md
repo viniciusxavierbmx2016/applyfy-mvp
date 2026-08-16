@@ -1030,6 +1030,42 @@ Cada um: Dev Brabo completo (read-only → proposta → staging → merge `--no-
   ⚠️ **NOME DO ARQUIVO — a correção prescrita foi REFUTADA pela medição.** Normalizar em **NFC não resolve**: o Storage encoda o valor de `?download=` **uma segunda vez sem decodificar a primeira**, então todo caractere que precise de percent-encoding vira lixo no disco do aluno. Medido nas 4 formas — NFD `a%CC%80s` · **NFC `%C3%A0s`** · NFC+underscore `_%C3%A0s_` · **ASCII puro sai limpo**. Entrou `sanitizeFileName` (função que já existia). **Preço declarado: o acento se perde** ("às" → "as"). Preservá-lo exige a rota **transmitir** os bytes e montar o `Content-Disposition` em RFC 5987 — ver item do redesenho.
   ⚠️ **FALSO POSITIVO REFUTADO — "a signed URL devolve 503": NÃO EXISTE. NÃO REABRIR SEM EVIDÊNCIA NOVA.** Provas independentes: (1) **o log do servidor** registra **todos** os cliques humanos como **302** — zero 503 saiu da aplicação (⚠️ e `grep 503` no log dá falso positivo em `in 503ms`/`auth:503ms`, que é **tempo**, não status); (2) **30 disparos seguidos** na assinada em staging = **30/30 → 200**, mais 3/3 em produção; (3) do lado do navegador, `fetch` com `redirect:'manual'` retornou **opaqueredirect**, só possível em 3xx — um 503 real viria como `status 503`/`type basic`. O código aparecia quando a cadeia de redirect era abortada pelo modo de observação, e havia ainda um `chrome-extension://invalid/ → 503` no load da aula (**extensão do navegador**, não a aplicação). ⚠️ Causa de fundo do alarme: **a aba pisca e fecha** — que é o comportamento CORRETO de um `attachment` em `target="_blank"` — e sem sinal nenhum o humano clicou 5× achando que falhava. Daí o sinal visual que entrou junto.
 
+- [x] **9.96 — Bucket `materials` fechado (Storage Parte 2, PASSO 2 — o A1 morre aqui)** 🔴 ✅ FEITO (config de produção + merge `71a7692`) — o achado **A1** da auditoria E2.1 está **FECHADO**. Material de curso não está mais em URL aberta.
+
+  **Antes → depois do bucket:**
+  ```
+  antes : public=true   file_size_limit=null        allowed_mime_types=null
+  depois: public=false  file_size_limit=52428800    allowed_mime_types=null
+  ROLLBACK (1 chamada): PATCH { public: true, file_size_limit: null }
+  ```
+  ⚠️ O teto de 50 MB é tão importante quanto o `public=false`: **o bucket não tinha teto nenhum**, então a checagem de 50 MB do app era a **única** parede — e a URL de upload assinada é emitida ao browser, que poderia subir qualquer tamanho por fora dela. Agora a parede é do Storage (lição do 7.14: *parede real = `fileSizeLimit` do bucket*).
+
+  **A query do inventário, que era o portão (rodada imediatamente antes do flip):**
+  ```sql
+  SELECT count(*) AS total,
+         count(*) FILTER (WHERE "fileUrl" !~ '/object/public/materials/') AS fora_do_padrao
+  FROM "LessonMaterial";
+  --  total | fora_do_padrao
+  --    148 |       0
+  ```
+  `fora_do_padrao = 0` era a condição de PARE: cada linha fora do formato viraria **"Material indisponível"** para o aluno no instante do flip. Também conferido: **0 registro sem objeto** · 10 objetos sem registro (8,3 MB de lixo, não bloqueia) · 148 registros / 158 objetos, **idênticos** à medição de 14/08 — nada entrou entre a investigação e o flip.
+
+  **Provas, na ordem, imediatamente após o PATCH:** (a) URL pública **morreu** · (b) URL assinada serve com **bytes = `fileSize`** em 3 materiais (8,7 MB · 3 KB · 6 KB, incluindo nome com espaço) · (c) rota do app **401 sem sessão** contra **404** em rota inexistente — o contraste prova que o 401 é da rota, não do roteador.
+
+  ⚠️ **PEGADINHA DO CDN, registrada porque quase virou falso alarme:** na primeira passada da prova (a), **1 dos 3 objetos ainda devolveu 200**. Não era flip incompleto — era **cache de borda da Cloudflare**. Furando o cache (query nova, `Cache-Control: no-cache`, `HEAD`) veio **400**, e a varredura completa depois deu **148/148 mortas**. **Tornar o bucket privado NÃO mata a URL pública no mesmo instante para quem a tem em cache** — a exposição decai com o TTL da borda. Quem provar um flip desses tem de **furar o cache**, senão lê o passado e conclui errado nas duas direções.
+
+  **RISCO ASSUMIDO PELO DONO (14/08):** links públicos que alguém tenha **copiado à mão** pararam de funcionar. Base da decisão: a URL **não vai por email, notificação nem export** — varredura deu **zero** — e o material segue acessível pelo app. Alcance: 148 materiais · 86 aulas · 17 cursos · 14 workspaces · **13 produtores**.
+
+  **A ORDEM foi o que protegeu:** o código privado (9.92) foi para produção **antes**, com o bucket ainda público, e só depois veio o flip. Código-privado convive com bucket-público; o inverso não. Rollback de cada passo é independente — `git revert` num, uma chamada de API no outro.
+
+  **Preparo junto (merge `71a7692`):** `GET` **e** `POST` de `producer/lessons/[id]/materials` passaram a usar `select` explícito e não devolvem mais `fileUrl` — que pós-flip seria URL morta entregue ao browser. ⚠️ Os dois porque `lesson-materials.tsx:141` empurra o material do POST no **mesmo estado** que o GET preenche; corrigir só um deixaria a lista com dois formatos de item.
+
+  ⚠️ **A coluna `fileUrl` continua guardando a URL pública** e o POST continua gravando `getPublicUrl` — de propósito. Hoje ela é o **carregador do path**, e o parse do download e o do DELETE dependem desse formato. Guardar só o path é refactor com migração de dados → item **9.97**.
+
+  ⚠️ **Teste humano final pendente**: baixar um material em produção, como aluno.
+
+- [ ] **9.97 — `LessonMaterial.fileUrl` guarda URL, não path** 🟢 — a coluna nasceu guardando a URL pública completa (`getPublicUrl`), e com o bucket privado ela virou **um path disfarçado de URL**: dois lugares a desmontam por regex para recuperar o que importa (`materialPathFromUrl` e o gêmeo inline do DELETE em `producer/lessons/[id]/materials/[materialId]/route.ts:63-66`). Guardar **só o path** elimina os dois parses e o gêmeo. ⚠️ Exige migração de dados nas 148 linhas + tocar POST, download e DELETE — sendo o DELETE **caminho destrutivo**, que pede matriz própria. Fazer numa fatia só, schema-first. → Camada 3.
+
 - [ ] **9.93 — Seed: `aluno-staging` sem `User.workspaceId`** 🟢 — o elenco diverge de produção num campo que produção **sempre** preenche: **0 de 22.335** alunos reais com matrícula ACTIVE têm `workspaceId` nulo; no staging, `aluno-staging` é o **único** dos 6 assim. Efeito: a home da **raiz** (`/api/courses` sem `?workspace=`) cai na bail-out anti-vazamento e mostra *"Você ainda não está matriculado em nenhum curso"* — e isso gerou um **achado falso de gate frouxo** que custou um ciclo inteiro de investigação. ⚠️ **Elenco que não espelha produção fabrica achado de segurança falso.** Corrigir junto com o 9.91. → Camada 3.
 
 - [ ] **9.94 — `/api/courses` sem escopo devolve vazio silencioso** 🟢 — sem `?workspace=` e sem `user.workspaceId`, a rota devolve `{enrolled: [], store: []}` (`route.ts:95-100`). A bail-out é **correta** (impede vazamento cross-workspace), mas a tela traduz *"não consegui resolver seu workspace"* como *"você não está matriculado em nenhum curso"* — mensagem que mente sobre a causa, família do **9.79**. Hoje ninguém em produção cai nele; o risco é o próximo diagnóstico ser envenenado de novo. → Camada 3.

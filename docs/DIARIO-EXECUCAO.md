@@ -35,6 +35,60 @@ Copie o bloco abaixo e preencha todos os campos. Campo sem resposta = etapa não
 
 <!-- As entradas começam abaixo desta linha, da mais recente para a mais antiga. -->
 
+## 2026-08-14 — CAMADA 2, STORAGE PARTE 2 · PASSO 2 — Flip do bucket (o A1 fechou)
+
+**Estado antes:** main em `2ba455d` · bucket `materials` `public=true`, sem teto
+
+**O que foi feito:** o segundo e último passo do **A1**. Um merge de preparo (a rota do painel
+deixa de devolver `fileUrl`) e, depois dele em produção, **uma chamada de config**:
+`{ public: false, file_size_limit: 52428800 }`. **Material de curso não está mais em URL aberta.**
+
+**Arquivos tocados:** `api/producer/lessons/[id]/materials/route.ts` ·
+`components/lesson-materials.tsx` *(+ a config do bucket, que não é arquivo)*
+
+**Como foi provado:**
+- **O portão, antes de qualquer coisa** — `SELECT count(*) FILTER (WHERE "fileUrl" !~
+  '/object/public/materials/')` → **0 de 148**. Se desse > 0, cada linha viraria "Material
+  indisponível" no instante do flip. Também: 0 registro sem objeto · 148/158 idênticos à medição
+  de 14/08 (nada entrou no meio).
+- **Estado do bucket registrado ANTES** (é o alvo do rollback): `public=true`,
+  `file_size_limit=null`.
+- **Depois do PATCH, na ordem:** (a) URL pública **morreu** · (b) URL assinada serve com
+  **bytes = `fileSize`** em 3 materiais (8,7 MB · 3 KB · 6 KB) · (c) rota do app **401** sem
+  sessão contra **404** em rota inexistente.
+- **Staging antes do merge de preparo:** painel devolve `id, name, fileName, fileSize, fileType,
+  sortOrder` — sem `fileUrl`, sem `object/public` no corpo — e o aluno seguiu baixando (200 ·
+  124.232 bytes).
+
+**SHA do merge:** `71a7692`  ·  **Rollback:** `git revert -m 1 71a7692` (código) **+**
+`PATCH { public: true, file_size_limit: null }` (config, uma chamada, efeito imediato)
+
+**Mudou em produção para quem:** **13 produtores · 17 cursos · 86 aulas · 148 materiais.** O
+aluno baixa igual, pelo mesmo botão. **Risco assumido pelo dono:** links públicos que alguém
+tenha copiado à mão pararam de funcionar — a URL não ia por email, notificação nem export
+(varredura = zero), e o material segue acessível pelo app. Ninguém a avisar.
+
+**Ficou aberto:** **9.97** (`fileUrl` guarda URL em vez de path — dois parses por regex e um
+gêmeo no DELETE) · e o **teste humano final**: baixar um material em produção como aluno.
+
+⚠️ **A pegadinha que quase virou falso alarme:** na primeira passada da prova (a), **1 dos 3
+objetos ainda devolveu 200**. Não era flip incompleto — era **cache de borda da Cloudflare**.
+Furando o cache (query nova, `no-cache`, `HEAD`) veio 400, e a varredura completa deu
+**148/148 mortas**. Tornar um bucket privado **não** mata a URL pública no mesmo instante para
+quem a tem em cache: a exposição decai com o TTL da borda.
+
+⚠️ **A FASE 2 ficou parada esperando uma prova que eu não conseguia fazer:** confirmar que o
+merge de preparo estava publicado. Três marcadores falharam — hash de chunks (a mudança removeu
+só uma *declaração de tipo*, e o bundle saiu byte-idêntico), `/login` (vinha do cache da Vercel)
+e `age` do prerender (sinal, não prova); `gh` não está instalado e não há token. Quem confirmou
+foi o humano, no painel. **Fica a lição: sem um marcador de deploy observável, "está em
+produção?" não é pergunta que eu responda sozinho.**
+
+**Regras conferidas:** §17 respondido ✅ · portão de inventário ✅ · rollback armado no próprio
+script ✅ · prova dupla de REF ✅ · papelada ✅
+
+---
+
 ## 2026-08-14 — CAMADA 2, STORAGE PARTE 2 · PASSO 1 — Download de material por URL assinada
 
 **Estado antes:** main em `3587505`
