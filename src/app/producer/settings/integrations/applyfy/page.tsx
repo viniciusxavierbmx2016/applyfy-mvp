@@ -83,7 +83,14 @@ export default function AdminIntegrationsPage() {
 
   // Scoped URL: webhook isola por workspace via slug. Token salvo aqui
   // (key = "applyfy_token") fica como `applyfy_token:<workspaceId>` no banco.
-  const baseUrl = origin || process.env.NEXT_PUBLIC_APP_URL || "";
+  /* 9.98 — a PRECEDÊNCIA invertida, e é só isso que muda aqui.
+     Antes o `origin` vencia, então esta tela exibia **o host em que o produtor
+     estava navegando** — quem abrisse o painel por `applyfy-mvp.vercel.app`
+     copiava ESSA URL para dentro do gateway, permanentemente. A população
+     apontando para a origem da Vercel crescia sozinha, todo dia.
+     ⚠️ O `origin` continua como fallback: sem `NEXT_PUBLIC_APP_URL` (dev de
+     alguém sem .env), a tela ainda mostra algo utilizável em vez de vazio. */
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || origin || "";
   const webhookUrl = activeWorkspace
     ? `${baseUrl}/api/webhooks/applyfy/${activeWorkspace.slug}`
     : `${baseUrl}/api/webhooks/applyfy`;

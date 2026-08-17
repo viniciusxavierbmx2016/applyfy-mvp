@@ -51,7 +51,14 @@ export default function PerfectPayIntegrationPage() {
   const [copied, setCopied] = useState(false);
 
   // URL escopada por workspace (slug). O produtor aponta o webhook da Perfect Pay pra cá.
-  const baseUrl = origin || process.env.NEXT_PUBLIC_APP_URL || "";
+  /* 9.98 — a PRECEDÊNCIA invertida, e é só isso que muda aqui.
+     Antes o `origin` vencia, então esta tela exibia **o host em que o produtor
+     estava navegando** — quem abrisse o painel por `applyfy-mvp.vercel.app`
+     copiava ESSA URL para dentro do gateway, permanentemente. A população
+     apontando para a origem da Vercel crescia sozinha, todo dia.
+     ⚠️ O `origin` continua como fallback: sem `NEXT_PUBLIC_APP_URL` (dev de
+     alguém sem .env), a tela ainda mostra algo utilizável em vez de vazio. */
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || origin || "";
   const webhookUrl = activeWorkspace
     ? `${baseUrl}/api/webhooks/perfectpay/${activeWorkspace.slug}`
     : `${baseUrl}/api/webhooks/perfectpay`;
