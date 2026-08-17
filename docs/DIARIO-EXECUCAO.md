@@ -35,6 +35,63 @@ Copie o bloco abaixo e preencha todos os campos. Campo sem resposta = etapa não
 
 <!-- As entradas começam abaixo desta linha, da mais recente para a mais antiga. -->
 
+## 2026-08-17 — CAMADA 3, ETAPA E3.3 — Predicado por role, cego ao vínculo (9.72 · 9.69 · 9.88 · 9.108)
+
+**Estado antes:** main em `55bfe38`
+
+**O que foi feito:** quatro gates que decidiam por **`user.role` global** passaram a decidir pelo
+**vínculo** com o curso/workspace. O quarto (**9.108**) não estava na lista — apareceu na
+varredura da classe.
+
+**Arquivos tocados:** `posts/[id]/like/route.ts` · `lessons/[id]/reaction/route.ts` ·
+`courses/[id]/terms-status/route.ts` · `upload/route.ts` · `upload/signed-url/route.ts` ·
+`lib/upload-access.ts` (novo) — **3 commits granulares**, build verde em cada.
+
+**Como foi provado:**
+- **Uma matriz serviu aos três**, 14/14: `colab-comunidade` curte post e reage a aula (**200**,
+  antes 403) · `colab-lessons` sobe thumbnail nas duas portas (**200**, antes 403) · `colab-zero`
+  **403** em tudo · `aluno-staging` e dono como controles · ⭐ `sem-vinculo` **403 nas duas
+  portas do bucket** — a prova de que o **A2 não reabriu**.
+- **9.69**: `dono-b` (PRODUCER do workspace B, aluno aqui) **passou a exigir** o aceite de termos;
+  `aluno-staging` continua exigindo; dono do curso não exige.
+- **Gate humano 5/5**, com efeito real: curtidas pela rota da comunidade, arquivo **persistido no
+  Storage**, e o modal "Termos de uso" aparecendo para `dono-b` **pela porta do aluno**.
+
+**SHA do merge:** `e3d5e62`  ·  **Rollback:** `git revert -m 1 e3d5e62`
+
+**Mudou em produção para quem:** **colaboradores** — quem tem permissão de comunidade passa a
+curtir post e reagir a aula; quem tem `MANAGE_LESSONS` passa a subir thumbnail. **Produtor de
+outro workspace matriculado num curso alheio** passa a **ver o aceite de termos** (antes pulava).
+Aluno e dono: **nada muda**. Ninguém a avisar — são portas que abriram para quem já tinha
+direito, e uma que fechou para quem não tinha.
+
+**Ficou aberto:** **9.109** 🔴 — `mfa/enroll` nega 2FA a colaborador.
+
+**⚠️ PALCO SEMEADO NESTA ETAPA — a próxima faxina NÃO pode apagar:**
+- **termos cadastrados no `curso-teste`** (via PUT, caminho real);
+- **`dono-b` matriculado no `curso-teste`** — é **o retrato do 9.69**: PRODUCER do workspace B
+  que, aqui, é só um aluno. Sem essas duas coisas o 9.69 é **intestável**, e a investigação
+  chegou a registrar isso antes de executar.
+
+**⭐ TRÊS ACHADOS QUE O TRABALHO PRODUZIU:**
+1. **O 4º item (9.108)** — `lessons/[id]/reaction`, o "curtir" da aula, com a cegueira idêntica
+   **nos dois handlers**. Apareceu por varrer o **arquivo inteiro**, não as linhas do item —
+   exatamente como o `:353`.
+2. **Uma variável com DUAS autorizações**, revelada pelo type check: `isStaff` decidia "pode
+   reagir" **e** "vê a contagem de dislikes". Corrigir a primeira teria **aberto a segunda de
+   carona**. Separada em `veDislikes`, que preserva quem via antes.
+3. **Paridade declarada em comentário é promessa, não garantia**: as duas portas do bucket diziam
+   *"Gate = PARIDADE com /api/upload"* e a mantinham por **cópia**. Virou `lib/upload-access.ts`.
+
+⚠️ E uma observação sobre documentação: o `isStaff` **já avisava**, em `auth.ts:197-200`, citando
+**nominalmente** o produtor de outro workspace e mandando usar `isCourseStaffOwner`. O comentário
+estava certo há meses. **Documentação não substitui gate.**
+
+**Regras conferidas:** §17 respondido ✅ · varredura do arquivo inteiro ✅ · irmão fechado no
+mesmo fôlego ✅ · short-circuit ADMIN/dono ✅ · gate humano ✅ · papelada ✅
+
+---
+
 ## 2026-08-17 — CAMADA 3, ETAPA E3.5 — Telas de acesso e dias (9.60 · 9.57c)
 
 **Estado antes:** main em `c359735` · 3 cópias do mesmo `onChange`, `expiresAt` sem validação

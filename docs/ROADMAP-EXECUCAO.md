@@ -345,7 +345,7 @@ Roda **em paralelo** às camadas, sem consumir sessão de desenvolvimento:
 | E3.0 Elenco (9.91 · 9.93) | ✅ fechada | seed versionado | 2026-08-16 |
 | E3.1 CVEs (9.101) — 4 de 5 fechados; sharp → 9.105 | ✅ fechada | `29368ab` | 2026-08-16 |
 | E3.2 A interface que mente (9.86·9.85·9.94) | ✅ fechada | `c088eb3` | 2026-08-16 |
-| E3.3 Predicado por role (9.72·9.69·9.88) | ⬜ pendente | — | — |
+| E3.3 Predicado por role (9.72·9.69·9.88·**9.108**) | ✅ fechada | `e3d5e62` | 2026-08-17 |
 | E3.4 Recorte de payload (9.81) | ⬜ pendente | — | — |
 | E3.5 Telas de acesso e dias (9.57c·9.60) | ✅ fechada | `e26e312` | 2026-08-17 |
 | E3.6 Dívida do storage (9.97·9.104) | ⬜ pendente | — | — |
