@@ -1,7 +1,11 @@
 "use client";
 
 import React, { useState } from "react";
-import { MAX_ACCESS_DAYS, parseAccessDays } from "@/lib/days-input";
+import {
+  normalizeDaysOnBlur,
+  resolveAccessDays,
+  sanitizeDaysText,
+} from "@/lib/days-input";
 import { AccessResult } from "../_types";
 import { DURATION_OPTIONS } from "../_lib/format";
 
@@ -18,18 +22,27 @@ export function SendAccessModal({
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [durationIdx, setDurationIdx] = useState(0);
-  const [customDays, setCustomDays] = useState(30);
+  // Texto, não número: só o texto guarda "30," enquanto se digita. O número
+  // resolvido é `diasResolvidos` — `null` enquanto não houver um.
+  const [customDays, setCustomDays] = useState("30");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   const opt = DURATION_OPTIONS[durationIdx];
   const isCustom = opt.days === -1;
+  const diasResolvidos = resolveAccessDays(customDays);
+  // Régua do 9.85: o botão trava E diz por quê. Campo vazio NUNCA vira
+  // prazo — gravar a partir de vazio é conceder acesso que ninguém pediu.
+  const motivoBloqueio =
+    isCustom && diasResolvidos === null
+      ? "Informe quantos dias de acesso"
+      : null;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
     setLoading(true);
-    const days = isCustom ? customDays : opt.days;
+    const days = isCustom ? diasResolvidos : opt.days;
     try {
       const res = await fetch(`/api/courses/${courseId}/students`, {
         method: "POST",
@@ -134,15 +147,13 @@ export function SendAccessModal({
             {isCustom && (
               <div className="mt-3 flex items-center gap-2">
                 <input
-                  type="number"
-                  min={1}
-                  max={MAX_ACCESS_DAYS}
-                  step={1}
+                  type="text"
                   inputMode="numeric"
+                  autoComplete="off"
+                  aria-label="Dias de acesso"
                   value={customDays}
-                  onChange={(e) =>
-                    setCustomDays((v) => parseAccessDays(e.target.value, v))
-                  }
+                  onChange={(e) => setCustomDays(sanitizeDaysText(e.target.value))}
+                  onBlur={(e) => setCustomDays(normalizeDaysOnBlur(e.target.value))}
                   className="w-28 px-3 py-2 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                 />
                 <span className="text-sm text-gray-600 dark:text-gray-400">
@@ -162,7 +173,8 @@ export function SendAccessModal({
             </button>
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || !!motivoBloqueio}
+              title={motivoBloqueio ?? undefined}
               className="px-4 py-2 bg-primary hover:bg-primary-hover disabled:opacity-50 text-white text-sm font-medium rounded-lg"
             >
               {loading ? "Enviando..." : "Enviar acesso"}

@@ -3,49 +3,59 @@
    ⚠️ Este número decide POR QUANTO TEMPO o aluno tem o curso que pagou. Errar
    aqui é aluno perdendo acesso antes da hora, ou ganhando mais do que comprou.
 
-   Nasceu de três cópias do mesmo `onChange` que produziram três comportamentos
-   (enroll-student · send-access · edit-access) — a família 9.42/9.54/9.57 pela
-   quarta vez. O teto também mora aqui para que CLIENT e SERVIDOR usem a MESMA
-   régua: `validations.ts` importa `MAX_ACCESS_DAYS` deste arquivo. Divergência
-   entre irmãs foi exatamente como o 9.57c nasceu. */
+   ─── Por que NÃO é mais um <input type="number"> ───────────────────────────
+   O input numérico do navegador aceita **apenas o separador decimal da locale**
+   e **descarta o outro** silenciosamente — e o descarte cola os dígitos
+   vizinhos. Medido:
+
+       locale pt-BR:  "30,5" → 31 ✅     "30.5" → 305 🔴
+       locale en-US:  "30.5" → 31 ✅     "30,5" → 305 🔴
+
+   Ou seja: o MESMO código dá 31 ou 305 dependendo de onde o produtor está. Não
+   é ajustável por handler — o caractere é descartado pelo navegador antes de
+   qualquer código nosso ver a tecla. Por isso o campo virou `type="text"` com
+   `inputMode="numeric"` (mantém o teclado numérico no celular) e normalização
+   PRÓPRIA, que trata "," e "." como o mesmo separador em qualquer locale.
+   O preço declarado: perdem-se as setas nativas.
+
+   ─── Por que o estado é TEXTO, e não `number | ""` ────────────────────────
+   Estado numérico não consegue guardar "30," — o que o usuário está escrevendo.
+   Ao redesenhar o campo com o número, a vírgula some, e a tecla seguinte cola:
+   "30," → exibe "30" → "5" → **305**. O mesmo bug por outro caminho. O texto
+   guarda o rascunho; o número só existe quando **resolvido**
+   (`resolveAccessDays`), e é `null` enquanto não houver um. */
 
 export const MIN_ACCESS_DAYS = 1;
 export const MAX_ACCESS_DAYS = 36500; // ~100 anos
 
-/* O bug do 9.60, em uma linha: `Number(v) || 1`.
+/* O que o campo EXIBE enquanto se digita. Não clampa e não arredonda: mexer no
+   texto no meio da digitação faz o valor "saltar" na frente do usuário.
+   Mantém dígitos e **um** separador; descarta o resto (letras, sinais, espaço).
+   String vazia é resultado válido — é assim que o backspace limpa o campo. */
+export function sanitizeDaysText(raw: string): string {
+  const limpo = raw.replace(/[^\d.,]/g, "");
+  const i = limpo.search(/[.,]/);
+  if (i === -1) return limpo;
+  // do primeiro separador em diante, só dígitos (mata "30,5,7")
+  return limpo.slice(0, i + 1) + limpo.slice(i + 1).replace(/[.,]/g, "");
+}
 
-   Enquanto se digita "30.5", o `<input type="number">` reporta `""` no momento
-   do ponto — porque "30." não é número válido. Aí `Number("") === 0`, o `|| 1`
-   troca por **1**, o campo se redesenha como "1", e a tecla seguinte concatena:
-   **"30.5" vira 15**. Com vírgula o caractere nem entra, e "30,5" vira **305**.
-   Nos dois casos o produtor vê um número que ele não digitou, e o servidor não
-   tem como saber — 15 e 305 são inteiros perfeitamente válidos.
-
-   A correção não é clampar melhor: é **não tratar estado transitório como
-   valor**. Entrada em trânsito PRESERVA o que já havia. */
-export function parseAccessDays(raw: string, anterior: number): number {
-  if (raw.trim() === "") return anterior; // transitório ("30." vira "") — não mexe
-  const n = Number(raw);
-  if (!Number.isFinite(n)) return anterior;
+/* O número que vai para o servidor. `null` = não há número (campo vazio, ou só
+   um separador solto) — e quem chama DEVE bloquear o envio, nunca chutar um
+   padrão: gravar prazo a partir de campo vazio é conceder acesso que ninguém
+   pediu. Aqui, sim, arredonda e clampa. */
+export function resolveAccessDays(texto: string): number | null {
+  const t = sanitizeDaysText(texto).replace(",", ".");
+  if (t === "" || t === ".") return null;
+  const n = Number(t);
+  if (!Number.isFinite(n)) return null;
   return Math.min(MAX_ACCESS_DAYS, Math.max(MIN_ACCESS_DAYS, Math.round(n)));
 }
 
-/* ⚠️ BLOQUEAR A DIGITAÇÃO DO SEPARADOR FOI TENTADO E **DESCARTADO POR MEDIÇÃO**.
-   Parecia a solução óbvia — "30,5 dias não existe, então não deixe digitar" —
-   mas piora o resultado, porque bloquear a tecla faz os dígitos vizinhos se
-   colarem. Medido, digitando "30.5" com a intenção de 30:
-
-       COM bloqueio → 305   (o "." não entra, o "5" cola no "30")
-       SEM bloqueio → 31    (o input aceita "30.5" e o Math.round resolve)
-
-   Ou seja: bloquear afasta **275 dias** da intenção; não bloquear erra por 1.
-   Por isso o `parseAccessDays` acima arredonda em vez de impedir.
-
-   🔴 O QUE CONTINUA ABERTO: a VÍRGULA. `<input type="number">` simplesmente não
-   insere "," — o caractere é descartado pelo próprio navegador, antes de
-   qualquer handler nosso, e "30,5" vira **305** com ou sem bloqueio. E em
-   teclado pt-BR a vírgula é o separador NATURAL, o que torna esse o erro mais
-   provável, não o menos. Fechar isso exige trocar para `type="text"` +
-   `inputMode="numeric"` com normalização própria de "," → "." — mudança de
-   comportamento do campo (perde as setas nativas) que é decisão de produto,
-   não efeito colateral desta etapa. Registrado como item próprio. */
+/* Para o `onBlur`: assim que o campo perde o foco, o rascunho vira o número que
+   de fato será gravado. O produtor vê "31" antes de salvar, em vez de descobrir
+   no banco que "30,5" virou outra coisa. Campo vazio continua vazio. */
+export function normalizeDaysOnBlur(texto: string): string {
+  const n = resolveAccessDays(texto);
+  return n === null ? "" : String(n);
+}
