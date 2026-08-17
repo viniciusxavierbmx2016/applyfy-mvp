@@ -343,7 +343,7 @@ Roda **em paralelo** às camadas, sem consumir sessão de desenvolvimento:
 | E2.2 Triagem dos achados | ⬜ pendente | — | — |
 | E2.3 Alerta Vercel 5xx | ⬜ pendente | — | — |
 | E3.0 Elenco (9.91 · 9.93) | ✅ fechada | seed versionado | 2026-08-16 |
-| E3.1 CVEs — 5 HIGH (9.101) | ⬜ pendente | — | — |
+| E3.1 CVEs (9.101) — 4 de 5 fechados; sharp → 9.105 | ✅ fechada | `29368ab` | 2026-08-16 |
 | E3.2 A interface que mente (9.86·9.90·9.79·9.94·9.85) | ⬜ pendente | — | — |
 | E3.3 Predicado por role (9.72·9.69·9.88) | ⬜ pendente | — | — |
 | E3.4 Recorte de payload (9.81) | ⬜ pendente | — | — |

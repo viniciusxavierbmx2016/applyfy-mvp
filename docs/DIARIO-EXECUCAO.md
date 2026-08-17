@@ -35,6 +35,67 @@ Copie o bloco abaixo e preencha todos os campos. Campo sem resposta = etapa não
 
 <!-- As entradas começam abaixo desta linha, da mais recente para a mais antiga. -->
 
+## 2026-08-16 — CAMADA 3, ETAPA E3.1 — CVEs: 4 dos 5 HIGH fechados (9.101)
+
+**Estado antes:** main em `b1936ba` · `npm audit` com 5 HIGH e 2 moderate
+
+**O que foi feito:** bump de 4 dependências em **3 commits granulares** — `nanoid` 3.3.12→3.3.18
+e `brace-expansion` 5.0.6→5.0.9 (transitivas) · `postcss` 8.5.14→8.5.26 · **`next` 16.2.6→16.2.12**,
+que fecha os **9 advisories** do framework, entre eles o **bypass de middleware/proxy no App
+Router** — a camada onde vivem o `proxy.ts` e o origin lock. O `sharp` **não fechou** e virou
+item próprio.
+
+**Arquivos tocados:** `package.json` · `package-lock.json` — **zero arquivo de código**.
+
+**Como foi provado:**
+- **Build verde após CADA bump**, não só no fim — commit granular só vale se cada degrau for
+  válido sozinho.
+- **Matriz de Regressão Padrão 21/21** com `.next` **apagado** antes de subir o palco (bump de
+  framework exige recompilar do zero, senão se mede o build velho).
+- **Superfícies específicas de cada pacote**: `next` → webhook responde 200 · gate sem sessão
+  401 · middleware intercepta 307 · rota protegida redireciona. `sharp` → upload grava, serve, e
+  o **otimizador `/_next/image` responde 200**. `postcss` → `.course-customized` presente e
+  `--member-*` compiladas no CSS **servido** (169 KB), não no fonte.
+- **Gate humano** no palco `e2ad8f9`: painel completo com console limpo · editor de aulas ·
+  caminho do `sharp` ponta a ponta (objeto real no Storage, `200/image/png/4209 bytes`, persiste
+  após reload) · área de membro **pelo gate de matrícula** (`hasAccess` true, `isStaffViewer`
+  false, sem banner de staff), com **15 posts por canal na API e 15 no DOM** após esgotar o
+  "Carregar mais".
+
+**SHA do merge:** `29368ab`  ·  **Rollback:** `git revert -m 1 29368ab` (+ `npm ci` para
+restaurar o lock)
+
+**Mudou em produção para quem:** ninguém deveria sentir nada — é bump de dependência sem
+mudança de código. O que muda é o **risco**: o bypass de middleware/proxy deixa de existir.
+
+**Ficou aberto:** **9.105** 🔴 — o `sharp`.
+
+**🔴 O `sharp` e por que ele NÃO fechou:** `next@16.2.12` exige `sharp@^0.34.5`; o advisory pede
+`>=0.35.0`. **Não há conserto dentro do range que o Next declara.** A exposição foi **medida, não
+assumida**: `next.config` otimiza imagens de `*.supabase.co` — onde vivem os uploads de usuário —
+e 34 arquivos usam `next/image`, então imagem de aluno passa pelo libvips. Atenuante: desde o
+9.87 o upload valida por **magic bytes**, então só entra imagem real — atenua, não fecha.
+**Decisão do dono: esperar**, com check periódico. Forçar `overrides` trocaria risco **medido**
+por risco **desconhecido** no pipeline de imagem de 22 mil alunos.
+
+**⚠️ TRÊS RESSALVAS HONESTAS, registradas porque somem fácil:**
+1. **A recompressão pelo `sharp` NÃO foi provada.** No teste ponta a ponta os bytes saíram
+   **idênticos à origem** — o arquivo não foi re-encodado. Provou-se que o caminho não quebrou,
+   **não** que o sharp processou.
+2. **O player não fechou.** Monta, escolhe `youtube-nocookie`, passa `origin` correto, faz
+   handshake com a IFrame API e lê metadados — mas parou em buffering no Chrome automatizado,
+   com **zero requisições a `googlevideo`**. É camada de mídia do ambiente, não o código. Fica
+   como o único item da matriz que **nenhuma automação fecha** — precisa de olho humano.
+3. **RP6 acusou 🔴 e era artefato meu**: escolhi `integrations/status` achando ser owner-only —
+   é `requireStaff()` e devolve `{"connected":false}`, sem segredo. Refeito em `applyfy-tokens` e
+   `hubla-secrets` → **403**. O `git diff main -- src/` vazio já provava que não podia ser
+   regressão.
+
+**Regras conferidas:** §17 respondido ✅ · commits granulares com build por degrau ✅ · `.next`
+limpo antes de medir ✅ · gate humano ✅ · papelada ✅
+
+---
+
 ## 2026-08-16 — CAMADA 3, ETAPA E3.0 — Fidelidade do elenco de staging (9.91 + 9.93)
 
 **Estado antes:** main em `66a80e4` · staging com 19 users, 5 posts, 1 grupo por curso
@@ -62,7 +123,7 @@ código de produção.
 - **Palco:** 2 grupos × **14 posts APPROVED** cada (o "Carregar mais" existe) + **1 PENDING por
   grupo** + 3 comentários PENDING + 1 convite REVOKED.
 
-**SHA do merge:** `<commit desta etapa>`  ·  **Rollback:** o seed é idempotente e versionado
+**SHA do merge:** `b1936ba` (commit direto na main — só dados de teste e seed)  ·  **Rollback:** o seed é idempotente e versionado
 
 **Mudou em produção para quem:** ninguém. Só staging.
 
@@ -119,6 +180,12 @@ comentários PENDING: 3 · convites REVOKED: 1 · auth.users=20 = Prisma=20
 ```
 
 **Ficou aberto:** nada desta etapa. O 9.90 fica **mais preciso** (é client-side) para o E3.2.
+
+⚠️ **Falso positivo registrado na validação por agente:** a contagem de posts do palco foi feita
+por **padrão de texto** ("Post de palco N") e acusou faltando — porque há posts semeados fora
+desse padrão. **Contar pela API, não pelo DOM nem por regex de conteúdo**: o número certo veio de
+`/api/posts?courseSlug=…` (15 por canal), e o DOM confirmou 15 após esgotar o "Carregar mais".
+Sonda que depende do texto do seed quebra assim que alguém posta fora do molde.
 
 **Regras conferidas:** prova dupla de `SUPABASE_REF` em todo bloco ✅ · escrita só em staging ✅ ·
 tudo pelo caminho real (nenhum `insert` direto para criar) ✅ · idempotência provada por 2ª
