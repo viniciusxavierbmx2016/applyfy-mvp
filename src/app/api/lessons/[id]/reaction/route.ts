@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getCurrentUser } from "@/lib/auth";
+import { getCurrentUser, isCourseStaffOwner } from "@/lib/auth";
+import { collaboratorCanActOnCourse } from "@/lib/collaborator";
 import type { ReactionType } from "@prisma/client";
 import { lessonReactionSchema, validateBody } from "@/lib/validations";
 import { createNotification } from "@/lib/notifications";
@@ -42,16 +43,29 @@ export async function GET(_request: Request, props: { params: Promise<{ id: stri
       return NextResponse.json({ enabled: false, likeCount: 0, dislikeCount: 0, userReaction: null });
     }
 
-    const isStaff =
-      user.role === "ADMIN" ||
-      (user.role === "PRODUCER" && (course.ownerId === user.id || course.workspace.ownerId === user.id));
+    /* ⚠️ A variável `isStaff` daqui significava DUAS coisas: "pode reagir" e
+       "vê a contagem de dislikes". São autorizações diferentes — a 1ª é de
+       MEMBRO, a 2ª é de moderação. Unificá-las faria o fix de reagir abrir
+       também o dislike, de carona e sem decisão. Separadas (lição do
+       `DASHBOARD_PERMISSIONS`): `veDislikes` mantém EXATAMENTE quem via antes. */
+    const veDislikes = isCourseStaffOwner(user, course);
 
-    if (!isStaff) {
-      const enrollment = await prisma.enrollment.findUnique({
-        where: { userId_courseId: { userId: user.id, courseId: course.id } },
-      });
-      if (!enrollment || enrollment.status !== "ACTIVE") {
-        return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
+    // Irmão exato do 9.72 — reagir a uma AULA é a mesma ação de membro que
+    // curtir um POST. Fechar um e deixar o outro é como o `:353` sobreviveu.
+    if (!veDislikes) {
+      const colaborador = await collaboratorCanActOnCourse(
+        user.id,
+        course.id,
+        ["MANAGE_COMMUNITY", "REPLY_COMMENTS"],
+        { requireMemberAccess: true }
+      );
+      if (!colaborador) {
+        const enrollment = await prisma.enrollment.findUnique({
+          where: { userId_courseId: { userId: user.id, courseId: course.id } },
+        });
+        if (!enrollment || enrollment.status !== "ACTIVE") {
+          return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
+        }
       }
     }
 
@@ -66,7 +80,7 @@ export async function GET(_request: Request, props: { params: Promise<{ id: stri
     return NextResponse.json({
       enabled: true,
       likeCount,
-      dislikeCount: isStaff ? dislikeCount : 0,
+      dislikeCount: veDislikes ? dislikeCount : 0,
       userReaction: existing?.type ?? null,
     });
   } catch (error) {
@@ -120,16 +134,29 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
       return NextResponse.json({ error: "Reações desativadas neste curso" }, { status: 403 });
     }
 
-    const isStaff =
-      user.role === "ADMIN" ||
-      (user.role === "PRODUCER" && (course.ownerId === user.id || course.workspace.ownerId === user.id));
+    /* ⚠️ A variável `isStaff` daqui significava DUAS coisas: "pode reagir" e
+       "vê a contagem de dislikes". São autorizações diferentes — a 1ª é de
+       MEMBRO, a 2ª é de moderação. Unificá-las faria o fix de reagir abrir
+       também o dislike, de carona e sem decisão. Separadas (lição do
+       `DASHBOARD_PERMISSIONS`): `veDislikes` mantém EXATAMENTE quem via antes. */
+    const veDislikes = isCourseStaffOwner(user, course);
 
-    if (!isStaff) {
-      const enrollment = await prisma.enrollment.findUnique({
-        where: { userId_courseId: { userId: user.id, courseId: course.id } },
-      });
-      if (!enrollment || enrollment.status !== "ACTIVE") {
-        return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
+    // Irmão exato do 9.72 — reagir a uma AULA é a mesma ação de membro que
+    // curtir um POST. Fechar um e deixar o outro é como o `:353` sobreviveu.
+    if (!veDislikes) {
+      const colaborador = await collaboratorCanActOnCourse(
+        user.id,
+        course.id,
+        ["MANAGE_COMMUNITY", "REPLY_COMMENTS"],
+        { requireMemberAccess: true }
+      );
+      if (!colaborador) {
+        const enrollment = await prisma.enrollment.findUnique({
+          where: { userId_courseId: { userId: user.id, courseId: course.id } },
+        });
+        if (!enrollment || enrollment.status !== "ACTIVE") {
+          return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
+        }
       }
     }
 
@@ -194,7 +221,7 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
 
     return NextResponse.json({
       likeCount,
-      dislikeCount: isStaff ? dislikeCount : 0,
+      dislikeCount: veDislikes ? dislikeCount : 0,
       userReaction: updated?.type ?? null,
     });
   } catch (error) {
