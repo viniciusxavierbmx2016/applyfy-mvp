@@ -35,6 +35,58 @@ Copie o bloco abaixo e preencha todos os campos. Campo sem resposta = etapa não
 
 <!-- As entradas começam abaixo desta linha, da mais recente para a mais antiga. -->
 
+## 2026-08-17 — CAMADA 3, ETAPA E3.10 — A torneira do webhook (9.98)
+
+**Estado antes:** main em `cbf89d2`
+
+**O que foi feito:** as 5 telas de integração montavam a URL do webhook a partir de
+`window.location.origin` — **o produtor copiava o host em que estava navegando**. Quem abrisse o
+painel por `applyfy-mvp.vercel.app` gravava **essa** URL no gateway, permanentemente. Invertida a
+precedência para `NEXT_PUBLIC_APP_URL || origin`.
+
+**Arquivos tocados:** as 5 telas de `producer/settings/integrations/` — **5 linhas de código e 35
+de comentário**. Sem o porquê escrito, a próxima pessoa "conserta" de volta.
+
+**Como foi provado:**
+- ⭐ **Pelo BUNDLE COMPILADO**, nos dois sentidos: na `main` a expressão é
+  `i || "https://applyfy-mvp.vercel.app"`; na branch é `U = "https://applyfy-mvp.vercel.app"` —
+  **o compilador eliminou o `origin`**. Ordem antiga: **0 ocorrências**.
+- **Cirurgia provada**: `window.location.origin` tem 10 ocorrências antes e depois, **idênticas**;
+  `git diff` **vazio** nos 4 arquivos dos usos legítimos (workspaces ×3, alunos, player).
+- **Gate humano**: as 5 telas com a URL canônica · `/w/staging-teste` abre · "Reenviar" → 200 ·
+  ⭐ **aula com vídeo do YouTube TOCA**, que era o uso sensível de `origin`.
+
+**SHA do merge:** `d58aecb`  ·  **Rollback:** `git revert -m 1 d58aecb`
+
+**Mudou em produção para quem:** **produtor que abrir a tela de integração daqui pra frente** —
+passa a ver o domínio canônico. **Nenhum produtor já configurado é afetado**, e nenhuma venda
+muda de caminho. Ninguém a avisar.
+
+**Ficou aberto:** **9.110** 🟢 (dev por `127.0.0.1` não hidrata o React).
+
+**⭐ A PROVA PLANEJADA FALHOU E A SUBSTITUTA ERA MELHOR.** O marcador seria abrir as telas por
+`127.0.0.1` e ver que o texto não muda. Não funcionou: por `127.0.0.1` o React **não hidrata**
+(nenhum `__reactFiber`; o submit vira GET nativo e não autentica) — comportamento que **também
+existe na `main`**, então não é do fix. A substituta — ler a **expressão compilada** — é
+**determinística**: não depende de host, cookie nem hidratação, e mostra que **não existe caminho
+no código executado** onde o host da navegação entre na URL. Virou memória.
+
+**⚠️ ARTEFATO DE SONDA, registrado:** a primeira comparação dos usos legítimos acusou 🔴. Era a
+**minha sonda**, que incluía o **número da linha** — e o comentário de 7 linhas deslocou as
+demais. Refeita por arquivo + conteúdo: idênticas. **Sonda que compara ruído junto com sinal
+inventa regressão.**
+
+**⭐ O QUE ESTE FIX NÃO FAZ — e é metade do valor do registro:** ele **fecha a torneira** (produtor
+novo copia o endereço certo), mas **não altera ninguém já configurado**. O gateway chama o
+endereço gravado no painel dele. **Migrar os existentes é etapa separada**, um a um, com aviso — e
+continua dependendo de **descobrir quem são**, o que o nosso banco não sabe (só log da
+Vercel/Cloudflare).
+
+**Regras conferidas:** §17 respondido ✅ · reconferência antes de tocar ✅ · cirurgia provada nos 5
+usos legítimos ✅ · gate humano ✅ · papelada ✅
+
+---
+
 ## 2026-08-17 — 📌 9.7 CARROSSEL: "abandonar" virou "refazer" — correção de decisão
 
 > Leitura pura + documentação. Zero código.
