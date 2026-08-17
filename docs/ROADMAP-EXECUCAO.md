@@ -213,15 +213,45 @@ auditoria — rate-limit da Peça B, HSTS e `npm audit` — seguem na Camada 3.
 ### CAMADA 3 — Faxina de bugs conhecidos
 *Todos já investigados. Agrupados por área para render uma sessão cada.*
 
-| Etapa | Itens | Por que juntos |
-|---|---|---|
-| **E3.1** | **9.72** colaborador modera mas não curte · **9.79** mensagem "não matriculado" quando a causa foi permissão · **9.69** `terms-status` deixa produtor de outro ws pular o aceite de termos · **9.64** assimetria POST×PATCH em `permissions:[]` | mesma família (permissões de colaborador) |
-| **E3.2** | **9.57c** teto `max` divergente nos modais irmãos de acesso · **9.60** clamp por tecla come dígitos no campo "Personalizado" | mesma tela |
-| **E3.3** | **9.61** Enter no rename de material salva a aula inteira (falta `preventDefault`) · **9.48** trocar de aba durante "Carregar mais" mistura posts do grupo antigo (falta 2º `abortRef`, molde no próprio arquivo) | ambos precisam de palco com conteúdo |
-| **E3.4** | **9.65** seletor de cursos do colab só com "Todos" · **9.66** `hasPermission`/`canAccessCourse` sem consumidores (dead code) | limpeza |
+> **REAGRUPADA EM 16/08/26.** A fila havia crescido de 8 para ~26 itens e virara lista, não
+> plano. Os grupos abaixo substituem os quatro E3.x antigos. Critério: **mesma causa, mesmo
+> arquivo, ou mesma matriz de prova** — item sem família fica sozinho, e isso é resposta válida.
 
-**Nota do E3.3:** o 9.48 exige palco próprio — 2º grupo + ~15 posts para "Carregar mais"
-existir. Semear antes.
+| Etapa | Itens | Por que juntos | Arquivos |
+|---|---|---|---|
+| **E3.0 — O elenco** | **9.91** sem persona sem-vínculo · **9.93** `aluno-staging` sem `User.workspaceId` | mesmo arquivo (`scripts/seed-staging.mjs`) e mesma causa: o elenco não espelha produção | 1 |
+| **E3.1 — CVEs** | os **5 HIGH** do `npm audit`: `next` · `sharp` · `postcss` · `nanoid` · `brace-expansion` (itens **9.101**) | mesmo comando, mesmo build, mesma regressão | `package.json` + lock |
+| **E3.2 — A interface que mente** | **9.86** régua dos textos de erro *(primeiro — é o molde)* → **9.90** comentário em post `PENDING` falha em silêncio · **9.79** "não matriculado" quando a causa foi permissão · **9.94** vazio silencioso vira "não matriculado em nenhum curso" · **9.85** botão `disabled` sem motivo | todos são a mesma falha: **a tela não diz a verdade sobre a causa** | ~6 |
+| **E3.3 — Predicado por role, cego ao vínculo** | **9.72** colaborador não curte · **9.69** `terms-status` pula aceite · **9.88** as 2 portas do bucket gateiam por role | mesma causa (`user.role` em vez do vínculo), mesmo fix, **uma matriz de personas serve às três** | 4 |
+| **E3.4 — Recorte de payload** | **9.81** `videoUrl` para quem não cuida de conteúdo | **sozinho de propósito** — exige mapear os consumidores no client antes | 1 + client |
+| **E3.5 — Telas de acesso e dias** | **9.57c** teto `max` divergente nos modais irmãos · **9.60** clamp por tecla come dígitos | mesma tela, mesmo teste | 3 |
+| **E3.6 — Dívida de dado do storage** | **9.97** `fileUrl` guarda URL em vez de path (+ o regex gêmeo do DELETE) · **9.104** 10 objetos órfãos / 8,3 MB sem rotina de limpeza | mesmo modelo, mesma migração | 3-4 |
+| **E3.7 — UI de colaboradores** | **9.83** convite revogado não reativa · **9.84** tabela estoura no mobile | mesma tela | 2 |
+| **E3.8 — Endurecimento de infra** | **9.102** HSTS `max-age=2592000` sem `includeSubDomains`/`preload` · **9.103** rate-limit em **20 de 197** rotas · **9.89** rate-limit por contagem, não por peso | mesma superfície (config + `lib/rate-limit.ts`) | 2-3 |
+| **Sozinhos** | **9.48** `loadMore` sem `AbortController` · **9.61** Enter no rename borbulha · **9.66** dead code em `lib/collaborator.ts` | sem família real | 3 |
+
+**⚠️ Palco especial (semear ANTES):**
+- **9.48** — 2º grupo + **~15 posts** para "Carregar mais" existir.
+- **9.90** — um post em `PENDING` na fila de moderação.
+- **9.83** — um convite em `REVOKED`.
+- **E3.0 vem primeiro por isso:** o elenco é o **instrumento** de todas as matrizes seguintes.
+
+**⛔ SAÍRAM DA CAMADA 3** (não são faxina):
+- **9.65** — **já foi decidido**: "APROVADO como está no ínterim" com validação humana de 12/08. Não é trabalho pendente; é decisão registrada. Sai da fila.
+- **9.82** (dono se autoconvida) — ⚠️ **depende do épico 9.74**: os efeitos que ele mesmo lista (`resolveStaffWorkspace`, `getStaffCourseIds`) são exatamente o que o 9.74 reescreve. Consertar antes seria consertar código que vai mudar → **move para junto do 9.74**.
+- **9.95** (rota transmitir os bytes em vez de redirecionar) — o próprio item diz "custo de streaming na Vercel **a medir**". Item com medição pendente não é faxina → **precisa de uma investigação própria primeiro**.
+- **9.99** (carimbo do Cloudflare pouco confiável) — é **anotação**, não conserto. Vive junto do 2.4 Peça B.
+- **9.100** (About do GitHub) — **ação manual de 10 segundos**, zero código, não ocupa sessão.
+- **9.64** (assimetria POST×PATCH em `permissions:[]`) — ⚠️ estava no E3.1 antigo por "família de permissões", mas a causa é **validação de schema**, não autorização, e o teste é outro. Fica **sozinho** ou entra no E3.7.
+
+**Ordem recomendada e o porquê:**
+1. **E3.0** — minutos, e **conserta o instrumento**: um elenco enviesado já fabricou um achado falso de segurança que custou um ciclo inteiro (ver 9.93).
+2. **E3.1** — ⚠️ o advisory do `next` é **bypass de middleware/proxy no App Router**, e este app tem `proxy.ts` e origin-lock nessa camada. É o **maior risco residual de segurança da Camada 3** — acima do 9.81. Os 5 têm correção sem *major*, então o custo é build + regressão, não migração.
+3. **E3.2** — maior **dor real hoje**: no 9.90 o aluno escreve, perde o texto e acha que enviou. Cliente pagante perdendo conteúdo ganha de exposição a colaborador convidado.
+4. **E3.5** — o 9.60 faz o produtor digitar `30.5` e gravar **15 dias** de acesso. Erro silencioso que decide **por quanto tempo o aluno tem o curso**.
+5. **E3.3** — 3 itens, 4 arquivos, **uma matriz só**. Melhor relação resultado/esforço da fila.
+6. **E3.4** — exposição real (1.833 aulas com `videoUrl`, 3 colaboradores leem a rota sem `MANAGE_LESSONS`), mas o alcance é **gente que o produtor convidou** — o próprio item registra que "não fura a fila".
+7. **E3.7** → 8. **E3.6** → 9. **E3.8** → 10. **Sozinhos**.
 
 **Portão de saída:** cada item com matriz própria + Matriz de Regressão Padrão + merge +
 papelada.
@@ -312,10 +342,16 @@ Roda **em paralelo** às camadas, sem consumir sessão de desenvolvimento:
 | **Storage Parte 2 · Passo 2** (flip do bucket) | ✅ fechada | `71a7692` + config | 2026-08-14 |
 | E2.2 Triagem dos achados | ⬜ pendente | — | — |
 | E2.3 Alerta Vercel 5xx | ⬜ pendente | — | — |
-| E3.1 Faxina permissões | ⬜ pendente | — | — |
-| E3.2 Faxina campo de dias | ⬜ pendente | — | — |
-| E3.3 Faxina comunidade/materiais | ⬜ pendente | — | — |
-| E3.4 Limpeza dead code | ⬜ pendente | — | — |
+| E3.0 Elenco (9.91 · 9.93) | ⬜ pendente | — | — |
+| E3.1 CVEs — 5 HIGH (9.101) | ⬜ pendente | — | — |
+| E3.2 A interface que mente (9.86·9.90·9.79·9.94·9.85) | ⬜ pendente | — | — |
+| E3.3 Predicado por role (9.72·9.69·9.88) | ⬜ pendente | — | — |
+| E3.4 Recorte de payload (9.81) | ⬜ pendente | — | — |
+| E3.5 Telas de acesso e dias (9.57c·9.60) | ⬜ pendente | — | — |
+| E3.6 Dívida do storage (9.97·9.104) | ⬜ pendente | — | — |
+| E3.7 UI de colaboradores (9.83·9.84) | ⬜ pendente | — | — |
+| E3.8 Endurecimento de infra (9.102·9.103·9.89) | ⬜ pendente | — | — |
+| E3.9 Sozinhos (9.48·9.61·9.66·9.64) | ⬜ pendente | — | — |
 | E4.1 Toggles Personalizar Curso | ⬜ pendente | — | — |
 | E4.2 PDF na comunidade | ⬜ pendente | — | — |
 | E4.3 Colab assistir aos cursos | ⬜ pendente | — | — |

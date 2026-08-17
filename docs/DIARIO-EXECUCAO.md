@@ -35,6 +35,60 @@ Copie o bloco abaixo e preencha todos os campos. Campo sem resposta = etapa não
 
 <!-- As entradas começam abaixo desta linha, da mais recente para a mais antiga. -->
 
+## 2026-08-16 — 📌 REAGRUPAMENTO DA CAMADA 3 — não é etapa fechada
+
+> Registro de trabalho de **planejamento**, não de código. Nenhum item foi consertado.
+
+**Estado antes:** main em `4a404f2` · Camada 3 com 4 etapas (E3.1–E3.4) desenhadas quando a
+fila tinha 8 itens — e ~26 itens abertos de fato.
+
+**O que foi feito:** recap item a item **pelo PLANO-MESTRE** (não pela memória) e
+reagrupamento por **afinidade real**: mesma causa, mesmo arquivo, ou mesma matriz de prova.
+Resultado: **10 grupos** (E3.0–E3.9) no lugar dos 4 antigos, com ordem recomendada e o porquê
+de cada posição. Tabela §8 do roadmap reescrita para refletir **grupos**, não itens soltos.
+
+**Arquivos tocados:** `docs/ROADMAP-EXECUCAO.md` (seção Camada 3 + tabela §8) ·
+`docs/PLANO-MESTRE.md` (4 itens novos + 2 remarcações)
+
+**Como foi provado:** os 26 itens da lista foram conferidos um a um contra o PLANO-MESTRE —
+**todos existem e estão abertos**, nenhum fantasma. Os três achados residuais da E2.1 foram
+**medidos agora**, não copiados: `npm audit` → **5 HIGH** (`next`, `sharp`, `postcss`, `nanoid`,
+`brace-expansion`, todos com fix sem *major*) · HSTS vivo → `max-age=2592000`, sem
+`includeSubDomains` · rate-limit → **20 de 197** rotas.
+
+**Mudou em produção para quem:** ninguém. Zero código.
+
+**⚠️ O recap corrigiu quatro coisas que a lista assumia:**
+1. **Os 3 achados da E2.1 não existiam como itens numerados** — viviam em prosa no roadmap.
+   Viraram **9.101** (CVEs), **9.102** (HSTS), **9.103** (cobertura de rate-limit). E ⚠️ não são
+   reabertura do 2.1/2.2, que estão `[x]` — são **residuais novos**.
+2. **9.65 não é trabalho pendente** — o próprio item diz "APROVADO como está no ínterim" com
+   validação humana de 12/08. Estava ocupando fila como se fosse conserto. Marcado `[x]`.
+3. **9.82 depende do épico 9.74** — os efeitos que ele lista (`resolveStaffWorkspace`,
+   `getStaffCourseIds`) são exatamente o que o épico reescreve. Movido.
+4. **Os órfãos do storage não tinham número** — viraram **9.104**.
+
+**⚠️ Grupos que a lista sugeria e a leitura REFUTOU:**
+- **9.93 não é "dívida do storage"** — é fidelidade do **elenco**, e vai com o 9.91 (mesmo
+  arquivo, `scripts/seed-staging.mjs`).
+- **9.100 não é "polimento de UI"** — é ação manual de 10 segundos fora do código.
+- **9.85 e 9.86 não são UI de colaboradores** — são da família "a interface mente sobre a
+  causa", que é transversal.
+- **9.64 não é família de permissões** — a causa é validação de schema, e o teste é outro.
+
+**⭐ A decisão de ordem que contraria a intuição:** o **E3.1 (CVEs)** ficou em 2º, à frente de
+todos os bugs de permissão. Motivo: o advisory do `next` é **bypass de middleware/proxy no App
+Router**, e este app tem `proxy.ts` e o origin lock nessa camada. Um bypass de framework vale
+mais que uma permissão larga demais concedida a gente que o produtor convidou.
+
+E o **E3.0 (elenco)** ficou em 1º por ser o **instrumento**: um elenco enviesado já fabricou um
+achado falso de segurança que custou um ciclo inteiro (9.93).
+
+**Ficou aberto:** os 10 grupos, nenhum executado. **9.95** precisa de investigação própria
+(medir custo de streaming) antes de virar faxina.
+
+---
+
 ## 2026-08-16 — RENAME DO PROJETO — o produto passa a se chamar Members Club em tudo que se vê
 
 **Estado antes:** main em `8906d25` · repo `applyfy-mvp` · remote local no nome antigo
