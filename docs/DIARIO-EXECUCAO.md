@@ -35,6 +35,57 @@ Copie o bloco abaixo e preencha todos os campos. Campo sem resposta = etapa não
 
 <!-- As entradas começam abaixo desta linha, da mais recente para a mais antiga. -->
 
+## 2026-08-17 — 📌 TRIAGEM DOS NUNCA-TRIADOS — não é etapa fechada
+
+> Leitura pura + documentação. Zero código. **Cada veredito foi conferido no código de hoje**,
+> não no texto do item.
+
+**Estado antes:** main em `67ca82e` · 60 itens abertos, 21 triados
+
+**O que foi feito:** varredura dos itens que **nunca passaram por triagem** — blocos *Débito*
+(9.1–9.9), *QA & Observabilidade* (9.10–9.16) e *Comunidade* (9.20–9.46). ⚠️ **O número real era
+36, não ~24.**
+
+**Arquivos tocados:** `docs/PLANO-MESTRE.md` · `docs/ROADMAP-EXECUCAO.md`
+
+**Como foi provado:** cada item verificado no código (`grep`/leitura), não por leitura do próprio
+item — que foi como três fantasmas sobreviveram até ontem.
+
+**Mudou em produção para quem:** ninguém. Zero código.
+
+**Resultado:** **1 fantasma** (9.5 — o guard já existia nas duas rotas) · **1 encolheu** (9.2 — o
+seed foi feito no E3.0; resta o `storage-policies.sql`, ⚠️ **que não está no repo**) · **1 cresceu**
+(9.6 — eram 4 branches stale, hoje são 5) · **1 ilegível** (9.14) · **5 vivos confirmados**
+(9.18 · 9.23 · 9.24 · 9.34 · 9.44b).
+
+**⭐ A TAXA DE FANTASMA CAIU — e isso é informação, não sorte.** Ontem foram 3 em 26 (11%); hoje
+1 em 36 (3%). Motivo provável: os itens de ontem estavam **na Camada 3, a área que estamos
+mexendo** — fantasma nasce quando o trabalho recente cruza o item e ninguém fecha o papel. Os
+blocos antigos quase não foram tocados, então quase não geraram fantasma. **Fantasma é função de
+proximidade ao trabalho, não de idade do item.**
+
+**⚠️ DOIS ACHADOS DE NATUREZA DIFERENTE, que mudam a leitura da fila:**
+1. **Nove itens não eram itens — eram FRENTES** (9.1 · 9.58 · 9.35b · 9.28+9.30 · 9.53 · 9.12 ·
+   9.13 · 9.15 · 9.22). Cada um vale uma sessão inteira ou mais. Contá-los como "itens de faxina"
+   fazia a fila parecer ter 36 coisas pequenas; **tem ~20 pequenas e ~9 frentes.** Uma fila que
+   mistura as duas escalas não se planeja.
+2. **O 9.14 ficou ILEGÍVEL por causa do nosso próprio rename**: "Arte real do logo Applyfy" hoje
+   se lê como o logo do produto, mas é o logo do **GATEWAY**. ⚠️ Item que não se consegue ler é
+   item que nunca será feito — ou pior, que alguém executa errado. **Renomear a marca do produto
+   mudou o sentido de itens antigos**, e este pode não ser o único.
+
+**Subiram para a Camada 3:** **E3.13** (9.23 corrida no `ensureDefaultGroup` → 500 em 4 rotas ·
+9.24 HTML cru no banco) e **E3.14** (9.44b — **11 pontos escrevem `Enrollment` e nenhum registra
+quem foi**; o `AuditLog` cobre 17 ações, nenhuma de acesso de aluno).
+
+**Ficou aberto:** 10 grupos · **10–12 sessões**, já **depois** de tirar as 9 frentes da conta.
+
+**🔴 DUAS DECISÕES DO DONO, pendentes:** **9.7** (branch 128+ commits atrás — rebase ou abandonar?
+o custo sobe todo dia) e **9.16** (backfill + `UPDATE` de preço **no banco de produção** — exige
+dry-run, contagem declarada antes e autorização explícita).
+
+---
+
 ## 2026-08-17 — 📌 REAGRUPAMENTO 2 DA CAMADA 3 — não é etapa fechada
 
 > Trabalho de **planejamento** e **caça a fantasmas**. Nenhum item foi consertado — e mesmo assim

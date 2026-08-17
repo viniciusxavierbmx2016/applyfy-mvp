@@ -253,6 +253,44 @@ auditoria — rate-limit da Peça B, HSTS e `npm audit` — seguem na Camada 3.
 **⇒ Estimativa: 8 a 10 sessões** para o restante da Camada 3, contando que **cada grupo tende a
 gerar 1 item novo** (foi a taxa observada: 5 grupos → 6 itens).
 
+### ⚠️ TRIAGEM DOS NUNCA-TRIADOS — 17/08/26
+
+O reagrupamento 2 apontou que a triagem da Camada 3 sempre olhou ~26 itens. **O número real de
+nunca-triados era 36**, não ~24. Resultado da varredura, **item a item contra o código de hoje**:
+
+| veredito | itens |
+|---|---|
+| 🔴 **FANTASMA** | **9.5** — o guard `findUnique` antes de `user.create` **já existe nas duas** rotas de convite |
+| ⚠️ **ENCOLHEU** | **9.2** — o seed de contas foi feito no E3.0; resta o `storage-policies.sql`, **que não está no repo** |
+| ⚠️ **CRESCEU** | **9.6** — eram 4 branches stale, hoje são **5** |
+| ⚠️ **ILEGÍVEL** | **9.14** — "logo Applyfy" hoje se lê como o produto; é o **logo do GATEWAY**. Reescrever o título |
+| ✅ **VIVOS confirmados** | 9.18 · 9.23 · 9.24 · 9.34 · 9.44b (cada um verificado no código, não no texto) |
+
+**⇒ SOBEM PARA A CAMADA 3** (segurança, integridade ou rastreabilidade):
+
+| Etapa | Item | Por quê |
+|---|---|---|
+| **E3.13 — Integridade da comunidade** | **9.23** 🟠 · **9.24** 🟠 | `ensureDefaultGroup` sem proteção de corrida **derruba 4 rotas com 500** quando duas requisições chegam juntas num curso sem grupo (23 cursos ainda vão criar o seu). E o comentário grava **HTML cru no banco** — hoje o render salva, mas o dado persistido não é equivalente ao do post. Mesma área, mesmo palco |
+| **E3.14 — Rastro de quem mexeu no acesso** | **9.44b** 🟠 | **11 pontos escrevem `Enrollment` e nenhum registra quem foi.** O `AuditLog` existe e cobre 17 ações — nenhuma é acesso de aluno. Quem estendeu, encurtou ou removeu o acesso de um aluno pagante **não deixa rastro**. É o único item da leva com natureza de **auditoria**, e auditoria que falta só se descobre quando já era necessária |
+
+**⇒ FRENTES, não itens** — estes não são "itens de faxina" e inflavam a fila fingindo que eram:
+**9.1** (migrations não reconstroem do zero — o maior débito estrutural) · **9.58** (EPIC no
+próprio título) · **9.35b** (o item já se chama "épico de shell") · **9.28 + 9.30** (juntos são o
+redesenho da comunidade) · **9.53** · **9.12** (Playwright) · **9.13** · **9.15** · **9.22**.
+**Tirar da contagem da Camada 3** — cada um é uma sessão inteira ou mais.
+
+**⇒ FILA (🟢, sem urgência):** 9.3 (resta a stack) · 9.4 · 9.9 · 9.14 (após reescrever o título) ·
+9.18 (código morto) · 9.21 · 9.33 · 9.34 · 9.41 (remedir: o caso real é 1, não 6) · 9.45 · 9.46 ·
+9.71 (recontar: 6, não 7).
+
+**🔴 DUAS DECISÕES QUE SÃO DO DONO — não avanço sem elas:**
+1. **9.7** — a branch `feat/course-banner-carousel` está **128 commits atrás** (medido em 07/13, hoje é mais). Rebase custa caro e cresce todo dia. **Rebase agora, ou abandonar a branch?** Enquanto não se decide, o custo só sobe.
+2. **9.16** — backfill de phone/CPF + `UPDATE` do preço do Plan **no banco de PRODUÇÃO**. Os scripts existem. ⚠️ É escrita em produção sobre dado de cliente: precisa de dry-run, contagem esperada declarada antes, e sua autorização explícita.
+
+**⇒ IMPACTO NA ESTIMATIVA:** a Camada 3 tinha 8 grupos / **8–10 sessões**. Com o E3.13 e o E3.14
+passa a **10 grupos / 10–12 sessões** — e isso **depois** de tirar 9 frentes da conta. Sem essa
+separação, a fila parecia ter ~36 itens pequenos; na verdade tem ~20 pequenos e ~9 frentes.
+
 **⛔ SEGUEM FORA DA CAMADA 3:** 9.65 (decidido) · 9.82 (→ 9.74) · 9.75 (bloqueado pelo 9.74).
 
 ⚠️ **E O QUE ESTE REAGRUPAMENTO NÃO COBRE:** o PLANO-MESTRE tem **~50 itens abertos**, mas a
@@ -363,6 +401,8 @@ Roda **em paralelo** às camadas, sem consumir sessão de desenvolvimento:
 | E3.7 UI de colaboradores (9.83·9.84) | ⬜ pendente | — | — |
 | E3.8 Endurecimento de infra (9.102·9.103·9.89·9.105) | ⬜ pendente | — | — |
 | E3.9 Sozinhos (9.48·9.61·9.66·9.64·9.99·9.100) | ⬜ pendente | — | — |
+| **E3.13 Integridade da comunidade (9.23·9.24)** 🟠 | ⬜ pendente — **subiu na triagem 17/08** | — | — |
+| **E3.14 Rastro de quem mexeu no acesso (9.44b)** 🟠 | ⬜ pendente — **subiu na triagem 17/08** | — | — |
 | E4.1 Toggles Personalizar Curso | ⬜ pendente | — | — |
 | E4.2 PDF na comunidade | ⬜ pendente | — | — |
 | E4.3 Colab assistir aos cursos | ⬜ pendente | — | — |
