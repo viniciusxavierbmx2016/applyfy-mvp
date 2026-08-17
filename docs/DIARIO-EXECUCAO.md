@@ -35,6 +35,59 @@ Copie o bloco abaixo e preencha todos os campos. Campo sem resposta = etapa não
 
 <!-- As entradas começam abaixo desta linha, da mais recente para a mais antiga. -->
 
+## 2026-08-17 — 📌 REAGRUPAMENTO 2 DA CAMADA 3 — não é etapa fechada
+
+> Trabalho de **planejamento** e **caça a fantasmas**. Nenhum item foi consertado — e mesmo assim
+> **três fecharam**.
+
+**Estado antes:** main em `19243bf` · Camada 3 com 5 de 10 grupos fechados
+
+**O que foi feito:** refeita a triagem, porque os 5 grupos fechados **geraram 6 itens novos**
+(9.104–9.109) que a ordem anterior não conhecia. Antes de agrupar, uma **caça a fantasmas** nos
+itens que tocam arquivos já mexidos.
+
+**Arquivos tocados:** `docs/ROADMAP-EXECUCAO.md` · `docs/PLANO-MESTRE.md`
+
+**Como foi provado:** cada fantasma foi confirmado **no código e no `git log -S`**, não por
+leitura do item.
+
+**Mudou em produção para quem:** ninguém. Zero código.
+
+**🔴 TRÊS FANTASMAS — fechados sem escrever uma linha:**
+- **9.29** era **o mesmo bug do A2/9.87**, com outro número. ⚠️ Dois números para um bug é como
+  um deles fica aberto para sempre: o 9.29 era de ago/26 e o A2 nasceu da auditoria E2.1, sem
+  ninguém cruzar as listas.
+- **9.38** fechado por `ad8e016`. ⚠️ E o mais constrangedor: **o texto do 9.48 já dizia** *"o
+  loadPosts ganhou cancelamento no 9.38"*. A prova estava escrita no item vizinho.
+- **9.26** (`masterPassword` em texto puro) — a rota já usa `select` explícito, com comentário
+  dizendo que o campo fica de fora.
+
+**E três que mudaram de tamanho:** **9.3** encolheu (título corrigido no rename; resta a stack) ·
+**9.71** foi de 7 para 6 `isStaffViewer` (o `like:39` saiu de carona no 9.72) · **9.41** tem
+número stale — diz "2 cursos", produção tem 6, mas 4 têm **zero** grupo e o `ensureDefaultGroup`
+resolve, então o caso real é **1**.
+
+**⭐ O FENÔMENO, nomeado:** a fila **cresce enquanto encolhe**. Cinco grupos fechados produziram
+seis itens novos — taxa de ~1 item por grupo. Isso **não é falha do processo, é o processo
+funcionando**: num sistema nunca varrido, cada correção ilumina o vizinho. O que seria falha é
+executar com o mapa velho. **O reagrupamento periódico é o custo de varrer um sistema pela
+primeira vez** — e desta vez ele se pagou sozinho, fechando 3 itens.
+
+**⚠️ E O QUE ESTE REAGRUPAMENTO NÃO COBRE:** o PLANO-MESTRE tem **~50 itens abertos**, mas a
+triagem da Camada 3 sempre olhou **~26**. Os outros ~24 (blocos *Comunidade*, *QA &
+Observabilidade*, *Débito*) **nunca passaram por triagem** e podem conter fantasmas iguais aos
+três de hoje.
+
+**Ficou aberto:** 8 grupos, ordem nova. **Estimativa: 8–10 sessões**, contando a taxa observada
+de 1 item novo por grupo.
+
+**⭐ A decisão de ordem que contraria a intuição:** o **9.98** (as 5 telas emitindo a URL do host
+navegado) subiu para **primeiro**, à frente do 9.109 (2FA). Motivo: é **o único item da fila que
+PIORA sozinho** — cada produtor que configura hoje grava a URL errada, e a dívida de migração
+cresce. Risco estático perde para risco que acumula.
+
+---
+
 ## 2026-08-17 — CAMADA 3, ETAPA E3.3 — Predicado por role, cego ao vínculo (9.72 · 9.69 · 9.88 · 9.108)
 
 **Estado antes:** main em `55bfe38`
