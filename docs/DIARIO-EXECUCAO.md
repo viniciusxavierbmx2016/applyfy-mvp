@@ -35,6 +35,56 @@ Copie o bloco abaixo e preencha todos os campos. Campo sem resposta = etapa não
 
 <!-- As entradas começam abaixo desta linha, da mais recente para a mais antiga. -->
 
+## 2026-08-17 — CAMADA 3, ETAPA E3.11 — 2FA para quem tem painel (9.109)
+
+**Estado antes:** main em `b570739`
+
+**O que foi feito:** o colaborador passou a poder **ativar** 2FA (o gate era por role, e ele é
+`role=STUDENT` desde o C5), e **desativar** passou a exigir o **segundo fator**. ⭐ Os dois no
+mesmo fôlego, por requisito — não por conveniência.
+
+**Arquivos tocados:** `lib/staff-access.ts` (novo) · `lib/upload-access.ts` ·
+`api/auth/mfa/enroll/route.ts` · `api/auth/mfa/unenroll/route.ts`
+
+**Como foi provado:**
+- **TOTP gerado por RFC 6238 com `crypto` nativo** — sem dependência nova. Ciclo completo:
+  `enroll` → `verify` (código real) → login **exige** o desafio → `unenroll` **sem** AAL2 **403** →
+  `challenge` → `unenroll` **com** AAL2 **200**.
+- **Matriz 16/16**: `colab-comunidade` e `colab-zero` ativam (antes 401) · `sem-vinculo` e
+  `aluno-staging` **403** · ADMIN e dono inalterados.
+- **Regressão do 9.88 provada 5/5 idêntica** — o helper foi extraído, não reescrito.
+- **Gate humano 6/6**, incluindo o teste que fecha o buraco: reativar, sair, entrar e tentar
+  desativar **sem** completar o desafio → **403** com a frase certa.
+
+**SHA do merge:** `b58df38`  ·  **Rollback:** `git revert -m 1 b58df38`
+
+**Mudou em produção para quem:** **colaboradores** — passam a poder proteger a conta (a tela já
+aparecia no menu deles e negava). **Quem já usa 2FA** — desativar passa a exigir o segundo fator;
+é restritivo **de propósito**, com mensagem que diz o que fazer, não 500. ADMIN e PRODUCER: nada
+muda no que já funcionava.
+
+**Ficou aberto:** **9.111** 🔴 — não existe caminho de recuperação de 2FA.
+
+**⭐ O ITEM ERA DOIS, e quem mostrou foi a varredura do diretório** (não a linha citada): `enroll`
+gateava por role e **`unenroll` não gateava nada**. Uma sessão em AAL1 desligava o 2FA. É a forma
+do **9.64** (POST rejeita, PATCH aceita) — só que aqui **a rota folgada é a que DESLIGA a
+proteção**. Abrir o `enroll` sozinho aumentaria o número de contas com 2FA removível por sessão de
+primeiro fator: mais cadeados, mesma chave do lado de fora.
+
+**⭐ UM RISCO DESCARTADO ANTES DE ABRIR:** o desafio **aparece** para o colaborador — as três
+portas de login fazem `listFactors()`. Se não aparecesse, habilitar seria **pior que não
+habilitar**: a pessoa se acharia protegida sem estar. Verifiquei antes de recomendar.
+
+**⚠️ E A DÍVIDA QUE ESTE FIX DEIXOU, escrita para não sumir:** ele **fechou a válvula de escape**
+que existia (desligar 2FA com sessão simples). A válvula era um buraco — mas era, também, o único
+caminho de quem perdesse o autenticador. **O 9.111 nasce deste fix**, e sobe para urgente **no dia
+em que alguém habilitar 2FA em produção**.
+
+**Regras conferidas:** §17 respondido ✅ · varredura do diretório inteiro ✅ · helper extraído sem
+terceira cópia ✅ · erro que diz o que fazer, nunca 500 ✅ · gate humano ✅ · papelada ✅
+
+---
+
 ## 2026-08-17 — CAMADA 3, ETAPA E3.10 — A torneira do webhook (9.98)
 
 **Estado antes:** main em `cbf89d2`

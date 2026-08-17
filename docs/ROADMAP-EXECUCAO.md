@@ -402,7 +402,7 @@ Roda **em paralelo** às camadas, sem consumir sessão de desenvolvimento:
 | E3.2 A interface que mente (9.86·9.85·9.94) | ✅ fechada | `c088eb3` | 2026-08-16 |
 | E3.3 Predicado por role (9.72·9.69·9.88·**9.108**) | ✅ fechada | `e3d5e62` | 2026-08-17 |
 | **E3.10 Torneira do webhook (9.98)** 🔴 | ✅ fechada | `d58aecb` | 2026-08-17 |
-| **E3.11 2FA para quem tem painel (9.109)** 🔴 | ⬜ pendente — 2º | — | — |
+| **E3.11 2FA para quem tem painel (9.109)** 🔴 | ✅ fechada | `b58df38` | 2026-08-17 |
 | E3.4 Recorte de payload (9.81) | ⬜ pendente — 3º | — | — |
 | **E3.12 Régua de erro, continuação (9.107·9.106·9.79)** | ⬜ pendente | — | — |
 | E3.5 Telas de acesso e dias (9.57c·9.60) | ✅ fechada | `e26e312` | 2026-08-17 |
