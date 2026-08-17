@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getCurrentUser } from "@/lib/auth";
+import { getCurrentUser, isCourseStaffOwner } from "@/lib/auth";
+import { collaboratorCanActOnCourse } from "@/lib/collaborator";
 import { GAMIFICATION, getLevelForPoints } from "@/lib/utils";
 import { createNotification } from "@/lib/notifications";
 
@@ -32,20 +33,30 @@ export async function POST(_request: Request, props: { params: Promise<{ id: str
       );
     }
 
-    const isCourseOwner =
-      user.role === "PRODUCER" &&
-      (post.course.ownerId === user.id ||
-        post.course.workspace.ownerId === user.id);
-    const isStaffViewer = user.role === "ADMIN" || isCourseOwner;
-
-    if (!isStaffViewer) {
-      const enrollment = await prisma.enrollment.findUnique({
-        where: {
-          userId_courseId: { userId: user.id, courseId: post.courseId },
-        },
-      });
-      if (!enrollment || enrollment.status !== "ACTIVE") {
-        return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
+    /* 9.72 — CURTIR É AÇÃO DE MEMBRO, não de staff.
+       O predicado era `ADMIN || dono`, e quem não passasse caía na exigência de
+       matrícula. Resultado: o colaborador com MANAGE_COMMUNITY **excluía post
+       alheio e não conseguia curtir** — podia o mais e não podia o menos.
+       A régua abaixo é a MESMA da ENTRADA da comunidade (publicar/comentar, em
+       `posts/route.ts`): curtir é menos que comentar, então nada afrouxa.
+       ⚠️ Short-circuit ADMIN/dono ANTES do vínculo (lição 9.63: há PRODUCER em
+       produção que também tem linha de Collaborator). */
+    if (!isCourseStaffOwner(user, post.course)) {
+      const colaborador = await collaboratorCanActOnCourse(
+        user.id,
+        post.courseId,
+        ["MANAGE_COMMUNITY", "REPLY_COMMENTS"],
+        { requireMemberAccess: true }
+      );
+      if (!colaborador) {
+        const enrollment = await prisma.enrollment.findUnique({
+          where: {
+            userId_courseId: { userId: user.id, courseId: post.courseId },
+          },
+        });
+        if (!enrollment || enrollment.status !== "ACTIVE") {
+          return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
+        }
       }
     }
 
