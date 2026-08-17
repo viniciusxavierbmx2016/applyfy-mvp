@@ -313,6 +313,15 @@ papelada.
 | **E4.2** | **PDF/material para download na comunidade** — anexo em post, não imagem inline | ⚠️ **Decisão do dono:** hoje o bucket é **público** (URL = qualquer um baixa). Material de curso deve ser privado com URL assinada? E qual o teto de tamanho (hoje 5MB)? |
 | **E4.3** 🟢 | **Colaborador assistir aos cursos sem ocupar matrícula** — permissão nova (ex.: `WATCH_COURSES`) que o produtor marca por colaborador. **ORIGEM (13/08):** o colaborador com `ACCESS_MEMBER_AREA` vê a vitrine, mas os cursos aparecem **"Bloqueado"** e o player recusa — **por desenho**: aula é barreira de receita, decisão registrada no 9.77. Caso real: a colaboradora do `shop-club` precisa conhecer o conteúdo para dar suporte. **DECISÃO DO VINICIUS (13/08):** caminho **(A) adotado AGORA** — *matricular* o colaborador (Vitalício), que já funciona e é o que **5 dos 12** já fazem. Caminho **(C) REJEITADO**: incluir aulas no `ACCESS_MEMBER_AREA` colapsaria duas decisões diferentes numa permissão só — o erro do 9.76, na direção do dinheiro. | ⚠️ **INVESTIGAR ANTES DE IMPLEMENTAR (B):** colaborador com acesso por permissão **conta como ALUNO?** Impacta: total de alunos do dashboard · **LIMITE DO PLANO (faturamento)** · analytics de engajamento · CSV de alunos · automações que disparam por matrícula. **Palpite do dono: NÃO deve contar** — mas é decisão de negócio e exige **laudo do impacto em cada um desses 5 pontos** antes de qualquer linha. |
 
+**+ 9.7 — Carrossel de banner do curso** (incluído em 17/08). ⚠️ **É ITEM, não frente**: o desenho
+está pronto e recuperado, o schema **já está em produção** (`Course.bannerExtra`), as dependências
+já estão instaladas e os 2 componentes são **arquivos novos** (~475 linhas) que entram sem
+conflito. Cabe numa sessão. **Caminho: `cherry-pick` dos 2 componentes + fiação refeita à mão** —
+nem rebase (a branch é WIP nunca validado e traz migração já aplicada), nem refazer do zero
+(jogaria fora 475 linhas de UI boa). ⛔ A branch `feat/course-banner-carousel` **não pode ser
+apagada** até a feature existir — é a referência de desenho. Ver **9.7** e o aviso no **9.6**.
+
+
 **Portão de saída:** produtor consegue usar a feature em produção; nada regrediu na tela
 compartilhada.
 

@@ -35,6 +35,55 @@ Copie o bloco abaixo e preencha todos os campos. Campo sem resposta = etapa não
 
 <!-- As entradas começam abaixo desta linha, da mais recente para a mais antiga. -->
 
+## 2026-08-17 — 📌 9.7 CARROSSEL: "abandonar" virou "refazer" — correção de decisão
+
+> Leitura pura + documentação. Zero código.
+
+**Estado antes:** main em `ddb1bae` · o 9.7 registrado como "rebase ou abandonar"
+
+**O que foi feito:** **correção de uma decisão que eu tinha registrado errado.** No reagrupamento
+escrevi que a branch do carrossel era "rebase ou abandonar" — o dono corrigiu: **a feature é
+desejada e vai ser feita**. Recuperei o desenho da branch, medi o que envelheceu, e registrei o
+9.7 como **item VIVO** com o desenho colado dentro.
+
+**Arquivos tocados:** `docs/PLANO-MESTRE.md` · `docs/ROADMAP-EXECUCAO.md`
+
+**Como foi provado:** desenho lido dos componentes da branch; envelhecimento medido com
+`git rev-list --count` **por arquivo tocado**; schema conferido no `information_schema` de
+produção.
+
+**Mudou em produção para quem:** ninguém. Zero código.
+
+**⭐ O ACHADO QUE REORGANIZOU O ITEM:** `Course.bannerExtra` **já está no schema da main e em
+produção** (migração `20260612190201` aplicada) — enquanto **nenhum dos 2 commits da branch está
+na main**. É uma **coluna órfã**: schema + banco + migração, **zero uso no código**, **0 de 54
+cursos** com dado. A decisão de dado sobreviveu; só a fiação nunca entrou.
+
+**⚠️ E EU TIVE QUE CORRIGIR O MEU PRÓPRIO ARGUMENTO.** Escrevi que rebasear seria "reescrever a
+feature no meio de conflitos injulgáveis". **A medição refuta isso**: dos arquivos que a branch
+toca, `course-preview.tsx` teve **0** commits desde o merge-base e `course-form.tsx` teve **1
+(+1/−1)**. O "448 commits atrás" assusta, mas **quase nenhum toca estes arquivos**. As 3
+dependências de drag-and-drop **já estão instaladas** e o componente importado **existe**. Um
+rebase teria **poucos conflitos**.
+
+O motivo real para não rebasear é **outro, e mais forte**: a branch é **WIP que ninguém nunca
+validou** (`pending visual validation`), e rebasear entregaria código não-validado **com aparência
+de pronto**; além disso ela carrega um **arquivo de migração já aplicado por outro caminho**, e
+histórico de migração é onde este projeto já destruiu um banco.
+
+**⇒ Caminho recomendado: `cherry-pick` seletivo** — os 2 componentes são **arquivos novos** (~475
+linhas, zero conflito); a fiação nos 4 arquivos existentes é **refeita à mão**. Preserva a UI e
+refaz só o que envelheceu. A validação visual, que nunca aconteceu, vira o gate.
+
+**⛔ A branch NÃO é apagada** até a feature existir — registrado **dentro do 9.6** (a faxina de
+branches), para ninguém apagá-la varrendo. ⚠️ E a lição vale para as outras 4: **branch abandonada
+pode ser a única cópia de um desenho** — examinar antes de apagar.
+
+**Ficou aberto:** 9.7 na **Camada 4** (é item, não frente: desenho pronto, schema aplicado, cabe
+numa sessão).
+
+---
+
 ## 2026-08-17 — 📌 TRIAGEM DOS NUNCA-TRIADOS — não é etapa fechada
 
 > Leitura pura + documentação. Zero código. **Cada veredito foi conferido no código de hoje**,
