@@ -347,7 +347,7 @@ Roda **em paralelo** às camadas, sem consumir sessão de desenvolvimento:
 | E3.2 A interface que mente (9.86·9.85·9.94) | ✅ fechada | `c088eb3` | 2026-08-16 |
 | E3.3 Predicado por role (9.72·9.69·9.88) | ⬜ pendente | — | — |
 | E3.4 Recorte de payload (9.81) | ⬜ pendente | — | — |
-| E3.5 Telas de acesso e dias (9.57c·9.60) | ⬜ pendente | — | — |
+| E3.5 Telas de acesso e dias (9.57c·9.60) | ✅ fechada | `e26e312` | 2026-08-17 |
 | E3.6 Dívida do storage (9.97·9.104) | ⬜ pendente | — | — |
 | E3.7 UI de colaboradores (9.83·9.84) | ⬜ pendente | — | — |
 | E3.8 Endurecimento de infra (9.102·9.103·9.89) | ⬜ pendente | — | — |

@@ -35,6 +35,56 @@ Copie o bloco abaixo e preencha todos os campos. Campo sem resposta = etapa não
 
 <!-- As entradas começam abaixo desta linha, da mais recente para a mais antiga. -->
 
+## 2026-08-17 — CAMADA 3, ETAPA E3.5 — Telas de acesso e dias (9.60 · 9.57c)
+
+**Estado antes:** main em `c359735` · 3 cópias do mesmo `onChange`, `expiresAt` sem validação
+
+**O que foi feito:** o campo "Personalizado" de dias de acesso foi **redesenhado** (`type="text"`
+com normalização própria, helper único nos 3 modais) e o servidor ganhou a validação que não
+tinha (`expiresAt` com formato, futuro e teto). ⚠️ Foram **3 rodadas** até a causa completa —
+duas correções minhas foram descartadas ou consertadas pelo caminho.
+
+**Arquivos tocados:** `src/lib/days-input.ts` (novo) · `src/lib/validations.ts` ·
+`enroll-student-modal.tsx` · `send-access-modal.tsx` · `edit-access-modal.tsx`
+
+**Como foi provado:**
+- **Simulação 16/16** com o helper **transpilado do fonte** (não uma cópia): `"30.5"` e `"30,5"`
+  → **31 nos dois modelos de locale** · backspace esvazia e resolve para `null` · `"0"`→1 ·
+  `"999999"`→36500 · `"abc"`→null · `"30,5,7"`→31 · blur de `"30,"`→`"30"`.
+- **Sondas de servidor**: 9999 → **400** · passado → **400** · lixo → **400** · `null` → **200**
+  gravando NULL · 90 dias → **200**. Nenhuma matrícula real alterada (as inválidas dão 400).
+- **Gate humano 6/6 nos TRÊS modais**, com salvamento real: `30.5`→31 · `30,5`→31 · backspace
+  esvazia (`value=""` conferido no DOM) e o botão trava com o motivo · campo limpo + `45`→45 ·
+  Vitalício sem data e 90 dias com "Expira em 90d" · prévia não aparece com campo vazio.
+
+**SHA do merge:** `e26e312`  ·  **Rollback:** `git revert -m 1 e26e312`
+
+**Mudou em produção para quem:** **produtor**, nos 3 modais de acesso. O campo perde as setas
+nativas (é `type="text"` agora) e ganha: aceitar `,` **e** `.`, esvaziar com backspace, e travar
+o envio quando vazio. Aluno não sente nada — o que muda é o prazo passar a ser o que o produtor
+digitou. Ninguém a avisar.
+
+**Ficou aberto:** nada desta etapa.
+
+**⚠️ TRÊS ERROS MEUS, REGISTRADOS PORQUE SÃO O APRENDIZADO DA ETAPA:**
+1. **Modelo de locale errado.** Meu relatório de investigação afirmou que a **vírgula** era o
+   caso quebrado e o ponto funcionava. É o **inverso** em pt-BR. Simulei em en-US **sem declarar
+   a locale** e apresentei como medição. O agente de navegador mediu certo.
+2. **Regressão introduzida e corrigida na mesma etapa.** A 1ª correção ("vazio preserva o
+   anterior") tornou **impossível esvaziar o campo** — `value` controlado por número redesenha o
+   valor antigo. Consertei o reset-para-1 e criei um campo que não limpa.
+3. **A "solução óbvia" era 9× pior.** Bloquear a digitação do separador leva `"30.5"` a **305**
+   em vez de 31, porque os dígitos vizinhos colam. Descartada **com número na mão**, e o porquê
+   ficou no código.
+
+⚠️ **A evidência de 12/08 do 9.60 (`30.5 → 15`) só faz sentido em locale en-US e NÃO foi
+reproduzida em pt-BR** — fica marcada no item como **dado a reabrir, não a confiar**.
+
+**Regras conferidas:** §17 respondido ✅ · helper único, sem 4ª cópia ✅ · servidor com a mesma
+régua do client (`MAX_ACCESS_DAYS` compartilhado) ✅ · gate humano ✅ · papelada ✅
+
+---
+
 ## 2026-08-16 — CAMADA 3, ETAPA E3.2 — "A interface que mente" (9.86 · 9.85 · 9.94)
 
 **Estado antes:** main em `98af3ae` · 26 implementações locais de `showToast`
