@@ -193,6 +193,99 @@ await garanteColaborador({ donoJar: donoA, wsId: wsAId, email: "dono-b@staging.t
 await garanteColaborador({ donoJar: donoA, wsId: wsAId, email: "colab-duplo@staging.test", nome: "Colab Duplo", permissions: ["REPLY_COMMENTS"] });
 if (wsB) await garanteColaborador({ donoJar: donoB, wsId: wsB.id, email: "colab-duplo@staging.test", nome: "Colab Duplo", permissions: ["MANAGE_COMMUNITY"], jaTemConta: true });
 
+// ════════════════════════════════════════════════════════════════════════════
+// E3.0 — FIDELIDADE DO ELENCO (9.91 + 9.93) e PALCO dos grupos seguintes
+// ════════════════════════════════════════════════════════════════════════════
+
+console.log("\n══ 9.93 — User.workspaceId (espelhar produção) ══");
+// Produção NUNCA deixa este campo nulo num aluno com matrícula ACTIVE: 0 de 22.449
+// (medido 16/08/26). A regra é `workspaceId = o workspace onde o aluno entrou`.
+// Um elenco que diverge aqui faz a home da raiz dizer "não está matriculado em
+// nenhum curso" — e isso já foi lido como falha de GATE, custando um ciclo inteiro.
+const semWs = await p.$queryRawUnsafe(`
+  SELECT u.id, u.email, c."workspaceId" ws
+  FROM "User" u
+  JOIN "Enrollment" e ON e."userId"=u.id AND e.status='ACTIVE'
+  JOIN "Course" c ON c.id=e."courseId"
+  WHERE u.role='STUDENT' AND u."workspaceId" IS NULL`);
+for (const a of semWs) {
+  await p.user.update({ where: { id: a.id }, data: { workspaceId: a.ws } });
+  console.log(`   ✏️  ${a.email} → workspaceId preenchido`);
+}
+console.log(`   alunos ACTIVE com workspaceId nulo: ${semWs.length ? "corrigidos " + semWs.length : "0 ✅"}`);
+
+console.log("\n══ 9.91 — a persona SEM VÍNCULO NENHUM (o atacante padrão) ══");
+// Conta autenticada com ZERO vínculo: nenhum workspace, curso, matrícula ou
+// colaboração. É o negativo de todo teste de gate — sem ela, "403 para quem não
+// tem nada" não é testável, e o teste do A2 teve de criá-la à mão.
+// ⚠️ Criada pela rota PÚBLICA de propósito: é assim que um estranho nasce.
+const ATACANTE = "sem-vinculo@staging.test";
+if (!(await p.user.findUnique({ where: { email: ATACANTE }, select: { id: true } }))) {
+  const r = await req("POST", "/api/auth/register-producer", {
+    email: ATACANTE, password: SENHA, name: "Sem Vinculo",
+    phone: "11999999999", businessType: "INFOPRODUTO", niche: "teste",
+  });
+  console.log(`   registro pela rota pública → ${r.status} ${ok(r.status) ? "✅" : "🔴"}`);
+} else console.log("   já existia ✅");
+{
+  const u = await p.user.findUnique({ where: { email: ATACANTE }, select: { id: true } });
+  const [w, c, e, cl] = await Promise.all([
+    p.workspace.count({ where: { ownerId: u.id } }), p.course.count({ where: { ownerId: u.id } }),
+    p.enrollment.count({ where: { userId: u.id } }), p.collaborator.count({ where: { userId: u.id } }),
+  ]);
+  console.log(`   vínculos: ws=${w} cursos=${c} matrículas=${e} colaborações=${cl} ${w + c + e + cl === 0 ? "✅ zerado" : "🔴 tem vínculo"}`);
+}
+
+console.log("\n══ PALCO — conteúdo que os grupos da Camada 3 exigem ══");
+const alunoJar = await (async () => {
+  const j = jar();
+  j.set(await fetch(`${BASE}/api/w/staging-teste/login`, { method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email: "aluno-staging@staging.test", password: SENHA }) }));
+  return j;
+})();
+
+// 9.48 — "Carregar mais" só existe com página cheia: 2 grupos × 15 posts.
+// ⚠️ A moderação do curso está LIGADA, então post de aluno nasce PENDING e o
+// aluno NÃO o vê. Semear sem aprovar deixaria o palco com 4 posts visíveis e o
+// 9.48 intestável — por isso o seed aprova, e deixa 1 PENDING por grupo de
+// propósito (que é justamente o palco do 9.90).
+const cursoPalco = await p.course.findUnique({ where: { slug: "curso-teste" }, select: { id: true } });
+if (!(await p.communityGroup.findFirst({ where: { courseId: cursoPalco.id, slug: { not: "geral" } } }))) {
+  const r = await req("POST", "/api/producer/community/groups", {
+    courseId: cursoPalco.id, name: "Turma Avançada", description: "2º grupo do palco (9.48)", permission: "READ_WRITE",
+  }, donoA);
+  console.log(`   2º grupo criado → ${r.status}`);
+} else console.log("   2º grupo já existia ✅");
+
+const gruposPalco = await p.communityGroup.findMany({ where: { courseId: cursoPalco.id }, select: { id: true, slug: true } });
+for (const g of gruposPalco) {
+  const atual = await p.post.count({ where: { courseId: cursoPalco.id, groupId: g.id } });
+  for (let i = atual; i < 15; i++) {
+    await req("POST", "/api/posts", { content: `<p>Post de palco ${i + 1} — seed E3.0 (conteúdo obviamente falso)</p>`, type: "FREE", courseSlug: "curso-teste", groupId: g.id }, alunoJar);
+  }
+}
+// Aprova tudo menos 1 por grupo (o PENDING é palco do 9.90, não sobra).
+for (const g of gruposPalco) {
+  const manter = await p.post.findFirst({ where: { courseId: cursoPalco.id, groupId: g.id, status: "PENDING" }, orderBy: { createdAt: "asc" }, select: { id: true } });
+  const aprovar = await p.post.findMany({ where: { courseId: cursoPalco.id, groupId: g.id, status: "PENDING", ...(manter ? { id: { not: manter.id } } : {}) }, select: { id: true } });
+  for (let i = 0; i < aprovar.length; i += 20) {
+    await req("POST", "/api/producer/moderation", { items: aprovar.slice(i, i + 20).map((x) => ({ type: "community_post", id: x.id })), action: "approve" }, donoA);
+  }
+  const ap = await p.post.count({ where: { courseId: cursoPalco.id, groupId: g.id, status: "APPROVED" } });
+  const pe = await p.post.count({ where: { courseId: cursoPalco.id, groupId: g.id, status: "PENDING" } });
+  console.log(`   grupo ${g.slug.padEnd(16)} APPROVED=${String(ap).padStart(2)} PENDING=${pe} ${ap > 10 ? "✅ 'Carregar mais' existe" : "🔴 página não enche"}`);
+}
+
+// 9.83 — um convite REVOKED, para testar "editar não reativa / não há botão".
+const REVOGADO = "colab-revogado@staging.test";
+let convRev = await p.collaborator.findFirst({ where: { email: REVOGADO }, select: { id: true, status: true } });
+if (!convRev) {
+  await req("POST", "/api/producer/collaborators", { email: REVOGADO, name: "Colab Revogado", permissions: ["REPLY_COMMENTS"], courseIds: [] }, donoA);
+  convRev = await p.collaborator.findFirst({ where: { email: REVOGADO }, select: { id: true, status: true } });
+}
+if (convRev && convRev.status !== "REVOKED") await req("PATCH", `/api/producer/collaborators/${convRev.id}`, { status: "REVOKED" }, donoA);
+console.log(`   convite ${REVOGADO}: ${(await p.collaborator.findFirst({ where: { email: REVOGADO }, select: { status: true } }))?.status} ✅`);
+
 console.log("\n══ VERIFICAÇÃO FINAL ══");
 const users = await p.user.findMany({ select: { id: true, email: true, role: true }, orderBy: { email: "asc" } });
 for (const u of users) {
@@ -207,4 +300,30 @@ for (const u of users) {
 }
 console.log("\n   Workspaces: " + (await p.workspace.findMany({ select: { slug: true } })).map((w) => w.slug).join(", "));
 console.log("   Courses: " + (await p.course.findMany({ select: { slug: true, communityEnabled: true } })).map((c) => c.slug + (c.communityEnabled ? "(com)" : "")).join(", "));
+
+// ─── ESTADO DO PALCO (o que um handoff de QA precisa ler antes de testar) ────
+console.log("\n══ ESTADO DO PALCO ══");
+for (const c of await p.course.findMany({ select: { slug: true, communityEnabled: true, communityModerationEnabled: true, lessonCommentsModerationEnabled: true } })) {
+  console.log(`   ${c.slug.padEnd(16)} comunidade=${c.communityEnabled ? "ON " : "off"} moderação: comunidade=${c.communityModerationEnabled ? "ON " : "off"} aulas=${c.lessonCommentsModerationEnabled ? "ON" : "off"}`);
+}
+for (const g of await p.communityGroup.findMany({ select: { slug: true, permission: true, course: { select: { slug: true } } } })) {
+  const ap = await p.post.count({ where: { groupId: (await p.communityGroup.findFirst({ where: { slug: g.slug, course: { slug: g.course.slug } }, select: { id: true } })).id, status: "APPROVED" } });
+  console.log(`   grupo ${g.course.slug}/${g.slug} permission=${g.permission} posts visíveis=${ap}`);
+}
+console.log(`   posts PENDING: ${await p.post.count({ where: { status: "PENDING" } })} · comentários PENDING: ${await p.comment.count({ where: { status: "PENDING" } })}`);
+console.log(`   convites REVOKED: ${await p.collaborator.count({ where: { status: "REVOKED" } })}`);
+
+// ─── auth.users × Prisma (o órfão que ninguém vê) ────────────────────────────
+// ⚠️ Apagar a linha do Prisma NÃO apaga o usuário do Supabase Auth. O órfão
+// resultante muda o ramo do register-producer ("email já cadastrado") e envenena
+// o próximo teste. Conferir aqui é barato; descobrir depois, não.
+try {
+  const { createClient } = require("@supabase/supabase-js");
+  const s = createClient(SB, process.env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } });
+  const { data } = await s.auth.admin.listUsers({ page: 1, perPage: 1000 });
+  const emails = new Set(users.map((u) => u.email.toLowerCase()));
+  const orfaos = (data?.users ?? []).filter((u) => u.email && !emails.has(u.email.toLowerCase()));
+  console.log(`\n   auth.users=${data?.users?.length ?? "?"} · Prisma=${users.length} ${orfaos.length === 0 ? "✅ batendo" : "🔴 órfãos: " + orfaos.map((o) => o.email).join(", ")}`);
+} catch (e) { console.log("   (checagem auth×Prisma indisponível: " + e.message.slice(0, 60) + ")"); }
+
 await p.$disconnect();

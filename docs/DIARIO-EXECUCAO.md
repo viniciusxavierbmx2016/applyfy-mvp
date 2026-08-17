@@ -35,6 +35,97 @@ Copie o bloco abaixo e preencha todos os campos. Campo sem resposta = etapa não
 
 <!-- As entradas começam abaixo desta linha, da mais recente para a mais antiga. -->
 
+## 2026-08-16 — CAMADA 3, ETAPA E3.0 — Fidelidade do elenco de staging (9.91 + 9.93)
+
+**Estado antes:** main em `66a80e4` · staging com 19 users, 5 posts, 1 grupo por curso
+
+**O que foi feito:** o elenco passou a **espelhar produção** e ganhou a persona que faltava.
+Além do caso conhecido, foi feita uma **varredura sistemática**: para cada coluna anulável de
+`User`, `Enrollment`, `Collaborator`, `Workspace` e `Course`, mediu-se quantos registros REAIS
+de produção têm nulo — e onde produção tem **0 de N**, o staging não pode ter. Também foi
+montado o **palco** que os grupos seguintes exigem.
+
+**Arquivos tocados:** `scripts/seed-staging.mjs` (único; +~90 linhas) — dados de teste, zero
+código de produção.
+
+**Como foi provado:**
+- **Varredura de fidelidade:** `User.workspaceId` foi a **única** divergência em ~89 colunas
+  anuláveis analisadas (produção **0/22.449** nulos · staging 1/5). Corrigida. ⭐ O item 5 do
+  comando perguntava se havia outros: **não havia** — resposta negativa, mas medida.
+- **Semântica confirmada antes de escrever:** em produção, `workspaceId` == workspace do curso
+  matriculado em **24.022 de 24.436** pares (98,3%); os 414 restantes são aluno com curso em
+  outro ws, normal em multi-workspace. A regra é *"o workspace onde o aluno entrou"*.
+- **`sem-vinculo@staging.test` criado pela ROTA PÚBLICA** (`register-producer`, 201) e conferido:
+  `ws=0 cursos=0 matrículas=0 colaborações=0`, login OK.
+- **Idempotência:** seed rodado **2×**; a segunda convergiu inteira ("já existia" em todas as
+  linhas), com contagens idênticas e zero duplicata.
+- **Palco:** 2 grupos × **14 posts APPROVED** cada (o "Carregar mais" existe) + **1 PENDING por
+  grupo** + 3 comentários PENDING + 1 convite REVOKED.
+
+**SHA do merge:** `<commit desta etapa>`  ·  **Rollback:** o seed é idempotente e versionado
+
+**Mudou em produção para quem:** ninguém. Só staging.
+
+**⚠️ TRÊS ACHADOS QUE O COMANDO NÃO PREVIA:**
+1. 🔴 **3 órfãos em `auth.users`** (`aluno-b-qa-storage`, `aluno-b2`, `sem-vinculo`) — restos dos
+   meus próprios testes. **Apagar a linha do Prisma não apaga o usuário do Supabase Auth.** O
+   órfão muda o ramo do `register-producer` ("email já cadastrado") e envenena o teste seguinte.
+   Removidos; **o seed agora confere `auth.users × Prisma` no fim** e denuncia órfão.
+2. ⚠️ **A moderação está LIGADA no `curso-teste`**, então os 26 posts semeados nasceram
+   `PENDING` — o aluno via **4**. Semear sem aprovar teria entregue um palco onde o 9.48 é
+   **intestável**. O seed passou a aprovar pelo caminho real da moderação, **deixando 1 PENDING
+   por grupo de propósito** (que é o palco do 9.90).
+3. ⭐ **O 9.90 é bug de CLIENTE, não de servidor** — provado ao montar o palco: o servidor
+   responde **403 com `{"error":"Post aguardando aprovação"}`**, mensagem correta e específica.
+   Quem engole é a tela. Isso **estreita o item** e muda onde procurar.
+
+**O ELENCO (handoff de QA — papel + permissões + escopo + o que DEVE e NÃO DEVE alcançar):**
+
+| persona | papel | permissões | escopo | matrícula | DEVE alcançar | NÃO deve |
+|---|---|---|---|---|---|---|
+| `producer-staging` | DONO `staging-teste` | — | — | — | tudo do ws A | ws B |
+| `dono-b` | DONO `workspace-b-staging` **+ colab no A** | A:`MANAGE_COMMUNITY,VIEW_ANALYTICS` | todos | — | tudo do B · moderação e analytics do A | conteúdo/alunos do A |
+| `admin-staging` | ADMIN plataforma | — | — | — | tudo | — |
+| `aluno-staging` | STUDENT | — | — | `curso-teste` ACTIVE | curso A, comunidade A, materiais A | qualquer coisa do B |
+| `aluno-b` | STUDENT | — | — | `curso-b` ACTIVE | curso B | **publicar no A (403)** |
+| `faxina-teste-1/2/4` | STUDENT | — | — | `curso-teste` ACTIVE | igual ao `aluno-staging` | ws B |
+| `colab-comunidade` | colaborador | `MANAGE_COMMUNITY,ACCESS_MEMBER_AREA` | 1 curso | — | moderar e entrar na comunidade | dinheiro, alunos, aulas |
+| `colab-modonly` | colaborador | `MANAGE_COMMUNITY` **sem** `ACCESS_MEMBER_AREA` | 1 curso | — | fila de moderação | **entrar na área de membros** |
+| `colab-reply` | colaborador | `REPLY_COMMENTS,ACCESS_MEMBER_AREA` | 1 curso | — | responder comentários | excluir post alheio |
+| `colab-lessons` | colaborador | `MANAGE_LESSONS` | todos | — | editar aulas e materiais | dinheiro, comunidade |
+| `colab-students` | colaborador | `MANAGE_STUDENTS` | todos | — | matricular/exportar alunos | dinheiro, aulas |
+| `colab-dash` | colaborador | `VIEW_DASHBOARD,ACCESS_MEMBER_AREA` | 1 curso | — | KPIs de receita | relatórios, gestão |
+| `colab-analytics` | colaborador | `VIEW_ANALYTICS,ACCESS_MEMBER_AREA` | 1 curso | — | engajamento/progresso | **dashboard financeiro** |
+| `colab-automations` | colaborador | `MANAGE_AUTOMATIONS` | todos | — | automações | resto |
+| `colab-escopo` | colaborador | `MANAGE_STUDENTS,MANAGE_LESSONS` | **1 curso só** | — | só o curso do escopo | **o outro curso do mesmo ws** |
+| `colab-duplo` | colaborador nos **2** ws | A:`REPLY_COMMENTS` · B:`MANAGE_COMMUNITY` | todos/todos | — | o que cada ws dá | trocar poder de um ws no outro |
+| `colab-zero` | colaborador | **nenhuma** | 1 curso | — | **nada além de existir** | tudo |
+| `colab-revogado` | convite `REVOKED` | `REPLY_COMMENTS` | todos | — | **nada** | tudo |
+| ⭐ `sem-vinculo` | PRODUCER sem nada | — | — | — | **NADA** — é o atacante padrão | tudo |
+
+⚠️ **A coluna "NÃO deve" é o ponto da tabela.** Sem ela, um handoff descreve o vínculo e não o
+poder — foi assim que `dono-b` virou "IDOR cross-tenant confirmado" que não existia.
+
+**ESTADO DO PALCO:**
+```
+curso-teste      comunidade=ON  moderação: comunidade=ON  aulas=ON   ← as duas LIGADAS de propósito
+curso-teste-2    comunidade=ON  moderação: off/off
+curso-b          comunidade=ON  moderação: off/off
+grupo curso-teste/geral            READ_WRITE  14 posts visíveis  (+1 PENDING)
+grupo curso-teste/turma-avancada   READ_WRITE  14 posts visíveis  (+1 PENDING)
+grupo curso-b/geral                READ_WRITE   1 post
+comentários PENDING: 3 · convites REVOKED: 1 · auth.users=20 = Prisma=20
+⚠️ cores do membro NULAS no curso-teste (o `.course-customized` não entra)
+```
+
+**Ficou aberto:** nada desta etapa. O 9.90 fica **mais preciso** (é client-side) para o E3.2.
+
+**Regras conferidas:** prova dupla de `SUPABASE_REF` em todo bloco ✅ · escrita só em staging ✅ ·
+tudo pelo caminho real (nenhum `insert` direto para criar) ✅ · idempotência provada por 2ª
+rodada ✅ · papelada ✅
+
+---
+
 ## 2026-08-16 — 📌 REAGRUPAMENTO DA CAMADA 3 — não é etapa fechada
 
 > Registro de trabalho de **planejamento**, não de código. Nenhum item foi consertado.
