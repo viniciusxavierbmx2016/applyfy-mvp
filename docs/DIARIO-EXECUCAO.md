@@ -35,6 +35,66 @@ Copie o bloco abaixo e preencha todos os campos. Campo sem resposta = etapa não
 
 <!-- As entradas começam abaixo desta linha, da mais recente para a mais antiga. -->
 
+## 2026-08-16 — CAMADA 3, ETAPA E3.2 — "A interface que mente" (9.86 · 9.85 · 9.94)
+
+**Estado antes:** main em `98af3ae` · 26 implementações locais de `showToast`
+
+**O que foi feito:** criada a **régua** de aviso (`useToast` + `mensagemDeErro`), adotada em 1
+tela, e consertados os dois pontos onde a tela mentia sobre a causa: o botão de convite que não
+dizia por que estava travado, e a home do aluno que traduzia "não consegui carregar" como "você
+não comprou nada". **O grupo encolheu de 5 para 3 itens** — ver abaixo.
+
+**Arquivos tocados:** `src/hooks/use-toast.tsx` (novo) ·
+`src/app/producer/settings/collaborators/page.tsx` · `src/app/(dashboard)/page.tsx`
+
+**Como foi provado:**
+- **A régua com 4xx reais**: `400 {"error":"Selecione ao menos uma permissão"}` e
+  `409 {"error":"Já existe um convite ativo para este e-mail"}` — e o humano confirmou por
+  **interceptação de fetch** que a UI exibe **exatamente** a string do servidor.
+- **9.94, os dois estados**: aluno logado → **200 + 1 curso** (o empty-state nem aparece) · sem
+  sessão → **401** → *"Não foi possível carregar seus cursos"*. Antes os dois caíam no mesmo
+  texto.
+- **Regressão dos toasts não migrados**: 3 telas conferidas mantendo `showToast` local; na tela
+  migrada, **6 chamadas preservadas e 0 implementação local restante**.
+- **Gate humano**: as três réguas com texto exato, frase e `disabled` medidos **juntos** em cada
+  transição · `PATCH → 200 + status REVOKED + toast` alinhados (nada de toast verde sobre chamada
+  morta) · aluno vê os cursos com `hasAccess` true / `isStaffViewer` false, e a ausência de "não
+  está matriculado" testada por **regex no `innerText`**.
+
+**SHA do merge:** `c088eb3`  ·  **Rollback:** `git revert -m 1 c088eb3`
+
+**Mudou em produção para quem:** **produtor** — o botão de convite agora diz o que falta, e o
+erro de convite traz a frase do servidor em vez de "Erro ao salvar". **Aluno** — só se a home
+falhar ao carregar: em vez de "você não está matriculado", lê "não foi possível carregar" com
+"Tentar de novo". Caminho feliz **idêntico**. Ninguém a avisar.
+
+**Ficou aberto:** **9.106** (adoção nas 25 telas restantes) · **9.107** (82 candidatos a erro
+engolido — ⚠️ **triar antes de virar fila**).
+
+**⭐ O GATE HUMANO ACHOU UM DEFEITO NA MINHA RÉGUA — o achado mais valioso da etapa:**
+o roteiro que escrevi para o 9.85 **passava por VACUIDADE**. O modal abre com
+`ACCESS_MEMBER_AREA` **já pré-marcada**, então "ao menos uma permissão" já está satisfeita na
+abertura — o estado 2 nunca era exercitado, e o roteiro passava sem testar nada.
+**Roteiro corrigido: "digite o e-mail E DESMARQUE a permissão que vem marcada".**
+⚠️ Uma régua que passa sem exercitar o caminho é **pior que régua nenhuma**: dá falsa confiança.
+
+**⚠️ O GRUPO ENCOLHEU — dois itens saíram, e por motivos diferentes:**
+- **9.90 → FANTASMA.** Já estava consertado desde `d5414b7` (**07/08**), **uma semana antes de o
+  item nascer**. Veio de relato de QA não conferido contra o repo. E eu piorei: no E3.0 escrevi
+  *"o servidor responde 403 e a tela engole"* a partir de **sonda de API sem abrir o client** —
+  metade medida, metade afirmada.
+- **9.79 → fora do grupo.** A mentira é do **SERVIDOR**, não da tela: *"Não matriculado neste
+  curso"* é frase **verdadeira e irrelevante** quando a causa é `ACCESS_MEMBER_AREA` revogada.
+  Fix no servidor, teste outro, 3 rotas. Não compartilha nada com a família.
+
+**⚠️ Resíduo deliberado no palco:** `qa-revogar-e30@staging.test` (status `REVOKED`) **fica** —
+é o cenário que o **9.83** vai precisar. O elenco não foi tocado (12 ACCEPTED intactos).
+
+**Regras conferidas:** §17 respondido ✅ · reuso do molde (`use-confirm`, `animate-fade-in-up`)
+✅ · adoção contida com prova por tela ✅ · gate humano ✅ · papelada ✅
+
+---
+
 ## 2026-08-16 — CAMADA 3, ETAPA E3.1 — CVEs: 4 dos 5 HIGH fechados (9.101)
 
 **Estado antes:** main em `b1936ba` · `npm audit` com 5 HIGH e 2 moderate
