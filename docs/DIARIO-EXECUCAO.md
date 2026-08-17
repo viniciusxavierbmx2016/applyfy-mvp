@@ -35,6 +35,83 @@ Copie o bloco abaixo e preencha todos os campos. Campo sem resposta = etapa não
 
 <!-- As entradas começam abaixo desta linha, da mais recente para a mais antiga. -->
 
+## 2026-08-17 — CAMADA 3, ETAPA E3.4 — Recorte de payload (9.81)
+
+**Estado antes:** main em `3c3a962`
+
+**O que foi feito:** `GET /api/courses/[id]` usava **`include` puro** e devolvia **toda coluna** de
+`Course`, `Module`, `Lesson` e `Section` — `videoUrl` de todas as aulas incluído — para qualquer uma
+das **5** permissões que abrem o editor, **nenhuma** relacionada a conteúdo. Virou **`select`
+explícito**, e só o bloco de **conteúdo de aula** (`videoUrl` · `description` · `duration` ·
+`hideYoutubeChrome`) ficou condicionado a `MANAGE_LESSONS`. ⚠️ **Quem entra não mudou**: a união das
+duas listas de permissão é exatamente o `anyOf` de 5 de antes.
+
+**Arquivos tocados:** `api/courses/[id]/route.ts` — **só ele** (+133/−10)
+
+**Como foi provado:**
+- **Diff de chaves `include`×`select` no mesmo dado**: `Course 54→54` · `Module 10→10` · `Lesson
+  9→9` **com** permissão e **9→5** **sem**, cortando exatamente os 4.
+- ⚠️ **O teste passava por VACUIDADE e foi pego**: `Section 0→0` — o `curso-teste` não tem seção
+  nenhuma, então aquele ramo passava **sem testar nada**. Refeito contra o **`information_schema`**,
+  com a lista extraída **do próprio arquivo da rota**: `Course 52/52` · `Section 5/5` · `Module 9/9`
+  · `Lesson 9/9`. Zero coluna esquecida — **inclusive na tabela sem linha nenhuma**.
+- **Matriz HTTP 8/8** com a expectativa **derivada do banco** (permissões + `courseIds` + workspace
+  lidos **antes** de medir): `colab-lessons` **200 com** vídeo · `colab-students`, `colab-reply` e
+  `colab-comunidade` **200 sem** · `colab-zero` e `sem-vinculo` **403** (gate intacto) · dono e ADMIN
+  **200 com**.
+- **Os 8 consumidores conferidos campo a campo** no payload sem permissão: layout 4/4 · menu 2/2 ·
+  settings 14/14 · customize 5/5 · CourseForm 19/19 · ModuleData 8/8. **Nenhum campo faltando.**
+- **7 rotas do editor carregam** com `producer-staging` **e** com `colab-students`, sem marcador de
+  erro no HTML.
+- **Gate humano 4/4**, com uma correção colada abaixo.
+
+**SHA do merge:** `fcb1cbc`  ·  **Rollback:** `git revert -m 1 fcb1cbc`
+
+**Mudou em produção para quem:** os **3 colaboradores** que liam a rota sem `MANAGE_LESSONS`
+(`marcilenexl`/orion-academy com `REPLY_COMMENTS`; `jesusblack016` e
+`ernestorodriguez.suport066`/kingdomacademy com `MANAGE_STUDENTS`) **param de receber** as URLs de
+vídeo — e **nenhuma tela deles muda**, porque nenhuma exibia. Quem tem `MANAGE_LESSONS`, dono e
+ADMIN: **nada muda**.
+
+**Ficou aberto:** **9.112** 🟠 (E3.15) — bloco **comercial e de contato** no mesmo payload
+(`checkoutUrl` · `price` · `priceCurrency` · `externalProductId` · `supportEmail` ·
+`supportWhatsapp`). ⛔ **Não anda sem decisão de dono**: cortá-lo sob `MANAGE_LESSONS` faria a
+permissão significar **duas coisas** (família do `DASHBOARD_PERMISSIONS`).
+
+**⚠️ O ROTEIRO DE VALIDAÇÃO APONTOU A TELA ERRADA — e o humano provou a não-regressão por
+COMPARAÇÃO.** Eu escrevi "Alunos → editar acesso de um aluno" esperando ver a lista de
+módulos/aulas. Ela **não aparece ali para ninguém** — nem para o dono sem restrição. O fato: a lista
+vive **duas camadas mais fundo**, no ícone de lápis (`aria-label="Editar tempo de acesso"`,
+`students/page.tsx:290`) que abre o modal, e **dentro dele numa segunda aba**, `Liberação de
+conteúdo` (`edit-access-modal.tsx:288`). O humano não aceitou a ausência como corte de permissão:
+**comparou com `producer-staging`, viu a mesma tela, e concluiu certo**. É a família do *roteiro que
+passa por vacuidade* — dessa vez o roteiro não passou por vacuidade, ele **mediu no lugar errado**,
+e só não virou achado falso porque houve **grupo de controle**. ⚠️ **Consequência registrada**: a
+lista de módulos/aulas **não foi vista renderizada** neste ciclo; a não-regressão daquele consumidor
+está provada **por campo presente no payload + comparação com o dono**, não por olho na tela.
+
+**⚠️ BURACOS DECLARADOS (baixo risco, não fechados):** `lives/[id]` **não rodou** — não há `Live` no
+palco; ela lê só `modules[].{id,title}`, provados presentes. E `sections[]` volta **vazio** — o
+conjunto de campos de `Section` está provado contra o schema, **não por HTTP**. Fechar os dois pedia
+**escrita no staging**, que o comando não autorizou.
+
+**⭐ O DESENHO COINCIDIU COM A INTENÇÃO DE PRODUTO, e isso é o que o tornou barato:** dos 8
+consumidores, o único que precisa do conteúdo é `edit/page.tsx` — e ele **já expulsa**
+(`router.replace` → `/comments`) quem não tem `MANAGE_LESSONS`. Não foi preciso inventar régua nova:
+a régua já existia no client, sem o servidor a respeitar.
+
+**⭐ EFEITO COLATERAL DESEJADO:** com `include`, **toda coluna nova ia junto sem ninguém decidir**.
+Com `select`, uma coluna que nasça no schema **não vaza sozinha**.
+
+**⚠️ NÚMEROS DO ITEM VENCIDOS, remedidos antes de agir:** o item dizia **1.833 aulas, 100% com
+`videoUrl`**. São **1.831, 1.718 (93,8%)**. Item velho é hipótese, não fato.
+
+**Regras conferidas:** §17 respondido ✅ · consumidores mapeados ANTES do desenho ✅ (o primeiro
+grep, filtrado, dizia 3 — eram 8) · staging-first ✅ · gate humano ✅ · refutação de IDOR **não
+reaberta** ✅ · papelada ✅
+
+---
+
 ## 2026-08-17 — CAMADA 3, ETAPA E3.11 — 2FA para quem tem painel (9.109)
 
 **Estado antes:** main em `b570739`

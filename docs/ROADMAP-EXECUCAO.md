@@ -236,7 +236,8 @@ auditoria — rate-limit da Peça B, HSTS e `npm audit` — seguem na Camada 3.
 |---|---|---|---|
 | **E3.10 — A torneira do webhook** | **9.98** 🔴 | **sozinho, e primeiro**: as 5 telas emitem a URL do host navegado, então a população apontando para a Vercel **cresce todo dia**. É dívida que **acumula sozinha** | 1 sessão |
 | **E3.11 — 2FA para quem tem painel** | **9.109** 🔴 | sozinho — segurança de **conta**, não de curso | ½ sessão |
-| **E3.4 — Recorte de payload** | **9.81** 🟠 | sozinho de propósito: exige mapear os consumidores no client antes | 1 sessão |
+| ~~**E3.4 — Recorte de payload**~~ | ~~**9.81** 🟠~~ | ✅ **FECHADA** `fcb1cbc` — sozinho de propósito: exigia mapear os consumidores no client antes, e exigiu mesmo (eram **8**, não 3) | 1 sessão |
+| **E3.15 — Bloco comercial no payload do curso** | **9.112** 🟠 | ⛔ **BLOQUEADA por decisão de dono**: qual permissão autoriza ver preço, checkout e `externalProductId`? Não cortar sob `MANAGE_LESSONS`. ⚠️ Palco precisa dos campos comerciais populados antes | ½ sessão |
 | **E3.6 — Dívida do storage** | **9.97** · **9.104** · **9.95** | mesmo modelo e mesma área; o 9.95 (transmitir em vez de redirecionar) resolveria o acento perdido do 9.92 | 1–2 sessões |
 | **E3.12 — A régua de erro, continuação** | **9.107** *(triar primeiro)* → **9.106** · **9.79** | continuação direta do E3.2: a régua existe, falta adotar e triar. O 9.79 volta aqui porque o fix é no **servidor**, mas o teste é o mesmo | 2 sessões |
 | **E3.7 — UI de colaboradores** | **9.83** · **9.84** | mesma tela. ⚠️ Palco já pronto (2 convites REVOKED) | ½ sessão |
@@ -246,9 +247,9 @@ auditoria — rate-limit da Peça B, HSTS e `npm audit` — seguem na Camada 3.
 **Ordem recomendada e o porquê:**
 1. **E3.10 (9.98)** — ⭐ **o único da fila que PIORA sozinho**. Cada produtor que configura hoje grava a URL errada, e a migração futura cresce. Risco estático perde para risco que acumula.
 2. **E3.11 (9.109)** — barato e o efeito é perverso: nega 2FA a quem exporta lista de alunos com e-mail e telefone.
-3. **E3.4 (9.81)** — a exposição de conteúdo que sobrou, a gente convidada.
+3. ~~**E3.4 (9.81)**~~ — ✅ fechada `fcb1cbc`. Deixou o **9.112** (E3.15), que **não anda sem decisão de dono**.
 4. **E3.7** — meia sessão, palco pronto, dor diária do produtor no celular.
-5. **E3.12** → 6. **E3.6** → 7. **E3.8** → 8. **E3.9**.
+5. **E3.12** → 6. **E3.6** → 7. **E3.8** → 8. **E3.9**. **E3.15** entra quando o dono responder.
 
 **⇒ Estimativa: 8 a 10 sessões** para o restante da Camada 3, contando que **cada grupo tende a
 gerar 1 item novo** (foi a taxa observada: 5 grupos → 6 itens).
@@ -403,7 +404,7 @@ Roda **em paralelo** às camadas, sem consumir sessão de desenvolvimento:
 | E3.3 Predicado por role (9.72·9.69·9.88·**9.108**) | ✅ fechada | `e3d5e62` | 2026-08-17 |
 | **E3.10 Torneira do webhook (9.98)** 🔴 | ✅ fechada | `d58aecb` | 2026-08-17 |
 | **E3.11 2FA para quem tem painel (9.109)** 🔴 | ✅ fechada | `b58df38` | 2026-08-17 |
-| E3.4 Recorte de payload (9.81) | ⬜ pendente — 3º | — | — |
+| **E3.4 Recorte de payload (9.81)** 🟠 | ✅ fechada | `fcb1cbc` | 2026-08-17 |
 | **E3.12 Régua de erro, continuação (9.107·9.106·9.79)** | ⬜ pendente | — | — |
 | E3.5 Telas de acesso e dias (9.57c·9.60) | ✅ fechada | `e26e312` | 2026-08-17 |
 | E3.6 Dívida do storage (9.97·9.104·9.95) | ⬜ pendente | — | — |
@@ -412,6 +413,7 @@ Roda **em paralelo** às camadas, sem consumir sessão de desenvolvimento:
 | E3.9 Sozinhos (9.48·9.61·9.66·9.64·9.99·9.100) | ⬜ pendente | — | — |
 | **E3.13 Integridade da comunidade (9.23·9.24)** 🟠 | ⬜ pendente — **subiu na triagem 17/08** | — | — |
 | **E3.14 Rastro de quem mexeu no acesso (9.44b)** 🟠 | ⬜ pendente — **subiu na triagem 17/08** | — | — |
+| **E3.15 Bloco comercial no payload (9.112)** 🟠 | ⛔ bloqueada — **pergunta de dono** (nasceu do E3.4) | — | — |
 | E4.1 Toggles Personalizar Curso | ⬜ pendente | — | — |
 | E4.2 PDF na comunidade | ⬜ pendente | — | — |
 | E4.3 Colab assistir aos cursos | ⬜ pendente | — | — |
