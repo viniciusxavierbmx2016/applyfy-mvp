@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { MAX_ACCESS_DAYS, MIN_ACCESS_DAYS } from "@/lib/days-input";
 import { NextResponse } from "next/server";
 
 // IDs in this codebase are uuid for most models, cuid for some — accept either via min/max.
@@ -630,12 +631,14 @@ export const enrollCourseStudentSchema = z.object({
   // 9.57 — falhar ALTO em vez de conceder vitalício em silêncio: a união com
   // string passava "30" pelo Zod e o typeof da rota descartava → expiresAt null.
   // Agora string/0/negativo/decimal/acima do teto = 400. null/omitido = vitalício
-  // (explícito, único caminho). Teto 36500 = 100 anos.
+  // (explícito, único caminho). Teto = MAX_ACCESS_DAYS (100 anos).
+  // ⭐ 9.57c: o literal 36500 virou a constante compartilhada — esta régua e a
+  // do `expiresAt` (enrollmentUpdateSchema) agora sobem juntas ou não sobem.
   days: z
-    .number("days deve ser número inteiro entre 1 e 36500; omita ou envie null para vitalício")
-    .int("days deve ser número inteiro entre 1 e 36500; omita ou envie null para vitalício")
-    .min(1, "days deve ser número inteiro entre 1 e 36500; omita ou envie null para vitalício")
-    .max(36500, "days deve ser número inteiro entre 1 e 36500; omita ou envie null para vitalício")
+    .number(`days deve ser número inteiro entre ${MIN_ACCESS_DAYS} e ${MAX_ACCESS_DAYS}; omita ou envie null para vitalício`)
+    .int(`days deve ser número inteiro entre ${MIN_ACCESS_DAYS} e ${MAX_ACCESS_DAYS}; omita ou envie null para vitalício`)
+    .min(MIN_ACCESS_DAYS, `days deve ser número inteiro entre ${MIN_ACCESS_DAYS} e ${MAX_ACCESS_DAYS}; omita ou envie null para vitalício`)
+    .max(MAX_ACCESS_DAYS, `days deve ser número inteiro entre ${MIN_ACCESS_DAYS} e ${MAX_ACCESS_DAYS}; omita ou envie null para vitalício`)
     .optional()
     .nullable(),
   phone: z.string().max(50).optional(),
@@ -665,9 +668,35 @@ export const createCourseModuleSchema = z.object({
   daysToRelease: z.number().int().min(0).optional(),
 });
 
+/* ⚠️ O prazo de acesso do aluno. Antes daqui, `expiresAt` era
+   `z.union([z.string(), z.null()])` — qualquer string — e a rota só checava
+   `isNaN(new Date(...))`. Um PATCH direto gravava acesso até o ano 9999: o
+   `max={3650}` do modal era limite **só de client**, e limite só de client não
+   é limite. Mesmo padrão que o 9.57 corrigiu na rota de `days`, sobrevivendo na
+   rota irmã.
+
+   ⭐ O teto vem de `MAX_ACCESS_DAYS` — a MESMA constante que os três modais e a
+   régua de `days` usam. Divergência entre irmãs foi como este item nasceu.
+
+   `null` segue válido: é o Vitalício. */
 export const enrollmentUpdateSchema = z
   .object({
-    expiresAt: z.union([z.string(), z.null()]).optional(),
+    expiresAt: z
+      .union([
+        z
+          .string()
+          .refine((s) => !Number.isNaN(Date.parse(s)), "expiresAt deve ser uma data válida")
+          .refine(
+            (s) => Date.parse(s) > Date.now(),
+            "expiresAt deve ser uma data futura; envie null para acesso vitalício"
+          )
+          .refine(
+            (s) => Date.parse(s) <= Date.now() + MAX_ACCESS_DAYS * 86400000,
+            `expiresAt excede o teto de ${MAX_ACCESS_DAYS} dias; envie null para acesso vitalício`
+          ),
+        z.null(),
+      ])
+      .optional(),
   })
   .passthrough();
 

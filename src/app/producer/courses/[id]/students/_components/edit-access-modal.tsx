@@ -1,6 +1,11 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import {
+  normalizeDaysOnBlur,
+  resolveAccessDays,
+  sanitizeDaysText,
+} from "@/lib/days-input";
 import { useConfirm } from "@/hooks/use-confirm";
 import { Student } from "../_types";
 import { DURATION_OPTIONS } from "../_lib/format";
@@ -33,7 +38,9 @@ export function EditAccessModal({
 }) {
   const [tab, setTab] = useState<"access" | "release">("access");
   const [durationIdx, setDurationIdx] = useState(0);
-  const [customDays, setCustomDays] = useState(30);
+  // Texto, não número: só o texto guarda "30," enquanto se digita. O número
+  // resolvido é `diasResolvidos` — `null` enquanto não houver um.
+  const [customDays, setCustomDays] = useState("30");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [modules, setModules] = useState<ModuleNode[] | null>(null);
@@ -83,6 +90,13 @@ export function EditAccessModal({
 
   const opt = DURATION_OPTIONS[durationIdx];
   const isCustom = opt.days === -1;
+  const diasResolvidos = resolveAccessDays(customDays);
+  // Régua do 9.85: o botão trava E diz por quê. Campo vazio NUNCA vira
+  // prazo — gravar a partir de vazio é conceder acesso que ninguém pediu.
+  const motivoBloqueio =
+    isCustom && diasResolvidos === null
+      ? "Informe quantos dias de acesso"
+      : null;
   const isLifetime = opt.days === null && !isCustom;
 
   async function toggleOverride(
@@ -181,7 +195,7 @@ export function EditAccessModal({
     setError("");
     let expiresAt: string | null = null;
     if (!isLifetime) {
-      const days = isCustom ? customDays : (opt.days as number);
+      const days = isCustom ? (diasResolvidos as number) : (opt.days as number);
       expiresAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
     }
     try {
@@ -306,13 +320,13 @@ export function EditAccessModal({
             {isCustom && (
               <div className="mt-3 flex items-center gap-2">
                 <input
-                  type="number"
-                  min={1}
-                  max={3650}
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="off"
+                  aria-label="Dias de acesso"
                   value={customDays}
-                  onChange={(e) =>
-                    setCustomDays(Math.max(1, Number(e.target.value) || 1))
-                  }
+                  onChange={(e) => setCustomDays(sanitizeDaysText(e.target.value))}
+                  onBlur={(e) => setCustomDays(normalizeDaysOnBlur(e.target.value))}
                   className="w-28 px-3 py-2 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                 />
                 <span className="text-sm text-gray-600 dark:text-gray-400">
@@ -323,12 +337,19 @@ export function EditAccessModal({
             <p className="text-xs text-gray-500 mt-2">
               {isLifetime
                 ? "Acesso permanente, sem data de expiração."
-                : `Nova expiração: ${new Date(
-                    // eslint-disable-next-line react-hooks/purity -- preview date based on time of render; intentional, not memoized
-                    Date.now() +
-                      (isCustom ? customDays : (opt.days as number)) *
-                        86400000
-                  ).toLocaleDateString("pt-BR")}`}
+                : diasResolvidos === null && isCustom
+                  ? // Sem número resolvido não há data para prever — e mostrar uma
+                    // data chutada aqui seria a mesma mentira que o E3.2 tirou das
+                    // outras telas.
+                    "Informe quantos dias para ver a nova expiração."
+                  : `Nova expiração: ${new Date(
+                      // eslint-disable-next-line react-hooks/purity -- preview date based on time of render; intentional, not memoized
+                      Date.now() +
+                        (isCustom
+                          ? (diasResolvidos as number)
+                          : (opt.days as number)) *
+                          86400000
+                    ).toLocaleDateString("pt-BR")}`}
             </p>
           </div>
 
@@ -342,7 +363,8 @@ export function EditAccessModal({
             </button>
             <button
               type="submit"
-              disabled={saving}
+              disabled={saving || !!motivoBloqueio}
+              title={motivoBloqueio ?? undefined}
               className="px-4 py-2 bg-primary hover:bg-primary-hover disabled:opacity-50 text-white text-sm font-medium rounded-lg"
             >
               {saving ? "Salvando..." : "Salvar"}
