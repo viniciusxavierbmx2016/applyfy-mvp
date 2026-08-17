@@ -7,6 +7,7 @@ import {
   type CollaboratorPermission,
 } from "@/lib/collaborator";
 import { useConfirm } from "@/hooks/use-confirm";
+import { mensagemDeErro, useToast } from "@/hooks/use-toast";
 import { HelpTooltip } from "@/components/help-tooltip";
 
 interface CourseOption {
@@ -51,14 +52,11 @@ export default function AdminCollaboratorsPage() {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState<CollaboratorItem | null>(null);
-  const [toast, setToast] = useState<string | null>(null);
+  // 9.86 — 1ª adoção da régua. A implementação LOCAL que morava aqui era uma
+  // das 26 do projeto; o visual neutro do hook é byte-a-byte o que havia.
+  const { showToast, Toast } = useToast();
   const [inviteLink, setInviteLink] = useState<string | null>(null);
   const { confirm, ConfirmDialog } = useConfirm();
-
-  function showToast(msg: string) {
-    setToast(msg);
-    setTimeout(() => setToast(null), 3000);
-  }
 
   async function load() {
     setLoading(true);
@@ -291,11 +289,7 @@ export default function AdminCollaboratorsPage() {
         </div>
       )}
 
-      {toast && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-4 py-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-sm font-medium rounded-lg shadow-lg">
-          {toast}
-        </div>
-      )}
+      <Toast />
       <ConfirmDialog />
     </div>
   );
@@ -343,6 +337,18 @@ function CollaboratorModal({
     );
   }
 
+  /* 9.85 — a razão de o botão estar travado, na MESMA ordem das condições do
+     `disabled` logo abaixo. Ordem importa: "salvando" vence tudo, e entre as
+     duas pendências o e-mail vem antes porque é o primeiro campo da tela.
+     ⚠️ Nenhuma condição foi acrescentada nem removida — só nomeada. */
+  const motivoBloqueio = saving
+    ? "Salvando…"
+    : !email
+      ? "Informe o e-mail do colaborador"
+      : permissions.length === 0
+        ? "Marque ao menos uma permissão"
+        : null;
+
   async function save() {
     setError(null);
     setSaving(true);
@@ -363,8 +369,11 @@ function CollaboratorModal({
     });
     setSaving(false);
     if (!r.ok) {
-      const d = await r.json().catch(() => ({}));
-      setError(d.error || "Erro ao salvar");
+      // 9.86 — a régua: 4xx mostra a frase do servidor (é frase de produto),
+      // 5xx vira frase da casa. Antes, um 500 desta rota exibia ao produtor a
+      // `error.message` da exceção — que nas rotas que fazem
+      // `error instanceof Error ? error.message` carrega detalhe de Prisma.
+      setError(await mensagemDeErro(r, "Não foi possível salvar"));
       return;
     }
     const d = await r.json();
@@ -503,6 +512,19 @@ function CollaboratorModal({
               {error}
             </div>
           )}
+
+          {/* 9.85 — o motivo VISÍVEL. O `title` do botão sozinho não bastaria:
+              não existe hover no celular, e leitor de tela não anuncia `title`
+              de forma confiável. Só aparece quando não há erro de servidor na
+              tela, para não empilhar dois avisos concorrentes. */}
+          {!error && motivoBloqueio && !saving && (
+            <p
+              id="motivo-bloqueio"
+              className="text-xs text-gray-500 dark:text-gray-400"
+            >
+              {motivoBloqueio} para {editing ? "salvar" : "enviar o convite"}.
+            </p>
+          )}
         </div>
 
         <div className="px-6 py-4 border-t border-gray-200 dark:border-white/10 flex items-center justify-end gap-2">
@@ -512,9 +534,15 @@ function CollaboratorModal({
           >
             Cancelar
           </button>
+          {/* 9.85 — o botão continua desabilitado pelas MESMAS três condições;
+              o que muda é o usuário saber QUAL delas o está travando. Antes:
+              três causas, zero ditas — e a de permissão é a menos óbvia, porque
+              o campo fica longe do botão. */}
           <button
             onClick={save}
             disabled={saving || !email || permissions.length === 0}
+            title={motivoBloqueio ?? undefined}
+            aria-describedby={motivoBloqueio ? "motivo-bloqueio" : undefined}
             className="px-4 py-2 bg-primary hover:bg-primary disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg"
           >
             {saving

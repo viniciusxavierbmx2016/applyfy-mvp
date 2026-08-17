@@ -117,6 +117,18 @@ function StudentHome({ firstName }: { firstName: string }) {
   const [enrolled, setEnrolled] = useState<EnrolledCourse[]>([]);
   const [store, setStore] = useState<StoreCourse[]>([]);
   const [loading, setLoading] = useState(true);
+  /* 9.94 — a tela dizia "você não está matriculado em nenhum curso" em DOIS
+     estados diferentes: quando não há matrícula (verdade) e quando a busca
+     FALHOU (mentira). O `if (res.ok)` sem `else` fazia os dois caírem no mesmo
+     lugar — lista vazia é o estado inicial, então falha ficava indistinguível
+     de vazio.
+
+     ⚠️ NÃO exigiu mudança de contrato na rota: o sinal já existia no `res.ok`
+     e estava sendo descartado. A bail-out anti-vazamento de `/api/courses`
+     (`route.ts:95-100`, que devolve vazio quando não resolve o workspace) segue
+     intacta e correta — o que muda é a tela parar de traduzir "não consegui
+     resolver seu workspace" como "você não comprou nada". */
+  const [falhou, setFalhou] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -126,7 +138,12 @@ function StudentHome({ firstName }: { firstName: string }) {
           const data = await res.json();
           setEnrolled(data.enrolled || []);
           setStore(data.store || []);
+        } else {
+          setFalhou(true);
         }
+      } catch {
+        // Rede caiu: também é falha, não é "sem cursos".
+        setFalhou(true);
       } finally {
         setLoading(false);
       }
@@ -234,9 +251,24 @@ function StudentHome({ firstName }: { firstName: string }) {
         <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Meus cursos</h2>
         {enrolled.length === 0 ? (
           <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-8 text-center">
-            <p className="text-gray-500">
-              Você ainda não está matriculado em nenhum curso
-            </p>
+            {falhou ? (
+              <>
+                <p className="text-gray-500">
+                  Não foi possível carregar seus cursos.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => window.location.reload()}
+                  className="mt-3 text-sm font-medium text-primary hover:underline"
+                >
+                  Tentar de novo
+                </button>
+              </>
+            ) : (
+              <p className="text-gray-500">
+                Você ainda não está matriculado em nenhum curso
+              </p>
+            )}
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
