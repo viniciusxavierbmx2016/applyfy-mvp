@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { canUploadWorkspaceAsset } from "@/lib/upload-access";
 import { getCurrentUser } from "@/lib/auth";
 import { createAdminClient, STORAGE_BUCKET } from "@/lib/supabase-admin";
 
@@ -26,9 +27,10 @@ export async function POST(request: Request) {
       { status: 401 }
     );
   }
-  if (user.role !== "ADMIN" && user.role !== "PRODUCER") {
+  // 9.88 — MESMO helper da /api/upload: a paridade agora é código, não comentário.
+  if (!(await canUploadWorkspaceAsset(user))) {
     return NextResponse.json(
-      { error: "Apenas staff (admin/producer) podem fazer upload." },
+      { error: "Sem permissão para enviar imagens. Fale com o dono do workspace." },
       { status: 403 }
     );
   }
