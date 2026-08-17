@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { MAX_ACCESS_DAYS, parseAccessDays } from "@/lib/days-input";
 import { AccessResult } from "../_types";
 import { DURATION_OPTIONS } from "../_lib/format";
 
@@ -135,10 +136,12 @@ export function SendAccessModal({
                 <input
                   type="number"
                   min={1}
-                  max={3650}
+                  max={MAX_ACCESS_DAYS}
+                  step={1}
+                  inputMode="numeric"
                   value={customDays}
                   onChange={(e) =>
-                    setCustomDays(Math.max(1, Number(e.target.value) || 1))
+                    setCustomDays((v) => parseAccessDays(e.target.value, v))
                   }
                   className="w-28 px-3 py-2 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                 />
