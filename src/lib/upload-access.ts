@@ -1,4 +1,4 @@
-import { prisma } from "@/lib/prisma";
+import { hasStaffPanelAccess } from "@/lib/staff-access";
 
 /* Quem pode subir imagem de workspace/curso (bucket `thumbnails`).
 
@@ -21,7 +21,13 @@ import { prisma } from "@/lib/prisma";
    ⚠️ Estas rotas NÃO recebem contexto de curso — sobem imagem genérica (capa de
    workspace, de curso, de live). Então o vínculo verificável é "colabora em
    ALGUM lugar com MANAGE_LESSONS", como no 9.87. Exigir "MANAGE_LESSONS NESTE
-   curso" pediria um parâmetro que os 4 call-sites não têm. */
+   curso" pediria um parâmetro que os 4 call-sites não têm.
+
+   ─── 9.109: a extração ───
+   A decisão de fundo ("esta pessoa entra no painel?") virou
+   `hasStaffPanelAccess`, compartilhada com o gate de 2FA. Aqui sobra só a
+   PARTE ESPECÍFICA: qual permissão o vínculo precisa ter. ⚠️ O comportamento é
+   byte-a-byte o de antes — mesma ordem de curto-circuito, mesma permissão. */
 
 // A permissão de quem cuida de CONTEÚDO — é ela que precisa de capa e thumbnail.
 const UPLOAD_PERMISSION = "MANAGE_LESSONS";
@@ -30,23 +36,5 @@ export async function canUploadWorkspaceAsset(user: {
   id: string;
   role: string;
 }): Promise<boolean> {
-  // Short-circuit ADMIN/dono ANTES do vínculo (lição 9.63: há PRODUCER em
-  // produção que também carrega linha de Collaborator).
-  if (user.role === "ADMIN") return true;
-  if (user.role === "PRODUCER") {
-    const [workspaces, courses] = await Promise.all([
-      prisma.workspace.count({ where: { ownerId: user.id } }),
-      prisma.course.count({ where: { ownerId: user.id } }),
-    ]);
-    if (workspaces > 0 || courses > 0) return true;
-  }
-
-  const colaboracoes = await prisma.collaborator.count({
-    where: {
-      userId: user.id,
-      status: "ACCEPTED",
-      permissions: { has: UPLOAD_PERMISSION },
-    },
-  });
-  return colaboracoes > 0;
+  return hasStaffPanelAccess(user, { requirePermission: UPLOAD_PERMISSION });
 }
