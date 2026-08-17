@@ -40,25 +40,43 @@ async function assertCanViewCourse(courseId: string) {
     },
   });
   if (!course) return { error: "Curso não encontrado", status: 404 as const };
-  if (user.role === "ADMIN") return { ok: true as const };
+  // Short-circuit ADMIN/dono ANTES do vínculo (lição 9.63: há PRODUCER em
+  // produção que TAMBÉM carrega linha de Collaborator).
+  if (user.role === "ADMIN") return { ok: true as const, canManageLessons: true };
   if (
     user.role === "PRODUCER" &&
     (course.ownerId === user.id || course.workspace.ownerId === user.id)
   ) {
-    return { ok: true as const };
+    return { ok: true as const, canManageLessons: true };
   }
   // COLLABORATOR-by-role OR STUDENT with an accepted Collaborator row:
   // collaboratorCanActOnCourse matches by userId and already embeds the
-  // cross-tenant workspace guard + course-scope. anyOf = every permission
-  // whose editor UI legitimately fetches this endpoint.
-  const canView = await collaboratorCanActOnCourse(user.id, courseId, [
+  // cross-tenant workspace guard + course-scope.
+  //
+  // ─── 9.81: por que DUAS listas e não uma ───
+  // Quem ENTRA continua sendo o mesmo conjunto de antes — a união das duas
+  // listas é exatamente o anyOf de 5 que existia aqui. O que muda é que agora
+  // a rota sabe QUAL das duas portas a pessoa usou, porque o conteúdo da aula
+  // (vídeo, descrição) é de quem edita conteúdo, não de quem responde
+  // comentário ou administra matrícula.
+  //
+  // ⚠️ A estreita vem primeiro de propósito: no caso comum — o editor de
+  // conteúdo abrindo o próprio editor — resolve em UMA consulta, não duas.
+  const canManageLessons = await collaboratorCanActOnCourse(user.id, courseId, [
     "MANAGE_LESSONS",
+  ]);
+  if (canManageLessons) {
+    return { ok: true as const, canManageLessons: true };
+  }
+  // As outras 4: entram na rota (o layout do editor busca este endpoint em
+  // TODA sub-tela — comentários, alunos, lives, comunidade), sem o conteúdo.
+  const canView = await collaboratorCanActOnCourse(user.id, courseId, [
     "MANAGE_STUDENTS",
     "REPLY_COMMENTS",
     "MANAGE_COMMUNITY",
     "MANAGE_LIVES",
   ]);
-  if (canView) return { ok: true as const };
+  if (canView) return { ok: true as const, canManageLessons: false };
   return { error: "Sem permissão", status: 403 as const };
 }
 
@@ -70,14 +88,119 @@ export async function GET(_request: Request, props: { params: Promise<{ id: stri
       return NextResponse.json({ error: check.error }, { status: check.status });
     }
 
+    /* 9.81 — o payload é DECLARADO, campo a campo.
+
+       Antes era `include` puro: devolvia toda coluna de Course, Module, Lesson
+       e Section a qualquer uma das 5 permissões que abrem o editor. O `select`
+       explícito faz duas coisas: recorta o conteúdo de aula (abaixo) e impede
+       que uma coluna NOVA passe a vazar sozinha só por nascer no schema.
+
+       ⚠️ Em Course, Module e Section o select lista TODAS as colunas atuais —
+       o payload dessas três é byte-a-byte o de antes. O recorte é só em Lesson.
+       Motivo: os 8 consumidores desta rota foram mapeados um a um, e nenhum
+       campo de curso/módulo/seção sobra sem dono. Campo a menos aqui é tela
+       quebrada; a economia não valeria o risco. */
     const course = await prisma.course.findUnique({
       where: { id: params.id },
-      include: {
-        sections: { orderBy: { order: "asc" } },
+      select: {
+        id: true,
+        title: true,
+        slug: true,
+        description: true,
+        thumbnail: true,
+        thumbnailPosition: true,
+        bannerUrl: true,
+        bannerPosition: true,
+        bannerExtra: true,
+        checkoutUrl: true,
+        price: true,
+        priceCurrency: true,
+        externalProductId: true,
+        isPublished: true,
+        showInStore: true,
+        certificateEnabled: true,
+        communityEnabled: true,
+        lessonCommentsEnabled: true,
+        reviewsEnabled: true,
+        lessonReactionsEnabled: true,
+        gamificationEnabled: true,
+        lessonCommentsModerationEnabled: true,
+        communityModerationEnabled: true,
+        termsContent: true,
+        termsFileUrl: true,
+        termsUpdatedAt: true,
+        showStudentCount: true,
+        supportEmail: true,
+        supportWhatsapp: true,
+        showLessonSupport: true,
+        showCourseInfoBox: true,
+        showAccessBadge: true,
+        supportButtonColor: true,
+        supportButtonImage: true,
+        memberBgColor: true,
+        memberSidebarColor: true,
+        memberHeaderColor: true,
+        memberCardColor: true,
+        memberPrimaryColor: true,
+        memberTextColor: true,
+        memberWelcomeText: true,
+        memberLayoutStyle: true,
+        courseBannerFadeEnabled: true,
+        courseBannerFadeColor: true,
+        courseBannerFadeOpacity: true,
+        featured: true,
+        category: true,
+        order: true,
+        ownerId: true,
+        workspaceId: true,
+        createdAt: true,
+        updatedAt: true,
+        sections: {
+          orderBy: { order: "asc" },
+          select: {
+            id: true,
+            title: true,
+            order: true,
+            courseId: true,
+            createdAt: true,
+          },
+        },
         modules: {
           orderBy: { order: "asc" },
-          include: {
-            lessons: { orderBy: { order: "asc" } },
+          select: {
+            id: true,
+            title: true,
+            order: true,
+            daysToRelease: true,
+            releaseAt: true,
+            thumbnailUrl: true,
+            hideTitle: true,
+            sectionId: true,
+            courseId: true,
+            lessons: {
+              orderBy: { order: "asc" },
+              select: {
+                // Estrutura — quem abre a tela de alunos precisa disto para
+                // editar liberação por aula (edit-access-modal).
+                id: true,
+                title: true,
+                order: true,
+                daysToRelease: true,
+                moduleId: true,
+                // ⭐ CONTEÚDO — só para quem edita conteúdo. O único consumidor
+                // que lê estes campos é o editor de aulas
+                // (edit → ModulesManager → LessonsManager), e a própria tela já
+                // devolve quem não tem MANAGE_LESSONS para /comments.
+                ...(check.canManageLessons
+                  ? {
+                      videoUrl: true,
+                      description: true,
+                      duration: true,
+                      hideYoutubeChrome: true,
+                    }
+                  : {}),
+              },
+            },
           },
         },
       },
