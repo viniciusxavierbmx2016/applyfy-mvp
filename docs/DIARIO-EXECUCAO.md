@@ -35,6 +35,85 @@ Copie o bloco abaixo e preencha todos os campos. Campo sem resposta = etapa não
 
 <!-- As entradas começam abaixo desta linha, da mais recente para a mais antiga. -->
 
+## 2026-08-17 — CAMADA 3, ETAPA E3.7 (parcial) — Reativar convite revogado (9.83)
+
+**Estado antes:** main em `4876d64`
+
+**O que foi feito:** um convite `REVOKED` não tinha caminho de volta na tela — só "Editar" e
+"Remover" — e **editar era enganoso**: o modal monta o payload **sem `status`**, então o PATCH
+gravava as permissões, a tela dizia **"Colaborador atualizado"** e o acesso continuava
+inexistente. Agora existe **"Reativar"**. ⭐ E **nenhuma linha nova de backend**: o `resend`
+**já era** a reativação inteira, barrado por uma guarda de 4 linhas.
+
+**Arquivos tocados:** `api/producer/collaborators/[id]/resend/route.ts` ·
+`producer/settings/collaborators/page.tsx` — **só esses dois**
+
+**Como foi provado:**
+- **Matriz 22/22**: revogado-que-aceitou e revogado-que-nunca-aceitou reativam (200, antes
+  **400**) · `acceptedAt` → `null` · `invitedAt` novo · magic link emitido · `userId` preservado.
+- ⭐ **O ramo que não podia mudar não mudou**: `PENDING` → Reenviar com **diff da linha inteira**
+  — **só `invitedAt` alterou**, exatamente como antes.
+- **Reconvite por POST leva ao MESMO destino** que o botão: mesma linha, `{PENDING, acceptedAt
+  null}`. Dois caminhos, um resultado.
+- **Guarda de `ACCEPTED`** (`e5c2caa`): 400 com a frase, e o colaborador **continua ACCEPTED** —
+  provado por **SELECT** (`status`, `acceptedAt`, `invitedAt`, `userId` intactos), não pelo
+  status code.
+- **CRUD intacto**: convidar · editar · revogar · remover — tudo em **descartáveis próprios**.
+- **Gate humano 5/5**, incluindo o aviso âmbar e a confirmação de reativação.
+
+**SHA do merge:** `cd4c71c`  ·  **Rollback:** `git revert -m 1 cd4c71c`
+
+**Mudou em produção para quem:** **produtores** que revogaram alguém — ganham o caminho de volta
+e param de ser enganados pela edição. **Ninguém perde nada**: os quatro fluxos existentes seguem
+idênticos, e o `PENDING` foi provado byte-a-byte. ⚠️ **Restritivo de propósito**: quem chamava o
+`resend` por API num colaborador **ativo** agora recebe **400** — antes o rebaixava a `PENDING` e
+tirava o acesso.
+
+**Ficou aberto:** **9.113** 🟠 (E3.16) — slot flutuante sem dono. E o **9.84**, que **encolheu**
+(abaixo). O E3.7 fecha **parcial**.
+
+**⭐ O FIX FOI DESCOBRIR QUE O FIX JÁ EXISTIA.** O `resend` fazia `{invitedAt: now, status:
+PENDING}` **e** emitia magic link — isto é, reativar. A rota só recusava. As 7 perguntas
+respondidas **no código**, não no palpite: pergunta 2 ("algo já faz isso?") valia um `−4/+1` em
+vez de um fluxo novo. O que sobrou de trabalho real foi **o que a remoção da guarda abriu**, não
+o que ela fechou.
+
+**⭐ A GUARDA QUE PRECISOU NASCER JUNTO — e por que ela não é escopo extra.** Ao tirar a guarda de
+`REVOKED`, a rota ficou **sem guarda nenhuma**, e o `update` é incondicional: um colaborador
+`ACCEPTED` chamado por API voltava a `PENDING` e **perdia o acesso na hora**. Era **pré-existente**
+— a guarda antiga só olhava `REVOKED` —, coberto por acidente porque a tela nunca ofereceu o botão
+em linha ativa. Mergear assim seria publicar uma rota que **desliga acesso** sem nenhuma
+verificação de estado. É a família **9.64/9.109: conferir a rota irmã que DESLIGA**. Recusa com
+**400, não 403** — quem chama **tem** permissão; o que não existe é a operação.
+
+**⚠️ O PALCO ESTAVA VAZIO NAS DUAS CÉLULAS QUE IMPORTAVAM, e isso foi descoberto ANTES de medir.**
+Havia **0 convites PENDING** — o controle da não-regressão do `resend` — e os 2 `REVOKED`
+preservados **nunca tinham sido aceitos**, então `acceptedAt` **já era `null`** e a asserção da
+limpeza sairia ✅ **sem o código ter feito nada**. Terceira aparição da vacuidade nesta frente
+(9.85 → 9.81 → aqui), e a primeira em que ela foi **prevista** em vez de descoberta no resultado.
+Semeados `colab-pendente-e37` e `colab-exaceito-e37` **pelo caminho real** (convidar → aceitar →
+revogar), registrados como **palco deliberado**. ⚠️ E os 2 `REVOKED` do E3.2 **não foram tocados**:
+todo teste destrutivo rodou em descartáveis próprios, conferidos ao final.
+
+**⚠️ CORREÇÃO DE REGISTRO — o E4.1 afirmava algo FALSO.** O item dizia que esconder o botão de
+suporte "resolve junto a sobreposição sobre **'Enviar convite'**". **São dois widgets
+diferentes**: `CourseSupportWidget` (`bottom-4 right-4 z-40`) só existe em
+`(course)/course/[slug]/layout.tsx:179` — **área do aluno** —, e quem cobre o painel do produtor é
+o `SupportChatWidget` (`bottom-6 right-6 z-50`) do `producer-shell.tsx:34`. O toggle do E4.1
+**não resolve nada** no painel. Corrigido no ROADMAP.
+
+**⚠️ O 9.84 ENCOLHEU — metade dele foi MEDIDA E REFUTADA pelo dono (406px).** O "scroll
+horizontal da página" **não existe**: `body.scrollWidth === documentElement.scrollWidth ===
+clientWidth === 406`, e os **132** elementos com `right > clientWidth` têm **todos** ancestral com
+`overflow-x` próprio — rolagem **interna legítima**. A leitura de código não achara causa e **eu
+não afirmei que existia**; a medição fechou. Resta do item **só a variante de cards no mobile**,
+com molde já existente em dois lugares (`students` em `md`, `applyfy` em `sm`) — escolher um.
+
+**Regras conferidas:** §17 respondido ✅ · as 7 perguntas respondidas no código ✅ · rota irmã que
+desliga conferida ✅ · elenco de staging intocado ✅ · gate humano ✅ · papelada ✅
+
+---
+
 ## 2026-08-17 — CAMADA 3, ETAPA E3.4 — Recorte de payload (9.81)
 
 **Estado antes:** main em `3c3a962`
