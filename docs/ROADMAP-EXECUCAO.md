@@ -417,6 +417,7 @@ Roda **em paralelo** às camadas, sem consumir sessão de desenvolvimento:
 | **E3.16 Slot flutuante sem dono (9.113)** 🟠 | ⬜ pendente — nasceu do E3.7 | — | — |
 | **E3.17 Padrão de tabela responsiva (9.114)** 🟢 | ⬜ pendente — nasceu do E3.7 | — | — |
 | **E3.18 Contato de suporte no payload (9.115)** 🟢 | ⬜ pendente — nasceu do E3.15 | — | — |
+| **E3.21 Cache do menu mente após salvar (9.118)** 🟠 | ⬜ pendente — nasceu do E3.12; **única rota com o header** | — | — |
 | **E3.19 Moderador de live inalcançável (9.116)** 🟠 | ⬜ pendente — **pergunta de dono**; nasceu da investigação do E3.12 | — | — |
 | **E3.20 Rota órfã do editor de menu (9.117)** 🟢 | ⬜ pendente — **decisão de dono** (linkar/remover/documentar); nasceu do E3.12 | — | — |
 | E4.1 Toggles Personalizar Curso | ⬜ pendente | — | — |
