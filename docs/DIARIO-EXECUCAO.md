@@ -35,6 +35,83 @@ Copie o bloco abaixo e preencha todos os campos. Campo sem resposta = etapa não
 
 <!-- As entradas começam abaixo desta linha, da mais recente para a mais antiga. -->
 
+## 2026-08-18 — CAMADA 3, ETAPA E3.15 — Preço e checkout restritos ao dono (9.112)
+
+**Estado antes:** main em `ce7d7ad`
+
+**O que foi feito:** `checkoutUrl`, `price`, `priceCurrency` e `externalProductId` saíam no payload
+de `GET /api/courses/[id]` para **qualquer uma das 5 permissões** do gate — inclusive
+`REPLY_COMMENTS`. Agora são de **ADMIN e DONO**, **sem permissão nova**. ⭐ E o corte é de
+**leitura E escrita**, no mesmo commit — pelo motivo abaixo.
+
+**Arquivos tocados:** `api/courses/[id]/route.ts` — **só ele** (+84/−22)
+
+**Como foi provado:**
+- **GET 7/7**: dono e ADMIN recebem os 4; `colab-lessons`, `colab-students`, `colab-reply` e
+  `colab-comunidade` **não**; `colab-zero` **403** (gate intacto). ⭐ E a asserção que fecha:
+  **o que falta ao colaborador são EXATAMENTE os 4** — nada a mais, nada a menos —, com
+  `supportEmail`/`supportWhatsapp` preservados.
+- 🔴 **PUT com o payload DERIVADO DO GET**, montado como `edit/page.tsx` → `CourseForm` monta de
+  verdade, não à mão. A sonda imprimiu o perigo: *"o form do colaborador enviaria:
+  `checkoutUrl=null price=null`"* — e os 4 campos ficaram **intactos** (por `SELECT` antes/depois).
+- Envio **explícito** por API (`price:1`, checkout malicioso, `USD`) → **ignorado**, tudo intacto.
+- **O dono grava preço novo E limpa com `null`** — a capacidade de apagar continua sendo dele.
+- **Regressão**: o colaborador segue salvando descrição, categoria, termos e flags.
+- **Humano 5/5**, com ⭐ **CINCO gravações consecutivas do colaborador** — cinco oportunidades de
+  apagar, **zero perdas**.
+
+**SHA do merge:** `f34e5c1`  ·  **Rollback:** `git revert -m 1 f34e5c1`
+
+**Mudou em produção para quem:** **os 3 colaboradores** que leem essa rota (`marcilenexl`,
+`jesusblack016`, `ernestorodriguez.suport066`) — param de receber preço, checkout e a chave de
+gateway, e **param de poder sobrescrevê-los**. ⚠️ Na aba Informações do editor os campos aparecem
+**vazios** (decisão do dono: vazio é aceitável; desabilitar com aviso seria client a mais para caso
+raro). **Dono e ADMIN: nada muda.**
+
+**Ficou aberto:** **9.115** 🟢 (E3.18) — `supportEmail`/`supportWhatsapp` no mesmo payload.
+
+**🔴 O ACHADO QUE MUDOU O DESENHO, e ele é §22 (possível perda de dado): cortar SÓ o GET
+APAGARIA os campos.** O `CourseForm` envia o payload **inteiro**, o PUT grava o que chega
+(`...(checkoutUrl !== undefined && { checkoutUrl })`, `price === "" → null`), e `canEditCourse`
+libera colaborador com `MANAGE_LESSONS`. Na **primeira** vez que ele salvasse a aba Informações,
+preço e checkout virariam `null` — falha **silenciosa**, em campo de **receita**, meses depois
+sem ligação com a causa. O fix, feito pela metade, seria **pior que o problema**.
+
+**⭐ E O ESPELHO, que o item não pedia e a investigação achou:** esse colaborador **já podia
+ALTERAR** preço e checkout. A decisão "é do dono" só é coerente cobrindo os **dois lados** —
+**esconder um valor que se continua deixando sobrescrever seria pior que não esconder**. É a
+família *conferir a rota irmã que desliga*, aqui **entre GET e PUT do mesmo arquivo**.
+
+**⛔ `supportEmail`/`supportWhatsapp` ficaram de fora — e não por serem inofensivos.** O
+`CourseForm` **os exige** para salvar qualquer coisa (`course-form.tsx:171-178`): cortá-los travaria
+a aba Informações do colaborador, que não salvaria **nem o título**. São contato de **produto**, e o
+aluno **não os recebe por esta rota** — o `CourseSupportWidget` recebe só `courseId`, título e
+cores, e o contato é resolvido no servidor por `lib/workspace-block.ts`. Virou **9.115**, com o
+aviso de que **restringi-los exige mudar o formulário junto**.
+
+**⚠️ PUT IGNORA em vez de recusar, e isso está escrito no código.** Um 403 recusaria o formulário
+**inteiro** — o colaborador não salvaria nem o título, e a tela ficaria inutilizável para quem tem
+todo o direito de usá-la. Ignorar preserva a tela e fecha a escrita.
+
+**⚠️ ASSIMETRIA PRÉ-EXISTENTE REGISTRADA E NÃO UNIFICADA:** o gate de **leitura** aceita dono do
+**workspace**; o de **escrita**, não. Unificar mudaria **quem pode editar** — fora do escopo. Ficou
+comentada no código para o próximo leitor não "consertar" por engano.
+
+**⚠️ PALCO POPULADO PELO CAMINHO REAL — era a QUARTA vacuidade desta frente.** Os 6 campos do
+`curso-teste` eram **todos `null`**: cortado e não-cortado sairiam idênticos.
+`checkoutUrl`/`price`/`priceCurrency`/`supportEmail`/`supportWhatsapp` pelo **PUT** (a aba
+Informações), e ⚠️ **`externalProductId` pelo `PATCH` das telas de integração — o PUT do curso
+NUNCA escreveu esse campo**, não está na desestruturação do corpo. **Estado de palco deliberado, não
+apagar**: `curso-teste` fica com **preço 197,5**, checkout `https://checkout.staging.test/curso-teste`
+e `externalProductId = PROD-STAGING-9112`. É o que torna este corte **observável** — sem eles,
+qualquer prova futura volta a passar por vacuidade.
+
+**Regras conferidas:** §17 respondido ✅ · rota irmã (o PUT) conferida no mesmo commit ✅ ·
+predicado reusado, sem terceiro jeito de perguntar "é dono?" ✅ · staging-first ✅ · gate humano ✅ ·
+papelada ✅
+
+---
+
 ## 2026-08-17 — CAMADA 3, ETAPA E3.7 (fecha) — Cards no mobile (9.84)
 
 **Estado antes:** main em `d2305fb`
