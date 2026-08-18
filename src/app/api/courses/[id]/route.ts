@@ -4,6 +4,18 @@ import { requireStaff, canEditCourse, getCurrentUser } from "@/lib/auth";
 import { collaboratorCanActOnCourse } from "@/lib/collaborator";
 import { updateCourseSchema, validateBody } from "@/lib/validations";
 
+/* 9.112 — passou a devolver `isOwner` além de `ok`.
+
+   QUEM PODE EDITAR não mudou em nada: os mesmos três caminhos de antes, na
+   mesma ordem. O que a função passou a dizer é POR QUAL deles a pessoa entrou,
+   porque o bloco comercial (preço, checkout, moeda) é do dono — e o PUT precisa
+   saber disso para não gravá-lo vindo de um colaborador.
+
+   ⚠️ `isOwner` aqui é "ADMIN ou dono DO CURSO", que é a régua que esta função
+   já usava. Ela é mais estreita que a do `assertCanViewCourse`, que também
+   aceita o dono do WORKSPACE — assimetria PRÉ-EXISTENTE, deixada de pé de
+   propósito: mexer nela mudaria quem pode editar, que não é o escopo daqui.
+   Na prática o dono de workspace que não é dono do curso já leva 403 abaixo. */
 async function assertCanEditCourse(courseId: string) {
   const staff = await requireStaff();
   const course = await prisma.course.findUnique({
@@ -11,15 +23,17 @@ async function assertCanEditCourse(courseId: string) {
     select: { id: true, ownerId: true },
   });
   if (!course) return { error: "Curso não encontrado", status: 404 as const };
-  if (staff.role === "ADMIN") return { ok: true as const };
+  if (staff.role === "ADMIN") return { ok: true as const, isOwner: true };
   if (staff.role === "PRODUCER" && course.ownerId !== staff.id) {
     return { error: "Forbidden", status: 403 as const };
   }
   if (staff.role === "COLLABORATOR") {
     const ok = await canEditCourse(staff, courseId);
     if (!ok) return { error: "Forbidden", status: 403 as const };
+    return { ok: true as const, isOwner: false };
   }
-  return { ok: true as const };
+  // Sobra o PRODUCER que passou pela checagem acima, isto é: o dono do curso.
+  return { ok: true as const, isOwner: true };
 }
 
 // Read-gate for the course editor endpoint. Broader than assertCanEditCourse:
@@ -42,12 +56,18 @@ async function assertCanViewCourse(courseId: string) {
   if (!course) return { error: "Curso não encontrado", status: 404 as const };
   // Short-circuit ADMIN/dono ANTES do vínculo (lição 9.63: há PRODUCER em
   // produção que TAMBÉM carrega linha de Collaborator).
-  if (user.role === "ADMIN") return { ok: true as const, canManageLessons: true };
+  //
+  // 9.112 — estes DOIS ramos, e só eles, são o dono. `isOwner` sai daqui de
+  // graça: a consulta acima já trouxe `ownerId` e `workspace.ownerId`. Não há
+  // pergunta nova nem terceiro jeito de perguntar "é dono?".
+  if (user.role === "ADMIN") {
+    return { ok: true as const, canManageLessons: true, isOwner: true };
+  }
   if (
     user.role === "PRODUCER" &&
     (course.ownerId === user.id || course.workspace.ownerId === user.id)
   ) {
-    return { ok: true as const, canManageLessons: true };
+    return { ok: true as const, canManageLessons: true, isOwner: true };
   }
   // COLLABORATOR-by-role OR STUDENT with an accepted Collaborator row:
   // collaboratorCanActOnCourse matches by userId and already embeds the
@@ -66,7 +86,7 @@ async function assertCanViewCourse(courseId: string) {
     "MANAGE_LESSONS",
   ]);
   if (canManageLessons) {
-    return { ok: true as const, canManageLessons: true };
+    return { ok: true as const, canManageLessons: true, isOwner: false };
   }
   // As outras 4: entram na rota (o layout do editor busca este endpoint em
   // TODA sub-tela — comentários, alunos, lives, comunidade), sem o conteúdo.
@@ -76,7 +96,7 @@ async function assertCanViewCourse(courseId: string) {
     "MANAGE_COMMUNITY",
     "MANAGE_LIVES",
   ]);
-  if (canView) return { ok: true as const, canManageLessons: false };
+  if (canView) return { ok: true as const, canManageLessons: false, isOwner: false };
   return { error: "Sem permissão", status: 403 as const };
 }
 
@@ -112,10 +132,26 @@ export async function GET(_request: Request, props: { params: Promise<{ id: stri
         bannerUrl: true,
         bannerPosition: true,
         bannerExtra: true,
-        checkoutUrl: true,
-        price: true,
-        priceCurrency: true,
-        externalProductId: true,
+        /* ⭐ 9.112 — BLOCO COMERCIAL: só o dono (e o ADMIN).
+
+           `externalProductId` é a chave que casa este curso com o produto no
+           gateway — infraestrutura de pagamento, não informação de trabalho. E
+           preço e checkout são a mesma família: as 24 rotas
+           `requireWorkspaceOwner` já reservam integrações e credenciais ao dono.
+           Nenhuma permissão de colaborador os libera, e nenhuma permissão nova
+           foi criada para isso.
+
+           ⚠️ Este recorte NÃO ANDA SOZINHO. O `CourseForm` devolve o payload
+           INTEIRO no PUT, e o PUT grava o que chega: cortar só a leitura faria
+           o formulário do colaborador mandar `checkoutUrl: null` e `price: null`
+           no primeiro "Salvar" — apagando preço e checkout do curso. A guarda
+           gêmea está no PUT, no mesmo commit. Ver o comentário lá. */
+        ...(check.isOwner && {
+          checkoutUrl: true,
+          price: true,
+          priceCurrency: true,
+          externalProductId: true,
+        }),
         isPublished: true,
         showInStore: true,
         certificateEnabled: true,
@@ -368,18 +404,44 @@ export async function PUT(request: Request, props: { params: Promise<{ id: strin
         ...(thumbnailPosition !== undefined && { thumbnailPosition }),
         ...(bannerUrl !== undefined && { bannerUrl }),
         ...(bannerPosition !== undefined && { bannerPosition }),
-        ...(checkoutUrl !== undefined && { checkoutUrl }),
-        ...(price !== undefined && {
-          price:
-            price === null || price === ""
-              ? null
-              : typeof price === "number"
-                ? price
-                : Number(price) || null,
-        }),
-        ...(priceCurrency !== undefined && {
-          priceCurrency: priceCurrency || "BRL",
-        }),
+        /* ⭐ 9.112 — a GUARDA GÊMEA do recorte do GET. Ver o comentário lá.
+
+           Sem ela, o fix seria PIOR que o problema: o colaborador deixa de
+           RECEBER preço e checkout, o `CourseForm` inicializa os campos vazios
+           (`course.checkoutUrl || ""`), e o primeiro "Salvar" na aba Informações
+           manda `checkoutUrl: null` e `price: null` — que este `update` grava.
+           Perda silenciosa de dado em campo de receita.
+
+           ⚠️ E o espelho, que o item não pedia mas a investigação achou: o
+           colaborador com MANAGE_LESSONS JÁ PODIA alterar preço e checkout
+           (`canEditCourse` o autoriza). Esconder um valor que se continua
+           deixando sobrescrever seria pior que não esconder. O recorte é de
+           leitura E de escrita, no mesmo commit.
+
+           ⚠️ POR QUE IGNORAR EM SILÊNCIO E NÃO 403: o `CourseForm` envia
+           SEMPRE o payload completo, inclusive estes campos. Um 403 recusaria
+           o formulário inteiro e o colaborador não conseguiria salvar nem o
+           título — a tela ficaria inutilizável para quem tem todo o direito de
+           usá-la. Ignorar preserva a tela e fecha a escrita. Não é omissão: a
+           decisão está escrita aqui e o campo nem chega ao formulário dele.
+
+           ⓘ `externalProductId` não aparece nesta guarda porque o PUT NUNCA o
+           escreveu — não está na desestruturação do corpo. Ele é gravado só
+           pelas rotas de integração, todas `requireWorkspaceOwner`. */
+        ...(check.isOwner && checkoutUrl !== undefined && { checkoutUrl }),
+        ...(check.isOwner &&
+          price !== undefined && {
+            price:
+              price === null || price === ""
+                ? null
+                : typeof price === "number"
+                  ? price
+                  : Number(price) || null,
+          }),
+        ...(check.isOwner &&
+          priceCurrency !== undefined && {
+            priceCurrency: priceCurrency || "BRL",
+          }),
         ...(isPublished !== undefined && { isPublished: Boolean(isPublished) }),
         ...(showInStore !== undefined && { showInStore: Boolean(showInStore) }),
         ...(certificateEnabled !== undefined && {
