@@ -240,7 +240,7 @@ auditoria — rate-limit da Peça B, HSTS e `npm audit` — seguem na Camada 3.
 | **E3.15 — Bloco comercial no payload do curso** | **9.112** 🟠 | ⛔ **BLOQUEADA por decisão de dono**: qual permissão autoriza ver preço, checkout e `externalProductId`? Não cortar sob `MANAGE_LESSONS`. ⚠️ Palco precisa dos campos comerciais populados antes | ½ sessão |
 | **E3.6 — Dívida do storage** | **9.97** · **9.104** · **9.95** | mesmo modelo e mesma área; o 9.95 (transmitir em vez de redirecionar) resolveria o acento perdido do 9.92 | 1–2 sessões |
 | **E3.12 — A régua de erro, continuação** | **9.107** *(triar primeiro)* → **9.106** · **9.79** | continuação direta do E3.2: a régua existe, falta adotar e triar. O 9.79 volta aqui porque o fix é no **servidor**, mas o teste é o mesmo | 2 sessões |
-| **E3.7 — UI de colaboradores** | ~~**9.83**~~ ✅ `cd4c71c` · **9.84** 🟢 | mesma tela. ⚠️ O palco **não** estava pronto: faltavam 1 PENDING e 1 REVOKED-que-aceitou, sem os quais 2 testes passavam por vacuidade. ⚠️ O 9.84 **encolheu** — o scroll de página foi medido e refutado; resta só a variante de cards | ¼ sessão restante |
+| ~~**E3.7 — UI de colaboradores**~~ | ~~**9.83** · **9.84**~~ | ✅ **FECHADA** `cd4c71c` + `2c02b72`. ⚠️ O palco **não** estava pronto: faltavam 1 PENDING e 1 REVOKED-que-aceitou, sem os quais 2 testes passavam por vacuidade. ⚠️ O 9.84 **encolheu**: metade dele (scroll de página) foi **medida e refutada** | ½ sessão |
 | **E3.8 — Endurecimento de infra** | **9.102** · **9.103** · **9.89** · **9.105** *(check periódico)* | mesma superfície (config + `lib/rate-limit.ts`) | 1–2 sessões |
 | **E3.9 — Sozinhos** | **9.48** · **9.61** · **9.66** · **9.64** · **9.99** · **9.100** | sem família real. ⚠️ **9.100 e 9.99 não custam sessão**: um é ação manual de 10s, o outro é anotação | 1 sessão |
 
@@ -248,7 +248,7 @@ auditoria — rate-limit da Peça B, HSTS e `npm audit` — seguem na Camada 3.
 1. **E3.10 (9.98)** — ⭐ **o único da fila que PIORA sozinho**. Cada produtor que configura hoje grava a URL errada, e a migração futura cresce. Risco estático perde para risco que acumula.
 2. **E3.11 (9.109)** — barato e o efeito é perverso: nega 2FA a quem exporta lista de alunos com e-mail e telefone.
 3. ~~**E3.4 (9.81)**~~ — ✅ fechada `fcb1cbc`. Deixou o **9.112** (E3.15), que **não anda sem decisão de dono**.
-4. **E3.7** — **9.83 ✅ fechado** (`cd4c71c`). Resta o **9.84**, agora ¼ de sessão: só a variante de cards.
+4. ~~**E3.7**~~ — ✅ **COMPLETA**: 9.83 (`cd4c71c`) + 9.84 (`2c02b72`). Deixou **9.113** (slot flutuante) e **9.114** (breakpoint divergente).
 5. **E3.12** → 6. **E3.6** → 7. **E3.8** → 8. **E3.9**. **E3.15** entra quando o dono responder.
 
 **⇒ Estimativa: 8 a 10 sessões** para o restante da Camada 3, contando que **cada grupo tende a
@@ -408,13 +408,14 @@ Roda **em paralelo** às camadas, sem consumir sessão de desenvolvimento:
 | **E3.12 Régua de erro, continuação (9.107·9.106·9.79)** | ⬜ pendente | — | — |
 | E3.5 Telas de acesso e dias (9.57c·9.60) | ✅ fechada | `e26e312` | 2026-08-17 |
 | E3.6 Dívida do storage (9.97·9.104·9.95) | ⬜ pendente | — | — |
-| **E3.7 UI de colaboradores** | 🟡 **parcial** — 9.83 ✅ · 9.84 ⬜ | `cd4c71c` | 2026-08-17 |
+| **E3.7 UI de colaboradores (9.83·9.84)** | ✅ **fechada** | `cd4c71c` + `2c02b72` | 2026-08-17 |
 | E3.8 Endurecimento de infra (9.102·9.103·9.89·9.105) | ⬜ pendente | — | — |
 | E3.9 Sozinhos (9.48·9.61·9.66·9.64·9.99·9.100) | ⬜ pendente | — | — |
 | **E3.13 Integridade da comunidade (9.23·9.24)** 🟠 | ⬜ pendente — **subiu na triagem 17/08** | — | — |
 | **E3.14 Rastro de quem mexeu no acesso (9.44b)** 🟠 | ⬜ pendente — **subiu na triagem 17/08** | — | — |
 | **E3.15 Bloco comercial no payload (9.112)** 🟠 | ⛔ bloqueada — **pergunta de dono** (nasceu do E3.4) | — | — |
 | **E3.16 Slot flutuante sem dono (9.113)** 🟠 | ⬜ pendente — nasceu do E3.7 | — | — |
+| **E3.17 Padrão de tabela responsiva (9.114)** 🟢 | ⬜ pendente — nasceu do E3.7 | — | — |
 | E4.1 Toggles Personalizar Curso | ⬜ pendente | — | — |
 | E4.2 PDF na comunidade | ⬜ pendente | — | — |
 | E4.3 Colab assistir aos cursos | ⬜ pendente | — | — |

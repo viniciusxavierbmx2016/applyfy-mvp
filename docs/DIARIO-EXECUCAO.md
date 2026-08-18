@@ -35,6 +35,71 @@ Copie o bloco abaixo e preencha todos os campos. Campo sem resposta = etapa não
 
 <!-- As entradas começam abaixo desta linha, da mais recente para a mais antiga. -->
 
+## 2026-08-17 — CAMADA 3, ETAPA E3.7 (fecha) — Cards no mobile (9.84)
+
+**Estado antes:** main em `d2305fb`
+
+**O que foi feito:** abaixo de `md`, a tabela de colaboradores dá lugar a **cards
+empilhados** com a mesma informação e as mesmas ações. Fecha o **E3.7 inteiro**.
+
+**Arquivos tocados:** `producer/settings/collaborators/page.tsx` — **só ele** (+174/−43)
+
+**Como foi provado:**
+- ⭐ **Desktop idêntico, por ARTEFATO e não por impressão**: as **5 strings de classe** dos
+  botões são **idênticas** às de `main`, **na mesma ordem**; o diff **dentro** da tabela é **só**
+  o wrapper ganhando `hidden md:block` — nenhum `<tr>`, `<td>`, `<th>`, `min-w-[640px]` ou
+  `overflow-x-auto` mudou.
+- **Bundle servido** (dev reiniciado, `.next` limpo): `hidden md:block` e `md:hidden space-y-3
+  pb-20` no chunk client, e o **CSS gerado** — `.basis-[calc(50%-0.25rem)]{flex-basis:calc(50% -
+  .25rem)}` e `.grow{flex-grow:1}`.
+- **Humano 7/7**, com ⭐ **Reativar executado de verdade no mobile**: status → Pendente, toast
+  "Convite reativado", modal com o link.
+
+**SHA do merge:** `2c02b72`  ·  **Rollback:** `git revert -m 1 2c02b72`
+
+**Mudou em produção para quem:** **produtores no celular** — o app é PWA e a tela de
+colaboradores era a última do painel a só rolar lateralmente. **No desktop, ninguém sente nada**:
+provado por artefato, não por olhar.
+
+**Ficou aberto:** **9.114** 🟢 (E3.17) — divergência de breakpoint entre os moldes de tabela
+responsiva.
+
+**⭐ O MOLDE FOI ESCOLHIDO POR FATO, NÃO POR ANALOGIA.** O palpite do dono ("o de `students`,
+por ser lista de pessoas") estava certo, mas a razão forte era outra: **o card do `applyfy` é de
+LOG — só leitura, sem rodapé de ações**. Uma tabela cujo ponto são **até 4 botões por linha** não
+tem o que copiar dele. Não era "qual é mais parecido", era "**qual dos dois tem a peça que eu
+preciso**".
+
+**⭐ A REGRA CONDICIONAL VIROU COMPONENTE, e essa foi a decisão de engenharia da etapa.** "Qual
+botão aparece em qual status" agora vive **uma vez**, em `<AcoesColaborador>`, chamado pelas duas
+superfícies com props idênticas exceto `layout`. Duplicar seria a família **9.42/9.54/9.57** — mas
+com um agravante que as anteriores não tinham: **a divergência nasceria invisível**. Ninguém abre
+a mesma tela em duas larguras para conferir se os botões batem. O defeito só apareceria no tamanho
+de tela que quem editou não estava olhando. **Nenhuma condição de status sobrou na tabela.**
+
+**⚠️ CARD SEM AVATAR, DE PROPÓSITO — e reportado em vez de omitido.** O molde de `students` tem
+avatar; a **linha** do desktop de colaboradores não mostra nenhum. O card carrega o que a linha
+tem. Copiar o avatar do molde faria as duas superfícies **discordarem sobre o que existe**.
+
+**⚠️ DUAS CORREÇÕES DE SONDA MINHAS, registradas porque as duas produziram um 🔴 falso:**
+1. Concluí "**servidor velho**" ao não achar os marcadores em `.next/static` e `.next/server`.
+   Esses diretórios são **sobras do `npm run build`**; o dev do Turbopack serve de **`.next/dev/`**.
+   Não era servidor velho — era **eu grepando o diretório errado**.
+2. `grep -c "basis-[calc(50%-0.25rem)]"` devolveu **0** porque os colchetes viraram **classe de
+   caracteres** do regex. A string sempre esteve no chunk. **Ausência só é ausência quando a sonda
+   sabe achar presença** — o `grep -o "basis-[^\"' ]*"` mostrou na hora.
+
+**⚠️ ESTADO DE PALCO ALTERADO PELO TESTE (registrado a pedido do dono):**
+`colab-exaceito-e37@staging.test` saiu de `REVOKED` e está **`PENDING`** — foi o **Reativar
+funcionando** no gate humano, não erro. Se algum grupo futuro precisar dele em `REVOKED`, é **um
+clique em "Revogar"**. O palco fica: `PENDING=2 · REVOKED=2 · ACCEPTED=13`, com `colab-revogado` e
+`qa-revogar-e30` (os preservados do E3.2) intactos.
+
+**Regras conferidas:** §17 respondido ✅ · molde reusado, terceiro não inventado ✅ · desktop
+provado por artefato ✅ · bundle servido conferido ✅ · gate humano ✅ · papelada ✅
+
+---
+
 ## 2026-08-17 — CAMADA 3, ETAPA E3.7 (parcial) — Reativar convite revogado (9.83)
 
 **Estado antes:** main em `4876d64`
