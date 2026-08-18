@@ -208,17 +208,30 @@ export default function ProducerLiveRoomPage() {
     }
   }
 
+  /* 9.107 — este era o pior caso do projeto inteiro: a tela AFIRMAVA o sucesso
+     antes de saber. `setModerators(filter)` e `setToast("Moderador removido")`
+     rodavam ANTES do fetch, e a falha não era tratada — quem "saiu" da lista
+     continuava moderando a live, com a tela dizendo o contrário. Não é erro
+     engolido: é interface mentindo sobre AUTORIZAÇÃO.
+
+     ⭐ O molde do conserto não foi inventado: é o `handleDeleteMessage` daqui
+     mesmo, 28 linhas acima — otimista, guarda o anterior, VOLTA se o servidor
+     recusar e diz o que houve. */
   async function removeModerator(userId: string) {
+    const removido = moderators.find((m) => m.userId === userId);
     setModerators((prev) => prev.filter((m) => m.userId !== userId));
-    setToast("Moderador removido");
     const res = await fetch(`/api/producer/lives/${liveId}/moderators`, {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ userId }),
     });
-    if (res.ok) {
-      fetchModerators();
+    if (!res.ok) {
+      if (removido) setModerators((prev) => [...prev, removido]);
+      setToast("Erro ao remover moderador");
+      return;
     }
+    setToast("Moderador removido");
+    fetchModerators();
   }
 
   async function handleEndLive() {

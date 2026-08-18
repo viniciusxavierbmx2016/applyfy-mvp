@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/auth";
-import { collaboratorCanActOnCourse } from "@/lib/collaborator";
+import { collaboratorCanActOnCourse, mensagemDeEntradaNegada } from "@/lib/collaborator";
 import { ensureDefaultGroup } from "@/lib/community-helpers";
 
 export async function GET(_request: Request, props: { params: Promise<{ id: string }> }) {
@@ -68,8 +68,10 @@ export async function GET(_request: Request, props: { params: Promise<{ id: stri
         },
       });
       if (!enrollment || enrollment.status !== "ACTIVE") {
+        // 9.79 — distingue "nunca teve vínculo" de "perdeu ACCESS_MEMBER_AREA".
+        // A consulta extra roda SÓ aqui, no caminho de falha.
         return NextResponse.json(
-          { error: "Não matriculado neste curso" },
+          { error: await mensagemDeEntradaNegada(user.id, course.id) },
           { status: 403 }
         );
       }

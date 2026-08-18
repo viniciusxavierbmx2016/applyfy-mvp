@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import {
   DndContext,
   closestCenter,
@@ -8,112 +7,31 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
-  type DragEndEvent,
 } from "@dnd-kit/core";
 import {
   SortableContext,
-  arrayMove,
   sortableKeyboardCoordinates,
   useSortable,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { MENU_ICON_KEYS, MenuIcon } from "@/components/menu-icons";
-import { useConfirm } from "@/hooks/use-confirm";
-
-interface MenuItem {
-  id: string;
-  label: string;
-  icon: string;
-  url: string;
-  order: number;
-  isDefault: boolean;
-  enabled: boolean;
-}
+import { useCourseMenu, type MenuItem } from "@/hooks/use-course-menu";
 
 export function CourseMenuManager({ courseId }: { courseId: string }) {
-  const [items, setItems] = useState<MenuItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [creating, setCreating] = useState(false);
-  const [newLabel, setNewLabel] = useState("");
-  const [newIcon, setNewIcon] = useState("link");
-  const [newUrl, setNewUrl] = useState("");
-  const { confirm, ConfirmDialog } = useConfirm();
+  /* 9.107 — os 6 estados e os 5 handlers viviam AQUI e, em cópia literal, na
+     página `/producer/courses/[id]/menu`. Agora vivem em `useCourseMenu`. */
+  const {
+    items, loading, creating, setCreating,
+    newLabel, setNewLabel, newIcon, setNewIcon, newUrl, setNewUrl,
+    handleDragEnd, handleUpdate, handleDelete, handleCreate,
+    ConfirmDialog, Toast,
+  } = useCourseMenu(courseId);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/immutability -- JS hoists function declarations; rule's TDZ check is overly strict
-    load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  async function load() {
-    setLoading(true);
-    const res = await fetch(`/api/courses/${courseId}/menu`);
-    if (res.ok) {
-      const data = await res.json();
-      setItems(data.items);
-    }
-    setLoading(false);
-  }
-
-  async function handleDragEnd(e: DragEndEvent) {
-    const { active, over } = e;
-    if (!over || active.id === over.id) return;
-    const oldIndex = items.findIndex((i) => i.id === active.id);
-    const newIndex = items.findIndex((i) => i.id === over.id);
-    const reordered = arrayMove(items, oldIndex, newIndex);
-    setItems(reordered);
-    await fetch(`/api/courses/${courseId}/menu/reorder`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ itemIds: reordered.map((i) => i.id) }),
-    });
-  }
-
-  async function handleUpdate(id: string, patch: Partial<MenuItem>) {
-    setItems((prev) => prev.map((i) => (i.id === id ? { ...i, ...patch } : i)));
-    await fetch(`/api/courses/${courseId}/menu/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(patch),
-    });
-  }
-
-  async function handleDelete(id: string) {
-    if (!(await confirm({ title: "Excluir item", message: "Excluir este item?", variant: "danger", confirmText: "Excluir" }))) return;
-    const res = await fetch(`/api/courses/${courseId}/menu/${id}`, {
-      method: "DELETE",
-    });
-    if (res.ok) {
-      setItems((prev) => prev.filter((i) => i.id !== id));
-    }
-  }
-
-  async function handleCreate() {
-    if (!newLabel.trim() || !newUrl.trim()) return;
-    const res = await fetch(`/api/courses/${courseId}/menu`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        label: newLabel.trim(),
-        icon: newIcon,
-        url: newUrl.trim(),
-      }),
-    });
-    if (res.ok) {
-      const data = await res.json();
-      setItems((prev) => [...prev, data.item]);
-      setNewLabel("");
-      setNewIcon("link");
-      setNewUrl("");
-      setCreating(false);
-    }
-  }
 
   if (loading) {
     return (
@@ -197,6 +115,7 @@ export function CourseMenuManager({ courseId }: { courseId: string }) {
         </button>
       )}
       <ConfirmDialog />
+      <Toast />
     </>
   );
 }

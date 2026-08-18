@@ -9,11 +9,9 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
-  type DragEndEvent,
 } from "@dnd-kit/core";
 import {
   SortableContext,
-  arrayMove,
   sortableKeyboardCoordinates,
   useSortable,
   verticalListSortingStrategy,
@@ -21,29 +19,21 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { MENU_ICON_KEYS, MenuIcon } from "@/components/menu-icons";
 import { CourseEditTabs } from "@/components/course-edit-tabs";
-import { useConfirm } from "@/hooks/use-confirm";
-
-interface MenuItem {
-  id: string;
-  label: string;
-  icon: string;
-  url: string;
-  order: number;
-  isDefault: boolean;
-  enabled: boolean;
-}
+import { useCourseMenu, type MenuItem } from "@/hooks/use-course-menu";
 
 export default function CourseMenuPage(props: { params: Promise<{ id: string }> }) {
   const params = use(props.params);
-  const [items, setItems] = useState<MenuItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [creating, setCreating] = useState(false);
-  const [newLabel, setNewLabel] = useState("");
-  const [newIcon, setNewIcon] = useState("link");
-  const [newUrl, setNewUrl] = useState("");
+  /* 9.107 — os 6 estados e os 5 handlers viviam AQUI e, em cópia literal, no
+     `CourseMenuManager`. Agora vivem em `useCourseMenu`. Fica nesta página só o
+     que é DELA: o cabeçalho com título e slug do curso. */
+  const {
+    items, loading, creating, setCreating,
+    newLabel, setNewLabel, newIcon, setNewIcon, newUrl, setNewUrl,
+    handleDragEnd, handleUpdate, handleDelete, handleCreate,
+    ConfirmDialog, Toast,
+  } = useCourseMenu(params.id);
   const [courseTitle, setCourseTitle] = useState("");
   const [courseSlug, setCourseSlug] = useState("");
-  const { confirm, ConfirmDialog } = useConfirm();
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -51,78 +41,12 @@ export default function CourseMenuPage(props: { params: Promise<{ id: string }> 
   );
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/immutability -- JS hoists function declarations; rule's TDZ check is overly strict
-    load();
     fetch(`/api/courses/${params.id}`)
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => { if (d?.course) { setCourseTitle(d.course.title); setCourseSlug(d.course.slug); } })
       .catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  async function load() {
-    setLoading(true);
-    const res = await fetch(`/api/courses/${params.id}/menu`);
-    if (res.ok) {
-      const data = await res.json();
-      setItems(data.items);
-    }
-    setLoading(false);
-  }
-
-  async function handleDragEnd(e: DragEndEvent) {
-    const { active, over } = e;
-    if (!over || active.id === over.id) return;
-    const oldIndex = items.findIndex((i) => i.id === active.id);
-    const newIndex = items.findIndex((i) => i.id === over.id);
-    const reordered = arrayMove(items, oldIndex, newIndex);
-    setItems(reordered);
-    await fetch(`/api/courses/${params.id}/menu/reorder`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ itemIds: reordered.map((i) => i.id) }),
-    });
-  }
-
-  async function handleUpdate(id: string, patch: Partial<MenuItem>) {
-    setItems((prev) => prev.map((i) => (i.id === id ? { ...i, ...patch } : i)));
-    await fetch(`/api/courses/${params.id}/menu/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(patch),
-    });
-  }
-
-  async function handleDelete(id: string) {
-    if (!(await confirm({ title: "Excluir item", message: "Excluir este item?", variant: "danger", confirmText: "Excluir" }))) return;
-    const res = await fetch(`/api/courses/${params.id}/menu/${id}`, {
-      method: "DELETE",
-    });
-    if (res.ok) {
-      setItems((prev) => prev.filter((i) => i.id !== id));
-    }
-  }
-
-  async function handleCreate() {
-    if (!newLabel.trim() || !newUrl.trim()) return;
-    const res = await fetch(`/api/courses/${params.id}/menu`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        label: newLabel.trim(),
-        icon: newIcon,
-        url: newUrl.trim(),
-      }),
-    });
-    if (res.ok) {
-      const data = await res.json();
-      setItems((prev) => [...prev, data.item]);
-      setNewLabel("");
-      setNewIcon("link");
-      setNewUrl("");
-      setCreating(false);
-    }
-  }
 
   return (
     <div className="max-w-6xl mx-auto">
@@ -246,6 +170,7 @@ export default function CourseMenuPage(props: { params: Promise<{ id: string }> 
         </>
       )}
       <ConfirmDialog />
+      <Toast />
     </div>
   );
 }
