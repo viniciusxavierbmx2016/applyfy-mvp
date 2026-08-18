@@ -39,6 +39,30 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
        que também dá `update` na mesma linha. A tela pede confirmação por causa
        disso. Fugir exigiria apagar e recriar, perdendo o histórico da linha. */
 
+    /* ⚠️ A guarda que PRECISOU nascer junto — a rota tinha UMA, e ela saiu.
+
+       O `update` abaixo é incondicional: aplicado a um colaborador ACCEPTED,
+       ele o rebaixa a PENDING e a pessoa **perde o acesso na hora**
+       (`collaboratorCanActOnCourse` só conta vínculo ACCEPTED). Isso é
+       PRÉ-EXISTENTE — a guarda antiga só olhava REVOKED —, mas ficava coberto
+       por acidente: a tela nunca ofereceu o botão para linha ativa. Mergear a
+       remoção da única guarda sem pôr esta no lugar deixaria a rota sem
+       nenhuma. É a família do 9.64/9.109: conferir a rota irmã que DESLIGA.
+
+       ⚠️ 400, não 403: quem chama TEM permissão (já passou pelo
+       requireWorkspaceOwner acima). O que não existe é a operação — reenviar
+       convite a quem já aceitou. Confundir estado inválido com falta de
+       permissão faria o produtor procurar o problema no lugar errado. */
+    if (c.status === "ACCEPTED") {
+      return NextResponse.json(
+        {
+          error:
+            "Este colaborador já aceitou o convite. Para retirar o acesso, use Revogar.",
+        },
+        { status: 400 }
+      );
+    }
+
     await prisma.collaborator.update({
       where: { id: c.id },
       data: {
