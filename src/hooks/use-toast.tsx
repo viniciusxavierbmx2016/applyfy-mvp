@@ -49,6 +49,43 @@ export async function mensagemDeErro(
   return doServidor || fallback;
 }
 
+/* ───── A METADE QUE FALTAVA NA RÉGUA (E3.12) ─────
+
+   `mensagemDeErro` acima exige um `Response` na assinatura — ela modela "o
+   servidor respondeu e recusou". O caso "o servidor NUNCA respondeu" não estava
+   no desenho: quando o `fetch` REJEITA (offline, DNS, TLS, CORS, servidor fora
+   do ar, extensão ou proxy bloqueando), não existe `res` e a função não pode nem
+   ser chamada. A exceção subia, saía do handler, e o estado otimista ficava de
+   pé sem uma palavra — foi assim que o teste do menu reprovou um fix que já
+   tratava 500 corretamente.
+
+   ⚠️ ESTE HELPER NÃO DECIDE O QUE A TELA FAZ. Ele normaliza a FALHA, não o
+   fluxo: devolve `{ok:false, mensagem}` e o handler continua dono do próprio
+   rollback. Um helper que engolisse o fluxo apagaria justamente a parte que
+   varia entre os nove call-sites.
+
+   ⚠️ A mensagem de rede NÃO crava a causa. O mesmo `TypeError` aparece com CORS
+   ou com o servidor fora do ar, quando a conexão do usuário está ótima. Ela diz
+   o que FAZER, não o que aconteceu. */
+export async function fetchJson(
+  input: RequestInfo | URL,
+  init?: RequestInit,
+  fallback = "Não foi possível concluir"
+): Promise<{ ok: true; data: unknown } | { ok: false; mensagem: string }> {
+  let res: Response;
+  try {
+    res = await fetch(input, init);
+  } catch {
+    return { ok: false, mensagem: `${fallback}. Verifique sua conexão e tente de novo.` };
+  }
+  // A régua do 9.86 continua intacta e continua verdadeira: ela só é chamada
+  // DEPOIS de existir um `res`, que é a condição que ela sempre pressupôs.
+  if (!res.ok) return { ok: false, mensagem: await mensagemDeErro(res, fallback) };
+  // ⚠️ 204 e respostas sem corpo são normais aqui (DELETE, PATCH): `data` vira
+  // null em vez de estourar, e quem não usa o corpo simplesmente o ignora.
+  return { ok: true, data: await res.json().catch(() => null) };
+}
+
 export function useToast() {
   const [toast, setToast] = useState<Toast | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);

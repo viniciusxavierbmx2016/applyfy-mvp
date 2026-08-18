@@ -7,7 +7,7 @@ import {
   type CollaboratorPermission,
 } from "@/lib/collaborator";
 import { useConfirm } from "@/hooks/use-confirm";
-import { mensagemDeErro, useToast } from "@/hooks/use-toast";
+import { fetchJson, mensagemDeErro, useToast } from "@/hooks/use-toast";
 import { HelpTooltip } from "@/components/help-tooltip";
 
 interface CourseOption {
@@ -86,13 +86,17 @@ export default function AdminCollaboratorsPage() {
      régua do 9.86. */
   async function handleRevoke(id: string) {
     if (!(await confirm({ title: "Revogar acesso", message: "Revogar acesso deste colaborador?", variant: "danger", confirmText: "Revogar" }))) return;
-    const r = await fetch(`/api/producer/collaborators/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status: "REVOKED" }),
-    });
+    const r = await fetchJson(
+      `/api/producer/collaborators/${id}`,
+      {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "REVOKED" }),
+      },
+      "Não foi possível revogar o acesso"
+    );
     if (!r.ok) {
-      showToast(await mensagemDeErro(r, "Não foi possível revogar o acesso"));
+      showToast(r.mensagem, "error");
       return;
     }
     showToast("Acesso revogado");
@@ -101,11 +105,13 @@ export default function AdminCollaboratorsPage() {
 
   async function handleDelete(id: string) {
     if (!(await confirm({ title: "Remover colaborador", message: "Remover este colaborador permanentemente?", variant: "danger", confirmText: "Remover" }))) return;
-    const r = await fetch(`/api/producer/collaborators/${id}`, {
-      method: "DELETE",
-    });
+    const r = await fetchJson(
+      `/api/producer/collaborators/${id}`,
+      { method: "DELETE" },
+      "Não foi possível remover o colaborador"
+    );
     if (!r.ok) {
-      showToast(await mensagemDeErro(r, "Não foi possível remover o colaborador"));
+      showToast(r.mensagem, "error");
       return;
     }
     showToast("Colaborador removido");

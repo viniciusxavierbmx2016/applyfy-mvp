@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { arrayMove } from "@dnd-kit/sortable";
 import type { DragEndEvent } from "@dnd-kit/core";
 import { useConfirm } from "@/hooks/use-confirm";
-import { mensagemDeErro, useToast } from "@/hooks/use-toast";
+import { fetchJson, useToast } from "@/hooks/use-toast";
 
 /* O menu do curso é editado em DOIS lugares: a página
    `/producer/courses/[id]/menu` e o `CourseMenuManager` embutido na aba
@@ -47,10 +47,9 @@ export function useCourseMenu(courseId: string) {
 
   async function load() {
     setLoading(true);
-    const res = await fetch(`/api/courses/${courseId}/menu`);
-    if (res.ok) {
-      const data = await res.json();
-      setItems(data.items);
+    const r = await fetchJson(`/api/courses/${courseId}/menu`);
+    if (r.ok) {
+      setItems((r.data as { items: MenuItem[] }).items);
     }
     // ⚠️ Falha de CARGA continua silenciosa aqui, de propósito: é o padrão do
     // Tier 3 do 9.107 (~91 sítios, "lista vazia sem explicação"), que espera
@@ -70,28 +69,36 @@ export function useCourseMenu(courseId: string) {
     const newIndex = items.findIndex((i) => i.id === over.id);
     const reordered = arrayMove(items, oldIndex, newIndex);
     setItems(reordered);
-    const res = await fetch(`/api/courses/${courseId}/menu/reorder`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ itemIds: reordered.map((i) => i.id) }),
-    });
-    if (!res.ok) {
+    const r = await fetchJson(
+      `/api/courses/${courseId}/menu/reorder`,
+      {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ itemIds: reordered.map((i) => i.id) }),
+      },
+      "Não foi possível salvar a nova ordem"
+    );
+    if (!r.ok) {
       setItems(anterior);
-      showToast(await mensagemDeErro(res, "Não foi possível salvar a nova ordem"));
+      showToast(r.mensagem, "error");
     }
   }
 
   async function handleUpdate(id: string, patch: Partial<MenuItem>) {
     const anterior = items;
     setItems((prev) => prev.map((i) => (i.id === id ? { ...i, ...patch } : i)));
-    const res = await fetch(`/api/courses/${courseId}/menu/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(patch),
-    });
-    if (!res.ok) {
+    const r = await fetchJson(
+      `/api/courses/${courseId}/menu/${id}`,
+      {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(patch),
+      },
+      "Não foi possível salvar a alteração"
+    );
+    if (!r.ok) {
       setItems(anterior);
-      showToast(await mensagemDeErro(res, "Não foi possível salvar a alteração"));
+      showToast(r.mensagem, "error");
     }
   }
 
@@ -106,11 +113,13 @@ export function useCourseMenu(courseId: string) {
     ) {
       return;
     }
-    const res = await fetch(`/api/courses/${courseId}/menu/${id}`, {
-      method: "DELETE",
-    });
-    if (!res.ok) {
-      showToast(await mensagemDeErro(res, "Não foi possível excluir o item"));
+    const r = await fetchJson(
+      `/api/courses/${courseId}/menu/${id}`,
+      { method: "DELETE" },
+      "Não foi possível excluir o item"
+    );
+    if (!r.ok) {
+      showToast(r.mensagem, "error");
       return;
     }
     setItems((prev) => prev.filter((i) => i.id !== id));
@@ -118,21 +127,24 @@ export function useCourseMenu(courseId: string) {
 
   async function handleCreate() {
     if (!newLabel.trim() || !newUrl.trim()) return;
-    const res = await fetch(`/api/courses/${courseId}/menu`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        label: newLabel.trim(),
-        icon: newIcon,
-        url: newUrl.trim(),
-      }),
-    });
-    if (!res.ok) {
-      showToast(await mensagemDeErro(res, "Não foi possível criar o item"));
+    const r = await fetchJson(
+      `/api/courses/${courseId}/menu`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          label: newLabel.trim(),
+          icon: newIcon,
+          url: newUrl.trim(),
+        }),
+      },
+      "Não foi possível criar o item"
+    );
+    if (!r.ok) {
+      showToast(r.mensagem, "error");
       return;
     }
-    const data = await res.json();
-    setItems((prev) => [...prev, data.item]);
+    setItems((prev) => [...prev, (r.data as { item: MenuItem }).item]);
     setNewLabel("");
     setNewIcon("link");
     setNewUrl("");

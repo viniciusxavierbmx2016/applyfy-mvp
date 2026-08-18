@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
+import { fetchJson } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { formatRelativeTime } from "@/lib/utils";
 
@@ -97,8 +98,10 @@ export function NotificationsBell({ workspaceSlug }: { workspaceSlug?: string } 
     const anteriorNaoLidas = unread;
     setItems((prev) => prev.map((i) => ({ ...i, read: true })));
     setUnread(0);
-    const res = await fetch("/api/notifications/read-all", { method: "PATCH" });
-    if (!res.ok) {
+    const r = await fetchJson("/api/notifications/read-all", { method: "PATCH" });
+    if (!r.ok) {
+      // Rollback sim, mensagem não: o sino não tem canal de aviso, e inventar
+      // um seria desenho. A volta do contador É o sinal honesto disponível.
       setItems(anterior);
       setUnread(anteriorNaoLidas);
     }

@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
+import { fetchJson } from "@/hooks/use-toast";
 
 interface LiveMessage {
   id: string;
@@ -220,14 +221,20 @@ export default function ProducerLiveRoomPage() {
   async function removeModerator(userId: string) {
     const removido = moderators.find((m) => m.userId === userId);
     setModerators((prev) => prev.filter((m) => m.userId !== userId));
-    const res = await fetch(`/api/producer/lives/${liveId}/moderators`, {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId }),
-    });
-    if (!res.ok) {
+    const r = await fetchJson(
+      `/api/producer/lives/${liveId}/moderators`,
+      {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId }),
+      },
+      "Não foi possível remover o moderador"
+    );
+    if (!r.ok) {
+      // ⚠️ volta ao valor de ANTES, não a um recalculado: `removido` foi
+      // capturado do render, então a linha reaparece como estava.
       if (removido) setModerators((prev) => [...prev, removido]);
-      setToast("Erro ao remover moderador");
+      setToast(r.mensagem);
       return;
     }
     setToast("Moderador removido");
