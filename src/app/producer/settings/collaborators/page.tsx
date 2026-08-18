@@ -73,6 +73,13 @@ export default function AdminCollaboratorsPage() {
     load();
   }, []);
 
+  // 9.84 — a tabela e os cards abrem o MESMO modal; extraído para a regra não
+  // existir em dois lugares.
+  function abrirEdicao(c: CollaboratorItem) {
+    setEditing(c);
+    setShowModal(true);
+  }
+
   async function handleRevoke(id: string) {
     if (!(await confirm({ title: "Revogar acesso", message: "Revogar acesso deste colaborador?", variant: "danger", confirmText: "Revogar" }))) return;
     const r = await fetch(`/api/producer/collaborators/${id}`, {
@@ -189,7 +196,9 @@ export default function AdminCollaboratorsPage() {
           <p className="text-gray-500">Nenhum colaborador convidado ainda.</p>
         </div>
       ) : (
-        <div className="bg-white dark:bg-white/5 border border-gray-200 dark:border-white/5 rounded-xl overflow-x-auto">
+        <>
+        {/* Desktop table — 9.84: envelopada, INTOCADA por dentro. */}
+        <div className="hidden md:block bg-white dark:bg-white/5 border border-gray-200 dark:border-white/5 rounded-xl overflow-x-auto">
           <table className="w-full text-sm min-w-[640px]">
             <thead>
               <tr className="border-b border-gray-200 dark:border-white/5">
@@ -227,48 +236,14 @@ export default function AdminCollaboratorsPage() {
                   </td>
                   <td className="px-4 py-4">
                     <div className="flex items-center gap-1.5 justify-end">
-                      <button
-                        onClick={() => {
-                          setEditing(c);
-                          setShowModal(true);
-                        }}
-                        className="px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-300 bg-white/5 hover:bg-white/10 rounded-lg border border-gray-200 dark:border-white/10 transition"
-                      >
-                        Editar
-                      </button>
-                      {c.status === "PENDING" && (
-                        <button
-                          onClick={() => handleResend(c)}
-                          className="px-3 py-1.5 text-xs font-medium text-primary bg-white/5 hover:bg-white/10 rounded-lg border border-gray-200 dark:border-white/10 transition"
-                        >
-                          Reenviar
-                        </button>
-                      )}
-                      {/* 9.83 — a linha revogada oferecia só "Editar" e
-                          "Remover": nenhum caminho de volta. Mesmo endpoint do
-                          "Reenviar", rótulo próprio porque a ação é outra. */}
-                      {c.status === "REVOKED" && (
-                        <button
-                          onClick={() => handleResend(c)}
-                          className="px-3 py-1.5 text-xs font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-500/5 hover:bg-emerald-500/10 rounded-lg border border-emerald-500/20 transition"
-                        >
-                          Reativar
-                        </button>
-                      )}
-                      {c.status !== "REVOKED" && (
-                        <button
-                          onClick={() => handleRevoke(c.id)}
-                          className="px-3 py-1.5 text-xs font-medium text-amber-600 dark:text-amber-400 bg-amber-500/5 hover:bg-amber-500/10 rounded-lg border border-amber-500/20 transition"
-                        >
-                          Revogar
-                        </button>
-                      )}
-                      <button
-                        onClick={() => handleDelete(c.id)}
-                        className="px-3 py-1.5 text-xs font-medium text-red-600 dark:text-red-400 bg-red-500/10 hover:bg-red-500/20 rounded-lg border border-red-500/20 transition"
-                      >
-                        Remover
-                      </button>
+                      <AcoesColaborador
+                        c={c}
+                        layout="linha"
+                        onEditar={abrirEdicao}
+                        onResend={handleResend}
+                        onRevogar={handleRevoke}
+                        onRemover={handleDelete}
+                      />
                     </div>
                   </td>
                 </tr>
@@ -276,6 +251,70 @@ export default function AdminCollaboratorsPage() {
             </tbody>
           </table>
         </div>
+
+        {/* Mobile cards — 9.84. Molde: courses/[id]/students/page.tsx:349
+            (cabeçalho → grade rotulada → rodapé de ações). ⚠️ Escolhido `md`,
+            e não o `sm` do applyfy, por um motivo de fato e não de gosto: o
+            card do applyfy é de LOG, só leitura — não tem rodapé de ações, que
+            é justamente o que uma linha com até 4 botões precisa.
+
+            ⚠️ Sem avatar de propósito: a linha do desktop não mostra nenhum, e
+            o card carrega o que a LINHA tem — inventar informação faria as duas
+            superfícies discordarem. */}
+        <div className="md:hidden space-y-3 pb-20">
+          {items.map((c) => (
+            <div
+              key={c.id}
+              className="bg-white dark:bg-white/5 border border-gray-200 dark:border-white/5 rounded-xl p-4"
+            >
+              <div className="flex items-start justify-between gap-3 mb-3">
+                <div className="min-w-0">
+                  <p className="font-medium text-gray-900 dark:text-white truncate">
+                    {c.user?.name || c.name || c.email}
+                  </p>
+                  <p className="text-xs text-gray-500 truncate">{c.email}</p>
+                </div>
+                <span
+                  className={`flex-shrink-0 text-xs font-semibold px-2 py-1 rounded-full ${STATUS_STYLE[c.status]}`}
+                >
+                  {STATUS_LABEL[c.status]}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-2 gap-x-3 gap-y-2 text-xs mb-4">
+                <div>
+                  <p className="text-gray-500">Permissões</p>
+                  <p className="text-gray-900 dark:text-white">
+                    {c.permissions.length} permiss
+                    {c.permissions.length === 1 ? "ão" : "ões"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-gray-500">Cursos</p>
+                  <p className="text-gray-900 dark:text-white">
+                    {c.courseIds.length === 0
+                      ? "Todos"
+                      : `${c.courseIds.length} curso${c.courseIds.length === 1 ? "" : "s"}`}
+                  </p>
+                </div>
+              </div>
+
+              {/* Até 4 botões (PENDING): quebram de 2 em 2, e um ímpar sobrando
+                  ocupa a linha inteira em vez de ficar órfão à esquerda. */}
+              <div className="flex flex-wrap gap-2">
+                <AcoesColaborador
+                  c={c}
+                  layout="card"
+                  onEditar={abrirEdicao}
+                  onResend={handleResend}
+                  onRevogar={handleRevoke}
+                  onRemover={handleDelete}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+        </>
       )}
 
       {showModal && (
@@ -335,6 +374,98 @@ export default function AdminCollaboratorsPage() {
       <Toast />
       <ConfirmDialog />
     </div>
+  );
+}
+
+/* 9.84 — as AÇÕES vivem uma vez só.
+
+   A tabela (desktop) e os cards (mobile) são duas apresentações do MESMO
+   estado. Duplicar aqui a regra "qual botão aparece em qual status" seria a
+   família 9.42/9.54/9.57 nascendo de novo: alguém muda a condição num lugar,
+   esquece o outro, e as duas superfícies passam a discordar sobre o que o
+   produtor pode fazer — com o agravante de que a divergência só aparece no
+   tamanho de tela que quem editou não estava olhando.
+
+   ⚠️ O que varia entre as duas NÃO é a regra, é o layout do botão: na linha
+   ficam lado a lado à direita; no card, dois por fileira. Por isso `layout` só
+   ACRESCENTA classe — as cores e o tamanho continuam as mesmas strings de
+   antes, para o desktop sair idêntico. */
+function AcoesColaborador({
+  c,
+  layout,
+  onEditar,
+  onResend,
+  onRevogar,
+  onRemover,
+}: {
+  c: CollaboratorItem;
+  layout: "linha" | "card";
+  onEditar: (c: CollaboratorItem) => void;
+  onResend: (c: CollaboratorItem) => void;
+  onRevogar: (id: string) => void;
+  onRemover: (id: string) => void;
+}) {
+  /* `grow` em vez de `flex-1` de propósito: `flex-1` é atalho de `flex` e
+     carrega `flex-basis: 0%` junto, que brigaria com o `basis-[...]` abaixo
+     dependendo da ordem no CSS gerado. `grow` mexe só em `flex-grow`. */
+  const l = layout === "card" ? " grow basis-[calc(50%-0.25rem)]" : "";
+  return (
+    <>
+      <button
+        onClick={() => onEditar(c)}
+        className={
+          "px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-300 bg-white/5 hover:bg-white/10 rounded-lg border border-gray-200 dark:border-white/10 transition" +
+          l
+        }
+      >
+        Editar
+      </button>
+      {c.status === "PENDING" && (
+        <button
+          onClick={() => onResend(c)}
+          className={
+            "px-3 py-1.5 text-xs font-medium text-primary bg-white/5 hover:bg-white/10 rounded-lg border border-gray-200 dark:border-white/10 transition" +
+            l
+          }
+        >
+          Reenviar
+        </button>
+      )}
+      {/* 9.83 — a linha revogada oferecia só "Editar" e "Remover": nenhum
+          caminho de volta. Mesmo endpoint do "Reenviar", rótulo próprio porque
+          a ação é outra. */}
+      {c.status === "REVOKED" && (
+        <button
+          onClick={() => onResend(c)}
+          className={
+            "px-3 py-1.5 text-xs font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-500/5 hover:bg-emerald-500/10 rounded-lg border border-emerald-500/20 transition" +
+            l
+          }
+        >
+          Reativar
+        </button>
+      )}
+      {c.status !== "REVOKED" && (
+        <button
+          onClick={() => onRevogar(c.id)}
+          className={
+            "px-3 py-1.5 text-xs font-medium text-amber-600 dark:text-amber-400 bg-amber-500/5 hover:bg-amber-500/10 rounded-lg border border-amber-500/20 transition" +
+            l
+          }
+        >
+          Revogar
+        </button>
+      )}
+      <button
+        onClick={() => onRemover(c.id)}
+        className={
+          "px-3 py-1.5 text-xs font-medium text-red-600 dark:text-red-400 bg-red-500/10 hover:bg-red-500/20 rounded-lg border border-red-500/20 transition" +
+          l
+        }
+      >
+        Remover
+      </button>
+    </>
   );
 }
 
