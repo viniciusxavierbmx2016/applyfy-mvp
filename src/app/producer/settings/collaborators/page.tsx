@@ -97,15 +97,47 @@ export default function AdminCollaboratorsPage() {
     }
   }
 
-  async function handleResend(id: string) {
-    const r = await fetch(`/api/producer/collaborators/${id}/resend`, {
+  /* 9.83 — UM handler para as duas ações, porque no servidor elas SÃO a mesma
+     coisa: `status: PENDING`, `invitedAt` novo e um link fresco. O que muda é o
+     que a pessoa está fazendo, e isso a tela precisa dizer.
+
+     ⚠️ Reativar pede confirmação e reenviar não: reativar devolve acesso a
+     alguém que o dono tirou, e re-arma o link que já esteve na caixa de entrada
+     dessa pessoa. Reenviar apenas repete um convite que já estava de pé. */
+  async function handleResend(c: CollaboratorItem) {
+    const reativando = c.status === "REVOKED";
+    if (
+      reativando &&
+      !(await confirm({
+        title: "Reativar convite",
+        message: `O convite de ${c.email} volta a valer, e o link enviado antes funciona de novo. A pessoa precisa aceitar outra vez — reativar não devolve o acesso sozinho.`,
+        confirmText: "Reativar",
+      }))
+    ) {
+      return;
+    }
+    const r = await fetch(`/api/producer/collaborators/${c.id}/resend`, {
       method: "POST",
     });
-    if (r.ok) {
-      const d = await r.json();
-      setInviteLink(d.inviteLink);
-      showToast("Convite reenviado");
+    if (!r.ok) {
+      // Antes, falha aqui era SILENCIOSA — o clique não produzia nada. Com o
+      // botão novo isso seria pior: a pessoa confirma um diálogo e a tela não
+      // responde. A régua do 9.86 já estava importada nesta tela.
+      showToast(
+        await mensagemDeErro(
+          r,
+          reativando ? "Não foi possível reativar" : "Não foi possível reenviar"
+        )
+      );
+      return;
     }
+    const d = await r.json();
+    setInviteLink(d.inviteLink);
+    showToast(reativando ? "Convite reativado" : "Convite reenviado");
+    // ⚠️ Só recarrega ao reativar: é a única das duas em que o STATUS da linha
+    // muda (REVOKED → Pendente). No reenvio o caminho de sucesso segue
+    // byte-a-byte o de antes — nenhuma busca a mais.
+    if (reativando) load();
   }
 
   return (
@@ -206,10 +238,21 @@ export default function AdminCollaboratorsPage() {
                       </button>
                       {c.status === "PENDING" && (
                         <button
-                          onClick={() => handleResend(c.id)}
+                          onClick={() => handleResend(c)}
                           className="px-3 py-1.5 text-xs font-medium text-primary bg-white/5 hover:bg-white/10 rounded-lg border border-gray-200 dark:border-white/10 transition"
                         >
                           Reenviar
+                        </button>
+                      )}
+                      {/* 9.83 — a linha revogada oferecia só "Editar" e
+                          "Remover": nenhum caminho de volta. Mesmo endpoint do
+                          "Reenviar", rótulo próprio porque a ação é outra. */}
+                      {c.status === "REVOKED" && (
+                        <button
+                          onClick={() => handleResend(c)}
+                          className="px-3 py-1.5 text-xs font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-500/5 hover:bg-emerald-500/10 rounded-lg border border-emerald-500/20 transition"
+                        >
+                          Reativar
                         </button>
                       )}
                       {c.status !== "REVOKED" && (
@@ -415,6 +458,19 @@ function CollaboratorModal({
         </div>
 
         <div className="p-6 space-y-5">
+          {/* 9.83 — o engano ATACADO NA ORIGEM. Editar uma linha revogada salva
+              as permissões e devolve "Colaborador atualizado" — mas o PATCH deste
+              modal não manda `status`, então o acesso continua inexistente. O
+              produtor saía daqui achando que tinha restaurado alguém. Dizer isso
+              custa uma frase; descobrir sozinho custa dias. */}
+          {editing?.status === "REVOKED" && (
+            <div className="px-3 py-2.5 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-lg text-sm text-amber-800 dark:text-amber-300">
+              Este acesso está <strong>revogado</strong>. Salvar aqui atualiza as
+              permissões, mas <strong>não devolve o acesso</strong> — para isso,
+              use <strong>Reativar</strong> na lista.
+            </div>
+          )}
+
           <div className="grid sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1.5">
