@@ -35,6 +35,60 @@ Copie o bloco abaixo e preencha todos os campos. Campo sem resposta = etapa não
 
 <!-- As entradas começam abaixo desta linha, da mais recente para a mais antiga. -->
 
+## 2026-08-19 — CAMADA 3, ETAPA E3.12 (parte 1) — Falso sucesso + a régua completa (9.107 Tier 1 · 9.79)
+
+**Estado antes:** main em `c8cd4e7`
+
+**O que foi feito:** morreu o **falso sucesso** — a tela afirmando o que não aconteceu. O
+`removeModerator` dizia "Moderador removido" **antes** do fetch; o `handleDragEnd` do menu fazia
+`await fetch` **sem guardar a resposta**, em **cópia literal** em 2 arquivos (→ `useCourseMenu`,
+−198 linhas). E o **9.79**: quem perdeu `ACCESS_MEMber_AREA` recebia "Não matriculado neste curso"
+— verdade literal, pista zero; agora `mensagemDeEntradaNegada` distingue. ⭐ No meio do gate, o
+teste humano **reprovou o fix** e expôs que ele cobria só `!res.ok`: quando o fetch **REJEITA**
+(rede) não existe `res` — e a régua do 9.86 tem esse ponto cego **na assinatura**. Nasceu
+`fetchJson`, cobrindo os dois modos, adotado nos 9 handlers da branch.
+
+**Arquivos tocados:** `use-course-menu.ts` (novo) · `use-toast.tsx` (`fetchJson`) ·
+`lib/collaborator.ts` (`mensagemDeEntradaNegada`) · `posts/route.ts` · `groups/route.ts` ·
+`menu/page.tsx` · `course-menu-manager.tsx` · `lives/[id]/page.tsx` · `collaborators/page.tsx` ·
+`notifications-bell.tsx`
+
+**Como foi provado:**
+- Matriz de máquina: 9.79 em 3 rotas × 2 personas + controles; `fetchJson` testado com o **texto
+  extraído do arquivo pela AST do tsc** em 5 casos (rede, 500, 403, 200, 204).
+- **Gate humano C·A·B, de olho**: **C** feliz 4/4 + persistência pós-restart · **A** falha de rede
+  **REAL** — servidor **morto sob build de produção** com a página aberta → revert + toast de
+  conexão · **B** 403 **REAL** — **revogação viva** de `MANAGE_LESSONS` no banco com a tela aberta
+  → revert + "Sem permissão". Staging **restaurado ao byte** (gabarito guardado antes da escrita).
+- ⚠️ Desvios registrados: `lives/moderators` aceita por prova via API (nenhuma persona alcança 403
+  clicável ali — 9.116); `colab-zero` nunca foi veículo válido (bloqueio por desenho → 9.120).
+
+**SHA do merge:** `6420f7d`  ·  **Rollback:** `git revert -m 1 6420f7d`
+
+**Mudou em produção para quem:** produtores — reordenar menu, remover moderador, revogar/remover
+colaborador e marcar notificações **param de mentir** quando a rede cai ou o servidor recusa: a
+tela **volta** e **diz o que fazer**. Colaborador que perdeu acesso à área de membros passa a ler a
+causa real. Caminho feliz: byte-a-byte o de antes.
+
+**Ficou aberto:** o **9.106** (adoção da régua nos lotes L1-L6, agora com `fetchJson`) · o padrão
+do **Tier 3** (~91 sítios de lista vazia) · os ~89 handlers pré-existentes só-`!res.ok` ·
+**9.119-9.122** (E3.22, os 4 achados de UX do gate).
+
+**⭐ O TESTE HUMANO REPROVOU O FIX, E FOI O MELHOR MOMENTO DA ETAPA.** A matriz de máquina exercitava
+o 4xx/500 e passava; o dedo humano bloqueou a URL e viu a ordem ficar torta em silêncio. Provar só
+um modo de falha foi exatamente o que deixou o buraco passar — o roteiro novo exige **os dois**.
+
+**⭐ AS TRÊS LIÇÕES DO GATE** (registradas no 9.107): **(L1)** falha de rede em SPA carregada
+**nunca em dev server** — o HMR recarrega a página quando o servidor morre e destrói o palco; usar
+`next build` + `next start`. **(L2)** drag sintético não é confiável entre sessões do agente —
+célula de arrasto exige mouse humano. **(L3)** **gate de TELA ≠ PÁGINA ≠ API** — mapear as três
+camadas antes de desenhar teste de permissão.
+
+**Regras conferidas:** §17 ✅ · os dois modos de falha provados ✅ · staging restaurado ao byte ✅ ·
+gate humano C·A·B ✅ · papelada ✅
+
+---
+
 ## 2026-08-18 — CAMADA 3, ETAPA E3.15 — Preço e checkout restritos ao dono (9.112)
 
 **Estado antes:** main em `ce7d7ad`
