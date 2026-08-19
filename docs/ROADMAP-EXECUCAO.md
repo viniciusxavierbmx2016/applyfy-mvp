@@ -405,7 +405,7 @@ Roda **em paralelo** às camadas, sem consumir sessão de desenvolvimento:
 | **E3.10 Torneira do webhook (9.98)** 🔴 | ✅ fechada | `d58aecb` | 2026-08-17 |
 | **E3.11 2FA para quem tem painel (9.109)** 🔴 | ✅ fechada | `b58df38` | 2026-08-17 |
 | **E3.4 Recorte de payload (9.81)** 🟠 | ✅ fechada | `fcb1cbc` | 2026-08-17 |
-| **E3.12 Régua de erro, continuação (9.107·9.106·9.79)** | ⬜ pendente | — | — |
+| **E3.12 Régua de erro, continuação (9.107·9.106·9.79)** | 🟡 **parte 1 fechada** — 9.79 ✅ · 9.107 Tier 1 ✅ + `fetchJson` (rede+resposta); restam 9.106 (lotes) e o padrão do Tier 3 | `6420f7d` | 2026-08-19 |
 | E3.5 Telas de acesso e dias (9.57c·9.60) | ✅ fechada | `e26e312` | 2026-08-17 |
 | E3.6 Dívida do storage (9.97·9.104·9.95) | ⬜ pendente | — | — |
 | **E3.7 UI de colaboradores (9.83·9.84)** | ✅ **fechada** | `cd4c71c` + `2c02b72` | 2026-08-17 |
@@ -418,6 +418,7 @@ Roda **em paralelo** às camadas, sem consumir sessão de desenvolvimento:
 | **E3.17 Padrão de tabela responsiva (9.114)** 🟢 | ⬜ pendente — nasceu do E3.7 | — | — |
 | **E3.18 Contato de suporte no payload (9.115)** 🟢 | ⬜ pendente — nasceu do E3.15 | — | — |
 | **E3.21 Cache do menu mente após salvar (9.118)** 🟠 | ⬜ pendente — nasceu do E3.12; **única rota com o header** | — | — |
+| **E3.22 UX de permissão no editor (9.119·9.120·9.121·9.122)** 🟢 | ⬜ pendente — 4 achados do gate do E3.12 (19/08) | — | — |
 | **E3.19 Moderador de live inalcançável (9.116)** 🟠 | ⬜ pendente — **pergunta de dono**; nasceu da investigação do E3.12 | — | — |
 | **E3.20 Rota órfã do editor de menu (9.117)** 🟢 | ⬜ pendente — **decisão de dono** (linkar/remover/documentar); nasceu do E3.12 | — | — |
 | E4.1 Toggles Personalizar Curso | ⬜ pendente | — | — |
