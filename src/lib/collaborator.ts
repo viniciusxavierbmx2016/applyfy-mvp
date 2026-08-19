@@ -149,3 +149,40 @@ export async function collaboratorCanActOnCourse(
   if (rec.courseIds.length === 0) return true;
   return rec.courseIds.includes(courseId);
 }
+
+/* 9.79 — a frase VERDADEIRA que não ajuda ninguém.
+
+   As três portas de entrada da comunidade (`GET /api/posts`, `POST /api/posts`
+   e `GET /api/courses/[id]/groups`) exigem `ACCESS_MEMBER_AREA` além da
+   permissão de comunidade. Quem TEM a permissão mas PERDEU esse acesso falha
+   ali, cai na checagem de matrícula, não tem matrícula — e recebia
+   "Não matriculado neste curso". Verdade literal e pista zero: a pessoa nunca
+   foi aluna, ela é colaboradora, e o que mudou foi a permissão dela.
+
+   ⚠️ §9 — POR QUE ISTO NÃO VAZA NADA: a frase específica só aparece para quem
+   TEM vínculo aceito com permissão de comunidade neste curso. Estamos contando
+   à pessoa algo sobre o PRÓPRIO vínculo, que ela já conhece. Quem nunca teve
+   vínculo continua recebendo a frase genérica e não aprende nada sobre a
+   estrutura do workspace.
+
+   ⚠️ E roda SÓ no caminho de falha, que é raro. O caminho feliz não ganha
+   nenhuma consulta: quem entra na comunidade nunca chega aqui.
+
+   ⭐ Existe como HELPER, e não copiada nas 3 rotas, porque três cópias de uma
+   regra de mensagem divergem exatamente como divergiram os handlers do menu
+   (família 9.42/9.54/9.57). */
+export async function mensagemDeEntradaNegada(
+  userId: string,
+  courseId: string
+): Promise<string> {
+  const temVinculoDeComunidade = await collaboratorCanActOnCourse(
+    userId,
+    courseId,
+    ["MANAGE_COMMUNITY", "REPLY_COMMENTS"]
+    // sem `requireMemberAccess`: a pergunta aqui é "o vínculo existe?", não
+    // "o vínculo basta?" — é justamente a diferença entre os dois casos.
+  );
+  return temVinculoDeComunidade
+    ? "Seu acesso à área de membros foi removido. Fale com o produtor."
+    : "Não matriculado neste curso";
+}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
+import { fetchJson } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { formatRelativeTime } from "@/lib/utils";
 
@@ -87,10 +88,23 @@ export function NotificationsBell({ workspaceSlug }: { workspaceSlug?: string } 
     if (n.link) router.push(n.link);
   }
 
+  /* 9.107 — era otimista sem volta: marcava tudo como lido na tela e, se o
+     servidor recusasse, a mentira ficava até o próximo recarregamento. O
+     rollback é o mesmo molde dos outros; a MENSAGEM não entra aqui porque o
+     sino não tem canal de aviso nenhum, e inventar um seria desenho, não fix.
+     Quando o sino for migrado no 9.106, a frase entra junto. */
   async function markAllRead() {
+    const anterior = items;
+    const anteriorNaoLidas = unread;
     setItems((prev) => prev.map((i) => ({ ...i, read: true })));
     setUnread(0);
-    await fetch("/api/notifications/read-all", { method: "PATCH" });
+    const r = await fetchJson("/api/notifications/read-all", { method: "PATCH" });
+    if (!r.ok) {
+      // Rollback sim, mensagem não: o sino não tem canal de aviso, e inventar
+      // um seria desenho. A volta do contador É o sinal honesto disponível.
+      setItems(anterior);
+      setUnread(anteriorNaoLidas);
+    }
   }
 
   return (

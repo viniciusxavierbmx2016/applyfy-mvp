@@ -7,7 +7,7 @@ import {
   type CollaboratorPermission,
 } from "@/lib/collaborator";
 import { useConfirm } from "@/hooks/use-confirm";
-import { mensagemDeErro, useToast } from "@/hooks/use-toast";
+import { fetchJson, mensagemDeErro, useToast } from "@/hooks/use-toast";
 import { HelpTooltip } from "@/components/help-tooltip";
 
 interface CourseOption {
@@ -80,28 +80,42 @@ export default function AdminCollaboratorsPage() {
     setShowModal(true);
   }
 
+  /* 9.107 — dívida do 9.83 quitada: naquele item o `handleResend` ganhou
+     tratamento de erro e estes dois ficaram sem, deixando a MESMA tela com
+     dois comportamentos para a mesma classe de falha. Agora os três seguem a
+     régua do 9.86. */
   async function handleRevoke(id: string) {
     if (!(await confirm({ title: "Revogar acesso", message: "Revogar acesso deste colaborador?", variant: "danger", confirmText: "Revogar" }))) return;
-    const r = await fetch(`/api/producer/collaborators/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status: "REVOKED" }),
-    });
-    if (r.ok) {
-      showToast("Acesso revogado");
-      load();
+    const r = await fetchJson(
+      `/api/producer/collaborators/${id}`,
+      {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "REVOKED" }),
+      },
+      "Não foi possível revogar o acesso"
+    );
+    if (!r.ok) {
+      showToast(r.mensagem, "error");
+      return;
     }
+    showToast("Acesso revogado");
+    load();
   }
 
   async function handleDelete(id: string) {
     if (!(await confirm({ title: "Remover colaborador", message: "Remover este colaborador permanentemente?", variant: "danger", confirmText: "Remover" }))) return;
-    const r = await fetch(`/api/producer/collaborators/${id}`, {
-      method: "DELETE",
-    });
-    if (r.ok) {
-      showToast("Colaborador removido");
-      load();
+    const r = await fetchJson(
+      `/api/producer/collaborators/${id}`,
+      { method: "DELETE" },
+      "Não foi possível remover o colaborador"
+    );
+    if (!r.ok) {
+      showToast(r.mensagem, "error");
+      return;
     }
+    showToast("Colaborador removido");
+    load();
   }
 
   /* 9.83 — UM handler para as duas ações, porque no servidor elas SÃO a mesma
