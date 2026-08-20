@@ -35,6 +35,53 @@ Copie o bloco abaixo e preencha todos os campos. Campo sem resposta = etapa não
 
 <!-- As entradas começam abaixo desta linha, da mais recente para a mais antiga. -->
 
+## 2026-08-20 — CAMADA 3, ETAPA E3.13 (parte 1) — A corrida do grupo default (9.23)
+
+**Estado antes:** main em `8c0683e`
+
+**O que foi feito:** `ensureDefaultGroup` era check-then-create sem proteção: num curso sem grupo,
+o clique único do aluno (a página dispara `GET /groups` + `GET /posts` **em paralelo**) fazia a
+perdedora estourar **P2002** e devolver **500**. Agora o `create` tem catch de `P2002` com re-busca
+**pela unique que conflitou** — o banco decide quem venceu e **a perdedora adota o grupo do
+vencedor**. No mesmo fôlego (`9dafa6c`): os **2 catches** de `producer/community/groups` param de
+vazar `error.message` em 5xx — era por ali que o P2002 do Prisma chegava **cru** à tela do produtor.
+
+**Arquivos tocados:** `lib/community-helpers.ts` · `api/producer/community/groups/route.ts` — só os 2 do escopo
+
+**Como foi provado:**
+- **A doença, antes do fix**: sonda na forma da produção (2 requisições HTTP simultâneas) →
+  reproduzida **na 1ª tentativa**: `GET /groups` 500 + `P2002 (courseId, slug)` no log.
+  ⚠️ A sonda 1 (5 chamadas num processo/um client) deu **5/5 fulfilled 3 vezes** — o pool
+  **serializava** o que queria correr; ficou como lição de fidelidade de sonda.
+- ⭐ **A trava que salvou o desenho**: o upsert do Prisma 5.22 nesta forma é **EMULADO** — log de
+  query mostrou `BEGIN → SELECT → COMMIT`, **sem `INSERT ON CONFLICT`** — a mesma corrida com outra
+  roupa. O fix virou o **PLANO B** exigido pelo comando, e não o upsert do desenho original.
+- **A cura, com a mesma sonda da doença**: **5/5 rodadas `200+200` com exatamente 1 grupo** +
+  regressão fast-path. ⭐ E o log mostra a corrida **disparando ~4×** (`prisma:error Unique
+  constraint`, a exceção capturada) e sendo **absorvida** — vitória por desenho, não por sorte.
+  **Zero 500, zero P2002 não-tratado.** **Olho humano ✅ (19/08).**
+
+**SHA do merge:** `b29c64b`  ·  **Rollback:** `git revert -m 1 b29c64b`
+
+**Mudou em produção para quem:** o **aluno** que abre a comunidade de um curso recém-criado —
+**20 cursos** de produção ainda vão criar seu grupo default, e cada primeira visita era uma roleta
+de 500. O **produtor** deixa de ver mensagem interna do Prisma em erro de grupos. ⚠️ **Vigiar os
+logs da comunidade nos primeiros dias** — são os 20 exercícios reais do caminho novo.
+
+**Ficou aberto:** **9.24** (comentário grava HTML cru) — a outra metade do E3.13.
+
+**⚠️ Desvio declarado**: o 2º catch vazador (POST `:139`) do MESMO arquivo fechado junto — padrão
+idêntico, 401/403 preservado byte a byte. **Bônus**: grupo manual slug `geral` não-default deixa de
+ser 500 permanente.
+
+**Nota de palco:** o **`curso-corrida-923`** (`fe995fcb-…`, dado obviamente fake) **permanece no
+staging** como palco de corrida reutilizável — apagar os grupos dele recria o cenário em segundos.
+
+**Regras conferidas:** §17 ✅ · corrida reproduzida ANTES do fix ✅ · trava empírica antes do
+desenho ✅ · escopo de 2 arquivos respeitado ✅ · gate humano ✅ · papelada ✅
+
+---
+
 ## 2026-08-19 — CAMADA 3, ETAPA E3.12 (parte 1) — Falso sucesso + a régua completa (9.107 Tier 1 · 9.79)
 
 **Estado antes:** main em `c8cd4e7`
