@@ -67,7 +67,14 @@ export async function GET(request: Request) {
     const msg = error instanceof Error ? error.message : "";
     const status =
       msg === "Não autorizado" ? 401 : msg === "Sem permissão" ? 403 : 500;
-    return NextResponse.json({ error: msg || "Erro" }, { status });
+    // 9.86 — 5xx NUNCA expõe error.message: era por aqui que o P2002 do Prisma
+    // ("Unique constraint failed on the fields: (`courseId`,`slug`)") chegava
+    // cru à tela do produtor. 401/403 seguem com as frases da casa de auth,
+    // que são produto; o detalhe do 500 fica no console.error acima.
+    return NextResponse.json(
+      { error: status === 500 ? "Erro ao buscar grupos" : msg },
+      { status }
+    );
   }
 }
 
@@ -141,6 +148,11 @@ export async function POST(request: Request) {
     const msg = error instanceof Error ? error.message : "";
     const status =
       msg === "Não autorizado" ? 401 : msg === "Sem permissão" ? 403 : 500;
-    return NextResponse.json({ error: msg || "Erro" }, { status });
+    // 9.86 — mesmo padrão do catch do GET acima: 5xx vira frase da casa.
+    // Irmão no MESMO arquivo, fechado no mesmo commit (lição 9.42/9.54/9.57).
+    return NextResponse.json(
+      { error: status === 500 ? "Erro ao criar grupo" : msg },
+      { status }
+    );
   }
 }
