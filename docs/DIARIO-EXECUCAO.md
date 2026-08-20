@@ -35,6 +35,55 @@ Copie o bloco abaixo e preencha todos os campos. Campo sem resposta = etapa não
 
 <!-- As entradas começam abaixo desta linha, da mais recente para a mais antiga. -->
 
+## 2026-08-20 — CAMADA 3, ETAPA E3.21 — O cache que fazia o editor mentir (9.118)
+
+**Estado antes:** main em `72c2586`
+
+**O que foi feito:** o `GET` do menu do curso respondia `private, max-age=300` — 5 minutos de
+licença ao **cache do navegador** numa rota cujo **único consumidor é a tela de edição**. O
+produtor salvava, dava F5, e o browser respondia da própria máquina: estado antigo, "não salvou".
+Virou **`no-store`** (1 linha + comentário). O menu do **aluno** vem de `by-slug/init` (cache
+próprio, 30s+SWR) e **não foi tocado** — o cache de 5 min **não protegia ninguém**.
+
+**Arquivos tocados:** `api/courses/[id]/menu/route.ts` — **só ele** (+12/−1)
+
+**Como foi provado:**
+- **Doença por olho humano (19/08)**: salvar → F5 → nome velho. **O banco provou que o save sempre
+  funcionou** — a mentira era 100% do navegador.
+- Headers na resposta **viva**, antes (`max-age=300`) e depois (`no-store`); vizinhas intactas
+  (`by-slug/init` ao vivo; `courses` pelo fonte — o ramo cacheado dela não é alcançável pelas
+  sondas, declarado).
+- **Cura v2 por ARRASTO (20/08)** — mutação trocada **de propósito** para desviar da corrida
+  por-tecla achada no meio do gate: **teste de gate não convive com defeito conhecido**.
+
+**SHA do merge:** `c427b6a`  ·  **Rollback:** `git revert -m 1 c427b6a`
+
+**Mudou em produção para quem:** o **produtor** que edita o menu — o F5 passa a contar a verdade.
+Aluno: nada (rota que ele não consome). Custo: +1 hit de DB por abertura de editor, duas telas de
+baixa frequência.
+
+**Ficou aberto:** **9.123** 🔴 (E3.23) — o achado **9.118-B**, abaixo. ⭐ Candidato a próximo.
+
+**⭐ O GATE DA CURA REPROVOU E ACHOU UM BUG MAIOR QUE O ITEM.** No teste humano, "Home E312"
+digitado após triple-click **gravou "H"** no banco — com a tela mostrando o texto completo. A
+perícia (read-only, o "H" preservado como evidência até o laudo) provou: **o input dispara 1 PATCH
+por tecla** (`onChange` → `handleUpdate`, sem debounce/fila/abort), os PATCHes voam em paralelo, e
+o banco fica com o que **comitar por último** — o do "H" comitou por último. **Pré-existente desde
+`77a8e78` (24/abr)**; o commit do no-store muda um header de resposta de GET e **não tem como
+causar escrita** — ele **REVELOU**. ⚠️ E a ironia que virou lição: **o cache escondia o save bom E
+o save ruim** — produção está exposta à corrida desde abril, invisível pela UI.
+
+**⚠️ Fatos anexos registrados**: `MenuItem` não tem `updatedAt` (perícia sem timestamp; servidor
+sem árbitro de write velho) · o header nasceu em `f736f01` (abr/26) para uma experiência que hoje
+não passa por esta rota · a "invalidação pós-mutação" ficou registrada como **ilusória** (HTTP
+cache de navegador não é invalidável pelo servidor).
+
+**Regras conferidas:** §17 ✅ · achado do gate periciado ANTES de qualquer decisão ✅ · dado da
+perícia restaurado pelo gabarito ✅ · escopo de 1 arquivo ✅ · gate humano (doença + cura v2) ✅ ·
+papelada ✅
+
+---
+
 ## 2026-08-20 — CAMADA 3, ETAPA E3.13 (fecha) — Comentário sanitizado na escrita (9.24)
 
 **Estado antes:** main em `9d75331`
