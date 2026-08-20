@@ -6,7 +6,7 @@ import { collaboratorCanActOnCourse } from "@/lib/collaborator";
 import { createNotification } from "@/lib/notifications";
 import { sendPushToUser } from "@/lib/push-send";
 import { createCommentSchema, validateBody } from "@/lib/validations";
-import { hasPostContent } from "@/lib/sanitize-html";
+import { hasPostContent, sanitizeHtml } from "@/lib/sanitize-html";
 
 // `isCourseStaffOwner` mora em @/lib/auth, ao lado do `isStaff` que ele
 // substitui — a segunda superfície (comentário de AULA) precisou do mesmo
@@ -184,7 +184,11 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
 
     // 9.54 — espelho da régua do post (posts/route.ts:179): texto OU <img> que
     // sobrevive à allowlist conta como conteúdo; <p></p> cru deixa de passar.
-    // O que é PERSISTIDO não muda aqui (sanitize-na-escrita = 9.24, item próprio).
+    // 9.24 fechou a outra metade: o que é PERSISTIDO agora passa pela MESMA
+    // allowlist dos posts (sanitizeHtml, no create abaixo) — o banco deixa de
+    // guardar o que o cliente mandou cru. O render de saída (post-card:938 e
+    // as duas telas de moderação) FICA: defesa em profundidade, e é o que
+    // cobre os comentários legados gravados antes deste fix.
     if (!hasPostContent(content)) {
       return NextResponse.json({ error: "Conteúdo obrigatório" }, { status: 400 });
     }
@@ -212,7 +216,7 @@ export async function POST(request: Request, props: { params: Promise<{ id: stri
 
     const comment = await prisma.comment.create({
       data: {
-        content: content.trim(),
+        content: sanitizeHtml(content).trim(),
         userId: user.id,
         postId: post.id,
         parentId: validParentId,
