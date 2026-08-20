@@ -411,7 +411,7 @@ Roda **em paralelo** às camadas, sem consumir sessão de desenvolvimento:
 | **E3.7 UI de colaboradores (9.83·9.84)** | ✅ **fechada** | `cd4c71c` + `2c02b72` | 2026-08-17 |
 | E3.8 Endurecimento de infra (9.102·9.103·9.89·9.105) | ⬜ pendente | — | — |
 | E3.9 Sozinhos (9.48·9.61·9.66·9.64·9.99·9.100) | ⬜ pendente | — | — |
-| **E3.13 Integridade da comunidade (9.23·9.24)** 🟠 | 🟡 **9.23 fechado** — resta 9.24 (HTML cru) | `b29c64b` | 2026-08-20 |
+| **E3.13 Integridade da comunidade (9.23·9.24)** 🟠 | ✅ **fechada** | 9.23 `b29c64b` · 9.24 `6325123` | 2026-08-20 |
 | **E3.14 Rastro de quem mexeu no acesso (9.44b)** 🟠 | ⬜ pendente — **subiu na triagem 17/08** | — | — |
 | **E3.15 Bloco comercial no payload (9.112)** 🟠 | ✅ **fechada** | `f34e5c1` | 2026-08-18 |
 | **E3.16 Slot flutuante sem dono (9.113)** 🟠 | ⬜ pendente — nasceu do E3.7 | — | — |

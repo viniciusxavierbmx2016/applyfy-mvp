@@ -35,6 +35,42 @@ Copie o bloco abaixo e preencha todos os campos. Campo sem resposta = etapa não
 
 <!-- As entradas começam abaixo desta linha, da mais recente para a mais antiga. -->
 
+## 2026-08-20 — CAMADA 3, ETAPA E3.13 (fecha) — Comentário sanitizado na escrita (9.24)
+
+**Estado antes:** main em `9d75331`
+
+**O que foi feito:** o post sanitiza antes de persistir desde sempre; o comentário gravava
+`content.trim()` **cru**. Agora a **mesma allowlist dos posts** roda no `create` — 1 linha +
+import, no lugar exato que o **marcador do 9.54** apontava. **Fecha o E3.13 inteiro** (9.23 +
+9.24).
+
+**Arquivos tocados:** `api/posts/[id]/comments/route.ts` — **só ele** (+7/−3)
+
+**Como foi provado:**
+- **Antes×depois com o MESMO payload, verbatim do banco**: velho →
+  `<img src="x" onerror="alert(1)">` **gravado**; novo → `<img src="x" />` — evento removido,
+  `<p>`/`<b>`/img preservados.
+- **Regressões**: só-imagem do 9.54 (201, img gravada) · texto **byte-idêntico** · vazio → 400
+  "Conteúdo obrigatório". A régua do 9.54 intacta.
+- **Olho humano ✅ (19/08)**: moderação → aprovação → render limpo no feed.
+
+**SHA do merge:** `6325123`  ·  **Rollback:** `git revert -m 1 6325123`
+
+**Mudou em produção para quem:** ninguém percebe — e é esse o ponto. O banco deixa de guardar o
+que o cliente mandou cru; o render de saída **fica** nas 3 superfícies (defesa em profundidade), e
+é o que cobre os **35 legados** (todos inofensivos — varredura 18/08). **SEM backfill, por
+decisão.** `LessonComment` é outro model, **fora** do 9.24 (React-escapado fim-a-fim).
+
+**Ficou aberto:** nada novo. E3.13 ✅ completo.
+
+**Nota de palco:** o **"comentário do gate 9.24"** (`47ffe89a`) fica no staging como dado fake
+aprovado — prova viva do render limpo.
+
+**Regras conferidas:** §17 ✅ · escopo de 1 arquivo ✅ · antes×depois no MESMO payload ✅ ·
+interplay do 9.54 provado ✅ · gate humano ✅ · papelada ✅
+
+---
+
 ## 2026-08-20 — CAMADA 3, ETAPA E3.13 (parte 1) — A corrida do grupo default (9.23)
 
 **Estado antes:** main em `8c0683e`
