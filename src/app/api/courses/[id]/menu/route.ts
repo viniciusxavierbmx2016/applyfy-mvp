@@ -49,9 +49,20 @@ export async function GET(_request: Request, props: { params: Promise<{ id: stri
       where: { courseId: params.id },
       orderBy: { order: "asc" },
     });
+    /* 9.118 — era `private, max-age=300`, e os 5 minutos de licença ao cache
+       do NAVEGADOR faziam o editor mentir: o produtor salvava o menu, dava F5,
+       e o browser respondia este GET da própria máquina — estado antigo, "não
+       salvou", edição em cima de estado velho. HTTP cache de navegador não é
+       invalidável pelo servidor; nenhuma mutação conseguia furá-lo.
+
+       ⚠️ O cache não protegia ninguém: o ÚNICO consumidor desta rota é o
+       editor do produtor (`useCourseMenu`, as duas telas de edição) — o menu
+       do ALUNO vem de `by-slug/[slug]/init`, que tem cache próprio (30s+SWR)
+       e não foi tocado. `no-store` espelha o padrão anti-cache da casa
+       (`w/[slug]` · `certificates` · `manifest`). */
     return NextResponse.json(
       { items },
-      { headers: { "Cache-Control": "private, max-age=300" } }
+      { headers: { "Cache-Control": "no-store" } }
     );
   } catch (error) {
     console.error("GET menu error:", error);
