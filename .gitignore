@@ -55,3 +55,4 @@ scripts/delete-workspaces-by-owner.mjs
 scripts/diag-byleopereira.mjs
 scripts/diag-user-deps.mjs
 scripts/list-workspaces-by-owner.mjs
+.claude/settings.local.json
